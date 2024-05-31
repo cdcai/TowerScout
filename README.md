@@ -1,6 +1,6 @@
 # TowerScout
 
-TowerScout is a tool for identifying cooling towers from satellite and aerial imagery.  Cooling towers are potential sources of _Legionella_ bacteria, which causes Legionnaires' disease.  TowerScout has been utilized in over 12 investigations of outbreaks of Legionnaires' disease across 8 states since 2021.  It can be used after outbreaks to identify potential sources of _Legionella_, and it can be used before outbreaks to build and update a registry of cooling towers to aid future investigations.  
+TowerScout is a tool for identifying cooling towers from satellite and aerial imagery for Legionnaires' disease outbreak investigations. 
 
 ## About TowerScout 
 
@@ -36,6 +36,12 @@ Please cite the following publication and this GitHub repository when utilizing 
 - Wong, KK, Segura T, Mein G, Lu J, Hannapel EJ, Kunz JM, Ritter T, Smith JC, Todeschini A, Nugen F, Edens C. Automated cooling tower detection through deep learning for Legionnaires’ disease outbreak investigations: a model development and validation study. *Lancet Digit Health.* 2024;6(7):e500-e506. [doi.org/10.1016/S2589-7500(24)00094-3](https://doi.org/10.1016/S2589-7500(24)00094-3)
 - [TO COME: [CITATION.cff file](https://citation-file-format.github.io/)]
 
+**Additional files**
+* <a target="_blank" href="https://drive.google.com/file/d/1EBxgqr6MrkAkEv1vJ2ftZiSjs6w865wf/view?usp=drive_link">YOLOv5 weights</a>
+* <a target="_blank" href="https://drive.google.com/file/d/1Cs3nXQddNf-Y0HYO8a5Yvm6mNB-Rx8HP/view?usp=drive_link">EfficientNet weights</a>
+* <a target="_blank" href="https://www2.census.gov/geo/tiger/TIGER2019/ZCTA5/">ZCTA5 shapefile</a>
+
+This is a proof of concept and is not intended for commercial use. Users should adhere to terms of service when using tools and resources from any imagery and data providers. 
 
 ## License
 
