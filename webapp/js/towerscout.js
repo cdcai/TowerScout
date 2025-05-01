@@ -1948,11 +1948,20 @@ function setProgress(val) {
 class myConsole {
   constructor() {
     this.textArea = document.getElementById("output");
+    this.console = console;
     // console.log("output area: " + this.textArea);
   }
 
   print(text) {
     this.textArea.innerText += text;
+  }
+
+  warn(text) {
+    this.console.warn(text);
+  }
+
+  error(text) {
+    this.console.error(text);
   }
 
   newLine() {
