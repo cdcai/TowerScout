@@ -1,21 +1,15 @@
-
 // TowerScout
 // A tool for identifying cooling towers from satellite and aerial imagery
 
 // TowerScout Team:
 // Karen Wong, Gunnar Mein, Thaddeus Segura, Jia Lu
-
 // Licensed under CC-BY-NC-SA-4.0
 // (see LICENSE.TXT in the root of the repository for details)
-
 
 // TowerScout.js
 // client-side logic
 
-
-
 // maps
-
 // The location of a spot in central NYC
 const nyc = [-74.00820558171071, 40.71083794970947];
 
@@ -38,8 +32,7 @@ const reviewCheckBox = document.getElementById("review");
 // dynamically adjust confidence of visible predictions
 confSlider.oninput = adjustConfidence;
 reviewCheckBox.onchange = changeReviewMode;
-const DEFAULT_CONFIDENCE = 0.35
-
+const DEFAULT_CONFIDENCE = 0.15
 
 let aboutOp = 0;
 let aboutInterval = 20;
@@ -101,8 +94,6 @@ function initGoogleMap() {
   // the Google Map is also the default map
   currentMap = googleMap;
 }
-
-
 
 //
 // Abstract Map base class
@@ -983,7 +974,7 @@ class Detection extends PlaceRect {
 
     this.id = Detection_detections.length;
     this.originalId = this.id;
-    //console.log("Detection #" + this.id + " is " + (this.selected ? "" : "not ") + "selected");
+    // console.log("Detection #" + this.id + " is " + (this.selected ? "" : "not ") + "selected");
     Detection_detections.push(this);
   }
 
@@ -1957,11 +1948,20 @@ function setProgress(val) {
 class myConsole {
   constructor() {
     this.textArea = document.getElementById("output");
+    this.console = console;
     // console.log("output area: " + this.textArea);
   }
 
   print(text) {
     this.textArea.innerText += text;
+  }
+
+  warn(text) {
+    this.console.warn(text);
+  }
+
+  error(text) {
+    this.console.error(text);
   }
 
   newLine() {

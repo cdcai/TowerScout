@@ -40,11 +40,8 @@ from functools import reduce
 
 dev = 0
 
-MAX_TILES = 1000
+MAX_TILES = 100000
 MAX_TILES_SESSION = 100000
-
-torch.set_num_threads(1)
-print("Pytorch threads:", torch.get_num_threads())
 
 engines = {}
 
@@ -52,7 +49,6 @@ engine_default = None
 engine_lock = threading.Lock()
 
 exit_events = ExitEvents()
-
 
 # on-demand instantiate YOLOv5 model
 def get_engine(e):
@@ -111,7 +107,8 @@ providers = {
 # other global variables
 google_api_key = ""
 bing_api_key = ""
-loop = asyncio.get_event_loop()
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
 
 # prepare uploads directory
 if not os.path.isdir("./uploads"):
@@ -266,7 +263,7 @@ def get_providers():
     print("map providers requested")
     result = json.dumps([{'id': k, 'name': v['name']}
                          for (k, v) in providers.items()])
-    print(result)
+    # print(result)
     return result
 
 # zipcode boundary lookup
@@ -286,7 +283,6 @@ def get_zipcode():
 
 # abort route
 
-
 @app.route('/abort', methods=['get'])
 def abort():
     print(" aborting", id(session))
@@ -294,7 +290,6 @@ def abort():
     return "ok"
 
 # detection route
-
 
 @app.route('/getobjects', methods=['POST'])
 def get_objects():
@@ -304,7 +299,7 @@ def get_objects():
     if 'tiles' not in session:
         session['tiles'] = 0
 
-    print("tiles queried in session:", session['tiles'])
+    # print("tiles queried in session:", session['tiles'])
     if session['tiles'] > MAX_TILES_SESSION:
         return "-1"
 
@@ -314,12 +309,13 @@ def get_objects():
     engine = request.form.get("engine")
     provider = request.form.get("provider")
     polygons = request.form.get("polygons")
+    
     print("incoming detection request:")
     print(" bounds:", bounds)
     print(" engine:", engine)
     print(" map provider:", provider)
-    print(" polygons:", polygons)
-
+    # print(" polygons:", polygons)
+    
     # cropping
     crop_tiles = True
 
@@ -327,7 +323,7 @@ def get_objects():
     polygons = json.loads(polygons)
     # print(" parsed polygons:", polygons)
     polygons = [ts_imgutil.make_boundary(p) for p in polygons]
-    print(" Shapely polygons:", polygons)
+    # print(" Shapely polygons:", polygons)
 
     # get the proper detector
     det = get_engine(engine)
@@ -346,7 +342,7 @@ def get_objects():
 
     # divide the map into 640x640 parts
     tiles, nx, ny, meters, h, w = map.make_tiles(bounds, crop_tiles=crop_tiles)
-    print(f" {len(tiles)} tiles, {nx} x {ny}, {meters} x {meters} m")
+    # print(f" {len(tiles)} tiles, {nx} x {ny}, {meters} x {meters} m")
     # print(" Tile centers:")
     # for c in tiles:
     #   print("  ",c)
@@ -383,11 +379,10 @@ def get_objects():
     # make a new tempdir name and attach to session
     tmpdir = tempfile.TemporaryDirectory()
     tmpdirname = tmpdir.name
-    tmpfilename = tmpdirname[tmpdirname.rindex("/")+1:]
+    tmpfilename = tmpdirname[tmpdirname.rindex("\\")+1:]
     print("creating tmp dir", tmpdirname)
     session['tmpdirname'] = tmpdirname
-    tmpdir.cleanup()  # yeah this is asinine but I need the tmpdir to survive to I will create it manually next
-    os.mkdir(tmpdirname)
+    # tmpdir.cleanup()  # yeah this is asinine but I need the tmpdir to survive to I will create it manually next
     print("created tmp dir", tmpdirname)
 
     # retrieve tiles and metadata if available
@@ -454,6 +449,7 @@ def get_objects():
     results.sort(key=lambda x: x['y1']*2*180+2*x['x1']+x['conf'])
 
     # coaslesce neighboring (in list) towers that are closer than 1 m for x1, y1
+    
     if len(results) > 1:
         i = 0
         while i < len(results)-1:
@@ -463,6 +459,7 @@ def get_objects():
                 results.remove(results[i+1])
             else:
                 i += 1
+    
 
     # prepend a pseudo-result for each tile, for debugging
     tile_results = []
@@ -491,13 +488,20 @@ def get_objects():
     session['results'] = results
     return results
 
+def cleanup_temp_directory():
+    # Cleanup the tempdir at the end of the session or application
+    if "tmpdir_obj" in session:
+        tmpdir = session['tmpdir_obj']
+        print("Cleaning up tmp dir", tmpdir.name)
+        tmpdir.cleanup()
+        del session['tmpdir_obj']
+        del session['tmpdirname']
+
 
 def allowed_extension(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg'}
 
 # detection route for provided images
-
-
 @ app.route('/getobjectscustom', methods=['POST'])
 def get_objects_custom():
     start = time.time()
@@ -552,6 +556,7 @@ def get_objects_custom():
 
     results = json.dumps(results)
     session['results'] = results
+    cleanup_temp_directory()
     return results
 
 
@@ -942,3 +947,4 @@ if __name__ == '__main__':
         dev = 1
 
     serve(app, host='0.0.0.0', port=5000)
+    print("Web app running at http://localhost:5000/")

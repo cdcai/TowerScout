@@ -9,7 +9,9 @@ webapp/data/*
 webapp/__pycache__/*
 webapp/model_params/*
 webapp/temp/*
+webapp/tmp.py
 webapp/uploads/*
+webapp/yolov5s.pt
 webapp/flask_session/*
 towerscout.pem
 workspace.code-workspace

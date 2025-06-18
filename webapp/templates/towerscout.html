@@ -205,15 +205,14 @@ Licensed under CC-BY-NC-SA-4.0
     </div>
   </div>
 
-
-
   <script src="/js/jquery-3.5.1.min.js"></script>
-  <script
-    src="https://maps.googleapis.com/maps/api/js?key={{google_map_key}}&callback=initGoogleMap&libraries=places,drawing&v=weekly"
-    defer>
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key={{google_map_key}}&v=3.55.1&loading=async&callback=initGoogleMap&libraries=places,drawing"
+    >
     </script>
-  <script type='text/javascript' src='http://www.bing.com/api/maps/mapcontrol?callback=initBingMap&key={{bing_map_key}}'
-    async defer>
+  <script async
+  type='text/javascript' src='http://www.bing.com/api/maps/mapcontrol?callback=initBingMap&key={{bing_map_key}}'
+    >
     </script>
   <script>
     let gak = "{{google_map_key}}";

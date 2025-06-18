@@ -17,6 +17,7 @@ import requests
 import time
 import random
 import tempfile
+import os
 import math
 import asyncio
 import aiohttp
@@ -118,34 +119,47 @@ class Map:
 #
 
 async def gather_urls(urls, dir, fname, metadata):
-    # execute
+    # change number to limit how many simultaneous calls
+    semaphore = asyncio.Semaphore(16)
+    
     async with aiohttp.ClientSession() as session:
-        await fetch_all(session, urls, dir, fname, metadata)
+        print("Running with Semaphore limiter")
+        await fetch_all(semaphore, session, urls, dir, fname, metadata)
 
 
-async def fetch(session, url, dir, fname, i):
-
+async def fetch(semaphore, session, url, dir, fname, i):
     meta = False
+    urlorig = url
     if url.endswith(" (meta)"):
         url = url[0:-7]
         meta = True
  
-    async with session.get(url) as response:
-        if response.status != 200:
-            response.raise_for_status()
+    try:
+        async with semaphore:
+            async with session.get(url) as response:
+                if response.status != 200:
+                    response.raise_for_status()
 
-        # write the file
-        filename = dir+"/"+fname+str(i)+(".meta.txt" if meta else ".jpg")
-        # print(" retrieving ",filename,"...")
-        async with aiofiles.open(filename, mode='wb') as f:
-            await f.write(await response.read())
-            await f.close()
+                # write the file
+                filename = os.path.join(dir, fname + str(i) + (".meta.txt" if meta else ".jpg"))
+                print(" retrieving ",filename,"...")
+                async with aiofiles.open(filename, mode='wb') as f:
+                    await f.write(await response.read())
+                    
+    except aiohttp.ClientError as e:
+        # print(f"Error fetching {str(i)} {url}: {e}")
+        # Retrying fetch after too many request response
+        if e.status == 429:
+            # print(f"Received 429 error, retrying after delay...")
+            await asyncio.sleep(1) 
+            # Retry the request
+            await fetch(semaphore, session, urlorig, dir, fname, i)
+            
 
-
-async def fetch_all(session, urls, dir, fname, metadata):
+async def fetch_all(semaphore, session, urls, dir, fname, metadata):
     tasks = []
     for (i, url) in enumerate(urls):
-        task = asyncio.create_task(fetch(session, url, dir, fname, i//2 if metadata else i))
+        task = fetch(semaphore, session, url, dir, fname, i//2 if metadata else i)
         tasks.append(task)
     results = await asyncio.gather(*tasks)
     return results
