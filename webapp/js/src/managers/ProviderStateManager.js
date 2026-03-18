@@ -36,6 +36,15 @@
       this.progressActive = false;
       this.progressLock = false;
 
+      // Phase 1 (Sprint 03): UI state management
+      this.currentElementRef = null;        // Currently highlighted detection DOM element
+      this.currentAddrElementRef = null;    // Currently highlighted address DOM element
+      // Note: isInitializing already exists (line 15)
+
+      // Phase 2 (Sprint 03): Tile state management
+      this.tileArray = [];      // Tile array for detection processing
+      this.tileLock = false;    // Mutex for tile array operations
+
       // Set initialization complete after initial setup (use setTimeout since timerManager not yet initialized)
       setTimeout(() => {
         this.isInitializing = false;
@@ -176,6 +185,20 @@
         this.currentMap = availableMap;
 
         console.log(`✅ Provider switched: ${rollbackState.provider} → ${targetProvider}`);
+
+        // ISSUE-002 FIX: Restore provider components after switch (drawing tools, etc.)
+        if (typeof availableMap.restore === 'function') {
+          try {
+            console.log(`🔄 Restoring ${targetProvider} components...`);
+            availableMap.restore();
+            console.log(`✅ ${targetProvider} components restored`);
+          } catch (restoreError) {
+            console.warn(`⚠️ ${targetProvider} restoration had errors (continuing):`, restoreError.message);
+            // Don't fail the switch due to restoration errors - log and continue
+          }
+        } else {
+          console.log(`ℹ️ ${targetProvider} does not have restoration method (expected for new providers)`);
+        }
 
         // Validate the switch worked
         window.timerManager.setTimeout(() => {
@@ -614,6 +637,161 @@
      */
     getProgressTimerId() {
       return this.progressTimerId;
+    }
+
+    // =============================================================================    // Tile State Management (Phase 2 - Sprint 03)
+    // Manages tile array for detection processing and navigation
+    // =============================================================================
+
+    /**
+     * Get tiles array - returns read-only copy for safe iteration
+     * @returns {Array} Read-only copy of tile array
+     */
+    getTiles() {
+      // Return copy to prevent unintended mutations during iteration
+      return [...this.tileArray];
+    }
+
+    /**
+     * Get tiles array length without copying (performance optimization)
+     * @returns {number} Number of tiles
+     */
+    getTilesLength() {
+      return this.tileArray.length;
+    }
+
+    /**
+     * Direct access to tile array for legacy code (use with caution)
+     * @returns {Array} Direct reference to internal tile array
+     * @deprecated Use getTiles() for read access, add/clear methods for mutations
+     */
+    getTilesArrayDirect() {
+      console.warn('⚠️ Direct tile array access detected. Consider using getTiles() or mutation methods.');
+      return this.tileArray;
+    }
+
+    /**
+     * Set tiles array with validation
+     * @param {Array} tiles - Array of Tile objects
+     * @throws {Error} If tiles is not an array
+     */
+    setTiles(tiles) {
+      if (!Array.isArray(tiles)) {
+        throw new Error('Tiles must be an array');
+      }
+      this.tileArray = tiles;
+      console.log(`✅ Tile array updated: ${tiles.length} items`);
+    }
+
+    /**
+     * Clear tiles array with mutex protection
+     */
+    clearTiles() {
+      // Acquire lock
+      while (this.tileLock) {
+        // Busy wait (synchronous operation, should be fast)
+      }
+
+      try {
+        this.tileLock = true;
+        this.tileArray.length = 0;
+        console.log('🧹 Tile array cleared');
+      } finally {
+        this.tileLock = false;
+      }
+    }
+
+    /**
+     * Add tile to array with mutex protection
+     * @param {Tile} tile - Tile object to add
+     */
+    addTile(tile) {
+      while (this.tileLock) {
+        // Busy wait
+      }
+
+      try {
+        this.tileLock = true;
+        this.tileArray.push(tile);
+      } finally {
+        this.tileLock = false;
+      }
+    }
+
+    // =============================================================================    // UI State Management (Phase 1 - Sprint 03)
+    // Manages currently highlighted detection elements for bidirectional highlighting
+    // =============================================================================
+
+    /**
+     * Get currently highlighted detection element
+     * @returns {HTMLElement|null} DOM element or null if none selected
+     */
+    getCurrentElement() {
+      return this.currentElementRef;
+    }
+
+    /**
+     * Set currently highlighted detection element
+     * @param {HTMLElement|null} element - DOM element to highlight
+     */
+    setCurrentElement(element) {
+      this.currentElementRef = element;
+      if (element) {
+        console.log(`🎯 Current detection element set: ${element.id}`);
+      }
+    }
+
+    /**
+     * Get currently highlighted address element
+     * @returns {HTMLElement|null} DOM element or null if none selected
+     */
+    getCurrentAddrElement() {
+      return this.currentAddrElementRef;
+    }
+
+    /**
+     * Set currently highlighted address element
+     * @param {HTMLElement|null} element - DOM element to highlight
+     */
+    setCurrentAddrElement(element) {
+      this.currentAddrElementRef = element;
+      if (element) {
+        console.log(`📍 Current address element set: ${element.id}`);
+      }
+    }
+
+    /**
+     * Clear all UI highlighting (both detection and address elements)
+     */
+    clearUIHighlighting() {
+      if (this.currentElementRef) {
+        this.currentElementRef.style.fontWeight = "normal";
+        this.currentElementRef.style.textDecoration = "";
+      }
+      if (this.currentAddrElementRef) {
+        this.currentAddrElementRef.style.fontWeight = "normal";
+        this.currentAddrElementRef.style.textDecoration = "";
+      }
+      this.currentElementRef = null;
+      this.currentAddrElementRef = null;
+      console.log(`🧹 UI highlighting cleared`);
+    }
+
+    /**
+     * Get initialization state (prevents provider switching during startup)
+     * @returns {boolean} True if still initializing, false if ready
+     */
+    getIsInitializing() {
+      return this.isInitializing;
+    }
+
+    /**
+     * Set initialization state
+     * @param {boolean} value - Initialization state
+     */
+    setIsInitializing(value) {
+      this.isInitializing = value;
+      console.log(`🔧 Initialization state: ${value ? 'INITIALIZING' : 'COMPLETE'}`);
     }
   }
 

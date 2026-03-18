@@ -22,6 +22,8 @@
       this.boundaries = [];
       this.newShapes = [];
       this.drawingManager = null;
+      this.drawingContext = null; // Track drawing context: 'search' or 'manual'
+      this.drawingNotificationId = null; // Track persistent notification
       this.searchDataSource = null;
       this.subscriptionKey = null;
       this.map = null; // Will be initialized after getting API key
@@ -240,29 +242,92 @@
 
       // Create drawing manager with polygon, rectangle, and edit tools
       // TASK-041 Phase 1: Added edit controls for better polygon completion UX
+      // TASK-033 Phase 2: Added purple styling for manual tower polygons
       this.drawingManager = new atlas.drawing.DrawingManager(this.map, {
         toolbar: new atlas.control.DrawingToolbar({
           position: 'top-right',
           style: 'light',
           buttons: ['draw-polygon', 'draw-rectangle', 'edit-geometry'],
           numColumns: 3
-        })
+        }),
+        // Configure purple styling for manual tower polygons (distinct from green search boundaries)
+        fillColor: '#800080',
+        strokeColor: '#800080',
+        fillOpacity: 0.1,
+        strokeWidth: 2
+      });
+
+      // Track drawing context for notification management
+      this.drawingContext = null; // 'search' or 'manual'
+      this.drawingNotificationId = null;
+
+      // Listen for drawing mode changes to show instructions when user clicks drawing tools
+      this.map.events.add('drawingmodechanged', this.drawingManager, (mode) => {
+        console.log('🎨 Azure Maps drawing mode changed:', mode);
+
+        if (mode === 'draw-polygon' || mode === 'draw-rectangle') {
+          // User clicked drawing tool - show persistent instructions
+          console.log('📝 Drawing started, showing persistent instructions...');
+
+          // Determine context: search boundary (no detections yet) or manual tower (after detection)
+          const hasDetections = window.providerManager && window.providerManager.getDetectionsLength() > 0;
+          this.drawingContext = hasDetections ? 'manual' : 'search';
+          console.log('📍 Drawing context:', this.drawingContext, '(detections:', hasDetections ? 'YES' : 'NO', ')');
+
+          // Show persistent notification with provider-specific instructions
+          const message = this.drawingContext === 'search'
+            ? 'Draw your search area. Double-click to complete the polygon.'
+            : 'Draw around the tower. Double-click to complete the polygon.';
+
+          this.drawingNotificationId = TowerScoutErrorHandler.showUserNotification(
+            message,
+            'info',
+            0 // Persistent until drawing completes (0 = no timeout)
+          );
+        } else if (mode === 'idle' || mode === 'edit-geometry') {
+          // Drawing ended or switched to edit mode - clear persistent notification
+          if (this.drawingNotificationId) {
+            TowerScoutErrorHandler.dismissNotification(this.drawingNotificationId);
+            this.drawingNotificationId = null;
+          }
+        }
       });
 
       // Listen for drawing completion events
       this.map.events.add('drawingcomplete', this.drawingManager, (drawingCompleteEvent) => {
         console.log('🎨 Azure Maps drawingcomplete event fired');
-        let shape = drawingCompleteEvent.data;
+        let shape = drawingCompleteEvent;
 
-        // TASK-041 Phase 1: Defensive check - Azure SDK may pass incomplete shapes during mode changes
-        if (!shape || typeof shape.getType !== 'function') {
-          console.warn('⚠️ Received incomplete shape from drawing event, ignoring');
+        // Dismiss persistent drawing instruction notification
+        if (this.drawingNotificationId) {
+          TowerScoutErrorHandler.dismissNotification(this.drawingNotificationId);
+          this.drawingNotificationId = null;
+        }
+
+        // TASK-033: Azure Maps passes the shape directly, not as drawingCompleteEvent.data
+        // The shape is an atlas.Shape object which doesn't have getType() function
+        if (!shape) {
+          console.warn('⚠️ No shape data from drawing event, ignoring');
           return;
         }
 
         this.newShapes.push(shape);
-        console.log('✅ New Azure Maps shape drawn:', shape.getType());
+        console.log('✅ New Azure Maps shape captured');
         console.log('  - Total shapes in newShapes array:', this.newShapes.length);
+
+        // Context-aware completion notification
+        const message = this.drawingContext === 'search'
+          ? 'Polygon complete! Click "Custom Shape" again to use as search area, or "Estimate Tiles" to proceed.'
+          : 'Polygon complete! Click "Save Towers" button below to add it to the detection list.';
+
+        TowerScoutErrorHandler.showUserNotification(
+          message,
+          'success',
+          6000
+        );
+
+        // Reset context
+        this.drawingContext = null;
       });
 
       // TASK-041 Phase 1: Mark drawing manager ready
@@ -271,6 +336,13 @@
     }
 
     initializeSearchBox() {
+      // TASK-039: Ensure standard search input is visible for Azure Maps
+      const searchInput = document.getElementById('search');
+      if (searchInput) {
+        searchInput.style.display = 'inline';
+        console.log('✅ Standard search input shown for Azure Maps');
+      }
+
       // Create data source for search results
       this.searchDataSource = new atlas.source.DataSource();
       this.map.sources.add(this.searchDataSource);
@@ -344,7 +416,7 @@
 
           if (props && props.detectionId !== undefined) {
             // Look up Detection object by ID from global array
-            const detection = Detection_detections[props.detectionId];
+            const detection = providerManager.getDetectionsArrayDirect()[props.detectionId];
             if (detection) {
               console.log(`🖱️ Azure Maps detection ${props.detectionId} clicked - triggering highlight`);
               detection.highlight(true, true);  // Call Detection.highlight() directly
@@ -1107,8 +1179,34 @@
     }
 
     addShapes() {
+      console.log('🏗️ Azure Maps addShapes() called');
+      console.log(`  - newShapes array length: ${this.newShapes.length}`);
+
+      // TASK-033: Validation - Check if shapes exist
+      if (this.newShapes.length === 0) {
+        console.warn('⚠️ No shapes to add (newShapes array empty)');
+        TowerScoutErrorHandler.showUserNotification(
+          'Draw a polygon first. Click "Add Towers" to enable drawing, then click "Save Towers" to add detections.',
+          'warning',
+          4000
+        );
+        return;
+      }
+
+      // TASK-033: Validation - Check if model has been run (Tile_tiles populated)
+      if (typeof Tile_tiles === 'undefined' || !Tile_tiles || Object.keys(Tile_tiles).length === 0) {
+        console.error('❌ Cannot add manual towers: Model has not been run yet');
+        TowerScoutErrorHandler.showUserNotification(
+          'Please run a detection search first before adding manual towers',
+          'error',
+          4000
+        );
+        return;
+      }
+
       // Process drawn shapes and add as detections
       let bounds;
+      let addedCount = 0;
 
       for (let shape of this.newShapes) {
         let geometry = shape.toJson().geometry;
@@ -1123,9 +1221,19 @@
         let y1 = Math.max(...lats);
         let y2 = Math.min(...lats);
 
-        let tileIds = Tile.getTileIds(x1, y1, x2, y2);
-        for (let tileId of tileIds) {
-          let tile = Tile_tiles[tileId];
+        // TASK-033 Phase 2: Create only ONE detection per drawn polygon (use center tile)
+        // This prevents multiple detections when polygon spans tile boundaries
+        let centerX = (x1 + x2) / 2;
+        let centerY = (y1 + y2) / 2;
+        let tileIds = Tile.getTileIds(centerX, centerY, centerX, centerY);
+
+        if (tileIds.length > 0) {
+          let tileArrayIndex = tileIds[0];
+          let tile = providerManager.getTilesArrayDirect()[tileArrayIndex];
+          // TASK-033 Phase 3: Use tile.id (not array index) for export matching
+          let tileId = tile.id;
+
+          // Clamp bounds to tile boundaries
           x1 = Math.max(x1, tile.x1);
           x1 = Math.min(x1, tile.x2);
           x2 = Math.max(x2, tile.x1);
@@ -1137,10 +1245,16 @@
 
           let det = new Detection(x1, y1, x2, y2,
             'added', 1.0, tileId, -1, true, true); // id_in_tile parameter
+
+          // TASK-033: Geocode manual tower location to get address
+          this.geocodeDetection(det);
+
           det.update();
+          addedCount++;
         }
       }
 
+      // TASK-033: Cleanup and user feedback
       this.newShapes = [];
 
       // Turn off drawing mode
@@ -1150,34 +1264,138 @@
 
       Detection.generateList();
       adjustConfidence();
+
+      // TASK-033 Phase 4: Lock provider switching after manual towers added
+      if (typeof lockProviderSwitching === 'function') {
+        lockProviderSwitching();
+      }
+
+      // TASK-033: User feedback
+      console.log(`✅ Successfully added ${addedCount} manual tower(s)`);
+      TowerScoutErrorHandler.showUserNotification(
+        `Successfully added ${addedCount} manual tower(s)`,
+        'success',
+        3000
+      );
+    }
+
+    // TASK-033: Geocode detection coordinates to get building address
+    async geocodeDetection(detection) {
+      try {
+        const center = detection.getCenter();
+        const lat = center[1];
+        const lng = center[0];
+
+        console.log(`🌍 Geocoding manual tower at ${lat}, ${lng}...`);
+
+        const response = await fetch('/api/geocode/reverse', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            lat: lat,
+            lng: lng,
+            provider: 'auto'
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Geocoding failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.address) {
+          detection.address = data.address;
+          detection.addressConfidence = data.confidence;
+          detection.addressProvider = data.provider;
+          console.log(`✅ Geocoded address: ${data.address}`);
+        } else {
+          // Fallback to coordinates
+          detection.address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+          detection.addressConfidence = 0.0;
+          detection.addressProvider = 'fallback';
+          console.warn(`⚠️ Geocoding failed, using coordinates`);
+        }
+
+        // TASK-033: Update detection list to show the new address
+        Detection.generateList();
+
+      } catch (error) {
+        console.error('❌ Geocoding error:', error);
+        // Fallback to coordinates
+        const center = detection.getCenter();
+        detection.address = `${center[1].toFixed(6)}, ${center[0].toFixed(6)}`;
+        detection.addressConfidence = 0.0;
+        detection.addressProvider = 'error';
+
+        // Update list even with fallback address
+        Detection.generateList();
+      }
     }
 
     clearShapes() {
-      // Clear all drawn shapes
+      // Remove unsaved drawn polygons only
+      // Note: To delete saved manual towers, uncheck them in the detection list
+      // Clear all drawn shapes from newShapes array
       for (let shape of this.newShapes) {
         this.drawingManager.getSource().remove(shape);
       }
       this.newShapes = [];
 
-      // Turn off drawing mode
+      // TASK-033 Phase 2: Also clear all shapes from drawing manager layer
+      // (Important: After "Save Towers", shapes are no longer in newShapes but remain in drawing layer)
       if (this.drawingManager) {
+        const drawingSource = this.drawingManager.getSource();
+        if (drawingSource) {
+          const allDrawnShapes = drawingSource.getShapes();
+          if (allDrawnShapes && allDrawnShapes.length > 0) {
+            console.log(`🧹 Clearing ${allDrawnShapes.length} shapes from Azure drawing manager layer`);
+            drawingSource.clear();
+          }
+        }
+        // Turn off drawing mode
         this.drawingManager.setOptions({ mode: 'idle' });
       }
     }
 
     clearAll() {
       this.clearShapes();
-      // Remove manually added detections (confidence = 1.0)
+
+      // TASK-033 Phase 2: Properly remove manual towers from map before removing from array
+      // First hide all manual tower rectangles (conf=1.0) and remove from data source
+      if (this.detectionDataSource) {
+        const shapes = this.detectionDataSource.getShapes();
+        const manualShapes = shapes.filter(s => {
+          const props = s.getProperties();
+          if (!props || props.detectionId === undefined) return false;
+          const det = providerManager.getDetectionsArrayDirect()[props.detectionId];
+          return det && det.conf === 1.0;
+        });
+
+        if (manualShapes.length > 0) {
+          console.log(`🗑️ Removing ${manualShapes.length} manual tower shapes from Azure Maps`);
+          this.detectionDataSource.remove(manualShapes);
+        }
+      }
+
+      // Then remove manual detections from array
       let dets = [];
-      for (let det of Detection_detections) {
+      for (let det of providerManager.getDetections()) {
         if (det.conf !== 1.0) {
           det.id = dets.length;
           dets.push(det);
         }
       }
-      Detection_detections = dets;
+      providerManager.setDetections(dets);
       // FIX NEW-ISSUE-003: generateList() now calls adjustConfidence() to filter outside detections
       Detection.generateList();
+
+      // TASK-033 Phase 4: Unlock provider switching after clearing all manual towers
+      if (typeof unlockProviderSwitching === 'function') {
+        unlockProviderSwitching();
+      }
     }
 
     getBoundsPolygon(query, place) {

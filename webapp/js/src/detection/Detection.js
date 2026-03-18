@@ -50,7 +50,12 @@
     }
 
     constructor(x1, y1, x2, y2, classname, conf, tile, idInTile, inside, selected, secondary, address, addressConfidence, addressProvider) {
-      super(x1, y1, x2, y2, conf === 1.0 ? "blue" : "#FF0000", conf === 1.0 ? "blue" : "#FF0000", 0.15, classname, () => {
+      // TASK-033 Phase 3: Manual towers (id_in_tile=-1) get purple outline, ML detections get red
+      const isManual = (idInTile === -1);
+      const outlineColor = isManual ? "#800080" : "#FF0000";  // Purple for manual, red for ML
+      const fillColor = isManual ? "#800080" : "#FF0000";
+
+      super(x1, y1, x2, y2, outlineColor, fillColor, 0.15, classname, () => {
         this.highlight(true, true);
       })
       this.conf = conf;
@@ -86,9 +91,10 @@
 
     static sort() {
       // DEBUG: Log detection order before sorting
+      const detections = providerManager.getDetectionsArrayDirect();
       console.log('🔄 Before sort:');
-      for (let i = 0; i < Detection_detections.length; i++) {
-        console.log(`  [${i}] inside=${Detection_detections[i].inside}, addr="${Detection_detections[i].address.substring(0, 30)}"`);
+      for (let i = 0; i < detections.length; i++) {
+        console.log(`  [${i}] inside=${detections[i].inside}, addr="${detections[i].address.substring(0, 30)}"`);
       }
 
       // TASK-043 Phase 2: Use state manager for thread-safe sort operation
@@ -103,14 +109,15 @@
       });
 
       // DEBUG: Log detection order after sorting
+      const detectionsAfterSort = providerManager.getDetectionsArrayDirect();
       console.log('🔄 After sort:');
-      for (let i = 0; i < Detection_detections.length; i++) {
-        console.log(`  [${i}] inside=${Detection_detections[i].inside}, addr="${Detection_detections[i].address.substring(0, 30)}"`);
+      for (let i = 0; i < detectionsAfterSort.length; i++) {
+        console.log(`  [${i}] inside=${detectionsAfterSort[i].inside}, addr="${detectionsAfterSort[i].address.substring(0, 30)}"`);
       }
 
       // Fix IDs and update map feature AND shape properties
-      for (let i = 0; i < Detection_detections.length; i++) {
-        let det = Detection_detections[i];
+      for (let i = 0; i < detectionsAfterSort.length; i++) {
+        let det = detectionsAfterSort[i];
         const oldId = det.id;  // Store old ID before changing
         det.id = i;
 
@@ -131,13 +138,15 @@
     }
 
     static generateList() {
-      let currentAddr = "";
+      // TASK-033 Phase 3: Initialize to null instead of empty string to handle empty addresses
+      let currentAddr = null;  // Use null to ensure first detection always triggers group creation
       let firstDet = null;
       let boxes = "<ul>";
       let count = 0;
       for (let det of Detection_detections) {
         if (det.address !== currentAddr) {
-          if (currentAddr !== "") {
+          // TASK-033 Phase 3: Check for null instead of empty string
+          if (currentAddr !== null) {
             boxes += "</ul></li>";
           }
           boxes += "<li id='addrli" + det.id + "'>";
@@ -176,17 +185,21 @@
     generateCheckBox() {
       // Defensive check for tile existence (prevents crash if tiles not loaded)
       let meta = "";
-      if (Tile_tiles[this.tile] && Tile_tiles[this.tile].metadata) {
-        meta = Tile_tiles[this.tile].metadata;
+      const tiles = providerManager.getTilesArrayDirect();
+      if (tiles[this.tile] && tiles[this.tile].metadata) {
+        meta = tiles[this.tile].metadata;
       }
       // TASK-043 FIX: Show P2 even when it equals 1.0 (was hidden due to < 1.0 condition)
       let p2 = (this.secondary > 0 ? ",&nbsp;P2(" + this.secondary.toFixed(2) + ")" : "")
+      // TASK-033 Phase 3: Add "✋ Manual" badge for manual towers (id_in_tile=-1)
+      let manualBadge = (this.idInTile === -1 ? "<span class='manual-badge' style='background-color:#800080;color:white;padding:2px 6px;border-radius:3px;font-size:11px;margin-right:4px;'>✋ Manual</span>" : "");
       let box = "<li><div style='display:block' id='detdiv" + this.id + "'>";
       box += "<input type='checkbox' id='detcb" + this.id + "' name='detcb" + this.id + "'";
       box += " value='" + this.id + "' " + (this.selected ? "checked" : "");
-      box += " style='display:inline;vertical-align:-10%;'"
+      box += " style='display:inline;vertical-align:-10%;'";
       box += " onclick='Detection_detections[" + this.id + "].select(undefined)'>";
       box += "&nbsp;";
+      box += manualBadge;
       box += "<span class='address' onclick='Detection.showDetection(" + this.id + ", true)' ";
       box += "id='plabel" + this.id + "'>";
       box += "P(" + this.conf.toFixed(2) + ")" + p2 + (meta !== "" ? ",&nbsp" + meta : "") + "</span></li>";
@@ -232,38 +245,43 @@
     }
 
     static showDetection(id, center) {
-      Detection_detections[id].highlight(center, false);
+      // TASK-033 Phase 2: Add bounds checking to prevent undefined highlight error
+      const detections = providerManager.getDetectionsArrayDirect();
+      if (id >= 0 && id < detections.length && detections[id]) {
+        detections[id].highlight(center, false);
+      } else {
+        console.warn(`⚠️ Cannot highlight detection ${id} - out of bounds or undefined`);
+      }
     }
 
     highlight(center, scroll) {
       let firstDet = this.firstDet;
 
-      if (currentAddrElement !== null) {
-        currentAddrElement.style.fontWeight = "normal";
-        currentAddrElement.style.textDecoration = "";
-        currentElement.style.fontWeight = "normal";
-        currentElement.style.textDecoration = "";
+      // Phase 1 (Sprint 03): Use providerManager for UI state
+      // Clear previous highlighting
+      if (providerManager.getCurrentAddrElement() !== null) {
+        providerManager.clearUIHighlighting();
       }
 
-      // highlight the address
+      // Highlight the address (parent element)
       let element = document.getElementById('addrlabel' + firstDet.id);
       element.style.fontWeight = "bolder";
       element.style.textDecoration = "underline";
-      currentAddrElement = element;
+      providerManager.setCurrentAddrElement(element);
 
-      // make sure parent element is open
+      // Make sure parent element is open
       element.parentNode.firstChild.classList.add('caret-down');
       // and list displayed
       element.parentNode.lastChild.classList.add('active');
 
-      // highlight the individual detection
+      // Highlight the individual detection
       element = document.getElementById(this.labelId);
       if (scroll) {
-        currentAddrElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        providerManager.getCurrentAddrElement().scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
       element.style.fontWeight = "bolder";
       element.style.textDecoration = "underline";
-      currentElement = element;
+      providerManager.setCurrentElement(element);
       document.getElementById("detection").value = this.indexInList;
 
 

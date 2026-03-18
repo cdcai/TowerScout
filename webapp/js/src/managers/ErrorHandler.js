@@ -106,8 +106,14 @@
       }
     }
 
-    static showUserNotification(message, type = 'info') {
-      console.log(`📢 User notification [${type}]: ${message}`);
+    static showUserNotification(message, type = 'info', timeout = 5000) {
+      console.log(`📢 User notification [${type}]: ${message} (timeout: ${timeout}ms)`);
+
+      // Clear any existing auto-hide timer
+      if (this._notificationTimer) {
+        window.timerManager.clearTimeout(this._notificationTimer);
+        this._notificationTimer = null;
+      }
 
       // Create or update notification element
       let notification = document.getElementById('error-notification');
@@ -143,17 +149,35 @@
       notification.style.opacity = '1';
       notification.style.display = 'block';
 
-      // Auto-hide after 5 seconds
-      window.timerManager.setTimeout(() => {
-        if (notification) {
-          notification.style.opacity = '0';
-          window.timerManager.setTimeout(() => {
-            if (notification && notification.parentNode) {
-              notification.parentNode.removeChild(notification);
-            }
-          }, 300);
-        }
-      }, 5000);
+      // Auto-hide after timeout (if timeout > 0)
+      if (timeout > 0) {
+        this._notificationTimer = window.timerManager.setTimeout(() => {
+          this.dismissNotification();
+        }, timeout);
+      }
+
+      // Return notification ID for tracking
+      return 'error-notification';
+    }
+
+    static dismissNotification() {
+      console.log('📢 Dismissing notification');
+
+      // Clear auto-hide timer if exists
+      if (this._notificationTimer) {
+        window.timerManager.clearTimeout(this._notificationTimer);
+        this._notificationTimer = null;
+      }
+
+      const notification = document.getElementById('error-notification');
+      if (notification) {
+        notification.style.opacity = '0';
+        window.timerManager.setTimeout(() => {
+          if (notification && notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+          }
+        }, 300);
+      }
     }
 
     static showFatalError(message) {

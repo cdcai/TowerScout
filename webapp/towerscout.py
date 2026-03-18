@@ -39,6 +39,7 @@ from ts_logging import (
     TowerScoutLogger, get_main_logger, get_maps_logger, get_ml_logger, 
     get_api_logger, log_startup_info, log_shutdown_info
 )
+from ts_performance import track_performance, PerformanceMetrics
 import torch
 import os
 from shutil import rmtree
@@ -611,6 +612,84 @@ def forward_geocode():
         api_logger.error(f"Geocoding error: {e}")
         return jsonify({'error': 'Internal geocoding error'}), 500
 
+@app.route('/api/geocode/reverse', methods=['POST'])
+def reverse_geocode():
+    """Convert coordinates to address using available providers"""
+    try:
+        # Rate limiting check
+        client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ.get('REMOTE_ADDR', '127.0.0.1'))
+        if not rate_limiter.is_allowed(client_ip, max_requests=30, window_seconds=600):  # 10 minutes
+            return jsonify({'error': 'Rate limit exceeded. Please wait before trying again.'}), 429
+            
+        data = request.get_json()
+        if not data or 'lat' not in data or 'lng' not in data:
+            return jsonify({'error': 'Missing lat/lng parameters'}), 400
+            
+        lat = float(data['lat'])
+        lng = float(data['lng'])
+        
+        # Validate coordinates
+        if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
+            return jsonify({'error': 'Invalid coordinates'}), 400
+        
+        preferred_provider = data.get('provider', 'auto')
+        
+        # Import geocoding service
+        from ts_geocoding import GeocodingService, GeocodingError
+        
+        # Initialize geocoding with available API keys
+        geocoding = GeocodingService(
+            azure_key=azure_api_key,
+            google_key=google_api_key
+        )
+        
+        # Check cache first
+        from ts_geocache import GeocodingCache
+        cache = GeocodingCache()
+        cached_result = cache.get(lat, lng)
+        
+        if cached_result:
+            api_logger.info(f"Cache hit for reverse geocode: {lat}, {lng}")
+            return jsonify({
+                'success': True,
+                'address': cached_result.address,
+                'provider': cached_result.provider.value,
+                'confidence': cached_result.confidence,
+                'cached': True
+            })
+        
+        # Perform reverse geocoding
+        try:
+            result = geocoding.reverse_geocode(lat, lng, preferred_provider)
+            
+            # Cache the result
+            cache.put(lat, lng, result)
+            
+            return jsonify({
+                'success': True,
+                'address': result.address,
+                'provider': result.provider.value,
+                'confidence': result.confidence,
+                'cached': False
+            })
+        except GeocodingError as e:
+            api_logger.warning(f"Geocoding failed for {lat}, {lng}: {e}")
+            # Return coordinates as fallback
+            return jsonify({
+                'success': False,
+                'address': f"{lat:.6f}, {lng:.6f}",
+                'provider': 'fallback',
+                'confidence': 0.0,
+                'error': str(e)
+            })
+        
+    except ValueError as e:
+        api_logger.warning(f"Invalid coordinate values: {e}")
+        return jsonify({'error': 'Invalid coordinate format'}), 400
+    except Exception as e:
+        api_logger.error(f"Reverse geocoding error: {e}")
+        return jsonify({'error': 'Internal geocoding error'}), 500
+
 # Unified map proxy endpoints
 @app.route('/api/maps/<provider>/<service>', methods=['GET'])
 def map_proxy(provider, service):
@@ -918,6 +997,13 @@ def get_objects():
     # cropping
     crop_tiles = True
     
+    # Initialize performance tracking for this detection workflow
+    # NOTE: Do NOT store in session - PerformanceMetrics contains threading locks that can't be pickled
+    perf_metrics = PerformanceMetrics(str(id(session)))
+    perf_metrics.detection_engine = engine
+    perf_metrics.map_provider = provider
+    perf_metrics.crop_tiles = crop_tiles
+    
     # Note: polygons are already validated Shapely Polygon objects
 
     # get the proper detector
@@ -977,9 +1063,16 @@ def get_objects():
 
     tiles = [t for t in tiles if ts_maps.check_tile_against_bounds(t, bounds)]
     tiles = [t for t in tiles if ts_imgutil.tileIntersectsPolygons(t, polygons)]
+    print(f"🔍 DEBUG: Setting IDs for {len(tiles)} tiles")  # Debug logging
     for i, tile in enumerate(tiles):
         tile['id'] = i
+        print(f"  Tile {i}: keys = {tile.keys()}")  # Show what keys exist
     print(" tiles left after viewport and polygon filter:", len(tiles))
+    
+    # Update performance metrics with tile count and estimate processing time
+    perf_metrics.tile_count = len(tiles)
+    perf_metrics.estimate_processing_time(len(tiles))
+    print(f"📊 Performance estimate: {len(tiles)} tiles, ~{perf_metrics.estimated_time_seconds:.1f} seconds")
 
     if estimate == "yes":
         # reset abort flag
@@ -1005,18 +1098,23 @@ def get_objects():
         del session['tmpdirname']
 
     # make a new tempdir name and attach to session
-    tmpdir = tempfile.TemporaryDirectory()
-    tmpdirname = tmpdir.name
-    tmpfilename = tmpdirname[tmpdirname.rindex("\\")+1:]
+    # TASK-033 Phase 3: Use mkdtemp() instead of TemporaryDirectory() to prevent automatic cleanup
+    # TemporaryDirectory() auto-deletes when garbage collected, breaking dataset export
+    tmpdirname = tempfile.mkdtemp()
+    tmpfilename = os.path.basename(tmpdirname)
     print("creating tmp dir", tmpdirname)
     session['tmpdirname'] = tmpdirname
-    # tmpdir.cleanup()  # yeah this is asinine but I need the tmpdir to survive to I will create it manually next
     print("created tmp dir", tmpdirname)
 
     # retrieve tiles and metadata if available
+    perf_metrics.start_phase('tile_download')
     meta = map.get_sat_maps(tiles, loop, tmpdirname, tmpfilename)
+    perf_metrics.end_phase('tile_download')
     session['metadata'] = meta
     print(" asynchronously retrieved", len(tiles), "files")
+    
+    # Update API call count for map tiles (1 call per tile)
+    perf_metrics.map_api_calls = len(tiles)
 
     # check for abort
     if exit_events.query(id(session)):
@@ -1026,10 +1124,16 @@ def get_objects():
 
     # augment tiles with retrieved filenames
     for i, tile in enumerate(tiles):
-        tile['filename'] = tmpdirname+"/"+tmpfilename+str(i)+".jpg"
+        # TASK-033 Phase 3: Use os.path.join for cross-platform compatibility
+        tile['filename'] = os.path.join(tmpdirname, tmpfilename + str(i) + ".jpg")
 
     # detect all towers
-    results_raw = det.detect(tiles, exit_events, id(session), crop_tiles=crop_tiles, secondary=secondary_en)
+    perf_metrics.start_phase('model_detection')
+    model_start_time = time.time()
+    results_raw = det.detect(tiles, exit_events, id(session), crop_tiles=crop_tiles, secondary=secondary_en, perf_metrics=perf_metrics)
+    perf_metrics.actual_model_time_seconds = time.time() - model_start_time
+    perf_metrics.end_phase('model_detection')
+    perf_metrics.update_memory_usage()  # Capture memory after model inference
     # abort if signaled
     if exit_events.query(id(session)):
         print(" client aborted request.")
@@ -1116,6 +1220,14 @@ def get_objects():
     print(f"   Total detections: {len(results)}")
     print(f"   Tiles processed: {len(results_raw)}")
     print(f"   Average detections per tile: {len(results)/len(results_raw):.2f}" if len(results_raw) > 0 else "   No tiles processed")
+    
+    # Update performance metrics with detection counts
+    perf_metrics.detection_count = len(results)
+    
+    # Calculate average confidence
+    if results:
+        total_confidence = sum(r.get('conf', 0) for r in results)
+        perf_metrics.avg_confidence = total_confidence / len(results)
 
     # mark results out of bounds or polygon
     inside_count = 0
@@ -1152,6 +1264,7 @@ def get_objects():
     session['geocoding_limited'] = False
     if results:  # Only geocode if we have detections
         print(f" starting address lookup for {len(results)} detections")
+        perf_metrics.start_phase('geocoding')
         address_start_time = time.time()
         
         try:
@@ -1232,10 +1345,13 @@ def get_objects():
                     'successful_requests': usage.successful_requests,
                     'failed_requests': usage.failed_requests
                 }
+                # Update performance metrics with geocoding API calls
+                perf_metrics.geocoding_api_calls = usage.total_requests
             except Exception as e:
                 print(f" warning: could not store geocoding usage: {e}")
             
             address_time = time.time() - address_start_time
+            perf_metrics.end_phase('geocoding')
             print(f" address lookup completed in {address_time:.2f} seconds")
             
         except Exception as e:
@@ -1258,6 +1374,7 @@ def get_objects():
     # JavaScript needs tile data for metadata, URLs, and coordinate references
     tile_results = []
     for tile in tiles:
+        print(f"🔍 DEBUG: Processing tile, keys: {tile.keys()}")  # Debug logging
         tile_results.append({
             'x1': tile['lng'] - 0.5*tile['w'],
             'y1': tile['lat'] + 0.5*tile['h'],
@@ -1268,18 +1385,29 @@ def get_objects():
             'conf': 1,
             'metadata': tile['metadata'],
             'url': tile['url'],
+            'id': tile.get('id', -1),  # TASK-033 Phase 3: Use .get() with fallback
             'selected': True
         })
 
     # all done
     selected = str(reduce(lambda a,e: a+(e['selected']),results, 0))
     print(" request complete," + str(len(results)) +" detections (" + selected +" selected), elapsed time: ", (time.time()-start))
+    
+    # Update performance metrics with selected count and finalize
+    perf_metrics.detections_selected = int(selected)
+    perf_metrics.finalize()
+    
+    # Log performance metrics
+    from ts_performance import get_performance_logger
+    get_performance_logger().log_metrics(perf_metrics)
+    
     results = tile_results+results  # Prepend tiles for metadata lookup
     print()
 
     exit_events.free(id(session))
     results = json.dumps(results)
     session['results'] = results
+    
     return results
 
 def cleanup_temp_directory():
@@ -1440,6 +1568,14 @@ def send_dataset():
     try:
         include = TowerScoutValidator.validate_json_field(request.form.get("include"), "include")
         additions = TowerScoutValidator.validate_json_field(request.form.get("additions"), "additions")
+        
+        # TASK-033 Phase 3: Debug logging for manual tower export
+        print(f"\n🔍 DATASET EXPORT DEBUG:")
+        print(f"   Include (ML detections): {len(include)} items")
+        print(f"   Additions (manual towers): {len(additions)} items")
+        if additions:
+            print(f"   First addition: {additions[0]}")
+            print(f"   Addition tile IDs: {[a['tile'] for a in additions]}")
     except ValidationError as e:
         return jsonify({'error': f'Validation error: {e.message}'}), 400
     tiles = session['detections']
@@ -1465,8 +1601,15 @@ def send_dataset():
 
     # write files and records which ones had detections
     filenames = []
+    print(f"\n🔍 WRITE LABELS DEBUG:")
+    print(f"   Processing {len(tiles)} tiles from session")
+    print(f"   Additions to match: {len(additions)} manual towers")
+    
     for i, tile in enumerate(tiles):
-        filenames += write_labels(i, tile,
+        # Use tile's actual ID (stored as 'index') for matching with additions
+        tile_id = tile.get('index', i)  # Fallback to enumeration index if 'index' not present
+        print(f"   Tile {i}: session index={tile.get('index', 'MISSING')}, using tile_id={tile_id}")
+        filenames += write_labels(tile_id, tile,
                                   keep_detections, additions, not meta)
 
     # write a contents file so we can load this again some time
@@ -1483,7 +1626,21 @@ def send_dataset():
 # https://stackoverflow.com/questions/1855095/how-to-create-a-zip-archive-of-a-directory-in-python
 
 def zipdir(path, filenames):
-    zipf = zipfile.ZipFile('temp/dataset.zip', 'w', zipfile.ZIP_DEFLATED)
+    # TASK-033 Phase 3: Ensure temp directory exists and use proper paths
+    temp_dir = os.path.join(os.path.dirname(__file__), 'temp')
+    os.makedirs(temp_dir, exist_ok=True)
+    
+    zip_path = os.path.join(temp_dir, 'dataset.zip')
+    zipf = zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED)
+    
+    # TASK-036: Add README.txt to dataset export
+    readme_path = os.path.join(os.path.dirname(__file__), 'DATASET_README.txt')
+    if os.path.exists(readme_path):
+        zipf.write(readme_path, 'README.txt')
+        print(" added README.txt to dataset")
+    else:
+        print(" WARNING: DATASET_README.txt not found, skipping README in export")
+    
     for root, dirs, files in os.walk(path):
         for file in files:
             print(" compressing file", file)
@@ -1528,16 +1685,21 @@ def write_labels(tile_id, tile, keep, additions, double_res):
 
     with open(tile['labelfilename'], "w") as f:
         print(" writing file ", f.name, "...")
+        manual_towers_written = 0
         for detection in tile['detections']:
             if detection in keep:
                 # print("", detection)
                 f.write(detection)
                 empty = False
         for a in additions:
+            print(f"     Checking addition: tile={a['tile']} vs tile_id={tile_id}, match={a['tile'] == tile_id}")
             if a['tile'] == tile_id:
                 f.write(" ".join(["0", str(a['centerx']), str(
                     a['centery']), str(a['w']), str(a['h'])])+"\n")
                 empty = False
+                manual_towers_written += 1
+        if manual_towers_written > 0:
+            print(f"     ✅ Wrote {manual_towers_written} manual tower(s) to this tile")
 
     # write xml labels for augmentation pipeline
     name = tile['labelfilename'][:-3]+"xml"
@@ -1616,21 +1778,131 @@ def write_contents_file(tmpdirname, tiles, keep_ids, additions, meta):
             session['results'] = json.dumps(results)
         
         # now, process additions, and add them to the session results
-        # todo!!! Fix the restore bug. Note: Send more lat/long, id_in_tile info from client
+        # TASK-033 Phase 3: Convert additions back to full detection objects with lat/long
         print("Session results before additions: ", session['results'])
         print("JSON version of additions:", json.dumps(additions))
         if len(additions) > 0:
-            # make every this:
-            #
-            # {"tile": 0, "centerx": 0.9099609375, "centery": 0.6593624174477392, "w": 0.034375, "h": 0.037459364023982526}
-            # 
-            # into this:
-            #
-            # {"x1": -74.00627583990182, "y1": 40.71050060528311, "x2": -74.0062392291362, "y2": 40.71042470437244, 
-            #  "conf": 1.0, "class": 0, "class_name": "ct", "secondary": 1..0, 
-            #  "tile": 1, "id_in_tile": 11, "selected": true, "inside": true}
-
-            pass # todo!!!
+            # Convert each addition from normalized tile coordinates to lat/long
+            # Input: {"tile": 0, "centerx": 0.91, "centery": 0.66, "w": 0.034, "h": 0.037}
+            # Output: {"x1": lat, "y1": lng, "x2": lat, "y2": lng, "conf": 1.0, "class": 0, 
+            #          "class_name": "ct", "secondary": 1.0, "tile": 0, "id_in_tile": -1, 
+            #          "selected": true, "inside": true}
+            
+            # Initialize geocoding service and cache for manual tower address lookup
+            geocoding_service = create_geocoding_service(
+                azure_key=azure_api_key,
+                google_key=google_api_key,
+                preferred_provider='google'  # Use consistent provider
+            )
+            geocoding_cache = create_geocoding_cache(clustering_radius_meters=50.0)
+            
+            results = json.loads(session['results'])
+            
+            for addition in additions:
+                tile_id = addition['tile']
+                # Find the corresponding tile to get its geographic bounds
+                tile = None
+                for t in tiles:
+                    if t.get('index', -1) == tile_id:
+                        tile = t
+                        break
+                
+                if tile is None:
+                    print(f"  Warning: Could not find tile {tile_id} for addition")
+                    continue
+                
+                # Get tile geographic bounds from results (tiles are at start of results array)
+                tile_result = None
+                for r in results:
+                    if r.get('class_name') == 'tile' and r.get('id') == tile_id:
+                        tile_result = r
+                        break
+                
+                if tile_result is None:
+                    print(f"  Warning: Could not find tile result {tile_id} for addition")
+                    continue
+                
+                # Convert normalized coordinates to lat/lng
+                # Tile bounds: x1=lng_west, y1=lat_north, x2=lng_east, y2=lat_south
+                tile_x1 = tile_result['x1']  # west longitude
+                tile_y1 = tile_result['y1']  # north latitude
+                tile_x2 = tile_result['x2']  # east longitude
+                tile_y2 = tile_result['y2']  # south latitude
+                
+                tile_width = tile_x2 - tile_x1
+                tile_height = tile_y1 - tile_y2  # Note: y1 > y2 (north > south)
+                
+                # Calculate detection bounds in lat/lng
+                center_lng = tile_x1 + (addition['centerx'] * tile_width)
+                center_lat = tile_y1 - (addition['centery'] * tile_height)  # Subtract because y increases downward
+                
+                half_width_lng = (addition['w'] * tile_width) / 2
+                half_height_lat = (addition['h'] * tile_height) / 2
+                
+                detection_x1 = center_lng - half_width_lng  # west
+                detection_y1 = center_lat + half_height_lat  # north
+                detection_x2 = center_lng + half_width_lng  # east
+                detection_y2 = center_lat - half_height_lat  # south
+                
+                # TASK-033 Phase 3: Reverse geocode manual tower location (with caching for performance)
+                try:
+                    # Try cache first for performance
+                    cached_result = geocoding_cache.get(center_lat, center_lng)
+                    if cached_result:
+                        manual_address = cached_result.address
+                        manual_addr_conf = cached_result.confidence
+                        manual_addr_provider = cached_result.provider.value
+                        print(f"  ✅ Manual tower address from cache: {manual_address[:50]}...")
+                    else:
+                        # Geocode and cache result
+                        geocoding_result = geocoding_service.reverse_geocode(center_lat, center_lng)
+                        manual_address = geocoding_result.address
+                        manual_addr_conf = geocoding_result.confidence
+                        manual_addr_provider = geocoding_result.provider.value
+                        
+                        # Cache the result for future restorations
+                        geocoding_cache.put(center_lat, center_lng, geocoding_result)
+                        print(f"  ✅ Manual tower geocoded: {manual_address[:50]}...")
+                except RateLimitError as e:
+                    print(f"  ⚠️ Geocoding rate limited for manual tower: {e}")
+                    manual_address = f"Address unavailable - {center_lat:.6f}, {center_lng:.6f}"
+                    manual_addr_conf = 0.0
+                    manual_addr_provider = "rate_limited"
+                except GeocodingError as e:
+                    print(f"  ⚠️ Reverse geocoding failed for manual tower: {e}")
+                    manual_address = ""
+                    manual_addr_conf = 0.0
+                    manual_addr_provider = "manual"
+                except Exception as geocode_error:
+                    print(f"  ⚠️ Unexpected geocoding error for manual tower: {geocode_error}")
+                    manual_address = ""
+                    manual_addr_conf = 0.0
+                    manual_addr_provider = "manual"
+                
+                # Create detection object (TASK-033 Phase 3: Include all required fields)
+                detection = {
+                    "x1": detection_x1,
+                    "y1": detection_y1,
+                    "x2": detection_x2,
+                    "y2": detection_y2,
+                    "conf": 1.0,
+                    "class": 0,
+                    "class_name": "ct",
+                    "secondary": 1.0,
+                    "tile": tile_id,
+                    "id_in_tile": -1,  # Mark as manual addition
+                    "selected": True,
+                    "inside": True,
+                    "address": manual_address,
+                    "address_confidence": manual_addr_conf,
+                    "address_provider": manual_addr_provider
+                }
+                
+                results.append(detection)
+                print(f"  Added manual tower to results: tile={tile_id}, lat={center_lat:.6f}, lng={center_lng:.6f}")
+            
+            # Update session results with additions
+            session['results'] = json.dumps(results)
 
         # write the whole "current result set", modified selections, additions and all
         f.write(session['results'])
@@ -1647,9 +1919,10 @@ def write_contents_file(tmpdirname, tiles, keep_ids, additions, meta):
 def upload_dataset():
     print("Dataset upload")
     
-    # Rate limiting (stricter for dataset uploads)
+    # Rate limiting (more lenient for local development/testing)
+    # TASK-033 Phase 3: Increased limit for manual verification testing
     client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ['REMOTE_ADDR'])
-    if not rate_limiter.is_allowed(client_ip, max_requests=3, window_seconds=300):
+    if not rate_limiter.is_allowed(client_ip, max_requests=10, window_seconds=60):
         return jsonify({'error': 'Rate limit exceeded for dataset uploads'}), 429
     
     # Input validation
@@ -1659,60 +1932,100 @@ def upload_dataset():
             
         file = TowerScoutValidator.validate_dataset_file(request.files['dataset'])
     except ValidationError as e:
+        print(f" ERROR: Validation failed: {e.message}")
         return jsonify({'error': f'Validation error: {e.message}'}), 400
     except Exception as e:
+        print(f" ERROR: Unexpected validation error: {str(e)}")
         return jsonify({'error': 'Invalid request data'}), 400
 
-    # make a temp dir as usual
-    # first, clean out the old tempdir
-    if "tmpdirname" in session:
-        rmtree(session['tmpdirname'], ignore_errors=True, onerror=None)
-        print(" cleaned up tmp dir", session['tmpdirname'])
-        del session['tmpdirname']
+    # ISSUE-001 FIX: Wrap entire processing in try-except for better error handling
+    try:
+        # make a temp dir as usual
+        # first, clean out the old tempdir
+        if "tmpdirname" in session:
+            rmtree(session['tmpdirname'], ignore_errors=True, onerror=None)
+            print(" cleaned up tmp dir", session['tmpdirname'])
+            del session['tmpdirname']
 
-    # make a new tempdir name and attach to session
-    tmpdirname = tempfile.mkdtemp()
-    print(" creating tmp dir", tmpdirname)
-    session['tmpdirname'] = tmpdirname
+        # make a new tempdir name and attach to session
+        tmpdirname = tempfile.mkdtemp()
+        print(" creating tmp dir", tmpdirname)
+        session['tmpdirname'] = tmpdirname
 
-    filename = tmpdirname + "/" + file.filename
-    file.save(filename)
-    new_stem = tmpdirname[tmpdirname.rindex("/")+1:]
+        # TASK-033 Phase 3: Use os.path.join and os.path.basename for cross-platform compatibility
+        filename = os.path.join(tmpdirname, file.filename)
+        file.save(filename)
+        new_stem = os.path.basename(tmpdirname)
 
-    # unzip dataset.zip
-    # - "empty" tiles and labels right into "."
-    # - "train" combine "images" and "labels" folders into "."
-    # content.txt in "."
-    with zipfile.ZipFile(filename) as zipf:
-        # read previous results and tiles from content.txt and add to session
-        # print(" zip contents:")
-        filenames = zipf.namelist()
-        old_stem = filenames[0][:filenames[0].index("/")]
-        files = adapt_filenames(filenames, old_stem, new_stem)
-        # print(files)
-        for f_zip, f_new in zip(zipf.namelist(), files):
-            print(" processing",f_zip,"to:",f_new)
-            if not f_zip.endswith(".xml"):
-                with zipf.open(f_zip) as f:
-                    with open(tmpdirname+"/"+f_new, "wb") as f_target:
-                        print(" writing", tmpdirname+"/"+f_new)
-                        f_target.write(f.read())
+        # unzip dataset.zip
+        # - "empty" tiles and labels right into "."
+        # - "train" combine "images" and "labels" folders into "."
+        # content.txt in "."
+        with zipfile.ZipFile(filename) as zipf:
+            # read previous results and tiles from content.txt and add to session
+            # print(" zip contents:")
+            filenames = zipf.namelist()
+            
+            # TASK-036: Skip root-level files (README.txt, contents.txt) when finding old_stem
+            # Only use files in subfolders to extract the dataset prefix
+            subfolder_files = [f for f in filenames if "/" in f and not f.endswith("/")]
+            if not subfolder_files:
+                print(" ERROR: No subfolder files found in dataset ZIP")
+                return jsonify({"error": "Invalid dataset structure: no subfolder files found"}), 400
+            
+            old_stem = subfolder_files[0][:subfolder_files[0].index("/")]
+            files = adapt_filenames(filenames, old_stem, new_stem)
+            # print(files)
+            for f_zip, f_new in zip(zipf.namelist(), files):
+                print(" processing",f_zip,"to:",f_new)
+                if not f_zip.endswith(".xml"):
+                    with zipf.open(f_zip) as f:
+                        with open(tmpdirname+"/"+f_new, "wb") as f_target:
+                            print(" writing", tmpdirname+"/"+f_new)
+                            f_target.write(f.read())
 
-    # process contents file
-    results = []
-    print("parsing contents.txt in", tmpdirname)
-    with open(tmpdirname+"/contents.txt") as f:
-        results = json.loads(f.read())
+        # process contents file
+        print("parsing contents.txt in", tmpdirname)
+        contents_file = os.path.join(tmpdirname, "contents.txt")
+        
+        if not os.path.exists(contents_file):
+            print(" ERROR: contents.txt not found in dataset")
+            return jsonify({"error": "Invalid dataset: contents.txt missing"}), 400
+        
+        with open(contents_file) as f:
+            results = json.loads(f.read())
+        
+        # Validate results structure
+        if not isinstance(results, list) or len(results) < 3:
+            print(f" ERROR: Invalid contents.txt structure: {type(results)}, len={len(results) if isinstance(results, list) else 'N/A'}")
+            return jsonify({"error": "Invalid dataset format: contents.txt structure invalid"}), 400
 
-    session['detections'] = adapt_tiles(
-        results[0], tmpdirname, old_stem, new_stem)
-    session['results'] = json.dumps(results[1])
-    session['metadata'] = results[2]
-    # print("Results:", results[1])
-    # return previous results
-    print(" dataset restored.")
+        session['detections'] = adapt_tiles(
+            results[0], tmpdirname, old_stem, new_stem)
+        session['results'] = json.dumps(results[1])
+        session['metadata'] = results[2]
+        # print("Results:", results[1])
+        # return previous results
+        print(" dataset restored.")
 
-    return session['results']
+        # TASK-033 Phase 3: Return JSON response, not plain text string
+        # Frontend expects parsed JSON array, not a JSON string
+        return jsonify(results[1])
+    
+    except zipfile.BadZipFile as e:
+        print(f" ERROR: Invalid ZIP file: {str(e)}")
+        return jsonify({'error': 'Invalid ZIP file format'}), 400
+    except json.JSONDecodeError as e:
+        print(f" ERROR: Invalid JSON in contents.txt: {str(e)}")
+        return jsonify({'error': 'Invalid dataset: corrupted contents.txt'}), 400
+    except KeyError as e:
+        print(f" ERROR: Missing required field in dataset: {str(e)}")
+        return jsonify({'error': f'Invalid dataset: missing field {str(e)}'}), 400
+    except Exception as e:
+        print(f" ERROR: Unexpected error during dataset upload: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Failed to process dataset: {str(e)}'}), 500
 
 # carefully unravel the zip structure we created in the dataset, and make it all flat
 
@@ -1722,6 +2035,13 @@ def adapt_filenames(filenames, old_stem, new_stem):
     # print("old_dir",old_dir)
     results = []
     for f in filenames:
+        # TASK-036: Handle root-level files (README.txt, contents.txt)
+        # These don't have the old_stem prefix
+        if "/" not in f:
+            # Root-level file - keep as-is
+            results.append(f)
+            continue
+        
         f = f[len(old_stem)+1:]  # strip old dir name
         # print("stripped:",f)
         if f.startswith("empty/"):
@@ -1743,10 +2063,11 @@ def adapt_filenames(filenames, old_stem, new_stem):
 def adapt_tiles(tiles, tmpdirname, old_stem, new_stem):
     for t in tiles:
         # print("before", t['filename'], t['labelfilename'])
-        name = t['filename'][t['filename'].rindex("/")+1:]
-        t['filename'] = tmpdirname + "/" + new_stem + name[len(old_stem):]
-        t['labelfilename'] = tmpdirname + "/" + \
-            new_stem + name[len(old_stem):][0:-4]+".txt"
+        # TASK-033 Phase 3: Use os.path.basename for cross-platform compatibility
+        name = os.path.basename(t['filename'])
+        # TASK-033 Phase 3: Use os.path.join for cross-platform compatibility
+        t['filename'] = os.path.join(tmpdirname, new_stem + name[len(old_stem):])
+        t['labelfilename'] = os.path.join(tmpdirname, new_stem + name[len(old_stem):][0:-4] + ".txt")
         # print("after", t['filename'], t['labelfilename'])
     return tiles
 

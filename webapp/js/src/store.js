@@ -14,9 +14,11 @@
   window.engines = {};
 
   // UI state tracking
-  window.currentElement = null;           // Currently selected detection marker
-  window.currentAddrElement = null;       // Currently selected address list item
-  window.isInitializing = true;           // Prevents provider switching during startup
+  // Phase 1 (Sprint 03): Migrated to ProviderStateManager
+  // Property descriptors in globals.js provide backward compatibility
+  // window.currentElement = null;           // Currently selected detection marker
+  // window.currentAddrElement = null;       // Currently selected address list item
+  // window.isInitializing = true;           // Prevents provider switching during startup
 
   // Provider manager instance (created in ProviderStateManager.js)
   window.providerManager = null;
@@ -31,7 +33,7 @@
   window.Detection_minConfidence = window.DEFAULT_CONFIDENCE || 0.5;
   window.Detection_current = null;
 
-  window.Tile_tiles = [];
+  // REMOVED: window.Tile_tiles = [];  // Phase 2: Now handled by property descriptor in globals.js
 
   console.log('✅ Store module loaded');
 })();

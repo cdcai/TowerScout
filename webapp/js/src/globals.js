@@ -20,7 +20,7 @@
   window.reviewCheckBox = null;
 
   // Tile management - global tile array
-  window.Tile_tiles = [];
+  // REMOVED: window.Tile_tiles = [];  // Phase 2: Handled by property descriptor below
 
   // Detection management - global detection arrays and state
   window.Detection_detectionsAugmented = 0;
@@ -116,6 +116,58 @@
     }
   });
 
+  // Phase 1 (Sprint 03): UI state deprecation with soft migration
+  // Provides backward compatibility while encouraging migration to providerManager
+  Object.defineProperty(window, 'currentElement', {
+    get() {
+      return window.providerManager ? window.providerManager.getCurrentElement() : null;
+    },
+    set(value) {
+      console.warn('⚠️ Direct window.currentElement assignment deprecated. Use providerManager.setCurrentElement() instead.');
+      if (window.providerManager) {
+        window.providerManager.setCurrentElement(value);
+      }
+    }
+  });
+
+  Object.defineProperty(window, 'currentAddrElement', {
+    get() {
+      return window.providerManager ? window.providerManager.getCurrentAddrElement() : null;
+    },
+    set(value) {
+      console.warn('⚠️ Direct window.currentAddrElement assignment deprecated. Use providerManager.setCurrentAddrElement() instead.');
+      if (window.providerManager) {
+        window.providerManager.setCurrentAddrElement(value);
+      }
+    }
+  });
+
+  Object.defineProperty(window, 'isInitializing', {
+    get() {
+      return window.providerManager ? window.providerManager.getIsInitializing() : true;
+    },
+    set(value) {
+      console.warn('⚠️ Direct window.isInitializing assignment deprecated. Use providerManager.setIsInitializing() instead.');
+      if (window.providerManager) {
+        window.providerManager.setIsInitializing(value);
+      }
+    }
+  });
+
+  // Phase 2 (Sprint 03): Tile state deprecation with soft migration  
+  // Provides backward compatibility while encouraging migration to providerManager
+  Object.defineProperty(window, 'Tile_tiles', {
+    get() {
+      return window.providerManager ? window.providerManager.getTilesArrayDirect() : [];
+    },
+    set(value) {
+      console.warn('⚠️ Direct Tile_tiles assignment deprecated. Use providerManager.setTiles() instead.');
+      if (window.providerManager) {
+        window.providerManager.setTiles(value);
+      }
+    }
+  });
+
   // Initialize DOM references safely after DOM is ready
   window.initializeDOMReferences = function () {
     console.log('🔧 Initializing DOM references...');
@@ -145,7 +197,96 @@
     window.confSlider.oninput = adjustConfidence;
     window.reviewCheckBox.onchange = changeReviewMode;
 
+    // TASK-033 Phase 4: Browser refresh warning for unsaved manual towers
+    window.onbeforeunload = function (e) {
+      // Check if manual towers exist (conf=1.0 or idInTile===-1)
+      const detections = window.Detection_detections || [];
+      const manualTowers = detections.filter(d => d.conf === 1.0 || d.idInTile === -1);
+
+      if (manualTowers.length > 0) {
+        const message = `You have ${manualTowers.length} unsaved manual tower${manualTowers.length > 1 ? 's' : ''}. Export your dataset to save them before leaving.`;
+        e.returnValue = message; // Chrome/Firefox
+        return message; // Safari
+      }
+    };
+
     console.log('✅ DOM references initialized');
+  };
+
+  // TASK-033 Phase 4: Provider lock/unlock functions
+  // Prevents provider switching after detection runs to avoid imagery mismatch
+  window.lockProviderSwitching = function () {
+    const detections = window.Detection_detections || [];
+    const hasDetections = detections.length > 0;
+
+    if (hasDetections) {
+      // Disable User Interface radio buttons (form#uis)
+      const uisRadios = document.querySelectorAll('form#uis input[type="radio"]');
+      uisRadios.forEach(radio => {
+        radio.disabled = true;
+        radio.title = 'Clear all detections to switch providers. Switching providers with active detections causes imagery mismatch.';
+      });
+
+      // Disable Backend map provider radio buttons (form#providers)
+      const providerRadios = document.querySelectorAll('form#providers input[type="radio"]');
+      providerRadios.forEach(radio => {
+        radio.disabled = true;
+        radio.title = 'Clear all detections to switch providers. Switching providers with active detections causes imagery mismatch.';
+      });
+
+      // Add visual feedback - gray out the labels
+      const uisLabels = document.querySelectorAll('form#uis label');
+      uisLabels.forEach(label => {
+        label.style.color = '#999';
+        label.style.cursor = 'not-allowed';
+      });
+
+      const providerLabels = document.querySelectorAll('form#providers label');
+      providerLabels.forEach(label => {
+        label.style.color = '#999';
+        label.style.cursor = 'not-allowed';
+      });
+
+      console.log('🔒 Provider switching locked (detections present)');
+    }
+  };
+
+  window.unlockProviderSwitching = function () {
+    const detections = window.Detection_detections || [];
+
+    // Only unlock if NO detections remain (ML or manual)
+    if (detections.length === 0) {
+      // Enable User Interface radio buttons (form#uis)
+      const uisRadios = document.querySelectorAll('form#uis input[type="radio"]');
+      uisRadios.forEach(radio => {
+        radio.disabled = false;
+        radio.title = 'Select map provider';
+      });
+
+      // Enable Backend map provider radio buttons (form#providers)
+      const providerRadios = document.querySelectorAll('form#providers input[type="radio"]');
+      providerRadios.forEach(radio => {
+        radio.disabled = false;
+        radio.title = 'Select backend map provider';
+      });
+
+      // Restore label styles
+      const uisLabels = document.querySelectorAll('form#uis label');
+      uisLabels.forEach(label => {
+        label.style.color = '';
+        label.style.cursor = '';
+      });
+
+      const providerLabels = document.querySelectorAll('form#providers label');
+      providerLabels.forEach(label => {
+        label.style.color = '';
+        label.style.cursor = '';
+      });
+
+      console.log('🔓 Provider switching unlocked (no detections)');
+    } else {
+      console.log(`🔒 Provider switching remains locked (${detections.length} detection(s) present)`);
+    }
   };
 
   console.log('✅ Globals module loaded');

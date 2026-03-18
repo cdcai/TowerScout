@@ -248,8 +248,8 @@
           );
           processedDetections++;
         } else if (r['class'] === 1) {
-          // Create tile
-          new Tile(r['x1'], r['y1'], r['x2'], r['y2'], r['metadata'], r['url']);
+          // Create tile - TASK-033 Phase 3: Pass tile ID from backend
+          new Tile(r['x1'], r['y1'], r['x2'], r['y2'], r['metadata'], r['url'], r['id']);
           processedTiles++;
         }
       } catch (objectError) {
@@ -264,6 +264,12 @@
     Detection.sort();
     Detection.generateList();
     adjustConfidence();  // Update detection visibility based on confidence threshold
+
+    // TASK-033 Phase 4: Lock provider switching after ML detection completes
+    if (typeof lockProviderSwitching === 'function') {
+      lockProviderSwitching();
+    }
+
     let time = (performance.now() - startTime) / 1000;
     disableProgress(time, result.length);
     console.log("Request completed in " + time + " s");

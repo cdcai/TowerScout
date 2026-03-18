@@ -42,13 +42,12 @@ let googleMap = null;
 let azureMap = null;
 let currentMap;
 let engines = {};
-let currentElement = null;
-let currentAddrElement = null;
-let isInitializing = true; // Flag to prevent provider switching during startup
+// Phase 1 (Sprint 03): currentElement, currentAddrElement, isInitializing migrated to ProviderStateManager
+// Property descriptors in globals.js provide backward compatibility
 
 // Expose map instances globally for cross-module access
 window.googleMap = null;
-window.azureMap = null;
+// REMOVED: window.azureMap = null;  // Handled by property descriptor in globals.js
 
 // Provider State Manager - Eliminates race conditions and ensures consistent state
 class ProviderStateManager {
@@ -2197,8 +2196,9 @@ class AzureMap extends TSMap {
       let y2 = Math.min(...lats);
 
       let tileIds = Tile.getTileIds(x1, y1, x2, y2);
+      const tiles = providerManager.getTilesArrayDirect();
       for (let tileId of tileIds) {
-        let tile = Tile_tiles[tileId];
+        let tile = tiles[tileId];
         x1 = Math.max(x1, tile.x1);
         x1 = Math.min(x1, tile.x2);
         x2 = Math.max(x2, tile.x1);
@@ -2248,7 +2248,7 @@ class AzureMap extends TSMap {
         dets.push(det);
       }
     }
-    Detection_detections = dets;
+    providerManager.setDetections(dets);
     Detection.generateList();
   }
 
@@ -2509,6 +2509,20 @@ class AzureMap extends TSMap {
     }
   }
 
+  // ISSUE-002 FIX: Restore method to re-initialize components after provider switch
+  restore() {
+    console.log('🔄 Restoring Azure Maps components after provider switch...');
+
+    try {
+      // Azure Maps drawing tools are initialized once and remain attached
+      // No restoration needed currently, but method exists for consistency
+      console.log('✅ Azure Maps restoration complete (no actions needed)');
+    } catch (error) {
+      console.error('❌ Error during Azure Maps restoration:', error);
+      // Don't throw - allow app to continue
+    }
+  }
+
   getBoundariesStr() {
     let result = [];
     for (let b of this.boundaries) {
@@ -2697,8 +2711,9 @@ class GoogleMap extends TSMap {
       let y2 = bounds.getSouthWest().lat();
 
       let tileIds = Tile.getTileIds(x1, y1, x2, y2);
+      const tiles = providerManager.getTilesArrayDirect();
       for (let tileId of tileIds) {
-        let tile = Tile_tiles[tileId]
+        let tile = tiles[tileId]
         x1 = Math.max(x1, tile.x1);
         x1 = Math.min(x1, tile.x2);
         x2 = Math.max(x2, tile.x1);
@@ -2731,13 +2746,13 @@ class GoogleMap extends TSMap {
     this.clearShapes();
     // now, also go through Detection_detections and take out the blue ones
     let dets = [];
-    for (let det of Detection_detections) {
+    for (let det of providerManager.getDetections()) {
       if (det.conf !== 1.0) {
         det.id = dets.length;
         dets.push(det);
       }
     }
-    Detection_detections = dets;
+    providerManager.setDetections(dets);
     Detection.generateList();
   }
 
@@ -3191,12 +3206,12 @@ class Detection extends PlaceRect { ... }
 /*
 [COMMENTED OUT - Now loaded from modular files]
 
-let Tile_tiles = [];
+// REMOVED: let Tile_tiles = [];  // Phase 2: Handled by property descriptor in globals.js
 class Tile extends PlaceRect { ... }
 
-let Detection_detections = []
+// REMOVED: let Detection_detections = []  // Handled by property descriptor in globals.js
 let Detection_detectionsAugmented = 0;
-let Detection_minConfidence = DEFAULT_CONFIDENCE;
+// REMOVED: let Detection_minConfidence = DEFAULT_CONFIDENCE;  // Handled by property descriptor in globals.js
 let Detection_current = null;
 class Detection extends PlaceRect { ... }
 */
@@ -3448,9 +3463,9 @@ function processObjects(result, startTime) {
     if (startTime) {
       const processingTime = ((performance.now() - startTime) / 1000).toFixed(1);
       console.log(`⏱️ Processing completed in ${processingTime} seconds`);
-      disableProgress(processingTime, Tile_tiles.length);
+      disableProgress(processingTime, providerManager.getTilesLength());
     } else {
-      disableProgress(0, Tile_tiles.length);
+      disableProgress(0, providerManager.getTilesLength());
     }
 
     // Process detections immediately since addresses are already available
@@ -3942,10 +3957,14 @@ async function setMap(newMap) {
 
       // Use provider manager for coordinated switching
       try {
-        console.log(`🔄 Attempting to switch to Google Maps (isInitializing: ${isInitializing})`);
+        console.log(`🔄 Attempting to switch to Google Maps (isInitializing: ${window.providerManager.getIsInitializing()})`);
         await providerManager.switchProvider('google', googleMap);
-        currentMap = googleMap;  // ✅ FIX: Sync global currentMap with providerManager
         console.log('🌍 Switched to Google Maps');
+
+        // TASK-039: Initialize Google search (ensures input is hidden and Web Component is ready)
+        if (googleMap && typeof googleMap.initializeSearch === 'function') {
+          googleMap.initializeSearch();
+        }
       } catch (error) {
         console.error('❌ Failed to switch to Google Maps:', error);
         console.error('❌ Google Maps state:', {
@@ -3987,14 +4006,18 @@ async function setMap(newMap) {
 
       // Use provider manager for coordinated switching
       try {
-        console.log(`🔄 Attempting to switch to Azure Maps (isInitializing: ${isInitializing})`);
+        console.log(`🔄 Attempting to switch to Azure Maps (isInitializing: ${window.providerManager.getIsInitializing()})`);
         await providerManager.switchProvider('azure');
-        currentMap = azureMap;  // ✅ FIX: Sync global currentMap with providerManager
         console.log('🗺️ Switched to Azure Maps');
 
         // Disable Google Places when switching to Azure
         if (azureMap && azureMap.disableGooglePlacesWhenActive) {
           azureMap.disableGooglePlacesWhenActive();
+        }
+
+        // TASK-039: Initialize Azure search (ensures input is visible)
+        if (azureMap && typeof azureMap.initializeSearchBox === 'function') {
+          azureMap.initializeSearchBox();
         }
 
         console.log('Current map set to Azure Maps');
@@ -4097,7 +4120,7 @@ function download_dataset() {
       //console.log(" including detection #" + (det.originalId));
     }
     if (det.idInTile === -1) {
-      const tile = Tile_tiles[det.tile];
+      const tile = providerManager.getTilesArrayDirect()[det.tile];
       additions.push({
         'tile': det.tile,
         'centerx': (((det.x1 + det.x2) / 2) - tile.x1) / (tile.x2 - tile.x1),
@@ -4136,8 +4159,9 @@ function download_dataset() {
 
 function download_csv() {
   let text = "id,selected,inside_boundary,meets threshold,latitude (deg),longitude (deg),distance from center (m),address,confidence\n";  // CRITICAL FIX: Add missing let declaration
-  for (let i = 0; i < Detection_detections.length; i++) {
-    let det = Detection_detections[i];
+  const detections = providerManager.getDetectionsArrayDirect();
+  for (let i = 0; i < detections.length; i++) {
+    let det = detections[i];
     text += [
       i,
       det['selected'],
@@ -4189,7 +4213,8 @@ function download_kml() {
       text += "    <Placemark>\n";
       text += '      <name>' + det.address + '</name>\n'
       // Defensive check for tile metadata in KML export
-      let tileMeta = (Tile_tiles[det.tile] && Tile_tiles[det.tile].metadata) ? Tile_tiles[det.tile].metadata : '';
+      const tiles = providerManager.getTilesArrayDirect();
+      let tileMeta = (tiles[det.tile] && tiles[det.tile].metadata) ? tiles[det.tile].metadata : '';
       text += '      <description>P(' + det.conf.toFixed(2) + ') at ' + det.address + ' ' + tileMeta + '</description>\n';
       text += "      <styleUrl>#icon-1736-0F9D58</styleUrl>\n"
       text += '      <Point>\n';
@@ -4290,15 +4315,35 @@ function uploadDataset() {
   console.log("Dataset upload request in progress ...")
   let startTime = performance.now();
 
-
   formData.append("dataset", dataset);
+
+  // ISSUE-001 FIX: Check response status before processing
   fetch('/uploaddataset', { method: "POST", body: formData })
-    .then(response => response.json())
     .then(response => {
+      // Check if response is OK before parsing JSON
+      if (!response.ok) {
+        // Parse error response
+        return response.json().then(errorData => {
+          throw new Error(errorData.error || `Server error: ${response.status}`);
+        }).catch(() => {
+          // If JSON parsing fails, throw generic error
+          throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        });
+      }
+      return response.json();
+    })
+    .then(response => {
+      // Process successful upload response
       processObjects(response, startTime);
     })
     .catch(error => {
-      console.log(error);
+      console.error('❌ Dataset upload failed:', error.message);
+      TowerScoutErrorHandler.showUserNotification(
+        `Dataset upload failed: ${error.message}`,
+        'error'
+      );
+      // Re-enable UI if necessary
+      disableProgress(0, 0);
     });
 }
 
@@ -4640,7 +4685,9 @@ document.addEventListener('DOMContentLoaded', function () {
         confSlider.value = Math.round(Detection_minConfidence * 100);
 
         // Initialization complete - enable provider switching
-        isInitializing = false;
+        if (window.providerManager) {
+          window.providerManager.setIsInitializing(false);
+        }
         console.log('🎉 Initialization complete - provider switching enabled');
 
         // Apply stored provider preference if any

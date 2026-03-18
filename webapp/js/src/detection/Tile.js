@@ -7,25 +7,27 @@
 
   class Tile extends PlaceRect {
     static resetAll() {
-      for (let tile of Tile_tiles) {
+      for (let tile of providerManager.getTiles()) {
         currentMap.updateMapRect(tile, false);
       }
-      Tile_tiles.length = 0; // Use mutation pattern from Stage 0
+      providerManager.clearTiles(); // Phase 2: Use state manager for clearing
     }
 
-    constructor(x1, y1, x2, y2, metadata, url) {
+    constructor(x1, y1, x2, y2, metadata, url, id) {
       super(x1, y1, x2, y2, "#0000FF", "#0000FF", 0.0, "tile")
       this.metadata = metadata; // for map metadata
       this.url = url
+      this.id = (id !== undefined) ? id : providerManager.getTilesLength();  // Phase 2: Use state manager for length
 
-      Tile_tiles.push(this);
+      providerManager.addTile(this); // Phase 2: Use state manager for adding
     }
 
     // find the ids for all tiles that the center of this box belongs to
     static getTileIds(x1, y1, x2, y2) {
       let result = [];
-      for (let i = 0; i < Tile_tiles.length; i++) {
-        let t = Tile_tiles[i]
+      const tiles = providerManager.getTilesArrayDirect();
+      for (let i = 0; i < tiles.length; i++) {
+        let t = tiles[i]
         // compute center
         let cx = (x1 + x2) / 2;
         let cy = (y1 + y2) / 2;
@@ -44,10 +46,10 @@
       if (index === "") {
         index = "0";
       } else {
-        index = Number(index) % Tile_tiles.length;
+        index = Number(index) % providerManager.getTilesLength();
       }
       document.getElementById("tile").value = String(index);
-      Tile_tiles[index].centerInMap();
+      providerManager.getTilesArrayDirect()[index].centerInMap();
     }
 
     static prev() {
@@ -55,10 +57,11 @@
       if (index === "") {
         index = "0";
       } else {
-        index = (((Number(index) - 1) % Tile_tiles.length) + Tile_tiles.length) % Tile_tiles.length; // don't ask
+        const len = providerManager.getTilesLength();
+        index = (((Number(index) - 1) % len) + len) % len; // don't ask
       }
       document.getElementById("tile").value = String(index);
-      Tile_tiles[index].centerInMap();
+      providerManager.getTilesArrayDirect()[index].centerInMap();
     }
 
     static next() {
@@ -66,10 +69,10 @@
       if (index === "") {
         index = "0";
       } else {
-        index = (Number(index) + 1) % Tile_tiles.length;
+        index = (Number(index) + 1) % providerManager.getTilesLength();
       }
       document.getElementById("tile").value = String(index);
-      Tile_tiles[index].centerInMap();
+      providerManager.getTilesArrayDirect()[index].centerInMap();
     }
   }
 

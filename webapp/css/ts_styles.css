@@ -104,6 +104,39 @@
     width: 30%;
 }
 
+/* TASK-039 Phase 4B: Constrain PlaceAutocompleteElement Web Component size */
+#google-autocomplete-container {
+    display: inline;
+    width: 40%;
+    vertical-align: 10%;
+}
+
+/* Target the actual Web Component element */
+gmp-place-autocomplete {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    font-size: 12px !important;
+    /* Reduce from default 16px to shrink em-based height */
+    height: 21px !important;
+    /* Match Azure input height exactly */
+    min-height: 21px !important;
+}
+
+/* CRITICAL: Style the input INSIDE the Shadow DOM using ::part() */
+/* The Web Component exposes part="input" for styling */
+gmp-place-autocomplete::part(input) {
+    height: 21px !important;
+    /* Match Azure input height */
+    padding: 2px 8px !important;
+    /* Compact padding like Azure */
+    font-size: 14px !important;
+    /* Match TowerScout font size */
+    line-height: 17px !important;
+    /* Tight line height for 21px total */
+}
+
 .grid-container {
     display: grid;
     grid-template-areas:

@@ -82,12 +82,15 @@ Licensed under CC-BY-NC-SA-4.0
       <div id="mapsearchui" style="display:block;height:auto">
         <span id="location">Location:&nbsp;</span>
         <input type="text" id="search" style="display:inline;" placeholder="Search ...">
+        <!-- TASK-039 Phase 4B: Container for PlaceAutocompleteElement Web Component -->
+        <!-- Note: Width constraint set via JavaScript to ensure Web Component respects sizing -->
+        <div id="google-autocomplete-container" style="display:none;"></div>
         <span style="float: right;" id="geometry">
           <input type='text' id='radius' style='width:20%;vertical-align:10%'>&nbsp;m
           <button onclick="circleBoundary()" id="radiusbutton" style="vertical-align:10%;">Circle</button>
           <span
             style="display: inline-block; width:1px; height:80%; vertical-align:-8%; background:white; margin: 0 2px;">&nbsp;</span>
-          <button onclick="drawnBoundary()" id="drawnbutton" style="vertical-align:10%;">Custom shape</button>
+          <button onclick="enableCustomDrawing()" id="drawnbutton" style="vertical-align:10%;">Custom shape</button>
           <span
             style="display: inline-block; width:1px; height:80%; vertical-align:-8%; background:white; margin: 0 2px;">&nbsp;</span>
           <button onclick="clearBoundaries()" style="vertical-align:10%;">Clear</button>
@@ -186,10 +189,14 @@ Licensed under CC-BY-NC-SA-4.0
     </div>
 
     <div class="fadd" id="fadd" style="overflow-y:hidden;white-space: nowrap; overflow-x: hidden;font-size: smaller;">
-      <button id="addbutton" class="btn" onclick="currentMap.addShapes()" style="width:33%; height:100%">Add
-        locations</button>
-      <button class="btn" onclick="currentMap.clearShapes()" style="width:33%; height:100%">Clear</button>
-      <button class="btn" onclick="currentMap.clearAll()" style="width:33%; height:100%">Clear all</button>
+      <button id="enableDrawingButton" class="btn" onclick="enableCustomDrawing()" style="width:25%; height:100%"
+        title="Start drawing polygons around towers">Add Towers</button>
+      <button id="addbutton" class="btn" onclick="currentMap.addShapes()" style="width:25%; height:100%"
+        title="Save drawn polygons as manual detections">Save Towers</button>
+      <button class="btn" onclick="currentMap.clearShapes()" style="width:25%; height:100%"
+        title="Remove unsaved drawn polygons">Clear</button>
+      <button class="btn" onclick="currentMap.clearAll()" style="width:25%; height:100%"
+        title="Remove all manual tower detections">Clear all</button>
     </div>
 
     <div class="fsave" id="fsave" style="overflow-y:hidden;white-space: nowrap; overflow-x: hidden;font-size: smaller;">
@@ -309,7 +316,7 @@ Licensed under CC-BY-NC-SA-4.0
 
           // Load Google Maps script with API key
           const script = document.createElement('script');
-          script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&v=3.55.1&loading=async&libraries=places,drawing&callback=initGoogleMapCallback`;
+          script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&v=quarterly&loading=async&libraries=places&callback=initGoogleMapCallback`;
           script.onerror = () => {
             console.error('Failed to load Google Maps');
             delete window.initGoogleMapCallback;
@@ -356,7 +363,7 @@ Licensed under CC-BY-NC-SA-4.0
       document.head.appendChild(debugScript);
     }
   </script>
-  <script src="/js/towerscout.js"></script>
+  <script src="/js/towerscout.js?v=20260311-1220-WIDTH"></script>
 </body>
 
 </html>

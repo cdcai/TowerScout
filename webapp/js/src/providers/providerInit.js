@@ -7,10 +7,10 @@
 
   // Initialize and add the Google Maps provider
   function initGoogleMap() {
-    googleMap = new GoogleMap();
+    const gmap = new GoogleMap();
 
     // TASK-043 Phase 1: Use providerManager to register map instance
-    providerManager.setGoogleMap(googleMap);
+    providerManager.setGoogleMap(gmap);
 
     setMyLocation();
 
@@ -23,8 +23,7 @@
 
     // Update provider manager if Google is the preferred provider
     if (providerManager.currentProvider === 'google' || providerManager.currentProvider === null) {
-      providerManager.currentMap = googleMap;
-      currentMap = googleMap;
+      providerManager.currentMap = gmap;
       console.log('✅ Google Maps initialized and set as current provider');
     }
 
@@ -45,38 +44,36 @@
         // Add timeout wrapper for initialization
         const initWithTimeout = Promise.race([
           (async () => {
-            azureMap = new AzureMap();
-            await azureMap.initializationPromise;
-            return azureMap;
+            const amap = new AzureMap();
+            await amap.initializationPromise;
+            return amap;
           })(),
           new Promise((_, reject) =>
             timerManager.setTimeout(() => reject(new Error('Azure Maps initialization timeout')), 30000)
           )
         ]);
 
-        await initWithTimeout;
+        const amap = await initWithTimeout;
 
         // TASK-043 Phase 1: Use providerManager to register Azure Maps instance
-        providerManager.setAzureMap(azureMap);
+        providerManager.setAzureMap(amap);
 
         // Validate Azure Maps is properly initialized
-        if (!azureMap || !azureMap.map || typeof azureMap.getBounds !== 'function') {
+        if (!amap || !amap.map || typeof amap.getBounds !== 'function') {
           throw new Error('Azure Maps initialization incomplete - missing required methods');
         }
 
         // If Azure is selected but currentMap is not set properly, fix it
         if (currentUI && currentUI.value === "azure") {
           console.log('Setting Azure Maps as current map');
-          providerManager.currentMap = azureMap;
-          currentMap = azureMap;
+          providerManager.currentMap = amap;
         } else if (providerManager.currentProvider === 'azure') {
           console.log('Setting Azure Maps as provider manager current map');
-          providerManager.currentMap = azureMap;
-          currentMap = azureMap;
+          providerManager.currentMap = amap;
         }
 
         console.log('✅ Azure Maps initialization complete');
-        return azureMap;
+        return amap;
 
       } catch (error) {
         retryCount++;

@@ -79,9 +79,13 @@ class YOLOv5_Detector:
                     cause=e
                 )
 
-    def detect(self, tiles, events, id, crop_tiles=False, secondary=None):
+    def detect(self, tiles, events, id, crop_tiles=False, secondary=None, perf_metrics=None):
         try:
             logger.info(f"Starting YOLOv5 detection on {len(tiles)} tiles")
+            
+            # Track memory before detection starts
+            if perf_metrics:
+                perf_metrics.update_memory_usage()
             
             # Inference in batches
             tile_count = len(tiles)
@@ -192,6 +196,10 @@ class YOLOv5_Detector:
                             continue
 
                     logger.debug(f"Batch {i//self.batch_size + 1}/{chunks} completed")
+                    
+                    # Track memory usage after batch (helpful for monitoring memory leaks)
+                    if perf_metrics:
+                        perf_metrics.update_memory_usage()
                     
                 except Exception as e:
                     if isinstance(e, ProcessingError):
