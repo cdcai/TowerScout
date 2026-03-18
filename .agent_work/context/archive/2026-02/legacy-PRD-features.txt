@@ -1,0 +1,32 @@
+Towerscout Product Requirements Document (PRD) Feature List
+This comprehensive list compiles all unique features from the original/legacy Towerscout application that should still be present in the updated version. Features have been deduplicated, organized into logical categories for clarity, and described in a requirements-oriented format suitable for a PRD. Each feature includes a brief description, and any dependencies or notes. 
+	1.  Core Detection and Processing Features
+	- Machine Learning-Based Cooling Tower Detection: Utilize state-of-the-art ML algorithms to process satellite imagery and identify cooling towers. Automatically retrieve building addresses for each detected tower. 
+	- Confidence Level Display and Toggling: Show model confidence scores for each detection; allow users to filter or toggle visibility based on confidence thresholds.
+	- Backend Map Provider Selection: Enable selection of Google or Azure as the imagery source for ML predictions, with toggling between providers to compare and select optimal satellite imagery quality.
+	- Satellite Angle Adjustment via Provider Switch: Allow switching map providers to compensate for differences in satellite angles, improving alignment of results with actual towers.
+	2.  Map Interaction and Navigation Features
+	- Basic Map Controls: Support dragging, zooming, and panning for exploring areas of interest. 
+	- Alternative View Zooming: Enable zooming in on identified buildings for inspections from different angles. 
+	3.  Search and Query Features
+	- Location-Based Searches: Search by city, neighborhood (with automatic map outlining), or zip code (entered in quotation marks). Useful for building registries.
+	- Circular Radius Search: Define a search radius around a specific point on the map. 
+	- Custom Polygon Search Tool: Draw polygon shapes to define search areas, excluding irrelevant regions like wooded areas or water bodies. 
+	- Tile Estimation for Search Efficiency: Estimate the number of tiles in the search area to predict processing time; recommend limits (e.g., <100 tiles for completion in ~30 seconds). 
+	- Search Execution and Result Display: Initiate searches within defined areas and display results in a standardized map-based format, focusing on towers within the boundaries. 
+	4. Result Review and Editing Features
+	- Map-Based Result Display: Overlay identified towers on the map with interactive elements. 
+	- Right-Hand Panel for Details: Display tower-specific information including address, confidence level, and image date (if available). 
+	- Interactive Highlighting: Click on an address to highlight the corresponding tower on the map, or vice versa.
+	- Review Modes: Allow reviewing results tile-by-tile or tower-by-tower. 
+	- Deselection of False Positives: Use checkboxes or individual review to deselect incorrectly identified items as towers.
+	- Manual Addition of Missed Towers: Use the polygon tool to highlight and add overlooked towers to the results. 
+	- Detection Feature for Misidentifications: A dedicated mode or tool to systematically review and flag incorrect detections. 
+	- Tile Feature for Missed Towers: A mode to scan tiles for overlooked towers.
+	- Label Mode for Registries and Training: Toggle to display all towers in full tiles (including outside search boundaries) for comprehensive labeling; supports building registries or gathering ML training data. 
+	- Tile Navigation in Label Mode: Click through tiles to review and label all visible towers. 
+	5.  Export and Data Management Features
+	- Data Export Options: Export results in various formats, including Excel/CSV for tracking (e.g., visits and sampling) and KML for 3D visualization in tools like Google Earth. 
+	- Dataset Addition via Map Selection: Add manually identified towers to the exportable dataset using map interface tools.
+	6.  Workflow and Integration Features
+	- Outbreak Investigation Workflow: Integrate search definition (radius/polygon with tile estimation), result review (detection/tile modes for errors and additions), and export (CSV/KML) into a cohesive process for rapid Legionella outbreak response. 

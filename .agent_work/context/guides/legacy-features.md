@@ -4,7 +4,7 @@
 
 This document catalogs all features from the legacy TowerScout Product Requirements Document (PRD) and provides comprehensive gap analysis against the current implementation. Features are categorized using the established status indicators and prioritized for development planning.
 
-**Legacy Source**: `legacy-PRD-features.txt` - Comprehensive feature list from original TowerScout application  
+**Legacy Source**: `.agent_work/context/archive/2026-02/legacy-PRD-features.txt` - Comprehensive feature list from original TowerScout application  
 **Analysis Date**: January 5, 2026  
 **Total Features**: 23 unique features across 6 categories  
 **Implementation Status**: 15 ✅ Implemented, 4 ❌ Missing, 3 ⚠️ Partial, 1 🔄 Evolved

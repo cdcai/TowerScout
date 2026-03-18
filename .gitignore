@@ -97,5 +97,3 @@ hosting/connect-tc.sh
 # GitHub workflows (managed separately)
 .github/*
 
-# Agent work and task management files
-.agent_work/

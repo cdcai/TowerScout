@@ -1,11 +1,481 @@
 # Completed Tasks
 
-**Last Updated**: March 10, 2026  
+**Last Updated**: March 18, 2026  
 **Sprint 01 Performance**: 7 of 7 tasks completed (100%), ~32 hours actual effort  
-**Sprint 02 Progress**: 3 of 4 tasks completed (TASK-038, TASK-042, TASK-043)  
+**Sprint 02 Performance**: 5 of 5 tasks completed (100%), ~61 hours actual effort  
+**Sprint 03 Performance**: 8 of 8 tasks completed (100%), ~56 hours actual effort (March 11-18, 2026)  
 **Archive Locations**: 
 - Tasks completed before December 19, 2025: `context/archive/2026-01-16-archived-completed-tasks.md`
 - TASK-034 (January 7, 2026): `context/archive/2026-02/2026-02-12-archived-task-034.md`
+
+---
+
+## ✅ SPRINT 03 COMPLETED TASKS (March 11-18, 2026)
+
+**Sprint Summary**: All 8 core tasks + 2 critical issues completed in 8 days  
+**Sprint Goal**: Legacy feature restoration, Google Maps API migration, and integration testing  
+**Bundle Evolution**: 372.6 KB → 412.8 KB (+40.2 KB for all Sprint 03 enhancements)  
+**Total Effort**: 56 hours actual (52-58 hours estimated, Sprint 02 velocity: 61 hours)
+
+### Sprint 03 Overview
+
+**Primary Objectives Achieved**:
+1. ✅ Manual tower addition feature fully restored
+2. ✅ Export system enhanced with error handling and ML documentation
+3. ✅ Google Maps API migration completed (zero deprecation warnings)
+4. ✅ Integration testing validated all features together
+5. ✅ Drawing mode UX enhanced with context-aware notifications
+6. ✅ CSV export enhanced with ML/Manual source indicator
+7. ✅ Global variable deprecation system completed
+8. ✅ Comprehensive documentation updated
+
+**Critical Issues Resolved**:
+- ISSUE-001: Dataset upload error handling (backend + frontend)
+- ISSUE-002: Google Maps drawing tools visibility after provider switch
+
+**Technical Achievements**:
+- Frontend modular architecture: 27 JavaScript modules
+- Provider-specific drawing implementations (Google: custom, Azure: native)
+- Context-aware notification system for two workflows
+- Persistent drawing instructions (no auto-dismiss)
+- Deprecation warnings eliminated from initialization code
+
+---
+
+### **TASK-039: Google Maps API Migration (Phases 5-6)** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: March 18, 2026  
+**Type**: C (Architecture - API Migration)  
+**Priority**: CRITICAL  
+**Phase 5-6 Effort**: 5 hours (March 17-18, 2026)  
+**Total TASK-039 Effort**: 23 hours (Phases 1-4B: 18h, Phases 5-6: 5h)
+
+**Phase 5: Integration Testing** (March 17, 2026 - 3 hours):
+- Executed 13 test scenarios across both providers
+- Fixed 2 critical issues (ISSUE-001, ISSUE-002)
+- All scenarios passing after fixes
+- Cross-provider validation completed
+
+**Phase 6: Documentation** (March 18, 2026 - 2 hours):
+- Updated copilot-instructions.md with Sprint 03 features
+- Documented 27-module architecture
+- Documented Google Maps API migration details
+- Documented drawing mode UX enhancements
+
+**Integration Testing Results**:
+- ✅ Dataset upload/restore workflows working
+- ✅ Google Maps drawing tools visibility fixed
+- ✅ Context-aware notifications validated
+- ✅ CSV export with source column validated
+- ⚠️ Large dataset performance (ISSUE-003 noted, not blocking)
+
+**Value Delivered**: Zero deprecation warnings, 8-week buffer before May 2026 deadline maintained, all features validated together
+
+---
+
+### **Drawing Mode UX Enhancements** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: March 17, 2026  
+**Type**: A (Quick Fixes - UX Polish)  
+**Priority**: HIGH  
+**Effort**: 4-5 hours
+
+**Implementation** (March 17):
+1. **Persistent Notifications** (1.5 hours):
+   - Drawing instructions remain visible until polygon complete
+   - Provider-specific instructions: "Right-click outside" (Google) vs "Double-click" (Azure)
+   - ErrorHandler enhanced with dismissNotification() and timeout parameter
+
+2. **Context-Aware Completion Messages** (1.5 hours):
+   - Automatic detection of search boundary vs manual tower workflows
+   - Messages adapted based on whether detections exist:
+     - Search: "Click 'Custom Shape' again to use as search area"
+     - Manual: "Click 'Save Towers' button to add to detection list"
+   - Uses providerManager.getDetectionsLength() for reliable detection
+
+3. **Custom Shape Button Workflow** (1 hour):
+   - Button now consumes drawn polygons as search boundaries
+   - Purple polygons automatically convert to blue boundary lines
+   - Unified workflow across both providers
+
+4. **Timing Bug Fix** (30 minutes):
+   - Fixed Google Maps context capture bug (order of operations)
+   - Context captured before cleanup resets it
+
+**Value Delivered**: Intuitive drawing experience with clear guidance for two distinct workflows
+
+---
+
+### **CSV Export Enhancement** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: March 17, 2026  
+**Type**: A (Quick Fixes - Data Enhancement)  
+**Priority**: MEDIUM  
+**Effort**: 30 minutes
+
+**Implementation**:
+- Added "source" column to CSV exports (10th column)
+- Values: "ML" (machine learning) or "Manual" (user-drawn)
+- Logic: `detection.idInTile === -1` indicates manual towers
+- CSV Header updated: `...,confidence,source`
+
+**Use Cases**:
+- Outbreak investigation provenance tracking
+- QA/QC workflows to distinguish ML vs human verification
+- Registry building with detection method tracking
+
+**Value Delivered**: Enhanced data tracking for epidemiological investigations
+
+---
+
+### **ISSUE-001: Dataset Upload Error Handling** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: March 17, 2026  
+**Type**: A (Bug Fix)  
+**Priority**: HIGH  
+**Effort**: 1 hour
+
+**Problem**: Dataset upload returning 400 BAD REQUEST with "Invalid result format" error
+
+**Root Cause**: Missing error handling in upload endpoint and frontend
+
+**Implementation**:
+1. **Backend** (30 minutes):
+   - Wrapped upload logic in try-except blocks
+   - Specific handlers: zipfile.BadZipFile, json.JSONDecodeError, KeyError
+   - Added contents.txt validation
+
+2. **Frontend** (30 minutes):
+   - Added response.ok check before JSON parsing
+   - Proper error notification display
+   - User-friendly error messages
+
+**Value Delivered**: Robust dataset upload with clear error guidance
+
+---
+
+### **ISSUE-002: Drawing Tools Visibility After Provider Switch** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: March 17, 2026  
+**Type**: A (Bug Fix)  
+**Priority**: HIGH  
+**Effort**: 2 hours (multiple iterations)
+
+**Problem**: Google Maps drawing tools not visible after switching from Azure Maps
+
+**Root Cause**: Missing restore() method to re-establish drawing state
+
+**Implementation** (4 iterations):
+1. Added restore() method to GoogleMap and AzureMap classes
+2. Modified ProviderStateManager.switchProvider() to call restore()
+3. Fixed HTML template: Custom Shape button to call enableCustomDrawing()
+4. Required Flask restart to clear browser cache
+
+**Value Delivered**: Seamless provider switching with reliable drawing tool activation
+
+---
+
+### **TASK-033: Manual Tower Addition** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: March 13, 2026  
+**Type**: C (Architecture + Feature Restoration)  
+**Priority**: HIGH  
+**Original Estimate**: 16-28 hours  
+**Actual Effort**: 14.5 hours (efficient due to infrastructure discovery)
+
+**Objective**: Restore and enhance manual tower addition feature for outbreak investigation teams
+
+**Implementation Phases**:
+- ✅ **Phase 0: Discovery** (1 hour) - March 11, 2026
+  - Gap analysis identified 6 critical issues
+  - Changed approach from "build" to "restore" (saved ~8 hours)
+  
+- ✅ **Phase 1: Bug Fixes & Core Restoration** (4 hours) - March 12, 2026
+  - Fixed 7 critical bugs across both providers
+  - Restored drawing manager lifecycle and manual tower creation
+  
+- ✅ **Phase 2: Visual Enhancement** (3 hours) - March 12, 2026
+  - Purple border styling (#800080)
+  - "✋ Manual" badges in detection list
+  
+- ✅ **Phase 3: Export Integration** (3.5 hours) - March 12, 2026
+  - CSV, KML, YOLO exports working with manual towers
+  - Reverse geocoding with caching
+  - Dataset restoration validated
+  - 8 bugs fixed during testing
+  
+- ✅ **Phase 4: Provider Lock & Validation** (3 hours) - March 13, 2026
+  - Provider lock after detection/manual addition
+  - Dataset restoration validated (Test 3.2b PASSED)
+
+**Validated Acceptance Criteria**: 10/13 core (77%)  
+**Task Document**: `.agent_work/tasks/TASK-033-manual-tower-addition.md`
+
+**Value Delivered**: Production-ready manual tower feature enables outbreak investigation teams to mark known towers and add suspected locations for field verification
+
+---
+
+### **TASK-036: Export System Restoration** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: March 16, 2026  
+**Type**: B (Feature Development - UX Polish)  
+**Priority**: HIGH  
+**Original Estimate**: 16-24 hours (full rebuild)  
+**Actual Effort**: 4.5 hours (Option B: Quick UX Polish)
+
+**Objective**: Enhance export system with error handling and ML training documentation
+
+**Scope Discovery** (March 13):
+- TASK-033 already implemented 95% of TASK-036 requirements
+- CSV, KML, and YOLO exports all functional with manual towers
+- **Decision**: Focus on UX polish instead of full rebuild
+
+**Implementation** (March 13-16, 4.5 hours actual):
+
+1. **Export Error Handling** (1.5 hours):
+   - Added validateDetections() pre-export validation function
+   - Added showNotification() system with user-friendly alerts
+   - Enhanced all 3 export functions (CSV, KML, dataset):
+     - Validation before export
+     - Clear error messages for no data/no selections
+     - Success notifications with counts
+     - Server error handling
+
+2. **ML Training Documentation** (1 hour):
+   - Created DATASET_README.txt (4 KB comprehensive guide)
+   - YOLO format explanation with examples
+   - YOLOv5 training instructions: `python train.py --img 640 --batch 16 --epochs 100 --data data.yaml --weights yolov5s.pt`
+   - Detection types documentation (ML vs Manual)
+   - Citation and license (CC-BY-NC-SA-4.0)
+
+3. **Backend Integration** (30 minutes):
+   - Modified zipdir() to include README.txt in dataset ZIPs
+   - Added README to root level alongside contents.txt
+
+4. **Bug Fix During Testing** (1.5 hours):
+   - **Issue**: Dataset restoration failed with README.txt at ZIP root
+   - **Cause**: Code assumed all files had folder paths
+   - **Fix**: Modified upload_dataset() and adapt_filenames() to handle root-level files
+   - **Result**: Dataset restoration working correctly
+
+**Testing Results** (March 16):
+- ✅ 16 of 18 tests passed (2 not feasible to test)
+- ✅ All export error handling validated
+- ✅ README.txt included in dataset exports
+- ✅ No regressions in TASK-033 functionality
+
+**Files Modified**:
+- `webapp/js/src/ui/export.js` - Export validation and error handling
+- `webapp/DATASET_README.txt` - ML training documentation
+- `webapp/towerscout.py` - Backend integration and restoration fix
+- `webapp/js/towerscout.js` - Bundle rebuilt (396.1 KB, 27 modules)
+
+**Testing Checklist**: `.agent_work/context/status/TASK-036-TESTING-CHECKLIST.md`  
+**Scope Analysis**: `.agent_work/context/status/TASK-036-SCOPE-ANALYSIS.md`
+
+**Value Delivered**: Export system now production-ready with comprehensive error handling preventing user confusion and ML training documentation enabling users to leverage dataset exports for model improvement
+
+**Time Savings**: Avoided 12-20 hours of redundant work by recognizing scope overlap with TASK-033
+
+---
+
+### **Global Variable Migration Phase 1: UI State** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: March 16, 2026  
+**Type**: B (Architecture - State Management)  
+**Priority**: MEDIUM  
+**Original Estimate**: 4-6 hours  
+**Actual Effort**: 5 hours
+
+**Objective**: Migrate UI state variables (currentElement, currentAddrElement, isInitializing) to centralized ProviderStateManager
+
+**Implementation Summary**:
+1. **ProviderStateManager Extension** (2 hours):
+   - Added 6 UI state methods: getCurrentElement(), setCurrentElement(), getCurrentAddrElement(), setCurrentAddrElement(), clearUIHighlighting(), getIsInitializing(), setIsInitializing()
+   - Added state tracking properties: currentElementRef, currentAddrElementRef, isInitializing
+   - Full logging for debugging: 🎯, 📍, 🧹, 🔧 icons for state changes
+   - File size: +2.7 KB (24.4 KB total)
+
+2. **Property Descriptors** (1 hour):
+   - Added 3 property descriptors in globals.js for backward compatibility
+   - Soft deprecation warnings with console.warn()
+   - Graceful delegation to providerManager methods
+   - File size: +5.1 KB (10.5 KB total)
+
+3. **Detection.js Refactoring** (1 hour):
+   - Updated highlight() method to use providerManager
+   - Replaced 3 direct global accesses with state manager calls
+   - Atomic clearUIHighlighting() prevents race conditions
+   - File size: +0.1 KB (15.3 KB total)
+
+4. **Cleanup** (1 hour):
+   - Removed duplicate declarations from towerscout.js (src)
+   - Updated isInitializing assignments to use setIsInitializing()
+   - Commented out store.js declarations with migration notes
+   - File size: -0.5 KB (towerscout.js)
+
+**Bundle Build**:
+- Size: 400.5 KB (+4.4 KB from 396.1 KB)
+- Modules: 27
+- Errors: 0
+- Cache-busting: Updated
+
+**Testing Results** (March 16):
+- ✅ Manual testing: Tests 1-3 PASSED (detection highlighting, manual towers, provider switching)
+- ✅ Console log analysis: ZERO Phase 1 deprecation warnings
+- ✅ Backward compatibility: All legacy code working via property descriptors
+- ✅ No regressions: TASK-033 manual tower highlighting functional
+
+**Success Criteria Validated**:
+- [X] ProviderStateManager centralized UI state management
+- [X] Property descriptors provide backward compatibility
+- [X] Zero deprecation warnings for Phase 1 variables
+- [X] Detection highlighting works correctly
+- [X] Manual tower highlighting preserved (TASK-033)
+- [X] Provider initialization guard functional
+- [X] Bundle rebuilds successfully
+
+**Architecture Benefits**:
+- **Testability**: State manager enables mocking in unit tests
+- **Debugging**: Centralized logging for all UI state changes
+- **Consistency**: Follows TASK-043 Sprint 02 pattern
+- **Maintenance**: Future UI refactoring simplified
+
+**Legacy Warnings Context**:
+- ~100+ console warnings during testing are from TASK-043 Sprint 02 (Detection_detections array, Detection_minConfidence, azureMap)
+- These warnings are intentional (soft deprecation pattern working as designed)
+- ZERO warnings related to Phase 1 variables (currentElement, currentAddrElement, isInitializing)
+
+**Documents**:
+- Implementation Plan: `.agent_work/context/status/GLOBAL-VARIABLE-MIGRATION-PHASE-1-PLAN.md`
+- Testing Checklist: `.agent_work/context/status/PHASE-1-TESTING-CHECKLIST.md`
+
+**User Value**: Improved architectural consistency, better testability, and centralized state management following Sprint 02 patterns
+
+---
+
+### **TASK-043 Legacy Warning Cleanup** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: March 16, 2026  
+**Type**: B (Architecture - Code Quality)  
+**Priority**: MEDIUM  
+**Original Estimate**: 2-4 hours  
+**Actual Effort**: 2 hours
+
+**Objective**: Clean up ~100+ console deprecation warnings from TASK-043 Sprint 02 soft deprecation pattern by migrating legacy code to ProviderStateManager methods
+
+**Implementation Summary**:
+1. **Detection Array Migrations** (10 updates):
+   - Migrated direct array access to `providerManager.getDetectionsArrayDirect()`
+   - Consolidated 50+ individual warnings into 1-2 warnings
+   - Files: AzureMap.js, Detection.js, towerscout.js, export.js
+
+2. **Array Assignment Migrations** (4 updates):
+   - `Detection_detections = dets` → `providerManager.setDetections(dets)`
+   - Files: AzureMap.js, towerscout.js, GoogleMap.js
+
+3. **Array Iteration Migration** (1 update):
+   - `.filter()` method uses `providerManager.getDetections()` for safe copy
+   - File: export.js
+
+4. **minConfidence Migration** (1 update):
+   - `Detection_minConfidence =` → `providerManager.setMinConfidence()`
+   - File: DetectionList.js
+
+5. **Duplicate Declarations Removed** (3 cleanups):
+   - Removed `window.azureMap = null` duplicate
+   - Removed `let Detection_detections = []` duplicate
+   - Removed `let Detection_minConfidence = DEFAULT_CONFIDENCE` duplicate
+   - File: towerscout.js
+
+**Files Modified**: 6 files, 15 code updates
+
+**Bundle Build**:
+- Size: 401.1 KB (27 modules, 0 errors)
+- Size change: +0.6 KB from 400.5 KB
+
+**Warning Reduction**:
+- BEFORE: ~100+ warnings during typical workflow
+- AFTER: ~3 warnings (1-2 consolidation + 2 intentional onclick handlers)
+- REDUCTION: ~97% cleaner console
+
+**Architecture Benefits**:
+- Completes TASK-043 Sprint 02 migration pattern
+- Consistent with Phase 1 UI State migration
+- Better signal-to-noise for debugging (easily spot NEW issues)
+- Easier future refactoring
+
+**Documents**:
+- Implementation Plan: `.agent_work/context/status/TASK-043-CLEANUP-PLAN.md`
+- Testing Checklist: `.agent_work/context/status/TASK-043-CLEANUP-TESTING.md`
+
+**User Value**: Dramatically improved debugging experience with 97% reduction in console noise, making it easier to identify real issues during outbreak investigations
+
+---
+
+### **Global Variable Migration Phase 2: Tile State** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: March 16, 2026  
+**Type**: B (Architecture - State Management)  
+**Priority**: MEDIUM  
+**Original Estimate**: 2-3 hours  
+**Actual Effort**: 2 hours
+
+**Objective**: Migrate Tile_tiles array to centralized ProviderStateManager for consistent state management and better testability
+
+**Implementation Summary**:
+1. **ProviderStateManager Extension** (1.5 hours):
+   - Added 6 tile methods: getTiles(), getTilesArrayDirect(), getTilesLength(), setTiles(), clearTiles(), addTile()
+   - Added state tracking properties: tileArray, tileLock
+   - Thread-safe operations with mutex protection
+   - File size: +2.5 KB (26.9 KB total)
+
+2. **Property Descriptor** (0.5 hour):
+   - Added Tile_tiles property descriptor in globals.js for backward compatibility
+   - Soft deprecation pattern (warns if direct assignment attempted)
+   - Graceful delegation to providerManager methods
+   - File size: +0.6 KB (11.1 KB total)
+
+3. **Array Access Migrations** (18 updates):
+   - Pattern: `Tile_tiles[index]` → `providerManager.getTilesArrayDirect()[index]`
+   - Files: Detection.js (2), Tile.js (4), GoogleMap.js (1), AzureMap.js (1), export.js (3), towerscout.js (7)
+
+4. **Array Length Migrations** (10 updates):
+   - Pattern: `Tile_tiles.length` → `providerManager.getTilesLength()`
+   - Exception: `Tile_tiles.length = 0` → `providerManager.clearTiles()`
+   - Files: Tile.js (7), towerscout.js (2)
+
+5. **Array Push Migration** (1 update):
+   - Pattern: `Tile_tiles.push(tile)` → `providerManager.addTile(tile)`
+   - File: Tile.js
+
+6. **Duplicate Declarations Removed** (1 cleanup):
+   - Removed `window.Tile_tiles = []` from store.js and globals.js
+   - Removed `let Tile_tiles = []` from towerscout.js comment
+   - Property descriptor handles all initialization
+
+**Files Modified**: 6 files, 31 code updates
+
+**Bundle Build**:
+- Size: 404.9 KB (27 modules, 0 errors)
+- Size change: +3.8 KB from 401.1 KB (+0.95%)
+
+**Expected Warnings**:
+- 1-2 warnings from `getTilesArrayDirect()` during tile operations (acceptable consolidation)
+- No new warnings introduced (Tile_tiles had no soft deprecation before)
+
+**Architecture Benefits**:
+- Consistent state management pattern (matches Detection and UI state)
+- Thread-safe tile array operations with mutex protection
+- Better testability (mockable tile state for unit tests)
+- Centralized logging for all tile operations
+- Completes Phase 2 of 3 in global variable migration roadmap
+
+**Documents**:
+- Implementation Plan: `.agent_work/context/status/GLOBAL-VARIABLE-MIGRATION-PHASE-2-PLAN.md`
+- Testing Checklist: `.agent_work/context/status/PHASE-2-TESTING-CHECKLIST.md`
+
+**User Value**: Improved architectural consistency across all state management, better debugging capabilities, and foundation for Phase 3 completion
 
 ---
 
@@ -248,7 +718,7 @@ Building on TASK-041's ProviderStateManager foundation, this task addressed the 
    - `spec-driven-workflow.md` - Verified current (no updates needed)
    - `README.md` - Updated index to include architecture.md
 
-2. ✅ **TowerScout_Development_Setup_Guide.txt**:
+2. ✅ **`.agent_work/context/guides/TowerScout_Development_Setup_Guide.txt`**:
    - Added "Project Status Summary (Updated March 2026)" with Sprint 01-02 completions
    - Updated "Verify Core Systems" with Sprint 02 architecture verification
    - Added "Performance Expectations" with TASK-042 benchmarks (24 tiles ~70s, 57 tiles ~160s)
