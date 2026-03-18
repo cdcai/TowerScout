@@ -1,6 +1,6 @@
 # Task Backlog - Future Work Prioritization
 
-**Last Updated**: March 11, 2026  
+**Last Updated**: March 16, 2026  
 **Sprint 03 Period**: March 11 - March 25, 2026  
 **Next Sprint Planning**: March 25, 2026  
 
@@ -33,7 +33,58 @@
 
 ---
 
-## 🟨 MEDIUM PRIORITY - Future Sprints
+## � HIGH PRIORITY - Sprint 04 Planning
+
+### **TASK-046: Setup Wizard and Settings Screen** 🟡
+**Status**: NOT_STARTED  
+**Type**: B (Feature Development)  
+**Priority**: HIGH  
+**Estimated Effort**: 5-9 days (1.5-2 weeks with testing)  
+**Target Sprint**: Sprint 04  
+**Created**: March 16, 2026
+
+**Objective**: Implement first-launch Setup Wizard and in-app Settings Screen for seamless API key management without manual .env file editing
+
+**Requirements**:
+- Setup Wizard: Auto-appears on first launch, multi-step flow (Welcome → API Keys → Provider → Info → Complete)
+- Settings Screen: In-app modal for API key updates, debug mode toggle, cache management
+- API key validation via test requests with success/error indicators
+- Docker-compatible .env file persistence with backup/rollback mechanism
+- Performance metrics display and resource links to documentation
+
+**Key Features**:
+- 🔑 **API Key Management**: Validate and save keys without text editor
+- 🚀 **User Onboarding**: Guided setup flow for non-technical users
+- ⚙️ **Settings Modal**: In-app configuration management
+- 🐳 **Docker Compatible**: Host-mounted .env file updates
+- 📊 **Performance Stats**: Recent detection metrics display
+- 🔧 **System Controls**: Debug mode toggle, cache clearing
+
+**Technical Components**:
+- Backend: `webapp/ts_config.py` module + 5 new Flask API endpoints
+- Frontend: Setup Wizard JavaScript (`setup-wizard.js`) + Settings Screen (`settings.js`)
+- UI: Modal overlays with mobile-responsive design
+- Safety: .env backups, validation, rollback mechanism
+
+**Dependencies**:
+- TASK-025 (Docker Containerization) - Volume mount strategy
+- TASK-001 (API Key Security) - Environment variable foundation ✅ COMPLETED
+- Python `python-dotenv` library (already installed)
+
+**Success Criteria**:
+- Users never need to manually edit .env files
+- Setup Wizard blocks app until configuration complete
+- API key validation via test requests (<5 seconds)
+- Settings preserve session state (detections, map view)
+- Docker volume mount persistence verified
+
+**Task Document**: [TASK-046-setup-wizard-settings-screen.md](./tasks/TASK-046-setup-wizard-settings-screen.md)
+
+**Notes**: Addresses major UX friction point for non-technical users. Eliminates manual .env file editing requirement. Critical for Docker-based local deployment strategy (TASK-025).
+
+---
+
+## �🟨 MEDIUM PRIORITY - Future Sprints
 
 ### **TASK-025: Docker Containerization** 🟡
 **Status**: NOT_STARTED  

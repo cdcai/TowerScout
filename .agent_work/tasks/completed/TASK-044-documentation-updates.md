@@ -66,7 +66,7 @@ Update user guides, setup documentation, and AGENTS.md folder to reflect Sprint 
 
 ### 2. User Workflow Documentation (0.5-1 hour)
 
-#### File: `TowerScout_Development_Setup_Guide.txt`
+#### File: `.agent_work/context/guides/TowerScout_Development_Setup_Guide.txt`
 
 **Section: Project Status** (NEW)
 - [ ] Add Sprint 01/02 completion summary

@@ -602,7 +602,7 @@ git commit -m "refactor(stage-0): convert array reassignments to mutations..."
 - npm v8+ (included with Node.js)
 - Git Bash restart after installation
 
-**Installation Guide**: See [NODEJS-INSTALL-GUIDE.md](../../NODEJS-INSTALL-GUIDE.md)
+**Installation Guide**: See [NODEJS-INSTALL-GUIDE.md](../../context/guides/NODEJS-INSTALL-GUIDE.md)
 
 **Quick Steps**:
 1. Download Node.js LTS from https://nodejs.org/

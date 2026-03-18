@@ -933,7 +933,7 @@ Fixes: TASK-045
 - Changing architecture → Update AGENTS.md/architecture.md
 - Modifying state management → Update this guide
 - Adding API endpoints → Update AGENTS.md/dev-workflow.md
-- Resolving issues → Update TowerScout_Development_Setup_Guide.txt troubleshooting
+- Resolving issues → Update .agent_work/context/guides/TowerScout_Development_Setup_Guide.txt troubleshooting
 
 ---
 
@@ -945,7 +945,7 @@ Fixes: TASK-045
 - **Architecture Patterns**: [AGENTS.md/architecture.md](../../../AGENTS.md/architecture.md)
 - **Development Workflows**: [AGENTS.md/dev-workflow.md](../../../AGENTS.md/dev-workflow.md)
 - **Security Practices**: [AGENTS.md/security.md](../../../AGENTS.md/security.md)
-- **Setup Guide**: [TowerScout_Development_Setup_Guide.txt](../../../TowerScout_Development_Setup_Guide.txt)
+- **Setup Guide**: [TowerScout_Development_Setup_Guide.txt](TowerScout_Development_Setup_Guide.txt)
 
 ### Decision Records
 
