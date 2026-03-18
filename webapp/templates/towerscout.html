@@ -13,7 +13,7 @@ Licensed under CC-BY-NC-SA-4.0
 -->
 
 
-  
+
 <head>
   <title>TowerScout</title>
   <link rel="stylesheet" media="screen and (min-device-width: 1200px)" href="/css/ts_styles.css">
@@ -38,7 +38,8 @@ Licensed under CC-BY-NC-SA-4.0
       <a class="hover_inline" target="_blank" href="https://www.linkedin.com/in/thaddeussegura/">Thaddeus Segura</a><br>
       <br>
       <br>
-      <a class="hover" target="_blank" href='https://groups.ischool.berkeley.edu/TowerScout/'>Click here to learn more about TowerScout!</a>
+      <a class="hover" target="_blank" href='https://groups.ischool.berkeley.edu/TowerScout/'>Click here to learn more
+        about TowerScout!</a>
     </div>
     <div id="logocred"
       style="position:absolute; z-index:2001;bottom:0px;right:0px;margin-bottom: 20px;margin-right: 20px;">
@@ -81,12 +82,15 @@ Licensed under CC-BY-NC-SA-4.0
       <div id="mapsearchui" style="display:block;height:auto">
         <span id="location">Location:&nbsp;</span>
         <input type="text" id="search" style="display:inline;" placeholder="Search ...">
+        <!-- TASK-039 Phase 4B: Container for PlaceAutocompleteElement Web Component -->
+        <!-- Note: Width constraint set via JavaScript to ensure Web Component respects sizing -->
+        <div id="google-autocomplete-container" style="display:none;"></div>
         <span style="float: right;" id="geometry">
           <input type='text' id='radius' style='width:20%;vertical-align:10%'>&nbsp;m
           <button onclick="circleBoundary()" id="radiusbutton" style="vertical-align:10%;">Circle</button>
           <span
             style="display: inline-block; width:1px; height:80%; vertical-align:-8%; background:white; margin: 0 2px;">&nbsp;</span>
-          <button onclick="drawnBoundary()" id="drawnbutton" style="vertical-align:10%;">Custom shape</button>
+          <button onclick="enableCustomDrawing()" id="drawnbutton" style="vertical-align:10%;">Custom shape</button>
           <span
             style="display: inline-block; width:1px; height:80%; vertical-align:-8%; background:white; margin: 0 2px;">&nbsp;</span>
           <button onclick="clearBoundaries()" style="vertical-align:10%;">Clear</button>
@@ -105,10 +109,10 @@ Licensed under CC-BY-NC-SA-4.0
     <div class="fmodel" style="font-size:smaller; overflow-y:hidden;white-space: nowrap; overflow-x: hidden;">
       User interface:<br><br>
       <form id="uis" name="uis">
-        <input type="radio" id="google" name="uis" value="google" checked>
+        <input type="radio" id="google" name="uis" value="google">
         <label for="google">Google Maps</label><br>
-        <input type="radio" id="bing" name="uis" value="bing">
-        <label for="bing">Bing Maps</label><br>
+        <input type="radio" id="azure" name="uis" value="azure" checked>
+        <label for="azure">Azure Maps</label><br>
         <input type="radio" id="upload" name="uis" value="upload">
         <label for="upload">Image upload</label><br>
       </form>
@@ -134,8 +138,8 @@ Licensed under CC-BY-NC-SA-4.0
 
     <!--The div element for the map -->
     <div class="fmap" style="overflow-y:hidden;white-space: nowrap; overflow-x: hidden;">
-      <div id="googleMap" style="display:block"></div>
-      <div id="bingMap" style="display:none"></div>
+      <div id="googleMap" style="display:none"></div>
+      <div id="azureMap" style="display:block"></div>
       <div id="uploadMap" style="display:none; overflow-y:scroll">
         <img id="canvas" style="width:100%;">
       </div>
@@ -175,16 +179,24 @@ Licensed under CC-BY-NC-SA-4.0
 
 
     <div class="ftowers" id="ftowers" style="overflow-y: hidden;">
+      <div id="apiUsage"
+        style="padding: 2px; font-size: 10px; color: #ccc; border-bottom: 1px solid #333; margin-bottom: 3px;">
+        <!-- API usage will be populated by JavaScript -->
+      </div>
       <p id="checkBoxes"
         style="margin: 0px; overflow-y:scroll; width:100%; height:100%;white-space: nowrap; overflow-x: hidden;">
       </p>
     </div>
 
     <div class="fadd" id="fadd" style="overflow-y:hidden;white-space: nowrap; overflow-x: hidden;font-size: smaller;">
-      <button id="addbutton" class="btn" onclick="currentMap.addShapes()" style="width:33%; height:100%">Add
-        locations</button>
-      <button class="btn" onclick="currentMap.clearShapes()" style="width:33%; height:100%">Clear</button>
-      <button class="btn" onclick="currentMap.clearAll()" style="width:33%; height:100%">Clear all</button>
+      <button id="enableDrawingButton" class="btn" onclick="enableCustomDrawing()" style="width:25%; height:100%"
+        title="Start drawing polygons around towers">Add Towers</button>
+      <button id="addbutton" class="btn" onclick="currentMap.addShapes()" style="width:25%; height:100%"
+        title="Save drawn polygons as manual detections">Save Towers</button>
+      <button class="btn" onclick="currentMap.clearShapes()" style="width:25%; height:100%"
+        title="Remove unsaved drawn polygons">Clear</button>
+      <button class="btn" onclick="currentMap.clearAll()" style="width:25%; height:100%"
+        title="Remove all manual tower detections">Clear all</button>
     </div>
 
     <div class="fsave" id="fsave" style="overflow-y:hidden;white-space: nowrap; overflow-x: hidden;font-size: smaller;">
@@ -206,20 +218,152 @@ Licensed under CC-BY-NC-SA-4.0
   </div>
 
   <script src="/js/jquery-3.5.1.min.js"></script>
-  <script async
-    src="https://maps.googleapis.com/maps/api/js?key={{google_map_key}}&v=3.55.1&loading=async&callback=initGoogleMap&libraries=places,drawing"
-    >
-    </script>
-  <script async
-  type='text/javascript' src='http://www.bing.com/api/maps/mapcontrol?callback=initBingMap&key={{bing_map_key}}'
-    >
-    </script>
+  <!-- Azure Maps Web SDK v3.0 -->
+  <link rel="stylesheet" href="https://atlas.microsoft.com/sdk/javascript/mapcontrol/3.0/atlas.min.css"
+    type="text/css" />
+  <link rel="stylesheet" href="https://atlas.microsoft.com/sdk/javascript/drawing/1.0/atlas-drawing.min.css"
+    type="text/css" />
+  <!-- Load Azure Maps SDK in correct order -->
+  <script src="https://atlas.microsoft.com/sdk/javascript/mapcontrol/3.0/atlas.min.js"
+    onload="console.log('Azure Maps main SDK loaded')"></script>
+  <!-- CRITICAL FIX: Add missing Service SDK for search functionality -->
+  <script src="https://atlas.microsoft.com/sdk/javascript/service/2.0/atlas-service.min.js"
+    onload="console.log('Azure Maps service SDK loaded')"></script>
+  <script src="https://atlas.microsoft.com/sdk/javascript/drawing/1.0/atlas-drawing.min.js"
+    onload="console.log('Azure Maps drawing SDK loaded')"></script>
+
+  <!-- Google Maps SDK will be loaded dynamically when needed -->
   <script>
-    let gak = "{{google_map_key}}";
-    let bak = "{{bing_map_key}}";
-    let dev = {{ dev }};
+    console.log('Google Maps will be loaded dynamically via proxy system');
   </script>
-  <script src="/js/towerscout.js"></script>
+  <script>
+    // API keys now secure on server - using proxy endpoints
+    let dev = "{{ dev }}";
+
+    // Provider availability (set by backend validation)
+    const availableProviders = {{ available_providers | tojson }};
+
+    // Set legacy JavaScript variables for compatibility
+    const gak = availableProviders.includes('google') ? true : null;
+    const aak = availableProviders.includes('azure') ? true : null;
+
+    console.log('Available providers:', availableProviders);
+    console.log('Google available:', !!gak);
+    console.log('Azure available:', !!aak);
+
+    // Map proxy configuration
+    const MAP_PROXY_CONFIG = {
+      google: {
+        tiles: '/api/maps/google/tiles',
+        static: '/api/maps/google/static'
+      },
+      azure: {
+        search: '/api/maps/azure/search',
+        tiles: '/api/maps/azure/tiles'
+      }
+    };
+
+    // Check if Azure Maps SDK is loaded
+    function checkAzureMapsLoaded() {
+      return typeof atlas !== 'undefined' && typeof atlas.Map !== 'undefined';
+    }
+
+    // Initialize Azure Maps when SDK is ready
+    function initAzureMaps() {
+      if (checkAzureMapsLoaded()) {
+        console.log('Azure Maps SDK loaded, initializing...');
+        try {
+          initAzureMap();
+        } catch (error) {
+          console.error('Azure Maps initialization error:', error.message);
+          // Fallback to Google Maps if Azure fails
+          if (typeof google !== 'undefined' && google.maps) {
+            console.log('Falling back to Google Maps');
+            setMapProvider('google');
+          }
+        }
+      } else {
+        console.log('Azure Maps SDK not ready, retrying in 100ms...');
+        setTimeout(initAzureMaps, 100);
+      }
+    }
+
+    // Function to dynamically load Google Maps
+    async function loadGoogleMaps() {
+      // Skip if Google Maps already loaded
+      if (typeof google !== 'undefined' && google.maps) {
+        console.log('Google Maps already loaded');
+        return Promise.resolve();
+      }
+
+      try {
+        // Fetch Google API key from backend
+        const response = await fetch('/getgooglekey');
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error('Google API key not available: ' + (data.message || 'Unknown error'));
+        }
+
+        return new Promise((resolve, reject) => {
+          // Create temporary callback
+          window.initGoogleMapCallback = function () {
+            console.log('Google Maps loaded via dynamic loading with API key');
+            delete window.initGoogleMapCallback; // Cleanup
+            initGoogleMap();
+            resolve();
+          };
+
+          // Load Google Maps script with API key
+          const script = document.createElement('script');
+          script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&v=quarterly&loading=async&libraries=places&callback=initGoogleMapCallback`;
+          script.onerror = () => {
+            console.error('Failed to load Google Maps');
+            delete window.initGoogleMapCallback;
+            reject(new Error('Google Maps loading failed'));
+          };
+          document.head.appendChild(script);
+        });
+      } catch (error) {
+        console.error('Error fetching Google API key:', error);
+        throw error;
+      }
+    }
+
+    // Initialize maps - Deferred to towerscout.js to prevent race conditions
+    // Provider initialization handled by unified DOMContentLoaded handler in towerscout.js
+    console.log('📋 Template loaded - map initialization deferred to towerscout.js');
+
+    // Backend provider detection still available for reference
+    async function getBackendProviders() {
+      try {
+        const response = await fetch('/getproviders');
+        const providers = await response.json();
+        console.log('🗺️ Backend providers available:', providers.map(p => p.id));
+        return providers;
+      } catch (error) {
+        console.error('❌ Error fetching backend providers:', error);
+        return [];
+      }
+    }
+
+    // Make backend provider info available globally
+    window.getBackendProviders = getBackendProviders;
+  </script>
+  <script>
+    // DEBUG: Add Azure Maps debugging if debug parameter is present
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('debug') === 'azure') {
+      console.log('🔧 [DEBUG MODE] Loading Azure Maps debug script...');
+      const debugScript = document.createElement('script');
+      debugScript.src = '/js/azure_maps_debug.js';
+      debugScript.onload = () => {
+        console.log('🔧 [DEBUG MODE] Azure Maps debug script loaded');
+      };
+      document.head.appendChild(debugScript);
+    }
+  </script>
+  <script src="/js/towerscout.js?v=20260311-1220-WIDTH"></script>
 </body>
 
 </html>

@@ -1,22 +1,101 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+test/
+tests/__pycache__/
+tests/**/__pycache__/
+
+# Node.js / NPM
+node_modules/
+package-lock.json
+npm-debug.log
+yarn.lock
+.npm
+
+# Flask
+instance/
+.webassets-cache
+flask_session/
+webapp/flask_session/*
+
+# Logs
+*.log
+logs/
+webapp/logs/*
+
+# Cache files
+cache/
+*.cache
+webapp/cache/**/*.cache
+
+# Environment variables (contains secrets)
+.env
+webapp/.env
+*.env
+!.env.example
+apikey.txt
+webapp/apikey.txt
+
+# Model weights (large files)
+model_params/
+webapp/model_params/*
+*.pt
+*.pth
+*.onnx
+yolov5s.pt
+webapp/yolov5s.pt
+yolov5/*
+
+# IDE
+.vscode/
+.vscode*
+.idea/
+*.swp
+*.swo
+*~
+workspace.code-workspace
+
+# OS
+.DS_Store
+*.DS_Store
+Thumbs.db
+.ipynb_checkpoints*
+
+# Uploads and temporary files
+uploads/*
+webapp/uploads/*
+!uploads/.gitkeep
+temp/*
+webapp/temp/*
+*.tmp
+*.bak
+tmp/
+webapp/tmp.py
+
+# Data files
 data/*
 data.yaml
-*.DS_Store
-.DS_Store
-.ipynb_checkpoints*
-.vscode*
-webapp/apikey.txt
 webapp/data/*
-webapp/__pycache__/*
-webapp/model_params/*
-webapp/temp/*
-webapp/tmp.py
-webapp/uploads/*
-webapp/yolov5s.pt
-webapp/flask_session/*
-towerscout.pem
-workspace.code-workspace
-test/*
 train/*
-yolov5/*
+
+# Deployment
+towerscout.pem
 hosting/connect-tc.sh
-.DS_Store
+
+# GitHub workflows (managed separately)
+.github/*
+
+# Agent work and task management files
+.agent_work/

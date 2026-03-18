@@ -31,6 +31,40 @@ Jasen M Kunz,
 Jessica C Smith, and
 [Chris Edens](https://www.linkedin.com/in/wcedens/) helped guide the project.
 
+## Features
+
+### Automated Detection
+- **Machine Learning Pipeline**: YOLOv5 object detection + EfficientNet classification
+- **Multi-Provider Support**: Google Maps and Azure Maps satellite imagery
+- **Batch Processing**: Efficiently process large geographic areas tile-by-tile
+- **Confidence Scoring**: Adjustable thresholds for detection sensitivity
+
+### Manual Tower Addition
+- **Interactive Drawing**: Add cooling towers manually via polygon drawing tool
+- **Visual Distinction**: Manual towers display with purple borders and "✋ Manual" badges
+- **Automatic Geocoding**: Addresses automatically retrieved and cached for performance
+- **Dataset Integration**: Manual towers included in all export formats (CSV, KML, YOLO)
+- **Dataset Restoration**: Import/export datasets to preserve manual towers across sessions
+- **Provider Lock**: Prevents imagery mismatch by locking provider selection after detections
+
+### Export & Analysis
+- **CSV Export**: Detection lists with addresses, confidence scores, and coordinates for epidemiological tracking
+- **KML Export**: Google Earth compatible files for geographic visualization
+- **YOLO Format**: Training dataset exports with normalized coordinates for ML model improvement
+- **Flexible Filtering**: Export subsets based on confidence thresholds or manual selection
+
+### Search & Navigation
+- **Address Search**: Find locations by street address, city, or neighborhood
+- **Zipcode Search**: Define search areas by postal code boundaries
+- **Custom Polygons**: Draw complex search areas with interactive polygon tool
+- **Circular Search**: Radius-based search around specific coordinates
+- **Tile Estimation**: Preview processing time before running detection (~100 tiles ≈ 30 seconds)
+
+### Data Validation
+- **Interactive Review**: Click towers in list to highlight on map (bidirectional)
+- **False Positive Removal**: Uncheck detections to exclude from exports
+- **Tile-by-Tile Review**: Systematic review mode for accuracy verification
+- **Cross-Provider Validation**: Compare detections across different imagery sources
 
 ## Attribution
 Please cite the following publication and this GitHub repository when utilizing TowerScout:

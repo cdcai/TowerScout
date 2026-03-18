@@ -13,100 +13,216 @@
 
 import math
 import torch
+import os
 from PIL import Image
 from ts_imgutil import crop
 import threading
+from ts_errors import ModelLoadError, ProcessingError, ResourceError
+from ts_logging import get_ml_logger
+
+logger = get_ml_logger()
 
 
 class YOLOv5_Detector:
     def __init__(self, filename):
-        # Model
-        #model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
-        self.model = torch.hub.load(
-            'ultralytics/yolov5', 'custom', path=filename)
-        if torch.cuda.is_available():
-            self.model.cuda()
-            t = torch.cuda.get_device_properties(0).total_memory
-            r = torch.cuda.memory_reserved(0)
-            a = torch.cuda.memory_allocated(0)
-            f = r-a  # free inside reserved
-            print("free cuda mem:", f)
-            self.batch_size = 8  # For our Tesla K8, this means 8 batches can run in parallel
-        else:
-            self.batch_size = torch.get_num_threads()  # tuned to threads
-        # add a semaphore so we don't run out of GPU memory between multiple clients
-        self.semaphore = threading.Semaphore(8)
-
-    def detect(self, tiles, events, id, crop_tiles=False, secondary=None):
-        # Inference in batches
-        tile_count = len(tiles)
-        chunks = math.ceil(tile_count/self.batch_size)
-        results = []
-        count = 0
-        print(" detecting ...")
-
-        for i in range(0, tile_count, self.batch_size):
-            # make a batch of image urls
-            tile_batch = tiles[i:i+self.batch_size]
-            # print("tile batch: ",tile_batch)
-            img_batch = [Image.open(tile['filename']) for tile in tile_batch]
-
-            # crop the tiles if requested
-            if crop_tiles:
-                img_batch = [crop(img) for img in img_batch]
-
-            # retain a copy of the images
-            if secondary is not None:
-                img_batch2 = [img.copy() for img in img_batch]
+        try:
+            logger.info(f"Initializing YOLOv5 detector with model: {filename}")
+            
+            # Validate model file exists
+            if not os.path.exists(filename):
+                raise ModelLoadError(
+                    f"YOLOv5 model file not found: {filename}",
+                    model_name="YOLOv5",
+                    model_path=filename
+                )
+            
+            # Model loading with error handling
+            try:
+                self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=filename)
+                logger.info("YOLOv5 model loaded successfully")
+            except Exception as e:
+                raise ModelLoadError(
+                    f"Failed to load YOLOv5 model: {str(e)}",
+                    model_name="YOLOv5",
+                    model_path=filename,
+                    cause=e
+                )
+            
+            # GPU/CPU configuration with error handling
+            if torch.cuda.is_available():
+                try:
+                    self.model.cuda()
+                    t = torch.cuda.get_device_properties(0).total_memory
+                    r = torch.cuda.memory_reserved(0)
+                    a = torch.cuda.memory_allocated(0)
+                    f = r-a  # free inside reserved
+                    logger.info(f"CUDA enabled - Free GPU memory: {f:,} bytes")
+                    self.batch_size = 8  # For our Tesla K8, this means 8 batches can run in parallel
+                except Exception as e:
+                    logger.warning(f"CUDA setup failed, falling back to CPU: {e}")
+                    self.batch_size = torch.get_num_threads()  # tuned to threads
             else:
-                img_batch2 = [None] * len(img_batch)
+                logger.info("CUDA not available, using CPU")
+                self.batch_size = torch.get_num_threads()  # tuned to threads
+            
+            # add a semaphore so we don't run out of GPU memory between multiple clients
+            self.semaphore = threading.Semaphore(8)
+            
+        except Exception as e:
+            if isinstance(e, ModelLoadError):
+                raise
+            else:
+                raise ModelLoadError(
+                    f"Unexpected error during YOLOv5 initialization: {str(e)}",
+                    model_name="YOLOv5",
+                    model_path=filename,
+                    cause=e
+                )
 
-            # detect
-            with self.semaphore:  # limit the number of jobs going on in parallel, because of GPU mem
-                result_obj = self.model(img_batch)
+    def detect(self, tiles, events, id, crop_tiles=False, secondary=None, perf_metrics=None):
+        try:
+            logger.info(f"Starting YOLOv5 detection on {len(tiles)} tiles")
+            
+            # Track memory before detection starts
+            if perf_metrics:
+                perf_metrics.update_memory_usage()
+            
+            # Inference in batches
+            tile_count = len(tiles)
+            chunks = math.ceil(tile_count/self.batch_size)
+            results = []
+            count = 0
 
-                #print(id(session), session['abort'])
-                if events.query(id):
-                    print(" thread aborting.")
-                    return []
+            for i in range(0, tile_count, self.batch_size):
+                try:
+                    # make a batch of image urls
+                    tile_batch = tiles[i:i+self.batch_size]
+                    logger.debug(f"Processing batch {i//self.batch_size + 1}/{chunks}: {len(tile_batch)} tiles")
+                    
+                    # Load images with error handling
+                    img_batch = []
+                    for tile in tile_batch:
+                        try:
+                            img_batch.append(Image.open(tile['filename']))
+                        except Exception as e:
+                            logger.error(f"Failed to load image {tile['filename']}: {e}")
+                            raise ProcessingError(
+                                f"Image loading failed: {tile['filename']}",
+                                operation="image_loading",
+                                cause=e
+                            )
 
-            # get the important part
-            results_raw = result_obj.xyxyn
+                    # crop the tiles if requested
+                    if crop_tiles:
+                        try:
+                            img_batch = [crop(img) for img in img_batch]
+                        except Exception as e:
+                            logger.error(f"Image cropping failed: {e}")
+                            raise ProcessingError(
+                                "Image cropping operation failed",
+                                operation="image_cropping",
+                                cause=e
+                            )
 
-            # result is tile by tile
-            for (tile, img, result) in zip(tile_batch, img_batch2, results_raw):
-                results_cpu = result.cpu().numpy().tolist()
+                    # retain a copy of the images
+                    if secondary is not None:
+                        img_batch2 = [img.copy() for img in img_batch]
+                    else:
+                        img_batch2 = [None] * len(img_batch)
 
-                # secondary classifier processing
-                if secondary is not None:
-                    # classifier will append its own prob to every detection
-                    secondary.classify(img, results_cpu, batch_id=count)
-                    count += 1
+                    # detect with semaphore protection
+                    with self.semaphore:  # limit the number of jobs going on in parallel, because of GPU mem
+                        try:
+                            result_obj = self.model(img_batch)
+                        except Exception as e:
+                            logger.error(f"YOLOv5 model inference failed: {e}")
+                            raise ProcessingError(
+                                f"Model inference failed: {str(e)}",
+                                operation="yolo_inference",
+                                tile_count=len(tile_batch),
+                                cause=e
+                            )
 
-                tile_results = [{
-                    'x1': item[0],
-                    'y1':item[1],
-                    'x2':item[2],
-                    'y2':item[3],
-                    'conf':item[4],
-                    'class':int(item[5]),
-                    'class_name':result_obj.names[int(item[5])],
-                    'secondary':item[6] if len(item) > 6 else 1
-                    } for item in results_cpu]
-                results.append(tile_results)
+                        # check for exit signal
+                        if events.query(id):
+                            logger.info("Detection aborted by user request")
+                            return []
 
-                # record the detections in the tile
-                boxes = []
-                for tr in tile_results:
-                    box = "0 " + \
-                        str((tr['x1']+tr['x2'])/2) + \
-                        " "+str((tr['y1']+tr['y2'])/2) + \
-                        " "+str(tr['x2']-tr['x1']) +\
-                        " "+str(tr['y2']-tr['y1'])+"\n"
-                    boxes.append(box)
-                tile['detections'] = boxes
+                    # get the important part
+                    results_raw = result_obj.xyxyn
 
-            print(f"tiles {count} / {tile_count} processed")
+                    # result is tile by tile
+                    for (tile, img, result) in zip(tile_batch, img_batch2, results_raw):
+                        try:
+                            results_cpu = result.cpu().numpy().tolist()
 
-        print("")
-        return results
+                            # secondary classifier processing
+                            if secondary is not None:
+                                try:
+                                    # classifier will append its own prob to every detection
+                                    secondary.classify(img, results_cpu, batch_id=count)
+                                    count += 1
+                                except Exception as e:
+                                    logger.error(f"Secondary classifier failed: {e}")
+                                    # Continue without secondary classification
+                                    count += 1
+
+                            tile_results = [{
+                                'x1': item[0],
+                                'y1':item[1],
+                                'x2':item[2],
+                                'y2':item[3],
+                                'conf':item[4],
+                                'class':int(item[5]),
+                                'class_name':result_obj.names[int(item[5])],
+                                'secondary':item[6] if len(item) > 6 else 1
+                                } for item in results_cpu]
+                            results.append(tile_results)
+
+                            # record the detections in the tile
+                            boxes = []
+                            for tr in tile_results:
+                                box = "0 " + \
+                                    str((tr['x1']+tr['x2'])/2) + \
+                                    " "+str((tr['y1']+tr['y2'])/2) + \
+                                    " "+str(tr['x2']-tr['x1']) +\
+                                    " "+str(tr['y2']-tr['y1'])+"\n"
+                                boxes.append(box)
+                            tile['detections'] = boxes
+                            
+                        except Exception as e:
+                            logger.error(f"Result processing failed for tile: {e}")
+                            # Continue processing other tiles
+                            continue
+
+                    logger.debug(f"Batch {i//self.batch_size + 1}/{chunks} completed")
+                    
+                    # Track memory usage after batch (helpful for monitoring memory leaks)
+                    if perf_metrics:
+                        perf_metrics.update_memory_usage()
+                    
+                except Exception as e:
+                    if isinstance(e, ProcessingError):
+                        raise
+                    else:
+                        logger.error(f"Unexpected error in batch processing: {e}")
+                        raise ProcessingError(
+                            f"Batch processing failed: {str(e)}",
+                            operation="batch_processing",
+                            cause=e
+                        )
+
+            logger.info(f"YOLOv5 detection completed: {tile_count} tiles processed")
+            return results
+            
+        except Exception as e:
+            if isinstance(e, ProcessingError):
+                raise
+            else:
+                logger.error(f"Unexpected error in YOLOv5 detection: {str(e)}", exc_info=True)
+                raise ProcessingError(
+                    f"YOLOv5 detection system error: {str(e)}",
+                    operation="detect",
+                    tile_count=len(tiles),
+                    cause=e
+                )

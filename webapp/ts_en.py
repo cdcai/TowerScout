@@ -16,36 +16,95 @@
 
 import torch
 import torch.nn as nn
+import os
 
 from efficientnet_pytorch import EfficientNet
 from torchvision import transforms
 
 import PIL
 from ts_imgutil import cut_square_detection
+from ts_errors import ModelLoadError, ProcessingError
+from ts_logging import get_ml_logger
+
+logger = get_ml_logger()
 
 class EN_Classifier:
 
     def __init__(self):
-        # load pre-trained EfficientNet model
-        self.model = EfficientNet.from_pretrained('efficientnet-b5', include_top=True)
+        try:
+            logger.info("Initializing EfficientNet classifier")
+            
+            # Validate model file exists
+            PATH_best = 'model_params/EN/b5_unweighted_best.pt'
+            if not os.path.exists(PATH_best):
+                raise ModelLoadError(
+                    f"EfficientNet model file not found: {PATH_best}",
+                    model_name="EfficientNet-B5",
+                    model_path=PATH_best
+                )
+            
+            try:
+                # load pre-trained EfficientNet model
+                self.model = EfficientNet.from_pretrained('efficientnet-b5', include_top=True)
+                logger.info("EfficientNet base model loaded successfully")
+            except Exception as e:
+                raise ModelLoadError(
+                    f"Failed to load EfficientNet base model: {str(e)}",
+                    model_name="EfficientNet-B5", 
+                    cause=e
+                )
 
-        # replace classification head
-        self.model._fc = nn.Sequential(
-            nn.Linear(2048, 512), #b5
-            nn.Linear(512, 1))
+            try:
+                # replace classification head
+                self.model._fc = nn.Sequential(
+                    nn.Linear(2048, 512), #b5
+                    nn.Linear(512, 1))
+                logger.debug("EfficientNet classification head replaced")
+            except Exception as e:
+                raise ModelLoadError(
+                    f"Failed to modify EfficientNet architecture: {str(e)}",
+                    model_name="EfficientNet-B5",
+                    cause=e
+                )
 
-        # load our weights
-        PATH_best = 'model_params/EN/b5_unweighted_best.pt'
+            # GPU/CPU configuration with error handling
+            try:
+                if torch.cuda.is_available():
+                    self.model.cuda()
+                    checkpoint = torch.load(PATH_best)
+                    logger.info("EfficientNet loaded on CUDA")
+                else:
+                    checkpoint = torch.load(PATH_best, map_location=torch.device('cpu'))
+                    logger.info("EfficientNet loaded on CPU")
+            except Exception as e:
+                raise ModelLoadError(
+                    f"Failed to configure EfficientNet device: {str(e)}", 
+                    model_name="EfficientNet-B5",
+                    model_path=PATH_best,
+                    cause=e
+                )
 
-        # switch to GPU memory if available
-        if torch.cuda.is_available():
-            self.model.cuda()
-            checkpoint = torch.load(PATH_best)
-        else:
-            checkpoint = torch.load(PATH_best, map_location=torch.device('cpu'))
-
-        self.model.load_state_dict(checkpoint)
-        self.model.eval()
+            try:
+                self.model.load_state_dict(checkpoint)
+                self.model.eval()
+                logger.info("EfficientNet weights loaded and model set to eval mode")
+            except Exception as e:
+                raise ModelLoadError(
+                    f"Failed to load EfficientNet weights: {str(e)}",
+                    model_name="EfficientNet-B5",
+                    model_path=PATH_best,
+                    cause=e
+                )
+                
+        except Exception as e:
+            if isinstance(e, ModelLoadError):
+                raise
+            else:
+                raise ModelLoadError(
+                    f"Unexpected error during EfficientNet initialization: {str(e)}",
+                    model_name="EfficientNet-B5",
+                    cause=e
+                )
 
         # prepare the image transform
         self.transform = transforms.Compose([

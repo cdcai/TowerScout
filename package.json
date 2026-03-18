@@ -1,0 +1,22 @@
+{
+    "name": "towerscout-frontend-refactoring",
+    "version": "2.6.1",
+    "description": "TowerScout TASK-038 frontend refactoring build system",
+    "private": true,
+    "scripts": {
+        "build": "node webapp/build.js",
+        "test:stage-0": "bash validate_stage_0.sh"
+    },
+    "dependencies": {},
+    "devDependencies": {},
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "keywords": [
+        "towerscout",
+        "refactoring",
+        "build"
+    ],
+    "author": "TowerScout Team",
+    "license": "MIT"
+}
