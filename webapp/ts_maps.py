@@ -22,11 +22,26 @@ import math
 import asyncio
 import aiohttp
 import aiofiles
-import ssl
 from ts_logging import get_maps_logger
+from ts_errors import MapProviderError, NetworkError
 
 # Initialize logger for this module
 maps_logger = get_maps_logger()
+TRUTHY_ENV_VALUES = {'1', 'true', 'yes', 'on'}
+
+
+def _allow_insecure_tls():
+    return os.getenv('TOWERSCOUT_ALLOW_INSECURE_TLS', '').strip().lower() in TRUTHY_ENV_VALUES
+
+
+def _build_connector():
+    if _allow_insecure_tls():
+        maps_logger.warning(
+            "Map downloads are running with TLS verification disabled because "
+            "TOWERSCOUT_ALLOW_INSECURE_TLS is enabled."
+        )
+        return aiohttp.TCPConnector(limit=50, limit_per_host=16, ssl=False)
+    return aiohttp.TCPConnector(limit=50, limit_per_host=16)
 
 
 class Map:
@@ -37,7 +52,6 @@ class Map:
     def get_sat_maps(self, tiles, loop, dir, fname):
         try:
             maps_logger.info(f"Starting satellite map download for {len(tiles)} tiles")
-            ssl._create_default_https_context = ssl._create_unverified_context
             urls = []
             
             for tile in tiles:
@@ -143,7 +157,7 @@ async def gather_urls(urls, dir, fname, metadata):
         maps_logger.info(f"Starting download of {len(urls)} map tiles")
         
         # Create session with proper error handling
-        connector = aiohttp.TCPConnector(limit=50, limit_per_host=16)
+        connector = _build_connector()
         timeout = aiohttp.ClientTimeout(total=300)  # 5 minute total timeout
         
         async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
@@ -268,25 +282,47 @@ async def fetch_all(semaphore, session, urls, dir, fname, metadata):
             task = fetch(semaphore, session, url, dir, fname, i//2 if metadata else i)
             tasks.append(task)
         
-        # Use return_exceptions=True to handle individual failures gracefully
+        # Gather all results so we can fail the imagery phase with accurate counts.
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
-        # Check for failures and log them
-        failed_count = 0
+        total_tiles = len(urls) // 2 if metadata else len(urls)
+        failed_asset_count = 0
+        failed_tile_ids = set()
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                failed_count += 1
+                failed_asset_count += 1
+                failed_tile_ids.add(i // 2 if metadata else i)
                 maps_logger.error(f"Failed to download tile {i}: {result}")
         
-        if failed_count > 0:
-            maps_logger.warning(f"{failed_count} out of {len(urls)} tiles failed to download")
-            if failed_count == len(urls):
-                raise MapProviderError(
-                    "All map tile downloads failed",
-                    provider="unknown"
-                )
+        successful_tile_count = total_tiles - len(failed_tile_ids)
+        if failed_tile_ids:
+            failed_tile_count = len(failed_tile_ids)
+            maps_logger.warning(
+                "Imagery download failed for %s of %s tile(s).",
+                failed_tile_count,
+                total_tiles,
+            )
+            raise MapProviderError(
+                f"Failed to download required imagery for {failed_tile_count} of {total_tiles} tile(s).",
+                provider="unknown",
+                details={
+                    "successful_tile_count": successful_tile_count,
+                    "failed_tile_count": failed_tile_count,
+                    "failed_asset_count": failed_asset_count,
+                    "total_tile_count": total_tiles,
+                    "failed_tile_ids": sorted(failed_tile_ids),
+                },
+                user_message=(
+                    "Required imagery tiles could not be downloaded. "
+                    "Detection stopped before model inference started."
+                ),
+            )
         
-        maps_logger.info(f"Download completed: {len(urls) - failed_count}/{len(urls)} tiles successful")
+        maps_logger.info(
+            "Download completed: %s/%s tile(s) successful",
+            successful_tile_count,
+            total_tiles,
+        )
         return results
         
     except Exception as e:

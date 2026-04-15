@@ -13,7 +13,7 @@
       this.switchingInProgress = false;
       this.initializationPromises = new Map();
       this.isInitializing = true;
-      console.log('🔧 ProviderStateManager initialized');
+      window.TowerScoutLogger.debug('🔧 ProviderStateManager initialized');
 
       // TASK-041 Phase 1: Initialization state tracking
       this.initializationState = {
@@ -48,7 +48,7 @@
       // Set initialization complete after initial setup (use setTimeout since timerManager not yet initialized)
       setTimeout(() => {
         this.isInitializing = false;
-        console.log('🎯 Provider initialization complete');
+        window.TowerScoutLogger.debug('🎯 Provider initialization complete');
       }, 3000);
     }
 
@@ -69,7 +69,7 @@
         return;
       }
 
-      console.log(`🔄 Switching provider from ${this.currentProvider} to ${targetProvider}`);
+      window.TowerScoutLogger.debug(`🔄 Switching provider from ${this.currentProvider} to ${targetProvider}`);
       this.switchingInProgress = true;
 
       // Store current state for rollback
@@ -81,10 +81,10 @@
       try {
         // ⭐ MEMORY MANAGEMENT: Cleanup previous provider BEFORE switching
         if (this.currentMap && typeof this.currentMap.cleanup === 'function') {
-          console.log(`🧹 Cleaning up ${this.currentProvider} before switch...`);
+          window.TowerScoutLogger.debug(`🧹 Cleaning up ${this.currentProvider} before switch...`);
           try {
             this.currentMap.cleanup();
-            console.log(`✅ ${this.currentProvider} cleanup successful`);
+            window.TowerScoutLogger.debug(`✅ ${this.currentProvider} cleanup successful`);
           } catch (cleanupError) {
             console.warn(`⚠️ ${this.currentProvider} cleanup had errors (continuing):`, cleanupError.message);
             // Don't fail the switch due to cleanup errors - log and continue
@@ -98,7 +98,7 @@
 
         // Wait for initialization if needed
         if (targetProvider === 'azure' && (!window.azureMap || window.azureMap.initializationPromise)) {
-          console.log('🔄 Waiting for Azure Maps initialization...');
+          window.TowerScoutLogger.debug('🔄 Waiting for Azure Maps initialization...');
           await Promise.race([
             this.ensureAzureInitialized(),
             new Promise((_, reject) =>
@@ -127,7 +127,7 @@
 
         // Additional validation for Google Maps - ensure map instance is ready  
         if (targetProvider === 'google') {
-          console.log('🔍 Validating Google Maps instance:', {
+          window.TowerScoutLogger.debug('🔍 Validating Google Maps instance:', {
             hasMap: !!availableMap.map,
             mapType: availableMap.map ? typeof availableMap.map : 'undefined',
             hasGetCenter: availableMap.map ? typeof availableMap.map.getCenter : 'undefined'
@@ -141,7 +141,7 @@
           try {
             if (typeof availableMap.map.getCenter === 'function') {
               const center = availableMap.map.getCenter();
-              console.log('🎯 Google Maps center check:', center);
+              window.TowerScoutLogger.debug('🎯 Google Maps center check:', center);
               // Allow null/undefined center if map just loaded
               if (center === null || center === undefined) {
                 console.warn('⚠️ Google Maps center not available yet, but map instance exists - allowing');
@@ -157,9 +157,9 @@
 
         // Test that the map can actually provide bounds (critical for ML pipeline)
         try {
-          console.log(`🔍 Testing ${targetProvider} bounds availability...`);
+          window.TowerScoutLogger.debug(`🔍 Testing ${targetProvider} bounds availability...`);
           const testBounds = availableMap.getBounds();
-          console.log(`📐 ${targetProvider} bounds result:`, testBounds);
+          window.TowerScoutLogger.debug(`📐 ${targetProvider} bounds result:`, testBounds);
 
           if (!testBounds || testBounds.length !== 4) {
             console.warn(`⚠️ ${targetProvider} bounds test failed, but allowing switch to proceed`);
@@ -168,7 +168,7 @@
               throw new Error(`${targetProvider} map bounds test failed`);
             }
           } else {
-            console.log(`✅ ${targetProvider} bounds test passed`);
+            window.TowerScoutLogger.debug(`✅ ${targetProvider} bounds test passed`);
           }
         } catch (boundsError) {
           console.warn(`⚠️ ${targetProvider} bounds error:`, boundsError.message);
@@ -184,20 +184,20 @@
         this.currentProvider = targetProvider;
         this.currentMap = availableMap;
 
-        console.log(`✅ Provider switched: ${rollbackState.provider} → ${targetProvider}`);
+        window.TowerScoutLogger.debug(`✅ Provider switched: ${rollbackState.provider} → ${targetProvider}`);
 
         // ISSUE-002 FIX: Restore provider components after switch (drawing tools, etc.)
         if (typeof availableMap.restore === 'function') {
           try {
-            console.log(`🔄 Restoring ${targetProvider} components...`);
+            window.TowerScoutLogger.debug(`🔄 Restoring ${targetProvider} components...`);
             availableMap.restore();
-            console.log(`✅ ${targetProvider} components restored`);
+            window.TowerScoutLogger.debug(`✅ ${targetProvider} components restored`);
           } catch (restoreError) {
             console.warn(`⚠️ ${targetProvider} restoration had errors (continuing):`, restoreError.message);
             // Don't fail the switch due to restoration errors - log and continue
           }
         } else {
-          console.log(`ℹ️ ${targetProvider} does not have restoration method (expected for new providers)`);
+          window.TowerScoutLogger.debug(`ℹ️ ${targetProvider} does not have restoration method (expected for new providers)`);
         }
 
         // Validate the switch worked
@@ -214,7 +214,7 @@
 
         // Rollback to previous state
         if (rollbackState.provider && rollbackState.map) {
-          console.log(`🔄 Rolling back to ${rollbackState.provider}`);
+          window.TowerScoutLogger.debug(`🔄 Rolling back to ${rollbackState.provider}`);
           this.currentProvider = rollbackState.provider;
           this.currentMap = rollbackState.map;
         }
@@ -229,10 +229,10 @@
 
     async ensureAzureInitialized() {
       if (!window.azureMap) {
-        console.log('🔄 Azure Maps not initialized, initializing...');
+        window.TowerScoutLogger.debug('🔄 Azure Maps not initialized, initializing...');
         await window.initAzureMap();
       } else if (window.azureMap.initializationPromise) {
-        console.log('🔄 Waiting for existing Azure Maps initialization...');
+        window.TowerScoutLogger.debug('🔄 Waiting for existing Azure Maps initialization...');
         await window.azureMap.initializationPromise;
       }
 
@@ -266,7 +266,7 @@
       if (provider === 'azure') {
         const ready = state.styleLoaded && state.drawingManagerReady && state.dataSourceReady;
         if (!ready) {
-          console.log('🔍 Azure initialization status:', {
+          window.TowerScoutLogger.debug('🔍 Azure initialization status:', {
             styleLoaded: state.styleLoaded,
             drawingManagerReady: state.drawingManagerReady,
             dataSourceReady: state.dataSourceReady
@@ -276,7 +276,7 @@
       } else if (provider === 'google') {
         const ready = state.styleLoaded && state.drawingManagerReady;
         if (!ready) {
-          console.log('🔍 Google initialization status:', {
+          window.TowerScoutLogger.debug('🔍 Google initialization status:', {
             styleLoaded: state.styleLoaded,
             drawingManagerReady: state.drawingManagerReady
           });
@@ -291,11 +291,11 @@
     markInitialized(provider, milestone) {
       if (this.initializationState[provider]) {
         this.initializationState[provider][milestone] = true;
-        console.log(`✅ ${provider} - ${milestone} complete`);
+        window.TowerScoutLogger.debug(`✅ ${provider} - ${milestone} complete`);
 
         // Check if provider is now fully initialized
         if (this.isFullyInitialized(provider)) {
-          console.log(`🎉 ${provider} is now fully initialized and ready!`);
+          window.TowerScoutLogger.debug(`🎉 ${provider} is now fully initialized and ready!`);
         }
       } else {
         console.warn(`⚠️ Attempted to mark milestone for unknown provider: ${provider}`);
@@ -332,7 +332,7 @@
         throw new Error('Invalid Google Maps instance - missing required methods');
       }
 
-      console.log('✅ Google Maps instance registered with ProviderStateManager');
+      window.TowerScoutLogger.debug('✅ Google Maps instance registered with ProviderStateManager');
       this.googleMapInstance = mapInstance;
 
       // Update currentMap if Google is the current provider
@@ -358,7 +358,7 @@
         throw new Error('Invalid Azure Maps instance - missing required methods');
       }
 
-      console.log('✅ Azure Maps instance registered with ProviderStateManager');
+      window.TowerScoutLogger.debug('✅ Azure Maps instance registered with ProviderStateManager');
       this.azureMapInstance = mapInstance;
 
       // Update currentMap if Azure is the current provider
@@ -417,7 +417,7 @@
         this.currentProvider = provider;
         this.currentMap = mapInstance;
 
-        console.log(`🔒 Current map set atomically: ${provider}`);
+        window.TowerScoutLogger.debug(`🔒 Current map set atomically: ${provider}`);
       } finally {
         this.mapStateLock = false;
       }
@@ -454,7 +454,7 @@
         throw new Error('Detections must be an array');
       }
       this.detectionArray = detections;
-      console.log(`✅ Detections array updated: ${detections.length} items`);
+      window.TowerScoutLogger.debug(`✅ Detections array updated: ${detections.length} items`);
     }
 
     /**
@@ -469,7 +469,7 @@
       try {
         this.detectionLock = true;
         this.detectionArray.length = 0;
-        console.log('🧹 Detections array cleared');
+        window.TowerScoutLogger.debug('🧹 Detections array cleared');
       } finally {
         this.detectionLock = false;
       }
@@ -504,7 +504,7 @@
       try {
         this.detectionLock = true;
         this.detectionArray.sort(compareFn);
-        console.log(`🔀 Detections sorted: ${this.detectionArray.length} items`);
+        window.TowerScoutLogger.debug(`🔀 Detections sorted: ${this.detectionArray.length} items`);
       } finally {
         this.detectionLock = false;
       }
@@ -529,7 +529,7 @@
         throw new Error('Confidence threshold must be a number between 0 and 1');
       }
       this.minConfidence = numValue;
-      console.log(`✅ Confidence threshold updated: ${numValue}`);
+      window.TowerScoutLogger.debug(`✅ Confidence threshold updated: ${numValue}`);
     }
 
     /**
@@ -579,10 +579,10 @@
         // Start new timer - use TimerManager for automatic cleanup tracking
         if (window.timerManager && window.timerManager.setInterval) {
           this.progressTimerId = window.timerManager.setInterval(callback, interval);
-          console.log(`⏱️ Progress timer started with TimerManager (ID: ${this.progressTimerId})`);
+          window.TowerScoutLogger.debug(`⏱️ Progress timer started with TimerManager (ID: ${this.progressTimerId})`);
         } else {
           this.progressTimerId = setInterval(callback, interval);
-          console.log(`⏱️ Progress timer started (ID: ${this.progressTimerId})`);
+          window.TowerScoutLogger.debug(`⏱️ Progress timer started (ID: ${this.progressTimerId})`);
         }
 
         this.progressActive = true;
@@ -612,7 +612,7 @@
           } else {
             clearInterval(this.progressTimerId);
           }
-          console.log(`🛑 Progress timer stopped (ID: ${this.progressTimerId})`);
+          window.TowerScoutLogger.debug(`🛑 Progress timer stopped (ID: ${this.progressTimerId})`);
           this.progressTimerId = null;
         }
 
@@ -680,7 +680,7 @@
         throw new Error('Tiles must be an array');
       }
       this.tileArray = tiles;
-      console.log(`✅ Tile array updated: ${tiles.length} items`);
+      window.TowerScoutLogger.debug(`✅ Tile array updated: ${tiles.length} items`);
     }
 
     /**
@@ -695,7 +695,7 @@
       try {
         this.tileLock = true;
         this.tileArray.length = 0;
-        console.log('🧹 Tile array cleared');
+        window.TowerScoutLogger.debug('🧹 Tile array cleared');
       } finally {
         this.tileLock = false;
       }
@@ -737,7 +737,7 @@
     setCurrentElement(element) {
       this.currentElementRef = element;
       if (element) {
-        console.log(`🎯 Current detection element set: ${element.id}`);
+        window.TowerScoutLogger.debug(`🎯 Current detection element set: ${element.id}`);
       }
     }
 
@@ -756,7 +756,7 @@
     setCurrentAddrElement(element) {
       this.currentAddrElementRef = element;
       if (element) {
-        console.log(`📍 Current address element set: ${element.id}`);
+        window.TowerScoutLogger.debug(`📍 Current address element set: ${element.id}`);
       }
     }
 
@@ -774,7 +774,7 @@
       }
       this.currentElementRef = null;
       this.currentAddrElementRef = null;
-      console.log(`🧹 UI highlighting cleared`);
+      window.TowerScoutLogger.debug(`🧹 UI highlighting cleared`);
     }
 
     /**
@@ -791,12 +791,12 @@
      */
     setIsInitializing(value) {
       this.isInitializing = value;
-      console.log(`🔧 Initialization state: ${value ? 'INITIALIZING' : 'COMPLETE'}`);
+      window.TowerScoutLogger.debug(`🔧 Initialization state: ${value ? 'INITIALIZING' : 'COMPLETE'}`);
     }
   }
 
   // Create global instance
   window.providerManager = new ProviderStateManager();
 
-  console.log('✅ ProviderStateManager module loaded');
+  window.TowerScoutLogger.debug('✅ ProviderStateManager module loaded');
 })();

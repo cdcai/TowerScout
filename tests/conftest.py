@@ -10,7 +10,14 @@ import sys
 import tempfile
 from pathlib import Path
 import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
+
+# Set import-time defaults before any test module imports application code.
+os.environ.setdefault('GOOGLE_API_KEY', 'test_google_key_123')
+os.environ.setdefault('AZURE_MAPS_SUBSCRIPTION_KEY', 'test_azure_key_456')
+os.environ.setdefault('FLASK_SECRET_KEY', 'test_secret_key_for_sessions')
+os.environ.setdefault('FLASK_ENV', 'testing')
+os.environ.setdefault('TOWERSCOUT_LAZY_MODEL_INIT', '1')
 
 # Add webapp directory to Python path for all tests
 WEBAPP_DIR = Path(__file__).parent.parent / 'webapp'

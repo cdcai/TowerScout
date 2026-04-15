@@ -641,7 +641,7 @@ open tests/frontend/test_stage_0_manual.html
 
 ### From Global Variables to ProviderStateManager
 
-**Decision Record**: `.agent_work/decisions/TASK-043-global-variable-migration-patterns.md`
+**Decision Record**: `.agent_work/decisions/015-global-variable-migration-patterns.md`
 
 #### Pattern 1: Provider Instance Access
 
@@ -949,17 +949,17 @@ Fixes: TASK-045
 
 ### Decision Records
 
-- **Global Variable Migration**: [.agent_work/decisions/TASK-043-global-variable-migration-patterns.md](../../decisions/TASK-043-global-variable-migration-patterns.md)
+- **Global Variable Migration**: [.agent_work/decisions/015-global-variable-migration-patterns.md](../../decisions/015-global-variable-migration-patterns.md)
 - **Azure Maps Integration**: [.agent_work/decisions/006-azure-maps-migration.md](../../decisions/006-azure-maps-migration.md)
 - **Error Handling**: [.agent_work/decisions/009-error-handling-infrastructure.md](../../decisions/009-error-handling-infrastructure.md)
 
 ### Task Documentation
 
-- **Frontend Modularization**: [.agent_work/tasks/TASK-038-frontend-refactoring.md](../../tasks/TASK-038-frontend-refactoring.md)
-- **State Management**: [.agent_work/tasks/TASK-041-state-management.md](../../tasks/TASK-041-state-management.md)
-- **Manual Testing**: [.agent_work/tasks/TASK-042-manual-testing-validation.md](../../tasks/TASK-042-manual-testing-validation.md)
-- **Global Variable Deprecation**: [.agent_work/tasks/TASK-043-global-variable-deprecation.md](../../tasks/TASK-043-global-variable-deprecation.md)
-- **Boundary Bug Fix**: [.agent_work/tasks/TASK-045-boundary-accumulation-bug.md](../../tasks/TASK-045-boundary-accumulation-bug.md)
+- **Frontend Modularization**: [.agent_work/tasks/completed/TASK-038-frontend-refactoring.md](../../tasks/completed/TASK-038-frontend-refactoring.md)
+- **State Management**: [.agent_work/tasks/completed/TASK-041-deep-dive-priority-2.md](../../tasks/completed/TASK-041-deep-dive-priority-2.md)
+- **Manual Testing**: [.agent_work/tasks/completed/TASK-042-testing-action-log.md](../../tasks/completed/TASK-042-testing-action-log.md)
+- **Global Variable Deprecation**: [.agent_work/tasks/completed/TASK-043-global-variable-deprecation.md](../../tasks/completed/TASK-043-global-variable-deprecation.md)
+- **Boundary Bug Fix**: [.agent_work/tasks/completed/TASK-045-boundary-accumulation-bug.md](../../tasks/completed/TASK-045-boundary-accumulation-bug.md)
 
 ---
 

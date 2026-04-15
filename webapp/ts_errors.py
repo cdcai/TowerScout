@@ -67,10 +67,10 @@ class ConfigurationError(TowerScoutError):
     """Raised when there are configuration issues (missing API keys, invalid settings)."""
     
     def __init__(self, message: str, missing_config: str = None, **kwargs):
+        kwargs.setdefault("user_message", "Configuration error. Please check your settings and try again.")
         super().__init__(
             message=message,
             error_code="CONFIGURATION_ERROR",
-            user_message="Configuration error. Please check your settings and try again.",
             **kwargs
         )
         if missing_config:
@@ -81,10 +81,10 @@ class ModelLoadError(TowerScoutError):
     """Raised when ML models fail to load (missing files, CUDA issues, corrupted weights)."""
     
     def __init__(self, message: str, model_name: str = None, model_path: str = None, **kwargs):
+        kwargs.setdefault("user_message", "Model loading failed. The detection system may be temporarily unavailable.")
         super().__init__(
             message=message,
             error_code="MODEL_LOAD_ERROR",
-            user_message="Model loading failed. The detection system may be temporarily unavailable.",
             **kwargs
         )
         if model_name:
@@ -98,10 +98,10 @@ class MapProviderError(TowerScoutError):
     
     def __init__(self, message: str, provider: str = None, api_response_code: int = None, 
                  retry_after: int = None, **kwargs):
+        kwargs.setdefault("user_message", "Map service temporarily unavailable. Please try again in a moment.")
         super().__init__(
             message=message,
             error_code="MAP_PROVIDER_ERROR",
-            user_message="Map service temporarily unavailable. Please try again in a moment.",
             **kwargs
         )
         if provider:
@@ -116,10 +116,10 @@ class ProcessingError(TowerScoutError):
     """Raised during image processing, detection, or coordinate transformation operations."""
     
     def __init__(self, message: str, operation: str = None, tile_count: int = None, **kwargs):
+        kwargs.setdefault("user_message", "Processing failed. Please check your input and try again.")
         super().__init__(
             message=message,
             error_code="PROCESSING_ERROR",
-            user_message="Processing failed. Please check your input and try again.",
             **kwargs
         )
         if operation:
@@ -132,10 +132,10 @@ class SessionError(TowerScoutError):
     """Raised when session management fails (expired sessions, invalid state)."""
     
     def __init__(self, message: str, session_id: str = None, **kwargs):
+        kwargs.setdefault("user_message", "Session error. Please refresh the page and try again.")
         super().__init__(
             message=message,
             error_code="SESSION_ERROR",
-            user_message="Session error. Please refresh the page and try again.",
             **kwargs
         )
         if session_id:
@@ -147,10 +147,10 @@ class ValidationError(TowerScoutError):
     
     def __init__(self, message: str, field_name: str = None, field_value: Any = None, **kwargs):
         # Import existing ValidationError behavior if it exists
+        kwargs.setdefault("user_message", f"Invalid input: {message}")
         super().__init__(
             message=message,
             error_code="VALIDATION_ERROR",
-            user_message=f"Invalid input: {message}",
             **kwargs
         )
         if field_name:
@@ -163,10 +163,10 @@ class NetworkError(TowerScoutError):
     """Raised when network operations fail (timeouts, connection errors)."""
     
     def __init__(self, message: str, url: str = None, timeout: int = None, **kwargs):
+        kwargs.setdefault("user_message", "Network connection failed. Please check your internet connection and try again.")
         super().__init__(
             message=message,
             error_code="NETWORK_ERROR",
-            user_message="Network connection failed. Please check your internet connection and try again.",
             **kwargs
         )
         if url:
@@ -180,10 +180,10 @@ class ResourceError(TowerScoutError):
     
     def __init__(self, message: str, resource_type: str = None, available: str = None, 
                  required: str = None, **kwargs):
+        kwargs.setdefault("user_message", "Insufficient system resources. Please try with a smaller area or contact support.")
         super().__init__(
             message=message,
             error_code="RESOURCE_ERROR",
-            user_message="Insufficient system resources. Please try with a smaller area or contact support.",
             **kwargs
         )
         if resource_type:

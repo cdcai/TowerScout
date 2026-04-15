@@ -29,7 +29,7 @@
         }
       })
       .catch(error => {
-        console.log(error);
+        window.TowerScoutLogger.debug(error);
       });
   }
 
@@ -50,5 +50,5 @@
   window.getZipcodePolygon = getZipcodePolygon;
   window.parseZipcodeResult = parseZipcodeResult;
 
-  console.log('✅ ZipcodeBoundary module loaded');
+  window.TowerScoutLogger.debug('✅ ZipcodeBoundary module loaded');
 })();

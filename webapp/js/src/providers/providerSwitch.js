@@ -4,5 +4,5 @@
 (function () {
   'use strict';
   // Provider switching code will be extracted here in Stage 3
-  console.log('✅ providerSwitch module loaded (Stage 3 pending)');
+  window.TowerScoutLogger.debug('✅ providerSwitch module loaded (Stage 3 pending)');
 })();

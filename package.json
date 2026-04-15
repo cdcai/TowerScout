@@ -5,10 +5,15 @@
     "private": true,
     "scripts": {
         "build": "node webapp/build.js",
-        "test:stage-0": "bash validate_stage_0.sh"
+        "test:stage-0": "bash validate_stage_0.sh",
+        "test:browser:detect": "node tests/frontend/test_detection_workflow_smoke.js",
+        "test:browser:detect:headed": "node tests/frontend/test_detection_workflow_smoke.js --headed",
+        "test:browser:detect:google": "node tests/frontend/test_detection_workflow_smoke.js --provider=google",
+        "test:browser:detect:azure": "node tests/frontend/test_detection_workflow_smoke.js --provider=azure"
     },
-    "dependencies": {},
-    "devDependencies": {},
+    "devDependencies": {
+        "puppeteer": "24.19.0"
+    },
     "engines": {
         "node": ">=16.0.0"
     },

@@ -14,12 +14,30 @@
     }
 
     constructor(x1, y1, x2, y2, metadata, url, id) {
-      super(x1, y1, x2, y2, "#0000FF", "#0000FF", 0.0, "tile")
+      super(x1, y1, x2, y2, "#0000FF", "#0000FF", 0.0, "tile", undefined, false)
       this.metadata = metadata; // for map metadata
       this.url = url
       this.id = (id !== undefined) ? id : providerManager.getTilesLength();  // Phase 2: Use state manager for length
 
       providerManager.addTile(this); // Phase 2: Use state manager for adding
+    }
+
+    centerInMap() {
+      const targetMap = currentMap || this.map || googleMap;
+      if (!targetMap) {
+        return;
+      }
+
+      if (typeof targetMap.fitBounds === 'function') {
+        if (targetMap.fitBounds.length >= 4) {
+          targetMap.fitBounds(this.x1, this.y1, this.x2, this.y2);
+        } else {
+          targetMap.fitBounds([this.x1, this.y1, this.x2, this.y2]);
+        }
+        return;
+      }
+
+      super.centerInMap();
     }
 
     // find the ids for all tiles that the center of this box belongs to
@@ -79,6 +97,6 @@
   // Expose to window for inline HTML handlers
   window.Tile = Tile;
 
-  console.log('✅ Tile module loaded');
+  window.TowerScoutLogger.debug('✅ Tile module loaded');
 
 })();

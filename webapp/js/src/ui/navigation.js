@@ -88,7 +88,7 @@
     let adiv = document.getElementById("about_div");
 
     let op = aboutOpacity(aboutSecs, aboutTotal)
-    //console.log(op, aboutSecs, aboutTotal)
+    //window.TowerScoutLogger.debug(op, aboutSecs, aboutTotal)
     if (op <= 0 || aboutSecs >= aboutTotal) {
       adiv.style.display = "none";
       removeClickDismissHandler(); // Clean up event listeners
@@ -136,6 +136,6 @@
   // ===== Expose to window for inline HTML handlers =====
   window.about = about;
 
-  console.log('✅ Navigation module loaded (about dialog)');
+  window.TowerScoutLogger.debug('✅ Navigation module loaded (about dialog)');
 
 })();

@@ -5,7 +5,7 @@
 
     class PlaceRect {
 
-        constructor(x1, y1, x2, y2, color, fillColor, opacity, classname, listener) {
+        constructor(x1, y1, x2, y2, color, fillColor, opacity, classname, listener, renderOnMap = true) {
 
             this.x1 = x1;
             this.y1 = y1;
@@ -17,7 +17,8 @@
             this.classname = classname;
             this.address = "<unknown address>";
             this.map = currentMap
-            this.mapRect = this.map.makeMapRect(this, listener);
+            this.renderOnMap = renderOnMap !== false;
+            this.mapRect = this.renderOnMap ? this.map.makeMapRect(this, listener) : null;
             // FIX NEW-ISSUE-003: Don't call update() here - let Detection call it after setting 'inside' property
             // this.update();  // Removed to prevent showing markers before boundary filtering
             this.listener = listener;
@@ -47,10 +48,13 @@
         augment(addr) {
             this.addrSpan.innerText = addr;
             this.address = addr;
-            //console.log("tower " + i + ": " + addr)
+            //window.TowerScoutLogger.debug("tower " + i + ": " + addr)
         }
 
         highlight(color) {
+            if (!this.mapRect) {
+                return;
+            }
             currentMap.colorMapRect(this, color);
             setTimeout(() => {
                 currentMap.colorMapRect(this, this.color);
@@ -59,9 +63,11 @@
 
         update(newMap) {
             if (typeof newMap !== 'undefined') {
-                this.map.updateMapRect(this, false);
-                this.mapRect = newMap.makeMapRect(this, this.listener);
+                if (this.mapRect) {
+                    this.map.updateMapRect(this, false);
+                }
                 this.map = newMap;
+                this.mapRect = this.renderOnMap ? newMap.makeMapRect(this, this.listener) : null;
             }
             // FIX NEW-ISSUE-003: Don't automatically show markers - let Detection.update() control visibility
             // this.map.updateMapRect(this, true);  // Removed - Detection subclass handles visibility logic
@@ -71,5 +77,5 @@
     // Expose PlaceRect to global scope for Detection and Tile classes
     window.PlaceRect = PlaceRect;
 
-    console.log('✅ PlaceRect base class loaded');
+    window.TowerScoutLogger.debug('✅ PlaceRect base class loaded');
 })();

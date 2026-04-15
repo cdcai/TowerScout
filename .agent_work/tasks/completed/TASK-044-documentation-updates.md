@@ -145,7 +145,7 @@ Update user guides, setup documentation, and AGENTS.md folder to reflect Sprint 
   - Performance benchmarking approach
 
 - [ ] **State Management Patterns**:
-  - Reference decision record: TASK-043-global-variable-migration-patterns.md
+  - Reference decision record: 015-global-variable-migration-patterns.md
   - Property descriptor deprecation pattern
   - Mutex-protected state mutations
   - Event listener and timer cleanup

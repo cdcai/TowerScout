@@ -1,0 +1,19 @@
+﻿{
+    "getengines":  {
+                       "status":  200,
+                       "json":  {
+                                    "value":  [
+                                                  {
+                                                      "id":  "newest",
+                                                      "name":  "newest"
+                                                  }
+                                              ],
+                                    "Count":  1
+                                }
+                   },
+    "root":  {
+                 "status":  200,
+                 "contains_towerscout":  true
+             },
+    "process_id":  23464
+}

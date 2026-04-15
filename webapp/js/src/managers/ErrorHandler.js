@@ -21,7 +21,7 @@
         e.preventDefault(); // Prevent default browser error display
       });
 
-      console.log('✅ Global error handling initialized');
+      window.TowerScoutLogger.debug('✅ Global error handling initialized');
     }
 
     static async handleProviderError(provider, error, context = 'Provider Operation') {
@@ -40,13 +40,13 @@
       try {
         // Prevent premature failures during initial map loading
         if (window.providerManager.isProviderAvailable(fallbackProvider) && !window.providerManager.isInitializing) {
-          console.log(`🔄 Attempting fallback to ${fallbackProvider}...`);
+          window.TowerScoutLogger.debug(`🔄 Attempting fallback to ${fallbackProvider}...`);
           await window.providerManager.switchProvider(fallbackProvider);
           this.showUserNotification(`Switched to ${fallbackProvider} Maps due to ${provider} error`, 'warning');
           return true;
         } else if (window.providerManager.isInitializing) {
           // During initial load, wait for proper initialization
-          console.log('⏳ Maps still initializing, delaying error handling...');
+          window.TowerScoutLogger.debug('⏳ Maps still initializing, delaying error handling...');
           return true;
         } else {
           throw new Error(`No fallback provider available. ${fallbackProvider} not accessible.`);
@@ -65,8 +65,10 @@
       console.error(`🌐 Network error during ${operation}:`, error);
 
       const isOffline = !navigator.onLine;
-      const isTimeout = error.name === 'TimeoutError' || error.message.includes('timeout');
-      const isRateLimit = error.message.includes('429') || error.message.includes('rate');
+      const message = error && error.message ? error.message : String(error || '');
+      const isTimeout = error.name === 'TimeoutError' || message.includes('timeout');
+      const isRateLimit = message.includes('429') || message.includes('rate');
+      const isValidation = /validation error|self-intersection|polygon geometry is invalid/i.test(message);
 
       if (isOffline) {
         this.showUserNotification('You appear to be offline. Please check your internet connection.', 'error');
@@ -74,15 +76,19 @@
         this.showUserNotification('Request timed out. The server may be busy, please try again.', 'warning');
       } else if (isRateLimit) {
         this.showUserNotification('Rate limit exceeded. Please wait a moment before trying again.', 'warning');
+      } else if (isValidation) {
+        this.showUserNotification(message.replace(/^Validation error:\s*/i, ''), 'error');
       } else {
-        this.showUserNotification(`Network error: ${error.message || 'Connection failed'}`, 'error');
+        this.showUserNotification(`Network error: ${message || 'Connection failed'}`, 'error');
       }
     }
 
     static handleCriticalError(error, source = 'Unknown') {
       console.error(`🚨 Critical error from ${source}:`, error);
 
-      const errorMessage = error.message || error.toString() || 'Unknown error occurred';
+      const errorMessage = error && typeof error === 'object'
+        ? (error.message || error.toString())
+        : (error ? String(error) : 'Unknown error occurred');
 
       // Check if it's a provider-related error
       if (errorMessage.includes('Maps') || errorMessage.includes('provider')) {
@@ -107,7 +113,17 @@
     }
 
     static showUserNotification(message, type = 'info', timeout = 5000) {
-      console.log(`📢 User notification [${type}]: ${message} (timeout: ${timeout}ms)`);
+      const outputPrefixes = {
+        info: '',
+        success: 'Success: ',
+        warning: 'Warning: ',
+        error: 'Error: '
+      };
+      const outputMessage = `${outputPrefixes[type] || ''}${message}`;
+
+      if (window.TowerScoutLogger && typeof window.TowerScoutLogger.info === 'function') {
+        window.TowerScoutLogger.info(outputMessage);
+      }
 
       // Clear any existing auto-hide timer
       if (this._notificationTimer) {
@@ -161,7 +177,7 @@
     }
 
     static dismissNotification() {
-      console.log('📢 Dismissing notification');
+      window.TowerScoutLogger.debug('📢 Dismissing notification');
 
       // Clear auto-hide timer if exists
       if (this._notificationTimer) {
@@ -224,5 +240,5 @@
   // Expose globally
   window.TowerScoutErrorHandler = TowerScoutErrorHandler;
 
-  console.log('✅ ErrorHandler module loaded');
+  window.TowerScoutLogger.debug('✅ ErrorHandler module loaded');
 })();

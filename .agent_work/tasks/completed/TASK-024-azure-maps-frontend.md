@@ -390,10 +390,10 @@ initializeDrawingTools() {
 **Final Solution**:
 ```bash
 # BEFORE (Invalid - space after =)
-AZURE_MAPS_SUBSCRIPTION_KEY= 7G19RuHdV6FMXdGdKUx9fwlCcD-HhPHFiyruTTUcgvj2l93BthmfR-JQQJ99BKACYeBjFqKOSFAAg-AZMP2nDj
+AZURE_MAPS_SUBSCRIPTION_KEY= your_azure_maps_subscription_key_here
 
 # AFTER (Valid - no space after =)  
-AZURE_MAPS_SUBSCRIPTION_KEY=7G19RuHdV6FMXdGdKUx9fwlCcD-HhPHFiyruTTUcgvj2l93BthmfR-JQQJ99BKACYeBjFqKOSFAAg-AZMP2nDj
+AZURE_MAPS_SUBSCRIPTION_KEY=your_azure_maps_subscription_key_here
 ```
 
 **Testing Verification**:

@@ -20,11 +20,11 @@ class TSMap {
   getBoundaryBounds() {
     // If no boundaries drawn, fall back to viewport bounds
     if (!this.boundaries || this.boundaries.length === 0) {
-      console.log('📍 No boundaries drawn, using viewport bounds');
+      window.TowerScoutLogger.debug('📍 No boundaries drawn, using viewport bounds');
       return this.getBounds();
     }
 
-    console.log(`📐 Calculating bounding box for ${this.boundaries.length} boundary/boundaries`);
+    window.TowerScoutLogger.debug(`📐 Calculating bounding box for ${this.boundaries.length} boundary/boundaries`);
 
     // Calculate bounding box from all boundaries
     let minLng = Infinity, maxLng = -Infinity;
@@ -52,7 +52,7 @@ class TSMap {
     }
 
     const bounds = [minLng, maxLat, maxLng, minLat]; // [west, north, east, south]
-    console.log('✅ Boundary bounding box:', {
+    window.TowerScoutLogger.debug('✅ Boundary bounding box:', {
       west: minLng.toFixed(6),
       north: maxLat.toFixed(6),
       east: maxLng.toFixed(6),
@@ -117,5 +117,5 @@ class TSMap {
   // Export to window for global access (IIFE pattern)
   window.TSMap = TSMap;
 
-  console.log('✅ TSMap base class loaded');
+  window.TowerScoutLogger.debug('✅ TSMap base class loaded');
 })();

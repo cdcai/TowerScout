@@ -9,7 +9,7 @@
 **Created**: 2026-02-18  
 **Completed**: 2026-03-02  
 **Design Document**: `.agent_work/design-task-038-revised.md` (v2.6.1)  
-**Completion Summary**: `.agent_work/tasks/TASK-038-COMPLETION-SUMMARY.md`
+**Completion Summary**: `.agent_work/tasks/completed/TASK-038-COMPLETION-SUMMARY.md`
 
 ---
 

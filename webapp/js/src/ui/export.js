@@ -17,7 +17,7 @@
     }[type] || 'ℹ️';
 
     alert(`${icon} ${message}`);
-    console.log(`[${type.toUpperCase()}] ${message}`);
+    window.TowerScoutLogger.debug(`[${type.toUpperCase()}] ${message}`);
   }
 
   /**
@@ -69,7 +69,7 @@
       document.body.appendChild(elem);
       elem.click();
       document.body.removeChild(elem);
-      console.log(`✅ ${filename} downloaded successfully`);
+      window.TowerScoutLogger.debug(`✅ ${filename} downloaded successfully`);
     } catch (error) {
       showNotification(`Failed to download ${filename}: ${error.message}`, 'error');
       throw error;
@@ -81,7 +81,7 @@
    * Includes selected detections and manual additions in YOLO format
    */
   function download_dataset() {
-    console.log("📦 Preparing dataset export...");
+    window.TowerScoutLogger.debug("📦 Preparing dataset export...");
 
     // Validate detections exist and are selected
     const validation = validateDetections();
@@ -112,7 +112,7 @@
           continue;
         }
 
-        console.log(`🔍 MANUAL TOWER EXPORT: det.tile=${det.tile}, tile.id=${tile.id}, arrayIndex=${Tile_tiles.indexOf(tile)}`);
+        window.TowerScoutLogger.debug(`🔍 MANUAL TOWER EXPORT: det.tile=${det.tile}, tile.id=${tile.id}, arrayIndex=${Tile_tiles.indexOf(tile)}`);
         additions.push({
           'tile': det.tile,  // Use tile ID (matches backend session tile['index'])
           'centerx': (((det.x1 + det.x2) / 2) - tile.x1) / (tile.x2 - tile.x1),
@@ -136,9 +136,9 @@
       return;
     }
 
-    console.log(`📦 Dataset export: ${include.length} ML detections, ${additions.length} manual towers`);
+    window.TowerScoutLogger.debug(`📦 Dataset export: ${include.length} ML detections, ${additions.length} manual towers`);
     if (additions.length > 0) {
-      console.log(`   Manual tower tile IDs:`, additions.map(a => a.tile));
+      window.TowerScoutLogger.debug(`   Manual tower tile IDs:`, additions.map(a => a.tile));
     }
     if (skippedManualTowers > 0) {
       console.warn(`⚠️ Skipped ${skippedManualTowers} manual towers with invalid tile references`);
@@ -149,7 +149,7 @@
     formData.append("additions", JSON.stringify(additions));
 
     // Show processing indicator
-    console.log('⏳ Generating dataset ZIP...');
+    window.TowerScoutLogger.debug('⏳ Generating dataset ZIP...');
 
     fetch("getdataset", { method: 'POST', body: formData })
       .then(response => {
@@ -170,7 +170,7 @@
         elem.click();
         document.body.removeChild(elem);
 
-        console.log(`✅ Dataset downloaded successfully (${(blob.size / 1024).toFixed(1)} KB)`);
+        window.TowerScoutLogger.debug(`✅ Dataset downloaded successfully (${(blob.size / 1024).toFixed(1)} KB)`);
         showNotification(
           `Dataset exported successfully!\n${include.length} ML detections + ${additions.length} manual towers`,
           'success'
@@ -192,7 +192,7 @@
    * TASK-033: Added 'source' column to indicate ML vs Manual detections
    */
   function download_csv() {
-    console.log("📄 Preparing CSV export...");
+    window.TowerScoutLogger.debug("📄 Preparing CSV export...");
 
     // Validate detections exist
     if (!window.Detection_detections || !Array.isArray(window.Detection_detections)) {
@@ -243,7 +243,7 @@
       }
 
       download("detections.csv", text);
-      console.log(`✅ CSV exported: ${exportedCount} detections`);
+      window.TowerScoutLogger.debug(`✅ CSV exported: ${exportedCount} detections`);
       showNotification(`CSV exported successfully: ${exportedCount} detections`, 'success');
 
     } catch (error) {
@@ -257,7 +257,7 @@
    * Includes styled markers and detection metadata
    */
   function download_kml() {
-    console.log("🌍 Preparing KML export...");
+    window.TowerScoutLogger.debug("🌍 Preparing KML export...");
 
     // Validate detections exist
     if (!window.Detection_detections || !Array.isArray(window.Detection_detections)) {
@@ -349,7 +349,7 @@
       }
 
       download("detections.kml", text);
-      console.log(`✅ KML exported: ${exportedCount} detections${skippedCount > 0 ? ` (${skippedCount} skipped)` : ''}`);
+      window.TowerScoutLogger.debug(`✅ KML exported: ${exportedCount} detections${skippedCount > 0 ? ` (${skippedCount} skipped)` : ''}`);
       showNotification(`KML exported successfully: ${exportedCount} detections`, 'success');
 
     } catch (error) {
@@ -363,5 +363,5 @@
   window.download_csv = download_csv;
   window.download_kml = download_kml;
 
-  console.log('✅ Export functions loaded');
+  window.TowerScoutLogger.debug('✅ Export functions loaded');
 })();

@@ -1,0 +1,179 @@
+﻿{
+  "generatedAt": "2026-03-23T19:35:40.768Z",
+  "results": [
+    {
+      "provider": "google-like",
+      "detections": 100,
+      "timingsMs": {
+        "create": 0.473,
+        "sort": 0.166,
+        "generateList": 0.571,
+        "adjustConfidence": 0.105,
+        "remountOnFreshMap": 0.1
+      },
+      "mapStats": {
+        "initial": {
+          "updateCalls": 200,
+          "makeCalls": 100
+        },
+        "remount": {
+          "updateCalls": 100,
+          "makeCalls": 100
+        }
+      },
+      "consoleCalls": {
+        "log": 256,
+        "warn": 306,
+        "error": 0
+      }
+    },
+    {
+      "provider": "azure-like",
+      "detections": 100,
+      "timingsMs": {
+        "create": 0.947,
+        "sort": 0.117,
+        "generateList": 0.234,
+        "adjustConfidence": 0.063,
+        "remountOnFreshMap": 0.424
+      },
+      "mapStats": {
+        "initial": {
+          "updateCalls": 200,
+          "shapeLookups": 14950,
+          "shapesAdded": 100,
+          "maxShapeCount": 100,
+          "makeCalls": 100
+        },
+        "remount": {
+          "updateCalls": 100,
+          "shapeLookups": 4950,
+          "shapesAdded": 100,
+          "maxShapeCount": 100,
+          "makeCalls": 100
+        }
+      },
+      "consoleCalls": {
+        "log": 356,
+        "warn": 306,
+        "error": 0
+      }
+    },
+    {
+      "provider": "google-like",
+      "detections": 500,
+      "timingsMs": {
+        "create": 1.068,
+        "sort": 0.178,
+        "generateList": 1.701,
+        "adjustConfidence": 0.32,
+        "remountOnFreshMap": 1.241
+      },
+      "mapStats": {
+        "initial": {
+          "updateCalls": 1000,
+          "makeCalls": 500
+        },
+        "remount": {
+          "updateCalls": 500,
+          "makeCalls": 500
+        }
+      },
+      "consoleCalls": {
+        "log": 1056,
+        "warn": 1506,
+        "error": 0
+      }
+    },
+    {
+      "provider": "azure-like",
+      "detections": 500,
+      "timingsMs": {
+        "create": 2.768,
+        "sort": 0.657,
+        "generateList": 1.099,
+        "adjustConfidence": 0.122,
+        "remountOnFreshMap": 2.558
+      },
+      "mapStats": {
+        "initial": {
+          "updateCalls": 1000,
+          "shapeLookups": 374750,
+          "shapesAdded": 500,
+          "maxShapeCount": 500,
+          "makeCalls": 500
+        },
+        "remount": {
+          "updateCalls": 500,
+          "shapeLookups": 124750,
+          "shapesAdded": 500,
+          "maxShapeCount": 500,
+          "makeCalls": 500
+        }
+      },
+      "consoleCalls": {
+        "log": 1556,
+        "warn": 1506,
+        "error": 0
+      }
+    },
+    {
+      "provider": "google-like",
+      "detections": 1000,
+      "timingsMs": {
+        "create": 0.717,
+        "sort": 0.253,
+        "generateList": 2.337,
+        "adjustConfidence": 0.551,
+        "remountOnFreshMap": 0.301
+      },
+      "mapStats": {
+        "initial": {
+          "updateCalls": 2000,
+          "makeCalls": 1000
+        },
+        "remount": {
+          "updateCalls": 1000,
+          "makeCalls": 1000
+        }
+      },
+      "consoleCalls": {
+        "log": 2056,
+        "warn": 3006,
+        "error": 0
+      }
+    },
+    {
+      "provider": "azure-like",
+      "detections": 1000,
+      "timingsMs": {
+        "create": 3.657,
+        "sort": 0.169,
+        "generateList": 1.022,
+        "adjustConfidence": 2.457,
+        "remountOnFreshMap": 7.183
+      },
+      "mapStats": {
+        "initial": {
+          "updateCalls": 2000,
+          "shapeLookups": 1499500,
+          "shapesAdded": 1000,
+          "maxShapeCount": 1000,
+          "makeCalls": 1000
+        },
+        "remount": {
+          "updateCalls": 1000,
+          "shapeLookups": 499500,
+          "shapesAdded": 1000,
+          "maxShapeCount": 1000,
+          "makeCalls": 1000
+        }
+      },
+      "consoleCalls": {
+        "log": 3056,
+        "warn": 3006,
+        "error": 0
+      }
+    }
+  ]
+}

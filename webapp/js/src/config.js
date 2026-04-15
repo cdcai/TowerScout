@@ -23,10 +23,11 @@
     // UI timing
     ABOUT_SCREEN_DURATION_SEC: 6,            // Duration to display about screen
     PROGRESS_UPDATE_INTERVAL_MS: 100,        // Interval for progress bar updates
+    DETECTION_PROGRESS_POLL_INTERVAL_MS: 750, // Throttled polling cadence for live phase/count updates
 
     // Performance tuning
     SECS_PER_TILE_DEFAULT: 0.25              // Estimated processing time per tile
   };
 
-  console.log('✅ CONFIG module loaded');
+  window.TowerScoutLogger.debug('✅ CONFIG module loaded');
 })();

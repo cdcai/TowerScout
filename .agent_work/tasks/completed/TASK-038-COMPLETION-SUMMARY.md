@@ -449,7 +449,7 @@ During user testing, 4 critical bugs were discovered and fixed:
 
 **Primary Design Document**: `.agent_work/design-task-038-revised.md` (v2.6.1)  
 **Revision History**: `.agent_work/design-task-038-revision-history.md`  
-**Task File**: `.agent_work/tasks/TASK-038-frontend-refactoring.md`
+**Task File**: `.agent_work/tasks/completed/TASK-038-frontend-refactoring.md`
 
 **Key Design Decisions Documented**:
 - Decision 001: Canonical JS Serve Path (/js/towerscout.js)

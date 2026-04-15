@@ -9,7 +9,7 @@
   class EventListenerManager {
     constructor() {
       this.listeners = new Map();
-      console.log('🔧 EventListenerManager initialized');
+      window.TowerScoutLogger.debug('🔧 EventListenerManager initialized');
     }
 
     addEventListener(element, event, callback, options = {}) {
@@ -104,5 +104,5 @@
   // Create global instance
   window.eventManager = new EventListenerManager();
 
-  console.log('✅ EventListenerManager module loaded');
+  window.TowerScoutLogger.debug('✅ EventListenerManager module loaded');
 })();

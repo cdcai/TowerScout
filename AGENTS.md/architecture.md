@@ -79,7 +79,13 @@ function switchToAzure() {
 - ✅ Centralized state for easier debugging
 
 **Migration Guide**:
-See `.agent_work/decisions/TASK-043-global-variable-migration-patterns.md` for detailed migration patterns from global variables to ProviderStateManager.
+See `.agent_work/decisions/015-global-variable-migration-patterns.md` for detailed migration patterns from global variables to ProviderStateManager.
+
+**Sprint 03 Deprecation Warnings Cleanup**:
+- Property descriptor initialization timing fixes (order of operations)
+- Removed deprecation warnings from startup/initialization code
+- Clean console output without triggering migration warnings during setup
+- Warnings only appear for actual deprecated usage patterns
 
 ---
 
@@ -192,7 +198,7 @@ try {
 - **Interaction**: Click to set center, drag to set radius
 - **Rendering**: Native circle shapes on both Google Maps and Azure Maps
 - **Data Format**: `{ center: [lng, lat], radius: number, isCircle: true }`
-- **Clearing Logic**: TASK-045 fix - clears stale circles before new detection
+- **Clearing Logic**: TASK-045 fix - clears stale circles before new detection, prevents boundary accumulation
 
 #### PolygonBoundary (`webapp/js/src/boundaries/polygonBoundary.js`)
 - **Interaction**: Click to add vertices, double-click to close
@@ -211,7 +217,13 @@ All boundary operations maintain synchronization across providers:
 1. User draws boundary on current provider
 2. Boundary added to both `googleMap.boundaries` and `azureMap.boundaries`
 3. Provider switch preserves all boundaries
-4. Clearing operations affect both providers (TASK-045 fix)
+4. Clearing operations affect both providers (TASK-045 fix - prevents accumulation bug)
+
+**Sprint 03 Enhancements**:
+- Context-aware drawing notifications (search boundaries vs manual towers)
+- Persistent instructions during polygon drawing (no auto-dismiss)
+- Provider-specific completion methods (right-click for Google, double-click for Azure)
+- Automatic workflow detection based on detection state
 
 ---
 
@@ -663,6 +675,106 @@ map.setCenter(lat, lng);  // Works for both providers
 
 ---
 
+## Google Maps API Migration Patterns (Sprint 03 - TASK-039)
+
+### PlaceAutocompleteElement Web Component Pattern
+
+**Purpose**: Replace deprecated SearchBox with modern Web Component.
+
+**Implementation** (`webapp/js/src/providers/googleMaps.js`):
+```javascript
+// Single global instance (prevents duplicate Web Components)
+let globalPlaceAutocomplete = null;
+
+function initializePlaceAutocomplete() {
+    if (globalPlaceAutocomplete) {
+        return globalPlaceAutocomplete;  // Reuse existing instance
+    }
+    
+    // Create Web Component
+    const autocompleteElement = document.createElement('gmp-place-autocomplete');
+    autocompleteElement.id = 'place-autocomplete';
+    
+    // Automatic bounds biasing based on current map viewport
+    const map = providerManager.getGoogleMap().map;
+    autocompleteElement.addEventListener('gmp-placeselect', async (event) => {
+        const place = event.place;
+        if (place.geometry) {
+            map.fitBounds(place.geometry.viewport);
+        }
+    });
+    
+    globalPlaceAutocomplete = autocompleteElement;
+    return autocompleteElement;
+}
+```
+
+**Benefits**:
+- Single instance prevents Web Component registration conflicts
+- Automatic bounds biasing improves search relevance
+- Seamless provider switching without re-initialization
+- Future-proof against SearchBox deprecation (April 2026)
+
+### Custom Polygon Drawing Pattern
+
+**Purpose**: Replace deprecated DrawingManager with custom implementation.
+
+**User Interaction**:
+- **Left-click**: Add polygon vertex with visual marker
+- **Right-click outside polygon**: Complete and close polygon (alternative to double-click)
+- **Visual preview**: Live polyline preview while drawing
+- **Editable**: Completed polygons are editable and draggable
+- **Purple styling**: Matches manual tower identification workflow (#800080)
+
+**Implementation Pattern**:
+```javascript
+class CustomPolygonDrawing {
+    constructor(map) {
+        this.map = map;
+        this.vertices = [];
+        this.markers = [];
+        this.tempPolyline = null;
+        this.isDrawing = false;
+        
+        // Context-aware notifications (Sprint 03 UX enhancement)
+        this.showPersistentNotification();  // No auto-dismiss during drawing
+    }
+    
+    handleLeftClick(latLng) {
+        this.vertices.push(latLng);
+        this.addMarker(latLng);
+        this.updatePreviewPolyline();
+    }
+    
+    handleRightClick(latLng) {
+        if (!this.isPointInsidePolygon(latLng, this.vertices)) {
+            this.completePolygon();  // Only close if outside
+        }
+    }
+    
+    completePolygon() {
+        const polygon = new google.maps.Polygon({
+            paths: this.vertices,
+            strokeColor: '#800080',
+            fillColor: '#800080',
+            editable: true,
+            draggable: true
+        });
+        
+        this.cleanup();  // Remove markers and preview
+        this.showCompletionMessage();  // Context-aware completion notification
+    }
+}
+```
+
+**Migration Benefits**:
+- Avoids DrawingManager deprecation (12+ months notice from Google)
+- Custom right-click completion improves UX
+- Full control over styling and behavior
+- Provider-specific interaction patterns
+
+---
+
 ## Related Documentation
 
 - [towerscout-domain.md](./towerscout-domain.md) - Project overview and architecture
@@ -670,13 +782,33 @@ map.setCenter(lat, lng);  // Works for both providers
 - [security.md](./security.md) - Security practices and guidelines
 - [spec-driven-workflow.md](./spec-driven-workflow.md) - Task management and workflows
 
-**Decision Records**:
-- `.agent_work/decisions/TASK-043-global-variable-migration-patterns.md` - Migration patterns
-- `.agent_work/decisions/006-azure-maps-migration.md` - Azure Maps integration
-- `.agent_work/decisions/009-error-handling-infrastructure.md` - Error handling patterns
+---
 
-**Task Documentation**:
-- `.agent_work/tasks/TASK-038-frontend-refactoring.md` - Frontend modularization
-- `.agent_work/tasks/TASK-041-state-management.md` - State management improvements
-- `.agent_work/tasks/TASK-043-global-variable-deprecation.md` - Global variable migration
-- `.agent_work/tasks/TASK-045-boundary-accumulation-bug.md` - Boundary clearing fix
+## 📚 Architecture Deep Dive Resources
+
+### State Management & Patterns
+- [Global Variable Migration Patterns](../.agent_work/decisions/015-global-variable-migration-patterns.md) - ProviderStateManager migration guide  - Comprehensive examples for converting legacy globals to managed state
+- [Provider Lock Decision](../.agent_work/decisions/014-provider-lock-after-detection.md) - Provider switching design rationale and constraints
+- [Memory Leak Solution Design](../.agent_work/context/analysis/MEMORY-LEAK-SOLUTION-DESIGN.md) - TASK-041 lifecycle management patterns and stress test results
+
+### Provider Integration
+- [Azure Maps Migration](../.agent_work/decisions/006-azure-maps-migration.md) - Azure Maps integration architecture
+- [Provider Independence Reality](../.agent_work/context/analysis/PROVIDER-INDEPENDENCE-REALITY.md) - Multi-provider design trade-offs
+- [Azure Maps ML Pipeline Analysis](../.agent_work/context/analysis/AZURE-MAPS-ML-PIPELINE-ANALYSIS.md) - Provider performance comparison
+
+### Frontend Architecture
+- [Developer Architecture Guide](../.agent_work/context/guides/Developer-Architecture-Guide.md) - Comprehensive frontend architecture reference
+- [Frontend Code Review](../.agent_work/context/analysis/FRONTEND-CODE-REVIEW.md) - Deep dive into JavaScript architecture and refactoring
+- [Mapping Workflow Deep Dive](../.agent_work/context/analysis/MAPPING-WORKFLOW-DEEP-DIVE.md) - Detection pipeline and data flow analysis
+
+### Error Handling & Infrastructure
+- [Error Handling Infrastructure](../.agent_work/decisions/009-error-handling-infrastructure.md) - Error handling patterns and TowerScoutErrorHandler design
+- [Input Validation Architecture](../.agent_work/decisions/004-input-validation-architecture.md) - Validation strategy and sanitization patterns
+
+### Task Documentation & Implementation Examples
+- Task files in `.agent_work/tasks/completed/` provide real-world implementation examples:
+  - `TASK-038-frontend-refactoring.md` - Frontend modularization execution
+  - `TASK-041-memory-management.md` - State management improvements
+  - `TASK-043-global-variable-deprecation.md` - Global variable migration process
+  - `TASK-045-boundary-accumulation-bug.md` - Boundary clearing fix implementation
+  - `TASK-039-google-maps-api-migration.md` - API migration with modern Web Components

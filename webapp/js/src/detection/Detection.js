@@ -15,9 +15,12 @@
       Detection_detectionsAugmented = 0;
       detectionsList.innerHTML = "";
 
-      // FIX NEW-ISSUE-003: Clear Azure Maps detection shapes to prevent duplicates
-      if (currentMap && currentMap.detectionDataSource) {
-        console.log('🧹 Clearing existing detection shapes from Azure Maps');
+      // FIX ISSUE-003: Let Azure Maps clear its own indexed detection shapes.
+      if (currentMap && typeof currentMap.clearDetectionShapes === 'function') {
+        const removedCount = currentMap.clearDetectionShapes();
+        window.TowerScoutLogger.debug(`Removed ${removedCount} detection shapes from Azure Maps`);
+      } else if (currentMap && currentMap.detectionDataSource) {
+        window.TowerScoutLogger.debug('🧹 Clearing existing detection shapes from Azure Maps');
 
         // Get ALL shapes from data source
         const allShapes = currentMap.detectionDataSource.getShapes();
@@ -28,7 +31,7 @@
           return props && props.detectionId !== undefined;
         });
 
-        console.log(`🗑️ Removing ${detectionShapes.length} detection shapes from data source`);
+        window.TowerScoutLogger.debug(`🗑️ Removing ${detectionShapes.length} detection shapes from data source`);
 
         // Remove detection shapes
         if (detectionShapes.length > 0) {
@@ -44,8 +47,19 @@
         if (remaining.length > 0) {
           console.error(`❌ Failed to clear ${remaining.length} detection shapes!`);
         } else {
-          console.log(`✅ All detection shapes cleared from data source`);
+          window.TowerScoutLogger.debug(`✅ All detection shapes cleared from data source`);
         }
+      }
+    }
+
+    static withVisibilityUpdatesPaused(callback) {
+      const previousState = Detection.visibilityUpdatesPaused === true;
+      Detection.visibilityUpdatesPaused = true;
+
+      try {
+        return callback();
+      } finally {
+        Detection.visibilityUpdatesPaused = previousState;
       }
     }
 
@@ -81,20 +95,22 @@
       }
       // TODO: Add similar fix for Google Maps when implementing
 
-      // console.log("Detection #" + this.id + " is " + (this.selected ? "" : "not ") + "selected");
+      // window.TowerScoutLogger.debug("Detection #" + this.id + " is " + (this.selected ? "" : "not ") + "selected");
       // TASK-043 Phase 2: Use state manager for thread-safe add operation
       providerManager.addDetection(this);
 
-      // FIX NEW-ISSUE-003: Call update() AFTER setting inside property (PlaceRect no longer calls it)
-      this.update();
+      if (!Detection.visibilityUpdatesPaused) {
+        // FIX NEW-ISSUE-003: Call update() AFTER setting inside property (PlaceRect no longer calls it)
+        this.update();
+      }
     }
 
     static sort() {
       // DEBUG: Log detection order before sorting
       const detections = providerManager.getDetectionsArrayDirect();
-      console.log('🔄 Before sort:');
+      window.TowerScoutLogger.debug('🔄 Before sort:');
       for (let i = 0; i < detections.length; i++) {
-        console.log(`  [${i}] inside=${detections[i].inside}, addr="${detections[i].address.substring(0, 30)}"`);
+        window.TowerScoutLogger.debug(`  [${i}] inside=${detections[i].inside}, addr="${detections[i].address.substring(0, 30)}"`);
       }
 
       // TASK-043 Phase 2: Use state manager for thread-safe sort operation
@@ -110,9 +126,9 @@
 
       // DEBUG: Log detection order after sorting
       const detectionsAfterSort = providerManager.getDetectionsArrayDirect();
-      console.log('🔄 After sort:');
+      window.TowerScoutLogger.debug('🔄 After sort:');
       for (let i = 0; i < detectionsAfterSort.length; i++) {
-        console.log(`  [${i}] inside=${detectionsAfterSort[i].inside}, addr="${detectionsAfterSort[i].address.substring(0, 30)}"`);
+        window.TowerScoutLogger.debug(`  [${i}] inside=${detectionsAfterSort[i].inside}, addr="${detectionsAfterSort[i].address.substring(0, 30)}"`);
       }
 
       // Fix IDs and update map feature AND shape properties
@@ -130,7 +146,11 @@
         // FIX NEW-ISSUE-005: Update the Shape in the data source with new detectionId
         if (det.azureShape && typeof det.azureShape.setProperties === 'function') {
           det.azureShape.setProperties({ detectionId: i });
-          console.log(`🔄 Updated Shape detectionId from ${oldId} to ${i}`);
+          window.TowerScoutLogger.debug(`🔄 Updated Shape detectionId from ${oldId} to ${i}`);
+        }
+
+        if (det.map && typeof det.map.reindexDetectionShape === 'function') {
+          det.map.reindexDetectionShape(oldId, i, det.azureShape || null);
         }
 
         // TODO: Add similar fix for Google Maps when implementing
@@ -171,7 +191,6 @@
         firstDet.maxSecondary = Math.max(det.secondary, firstDet.maxSecondary || 0)
         det.firstDet = firstDet; // record block header
         det.indexInList = count;
-        det.update();
         count++;
       }
       boxes += "</li></ul>";
@@ -304,7 +323,7 @@
       // this.addrSpan.innerText = addr;
       this.address = addr;
       Detection_detectionsAugmented++;
-      //console.log("tower " + i + ": " + addr)
+      //window.TowerScoutLogger.debug("tower " + i + ": " + addr)
     }
 
     update(newMap) {
@@ -321,7 +340,7 @@
       // DEBUG: Log visibility decision for diagnosis (first 5 detections only to avoid spam)
       const shouldShow = this.selected && meetsConfidence && meetsInside;
       if (this.id < 5) {
-        console.log(`Det ${this.id}: inside=${this.inside}, reviewMode=${reviewCheckBox.checked}, meetsInside=${meetsInside}, shouldShow=${shouldShow}`);
+        window.TowerScoutLogger.debug(`Det ${this.id}: inside=${this.inside}, reviewMode=${reviewCheckBox.checked}, meetsInside=${meetsInside}, shouldShow=${shouldShow}`);
       }
 
       // IDEMPOTENCY CHECK: Only update if visibility state changed
@@ -329,7 +348,7 @@
         this.map.updateMapRect(this, shouldShow);
         this._lastVisibilityState = shouldShow;  // Cache state
       } else if (this.id < 5) {
-        console.log(`⏭️ Skipping Det ${this.id} - visibility unchanged (${shouldShow})`);
+        window.TowerScoutLogger.debug(`⏭️ Skipping Det ${this.id} - visibility unchanged (${shouldShow})`);
       }
     }
 
@@ -391,9 +410,11 @@
     }
   }
 
+  Detection.visibilityUpdatesPaused = false;
+
   // Expose to window for inline HTML handlers
   window.Detection = Detection;
 
-  console.log('✅ Detection module loaded');
+  window.TowerScoutLogger.debug('✅ Detection module loaded');
 
 })();

@@ -99,7 +99,7 @@ Currently users can switch providers (Google ↔ Azure) at any time.
 
 ### Decision: DISABLE provider switching after detection ✅
 
-**Rationale** (see DECISION-004-provider-lock-after-detection.md for full analysis):
+**Rationale** (see 014-provider-lock-after-detection.md for full analysis):
 - **Data integrity**: Detection coordinates specific to provider's imagery
 - **Imagery mismatch**: Different providers use different satellite sources
 - **Mission-critical**: Coordinate precision essential for outbreak investigations
@@ -256,7 +256,7 @@ Manual tower polygons are editable/draggable after creation.
 - [x] TASK-033-manual-tower-addition.md - Acceptance criteria revised
 - [x] MANUAL_VERIFICATION_PHASE4.md - Test plan revised with implementation steps
 - [x] current-tasks.md - Success criteria updated
-- [x] DECISION-004-provider-lock-after-detection.md - Full analysis created
+- [x] 014-provider-lock-after-detection.md - Full analysis created
 - [x] This summary document - All 4 decisions captured
 
 ---

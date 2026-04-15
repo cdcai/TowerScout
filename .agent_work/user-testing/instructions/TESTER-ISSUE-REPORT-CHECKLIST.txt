@@ -1,0 +1,86 @@
+TOWERSCOUT TESTER ISSUE REPORT CHECKLIST
+========================================
+
+Last reviewed: 2026-04-09
+Use this when you get blocked during install, startup, setup, or your first test run.
+
+IMPORTANT
+=========
+
+- Do not send API keys.
+- Do not send your full `.env` file.
+- Send screenshots and exact error text whenever possible.
+
+WHAT TO SEND
+============
+
+Please send all of the items below:
+
+1. Which guide you followed:
+   - `TowerScout_User_Testing_Guide.txt`
+   - `TowerScout_User_Testing_Guide_Windows_Miniconda.txt`
+   - `TowerScout_Development_Setup_Guide.txt`
+
+2. Which step failed:
+   - install packages
+   - start the app
+   - complete the Setup Wizard
+   - run the first detection
+
+3. The exact command you ran when it failed.
+
+4. The exact error text.
+
+5. A screenshot of the failing window.
+
+6. The output of:
+
+```powershell
+py --version
+git branch --show-current
+git rev-parse --short HEAD
+```
+
+7. The output of:
+
+```powershell
+Test-Path webapp\model_params\yolov5\newest.pt
+Test-Path webapp\model_params\EN\b5_unweighted_best.pt
+```
+
+8. Whether you were using:
+   - Azure Maps
+   - Google Maps
+   - neither yet
+
+9. Whether the problem happened:
+   - before the Setup Wizard appeared
+   - inside the Setup Wizard
+   - after the app loaded
+   - during the first detection run
+
+10. Anything you already tried that did not work.
+
+HOW TO CAPTURE THE TERMINAL OUTPUT
+==================================
+
+- If the error is already visible in PowerShell, copy the last part of the output and paste it into a text file.
+- If possible, keep the PowerShell window open until you have taken the screenshot.
+
+WHAT A GOOD REPORT LOOKS LIKE
+=============================
+
+Example:
+
+- Guide used: `TowerScout_User_Testing_Guide.txt`
+- Failed step: start the app
+- Command: `python towerscout.py dev`
+- Error: `ModuleNotFoundError: No module named 'xyz'`
+- Python version: `Python 3.12.2`
+- Branch: `feature-sprint-05`
+- Commit: `abc1234`
+- Model files present: `True` and `True`
+- Provider: `Google Maps`
+- Screenshot attached: yes
+
+That is enough for the team to triage the issue quickly.

@@ -48,9 +48,9 @@
       this.isCircle = true; // Flag to identify circle boundaries
 
       // Use Azure Maps compatible circle generation
-      console.log('Generating circle with center:', center, 'radius:', radius);
+      window.TowerScoutLogger.debug('Generating circle with center:', center, 'radius:', radius);
       this.points = this.generateCircle(center, radius, 64); // Use 64 segments for smooth circle
-      console.log('Generated circle with', this.points.length, 'points');
+      window.TowerScoutLogger.debug('Generated circle with', this.points.length, 'points');
     }
 
     // Generate circle using proper geographic calculations
@@ -111,7 +111,7 @@
     // radius? construct a circle
     let radius = document.getElementById("radius").value;
     if (radius !== "") {
-      console.log('🔵 Creating circle with radius:', radius, 'meters');
+      window.TowerScoutLogger.debug('🔵 Creating circle with radius:', radius, 'meters');
 
       // convert to m
       radius = Number(radius);
@@ -128,10 +128,10 @@
       // TASK-041 Phase 1: Use map from provider manager
       // make circle - use current map center
       let centerCoords = map.getCenter();
-      console.log('🎯 Circle center coordinates:', centerCoords);
+      window.TowerScoutLogger.debug('🎯 Circle center coordinates:', centerCoords);
 
       // TASK-041 Phase 2 Step 2.2: Clear previous circles (surgical removal, preserves polygons)
-      console.log('🔄 Clearing previous circles before creating new one...');
+      window.TowerScoutLogger.debug('🔄 Clearing previous circles before creating new one...');
 
       // Clear circles from both providers (only if initialized)
       if (googleMap && typeof googleMap.clearCircles === 'function') {
@@ -146,31 +146,31 @@
 
       // Add new circle
       let circleBoundary = new CircleBoundary(centerCoords, radius);
-      console.log('Circle boundary points:', circleBoundary.points.length);
-      console.log('Circle boundary sample points:', circleBoundary.points.slice(0, 5));
-      console.log('Circle boundary isCircle flag:', circleBoundary.isCircle);
+      window.TowerScoutLogger.debug('Circle boundary points:', circleBoundary.points.length);
+      window.TowerScoutLogger.debug('Circle boundary sample points:', circleBoundary.points.slice(0, 5));
+      window.TowerScoutLogger.debug('Circle boundary isCircle flag:', circleBoundary.isCircle);
 
       // Add boundary to initialized providers only
       if (googleMap) {
         googleMap.addBoundary(circleBoundary);
-        console.log('After add - Google boundaries:', googleMap.boundaries.length);
+        window.TowerScoutLogger.debug('After add - Google boundaries:', googleMap.boundaries.length);
       }
       if (azureMap) {
         azureMap.addBoundary(circleBoundary);
-        console.log('After add - Azure boundaries:', azureMap.boundaries.length);
-        console.log('Azure searchDataSource exists:', !!azureMap.searchDataSource);
+        window.TowerScoutLogger.debug('After add - Azure boundaries:', azureMap.boundaries.length);
+        window.TowerScoutLogger.debug('Azure searchDataSource exists:', !!azureMap.searchDataSource);
 
         // Check if boundary was actually added to data source
         if (azureMap.searchDataSource) {
           let shapes = azureMap.searchDataSource.getShapes();
-          console.log('Total shapes in data source:', shapes.length);
+          window.TowerScoutLogger.debug('Total shapes in data source:', shapes.length);
           let boundaryShapes = shapes.filter(s => s.getProperties().type === 'boundary');
-          console.log('Boundary shapes in data source:', boundaryShapes.length);
+          window.TowerScoutLogger.debug('Boundary shapes in data source:', boundaryShapes.length);
         }
       }
 
       // DON'T call showBoundaries() to avoid map reset - boundary should render automatically
-      console.log('✅ Circle boundary created (should render automatically)');
+      window.TowerScoutLogger.debug('✅ Circle boundary created (should render automatically)');
     } else {
       console.warn('⚠️ No radius value entered');
     }
@@ -183,5 +183,5 @@
   window.CircleBoundary = CircleBoundary;
   window.circleBoundary = circleBoundary;
 
-  console.log('✅ CircleBoundary module loaded');
+  window.TowerScoutLogger.debug('✅ CircleBoundary module loaded');
 })();

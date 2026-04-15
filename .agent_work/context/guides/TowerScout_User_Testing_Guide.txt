@@ -1,0 +1,309 @@
+TOWERSCOUT USER TESTING GUIDE
+=============================
+
+Last reviewed: 2026-04-09
+Audience: nontechnical testers who want to run the current app locally
+
+WHAT THIS GUIDE IS FOR
+======================
+
+This guide is for running TowerScout so you can test it. It is not a developer guide.
+
+These steps are written for Windows PowerShell because that is the simplest handoff for most local testers.
+
+The branch this guide targets is:
+- `feature-sprint-05`
+
+WHAT YOU NEED BEFORE YOU START
+==============================
+
+You will need:
+- Git
+- Python 3.12 or 3.11
+- an internet connection
+- one valid Azure Maps key or Google Maps key
+- two model files that are not stored in GitHub
+- ZIP code boundary data if you want to test ZIP code search
+
+You do NOT need:
+- Docker
+- VS Code
+- Node.js
+- any coding experience beyond copy/paste
+
+Important:
+- TowerScout now loads YOLOv5 from a vendored local runtime snapshot in the repo.
+- The first YOLOv5 model load no longer needs GitHub or Torch Hub access when the runtime dependencies and model files are already in place.
+
+BEST CASE BEFORE YOU BEGIN
+==========================
+
+If a teammate can give you these items ahead of time, setup is much easier:
+- a valid Azure Maps key or Google Maps key
+- the file `newest.pt`
+- the file `b5_unweighted_best.pt`
+
+STEP 1: INSTALL GIT
+===================
+
+Install Git from:
+- https://git-scm.com/download/win
+
+After installation, open PowerShell and check:
+
+```powershell
+git --version
+```
+
+STEP 2: INSTALL PYTHON
+======================
+
+Install Python from:
+- https://www.python.org/downloads/windows/
+
+During installation:
+- check "Add Python to PATH"
+
+After installation, open a new PowerShell window and check:
+
+```powershell
+py --version
+```
+
+STEP 3: DOWNLOAD THE REPOSITORY
+===============================
+
+Open PowerShell and copy/paste:
+
+```powershell
+git clone https://github.com/J-Schulein/TowerScout.git
+cd TowerScout
+git checkout feature-sprint-05
+```
+
+STEP 4: CREATE A PYTHON ENVIRONMENT
+===================================
+
+If you installed Python 3.12, use:
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+If you installed Python 3.11 instead, replace `3.12` with `3.11`.
+
+After activation, your prompt should start with `(.venv)`.
+
+STEP 5: INSTALL THE APP'S PYTHON PACKAGES
+=========================================
+
+Copy/paste:
+
+```powershell
+python -m pip install --upgrade pip
+pip install -r webapp\requirements.txt
+```
+
+This step can take a while because the app uses machine learning and mapping libraries.
+
+Optional GPU note:
+- CPU-only setup is supported and works for normal testing.
+- `pip install -r webapp\requirements.txt` gives the validated CPU baseline for Sprint 05; it does not install a CUDA-enabled PyTorch build automatically.
+- The runtime manifest now pins a NumPy 1 baseline and satisfies the local YOLOv5 runtime minimums for `Pillow` and `Requests`, so first detection should not upgrade those packages inside the live Python process.
+- If you have a compatible NVIDIA GPU and specifically want CUDA acceleration, install the matching CUDA-enabled PyTorch build for `torch==2.2.1` and `torchvision==0.17.1` using the official PyTorch instructions.
+- TowerScout will use CUDA automatically if that install reports CUDA as available.
+
+TLS note:
+- TowerScout verifies TLS certificates by default.
+- Only set `TOWERSCOUT_ALLOW_INSECURE_TLS=1` for a short-lived local recovery scenario when you explicitly need to bypass certificate verification.
+
+STEP 6: ADD ZIP CODE DATA IF YOU WANT ZIP CODE SEARCH
+=====================================================
+
+TowerScout's ZIP code search expects the Census ZCTA shapefile contents to exist in:
+- `webapp\data\tl_2025_us_zcta520`
+
+If that folder is missing or empty, download the ZIP file from:
+- https://www2.census.gov/geo/tiger/TIGER2025/ZCTA520/
+
+Then extract the Census ZCTA shapefile ZIP and place the extracted contents in:
+- `webapp\data\tl_2025_us_zcta520`
+
+If the folder does not exist yet, create it first:
+
+```powershell
+New-Item -ItemType Directory -Force webapp\data\tl_2025_us_zcta520
+```
+
+Notes:
+- This data is required for ZIP code search.
+- If you are not testing ZIP code search, the rest of the app can still run without it.
+
+STEP 7: ADD THE TWO MODEL FILES
+===============================
+
+TowerScout needs two model files that are not stored in the GitHub repo.
+
+Put them in these exact locations:
+- `webapp\model_params\yolov5\newest.pt`
+- `webapp\model_params\EN\b5_unweighted_best.pt`
+
+If those folders do not exist yet, create them:
+
+```powershell
+New-Item -ItemType Directory -Force webapp\model_params\yolov5
+New-Item -ItemType Directory -Force webapp\model_params\EN
+```
+
+Current download links listed in the repo README:
+- YOLOv5 weights: https://drive.google.com/file/d/1EBxgqr6MrkAkEv1vJ2ftZiSjs6w865wf/view?usp=drive_link
+- EfficientNet weights: https://drive.google.com/file/d/1Cs3nXQddNf-Y0HYO8a5Yvm6mNB-Rx8HP/view?usp=drive_link
+
+Important:
+- the filenames must stay exactly `newest.pt` and `b5_unweighted_best.pt`
+- if either file is missing, the app may not start
+
+STEP 8: START TOWERSCOUT
+========================
+
+Copy/paste:
+
+```powershell
+cd webapp
+python towerscout.py dev
+```
+
+Leave that PowerShell window open while you use the app.
+
+Then open your browser and go to:
+- http://localhost:5000
+
+STEP 9: COMPLETE FIRST-TIME SETUP
+=================================
+
+If this is your first run, TowerScout will usually show a Setup Wizard.
+
+In the Setup Wizard:
+1. Choose Azure Maps or Google Maps.
+2. Paste in your key.
+3. Click the button to validate the key.
+4. Save the configuration.
+5. Wait for the app to refresh.
+
+Notes:
+- You only need one valid provider key to begin testing.
+- The app saves this information for you in `webapp/config/.env`.
+- Bing is legacy-only and is not the normal setup path now.
+
+If a teammate already gave you a ready-made config file, the Setup Wizard may not appear. That is fine.
+
+STEP 10: BASIC TEST FLOW
+========================
+
+Once the map loads, a simple test run looks like this:
+
+1. Search for a place or ZIP code.
+2. Draw a polygon or circle around a small area.
+3. Click `Estimate Tiles`.
+4. If the estimate looks reasonable, click `Find Towers`.
+5. Watch the progress overlay while detection runs.
+6. Review results on the map and in the right-hand panel.
+7. Try export options if that is part of your test.
+
+Good things to check:
+- the map loads
+- the app responds to search
+- estimate works before full detection
+- progress updates while detection is running
+- results appear on both the map and the list
+- clicking a result highlights the matching map item
+
+PRACTICAL TESTING TIPS
+======================
+
+- Start with a small area. Large searches take longer.
+- The first detection run can be slower because model loading happens during the session.
+- If the first detection run fails during model load, treat it as a local dependency or workspace problem rather than a GitHub download problem.
+- If both Azure and Google are configured, try switching providers before detection starts.
+- Keep notes on what you searched for and what happened.
+
+HOW TO STOP THE APP
+===================
+
+Go back to the PowerShell window running TowerScout and press:
+- `Ctrl + C`
+
+HOW TO START IT AGAIN LATER
+===========================
+
+Open PowerShell in the TowerScout folder and run:
+
+```powershell
+cd path\to\TowerScout
+.\.venv\Scripts\Activate.ps1
+cd webapp
+python towerscout.py dev
+```
+
+COMMON PROBLEMS
+===============
+
+Problem: `py` is not recognized
+- Close PowerShell and open it again
+- If that still fails, try `python --version`
+
+Problem: The install step fails
+- Take a screenshot
+- send the screenshot and the exact error text to a teammate
+
+Problem: The first detection run fails with a YOLOv5 load error
+- Ask a teammate to verify `pip install -r webapp/requirements.txt` completed successfully
+- Ask a teammate to confirm `webapp\vendor\yolov5_local\` and `webapp\model_params\yolov5\newest.pt` are present
+- Send the exact error text to a teammate
+
+Problem: The app says setup is still required
+- Your provider key was not saved yet, or it was invalid
+- Open the Setup Wizard again and try saving a real Azure or Google key
+
+Problem: The map does not load
+- Check that your provider key is valid
+- Make sure your internet connection is working
+
+Problem: The app crashes on startup with a model-related error
+- One of the two required model files is missing
+- Check the exact filenames and file locations again
+
+Problem: You expected GPU acceleration but the app still runs on CPU
+- TowerScout only uses CUDA when the installed PyTorch build reports CUDA as available
+- A CUDA-compatible GPU by itself is not enough
+- If you need GPU acceleration, ask a teammate for the correct CUDA-enabled PyTorch install command for `torch==2.2.1` and `torchvision==0.17.1`
+
+Problem: Nothing happens at `http://localhost:5000`
+- Make sure the PowerShell window is still running
+- Check whether TowerScout printed an error message
+
+WHAT TO REPORT BACK TO THE TEAM
+===============================
+
+If something goes wrong, send back:
+- the step number where it failed
+- a screenshot
+- the exact error message if one appeared
+- whether you were using Azure Maps or Google Maps
+- what search area you tried to test
+- whether ZIP code search was part of the test
+
+SHORT VERSION
+=============
+
+If you only want the fast path:
+1. Install Git and Python.
+2. Clone the repo and check out `feature-sprint-05`.
+3. Create `.venv`.
+4. Install `webapp\requirements.txt`.
+5. If you want ZIP code search, download the Census ZCTA shapefile ZIP and extract it into `webapp\data\tl_2025_us_zcta520`.
+6. Put `newest.pt` and `b5_unweighted_best.pt` in the correct folders.
+7. Run `python towerscout.py dev` from `webapp`.
+8. Open `http://localhost:5000`.
+9. Finish Setup Wizard and test the app.

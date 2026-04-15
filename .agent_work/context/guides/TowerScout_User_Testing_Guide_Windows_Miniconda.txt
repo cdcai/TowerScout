@@ -1,0 +1,356 @@
+TOWERSCOUT USER TESTING GUIDE (WINDOWS MINICONDA)
+=================================================
+
+Last reviewed: 2026-04-09
+Audience: nontechnical testers who want to run the current app locally on Windows with Miniconda
+
+WHAT THIS GUIDE IS FOR
+======================
+
+This guide is for running TowerScout so you can test it. It is not a developer guide.
+
+These steps are written for Windows users who:
+- want to use Miniconda
+- may not have Git installed
+- need one clean setup path they can copy and follow
+
+The branch this guide targets is:
+- `feature-sprint-05`
+
+WHAT YOU NEED BEFORE YOU START
+==============================
+
+You will need:
+- Windows
+- Miniconda
+- an internet connection
+- one valid Azure Maps key or Google Maps key
+- two model files that are not stored in GitHub
+- ZIP code boundary data if you want to test ZIP code search
+
+You do NOT need:
+- Git
+- Docker
+- VS Code
+- Node.js
+- coding experience beyond basic copy/paste
+
+Important:
+- TowerScout now loads YOLOv5 from a vendored local runtime snapshot in the repo.
+- The first YOLOv5 model load no longer needs GitHub or Torch Hub access when the runtime dependencies and model files are already in place.
+
+BEST CASE BEFORE YOU BEGIN
+==========================
+
+If a teammate can give you these items ahead of time, setup is much easier:
+- a ZIP or extracted copy of the `feature-sprint-05` branch
+- a valid Azure Maps key or Google Maps key
+- the file `newest.pt`
+- the file `b5_unweighted_best.pt`
+
+STEP 1: INSTALL MINICONDA
+=========================
+
+Install Miniconda from the official Windows installer.
+
+After installation:
+1. Open `Miniconda Prompt`.
+2. Check that Conda works:
+
+```bat
+conda --version
+```
+
+If `conda` is not recognized:
+- close the window
+- open `Miniconda Prompt` again
+
+STEP 2: GET THE TOWERSCOUT FOLDER WITHOUT GIT
+=============================================
+
+You can use either of these paths:
+
+Option A:
+- Ask a teammate to give you a ZIP or extracted copy of the `feature-sprint-05` branch.
+
+Option B:
+- Open the TowerScout GitHub page in your browser.
+- Switch to the `feature-sprint-05` branch.
+- Use `Code` > `Download ZIP`.
+- Extract the ZIP to a normal local folder such as `C:\Users\yourname\TowerScout`.
+
+After extraction:
+- open the folder in File Explorer
+- confirm you can see `webapp`, `README.md`, and `.agent_work`
+
+If the extracted folder name includes the branch name, that is fine.
+
+STEP 3: CREATE A CONDA ENVIRONMENT
+==================================
+
+Open `Miniconda Prompt`, then go to the TowerScout folder:
+
+```bat
+cd C:\path\to\TowerScout
+```
+
+Create a fresh Conda environment with Python 3.12:
+
+```bat
+conda create -n towerscout python=3.12 -y
+conda activate towerscout
+python --version
+```
+
+If Python 3.12 gives you trouble, use Python 3.11 instead:
+
+```bat
+conda create -n towerscout python=3.11 -y
+conda activate towerscout
+python --version
+```
+
+After activation, your prompt should start with `(towerscout)`.
+
+STEP 4: INSTALL THE APP'S PYTHON PACKAGES
+=========================================
+
+From the TowerScout folder, copy/paste:
+
+```bat
+python -m pip install --upgrade pip
+python -m pip install -r webapp\requirements.txt
+```
+
+Notes:
+- This step can take a while because the app uses machine learning and mapping libraries.
+- `webapp\requirements.txt` now includes the current verified `tqdm` runtime dependency, so no separate `tqdm` install is required.
+- `pkg_resources` and `setuptools<82` are not required for the current audited runtime path.
+- `webapp\requirements.txt` now explicitly includes `packaging`, `pandas`, and a pinned `ultralytics` version because the hardened YOLOv5 load path imports those directly.
+- `webapp\requirements.txt` now pins the validated Sprint 05 CPU baseline, including `numpy==1.26.4` and the pinned YOLOv5 minimums for `Pillow` and `Requests`.
+- Installing `webapp\requirements.txt` does not give you CUDA automatically; it gives the validated CPU baseline.
+- If you want CUDA acceleration on a compatible NVIDIA machine, install the matching CUDA-enabled PyTorch build for `torch==2.2.1` and `torchvision==0.17.1` using the official PyTorch instructions. TowerScout will use CUDA automatically if that build reports CUDA as available.
+- TowerScout verifies TLS certificates by default. Only set `TOWERSCOUT_ALLOW_INSECURE_TLS=1` for a short-lived local recovery scenario when you explicitly need to bypass certificate verification.
+
+STEP 5: ADD ZIP CODE DATA IF YOU WANT ZIP CODE SEARCH
+=====================================================
+
+TowerScout's ZIP code search expects the Census ZCTA shapefile contents to exist in:
+- `webapp\data\tl_2025_us_zcta520`
+
+If that folder is missing or empty, download the ZIP file from:
+- https://www2.census.gov/geo/tiger/TIGER2025/ZCTA520/
+
+Then extract the Census ZCTA shapefile ZIP and place the extracted contents in:
+- `webapp\data\tl_2025_us_zcta520`
+
+If the folder does not exist yet, create it first:
+
+```bat
+if not exist webapp\data\tl_2025_us_zcta520 mkdir webapp\data\tl_2025_us_zcta520
+```
+
+Notes:
+- This data is required for ZIP code search.
+- If you are not testing ZIP code search, the rest of the app can still run without it.
+
+STEP 6: ADD THE TWO MODEL FILES
+===============================
+
+TowerScout needs two model files that are not stored in the repo.
+
+Put them in these exact locations:
+- `webapp\model_params\yolov5\newest.pt`
+- `webapp\model_params\EN\b5_unweighted_best.pt`
+
+If those folders do not exist yet, create them:
+
+```bat
+if not exist webapp\model_params\yolov5 mkdir webapp\model_params\yolov5
+if not exist webapp\model_params\EN mkdir webapp\model_params\EN
+```
+
+Current download links listed in the repo README:
+- YOLOv5 weights: https://drive.google.com/file/d/1EBxgqr6MrkAkEv1vJ2ftZiSjs6w865wf/view?usp=drive_link
+- EfficientNet weights: https://drive.google.com/file/d/1Cs3nXQddNf-Y0HYO8a5Yvm6mNB-Rx8HP/view?usp=drive_link
+
+Important:
+- the filenames must stay exactly `newest.pt` and `b5_unweighted_best.pt`
+- if either file is missing, the app may not start
+
+STEP 7: CREATE A FLASK SECRET KEY
+=================================
+
+TowerScout uses `FLASK_SECRET_KEY` for session security.
+
+Generate one in `Miniconda Prompt`:
+
+```bat
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Copy the long value that prints. You will paste it into the config file in the next step.
+
+STEP 8: CREATE OR UPDATE THE CONFIG FILE
+========================================
+
+TowerScout saves config in:
+- `webapp\config\.env`
+
+From the TowerScout folder, run:
+
+```bat
+if not exist webapp\config mkdir webapp\config
+if not exist webapp\config\.env copy webapp\.env.example webapp\config\.env
+notepad webapp\config\.env
+```
+
+In Notepad:
+1. Find the line that starts with `FLASK_SECRET_KEY=`.
+2. Replace the placeholder value with the secret you generated.
+3. Save the file.
+4. Close Notepad.
+
+Notes:
+- You do not need to fill in every setting by hand.
+- The Setup Wizard can save your Azure Maps or Google Maps key later.
+- If `webapp\config\.env` already existed, keep it and only update the `FLASK_SECRET_KEY` line if needed.
+
+STEP 9: START TOWERSCOUT
+========================
+
+From the TowerScout folder, run:
+
+```bat
+cd webapp
+python towerscout.py dev
+```
+
+Leave that `Miniconda Prompt` window open while you use the app.
+
+Then open your browser and go to:
+- http://localhost:5000
+
+STEP 10: COMPLETE FIRST-TIME SETUP
+==================================
+
+If this is your first run, TowerScout will usually show a Setup Wizard.
+
+In the Setup Wizard:
+1. Choose Azure Maps or Google Maps.
+2. Paste in your key.
+3. Click the button to validate the key.
+4. Save the configuration.
+5. Wait for the app to refresh.
+
+Notes:
+- You only need one valid provider key to begin testing.
+- The app saves this information for you in `webapp\config\.env`.
+- Bing is legacy-only and is not the normal setup path now.
+
+If a teammate already gave you a ready-made config file, the Setup Wizard may not appear. That is fine.
+
+STEP 11: BASIC TEST FLOW
+========================
+
+Once the map loads, a simple test run looks like this:
+
+1. Search for a place or ZIP code.
+2. Draw a polygon or circle around a small area.
+3. Click `Estimate Tiles`.
+4. If the estimate looks reasonable, click `Find Towers`.
+5. Watch the progress overlay while detection runs.
+6. Review results on the map and in the right-hand panel.
+7. Try export options if that is part of your test.
+
+Good things to check:
+- the map loads
+- the app responds to search
+- estimate works before full detection
+- progress updates while detection is running
+- results appear on both the map and the list
+- clicking a result highlights the matching map item
+
+PRACTICAL TESTING TIPS
+======================
+
+- Start with a small area. Large searches take longer.
+- The first detection run can be slower because model loading happens during the session.
+- Keep notes on what you searched for and what happened.
+- Do not use the Conda `base` environment for testing if you can avoid it. A dedicated `towerscout` environment is cleaner.
+
+HOW TO STOP THE APP
+===================
+
+Go back to the `Miniconda Prompt` window running TowerScout and press:
+- `Ctrl + C`
+
+HOW TO START IT AGAIN LATER
+===========================
+
+Open `Miniconda Prompt` and run:
+
+```bat
+cd C:\path\to\TowerScout
+conda activate towerscout
+cd webapp
+python towerscout.py dev
+```
+
+COMMON PROBLEMS
+===============
+
+Problem: `conda` is not recognized
+- Open `Miniconda Prompt`, not a normal Command Prompt
+- If needed, reinstall Miniconda
+
+Problem: The install step fails
+- Take a screenshot
+- send the screenshot and the exact error text to a teammate
+
+Problem: The app says setup is still required
+- Your provider key was not saved yet, or it was invalid
+- Open the Setup Wizard again and try saving a real Azure or Google key
+
+Problem: The map does not load
+- Check that your provider key is valid
+- Make sure your internet connection is working
+
+Problem: The app crashes on startup with a model-related error
+- One of the two required model files is missing
+- Check the exact filenames and file locations again
+
+Problem: YOLOv5 load fails with a local runtime error
+- Ask a teammate to verify `pip install -r webapp/requirements.txt` completed successfully
+- Ask a teammate to confirm `webapp\vendor\yolov5_local\` and `webapp\model_params\yolov5\newest.pt` are present
+
+Problem: Nothing happens at `http://localhost:5000`
+- Make sure the `Miniconda Prompt` window is still running
+- Check whether TowerScout printed an error message
+
+WHAT TO REPORT BACK TO THE TEAM
+===============================
+
+If something goes wrong, send back:
+- the step number where it failed
+- a screenshot
+- the exact error message if one appeared
+- whether you were using Azure Maps or Google Maps
+- what search area you tried to test
+- whether ZIP code search was part of the test
+
+SHORT VERSION
+=============
+
+If you only want the fast path:
+1. Install Miniconda.
+2. Download or receive the `feature-sprint-05` TowerScout folder.
+3. Create and activate a `towerscout` Conda environment.
+4. Install `webapp\requirements.txt`.
+5. If you want ZIP code search, download the Census ZCTA shapefile ZIP and extract it into `webapp\data\tl_2025_us_zcta520`.
+6. Put `newest.pt` and `b5_unweighted_best.pt` in the correct folders.
+7. Generate a `FLASK_SECRET_KEY`.
+8. Add that key to `webapp\config\.env`.
+9. Run `python towerscout.py dev` from `webapp`.
+10. Open `http://localhost:5000`.
+11. Finish the Setup Wizard and test the app.

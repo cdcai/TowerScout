@@ -17,5 +17,5 @@
   // Expose to window for global access
   window.createElementFromHTML = createElementFromHTML;
 
-  console.log('✅ Imagery utilities loaded');
+  window.TowerScoutLogger.debug('✅ Imagery utilities loaded');
 })();

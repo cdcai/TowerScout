@@ -7,6 +7,10 @@
 
   // Initialize and add the Google Maps provider
   function initGoogleMap() {
+    if (typeof google === 'undefined' || !google.maps || typeof google.maps.Map !== 'function') {
+      throw new Error('Google Maps SDK not loaded. Call loadGoogleMaps() before initGoogleMap().');
+    }
+
     const gmap = new GoogleMap();
 
     // TASK-043 Phase 1: Use providerManager to register map instance
@@ -24,7 +28,7 @@
     // Update provider manager if Google is the preferred provider
     if (providerManager.currentProvider === 'google' || providerManager.currentProvider === null) {
       providerManager.currentMap = gmap;
-      console.log('✅ Google Maps initialized and set as current provider');
+      window.TowerScoutLogger.info('Google Maps is ready.');
     }
 
     // Initialize provider-aware search system
@@ -33,7 +37,7 @@
 
   // Initialize and add the Azure Maps provider
   async function initAzureMap() {
-    console.log('Initializing Azure Maps...');
+    window.TowerScoutLogger.info('Initializing Azure Maps...');
 
     let retryCount = 0;
     const maxRetries = CONFIG.MAX_RETRIES;
@@ -65,14 +69,14 @@
 
         // If Azure is selected but currentMap is not set properly, fix it
         if (currentUI && currentUI.value === "azure") {
-          console.log('Setting Azure Maps as current map');
+          window.TowerScoutLogger.debug('Setting Azure Maps as current map');
           providerManager.currentMap = amap;
         } else if (providerManager.currentProvider === 'azure') {
-          console.log('Setting Azure Maps as provider manager current map');
+          window.TowerScoutLogger.debug('Setting Azure Maps as provider manager current map');
           providerManager.currentMap = amap;
         }
 
-        console.log('✅ Azure Maps initialization complete');
+        window.TowerScoutLogger.info('Azure Maps is ready.');
         return amap;
 
       } catch (error) {
@@ -97,7 +101,7 @@
           throw error;
         } else {
           // Wait before retry
-          console.log(`⏳ Retrying Azure Maps initialization in ${retryDelay}ms...`);
+          window.TowerScoutLogger.info(`Retrying Azure Maps initialization in ${retryDelay}ms...`);
           await new Promise(resolve => timerManager.setTimeout(resolve, retryDelay));
         }
       }
@@ -108,6 +112,6 @@
   window.initGoogleMap = initGoogleMap;
   window.initAzureMap = initAzureMap;
 
-  console.log('✅ Provider initialization module loaded');
+  window.TowerScoutLogger.debug('✅ Provider initialization module loaded');
 })();
 

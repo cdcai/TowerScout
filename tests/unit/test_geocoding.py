@@ -12,8 +12,8 @@ import unittest
 from unittest.mock import Mock, patch, MagicMock
 import json
 import time
-import tempfile
 import os
+import uuid
 from pathlib import Path
 
 # Import modules under test
@@ -36,13 +36,23 @@ class TestGeocodingService(unittest.TestCase):
         self.test_lng = -122.3493
         self.azure_key = "test_azure_key_12345"
         self.google_key = "test_google_key_12345"
+        self.env_patcher = patch.dict(
+            os.environ,
+            {
+                'AZURE_MAPS_SUBSCRIPTION_KEY': '',
+                'GOOGLE_API_KEY': '',
+            },
+            clear=False,
+        )
+        self.env_patcher.start()
+        self.addCleanup(self.env_patcher.stop)
 
     def test_service_initialization_with_azure_key(self):
         """Test service initialization with Azure Maps key."""
         service = GeocodingService(azure_key=self.azure_key)
         
         self.assertEqual(service.azure_key, self.azure_key)
-        self.assertIsNone(service.google_key)
+        self.assertFalse(service.google_key)
         self.assertIn(GeocodingProvider.AZURE_MAPS, service.providers)
         self.assertNotIn(GeocodingProvider.GOOGLE_MAPS, service.providers)
 
@@ -50,7 +60,7 @@ class TestGeocodingService(unittest.TestCase):
         """Test service initialization with Google Maps key."""
         service = GeocodingService(google_key=self.google_key)
         
-        self.assertIsNone(service.azure_key)
+        self.assertFalse(service.azure_key)
         self.assertEqual(service.google_key, self.google_key)
         self.assertNotIn(GeocodingProvider.AZURE_MAPS, service.providers)
         self.assertIn(GeocodingProvider.GOOGLE_MAPS, service.providers)
@@ -80,7 +90,7 @@ class TestGeocodingService(unittest.TestCase):
         mock_response.raise_for_status = Mock()
         mock_response.json.return_value = {
             'summary': {'numResults': 1},
-            'results': [{
+            'addresses': [{
                 'address': {'freeformAddress': '123 Test Street, Seattle, WA'},
                 'matchType': 'AddressPoint'
             }]
@@ -89,7 +99,7 @@ class TestGeocodingService(unittest.TestCase):
         
         service = GeocodingService(azure_key=self.azure_key)
         
-        with patch('flask.session', {}):
+        with patch('ts_geocoding.session', {}):
             result = service.reverse_geocode(self.test_lat, self.test_lng)
         
         self.assertTrue(result.success)
@@ -112,16 +122,59 @@ class TestGeocodingService(unittest.TestCase):
             }]
         }
         mock_get.return_value = mock_response
-        
+
         service = GeocodingService(google_key=self.google_key)
-        
-        with patch('flask.session', {}):
+
+        with patch('ts_geocoding.session', {}):
             result = service.reverse_geocode(self.test_lat, self.test_lng)
         
         self.assertTrue(result.success)
         self.assertEqual(result.address, '456 Test Avenue, Seattle, WA')
         self.assertEqual(result.provider, GeocodingProvider.GOOGLE_MAPS)
         self.assertEqual(result.confidence, 0.95)  # ROOFTOP confidence
+
+    @patch('requests.get')
+    def test_reverse_geocode_verifies_tls_by_default(self, mock_get):
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status = Mock()
+        mock_response.json.return_value = {
+            'summary': {'numResults': 1},
+            'addresses': [{
+                'address': {'freeformAddress': '123 Test Street, Seattle, WA'},
+                'matchType': 'AddressPoint'
+            }]
+        }
+        mock_get.return_value = mock_response
+
+        service = GeocodingService(azure_key=self.azure_key)
+
+        with patch('ts_geocoding.session', {}):
+            service.reverse_geocode(self.test_lat, self.test_lng)
+
+        self.assertTrue(mock_get.call_args.kwargs['verify'])
+
+    @patch.dict(os.environ, {'TOWERSCOUT_ALLOW_INSECURE_TLS': '1'}, clear=False)
+    @patch('requests.get')
+    def test_reverse_geocode_can_disable_tls_when_explicit_env_set(self, mock_get):
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status = Mock()
+        mock_response.json.return_value = {
+            'summary': {'numResults': 1},
+            'addresses': [{
+                'address': {'freeformAddress': '123 Test Street, Seattle, WA'},
+                'matchType': 'AddressPoint'
+            }]
+        }
+        mock_get.return_value = mock_response
+
+        service = GeocodingService(azure_key=self.azure_key)
+
+        with patch('ts_geocoding.session', {}):
+            service.reverse_geocode(self.test_lat, self.test_lng)
+
+        self.assertFalse(mock_get.call_args.kwargs['verify'])
 
     @patch('requests.get')
     def test_provider_fallback(self, mock_get):
@@ -151,7 +204,7 @@ class TestGeocodingService(unittest.TestCase):
         
         service = GeocodingService(azure_key=self.azure_key, google_key=self.google_key)
         
-        with patch('flask.session', {}):
+        with patch('ts_geocoding.session', {}):
             result = service.reverse_geocode(self.test_lat, self.test_lng)
         
         self.assertTrue(result.success)
@@ -168,7 +221,7 @@ class TestGeocodingService(unittest.TestCase):
         
         service = GeocodingService(azure_key=self.azure_key, google_key=self.google_key)
         
-        with patch('flask.session', {}):
+        with patch('ts_geocoding.session', {}):
             result = service.reverse_geocode(self.test_lat, self.test_lng)
         
         self.assertFalse(result.success)
@@ -192,7 +245,7 @@ class TestGeocodingService(unittest.TestCase):
             }
         }
         
-        with patch('flask.session', mock_session):
+        with patch('ts_geocoding.session', mock_session):
             with self.assertRaises(Exception):  # RateLimitError
                 service.reverse_geocode(self.test_lat, self.test_lng)
 
@@ -204,7 +257,8 @@ class TestGeocodingCache(unittest.TestCase):
         """Set up test fixtures."""
         self.test_lat = 47.6205
         self.test_lng = -122.3493
-        self.temp_dir = tempfile.mkdtemp()
+        self.temp_dir = Path.cwd() / ".agent_work" / "pytest-temp" / f"geocache-{uuid.uuid4().hex}"
+        self.temp_dir.mkdir(parents=True, exist_ok=True)
         
         # Sample geocoding result
         self.test_result = GeocodingResult(
@@ -238,7 +292,7 @@ class TestGeocodingCache(unittest.TestCase):
         cache.put(self.test_lat, self.test_lng, self.test_result)
         
         # Retrieve from cache
-        retrieved = cache.get(self.test_lat, self.test_lng)
+        retrieved = cache.get(self.test_lat, self.test_lng, provider=self.test_result.provider)
         
         self.assertIsNotNone(retrieved)
         self.assertEqual(retrieved.address, self.test_result.address)
@@ -253,10 +307,10 @@ class TestGeocodingCache(unittest.TestCase):
         cache.put(self.test_lat, self.test_lng, self.test_result)
         
         # Request nearby location (within clustering radius)
-        nearby_lat = self.test_lat + 0.0005  # ~50m north
-        nearby_lng = self.test_lng + 0.0005  # ~50m east
+        nearby_lat = self.test_lat + 0.0001  # ~11m north
+        nearby_lng = self.test_lng + 0.0001  # ~8m east at this latitude
         
-        retrieved = cache.get(nearby_lat, nearby_lng)
+        retrieved = cache.get(nearby_lat, nearby_lng, provider=self.test_result.provider)
         
         # Should retrieve cached result due to clustering
         self.assertIsNotNone(retrieved)
@@ -273,7 +327,7 @@ class TestGeocodingCache(unittest.TestCase):
         distant_lat = self.test_lat + 0.01  # ~1km north
         distant_lng = self.test_lng + 0.01  # ~1km east
         
-        retrieved = cache.get(distant_lat, distant_lng)
+        retrieved = cache.get(distant_lat, distant_lng, provider=self.test_result.provider)
         
         # Should be cache miss
         self.assertIsNone(retrieved)
@@ -305,7 +359,7 @@ class TestGeocodingCache(unittest.TestCase):
         cache2 = GeocodingCache(cache_dir=self.temp_dir)
         
         # Should retrieve from persisted cache
-        retrieved = cache2.get(self.test_lat, self.test_lng)
+        retrieved = cache2.get(self.test_lat, self.test_lng, provider=self.test_result.provider)
         self.assertIsNotNone(retrieved)
         self.assertEqual(retrieved.address, self.test_result.address)
 

@@ -1,0 +1,370 @@
+(towerscout) C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp>python towerscout.py dev
+🚀 TowerScout starting...
+============================================================
+TOWERSCOUT ENVIRONMENT DEBUG
+============================================================
+Current working directory: C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp
+Script directory: C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp
+.env file path: C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\config\.env
+.env file exists: True
+Loading .env from: C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\config\.env
+
+Environment Variables Status:
+GOOGLE_API_KEY: ✓ Loaded
+AZURE_MAPS_SUBSCRIPTION_KEY: ✗ Missing
+BING_API_KEY: ✗ Missing
+============================================================
+2026-04-09 11:14:26 - towerscout.main - WARNING - BING_API_KEY not configured or contains placeholder text. Bing Maps provider will be unavailable.
+2026-04-09 11:14:26 - towerscout.main - WARNING - AZURE_MAPS_SUBSCRIPTION_KEY not configured or contains placeholder text. Azure Maps provider will be unavailable.
+2026-04-09 11:14:26 - towerscout.ml - INFO - Torch CUDA: not available
+2026-04-09 11:14:26 - towerscout.ml - INFO - Initializing EfficientNet classifier
+Loaded pretrained weights for efficientnet-b5
+2026-04-09 11:14:27 - towerscout.ml - INFO - EfficientNet base model loaded successfully
+2026-04-09 11:14:27 - towerscout.ml - INFO - EfficientNet loaded on CPU
+2026-04-09 11:14:27 - towerscout.ml - INFO - EfficientNet weights loaded and model set to eval mode
+2026-04-09 11:14:41 - towerscout.api - INFO - Main page loaded at 2026-04-09 10:14:41.760972-05:00 EST
+INFO:towerscout.api:Main page loaded at 2026-04-09 10:14:41.760972-05:00 EST
+2026-04-09 11:14:42 - towerscout.api - INFO - Google Maps key API endpoint requested - Key available: True
+INFO:towerscout.api:Google Maps key API endpoint requested - Key available: True
+2026-04-09 11:14:42 - towerscout.api - INFO - Returning Google API key to frontend (starts with: AIzaSyBp5UtXMtt...)
+INFO:towerscout.api:Returning Google API key to frontend (starts with: AIzaSyBp5UtXMtt...)
+2026-04-09 11:14:42 - towerscout.api - WARNING - 404 error: http://localhost:5000/favicon.ico
+WARNING:towerscout.api:404 error: http://localhost:5000/favicon.ico
+C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\towerscout.py:1181: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
+
+🔍 DIAGNOSTIC: Validating estimate request...
+   Form data keys: ['bounds', 'engine', 'provider', 'polygons']
+incoming estimate request:
+ bounds: 33.794218,-84.335384,33.803201,-84.324574
+ engine: newest
+ map provider: google
+ polygons count: 1
+
+🗺️  DIAGNOSTIC: Initializing map provider 'google'...
+   Google API key available: True
+   Azure API key available: False
+✅ Google Maps initialized
+
+🔲 DIAGNOSTIC: Making tiles from bounds...
+   Bounds: 33.794218,-84.335384,33.803201,-84.324574
+   Crop tiles: True
+✅ Created 49 tiles (7 x 7)
+🔍 DEBUG: Setting IDs for 46 tiles
+  Tile 0: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 1: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 2: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 3: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 4: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 5: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 6: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 7: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 8: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 9: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 10: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 11: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 12: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 13: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 14: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 15: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 16: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 17: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 18: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 19: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 20: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 21: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 22: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 23: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 24: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 25: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 26: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 27: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 28: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 29: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 30: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 31: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 32: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 33: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 34: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 35: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 36: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 37: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 38: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 39: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 40: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 41: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 42: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 43: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 44: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 45: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+ tiles left after viewport and polygon filter: 46
+📊 Performance estimate: 46 tiles, ~13.8 seconds
+
+[Task-053] Validating detection request...
+   Form data keys: ['bounds', 'engine', 'provider', 'polygons']
+   Polygons data (first 200 chars): [[[-84.32997930183794,33.80320125927133],[-84.32944951475338,33.80317963110319],[-84.32892482980805,33.803114954889864],[-84.3284103000048,33.80300785349863],[-84.32791088054692,33.802859358374434],[-...
+incoming detection request:
+ bounds: 33.794218,-84.335384,33.803201,-84.324574
+ engine: newest
+ map provider: google
+ polygons count: 1
+2026-04-09 11:14:59 - towerscout.ml - INFO - Loading model: newest
+INFO:towerscout.ml:Loading model: newest
+2026-04-09 11:14:59 - towerscout.ml - INFO - Initializing YOLOv5 detector with model: C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\model_params\yolov5\newest.pt
+INFO:towerscout.ml:Initializing YOLOv5 detector with model: C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\model_params\yolov5\newest.pt
+Using cache found in C:\Users\iek4/.cache\torch\hub\ultralytics_yolov5_master
+2026-04-09 11:14:59 - towerscout.ml - WARNING - Detected stale cached YOLOv5 Torch Hub repo requiring pkg_resources. Clearing cache and retrying fresh load: C:\Users\iek4\.cache\torch\hub\ultralytics_yolov5_master
+WARNING:towerscout.ml:Detected stale cached YOLOv5 Torch Hub repo requiring pkg_resources. Clearing cache and retrying fresh load: C:\Users\iek4\.cache\torch\hub\ultralytics_yolov5_master
+C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\torch\hub.py:294: UserWarning: You are about to download and run code from an untrusted repository. In a future release, this won't be allowed. To add the repository to your trusted list, change the command to {calling_fn}(..., trust_repo=False) and a command prompt will appear asking for an explicit confirmation of trust, or load(..., trust_repo=True), which will assume that the prompt is to be answered with 'yes'. You can also use load(..., trust_repo='check') which will only prompt for confirmation if the repo is not already trusted. This will eventually be the default behaviour
+  warnings.warn(
+Downloading: "https://github.com/ultralytics/yolov5/zipball/master" to C:\Users\iek4/.cache\torch\hub\master.zip
+requirements: Ultralytics requirements ['gitpython>=3.1.30', 'pillow>=10.3.0', 'requests>=2.32.2'] not found, attempting AutoUpdate...
+Collecting gitpython>=3.1.30
+  Downloading gitpython-3.1.46-py3-none-any.whl.metadata (13 kB)
+Collecting pillow>=10.3.0
+  Downloading pillow-12.2.0-cp312-cp312-win_amd64.whl.metadata (9.0 kB)
+Collecting requests>=2.32.2
+  Downloading requests-2.33.1-py3-none-any.whl.metadata (4.8 kB)
+Collecting gitdb<5,>=4.0.1 (from gitpython>=3.1.30)
+  Downloading gitdb-4.0.12-py3-none-any.whl.metadata (1.2 kB)
+Collecting smmap<6,>=3.0.1 (from gitdb<5,>=4.0.1->gitpython>=3.1.30)
+  Downloading smmap-5.0.3-py3-none-any.whl.metadata (4.6 kB)
+Requirement already satisfied: charset_normalizer<4,>=2 in C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages (from requests>=2.32.2) (3.4.7)
+Requirement already satisfied: idna<4,>=2.5 in C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages (from requests>=2.32.2) (3.11)
+Requirement already satisfied: urllib3<3,>=1.26 in C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages (from requests>=2.32.2) (2.6.3)
+Requirement already satisfied: certifi>=2023.5.7 in C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages (from requests>=2.32.2) (2026.2.25)
+Downloading gitpython-3.1.46-py3-none-any.whl (208 kB)
+Downloading gitdb-4.0.12-py3-none-any.whl (62 kB)
+Downloading smmap-5.0.3-py3-none-any.whl (24 kB)
+Downloading pillow-12.2.0-cp312-cp312-win_amd64.whl (7.1 MB)
+   ---------------------------------------- 7.1/7.1 MB 87.5 MB/s  0:00:00
+Downloading requests-2.33.1-py3-none-any.whl (64 kB)
+Installing collected packages: smmap, requests, pillow, gitdb, gitpython
+  Attempting uninstall: requests
+    Found existing installation: requests 2.31.0
+    Uninstalling requests-2.31.0:
+      Successfully uninstalled requests-2.31.0
+  Attempting uninstall: pillow
+    Found existing installation: pillow 10.2.0
+    Uninstalling pillow-10.2.0:
+      Successfully uninstalled pillow-10.2.0
+  WARNING: Failed to remove contents in a temporary directory 'C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\~il'.
+  You can safely remove it manually.
+
+Successfully installed gitdb-4.0.12 gitpython-3.1.46 pillow-12.2.0 requests-2.33.1 smmap-5.0.3
+
+requirements: AutoUpdate success  6.2s
+WARNING requirements: Restart runtime or rerun command for updates to take effect
+
+YOLOv5  2026-4-9 Python-3.12.13 torch-2.2.1+cpu CPU
+
+Fusing layers...
+Model summary: 476 layers, 87198694 parameters, 0 gradients
+Adding AutoShape...
+2026-04-09 11:15:10 - towerscout.ml - INFO - YOLOv5 model loaded successfully
+INFO:towerscout.ml:YOLOv5 model loaded successfully
+2026-04-09 11:15:10 - towerscout.ml - INFO - CUDA not available, using CPU
+INFO:towerscout.ml:CUDA not available, using CPU
+
+🗺️  DIAGNOSTIC: Initializing map provider 'google'...
+   Google API key available: True
+   Azure API key available: False
+✅ Google Maps initialized
+
+🔲 DIAGNOSTIC: Making tiles from bounds...
+   Bounds: 33.794218,-84.335384,33.803201,-84.324574
+   Crop tiles: True
+✅ Created 49 tiles (7 x 7)
+🔍 DEBUG: Setting IDs for 46 tiles
+  Tile 0: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 1: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 2: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 3: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 4: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 5: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 6: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 7: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 8: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 9: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 10: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 11: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 12: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 13: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 14: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 15: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 16: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 17: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 18: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 19: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 20: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 21: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 22: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 23: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 24: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 25: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 26: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 27: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 28: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 29: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 30: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 31: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 32: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 33: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 34: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 35: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 36: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 37: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 38: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 39: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 40: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 41: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 42: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 43: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 44: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+  Tile 45: keys = dict_keys(['lat', 'lat_for_url', 'lng', 'h', 'w', 'id'])
+ tiles left after viewport and polygon filter: 46
+performance estimate: 46 tiles, ~13.8 seconds
+creating tmp dir C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\temp\session\session-22af33aeaf3f
+created tmp dir C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\temp\session\session-22af33aeaf3f
+2026-04-09 11:15:11 - towerscout.maps - INFO - Starting satellite map download for 46 tiles
+INFO:towerscout.maps:Starting satellite map download for 46 tiles
+2026-04-09 11:15:11 - towerscout.maps - INFO - Starting download of 46 map tiles
+INFO:towerscout.maps:Starting download of 46 map tiles
+2026-04-09 11:15:12 - towerscout.maps - INFO - Download completed: 46/46 tiles successful
+INFO:towerscout.maps:Download completed: 46/46 tiles successful
+2026-04-09 11:15:12 - towerscout.maps - INFO - Completed download of 46 map tiles
+INFO:towerscout.maps:Completed download of 46 map tiles
+2026-04-09 11:15:12 - towerscout.maps - INFO - Satellite map download completed for 46 tiles
+INFO:towerscout.maps:Satellite map download completed for 46 tiles
+ asynchronously retrieved 46 files
+2026-04-09 11:15:12 - towerscout.ml - INFO - Starting YOLOv5 detection on 46 tiles
+INFO:towerscout.ml:Starting YOLOv5 detection on 46 tiles
+requirements: Ultralytics requirement ['pi-heif'] not found, attempting AutoUpdate...
+Collecting pi-heif
+  Downloading pi_heif-1.3.0-cp312-cp312-win_amd64.whl.metadata (6.5 kB)
+Requirement already satisfied: pillow>=11.1.0 in C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages (from pi-heif) (12.2.0)
+Downloading pi_heif-1.3.0-cp312-cp312-win_amd64.whl (1.9 MB)
+   ---------------------------------------- 1.9/1.9 MB 112.3 MB/s  0:00:00
+Installing collected packages: pi-heif
+Successfully installed pi-heif-1.3.0
+
+requirements: AutoUpdate success  1.3s
+WARNING requirements: Restart runtime or rerun command for updates to take effect
+
+2026-04-09 11:15:14 - towerscout.ml - ERROR - Failed to load image C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\temp\session\session-22af33aeaf3f\session-22af33aeaf3f0.jpg: 'JpegImageFile' object has no attribute '_im'
+ERROR:towerscout.ml:Failed to load image C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\temp\session\session-22af33aeaf3f\session-22af33aeaf3f0.jpg: 'JpegImageFile' object has no attribute '_im'
+2026-04-09 11:15:14 - towerscout.api - ERROR - Detection pipeline failed: Image loading failed: C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\temp\session\session-22af33aeaf3f\session-22af33aeaf3f0.jpg
+Traceback (most recent call last):
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\ultralytics\utils\patches.py", line 74, in image_open
+    return _image_open(filename, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\Image.py", line 3288, in open
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\Image.py", line 3274, in _open_core
+    _check_size(size)
+
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\JpegImagePlugin.py", line 857, in jpeg_factory
+    im = JpegImageFile(fp, filename)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\ImageFile.py", line 137, in __init__
+    # filename
+        ^^^^^^^
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\JpegImagePlugin.py", line 382, in _open
+    handler(self, i)
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\JpegImagePlugin.py", line 200, in SOF
+    if self._im is not None and self.size != self.im.size:
+       ^^^^^^^^
+AttributeError: 'JpegImageFile' object has no attribute '_im'. Did you mean: 'im'?
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\ts_yolov5.py", line 211, in detect
+    img_batch.append(Image.open(tile['filename']))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\ultralytics\utils\patches.py", line 83, in image_open
+    return _image_open(filename, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\Image.py", line 3288, in open
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\Image.py", line 3274, in _open_core
+    _check_size(size)
+
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\JpegImagePlugin.py", line 857, in jpeg_factory
+    im = JpegImageFile(fp, filename)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\ImageFile.py", line 137, in __init__
+    # filename
+        ^^^^^^^
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\JpegImagePlugin.py", line 382, in _open
+    handler(self, i)
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\JpegImagePlugin.py", line 200, in SOF
+    if self._im is not None and self.size != self.im.size:
+       ^^^^^^^^
+AttributeError: 'JpegImageFile' object has no attribute '_im'. Did you mean: 'im'?
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\towerscout.py", line 845, in _run_detection_request
+    results_raw = det.detect(
+                  ^^^^^^^^^^^
+  File "C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\ts_yolov5.py", line 214, in detect
+    raise ProcessingError(
+ts_errors.ProcessingError: Image loading failed: C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\temp\session\session-22af33aeaf3f\session-22af33aeaf3f0.jpg
+ERROR:towerscout.api:Detection pipeline failed: Image loading failed: C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\temp\session\session-22af33aeaf3f\session-22af33aeaf3f0.jpg
+Traceback (most recent call last):
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\ultralytics\utils\patches.py", line 74, in image_open
+    return _image_open(filename, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\Image.py", line 3288, in open
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\Image.py", line 3274, in _open_core
+    _check_size(size)
+
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\JpegImagePlugin.py", line 857, in jpeg_factory
+    im = JpegImageFile(fp, filename)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\ImageFile.py", line 137, in __init__
+    # filename
+        ^^^^^^^
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\JpegImagePlugin.py", line 382, in _open
+    handler(self, i)
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\JpegImagePlugin.py", line 200, in SOF
+    if self._im is not None and self.size != self.im.size:
+       ^^^^^^^^
+AttributeError: 'JpegImageFile' object has no attribute '_im'. Did you mean: 'im'?
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\ts_yolov5.py", line 211, in detect
+    img_batch.append(Image.open(tile['filename']))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\ultralytics\utils\patches.py", line 83, in image_open
+    return _image_open(filename, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\Image.py", line 3288, in open
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\Image.py", line 3274, in _open_core
+    _check_size(size)
+
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\JpegImagePlugin.py", line 857, in jpeg_factory
+    im = JpegImageFile(fp, filename)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\ImageFile.py", line 137, in __init__
+    # filename
+        ^^^^^^^
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\JpegImagePlugin.py", line 382, in _open
+    handler(self, i)
+  File "C:\Users\iek4\AppData\Local\miniconda3\envs\towerscout\Lib\site-packages\PIL\JpegImagePlugin.py", line 200, in SOF
+    if self._im is not None and self.size != self.im.size:
+       ^^^^^^^^
+AttributeError: 'JpegImageFile' object has no attribute '_im'. Did you mean: 'im'?
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\towerscout.py", line 845, in _run_detection_request
+    results_raw = det.detect(
+                  ^^^^^^^^^^^
+  File "C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\ts_yolov5.py", line 214, in detect
+    raise ProcessingError(
+ts_errors.ProcessingError: Image loading failed: C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\temp\session\session-22af33aeaf3f\session-22af33aeaf3f0.jpg
+cleaned up tmp dir C:\Coding_local\TowerScout-Jono\TowerScout-feature-sprint-05\webapp\temp\session\session-22af33aeaf3f

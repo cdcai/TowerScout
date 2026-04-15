@@ -1,12 +1,350 @@
 # Completed Tasks
 
-**Last Updated**: March 18, 2026  
+**Last Updated**: April 6, 2026  
 **Sprint 01 Performance**: 7 of 7 tasks completed (100%), ~32 hours actual effort  
 **Sprint 02 Performance**: 5 of 5 tasks completed (100%), ~61 hours actual effort  
 **Sprint 03 Performance**: 8 of 8 tasks completed (100%), ~56 hours actual effort (March 11-18, 2026)  
+**Sprint 04 Performance**: 7 of 7 core tasks completed (100%), 19 days actual (March 19 - April 6, 2026)  
 **Archive Locations**: 
 - Tasks completed before December 19, 2025: `context/archive/2026-01-16-archived-completed-tasks.md`
 - TASK-034 (January 7, 2026): `context/archive/2026-02/2026-02-12-archived-task-034.md`
+
+---
+
+## ✅ SPRINT 04 COMPLETED TASKS (March 19 - April 6, 2026)
+
+**Sprint Summary**: All 7 core implementation tasks + 1 added closeout task completed in 19 days  
+**Sprint Goal**: Setup Wizard implementation + code quality improvements + detection workflow stabilization  
+**Bundle Evolution**: 412.8 KB → 446.1 KB (+33.3 KB for all Sprint 04 enhancements)  
+**Sprint Status**: COMPLETE - Core Sprint 04 scope delivered; optional quick wins deferred to Sprint 05
+
+### Sprint 04 Overview
+
+**Primary Objectives Achieved**:
+1. ✅ TASK-046: Setup Wizard and Settings Screen - In-app API key management
+2. ✅ ISSUE-003: Large Dataset Performance Investigation - Evidence-based profiling completed
+3. ✅ ISSUE-003 Quick Wins: Performance improvements (debug image gating, hydration cleanup)
+4. ✅ TASK-048: Console Log Audit - Debug-gated browser logs with layered status messaging
+5. ✅ TASK-050: Full-Repo Audit - Evidence-based stale-code and performance audit
+6. ✅ TASK-049: Legacy Code Cleanup - Pytest collection repair and stale-surface archival
+7. ✅ TASK-047: UI Formatting and Polish - Main-screen polish, settings readability, progress overlay
+8. ✅ TASK-053: Detection Workflow Stabilization - Browser validation and provider-aware workflow fixes
+
+**Deferred to Sprint 05**:
+- Browser Refresh Warning Fix (optional quick win)
+- Error Handling Pattern Standardization (optional quick win)
+
+**Technical Achievements**:
+- Setup-required boot mode with in-app configuration management
+- Provider-aware geocoding cache isolation
+- Spatial duplicate suppression before geocoding
+- Lightweight progress tracking with coarse backend updates
+- Browser smoke validation for Google, Azure, and cancel flows
+- Pytest collection gate repaired: 154 tests collected / 0 collection errors
+- Bundle size under 500 KB target: 446.1 KB final recorded size
+
+---
+
+### **TASK-046: Setup Wizard and Settings Screen** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: March 23, 2026  
+**Type**: B (Feature Development)  
+**Priority**: CRITICAL  
+**Estimated Effort**: 40-50 hours (5-7 days)  
+**Actual Effort**: Approximately 40-48 hours (5 phases completed)  
+**Task File**: [TASK-046-setup-wizard-settings-screen.md](./tasks/TASK-046-setup-wizard-settings-screen.md)
+
+**Objective**: Implement first-launch Setup Wizard and in-app Settings Screen for seamless API key management without manual .env file editing
+
+**Key Features Delivered**:
+- 🔑 API Key Management (validate and save without text editor)
+- 🚀 First-Launch Setup Wizard (guided multi-step flow)
+- ⚙️ Settings Modal (in-app configuration updates)
+- 🐳 Docker Compatible (host-mounted .env updates)
+- 📊 Performance Metrics Display (recent detection stats)  
+- 🔧 System Controls (debug mode, cache clearing)
+
+**Implementation Phases**:
+- ✅ Phase 0: Discovery, requirements, and design decisions
+- ✅ Phase 1: Backend `ts_config.py` + 5 config API endpoints
+- ✅ Phase 2: Setup wizard flow, provider validation, .env persistence, setup-required boot mode
+- ✅ Phase 3: Settings modal, masked key previews, performance metrics
+- ✅ Phase 4: Runtime smoke testing, validation hardening
+- ✅ Phase 5: Documentation and scope closeout
+
+**Value Delivered**: Eliminated major UX friction point for non-technical users. Critical for Docker-based local deployment.
+
+---
+
+### **ISSUE-003: Large Dataset Performance Investigation** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: March 23, 2026  
+**Type**: A (Performance - Discovery Phase)  
+**Priority**: MEDIUM  
+**Estimated Effort**: 2-4 hours  
+**Actual Effort**: ~4 hours (investigation only)
+
+**Objective**: Benchmark performance with 500+ detections and identify optimization opportunities
+
+**Investigation Results**:
+- Created reproducible benchmark harness for 100/500/1000 visible detections
+- Identified Azure Maps hotspot: repeated full-shape scans (`374,750` lookups at 500 detections)
+- Detection-list generation stayed roughly linear
+- Azure shape-index quick win implemented to remove hot-path lookups
+- Documented findings in `.agent_work/context/analysis/ISSUE-003-PERFORMANCE-INVESTIGATION.md`
+
+**Go/No-Go Decision**: NO-GO for broad Sprint 04 optimization work; evidence supported only targeted Azure fix
+
+**Value Delivered**: Evidence-based performance analysis instead of ad hoc optimization
+
+---
+
+### **ISSUE-003 Follow-Up: Performance Quick Wins** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: March 31, 2026  
+**Type**: A (Performance Quick Wins)  
+**Priority**: MEDIUM-HIGH  
+**Estimated Effort**: 3-6 hours
+**Actual Effort**: ~4 hours
+
+**Objective**: Land the lowest-risk post-ISSUE-003 performance wins before broader refactors
+
+**Quick Wins Implemented**:
+1. **EfficientNet Debug Image Gating**
+   - Debug image writes now disabled by default
+   - Only enabled when `TOWERSCOUT_SAVE_EN_DEBUG_IMAGES` is set
+   - Eliminates unnecessary file I/O during normal detection runs
+
+2. **Frontend Hydration Cleanup**
+   - Collapsed redundant detection hydration/visibility passes
+   - Single post-hydration visibility pass instead of multiple updates
+   - Reduced unnecessary DOM manipulation
+
+3. **Metadata-Only Overlay Optimization**
+   - Metadata-only `Tile` objects skip overlay allocation
+   - Provider overlays only created when needed for review mode
+   - Reduced memory allocation for large result sets
+
+**Value Delivered**: Faster heavy-load detection review with bounded implementation risk
+
+---
+
+### **TASK-048: Console Log Audit and Simplification** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: March 31, 2026  
+**Type**: A (Developer Experience)  
+**Priority**: MEDIUM  
+**Estimated Effort**: 3-5 hours  
+**Actual Effort**: ~5 hours
+
+**Objective**: Audit and refine browser console log output for better end-user understanding
+
+**Implementation**:
+1. **Debug-Gated Browser Logs**
+   - Added early `TowerScoutLogger` bootstrap
+   - Migrated verbose console.log to `TowerScoutLogger.debug()`
+   - Settings toggle now controls debug mode immediately
+   - Contract test added to enforce logging standards
+
+2. **Layered App Logging**
+   - Extended `TowerScoutLogger` with always-on `info()` path
+   - In-app output panel shows baseline status messages
+   - Debug mode adds detailed trace output to console and app panel
+   - Queued flush for messages before `#output` exists
+
+**Value Delivered**: Cleaner console output for end users, detailed debugging when needed
+
+---
+
+### **TASK-050: Full-Repo Stale Code and Performance Audit** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: March 31, 2026  
+**Type**: C (Architecture / Analysis)  
+**Priority**: HIGH  
+**Estimated Effort**: 6-10 hours  
+**Actual Effort**: ~8 hours
+
+**Objective**: Perform full-repository audit to identify stale/orphaned/generated code and performance opportunities
+
+**Deliverables**:
+- Master findings document in `.agent_work/context/analysis/`
+- Baseline validation output for pytest collection and unused-code scanning
+- Classification of confirmed stale items vs. runtime-verification candidates
+- Recommendations mapped to TASK-049, ISSUE-003, and TASK-048
+
+**Key Findings**:
+- Identified tracked generated artifacts (`.coverage`, cache files)
+- Discovered stale helper scripts and test harnesses
+- Documented performance opportunities (delivered in ISSUE-003 quick wins)
+- Provided evidence-backed cleanup roadmap
+
+**Value Delivered**: Created evidence-backed cleanup and performance roadmap without risking active functionality
+
+---
+
+### **TASK-049: Legacy Code Cleanup** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: March 31, 2026  
+**Type**: A (Code Quality)  
+**Priority**: MEDIUM  
+**Estimated Effort**: 4-6 hours  
+**Actual Effort**: ~6 hours
+
+**Objective**: Execute verified cleanup/remediation batches from TASK-050 without removing active paths
+
+**Implementation**:
+1. **Batch 1: Low-Risk Tracked Artifacts**
+   - Removed `.coverage`, `.DS_Store`
+   - Removed 25 tracked `webapp/cache/maps/*.cache` files
+   - Removed `webapp/templates/towerscout_backup.html`
+
+2. **Validation Gate Repair**
+   - Added import-time test environment defaults
+   - Introduced env-gated lazy `EN_Classifier` path
+   - Rewrote `tests/unit/test_event_system.py` to current API
+   - Quarantined stale `tests/integration/test_end_to_end.py`
+   - **Result**: Pytest collection gate now clean: 154 collected / 0 collection errors
+
+3. **Medium-Risk Stale-Surface Triage**
+   - Archived `webapp/js/src/comment_providers.sh` and `temp_extract_providers.sh`
+   - Archived full `webapp/tests/` tree (preserved for recovery)
+   - Unused import/local baseline improved from 105/14 to 73/6
+
+**Closeout Decisions**:
+- Runtime dependency verification moved to TASK-051
+- Current smoke-test rebuild moved to TASK-052
+- Preserved `webapp/js/towerscout.original.js` as rollback asset
+
+**Value Delivered**: Cleaner, more maintainable codebase with improved test infrastructure
+
+---
+
+### **TASK-047: UI Formatting and Polish** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: April 6, 2026  
+**Type**: A (UI/UX Polish)  
+**Priority**: MEDIUM  
+**Estimated Effort**: 6-10 hours  
+**Actual Effort**: ~10 hours (paused during TASK-053, resumed after)
+
+**Objective**: Implement main-screen polish, settings readability fixes, and detection progress overlay
+
+**Implementation Phases**:
+1. **Phase 1: Main-Screen Polish**
+   - Header, top-right utility row, action-row spacing refinements
+   - Export hover text improvements
+   - Search-button corner-radius updates
+   - Settings button width adjustment
+
+2. **Phase 2: Settings Modal Readability**
+   - `Resource Links` heading clarity
+   - White link styling for better visibility
+   - Overall settings screen readability improvements
+
+3. **Phase 3: Polygon-Complete Notifications**
+   - Extended timeout to 9000ms for drawing notifications
+   - Provider-specific completion messages
+
+4. **Phase 4: Progress Overlay**
+   - Lightweight `ts_progress.py` session tracker
+   - `GET /api/detection/progress` endpoint
+   - Coarse backend phase/count updates (tiles, imagery, batches, geocoding)
+   - Progress-overlay title/detail with 750ms polling
+   - Stale terminal status handling
+
+5. **Phase 5: Validation and Closeout**
+   - Manual QA on Google Maps and Azure Maps
+   - Browser smoke validation for cancel flows
+   - Cross-provider progress message verification
+
+**Value Delivered**: Enhanced visual polish and professional appearance with real-time detection feedback
+
+---
+
+### **TASK-053: Detection Workflow Stabilization and Live Browser Validation** ✅
+**Status**: ✅ COMPLETE  
+**Completed**: April 6, 2026  
+**Type**: C (Architecture / Workflow Stabilization)  
+**Priority**: HIGH  
+**Estimated Effort**: 12-20 hours  
+**Actual Effort**: ~18 hours
+
+**Objective**: Stabilize core detection workflow from estimate through rendering on both Google Maps and Azure Maps
+
+**Major Implementation Areas**:
+1. **Estimate/Detect Separation**
+   - Dedicated `POST /api/detection/estimate` endpoint
+   - Detection-only `POST /getobjects` path
+   - Removed hidden estimate preflight on `Find towers`
+   - Frontend request separation
+
+2. **Cancel Lifecycle Cleanup**
+   - `POST`/`GET` abort compatibility
+   - Per-run cancel tokens
+   - Stale cancelled response handling
+   - Proper cleanup of detection state
+
+3. **Provider-Aware Geocoding**
+   - Isolated provider-specific geocoding caches
+   - Explicit provider propagation for reverse geocoding
+   - Eviction of `Address unavailable ...` cache entries
+   - Real address fallback instead of placeholder strings
+
+4. **Duplicate Suppression**
+   - Pre-geocode spatial deduplication
+   - Proper handling of tower identity across providers
+
+5. **Browser Validation Infrastructure**
+   - Puppeteer 24.19.0 pinned as dev dependency
+   - Maintained smoke harness at `tests/frontend/test_detection_workflow_smoke.js`
+   - AOI fixture pattern with example and local (untracked) versions
+   - Isolated helper server on `localhost:5001` for clean reruns
+
+**Follow-Up Fixes Delivered**:
+- Session temp directory write permissions on Windows
+- Azure confidence slider missing on initial load
+- Fresh/restored detections showing `Address unavailable ...`
+- Azure restore inconsistencies for selection and manual-drawing geometry
+- Google `Find` mode hiding inside-radius detections
+- Azure tile review clipped/over-zoomed framing
+- Google tile-review console error with invalid bounds
+- Setup wizard Google-only startup regression
+- Google Geocoding API authorization requirement in key validation
+
+**Browser Smoke Validation**:
+- ✅ Azure detection flow: green (14 detections, 0 page errors)
+- ✅ Google detection flow: green (8 detections, 0 page errors)
+- ✅ Cancel flow: green (200 abort status, successful follow-up runs)
+
+**Manual QA Sign-Off**:
+- ✅ Manual tower workflows
+- ✅ Export / restore
+- ✅ Settings API key management
+- ✅ Click-after-cancel detection reruns
+
+**Value Delivered**: Protected the application's core search and detection flow before Sprint 05 containerization work
+
+---
+
+## 📊 Sprint 04 Metrics
+
+### Task Completion
+- **Core planned tasks**: 7 of 7 completed (100%)
+- **Added closeout task**: 1 of 1 completed (TASK-053)
+- **Optional quick wins**: 2 deferred to Sprint 05
+- **Duration**: 19 days actual (16 days planned)
+
+### Validation Coverage
+- Pytest collection: 154 collected / 0 collection errors (repaired from 2 errors)
+- Browser smoke: Green for Google, Azure, and cancel flows
+- Manual QA: Sign-off for manual towers, export/restore, settings, cancel flows
+- Bundle size: 446.1 KB (under 500 KB target)
+
+### Code Quality Improvements
+- Unused imports: 105 → 73 (32 reduction)
+- Unused locals: 14 → 6 (8 reduction)
+- Stale surfaces archived: Helper scripts and legacy test harnesses
+- Collection errors: 2 → 0 (100% fixed)
 
 ---
 
@@ -209,7 +547,7 @@
   - Dataset restoration validated (Test 3.2b PASSED)
 
 **Validated Acceptance Criteria**: 10/13 core (77%)  
-**Task Document**: `.agent_work/tasks/TASK-033-manual-tower-addition.md`
+**Task Document**: `.agent_work/tasks/completed/TASK-033/TASK-033-manual-tower-addition.md`
 
 **Value Delivered**: Production-ready manual tower feature enables outbreak investigation teams to mark known towers and add suspected locations for field verification
 
@@ -347,8 +685,8 @@
 - ZERO warnings related to Phase 1 variables (currentElement, currentAddrElement, isInitializing)
 
 **Documents**:
-- Implementation Plan: `.agent_work/context/status/GLOBAL-VARIABLE-MIGRATION-PHASE-1-PLAN.md`
-- Testing Checklist: `.agent_work/context/status/PHASE-1-TESTING-CHECKLIST.md`
+- Implementation Plan: `.agent_work/context/archive/2026-04/status/GLOBAL-VARIABLE-MIGRATION-PHASE-1-PLAN.md`
+- Testing Checklist: `.agent_work/context/archive/2026-04/status/PHASE-1-TESTING-CHECKLIST.md`
 
 **User Value**: Improved architectural consistency, better testability, and centralized state management following Sprint 02 patterns
 
@@ -472,8 +810,8 @@
 - Completes Phase 2 of 3 in global variable migration roadmap
 
 **Documents**:
-- Implementation Plan: `.agent_work/context/status/GLOBAL-VARIABLE-MIGRATION-PHASE-2-PLAN.md`
-- Testing Checklist: `.agent_work/context/status/PHASE-2-TESTING-CHECKLIST.md`
+- Implementation Plan: `.agent_work/context/archive/2026-04/status/GLOBAL-VARIABLE-MIGRATION-PHASE-2-PLAN.md`
+- Testing Checklist: `.agent_work/context/archive/2026-04/status/PHASE-2-TESTING-CHECKLIST.md`
 
 **User Value**: Improved architectural consistency across all state management, better debugging capabilities, and foundation for Phase 3 completion
 
@@ -544,8 +882,8 @@
 - Build time: <2 seconds
 - Commits: 11 total (5 stages + 1 stage fix + 1 stage extraction + 4 critical fixes)
 
-**Completion Summary**: See `.agent_work/tasks/TASK-038-COMPLETION-SUMMARY.md`  
-**Task File**: `.agent_work/tasks/TASK-038-frontend-refactoring.md`  
+**Completion Summary**: See `.agent_work/tasks/completed/TASK-038-COMPLETION-SUMMARY.md`  
+**Task File**: `.agent_work/tasks/completed/TASK-038-frontend-refactoring.md`  
 **Design Document**: `.agent_work/design-task-038-revised.md` (v2.6.1)
 
 ---
@@ -615,7 +953,7 @@
 
 **Technical Achievement**: Discovered and fixed fundamental Azure Maps SDK architectural constraints not documented in official guides. Established ID-based click handler pattern as best practice for Azure Maps data sources.
 
-**Task File**: `.agent_work/tasks/TASK-042-testing-action-log.md` (1,800+ lines with detailed debugging sessions)
+**Task File**: `.agent_work/tasks/completed/TASK-042-testing-action-log.md` (1,800+ lines with detailed debugging sessions)
 
 ---
 
@@ -651,7 +989,7 @@ Building on TASK-041's ProviderStateManager foundation, this task addressed the 
 
 - ✅ **Phase 4**: Testing & Documentation (2 hours) - March 10, 2026
   - Manual testing: 4 comprehensive test scenarios (all PASSED)
-  - Decision record created: TASK-043-global-variable-migration-patterns.md
+  - Decision record created: 015-global-variable-migration-patterns.md
   - Bundle size analysis: +8.7 KB (2.6% increase - acceptable)
   - Build status: ✅ SUCCESS (27 modules, 346.4 KB)
 
@@ -696,8 +1034,8 @@ Building on TASK-041's ProviderStateManager foundation, this task addressed the 
 - Configuration consolidation - 1-2 hours
 - Total remaining: ~10-14 hours across Sprint 03-04
 
-**Task File**: `.agent_work/tasks/TASK-043-global-variable-deprecation.md` (comprehensive implementation log with 4 test results)  
-**Decision Record**: `.agent_work/decisions/TASK-043-global-variable-migration-patterns.md`
+**Task File**: `.agent_work/tasks/completed/TASK-043-global-variable-deprecation.md` (comprehensive implementation log with 4 test results)  
+**Decision Record**: `.agent_work/decisions/015-global-variable-migration-patterns.md`
 
 ---
 
@@ -762,7 +1100,7 @@ Building on TASK-041's ProviderStateManager foundation, this task addressed the 
 - [x] Troubleshooting updated with resolved issues
 - [x] Architecture guide created for contributors
 
-**Task File**: `.agent_work/tasks/TASK-044-documentation-updates.md`
+**Task File**: `.agent_work/tasks/completed/TASK-044-documentation-updates.md`
 
 ---
 
@@ -814,7 +1152,7 @@ Building on TASK-041's ProviderStateManager foundation, this task addressed the 
 - ✅ Better debugging visibility (enhanced console logging)
 - ✅ Provider synchronization working correctly
 
-**Task File**: `.agent_work/tasks/TASK-045-boundary-accumulation-bug.md`
+**Task File**: `.agent_work/tasks/completed/TASK-045-boundary-accumulation-bug.md`
 
 ---
 

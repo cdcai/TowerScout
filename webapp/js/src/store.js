@@ -35,5 +35,5 @@
 
   // REMOVED: window.Tile_tiles = [];  // Phase 2: Now handled by property descriptor in globals.js
 
-  console.log('✅ Store module loaded');
+  window.TowerScoutLogger.debug('✅ Store module loaded');
 })();

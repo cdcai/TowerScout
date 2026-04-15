@@ -1,831 +1,711 @@
 # Current Tasks - Active Sprint
 
-**Sprint Period**: March 19 - April 1, 2026 (Sprint 04 - PLANNING PHASE)  
-**Last Updated**: March 18, 2026  
-**Focus**: UX Improvements & Docker Deployment  
-**Status**: 🎯 **SPRINT 04 PLANNING** - Sprint 03 completed successfully (100%), ready for next sprint
-
-## 🎉 Sprint 03 Completion (March 11-18, 2026)
-
-**Sprint Status**: ✅ **COMPLETE - ALL OBJECTIVES ACHIEVED**  
-**Sprint Duration**: 8 days (completed 6 days ahead of schedule)  
-**Sprint Effort**: 56 hours actual (planned: 44-71 hours)  
-**Sprint Velocity**: 7.0 hours/day (vs Sprint 02: 4.4 hours/day)  
-**Task Completion Rate**: 8 of 8 tasks (100%)  
-**Critical Issues Resolved**: 2 of 2 (ISSUE-001, ISSUE-002)  
-**Bundle Evolution**: 372.6 KB → 412.8 KB (+40.2 KB)
-
-**Sprint 03 Achievements**:
-- ✅ Manual tower addition feature fully restored (TASK-033)
-- ✅ Export system enhanced with ML documentation (TASK-036)
-- ✅ Google Maps API migration completed (TASK-039 Phases 5-6)
-- ✅ Drawing mode UX with context-aware notifications
-- ✅ CSV export with ML/Manual source indicator  
-- ✅ Integration testing validated all features
-- ✅ Global variable deprecation system completed
-- ✅ Comprehensive documentation updated
-
-**Sprint 03 Retrospective**: See [SPRINT-03-RETROSPECTIVE.md](./context/status/SPRINT-03-RETROSPECTIVE.md)  
-**Completed Tasks**: See [completed-tasks.md](./completed-tasks.md) for full Sprint 03 task details
+**Sprint Period**: April 7 - April 25, 2026 (Sprint 05 - 19 days)  
+**Last Updated**: April 14, 2026  
+**Focus**: Runtime determinism, local YOLO runtime ownership, smoke-baseline validation, pre-Docker cleanup, and Docker readiness  
+**Status**: 🆕 **SPRINT 05 PLANNING** - Sprint 05 officially starts April 7, 2026
 
 ---
 
-## 🎯 SPRINT 04 GOALS (PLANNING PHASE)
+## 🎉 Sprint 04 Completion (March 19 - April 6, 2026)
 
-**Sprint Period**: March 19 - April 1, 2026 (14 days)  
-**Planning Date**: March 18, 2026  
-**Sprint Focus**: UX Improvements & Deployment Readiness
+**Sprint Status**: ✅ **COMPLETE - ALL CORE OBJECTIVES ACHIEVED**  
+**Sprint Duration**: 19 days (extended from 16 days to absorb TASK-053)  
+**Task Completion Rate**: 7 of 7 core tasks + 1 added closeout task (100%)  
+**Bundle Evolution**: 412.8 KB → 446.1 KB (+33.3 KB)
 
-### Proposed Sprint 04 Objectives
+**Sprint 04 Achievements**:
+- ✅ Setup Wizard and Settings implemented (TASK-046)
+- ✅ Large dataset performance investigation completed (ISSUE-003)
+- ✅ Performance quick wins delivered (debug image gating, hydration cleanup)
+- ✅ Console logging audit completed (TASK-048)
+- ✅ Full-repo stale code audit completed (TASK-050)
+- ✅ Legacy code cleanup with pytest gate repair (TASK-049)
+- ✅ UI formatting and progress overlay (TASK-047)
+- ✅ Detection workflow stabilization with browser validation (TASK-053)
+- ✅ Browser smoke harness established
+- ✅ Pytest collection gate: 154 collected / 0 collection errors
 
-1. **TASK-046: Setup Wizard and Settings Screen** (HIGH PRIORITY)
-   - First-launch Setup Wizard for API key configuration
-   - In-app Settings Screen for configuration management
-   - Eliminates manual .env file editing requirement
-   - Estimated: 5-9 days (1.5-2 weeks with testing)
-
-2. **Additional Tasks** (To be selected from backlog):
-   - TASK-025: Docker Containerization (MEDIUM PRIORITY)
-   - Performance optimization (ISSUE-003 follow-up)
-   - Additional UX improvements
-
-**Sprint Capacity**: 50-60 hours (Based on Sprint 02 & 03 velocity)  
-**Sprint Duration**: 14 days (standard sprint length)  
-**Planning Status**: ⏳ AWAITING USER INPUT for Sprint 04 scope
-
----
-
-## 📋 SPRINT 04 CANDIDATE TASKS
-
-### **TASK-046: Setup Wizard and Settings Screen** 🟡
-**Status**: NOT_STARTED  
-**Type**: B (Feature Development)  
-**Priority**: HIGH  
-**Estimated Effort**: 5-9 days (40-72 hours with testing)  
-**Target Sprint**: Sprint 04  
-**Backlog**: See [task-backlog.md](./task-backlog.md) for full details
-
-**Objective**: Implement first-launch Setup Wizard and in-app Settings Screen for seamless API key management
-
-**Key Features**:
-- 🔑 API Key Management (validate and save without text editor)
-- 🚀 User Onboarding (guided setup flow)
-- ⚙️ Settings Modal (in-app configuration)
-- 🐳 Docker Compatible (host-mounted .env updates)
-- 📊 Performance Stats (recent detection metrics)
-
-**Dependencies**:
-- TASK-001 (API Key Security) ✅ COMPLETED
-- TASK-025 (Docker Containerization) - Volume mount strategy (can parallelize)
-- Python `python-dotenv` library (already installed)
-
-**User Value**: Eliminates major UX friction point for non-technical users. Critical for Docker-based local deployment.
+**Sprint 04 Retrospective**: See [SPRINT-04-RETROSPECTIVE.md](./context/status/SPRINT-04-RETROSPECTIVE.md)  
+**Completed Tasks**: See [completed-tasks.md](./completed-tasks.md) for full Sprint 04 task details
 
 ---
 
-### **TASK-025: Docker Containerization** 🟡
-**Status**: NOT_STARTED  
-**Type**: A (Infrastructure)  
-**Priority**: MEDIUM  
-**Estimated Effort**: 1-2 days (8-16 hours)  
-**Target Sprint**: Sprint 04 (optional, can pair with TASK-046)
+## Pre-Sprint 05 Closeout Gate
 
-**Objective**: Create Docker configuration for one-command local deployment
+These are current-branch closeout items for `feature-sprint-04-closeout`. Complete them before merging to `main` and creating the Sprint 05 branch so Sprint 05 delivery work starts from a cleaner baseline.
 
-**Key Features**:
-- Multi-stage Dockerfile with model weights (~1.2GB)
-- Docker Compose with volume mounts
-- Environment variable management
-- Optional CUDA runtime support
-
-**Dependencies**:
-- TASK-001 (API Key Security) ✅ COMPLETED
-- TASK-046 (Setup Wizard) - UI for configuration (optional)
-
-**User Value**: Simplified deployment for non-technical users, eliminates manual setup
-
----
-
-### **Performance Optimization (ISSUE-003 Follow-up)** 🟢
-**Status**: NOT_STARTED (deferred from Sprint 03)  
-**Type**: A (Performance)  
-**Priority**: LOW-MEDIUM  
-**Estimated Effort**: 1-2 days (8-16 hours)
-
-**Objective**: Optimize performance for large datasets (500+ detections)
-
-**Observed Issue**: Rendering slowdown with 500+ detections noted during Sprint 03
-
-**Investigation Areas**:
-- Detection list rendering optimization
-- Map marker clustering for dense areas
-- Lazy loading for large result sets
-
-**Dependencies**: None
-
-**User Value**: Improved performance for city-wide detection scans
-
----
-
-## 📊 Sprint 04 Capacity Planning
-
-**Available Capacity**: 50-60 hours (based on Sprint 02 & 03 velocity)  
-**Proposed Allocation**:
-- TASK-046: 40-50 hours (primary focus)
-- TASK-025: 8-16 hours (optional, if capacity allows)
-- Buffer: 10-15% for unexpected issues
-
-**Sprint 04 Execution Options**:
-
-**Option A: Focus on TASK-046 (Recommended)**
-```
-1. TASK-046 Phase 0: Discovery & Design        4-6 hours
-2. TASK-046 Phase 1: Backend Config Module     8-12 hours
-3. TASK-046 Phase 2: Setup Wizard UI          12-16 hours
-4. TASK-046 Phase 3: Settings Screen          8-12 hours
-5. TASK-046 Phase 4: Testing & Polish         8-12 hours
-6. TASK-046 Phase 5: Documentation            2-4 hours
-Total: 42-62 hours (fits within Sprint 04 capacity)
-```
-
-**Option B: TASK-046 + TASK-025 (Aggressive)**
-```
-1. TASK-046 (as above)                        42-62 hours
-2. TASK-025: Docker Containerization          8-16 hours
-Total: 50-78 hours (exceeds upper capacity, high risk)
-```
-
-**Option C: TASK-046 + Performance (Balanced)**
-```
-1. TASK-046 (as above)                        42-62 hours
-2. Performance Optimization (ISSUE-003)       8-16 hours
-Total: 50-78 hours (exceeds upper capacity, medium risk)
-```
-
-**Recommendation**: **Option A** - Focus on TASK-046 for quality delivery
-
----
-
-## 🎯 Sprint 04 Definition of Done (Proposed)
-
-- [ ] Setup Wizard functional on first launch
-- [ ] Settings Screen accessible and functional
-- [ ] API key validation working with test requests
-- [ ] .env file persistence with backup/rollback
-- [ ] Docker compatibility validated (if TASK-025 included)
-- [ ] Cross-browser testing completed
-- [ ] No regressions in existing functionality
-- [ ] User documentation updated
-- [ ] All acceptance criteria met for completed tasks
-
----
-
-## 📅 Sprint 04 Planning Session
-
-**Planning Date**: March 18, 2026  
-**Planning Status**: ⏳ AWAITING USER INPUT
-
-**Planning Checklist**:
-- [x] Sprint 03 retrospective completed
-- [x] Sprint 03 tasks moved to completed-tasks.md
-- [x] Sprint 04 candidate tasks identified
-- [x] Sprint 04 capacity estimated
-- [ ] Sprint 04 scope finalized
-- [ ] TASK-046 Phase 0 discovery scheduled
-- [ ] Sprint 04 kickoff scheduled
-
-**Next Steps**:
-1. Review Sprint 03 retrospective
-2. Confirm Sprint 04 scope (Option A, B, or C)
-3. Schedule TASK-046 Phase 0 discovery (4-6 hours)
-4. Begin Sprint 04 execution
-
----
-
----
-
-### **TASK-039: Google Maps API Upgrade (ISSUE-005)** �
-**Status**: PHASE 4B COMPLETE - Phase 5+6 Deferred to Sprint End  
-**Type**: C (Architecture - API Migration)  
+### **PRE-SPRINT-05-01: Runtime Path Normalization**
+**Status**: COMPLETED  
+**Type**: A (Closeout / Runtime Consistency)  
 **Priority**: CRITICAL  
-**Created**: February 17, 2026  
-**Started**: March 10, 2026  
-**Phase 4B Completed**: March 11, 2026  
-**Estimated Remaining Effort**: 4-7 hours (Phase 5+6 only)  
-**Hard Deadline**: May 2026 (8-week buffer maintained)
+**Estimated Effort**: 6-10 hours  
+**Branch Context**: `feature-sprint-04-closeout`  
 
-**Objective**: Migrate from deprecated Google Maps APIs before they are removed in May 2026
+**Objective**: Normalize TowerScout runtime path handling so logs, uploads, cache, sessions, temp files, and model-relative assets resolve consistently regardless of launch mode.
 
-**Current Status Summary** (March 11, 2026):
-- ✅ **Phases 1-4B COMPLETE**: All deprecated APIs removed and replaced
-- ✅ **Primary Goal Achieved**: Zero deprecation warnings in browser console (user validated)
-- ✅ **Functional Validation**: Search, provider switching, drawing tools all working
-- 🔄 **Phase 5+6 DEFERRED**: Comprehensive testing and documentation scheduled for sprint end
-- ⏰ **Timeline**: 8 weeks remaining to May 2026 deadline (healthy buffer)
+**Key Activities**:
+- Choose and document a canonical runtime root for persistent and temp artifacts
+- Replace mixed `cwd`-relative and app-relative path usage with centralized path definitions
+- Normalize high-risk areas first: logs, uploads, map cache, filesystem sessions, and model paths
+- Verify behavior remains consistent for local dev, pytest, and CI launch modes
 
-**Sprint 03 Strategy**:
-- **Defer Phase 5+6** to end of sprint for integration testing with TASK-033 (manual towers) and TASK-036 (export)
-- **Benefit**: Phase 5 testing validates entire workflow (Google Maps + manual addition + export system)
-- **Risk**: Minimal - primary objective achieved, 8-week buffer before deadline
+**Validation**:
+- App startup succeeds from the supported dev workflow
+- Pytest collection and targeted smoke paths still pass from repo root
+- No new duplicate runtime directories are created by mixed launch modes during validation
 
-**Completed Work Summary**:
+**Progress Update**:
+- Added shared runtime path helpers in `webapp/ts_paths.py` anchored to `webapp/`
+- Normalized `towerscout.py` runtime paths for map cache, uploads, model directories, Flask session storage, temp dataset export, and `send_from_directory` path resolution
+- Updated supporting modules (`ts_en.py`, `ts_validation.py`, `ts_geocache.py`, `ts_logging.py`, `ts_performance.py`) to use shared app-anchored path helpers
+- Updated `tests/test_performance_metrics.py` so it no longer changes `cwd` to `webapp/` just to find logs
+- Verified repo-root import/app smoke, `cd webapp` import/app smoke, and targeted config/path tests
 
-**Phase 1-3** (March 10, 2026):
-- ✅ API version upgraded to `v=quarterly`
-- ✅ Custom polygon drawing (right-click completion)
-- ✅ SearchBox → Autocomplete migration
+**Notes**:
+- This is a closeout prerequisite, not Sprint 05 feature delivery work
+- Final Docker volume decisions should be derived only after this task is complete
+- Pre-push hygiene note: `.agent_work/tasks/completed/TASK-053/evidence/browser-runs/` remains local-only and ignored because its `summary.json` artifacts can contain live provider request URLs and should not be committed without sanitization
+- Transitional compatibility note: `ts_config.get_recent_performance_stats()` still falls back to `cwd/logs/performance.log` if the normalized `webapp/logs/performance.log` is absent
+- Remaining `cwd` references are intentional diagnostics (`towerscout.py`, `ts_logging.py`), the temporary log-reader compatibility fallback in `ts_config.py`, and non-active helper/archive surfaces outside the runtime write path
+- Remaining stale validation blockers are tracked under `TASK-052`, not under this closeout task
 
-**Phase 4B** (March 11, 2026):
-- ✅ Autocomplete → PlaceAutocompleteElement Web Component
-- ✅ **9 bug fixes applied**: locationBias, sizing, lifecycle, orphans, Shadow DOM, race conditions, global singleton, input visibility, syntax
-- ✅ **2 UX enhancements**: Placeholder text ("Search with Google Maps..."), width extended to 40%
-- ✅ **User validation complete**: Zero deprecation warnings confirmed
-- ✅ Bundle: 372.6 KB (27 modules), cache-busting: `?v=20260311-1220-WIDTH`
+**Validation Results**:
+- Repo-root and `cd webapp` launch-mode smokes both resolved uploads, map cache, model directories, session storage, and temp session paths under `webapp/`
+- Both smokes returned `GET /` status `200`
+- `webapp/flask_session/` was updated by the smoke runs while repo-root `flask_session/` retained its older April 6 timestamp, which confirms the normalized session target was used
+- Targeted `tests/unit/test_config.py` path/log-reader cases passed (`4 passed`)
 
-**Remaining Work** (Scheduled for Sprint End):
+### **PRE-SPRINT-05-02: Post-Normalization Cleanup + Validation**
+**Status**: COMPLETED  
+**Type**: A (Closeout / Cleanup)  
+**Priority**: HIGH  
+**Estimated Effort**: 2-4 hours  
+**Branch Context**: `feature-sprint-04-closeout`  
 
-**Phase 5: Comprehensive Testing** (3-5 hours):
-- Cross-browser testing (Chrome, Edge, Firefox, Safari)
-- Drawing tools stress testing (complex polygons, rapid provider switching)
-- Detection workflow validation (coordinate accuracy)
-- Integration testing with TASK-033 manual towers and TASK-036 export
-- Performance benchmarking
-- All 23 existing tests validation (TASK-042 suite)
+**Objective**: Remove or reclassify only confirmed dead runtime artifacts after normalization and validate the repo is ready to merge into `main`.
 
-**Phase 6: Documentation** (1-2 hours):
-- Update copilot-instructions.md with PlaceAutocompleteElement patterns
-- Create Google-Maps-API-Migration-Guide.md
-- Document Shadow DOM styling techniques (::part() selector)
-- Document global singleton and triple-redundant input visibility patterns
-- Move TASK-039 to completed-tasks.md
+**Key Activities**:
+- Re-check root-level runtime directories and confirm which ones are now obsolete
+- Clean up only artifacts that are proven unused after normalization
+- Update docs and task tracking to reflect the normalized runtime path behavior
+- Confirm deferred items stay deferred: `TowerScoutSite/`, `Model/`, `SyntheticData/`, and `hosting/`
+- Confirm no API key values will be included or exposed during the commit process
+
+**Validation**:
+- Smoke checks confirm the normalized runtime paths are the only active write targets
+- Documentation and task notes consistently describe current behavior, future target state, and deferred cleanup
+- Branch is ready for merge review without ambiguous runtime-path cleanup risk
+
+**Notes**:
+- Do not treat this as blanket repo pruning
+- Archive or defer anything that still has rollback, operational, or product-surface value
+
+**Progress Update**:
+- Re-checked repo-root runtime-looking directories after normalization and removed confirmed stale local leftovers: repo-root `cache/`, `uploads/`, `flask_session/`, random `pytest-cache-files-*`, and `webapp/tmp*` temp dirs
+- Kept repo-root `logs/` only as a transitional compatibility surface because `ts_config.get_recent_performance_stats()` still falls back to `cwd/logs/performance.log` if `webapp/logs/performance.log` is absent
+- Updated path-sensitive docs and task tracking to use the canonical `webapp/` runtime contract for Sprint 05 planning and Docker follow-through
+- Tightened `.gitignore` for random pytest/temp artifacts and local browser-run captures so secret-bearing analysis artifacts stay out of commits
+
+**Validation Results**:
+- Repo-root and `cd webapp` launch-mode smokes both returned `GET /` status `200`
+- Deleted repo-root `cache/`, `uploads/`, and `flask_session/` stayed absent after both smokes, which confirms they are no longer active write targets
+- `webapp/flask_session/` and `webapp/logs/` advanced during the smokes while repo-root `logs/` retained its pre-smoke April 7 timestamp, which confirms the canonical `webapp/` write targets were used
+- `pytest --collect-only tests -q` collected `159` tests with no collection errors
+- `pytest tests/unit/test_config.py -q` still reports the two known stale Google-validation test failures already scoped under `TASK-052`; they were not folded into this cleanup task
+
+**Closeout Decision**:
+- Deferred repo surfaces remain deferred: `TowerScoutSite/`, `Model/`, `SyntheticData/`, and `hosting/`
+- Docker planning should now use the canonical `webapp/config/`, `webapp/flask_session/`, `webapp/logs/`, `webapp/temp/`, `webapp/uploads/`, and `webapp/cache/` mount set
+- Repo-root `logs/` is transitional/local-only and should not be treated as a Docker persistence target
+
+---
+
+## 🎯 SPRINT 05 GOALS
+
+**Sprint Period**: April 7 - April 25, 2026 (19 days)  
+**Planning Completed**: April 6, 2026  
+**Sprint Focus**: Runtime hardening, reproducible inference, Docker readiness, and bounded local-launch follow-through  
+**Target Capacity**: 70-80 hours (with Docker now contingent on additional runtime hardening gates)  
+**Expected Bundle Growth**: +10-20 KB (infrastructure-heavy sprint unless TASK-054 expands into frontend warm-start UX)  
+
+### Sprint 05 Objectives
+
+**Primary Goal**: Deliver a reliable and reproducible runtime baseline, then containerize that corrected baseline rather than containerizing known first-run instability.
+
+**Secondary Goals**:
+1. Keep `TASK-051` and `TASK-055` as the completed foundation for Sprint 05 runtime work
+2. Complete `TASK-056` first-run reliability and runtime determinism hardening
+3. Complete `TASK-057` local YOLO runtime ownership and Torch Hub independence
+4. Establish the current integration smoke-test baseline on that corrected runtime (`TASK-052`)
+5. Deliver Docker containerization (`TASK-025`) only after the corrected baseline exists
+6. Keep `TASK-054` as a post-Docker stretch goal and defer `TASK-029` / `TASK-026` unless meaningful Sprint 05 capacity remains
+
+**Key Principle**: Keep `TASK-025` focused on container build/run behavior. Use `TASK-056`, `TASK-057`, and `TASK-052` as explicit prerequisites so Docker acceptance criteria stay clear and runtime-risk changes remain isolated. Treat launcher/browser UX as follow-on work under `TASK-054` rather than silently expanding Docker scope.
+
+---
+
+## 📋 SPRINT 05 ACTIVE TASKS
+
+### **TASK-051: Runtime Dependency Verification and Split** ✅
+**Status**: COMPLETED  
+**Type**: C (Architecture / Deployment Readiness)  
+**Priority**: CRITICAL  
+**Estimated Effort**: 6-10 hours  
+**Target Sprint**: Sprint 05  
+**Task File**: `.agent_work/tasks/active/TASK-051-runtime-dependency-audit-and-decision-gate.md`  
+
+**Objective**: Make the runtime manifest and setup docs truthful enough for Docker preparation without changing current runtime behavior.
+
+**Key Activities**:
+- Add the verified explicit runtime gaps `psutil` and `tqdm` to `webapp/requirements.txt`
+- Update active runtime/setup guides to remove stale `pkg_resources` guidance
+- Document first-run Torch Hub / GitHub behavior and CUDA install-time requirements
+- Preserve current user workflow, appearance, and runtime behavior
+
+**Validation**:
+- Clean-environment install test
+- App startup verification
+- CPU-only verification path
+- CUDA-available verification path where hardware is available
+
+**Dependencies**:
+- TASK-049 stale-code audit findings ✅ COMPLETED
+
+**Notes**: Recommended as pre-containerization gate. Do not fold into TASK-025 - different risks, acceptance criteria, and rollback needs.
+
+**Completion Summary**:
+- Phase 1 audit artifacts and decision memo are complete
+- Option 2 Phase 2 follow-through is complete
+- `webapp/requirements.txt` now explicitly includes `psutil` and `tqdm`
+- Active runtime/setup guides now remove the stale `pkg_resources` / `setuptools<82` workaround and document first-run Torch Hub / GitHub plus CUDA install-time requirements
+- Post-close correction recorded: stale cached Torch Hub snapshots can still import `pkg_resources`, and a short-term cache-migration recovery path now exists in `webapp/ts_yolov5.py`
+- Validation rerun completed:
+  - startup/import smoke passed
+  - `pytest --collect-only tests -q` collected `159` tests
+  - clean-manifest install proof passed
+  - empty-cache YOLO proof reproduced offline failure and networked success
+- No Torch Hub redesign or Docker work was folded into this task
+- Recommended handoff: complete `TASK-055`, then move to `TASK-052`
+
+**User Value**: Ensures Docker container has minimal, verified runtime dependencies
+
+---
+
+### **TASK-055: YOLO Torch Hub Pinned-Ref Hardening** ✅
+**Status**: COMPLETED  
+**Type**: C (Runtime Hardening / Deployment Readiness)  
+**Priority**: CRITICAL  
+**Estimated Effort**: 6-10 hours  
+**Target Sprint**: Sprint 05  
+**Task File**: `.agent_work/tasks/active/TASK-055-yolo-torch-hub-pinned-ref-hardening.md`  
+
+**Objective**: Replace the mutable YOLO `torch.hub` default-branch load with a tested pinned ref and ref-specific cache handling so TowerScout no longer depends on whatever `ultralytics_yolov5_master` happens to be in a user's Hub cache.
+
+**Key Activities**:
+- Validate published YOLOv5 release refs against TowerScout's current weights and reject any ref that reintroduces the stale `pkg_resources` runtime problem
+- Pin TowerScout to a tested YOLOv5 commit SHA instead of the moving default branch
+- Refresh only the pinned-ref cache when a cached pinned repo becomes invalid, while keeping a narrow legacy cleanup path for `pkg_resources`-era `master` caches
+- Make first-run and refresh failures mention the pinned ref and the GitHub/network dependency clearly
+- Update runtime docs and task tracking so the hardened Hub contract is documented before `TASK-052`
+
+**Validation**:
+- Targeted unit coverage for pinned-ref load, pinned-cache refresh, legacy-cache cleanup, and first-run offline failure messaging
+- Live empty-cache Torch Hub validation against the selected pinned commit
+- Offline valid-cache proof using the pinned cache
+- Startup/import smoke and pytest collection gate rerun after the hardening change
+
+**Dependencies**:
+- ✅ TASK-051 completed dependency audit and documented the stale-cache limitation
+
+**Completion Summary**:
+- Published release-tag validation was rejected as the primary fix path because YOLOv5 `v7.0` and earlier release tags still imported `pkg_resources`
+- TowerScout now pins YOLOv5 to commit `1d62daa3c6b8ec15fdb319c0a2e341d8b56ec86c`, which was live-validated against `webapp/model_params/yolov5/newest.pt`
+- `webapp/ts_yolov5.py` now loads the pinned ref with `trust_repo=True`, refreshes only the pinned cache on cache-corruption/import failures, and preserves a narrow legacy cleanup path for stale `master` caches
+- `webapp/requirements.txt` now explicitly includes `packaging`, `pandas`, and a pinned `ultralytics==8.3.249` version to match the hardened runtime path
+- Active setup/runtime guides now describe the pinned Hub ref behavior and first-run GitHub dependency accurately
+- `TASK-051` remains closed; this task superseded the short-term mitigation without reopening the dependency-audit task
+
+**User Value**: Removes YOLO default-branch cache drift and gives Docker/Sprint 05 validation work a more deterministic runtime baseline
+
+---
+
+### **TASK-056: First-Run Reliability and Runtime Determinism Hardening** ✅
+**Status**: COMPLETED  
+**Type**: C (Runtime Hardening / Deployment Readiness)  
+**Priority**: CRITICAL  
+**Estimated Effort**: 12-20 hours  
+**Target Sprint**: Sprint 05  
+**Task File**: `.agent_work/tasks/active/TASK-056-first-run-reliability-and-runtime-determinism-hardening.md`  
+
+**Objective**: Correct the confirmed first-run blockers and deployment-hostile runtime behavior before the Sprint 05 smoke baseline and Docker work proceed.
+
+**Key Activities**:
+- Fail the imagery phase on any tile-download failure and prevent inference from starting on partial downloads (`UT-002`)
+- Remove the unreachable legacy block below `get_objects()` (`UT-003`)
+- Lock the Sprint 05 runtime to a validated CPU baseline plus an explicitly documented optional CUDA path (`UT-004`)
+- Explicitly contain the current stack on a validated NumPy 1 baseline and document the deferred NumPy 2 migration (`UT-005`)
+- Stop first-run in-process package mutation and align the YOLO runtime contract with the actual minimum dependency set (`UT-006`)
+- Restore TLS verification as the default runtime behavior and remove blanket bypasses (`UT-010`)
+- Replace `id(session)` with a stable session identifier (`UT-013`)
+- Remove or intentionally pin `seaborn` and replace raw `print()` usage in the touched runtime paths with structured logging (`UT-017`, scoped `UT-009`)
+
+**Validation**:
+- Partial-download failure path proves detection stops during imagery phase
+- Clean-environment first-run proof succeeds on the CPU baseline without runtime package mutation
+- `pytest --collect-only tests -q` remains clean
+- Updated runtime/setup docs reflect CPU/CUDA, NumPy, TLS, and first-run expectations
+
+**Dependencies**:
+- ✅ TASK-051 runtime dependency audit and decision gate
+- ✅ TASK-055 YOLO Torch Hub pinned-ref hardening
+
+**Notes**:
+- Preserve the current `dev` lazy-loading behavior; this task does not change that startup contract.
+- Keep this task bounded. Do not absorb vendoring YOLO locally, Docker work, or background-job architecture here.
+- Progress update (April 13): imagery failures now stop before inference, active session identity is stable, YOLO dependency checks/autoinstall hardening are in place, TLS now verifies by default, and the touched runtime paths were moved to structured logging.
+- Validation update (April 13): focused Task-056 coverage passed (`40 passed`) and pytest collection remained clean with `.venv\\Scripts\\python.exe -m pytest --collect-only tests -q -p no:cacheprovider` (`173 tests collected`).
+- Proof follow-up (April 13): the first isolated CPU-baseline proof failed because the active pinned `torch.hub` YOLO path still imported `seaborn`; `seaborn==0.13.2` was restored to the runtime manifest and the YOLO dependency preflight now checks the current Hub-path imports before model load.
+- Closeout update (April 13): the rerun same-device clean-environment CPU proof passed and is recorded in `.agent_work/tasks/active/TASK-056/TASK-056-clean-cpu-first-run-proof.md`.
+- Senior review follow-up (April 14): the original `UT-010`, `UT-013`, and `UT-017` concerns are resolved on `a2160dc`, but `UT-003` and the remaining active `UT-009` logging cleanup were only partially addressed and are routed to `TASK-062` rather than reopening this completed task.
+
+**User Value**: Makes the current app install and first detection materially more reliable before the team locks the smoke baseline or starts containerization.
+
+---
+
+### **TASK-057: Local YOLO Runtime Ownership and Torch Hub Independence** ✅
+**Status**: COMPLETED  
+**Type**: C (Runtime Architecture / Deployment Readiness)  
+**Priority**: CRITICAL  
+**Estimated Effort**: 12-20 hours  
+**Target Sprint**: Sprint 05  
+**Task File**: `.agent_work/tasks/active/TASK-057-local-yolo-runtime-ownership-and-offline-readiness.md`  
+
+**Objective**: Remove the remaining Torch Hub / GitHub dependency from the active YOLO load path so the Sprint 05 smoke baseline and Docker work are built on a TowerScout-owned local inference contract.
+
+**Key Activities**:
+- Vendor the validated YOLO source snapshot locally and replace the active `torch.hub` load path (`UT-014`)
+- Revalidate the current YOLO weights against the local loader and confirm the interface TowerScout expects remains intact
+- Reconfirm the CPU baseline and optional CUDA compatibility on the new local loader path (`UT-004`)
+- Eliminate first-run Torch Hub / GitHub bootstrap dependence for model initialization and revalidate the earlier first-run mutation/failure surfaces on the local loader contract (`UT-006`, `UT-001`)
+- Update runtime/setup docs so `TASK-052` and `TASK-025` inherit the local-loader contract rather than the Hub-based one
+
+**Validation**:
+- Clean-runtime first-run proof shows YOLO initialization no longer depends on Torch Hub cache state or GitHub / Torch Hub runtime fetches
+- `webapp/model_params/yolov5/newest.pt` loads successfully through the local loader
+- CPU baseline validation passes and CUDA path expectations are documented or validated where hardware is available
+- `pytest --collect-only tests -q` remains clean
+
+**Dependencies**:
+- ✅ TASK-056 runtime hardening complete
+
+**Notes**:
+- This is the structural follow-on to the immediate runtime hardening task, not a broad architecture rewrite.
+- This is not a full-app offline-readiness task; provider-backed imagery and geocoding remain network-dependent.
+- Do not expand this task into ONNX/TensorRT migration, Docker work, or queue-based detection redesign.
+- Senior review follow-up (April 14): the original `UT-014` concern is resolved on `a2160dc`, but the vendored-tree scope and temporary `sys.path` loader contract are now tracked separately as `UT-018` and `UT-019` before Docker work begins.
+
+**Completion Summary**:
+- Vendored the validated YOLOv5 runtime snapshot locally under `webapp/vendor/yolov5_local/` with provenance documented from `ultralytics/yolov5@1d62daa3c6b8ec15fdb319c0a2e341d8b56ec86c`
+- Added `webapp/ts_yolov5_local.py` and switched `webapp/ts_yolov5.py` from `torch.hub` to a TowerScout-owned local loader path
+- Patched the vendored runtime to fail fast on missing `ultralytics` instead of attempting in-process package mutation
+- Updated active setup/runtime guides so they no longer describe first-run GitHub dependence as part of normal YOLO initialization
+- Validation passed:
+  - `.venv\\Scripts\\python.exe -m pytest tests\\unit\\test_yolov5_local_loader.py -q -p no:cacheprovider` -> `5 passed`
+  - `.venv\\Scripts\\python.exe -m pytest --collect-only tests -q -p no:cacheprovider` -> `170 tests collected`
+  - direct `YOLOv5_Detector` load against `webapp/model_params/yolov5/newest.pt` succeeded
+  - direct `YOLOv5_Detector` load also succeeded with `torch.hub.load` and `torch.hub.download_url_to_file` patched to fail, which proved the active loader no longer depends on Torch Hub
+- Clean first-run proof recorded in `.agent_work/tasks/active/TASK-057/TASK-057-clean-local-yolo-first-run-proof.md` with companion env and terminal logs
+- Broader app and host-side smoke recorded in `.agent_work/tasks/active/TASK-057/TASK-057-broader-app-and-host-smoke.md` with companion live-server stdout/stderr and probe logs
+
+**User Value**: Removes the last major runtime nondeterminism before Docker by ensuring TowerScout owns the inference code it depends on.
+
+---
+
+### **TASK-052: Current Integration Smoke Test Baseline** ✅
+**Status**: COMPLETED  
+**Type**: A (Quality / Validation)  
+**Priority**: CRITICAL  
+**Estimated Effort**: 4-8 hours  
+**Target Sprint**: Sprint 05  
+**Task File**: `.agent_work/tasks/active/TASK-052-current-integration-smoke-test-baseline.md`  
+
+**Objective**: Replace the quarantined legacy end-to-end harness with a current smoke test that validates the live Flask route surface and core app boot flow on top of the corrected Sprint 05 runtime contract.
+
+**Key Activities**:
+- Replace skipped legacy `tests/integration/test_end_to_end.py` coverage
+- Establish the smoke first on the host/non-containerized app so it becomes the baseline before Docker work begins
+- Validate application boot with current configuration/setup flow
+- Exercise core live routes and confirm expected response behavior
+- Add one bounded detection-readiness path that is strong enough to catch model-load/runtime regressions without turning `TASK-052` into a full browser E2E suite
+- Make the smoke reusable by `TASK-025` so Docker validation runs the same contract against the containerized app
+- Provide stable regression target for containerization work
+- Keep test lightweight for regular Sprint 05 runs
+- Triage or replace stale tests and mocks discovered during pre-sprint closeout so validation reflects the live route surface
 
 **Success Criteria**:
-- ✅ **AC-001**: No deprecation warnings - **VALIDATED** (March 11, 2026)
-- ✅ **AC-004**: Address search - **VALIDATED**
-- ✅ **AC-005**: City/neighborhood search - **VALIDATED**
-- ✅ **AC-006**: Zipcode search - **VALIDATED**
-- ✅ **AC-007**: Provider switching - **VALIDATED**
-- ⏳ **AC-002**: Rectangle drawing (Phase 5)
-- ⏳ **AC-003**: Polygon drawing (Phase 5)
-- ⏳ **AC-008**: Detection workflow (Phase 5)
-- ⏳ **AC-009**: All 23 tests pass (Phase 5)
-- ⏳ **AC-010**: Cross-browser (Phase 5)
-- ⏳ **AC-011**: Performance (Phase 5)
-- ⏳ **AC-012**: Drawing responsiveness (Phase 5)
-- ⏳ **AC-014**: Documentation (Phase 6)
-
-**Files Modified**:
-- webapp/templates/towerscout.html - PlaceAutocompleteElement container, cache-busting
-- webapp/js/src/providers/GoogleMap.js - Web Component implementation, global singleton, input visibility
-- webapp/js/src/providers/AzureMap.js - Input visibility management
-- webapp/js/src/towerscout.js - Provider switching integration
-- webapp/css/ts_styles.css - Shadow DOM styling with ::part(), container width
-
-**Notes**: 
-- **Hard deadline**: May 2026 (8 weeks buffer maintained)
-- **Deferred rationale**: Integration testing with TASK-033/036 provides comprehensive validation
-- **Emergency path**: Can accelerate Phase 5+6 if production issues arise (4-7 hours)
-
----
-
-### **TASK-033: Manual Tower Addition Feature Restoration** �
-**Status**: 🟢 PHASE 4 IMPLEMENTATION COMPLETE → ⏳ AWAITING TESTING  
-**Type**: C (Architecture + Bug Fixes + Geocoding Integration)  
-**Priority**: HIGH  
-**Created**: February 17, 2026  
-**Phase 0 Completed**: March 11, 2026 (~1 hour)  
-**Phase 1 Completed**: March 12, 2026 (~4 hours)  
-**Phase 2 Completed**: March 12, 2026 (~3 hours)  
-**Phase 3 Completed**: March 12, 2026 (~3.5 hours: 1.5h automated + 2h manual verification)  
-**Phase 4 Implementation Completed**: March 13, 2026 (~3 hours)  
-**Estimated Remaining Effort**: 1.5 hours (testing only)  
-**Target Completion**: March 13, 2026 (end of day)  
-**Task Document**: [TASK-033-manual-tower-addition.md](.agent_work/tasks/TASK-033-manual-tower-addition.md)  
-**Phase 4 Checklist**: [MANUAL_VERIFICATION_PHASE4.md](../tests/integration/MANUAL_VERIFICATION_PHASE4.md)
-
-**Objective**: **Restore and enhance** manual tower addition feature - infrastructure exists but is non-functional
-
-**User Value**: Critical for outbreak investigation teams to mark known towers not detected by ML or add suspected locations for field verification
-
-**STATUS UPDATE** (March 13, 2026):
-- ✅ **All Phases 0-4 COMPLETE**: Core functionality restored and validated
-- ✅ **Phase 4 COMPLETE**: Provider lock and dataset restoration validated
-- ✅ **Production Ready**: 10/13 acceptance criteria met, ready for outbreak investigations
-- ⏳ **Deferred Items**: Performance testing (AC-015), full persistence, polygon editing
-
-**Existing Infrastructure**:
-- **UI Buttons**: "Add Locations", "Clear", "Clear All" in `div#fadd.fadd` container
-- **Methods**: `addShapes()`, `clearShapes()`, `clearAll()` exist but broken
-- **Detection Support**: confidence=1.0, idInTile=-1 architecture ready
-- **Drawing Events**: `drawingcomplete` fires but disconnected from manual tower creation
-
-**Phase 3 Achievements** (March 12, 2026):
-- ✅ **Automated Tests**: 5/5 export integration tests passed
-- ✅ **Manual Verification**: 18/18 test steps completed successfully
-- ✅ **Export Formats**: CSV, KML, YOLO all working with manual towers
-- ✅ **Dataset Restoration**: Purple borders, badges, and addresses restored
-- ✅ **Geocoding**: Reverse geocoding with caching (~1-3 sec first, instant cached)
-- ✅ **Cross-Provider**: Consistent behavior on Google Maps and Azure Maps
-- ✅ **8 Bugs Fixed**: PerformanceMetrics, paths, temp dirs, JSON, ID logic, addresses, geocoding
-
-**Phase 4 Implementation Summary** (March 13, 2026 - 3 hours actual):
-
-✅ **Implementation 1: Browser Refresh Warning** (30 min):
-- Added `window.onbeforeunload` handler in `globals.js`
-- Warns users before losing unsaved manual towers
-- Message: "You have N unsaved manual tower(s). Export your dataset to save them before leaving."
-- Cross-browser compatible (Chrome, Firefox, Edge, Safari)
-- **Status**: ⚠️ Requires debugging - May not display reliably
-
-❌ **Implementation 2: Enhanced "Clear" Button** - REVERTED:
-- **Decision**: Reverted to original behavior based on user feedback
-- **Rationale**: Checkbox system already handles deletion well, simpler UX
-- Original "Clear" button restored: Only removes unsaved polygons
-- Manual tower deletion: Use checkbox in detection list
-- Files reverted: GoogleMap.js and AzureMap.js
-
-✅ **Implementation 3: Provider Lock After Detection** (1 hour):
-- Added `lockProviderSwitching()` and `unlockProviderSwitching()` functions in `globals.js`
-- Locks BOTH User Interface radios (form#uis) AND Backend provider radios (form#providers) per user requirement
-- Triggers after ML detection OR manual tower addition
-- Unlocks only when ALL detections cleared
-- Visual feedback: Grayed labels + tooltips explaining lock reason
-
-✅ **Build Status**: Bundle rebuilt successfully (389.7 KB, 27 modules, 0 errors)
-
-**Validated Acceptance Criteria** (11/13 core + 2 deferred):
-- ✅ **Core Complete**: AC-001, AC-002, AC-003, AC-004, AC-005, AC-006, AC-008, AC-010, AC-011, AC-012, AC-014
-- 🔄 **Phase 4 Implementation**: AC-007-ALT (refresh warning), AC-009-ENH (enhanced Clear), AC-015 (performance)
-- ⏳ **Future Enhancements**: AC-007-ORIG (full persistence), AC-013 (polygon editing)
-
-**Completed Phases** (March 11-13, 2026):
-- ✅ **Phase 0**: Discovery & Root Cause Analysis (~1 hour)
-- ✅ **Phase 1**: Bug Fixes & Core Restoration (~4 hours)
-- ✅ **Phase 2**: Visual Enhancement & Polish (~3 hours)
-- ✅ **Phase 3**: Export Integration & Manual Verification (~3.5 hours)
-- ✅ **Phase 4 Implementation**: Three features coded and built (~3 hours)
-- ⏳ **Phase 4 Testing**: User validation required (~1.5 hours) - **PENDING**
-
-**Implementation Summary**:
-
-1. ✅ **Phase 0: Discovery** (~1 hour) - **COMPLETE**:
-   - Gap analysis with 6 critical issues identified
-   - Deliverable: [TASK-033-phase-0-gap-analysis.md](./tasks/TASK-033-phase-0-gap-analysis.md)
-   
-2. ✅ **Phase 1: Bug Fixes** (~4 hours) - **COMPLETE**:
-   - Fixed 7 critical bugs across both providers
-   - Restored drawing manager lifecycle and manual tower creation
-   - User validation: All features working
-
-3. ✅ **Phase 2: Visual Enhancement** (~3 hours) - **COMPLETE**:
-   - Purple border styling implemented (#800080)
-   - "✋ Manual" badges in detection list
-   - Clear All functionality validated
-   - User validation: All tests passed
-
-4. ✅ **Phase 3: Export Integration** (~3.5 hours) - **COMPLETE**:
-   - **Phase 3A**: 5/5 automated tests passed (manual_tower_export_integration.py)
-   - **Phase 3B**: 18/18 manual verification steps completed
-   - **8 Bugs Fixed**: PerformanceMetrics, paths, temp dirs, JSON, ID logic, addresses, geocoding
-   - **Geocoding Enhancement**: Reverse geocoding for manual tower addresses
-   - Deliverable: [MANUAL_VERIFICATION_PHASE3.md](../tests/integration/MANUAL_VERIFICATION_PHASE3.md)
-
-5. ✅ **Phase 4 Implementation** (~3 hours) - **COMPLETE**:
-   - **Implementation 1**: Browser refresh warning (30 min)
-   - **Implementation 2**: Enhanced "Clear" button with context-aware logic (1.5 hours)
-   - **Implementation 3**: Provider lock for both UI and backend radios (1 hour)
-   - **Build**: Bundle rebuilt successfully (393.1 KB, 27 modules, 0 errors)
-   - Deliverable: [TASK-033-manual-tower-addition.md](./tasks/TASK-033-manual-tower-addition.md)
-
-6. ⏳ **Phase 4 Testing** (~1.5 hours) - **PENDING USER TESTING**:
-   - Browser refresh warning validation
-   - Enhanced "Clear" button testing (context-aware behavior)
-   - Provider lock testing (both radio sets)
-   - Performance benchmarking with 100+ towers
-   - Cross-browser validation (Chrome, Firefox, Edge)
-   - Documentation updates (user guides, README)
-
-**Dependencies**: 
-- TASK-030 (Address Lookup) ✅ COMPLETED - Address system integration
-- TASK-031 (Interactive Highlighting) ✅ COMPLETED - Selection system integration
-- TASK-032 (Enhanced Details Panel) ✅ COMPLETED - UI integration
-- TASK-038 (Frontend Refactoring) ✅ COMPLETED - Modular architecture enables clean integration
-
-**Success Criteria** (10/13 Core VALIDATED):
-- [x] Users can add towers manually via polygon drawing ✅ VALIDATED
-- [x] Manual towers appear in detection list with visual distinction ✅ VALIDATED
-- [x] Manual towers receive geocoded addresses automatically ✅ VALIDATED
-- [x] Manual towers included in all export formats ✅ VALIDATED
-- [x] Provider switching disabled after detection (prevents imagery mismatch) ✅ VALIDATED
-- [x] No conflicts with ML-detected towers ✅ VALIDATED
-- [x] Dataset restoration with purple borders and badges ✅ VALIDATED
-- [x] Geocoding with caching for performance ✅ VALIDATED
-- [x] Cross-provider consistency (Google + Azure) ✅ VALIDATED
-- [ ] Browser alert warns before refresh with manual towers ⚠️ IMPLEMENTED (debugging deferred - LOW PRIORITY)
-- ⏳ Performance validated with 100+ towers (DEFERRED - not blocking for Phase 4)
-- ⏳ Full session persistence (FUTURE ENHANCEMENT - AC-007-ORIG)
-- ⏳ Polygon editing/dragging (FUTURE ENHANCEMENT - AC-013)
-
-**Next Steps**: Task completion documentation and README updates
-
-**User Value**: Critical for outbreak investigation teams to mark known towers not detected by ML or add suspected locations for field verification
-
----
-
-### **TASK-036: Export System Restoration** ✅
-**Status**: ✅ COMPLETE  
-**Type**: B (Feature Development - UX Polish)  
-**Priority**: HIGH  
-**Created**: February 17, 2026  
-**Completed**: March 16, 2026  
-**Original Estimate**: 16-24 hours  
-**Actual Effort**: 4.5 hours (Option B: Quick UX Polish)
-
-**Objective**: Restore and enhance data export capabilities for outbreak investigation workflows
-
-**Requirements**:
-- Excel/CSV export for epidemiological tracking
-- KML export for Google Earth integration
-- YOLO format dataset export for ML training
-- Batch export with filtering options
-- Include confidence scores, addresses, coordinates, and detection metadata
-
-**Implementation Plan**:
-1. **CSV Export** (6-8 hours):
-   - Generate CSV with columns: ID, Address, Latitude, Longitude, Confidence, Detection Type (ML/Manual), Date
-   - Include filtering by confidence threshold
-   - Handle manual vs ML-detected tower distinctions
-   - Excel-compatible formatting
-
-2. **KML Export** (4-6 hours):
-   - Generate KML with placemarks for each detection
-   - Include tower metadata in description fields
-   - Color-code by confidence level
-   - Support for manual vs ML tower distinction
-   - Google Earth compatibility testing
-
-3. **YOLO Format Export** (4-6 hours):
-   - Generate YOLO format labels for ML training
-   - Include bounding box coordinates in YOLO format
-   - Package images with corresponding labels
-   - ZIP archive creation for easy download
-   - Documentation for ML training workflow
-
-4. **UI Integration** (2-4 hours):
-   - Export button with format selection dropdown
-   - Progress indicator for large exports
-   - Download handling for generated files
-   - Error handling for export failures
+- `pytest --collect-only tests -q` remains clean
+- Current smoke test exists for host-side app boot + core route availability
+- Smoke covers one bounded detection-readiness path or explicitly documents why a narrower substitute was required
+- Smoke prerequisites and intentional skips are documented for provider keys, model files, and the post-`TASK-057` local YOLO runtime contract
+- Containerization work has concrete validation target beyond import/collection
+- `TASK-025` can reuse the same smoke contract against Docker instead of defining a different validation baseline
+- Stale validation surfaces are either updated to current behavior or explicitly retired from the active baseline
 
 **Dependencies**:
-- TASK-030 (Address Lookup) ✅ COMPLETED - Address data in exports
-- TASK-033 (Manual Addition) - Include manual additions in exports (can proceed independently)
-- TASK-038 (Frontend Refactoring) ✅ COMPLETED - Modular architecture enables clean export module
+- TASK-056 first-run reliability and runtime determinism hardening ✅ COMPLETED
+- TASK-057 local YOLO runtime ownership and Torch Hub independence ✅ COMPLETED
+- TASK-046 setup wizard/settings implementation ✅ COMPLETED
+- TASK-049 validation-gate repair ✅ COMPLETED
+- TASK-055 YOLO Torch Hub pinned-ref hardening ✅ COMPLETED
 
-**Implementation Summary** (March 13-16, 2026):
+**Notes**:
+- Recommended before TASK-025 so Docker work validates against current, supported app surface.
+- This smoke should validate the corrected post-`TASK-056` runtime contract and the local post-`TASK-057` YOLO loader path, not the earlier Hub-based runtime.
+- This task should define the validation contract once, on the host app first, and let `TASK-025` reuse it for container validation.
+- Keep the smoke broad enough to catch setup/config/model-loading regressions, but bounded enough that it remains practical for repeated Sprint 05 runs.
+- Current stale-test findings from PRE-SPRINT-05-01 include outdated Google API validation mocks in `tests/unit/test_config.py` and `GET /getobjects` assumptions in `tests/unit/test_flask_routes.py`.
+- Unless one of those blocks additional closeout work earlier, handle them under TASK-052 rather than folding them into runtime-path normalization.
+- Completion update (April 13): dedicated task file created, `tests/unit/test_flask_routes.py` rebuilt against the live route surface, and `tests/integration/test_end_to_end.py` now provides the maintained current smoke baseline with a bounded real-YOLO readiness path.
 
-**Scope Discovery** (March 13):
-- TASK-033 already implemented 95% of TASK-036 requirements
-- CSV, KML, and YOLO exports all functional with manual towers
-- Dataset restoration working correctly
-- **Decision**: Option B - UX Polish (4-5 hours) instead of full rebuild
+**Validation Results**:
+- `pytest tests/unit/test_flask_routes.py -q -p no:cacheprovider` -> `7 passed`
+- `pytest tests/integration/test_end_to_end.py -q -p no:cacheprovider` -> `2 passed`
+- `pytest tests/backend/test_endpoint_contract.py -q -p no:cacheprovider` -> `2 passed`
+- `pytest --collect-only tests -q -p no:cacheprovider` -> `160 tests collected`
 
-**Implementation** (March 13, 4.5 hours actual):
-1. **Export Error Handling** (1.5 hours):
-   - Added validateDetections() function for pre-export validation
-   - Added showNotification() system with user-friendly alerts
-   - Enhanced download_dataset() with validation and error messages
-   - Enhanced download_csv() with export counting and success notifications
-   - Enhanced download_kml() with skip counting and clear error messages
-
-2. **ML Training Documentation** (1 hour):
-   - Created DATASET_README.txt (4 KB comprehensive guide)
-   - YOLO format explanation with examples
-   - YOLOv5 training instructions
-   - Detection types documentation
-   - Citation and license information
-
-3. **Backend Integration** (30 minutes):
-   - Modified zipdir() function to include README.txt in dataset ZIPs
-   - Added README to root level alongside contents.txt
-
-4. **Bug Fix During Testing** (1.5 hours):
-   - **Issue**: Dataset restoration failed with README.txt at ZIP root
-   - **Cause**: Code assumed all files had folder paths (with "/")
-   - **Fix**: Modified upload_dataset() to skip root-level files when finding old_stem
-   - **Fix**: Modified adapt_filenames() to handle root-level files separately
-   - **Result**: Dataset restoration working correctly
-
-**Testing Results** (March 16):
-- ✅ 16 of 18 tests passed (2 not feasible to test)
-- ✅ All export error handling validated
-- ✅ README.txt included in dataset exports
-- ✅ No regressions in TASK-033 functionality
-
-**Validated Success Criteria**:
-- [X] CSV export generates valid, Excel-compatible files
-- [X] KML export opens correctly in Google Earth
-- [X] YOLO format export compatible with ML training pipeline
-- [X] All export formats include detection metadata (confidence, type, date)
-- [X] Export handles both ML-detected and manually added towers
-- [X] Filtering options work correctly (confidence threshold, detection type)
-- [X] Export validation prevents user confusion with clear error messages
-- [X] ML training documentation helps users leverage dataset exports
-
-**User Value**: Mission-critical export system now production-ready with comprehensive error handling and ML training documentation for outbreak investigation teams
-
-**Notes**: Critical for outbreak investigation teams
+**User Value**: Provides regression protection during containerization and proves the intended post-hardening runtime contract before Docker begins.
 
 ---
 
-## 📊 Sprint 03 Capacity & Execution Plan
+### **TASK-062: Pre-Docker Runtime Cleanup And YOLO Loader Hardening** ✅
+**Status**: COMPLETED  
+**Type**: C (Runtime Hardening / Deployment Readiness)  
+**Priority**: HIGH  
+**Estimated Effort**: 6-10 hours  
+**Target Sprint**: Sprint 05  
+**Task File**: `.agent_work/tasks/active/TASK-062-pre-docker-runtime-cleanup-and-yolo-loader-hardening.md`
 
-**Sprint Duration**: 14 days (March 11 - March 25, 2026)  
-**Sprint Status**: 🚀 **IN PROGRESS - TASK-033 PHASE 1 COMPLETE ✅**  
-**Current Date**: March 11, 2026  
-**Active Tasks**: 3 tasks + global variable migration  
-**Planned Effort**: 44-71 hours estimated (revised from 52-67h after TASK-033 infrastructure discovery)  
-**Sprint Velocity**: Based on Sprint 02 (61 hours), within healthy capacity range  
-**Phase 0 Completion**: March 11, 2026 (~1 hour)  
-**Phase 1 Completion**: March 11, 2026 (~1 hour, ready for browser testing)
+**Objective**: Address the April 13 senior-review follow-up items that are narrower than `TASK-058`, `TASK-059`, and `TASK-060`, but should land before `TASK-025` fixes the Docker baseline around the current runtime contract.
 
-**Sprint 03 Execution Sequence** (Option A - Strategic Integration):
+**Key Activities**:
+- Delete the archived legacy `get_objects()` block from `webapp/towerscout.py` (`UT-003`)
+- Replace the remaining active `print()` usage in export, upload, dataset restore, startup, and manual-addition paths with structured logging (`UT-009`)
+- Trim `webapp/vendor/yolov5_local/` to an inference-only runtime footprint and remove obvious non-runtime artifacts (`UT-018`)
+- Replace the temporary `sys.path` YOLO loader contract with an explicit long-lived import contract (`UT-019`)
+- If the JS backup file is touched anyway, remove or relocate `webapp/js/towerscout.original.js` from the served tree without turning this task into full build-system modernization (`UT-012` quick cleanup only)
 
-| Task | Hours | Week | Status | Notes |
-|------|-------|------|--------|-------|
-| TASK-033: Manual Tower Addition | 16-28h | Week 1 | ✅ COMPLETE | 14.5h actual (March 13) |
-| Global Variables Phase 1: UI State | 4-6h | Week 1 | ✅ COMPLETE | 5h actual (March 16) |
-| TASK-043 Cleanup: Legacy Warnings | 2-4h | Week 1 | ✅ COMPLETE | 2h actual (March 16) |
-| Global Variables Phase 2: Tile State | 2-3h | Week 1 | ✅ COMPLETE | 2h actual (March 16) |
-| TASK-036: Export System | 16-24h | Week 1-2 | ✅ COMPLETE | 4.5h actual (March 16) |
-| Global Variables Phase 3: DOM | 2-3h | Week 2 | ⏳ PLANNED | Optional - assess need |
-| TASK-039 Phase 5: Testing | 3-5h | Week 2 | ⏳ DEFERRED | Integration testing |
-| TASK-039 Phase 6: Documentation | 1-2h | Week 2 | ⏳ DEFERRED | Sprint closeout |
-| **Total** | **44-71h** | **14 days** | **48h complete** | Within Sprint 02 velocity |
+**Validation**:
+- `pytest tests/unit/test_yolov5_local_loader.py -q -p no:cacheprovider`
+- Reuse the `TASK-052` smoke contract rather than reopening `TASK-052`
+- Focused route and loader smoke remain green after the cleanup
 
-**Strategic Rationale**:
-1. ✅ **TASK-033 First**: Restores critical legacy feature, immediate outbreak investigation value
-2. ✅ **UI Globals During TASK-033**: Migration context fresh from manual addition UI implementation
-3. ✅ **TASK-036 Uses TASK-033**: Export system includes manual towers from day one
-4. ✅ **Phase 5 Integration**: Tests Google Maps + manual towers + export together
-5. ✅ **8-Week Buffer**: May 2026 deadline provides safety for deferred validation
+**Dependencies**:
+- ✅ TASK-057 local YOLO runtime ownership and Torch Hub independence
+- ✅ TASK-052 current integration smoke-test baseline
 
-**Sprint 03 Task Breakdown**:
-- ✅ TASK-039 Phases 1-4B: COMPLETE (18 hours actual, March 10-11)
-- ✅ TASK-033: COMPLETE (14.5 hours actual, March 11-13)
-- ✅ TASK-036: COMPLETE (4.5 hours actual, March 13-16)
-- ✅ Global Variables Phase 1: COMPLETE (5 hours actual, March 16)
-- ✅ TASK-043 Cleanup: COMPLETE (2 hours actual, March 16)
-- ✅ Global Variables Phase 2: COMPLETE (2 hours actual, March 16)
-- 🔄 TASK-039 Phase 5: **NEXT SESSION** (3-5 hours) - Integration testing with fresh eyes
-- ⏳ TASK-039 Phase 6: 1-2 hours - Documentation & sprint closeout
-- ⏳ Global Variables Phase 3: 2-3 hours - **Assess need after Phase 5 testing**
+**Notes**:
+- Keep background jobs, filesystem-session redesign, and broad backend decomposition out of this task; those belong to `TASK-058` and `TASK-059`.
+- Do not reopen `TASK-052`. Use its smoke suite as regression coverage for this task and later for `TASK-025`.
+- If Sprint 05 tightens, prioritize `UT-018`, `UT-019`, and `UT-003` before the broader remaining `UT-009` print cleanup.
 
-**Capacity Update** (March 16, 2026 - Day 6):
-- **Completed So Far**: 48 hours (TASK-039: 18h, TASK-033: 14.5h, TASK-036: 4.5h, Globals P1: 5h, TASK-043: 2h, Globals P2: 2h, Documentation: 2h)
-- **Remaining Planned**: 4-10 hours (Phase 5: 3-5h, Phase 6: 1-2h, Phase 3: 0-3h if needed)
-- **Total Sprint**: 52-58 hours estimated (revised from 44-71h)
-- **Sprint 02 Velocity**: 61 hours actual
-- **Status**: 🟢 **AHEAD OF SCHEDULE** - 48h complete with 8 days remaining, all major features delivered
-
-**Risk Mitigation**: 
-- ✅ TASK-039 primary goal achieved (zero deprecation warnings)
-- ✅ 8-week buffer before May 2026 breaking change
-- ⏰ Phase 5+6 can be accelerated if production issues arise
-- 🔄 TASK-036 can defer to Sprint 04 if velocity lower than expected
-
-## 🎯 Sprint 03 Definition of Done
-
-- [x] Google Maps API upgraded (no deprecation warnings in console) ✅ TASK-039 Phase 1-4B
-- [x] Drawing Library migrated to new API ✅ TASK-039
-- [x] Places SearchBox migrated to Autocomplete ✅ TASK-039
-- [x] Manual tower addition feature functional ✅ TASK-033
-- [x] Export system restored (CSV, KML, YOLO formats) ✅ TASK-036
-- [x] All legacy outbreak investigation workflows operational ✅ TASK-033 + TASK-036
-- [ ] Cross-browser testing completed (Chrome, Edge, Firefox, Safari) ⏳ Phase 5 - **NEXT SESSION**
-- [ ] No regressions in existing functionality ⏳ Phase 5 - Integration testing
-- [ ] All acceptance criteria met for each completed task ⏳ Phase 5 validation
+**User Value**: Reduces pre-Docker risk without muddying `TASK-025` or reopening broader architecture work.
 
 ---
 
-## 📅 Next Session Plan (March 17+, 2026)
+### **TASK-025: Docker Containerization** 🔴
+**Status**: NOT_STARTED  
+**Type**: A (Infrastructure)  
+**Priority**: HIGH  
+**Estimated Effort**: 1-2 days (8-16 hours)  
+**Target Sprint**: Sprint 05  
 
-**Primary Goal**: Integration Testing with Fresh Eyes  
-**Document**: `.agent_work/context/status/NEXT-SESSION-PLAN.md`
+**Objective**: Create Docker configuration for one-command local deployment on top of the corrected Sprint 05 runtime and smoke baseline.
 
-**Session Priorities**:
-1. 🔍 **TASK-039 Phase 5: Integration Testing** (3-5 hours)
-   - Test all Sprint 03 features together
-   - Validate Phase 1 + Phase 2 + TASK-043 migrations
-   - Check console warning counts
-   - Cross-browser validation
-2. 📝 **TASK-039 Phase 6: Documentation** (1-2 hours)
-   - Update copilot-instructions.md
-   - Create migration guides
-   - Sprint 03 completion documentation
-3. ⚖️ **Phase 3 Assessment** (after testing)
-   - Decide if DOM element migration needed
-   - Base decision on integration testing results
-   - Likely optional (prediction: skip Phase 3)
+**Requirements**:
+- Multi-stage Dockerfile with model weights
+- Docker Compose configuration
+- Environment variable management
+- Platform-specific optimization (AMD64/ARM64)
+- Volume mount strategy for persistent state
 
-**Why Wait Until Tomorrow**:
-- 9 hours of focused architectural work completed today
-- Fresh eyes catch more issues during testing
-- 8 days remaining provides comfortable buffer
-- Mental fatigue after intensive refactoring
+**Current Runtime Persistence Surfaces**:
+Runtime-path normalization is complete. Docker work should treat the following as the active persistence contract:
 
-**Sprint Status**: 🟢 **AHEAD OF SCHEDULE** - All major features delivered, integration testing remains
+1. **`webapp/config/`**
+2. **`webapp/flask_session/`**
+3. **`webapp/logs/`**
+4. **`webapp/temp/`**
+5. **`webapp/uploads/`**
+6. **`webapp/cache/`**
 
----
+**Transitional Compatibility Note**:
+`ts_config.get_recent_performance_stats()` still falls back to `cwd/logs/performance.log` if `webapp/logs/performance.log` is absent. Treat repo-root `logs/` as a temporary local compatibility surface, not a Docker mount target.
 
-## ✅ SPRINT 02 ACHIEVEMENTS (February 18 - March 11, 2026)
+**Environment Variables Required**:
+- `GOOGLE_API_KEY`
+- `AZURE_MAPS_SUBSCRIPTION_KEY`
+- `DEFAULT_MAP_PROVIDER`
+- `FLASK_SECRET_KEY` (must be stable across restarts)
 
-**Sprint Summary**: All 5 tasks completed, 61 hours effort, modular architecture established
+**Dependencies**:
+- ✅ TASK-056 - first-run reliability and runtime determinism hardening
+- ✅ TASK-057 - local YOLO runtime ownership and Torch Hub independence
+- ✅ TASK-046 (completed) - setup wizard/settings volume-mount behavior
+- 🟡 TASK-051 - runtime dependency verification and split
+- ✅ TASK-055 - YOLO Torch Hub pinned-ref hardening
+- 🟡 TASK-052 - current integration smoke-test baseline
+- ✅ TASK-062 - pre-Docker runtime cleanup and loader hardening
 
-See [completed-tasks.md](completed-tasks.md) for full Sprint 02 task details:
-- TASK-038: Frontend Code Quality & Refactoring (41 hours)
-- TASK-042: Deferred Testing Resolution (8 hours)
-- TASK-043: Global Variable Deprecation (6 hours)
-- TASK-044: Documentation Updates (3 hours)
-- TASK-045: Frontend Boundary Accumulation Bug (3 hours)
+**Notes**:
+- Keep focused on container build/run behavior
+- Do NOT absorb runtime hardening, YOLO ownership redesign, or smoke-test replacement into this task
+- Reuse the `TASK-052` smoke contract against the containerized app rather than inventing a separate Docker-only validation path
+- Current app uses filesystem-backed Flask sessions and writes to `webapp/config/.env`
+- Final Docker volume decisions should use the normalized `webapp/` runtime contract, not historical folder duplication
+- Docker delivery must provide writable session storage, stable `FLASK_SECRET_KEY`, and persistent writable mount for `webapp/config/`
+- TASK-025 Phase 1 must explicitly choose and document the model-weight strategy (image layer vs runtime download vs host volume)
+- Treat the current filesystem-session and temp-path contract as an explicit containment requirement for the first Docker milestone, not as a solved architecture problem
+- Without these, first-launch setup may fail or saved configuration lost on container replacement
 
-**Key Achievements**:
-- Modular frontend architecture (27 modules across 7 directories)
-- Zero regressions in comprehensive testing (23/23 tests PASS)
-- 3 critical race conditions fixed with property descriptors
-- Comprehensive developer and user documentation
-- Frontend boundary state integrity restored
-
----
-
-## ✅ SPRINT 01 ACHIEVEMENTS (February 4-18, 2026)
-
-**Sprint Summary**: All 7 tasks completed, 90% issue resolution rate, ~32 hours effort
-
-See [completed-tasks.md](completed-tasks.md) for full Sprint 01 task details:
-- TASK-041: Deep Dive Priority 2 (State Management & Memory Cleanup)
-- TASK-037: User Journey Verification (9 of 10 issues resolved)
-- TASK-039: Emergency Geocoding Fixes
-- TASK-040: Azure Maps Visual Consistency
-- TASK-035: Memory Management & Map Object Cleanup
-- TASK-031: Interactive Highlighting System
-- TASK-032: Enhanced Details Panel
-
-**Key Achievements**:
-- Exceptional memory performance (decreased 0.7% in stress testing)
-- 5 critical issues resolved through architectural improvements
-- Cross-provider functionality validated and stable
-- Smooth user experience improvements delivered
+**User Value**: Enables one-command deployment for non-technical users
 
 ---
 
-## ✅ SPRINT 01 ACHIEVEMENTS (February 4-18, 2026)
+### **TASK-054: Local Launch UX** 🟡
+**Status**: NOT_STARTED  
+**Type**: B (Deployment UX / Local Launch Flow)  
+**Priority**: MEDIUM  
+**Estimated Effort**: 1-2 days (8-12 hours)  
+**Target Sprint**: Sprint 05 (post-Docker stretch goal)  
 
-**Sprint Summary**: All 7 tasks completed, 90% issue resolution rate, ~32 hours effort
+**Objective**: Deliver a user-friendly local launch flow for Docker deployments so users can start TowerScout with a click, have the browser open automatically, and receive a clear startup experience while the application becomes ready.
 
-See [completed-tasks.md](completed-tasks.md) for full Sprint 01 task details:
-- TASK-041: Deep Dive Priority 2 (State Management & Memory Cleanup)
-- TASK-037: User Journey Verification (9 of 10 issues resolved)
-- TASK-039: Emergency Geocoding Fixes
-- TASK-040: Azure Maps Visual Consistency
-- TASK-035: Memory Management & Map Object Cleanup
-- TASK-031: Interactive Highlighting System
-- TASK-032: Enhanced Details Panel
+**Requirements**:
+- Host-side launcher flow for supported local deployment targets (`start.bat` first, cross-platform launcher follow-up if capacity allows)
+- Browser auto-open only after the app shell is reachable on the configured localhost port
+- Clear separation between "container is up" and "application is ready for user interaction"
+- User-facing startup experience that works with the existing Setup Wizard flow instead of bypassing it
+- Troubleshooting path for common launch failures (Docker not running, port conflict, startup timeout)
 
-**Key Achievements**:
-- Exceptional memory performance (decreased 0.7% in stress testing)
-- 5 critical issues resolved through architectural improvements
-- Cross-provider functionality validated and stable
-- Smooth user experience improvements delivered
+**Proposed Delivery Phases**:
+1. **Phase 1 - Launcher MVP**
+   - Add launcher script(s) for local Docker startup
+   - Wait for reachable app shell before opening the browser
+   - Add companion stop/logs guidance or scripts so users are not forced into raw Docker CLI usage for routine support
+2. **Phase 2 - Readiness + Browser Orchestration**
+   - Add or formalize a lightweight startup/readiness endpoint for launcher polling
+   - Ensure browser launch targets the correct localhost port and only happens once per launch attempt
+   - Document expected behavior for first launch, repeat launch, and failure modes
+3. **Phase 3 - Deferred Warm-Initialization UX**
+   - Evaluate whether model/ZIP warm initialization can happen after the app shell is served
+   - If feasible within Sprint 05 capacity, expose startup status to the frontend so setup/loading UI can distinguish "page is available" from "runtime is fully warm"
+   - Defer this phase to Sprint 06 if Docker baseline or launcher MVP consumes available capacity
 
----
+**Dependencies**:
+- 🟡 TASK-052 - current integration smoke-test baseline
+- 🔴 TASK-025 - Docker containerization baseline complete enough to support a stable local launcher target
 
-## ✅ PREVIOUS SPRINT ACHIEVEMENTS (January 6-16, 2026)
+**Notes**:
+- Do NOT absorb this task into TASK-025. The launcher/browser UX is a separate user-experience layer with different failure modes and rollback concerns.
+- Container code should not be responsible for opening the host browser; browser launch should be driven by the host-side launcher.
+- If Sprint 05 tightens, ship Phase 1 first and defer background warm-initialization redesign.
 
-### **TASK-030: Address Lookup for Detections** ✅
-**Status**: ✅ COMPLETED (January 16, 2026)  
-**Type**: B (Feature Development)  
-**Priority**: CRITICAL  
-**Started**: January 6, 2026  
-**Completed**: January 16, 2026  
-**Final Effort**: 11 days (expanded from 5-7 days)
-
-**Final Impact Delivered**:
-- ✅ **Azure Maps Fully Operational**: Default provider with native search and ML pipeline integration
-- ✅ **Google Maps Provider Switching**: Bidirectional switching working correctly without errors
-- ✅ **Cross-Provider Address Lookup**: Both providers handle search and detection workflows
-- ✅ **ML Pipeline Integration**: Detection requests work seamlessly with both providers
-- ✅ **Authentication & Initialization**: Resolved race conditions and API key management
-- ✅ **Coordinate System Normalization**: Fixed coordinate handling across providers
-
-
-**Previous Sprint Summary** (January 6-16, 2026):
-- ✅ **TASK-030: Address Lookup for Detections** - Completed successfully
-  - Azure Maps fully operational as default provider
-  - Google Maps provider switching working without errors
-  - Cross-provider compatibility for searches and detection
-  - ML pipeline integration with both providers
-
-**Outstanding from Previous Sprint**:
-- 🔄 **Circling and Radius Features** - Drawing tools need debugging (Medium Priority for future sprint)
+**User Value**: Reduces or eliminates command-line interaction for local users while keeping Setup Wizard and startup behavior understandable.
 
 ---
 
-## 🔄 Sprint 03 Preview
+### **TASK-029: Multi-Provider Fallback** 🟡
+**Status**: NOT_STARTED  
+**Type**: B (Reliability)  
+**Priority**: MEDIUM  
+**Estimated Effort**: 2-3 days (16-24 hours)  
+**Target Sprint**: Sprint 05 (stretch goal)  
 
-**Sprint 02 Completion**: March 4, 2026  
-**Sprint 03 Start**: March 5, 2026  
-**Primary Focus**: Feature Development (TASK-033, TASK-036)  
-**Secondary Focus**: Google Maps API Migration (TASK-039) - Must complete by April 2026  
-**Foundation**: Modular codebase from TASK-038 enables rapid feature additions  
-**Velocity**: Target 32-40 hours per sprint based on Sprint 01-02 performance
+**Objective**: Implement automatic fallback between map providers for reliability
 
-**Candidate Tasks for Sprint 03**:
-- TASK-033: Manual Tower Addition Feature (3 days)
-- TASK-036: Export System Restoration (2-3 days)
-- TASK-039: Google Maps API Upgrade (8-20 hours, deadline April 2026)
-- Continue global variable deprecation (TASK-043 follow-up)
+**Requirements**:
+- Automatic provider switching on API failures
+- Quality comparison and provider selection logic
+- Rate limit handling and quota management
+- Transparent failover for users
+
+**Dependencies**:
+- Provider abstraction layer ✅ COMPLETED
+
+**Notes**: May be deferred to Sprint 06 if Docker work requires more time
+
+**User Value**: Improved reliability when one provider experiences issues
 
 ---
 
-## 🗂️ Repository Housekeeping (March 16, 2026)
+### **Optional Quick Wins from Sprint 04** 🟢
+**Status**: NOT_STARTED  
+**Priority**: LOW-MEDIUM  
+**Total Estimated Effort**: 4-6 hours
 
-### Status Summary
-- ✅ **Immediate Cleanup**: Completed (3 files deleted/verified)
-- ⏳ **Sprint Retrospective Cleanup**: Scheduled for March 25-26, 2026 (30 minutes)
+**Browser Refresh Warning Fix** (2-3 hours)
+- Debug `window.onbeforeunload` inconsistencies
+- Cross-browser compatibility testing
+- Implement reliable solution
 
-### Immediate Cleanup ✅ COMPLETED (March 16, 2026)
+**Error Handling Pattern Standardization** (2-3 hours)
+- Remove deprecated `fatalError()` references
+- Standardize on `TowerScoutErrorHandler`
+- Update documentation
 
-**Files Deleted**:
-- `nul` - Windows timeout error output (safe to remove)
-- `bfg.jar` - Git history cleanup tool (cleanup completed March 2, 2026)
+**Notes**: Include only if Sprint 05 capacity allows after TASK-056, TASK-057, TASK-052, and TASK-025
 
-**Verification Completed**:
-- ✅ `.gitignore` properly configured for `.DS_Store`, `cache/`, `logs/`, `uploads/`
-- ✅ No duplicate folders found in workspace
-- ✅ All application folders actively used
+---
 
-### Sprint Retrospective Cleanup Plan (March 25-26, 2026)
+## 📊 Sprint 05 Execution Plan
 
-**Scheduled Effort**: 30 minutes during bi-weekly maintenance  
-**Rationale**: Avoid disrupting active Sprint 03 work
+**Sprint Duration**: 19 days (April 7 - April 25, 2026)  
+**Target Capacity**: 70-80 hours  
+**Sprint Pace**: Medium-to-high complexity work with explicit runtime hardening gates before Docker
 
-#### Root Folder Reorganization (9 files)
+### Week 1: April 7-13 (Runtime Contract Correction)
+**Focus**: Finish the dependency and YOLO pinning foundation, then complete the first-run hardening gate  
+**Estimated Effort**: 26-34 hours
 
-**Move to `.agent_work/context/guides/`** (6 files):
-1. `MIGRATION_GUIDE.md` - API key migration guide
-2. `PERFORMANCE_IMPLEMENTATION_SUMMARY.md` - Performance metrics guide
-3. `TowerScout_Development_Setup_Guide.txt` - Development setup
-4. `TowerScout_Project_Overview.txt` - Project overview
-5. `NODEJS-INSTALL-GUIDE.md` - Node.js setup guide
-6. `VS_Code_to_Cursor_Migration_Guide.txt` - IDE migration guide
+| Date | Tasks | Hours |
+|------|-------|-------|
+| Apr 7-9 | TASK-051: Runtime dependency verification and split | 8-12h |
+| Apr 9 | TASK-055: YOLO pinned-ref hardening | 6-10h |
+| Apr 10-13 | TASK-056: First-run reliability and runtime determinism hardening | 12-20h |
 
-**Move to `.agent_work/context/archive/2026-02/`** (2 files):
-7. `git-history-cleanup-report.txt` - Historical report (March 2, 2026)
-8. `legacy-PRD-features.txt` - Historical requirements snapshot
+**Week 1 Note**:
+- `PRE-SPRINT-05-02` closeout validation is complete; continue using the canonical `webapp/` runtime contract rather than the old mixed-path folder duplication.
 
-**Move to `.agent_work/tasks/completed/TASK-038/`** (1 file):
-9. `INFRASTRUCTURE-README.md` - TASK-038 build system documentation
+### Week 2: April 14-20 (Local YOLO Runtime Ownership + Host Baseline)
+**Focus**: Remove the remaining Hub/GitHub runtime dependency and lock the host smoke baseline  
+**Estimated Effort**: 18-28 hours
 
-#### Status/Tasks Folder Organization (10 files)
+| Date | Tasks | Hours |
+|------|-------|-------|
+| Apr 14-17 | TASK-057: Local YOLO runtime ownership and Torch Hub independence | 12-20h |
+| Apr 18-20 | TASK-052: Current integration smoke-test baseline | 6-10h |
 
-**Create and organize task subfolders**:
+**Week 2 Replan Update (April 14)**:
+- Insert `TASK-062` between `TASK-052` and `TASK-025` so the senior-review cleanup lands on the host baseline before Docker work starts.
 
-**`.agent_work/tasks/completed/TASK-033/`**:
-- Move from `status/`: `TASK-033-PHASE4-DESIGN-DECISIONS.md`
-- Move from `tasks/`: `TASK-033-manual-tower-addition.md`, `TASK-033-phase-0-gap-analysis.md`
+### Week 3: April 21-25 (Docker Baseline + Stretch Decision)
+**Focus**: Containerize the corrected baseline, then decide whether any launch-UX stretch capacity remains  
+**Estimated Effort**: 18-28 hours
 
-**`.agent_work/tasks/completed/TASK-036/`**:
-- Move from `status/`: `TASK-036-SCOPE-ANALYSIS.md`, `TASK-036-TESTING-CHECKLIST.md`
+| Date | Tasks | Hours |
+|------|-------|-------|
+| Apr 21 | TASK-062: Pre-Docker runtime cleanup and loader hardening | 6-10h |
+| Apr 22-23 | TASK-025 Phase 1-2: Docker strategy, Dockerfile, and compose config | 10-16h |
+| Apr 23-24 | TASK-025 Phase 3-4: volume mounts, validation, and documentation | 8-12h |
+| Apr 24-25 | Stretch decision: TASK-054 Phase 1 only if Docker baseline lands cleanly | 0-8h |
+| Apr 25 | Sprint 05 Retrospective | 2-4h |
 
-**`.agent_work/tasks/completed/`**:
-- Move from `status/`: `TASK-037-UPDATE-SUMMARY.md`, `TASK-043-CLEANUP-PLAN.md`, `TASK-043-CLEANUP-TESTING.md`
-- Move from `tasks/`: `TASK-039-google-maps-api-upgrade.md`, `TASK-042-testing-action-log.md`
+**Total Sprint Effort**: 64-94 hours (planning target remains 70-80h)
 
-**After cleanup, `status/` folder should contain only**:
-- Sprint retrospectives and status updates
-- Global planning documents (NEXT-SESSION-PLAN.md, migration plans)
-- Maintenance reports and sprint metrics
-- Testing checklists (Phase 1, Phase 2)
+---
 
-#### Verification Steps
-- Update cross-references in README.md
-- Verify documentation links still work
-- Update sprint documentation references
+## 🎯 Sprint 05 Definition of Done
 
-### Audit Details
+### Must-Have (Primary Goals)
+- [x] TASK-051 complete: Runtime dependencies verified and split documented
+- [x] TASK-055 complete: YOLO Torch Hub pinned-ref hardening landed
+- [x] TASK-056 complete: First-run blockers and deployment-hostile runtime defaults corrected
+- [x] TASK-057 complete: Active YOLO load path no longer depends on Torch Hub / GitHub at runtime
+- [x] TASK-052 complete: Current integration smoke test in place on the corrected runtime contract
+- [x] TASK-062 complete: Senior-review cleanup landed on the host baseline before Docker starts
+- [ ] TASK-025 Phase 1-3 complete: Docker container builds and runs on the corrected baseline
+- [ ] Setup Wizard functional in Docker environment
+- [ ] Settings save/load works with volume mounts
+- [ ] Detection workflow validated in container
+- [ ] All volume mounts tested and documented
+- [ ] Docker Compose configuration validated
+- [ ] Zero regressions from Sprint 04 functionality
 
-**Audit Date**: March 16, 2026  
-**Files Audited**: 50+ root directory files and folders  
-**Issues Identified**: 12 organizational improvements  
-**Issues Resolved**: 3 immediate (deleted files + .gitignore verification)  
-**Issues Scheduled**: 9 for retrospective (file relocations + folder organization)  
+### Should-Have (Secondary Goals)
+- [ ] TASK-025 Phase 4 complete: Full Docker documentation
+- [ ] Multi-platform support (AMD64 at minimum)
+- [ ] TASK-054 Phase 1 complete: launcher MVP for local Docker startup
+- [ ] Browser Refresh Warning Fix (if capacity allows)
+- [ ] Error Handling Standardization (if capacity allows)
 
-**Findings**:
-- ✅ Application structure healthy (all folders actively used)
-- ✅ No duplicate folders found
-- ⚠️ 9 documentation files in wrong location (non-blocking)
-- ⚠️ 10 task-specific files need organization (non-blocking)
+### Nice-to-Have (Stretch Goals)
+- [ ] TASK-054 Phase 2 complete or cleanly deferred with documented readiness approach
+- [ ] ARM64 platform support
+- [ ] Docker Hub image publishing
+- [ ] Performance optimization in containerized environment
+- [ ] TASK-029 investigation started only if all runtime and Docker gates land early
 
-**Full Analysis**: See `.agent_work/context/status/SPRINT-03-STATUS-UPDATE.md` (Repository Housekeeping section)
-- Docker containerization (TASK-025) if capacity allows
+### Sprint Health Metrics
+- TASK-051, TASK-055, TASK-056, TASK-057, TASK-052, and TASK-062 complete before TASK-025 starts
+- Clean-environment first detection succeeds without in-process package mutation
+- YOLO initialization no longer depends on first-run GitHub access
+- Docker container starts successfully on first attempt
+- All TASK-046 features work in containerized environment
+- Documentation includes troubleshooting guide
+- All automated tests passing in container
+- Container image size reasonable (<2GB with models)
+
+---
+
+## 📅 Sprint 05 Planning Notes
+
+**Key Decisions**:
+1. **Sequencing is critical**: `TASK-051` and `TASK-055` are already complete, `TASK-056`, `TASK-057`, and `TASK-052` are complete, and the new `TASK-062` cleanup should land before `TASK-025`
+2. **`TASK-025` scope discipline**: Do NOT absorb runtime hardening, YOLO ownership redesign, or smoke-baseline work into the Docker task
+3. **`TASK-054` stays separate**: Launcher/browser UX work starts only after the Docker baseline is stable enough to target
+4. **Current `dev` lazy-loading behavior remains intentional**: do not expand Sprint 05 scope to "fix" that
+5. **Volume mount testing remains mandatory**: explicitly test Setup Wizard save/load in Docker against the current filesystem-session contract
+6. **Model-weight strategy is a Phase 1 Docker decision**: do not defer layer/download/volume treatment until late Docker validation
+7. **Fallback plan**: If the added runtime gates consume Sprint 05 capacity, defer `TASK-054` and `TASK-029` rather than compressing `TASK-025`
+
+**Risk Mitigation**:
+- `TASK-056` corrects first-run failures before the smoke baseline is defined
+- `TASK-057` prevents Docker from being built on top of a runtime contract that still depends on Torch Hub / GitHub
+- `TASK-052` provides regression protection during Docker work
+- Keep `TASK-025` phases separate for easier rollback if needed
+- Keep `TASK-054` phased so launcher MVP can ship without forcing startup-pipeline redesign into the same sprint
+- Use a conservative planning pace around 3.5-4.0 hrs/day instead of Sprint 03 peak velocity
+- Document all Docker-specific configuration decisions
+
+**Success Indicators**:
+- A new user can install and run a first detection without in-process package upgrades
+- YOLO initialization works on the validated host baseline without first-run GitHub dependence
+- A new user can run `docker compose up` and complete Setup Wizard
+- Configuration persists across container restarts
+- Detection workflow works end-to-end in container
+- A user can launch the local Docker deployment with minimal or no manual CLI interaction once `TASK-054` lands
+- No manual `.env` editing required
+
+---
+
+## 🔗 Related Documentation
+
+- [Sprint 05 Planning](./context/status/SPRINT-05-PLAN.md) - Detailed sprint plan synchronized with this tracker
+- [Sprint 04 Retrospective](./context/status/SPRINT-04-RETROSPECTIVE.md)
+- [Task Backlog](./task-backlog.md)
+- [Completed Tasks](./completed-tasks.md)
+- [Docker Requirements Analysis](./context/analysis/REMOVAL-CANDIDATES-CONTAINERIZATION.md)
+
+---
+
+## 📝 Notes
+
+**Sprint 04 Learnings Applied**:
+- Keep sprint plans synced with live task status
+- Update definition-of-done checklists as work completes
+- Perform mid-sprint resync if scope changes
+- Mark optional items as optional everywhere
+
+**Sprint 05 Focus**:
+- This sprint is about deployment readiness, not feature development
+- Emphasis on validation, testing, and infrastructure
+- Conservative approach to containerization
+- Document everything for non-technical deployment
+
+**Next Sprint Preview (Sprint 06)**:
+- TASK-058: Background detection jobs and durable run state
+- TASK-059: Backend layer decomposition and logging consolidation
+- TASK-026: CPU Optimization
+- TASK-027: Enhanced Error Handling
+- TASK-060 / TASK-061 and remaining stretch work depending on Sprint 05 closeout

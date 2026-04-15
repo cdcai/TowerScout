@@ -11,8 +11,10 @@ import os
 from typing import List, Dict, Any, Optional, Tuple
 from shapely.geometry import Polygon
 from shapely.geometry.polygon import LinearRing
+from shapely.validation import explain_validity
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
+from ts_paths import get_yolov5_model_dir
 
 
 class ValidationError(Exception):
@@ -54,7 +56,7 @@ class TowerScoutValidator:
         engines.update(TowerScoutValidator.VALID_ENGINES)
         
         # Add dynamic model files from yolov5 directory
-        model_dir = os.path.join(os.path.dirname(__file__), 'model_params', 'yolov5')
+        model_dir = get_yolov5_model_dir()
         if os.path.exists(model_dir):
             for filename in os.listdir(model_dir):
                 if filename.endswith('.pt'):
@@ -154,7 +156,14 @@ class TowerScoutValidator:
             polygon = Polygon(coordinates)
             
             if not polygon.is_valid:
-                raise ValidationError("Polygon geometry is invalid (self-intersecting or malformed)")
+                validity_detail = explain_validity(polygon)
+                if validity_detail:
+                    lowered_detail = validity_detail.lower()
+                    if 'self-intersection' in lowered_detail:
+                        raise ValidationError("Polygon geometry is invalid (self-intersection)")
+                    raise ValidationError(f"Polygon geometry is invalid ({lowered_detail})")
+
+                raise ValidationError("Polygon geometry is invalid (malformed)")
             
             if polygon.area == 0:
                 raise ValidationError("Polygon has zero area")

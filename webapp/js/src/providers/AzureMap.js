@@ -17,14 +17,19 @@
         throw new Error('Azure Maps Map class not available. Please check Azure Maps SDK loading.');
       }
 
-      console.log('Azure Maps SDK loaded, initializing with subscription key authentication...');
+      window.TowerScoutLogger.debug('Azure Maps SDK loaded, initializing with subscription key authentication...');
 
       this.boundaries = [];
       this.newShapes = [];
       this.drawingManager = null;
+      this.pendingDrawingContext = null;
       this.drawingContext = null; // Track drawing context: 'search' or 'manual'
       this.drawingNotificationId = null; // Track persistent notification
       this.searchDataSource = null;
+      this.detectionDataSource = null;
+      this.detectionPolygonLayer = null;
+      this.detectionLineLayer = null;
+      this.detectionShapeIndex = new Map();
       this.subscriptionKey = null;
       this.map = null; // Will be initialized after getting API key
       this.mapEventListeners = []; // Track map-specific event listeners for cleanup
@@ -42,7 +47,7 @@
     async initializeWithSubscriptionKey() {
       try {
         // Fetch Azure Maps subscription key from backend
-        console.log('🔑 Fetching Azure Maps subscription key...');
+        window.TowerScoutLogger.debug('🔑 Fetching Azure Maps subscription key...');
         const response = await fetch('/getazurekey');
 
         if (!response.ok) {
@@ -56,7 +61,7 @@
         }
 
         this.subscriptionKey = data.subscriptionKey;
-        console.log('✅ Azure Maps subscription key loaded, initializing map...');
+        window.TowerScoutLogger.debug('✅ Azure Maps subscription key loaded, initializing map...');
 
         // Validate subscription key format
         if (this.subscriptionKey.length < 20 || !this.subscriptionKey.match(/^[A-Za-z0-9\-_]+$/)) {
@@ -84,7 +89,7 @@
 
         // Force resize after map loads to ensure proper container sizing
         this.map.events.addOnce('ready', () => {
-          console.log('✅ Azure Maps ready, forcing resize...');
+          window.TowerScoutLogger.debug('✅ Azure Maps ready, forcing resize...');
 
           // Basic container sizing
           const container = document.getElementById('azureMap');
@@ -95,7 +100,7 @@
           }
 
           this.map.resize();
-          console.log('✅ Azure Maps container resized');
+          window.TowerScoutLogger.debug('✅ Azure Maps container resized');
 
           // Validate style loaded correctly
           this.validateStyleLoading();
@@ -106,7 +111,7 @@
           console.warn('⚠️ Azure Maps style image missing:', e);
         });
 
-        console.log('✅ Azure Maps instance created with subscription key authentication');
+        window.TowerScoutLogger.debug('✅ Azure Maps instance created with subscription key authentication');
         return this.setupMapEvents();
       } catch (error) {
         console.error('❌ Azure Maps initialization failed:', error);
@@ -127,7 +132,7 @@
       try {
         // Check if satellite style loaded correctly
         const currentStyle = this.map.getStyle();
-        console.log('🗺️ Azure Maps current style:', currentStyle ? currentStyle.name || 'unknown' : 'none');
+        window.TowerScoutLogger.debug('🗺️ Azure Maps current style:', currentStyle ? currentStyle.name || 'unknown' : 'none');
 
         if (!currentStyle || currentStyle.name !== 'satellite') {
           console.warn('⚠️ Satellite style may not have loaded correctly, attempting fallback...');
@@ -136,18 +141,18 @@
           setTimeout(() => {
             try {
               this.map.setStyle('satellite');
-              console.log('🔄 Attempted to reload satellite style');
+              window.TowerScoutLogger.debug('🔄 Attempted to reload satellite style');
               // TASK-041 Phase 1: Mark style loaded after successful reload
               providerManager.markInitialized('azure', 'styleLoaded');
             } catch (styleError) {
               console.error('❌ Failed to reload satellite style:', styleError);
-              console.log('📍 Using default style as fallback');
+              window.TowerScoutLogger.debug('📍 Using default style as fallback');
               // Mark as loaded anyway to not block other operations
               providerManager.markInitialized('azure', 'styleLoaded');
             }
           }, 1000);
         } else {
-          console.log('✅ Satellite style loaded successfully');
+          window.TowerScoutLogger.debug('✅ Satellite style loaded successfully');
           // TASK-041 Phase 1: Mark style loaded
           providerManager.markInitialized('azure', 'styleLoaded');
         }
@@ -196,10 +201,10 @@
 
       // Wait for Azure Maps to be ready before initializing drawing tools
       this.map.events.add('ready', () => {
-        console.log('Azure Maps ready event fired');
+        window.TowerScoutLogger.debug('Azure Maps ready event fired');
 
         // Azure Maps already initialized with satellite style
-        console.log('Azure Maps initialized with satellite style for optimal detection performance');
+        window.TowerScoutLogger.debug('Azure Maps initialized with satellite style for optimal detection performance');
 
         this.initializeDrawingTools();
         this.initializeSearchBox();
@@ -210,13 +215,79 @@
       this.map.events.add('moveend', () => {
         // Azure Maps doesn't need to bias Google's search box
         // Azure Maps uses native search that auto-biases to current viewport
-        console.log('Azure Maps view changed - native search automatically biased');
+        window.TowerScoutLogger.debug('Azure Maps view changed - native search automatically biased');
       });
 
       return this.map;
     }
 
+    getPendingBoundaryShapes() {
+      if (this.newShapes.length > 0) {
+        return this.newShapes;
+      }
+
+      if (this.drawingManager) {
+        const source = this.drawingManager.getSource();
+        const allShapes = source.getShapes();
+        if (allShapes.length > 0) {
+          return allShapes;
+        }
+      }
+
+      return [];
+    }
+
+    extractBoundaryPointsFromShape(shape) {
+      const geometry = shape.toJson().geometry;
+      if (!geometry || !geometry.coordinates || geometry.coordinates.length === 0) {
+        return null;
+      }
+
+      if (geometry.type !== 'Polygon' && geometry.type !== 'Rectangle') {
+        return null;
+      }
+
+      return geometry.coordinates[0].map((coord) => [coord[0], coord[1]]);
+    }
+
+    validateDrawnShapes(options = {}) {
+      const showNotification = options.showNotification === true;
+      const label = options.label || 'custom shape';
+      const remediation = options.remediation || 'clear_then_redraw';
+      const shapes = options.shapes || this.getPendingBoundaryShapes();
+      const polygons = [];
+
+      for (const shape of shapes) {
+        const points = this.extractBoundaryPointsFromShape(shape);
+        if (points) {
+          polygons.push(points);
+        }
+      }
+
+      const validation = window.PolygonValidation.validatePolygonCollection(polygons);
+      if (!validation.valid && showNotification) {
+        TowerScoutErrorHandler.showUserNotification(
+          window.PolygonValidation.getUserMessage(validation, label, { remediation }),
+          'warning',
+          6000
+        );
+      }
+
+      return validation;
+    }
+
+    setPendingDrawingContext(context) {
+      this.pendingDrawingContext = context === 'manual' ? 'manual' : 'search';
+      window.TowerScoutLogger.debug('Azure Maps pending drawing context set to:', this.pendingDrawingContext);
+    }
+
     initializeDrawingTools(retryCount = 0) {
+      if (this.drawingManager) {
+        window.TowerScoutLogger.debug('Azure Maps drawing tools already initialized');
+        providerManager.markInitialized('azure', 'drawingManagerReady');
+        return;
+      }
+
       // Check if drawing SDK is available
       if (typeof atlas.drawing === 'undefined') {
         if (retryCount >= CONFIG.DRAWING_TOOLS_MAX_RETRIES) {
@@ -238,7 +309,7 @@
         return;
       }
 
-      console.log('Initializing Azure Maps drawing tools...');
+      window.TowerScoutLogger.debug('Initializing Azure Maps drawing tools...');
 
       // Create drawing manager with polygon, rectangle, and edit tools
       // TASK-041 Phase 1: Added edit controls for better polygon completion UX
@@ -263,16 +334,17 @@
 
       // Listen for drawing mode changes to show instructions when user clicks drawing tools
       this.map.events.add('drawingmodechanged', this.drawingManager, (mode) => {
-        console.log('🎨 Azure Maps drawing mode changed:', mode);
+        window.TowerScoutLogger.debug('🎨 Azure Maps drawing mode changed:', mode);
 
         if (mode === 'draw-polygon' || mode === 'draw-rectangle') {
           // User clicked drawing tool - show persistent instructions
-          console.log('📝 Drawing started, showing persistent instructions...');
+          window.TowerScoutLogger.debug('📝 Drawing started, showing persistent instructions...');
 
           // Determine context: search boundary (no detections yet) or manual tower (after detection)
           const hasDetections = window.providerManager && window.providerManager.getDetectionsLength() > 0;
-          this.drawingContext = hasDetections ? 'manual' : 'search';
-          console.log('📍 Drawing context:', this.drawingContext, '(detections:', hasDetections ? 'YES' : 'NO', ')');
+          const inferredContext = hasDetections ? 'manual' : 'search';
+          this.drawingContext = this.pendingDrawingContext || inferredContext;
+          window.TowerScoutLogger.debug('📍 Drawing context:', this.drawingContext, '(detections:', hasDetections ? 'YES' : 'NO', ')');
 
           // Show persistent notification with provider-specific instructions
           const message = this.drawingContext === 'search'
@@ -295,7 +367,7 @@
 
       // Listen for drawing completion events
       this.map.events.add('drawingcomplete', this.drawingManager, (drawingCompleteEvent) => {
-        console.log('🎨 Azure Maps drawingcomplete event fired');
+        window.TowerScoutLogger.debug('🎨 Azure Maps drawingcomplete event fired');
         let shape = drawingCompleteEvent;
 
         // Dismiss persistent drawing instruction notification
@@ -312,18 +384,32 @@
         }
 
         this.newShapes.push(shape);
-        console.log('✅ New Azure Maps shape captured');
-        console.log('  - Total shapes in newShapes array:', this.newShapes.length);
+        window.TowerScoutLogger.debug('✅ New Azure Maps shape captured');
+        window.TowerScoutLogger.debug('  - Total shapes in newShapes array:', this.newShapes.length);
+
+        const validation = this.validateDrawnShapes({ shapes: [shape] });
+        if (!validation.valid) {
+          TowerScoutErrorHandler.showUserNotification(
+            window.PolygonValidation.getUserMessage(validation, 'custom shape', { remediation: 'clear_then_redraw' }),
+            'warning',
+            6000
+          );
+          this.drawingContext = null;
+          return;
+        }
 
         // Context-aware completion notification
-        const message = this.drawingContext === 'search'
+        const hasDetections = window.providerManager && window.providerManager.getDetectionsLength() > 0;
+        const inferredContext = hasDetections ? 'manual' : 'search';
+        const completionContext = this.drawingContext || this.pendingDrawingContext || inferredContext;
+        const message = completionContext === 'search'
           ? 'Polygon complete! Click "Custom Shape" again to use as search area, or "Estimate Tiles" to proceed.'
           : 'Polygon complete! Click "Save Towers" button below to add it to the detection list.';
 
         TowerScoutErrorHandler.showUserNotification(
           message,
           'success',
-          6000
+          9000
         );
 
         // Reset context
@@ -332,15 +418,26 @@
 
       // TASK-041 Phase 1: Mark drawing manager ready
       providerManager.markInitialized('azure', 'drawingManagerReady');
-      console.log('✅ Azure Maps drawing tools initialized');
+      window.TowerScoutLogger.debug('✅ Azure Maps drawing tools initialized');
     }
 
     initializeSearchBox() {
+      if (this.searchDataSource && this.detectionDataSource) {
+        providerManager.markInitialized('azure', 'dataSourceReady');
+        window.TowerScoutLogger.debug('Azure Maps data sources already initialized');
+        return;
+      }
+
+      if (this.searchDataSource || this.detectionDataSource) {
+        console.warn('Partial Azure Maps search infrastructure detected; resetting before reinitialization');
+        this.cleanupSearch();
+      }
+
       // TASK-039: Ensure standard search input is visible for Azure Maps
       const searchInput = document.getElementById('search');
       if (searchInput) {
         searchInput.style.display = 'inline';
-        console.log('✅ Standard search input shown for Azure Maps');
+        window.TowerScoutLogger.debug('✅ Standard search input shown for Azure Maps');
       }
 
       // Create data source for search results
@@ -350,10 +447,11 @@
       // Create data source for detection rectangles
       this.detectionDataSource = new atlas.source.DataSource();
       this.map.sources.add(this.detectionDataSource);
+      this.clearDetectionShapeIndex(true);
 
       // TASK-041 Phase 1: Mark data source ready
       providerManager.markInitialized('azure', 'dataSourceReady');
-      console.log('✅ Azure Maps data sources initialized');
+      window.TowerScoutLogger.debug('✅ Azure Maps data sources initialized');
 
       // Add layer for search result markers (only for point features, not boundaries)
       this.map.layers.add(new atlas.layer.BubbleLayer(this.searchDataSource, null, {
@@ -418,7 +516,7 @@
             // Look up Detection object by ID from global array
             const detection = providerManager.getDetectionsArrayDirect()[props.detectionId];
             if (detection) {
-              console.log(`🖱️ Azure Maps detection ${props.detectionId} clicked - triggering highlight`);
+              window.TowerScoutLogger.debug(`🖱️ Azure Maps detection ${props.detectionId} clicked - triggering highlight`);
               detection.highlight(true, true);  // Call Detection.highlight() directly
             } else {
               console.warn(`⚠️ Clicked detection ${props.detectionId} but Detection object not found`);
@@ -429,7 +527,7 @@
         }
       });
 
-      console.log('✅ Azure Maps: Detection DataSource and layers initialized');
+      window.TowerScoutLogger.debug('✅ Azure Maps: Detection DataSource and layers initialized');
 
       // Initialize Azure-native search for this provider
       this.initializeAzureSearch();
@@ -438,11 +536,11 @@
     initializeAzureSearch() {
       // Prevent duplicate initialization
       if (this.searchInitialized) {
-        console.log('⚠️ Azure search already initialized, skipping...');
+        window.TowerScoutLogger.debug('⚠️ Azure search already initialized, skipping...');
         return;
       }
 
-      console.log('Initializing Azure-native search system');
+      window.TowerScoutLogger.debug('Initializing Azure-native search system');
       this.searchInitialized = true;
 
       // Store reference to search input for Azure-specific handling
@@ -450,14 +548,14 @@
 
       // Use already-loaded subscription key from initialization
       if (this.subscriptionKey) {
-        console.log('Using pre-loaded Azure Maps subscription key for search');
+        window.TowerScoutLogger.debug('Using pre-loaded Azure Maps subscription key for search');
 
         // Initialize Azure Maps search with proper authentication
         if (typeof atlas.service !== 'undefined' && typeof atlas.service.SearchURL !== 'undefined') {
           this.searchURL = new atlas.service.SearchURL(atlas.service.MapsURL.newPipeline(
             new atlas.service.SubscriptionKeyCredential(this.subscriptionKey)
           ));
-          console.log('Azure Maps Search service initialized with authentication');
+          window.TowerScoutLogger.debug('Azure Maps Search service initialized with authentication');
         }
       } else {
         console.warn('Azure Maps subscription key not available for search initialization');
@@ -470,7 +568,7 @@
     updateMapAuthentication() {
       // Update map authentication from anonymous to subscription key
       if (this.map && this.subscriptionKey) {
-        console.log('Updating Azure Maps authentication to use subscription key');
+        window.TowerScoutLogger.debug('Updating Azure Maps authentication to use subscription key');
 
         // Set authentication for the map instance
         this.map.setAuthenticationOptions({
@@ -486,7 +584,7 @@
 
       // Remove Google Places classes and listeners when Azure is selected
       if (currentProvider === 'azure') {
-        console.log('🔧 Completely disabling Google Places for Azure Maps');
+        window.TowerScoutLogger.debug('🔧 Completely disabling Google Places for Azure Maps');
 
         // Remove Google Places autocomplete classes
         searchInput.classList.remove('pac-target-input');
@@ -519,7 +617,7 @@
         // Set Azure Maps placeholder
         input.setAttribute('placeholder', 'Search with Azure Maps...');
 
-        console.log('✅ Google Places completely disabled, Azure Maps search active');
+        window.TowerScoutLogger.debug('✅ Google Places completely disabled, Azure Maps search active');
       }
     }
 
@@ -546,7 +644,7 @@
 
       // Log search result details instead of showing popup
       const address = result.address || {};
-      console.log('🎯 Search Result Details:', {
+      window.TowerScoutLogger.debug('🎯 Search Result Details:', {
         location: address.freeformAddress || 'Search Result',
         municipality: address.municipality || '',
         region: address.countrySubdivision || '',
@@ -554,7 +652,7 @@
         coordinates: [lng, lat]
       });
 
-      console.log(`Added Azure Maps search marker at [${lng}, ${lat}]`);
+      window.TowerScoutLogger.debug(`Added Azure Maps search marker at [${lng}, ${lat}]`);
       return searchMarker;
     }
 
@@ -582,7 +680,7 @@
       }
 
       const result = [center[0], center[1]]; // [lng, lat]
-      console.log('🎯 Azure Maps getCenter() - camera center:', center, '→ result:', result);
+      window.TowerScoutLogger.debug('🎯 Azure Maps getCenter() - camera center:', center, '→ result:', result);
       return result;
     }
 
@@ -615,7 +713,7 @@
     }
 
     async search(place) {
-      console.log('Azure Maps search for:', place);
+      window.TowerScoutLogger.debug('Azure Maps search for:', place);
 
       if (!this.searchURL) {
         console.error('Azure Maps Search service not initialized');
@@ -623,7 +721,7 @@
       }
 
       try {
-        console.log('Performing Azure Maps search...');
+        window.TowerScoutLogger.debug('Performing Azure Maps search...');
         const results = await this.searchURL.searchAddressReverse(
           atlas.service.Aborter.none,
           [0, 0], // This will be replaced with proper query
@@ -636,7 +734,7 @@
 
         if (results && results.results && results.results.length > 0) {
           const result = results.results[0];
-          console.log('Azure Maps search result:', result);
+          window.TowerScoutLogger.debug('Azure Maps search result:', result);
 
           // Add search marker and center map
           this.addSearchResultMarker(result);
@@ -662,7 +760,7 @@
     biasSearchBox() {
       // Azure Maps does not need to bias Google's SearchBox
       // Azure Maps uses native search that is automatically biased to current viewport
-      console.log('Azure Maps search bias not needed - using native Azure search');
+      window.TowerScoutLogger.debug('Azure Maps search bias not needed - using native Azure search');
 
       // Optional: Could add Azure-specific search viewport biasing here if needed
       // For now, Azure Maps native search provides proper geographic relevance
@@ -709,16 +807,16 @@
         const widthMeters = widthDeg * 111320 * Math.cos(o.y1 * Math.PI / 180); // approximate meters
         const heightMeters = heightDeg * 110540; // approximate meters
 
-        console.log(`\ud83c\udfed makeMapRect: Created Feature ${detectionId} (listener stored: ${typeof o.clickListener}, NOT added to data source)`);
-        console.log(`  Coordinates: [${o.x1.toFixed(6)}, ${o.y1.toFixed(6)}] to [${o.x2.toFixed(6)}, ${o.y2.toFixed(6)}]`);
-        console.log(`  Box size: ${widthMeters.toFixed(1)}m x ${heightMeters.toFixed(1)}m`);
+        window.TowerScoutLogger.debug(`\ud83c\udfed makeMapRect: Created Feature ${detectionId} (listener stored: ${typeof o.clickListener}, NOT added to data source)`);
+        window.TowerScoutLogger.debug(`  Coordinates: [${o.x1.toFixed(6)}, ${o.y1.toFixed(6)}] to [${o.x2.toFixed(6)}, ${o.y2.toFixed(6)}]`);
+        window.TowerScoutLogger.debug(`  Box size: ${widthMeters.toFixed(1)}m x ${heightMeters.toFixed(1)}m`);
 
         // Warn if detection is suspiciously small (< 10m)
         if (widthMeters < 10 || heightMeters < 10) {
           console.warn(`⚠️ Detection ${detectionId} is very small (${widthMeters.toFixed(1)}m x ${heightMeters.toFixed(1)}m) - possible coordinate transformation issue`);
         }
       } else if (isTile) {
-        console.log(`Tile ${detectionId} created for metadata (not rendered on map)`);
+        window.TowerScoutLogger.debug(`Tile ${detectionId} created for metadata (not rendered on map)`);
       }
 
       // Handle click listener if provided
@@ -728,6 +826,114 @@
       }
 
       return feature;
+    }
+
+    clearDetectionShapeIndex(resetDetectionRefs = false) {
+      this.detectionShapeIndex.clear();
+
+      if (!resetDetectionRefs || !window.providerManager) {
+        return;
+      }
+
+      for (let det of providerManager.getDetections()) {
+        if (det.map === this) {
+          det.azureShape = null;
+        }
+      }
+    }
+
+    indexDetectionShape(detectionId, shape) {
+      if (detectionId === undefined || detectionId === null || !shape) {
+        return;
+      }
+
+      this.detectionShapeIndex.set(detectionId, shape);
+    }
+
+    getDetectionShape(detectionId) {
+      if (this.detectionShapeIndex.has(detectionId)) {
+        return this.detectionShapeIndex.get(detectionId);
+      }
+
+      if (!this.detectionDataSource) {
+        return null;
+      }
+
+      const shapes = this.detectionDataSource.getShapes();
+      if (!shapes || shapes.length === 0) {
+        return null;
+      }
+
+      let match = null;
+      for (const shape of shapes) {
+        const props = (typeof shape.getProperties === 'function')
+          ? shape.getProperties()
+          : shape.properties;
+
+        if (props && props.detectionId !== undefined) {
+          this.detectionShapeIndex.set(props.detectionId, shape);
+          if (props.detectionId === detectionId && match === null) {
+            match = shape;
+          }
+        }
+      }
+
+      return match;
+    }
+
+    reindexDetectionShape(oldId, newId, shape = null) {
+      if (oldId !== undefined && oldId !== null) {
+        this.detectionShapeIndex.delete(oldId);
+      }
+
+      const targetShape = shape || this.getDetectionShape(newId);
+      if (newId !== undefined && newId !== null && targetShape) {
+        this.detectionShapeIndex.set(newId, targetShape);
+      }
+    }
+
+    removeDetectionShapes(shapes) {
+      if (!this.detectionDataSource || !shapes || shapes.length === 0) {
+        return 0;
+      }
+
+      this.detectionDataSource.remove(shapes);
+
+      for (const shape of shapes) {
+        const props = (typeof shape.getProperties === 'function')
+          ? shape.getProperties()
+          : shape.properties;
+
+        if (props && props.detectionId !== undefined) {
+          this.detectionShapeIndex.delete(props.detectionId);
+
+          if (window.providerManager) {
+            const det = providerManager.getDetectionsArrayDirect()[props.detectionId];
+            if (det && det.map === this && det.azureShape === shape) {
+              det.azureShape = null;
+            }
+          }
+        }
+      }
+
+      return shapes.length;
+    }
+
+    clearDetectionShapes() {
+      if (!this.detectionDataSource) {
+        this.clearDetectionShapeIndex(true);
+        return 0;
+      }
+
+      const allShapes = this.detectionDataSource.getShapes();
+      const detectionShapes = allShapes.filter(shape => {
+        const props = shape.getProperties();
+        return props && props.detectionId !== undefined;
+      });
+
+      const removedCount = this.removeDetectionShapes(detectionShapes);
+      this.clearDetectionShapeIndex(true);
+      return removedCount;
     }
 
     updateMapRect(o, onoff) {
@@ -748,20 +954,15 @@
       // Handle detection ID - may be undefined if called before ID assignment
       const detectionId = (o.id !== undefined) ? o.id : 'pending';
 
-      // Find existing shape by detection ID (shapes are atlas.Shape instances, not features)
-      const shapes = this.detectionDataSource.getShapes();
-      const existingShapes = shapes ? shapes.filter(s => {
-        const props = s.getProperties();
-        return props && props.detectionId === detectionId;
-      }) : [];
+      const shape = this.getDetectionShape(detectionId);
 
-      if (existingShapes.length > 0) {
+      if (shape) {
         // REUSE EXISTING SHAPE - just change opacity and border visibility
-        const shape = existingShapes[0];
+        o.azureShape = shape;
 
         if (onoff === false || !onoff) {
           // HIDE: Set opacity to 0 and make border transparent
-          console.log(`🔴 Hiding detection ${detectionId} (opacity=0, transparent border)`);
+          window.TowerScoutLogger.debug(`🔴 Hiding detection ${detectionId} (opacity=0, transparent border)`);
           shape.setProperties({
             detectionId: detectionId,  // MUST preserve ID
             fillOpacity: 0.0,
@@ -770,7 +971,7 @@
           });
         } else {
           // SHOW: Restore opacity and colors
-          console.log(`🟢 Showing detection ${detectionId} (opacity=0.5, visible border)`);
+          window.TowerScoutLogger.debug(`🟢 Showing detection ${detectionId} (opacity=0.5, visible border)`);
           shape.setProperties({
             detectionId: detectionId,  // MUST preserve ID
             fillColor: o.fillColor,
@@ -807,6 +1008,7 @@
 
         // Store reference for future updates
         o.azureShape = shape;
+        this.indexDetectionShape(detectionId, shape);
       }
     }
 
@@ -821,25 +1023,17 @@
       // Handle detection ID
       const detectionId = (o.id !== undefined) ? o.id : 'pending';
 
-      // Find the shape in the data source by detectionId
-      const shapes = this.detectionDataSource.getShapes();
-      const existingShapes = shapes ? shapes.filter(s => {
-        const props = (typeof s.getProperties === 'function')
-          ? s.getProperties()
-          : s.properties;
-        return props && props.detectionId === detectionId;
-      }) : [];
-
-      if (existingShapes.length === 0) {
+      const shape = this.getDetectionShape(detectionId);
+      if (!shape) {
         console.warn(`⚠️ Cannot color detection ${detectionId} - shape not found in data source`);
         return;
       }
+      o.azureShape = shape;
 
-      if (existingShapes.length > 1) {
+      if (false) { // Indexed lookups guarantee a single matching shape in the hot path.
         console.warn(`⚠️ Found ${existingShapes.length} shapes with detectionId ${detectionId} - using first one`);
       }
 
-      const shape = existingShapes[0];
 
       // Determine if detection is selected (green) or unselected (red)
       const isSelected = (color === 'green' ||
@@ -861,7 +1055,7 @@
           fillOpacity: 0.3,
           strokeWidth: 2
         });
-        console.log(`✅ Highlighted detection ${detectionId} with green (opacity: 0.3)`);
+        window.TowerScoutLogger.debug(`✅ Highlighted detection ${detectionId} with green (opacity: 0.3)`);
       } else {
         // Unselected: Red with standard opacity
         shape.setProperties({
@@ -871,12 +1065,12 @@
           fillOpacity: 0.15,
           strokeWidth: 1
         });
-        console.log(`🔴 Reset detection ${detectionId} to red (opacity: 0.15)`);
+        window.TowerScoutLogger.debug(`🔴 Reset detection ${detectionId} to red (opacity: 0.15)`);
       }
     }
 
     resetBoundaries() {
-      console.log('🧹 Azure Maps: Resetting boundaries...');
+      window.TowerScoutLogger.debug('🧹 Azure Maps: Resetting boundaries...');
 
       // Use clear-and-rebuild pattern (proven reliable in Step 2.2)
       if (this.searchDataSource) {
@@ -891,7 +1085,7 @@
           });
 
           const boundaryCount = allShapes.length - nonBoundaryShapes.length;
-          console.log(`✅ Removing ${boundaryCount} boundary shapes`);
+          window.TowerScoutLogger.debug(`✅ Removing ${boundaryCount} boundary shapes`);
 
           // Clear all shapes and re-add non-boundary shapes
           this.searchDataSource.clear();
@@ -922,17 +1116,17 @@
             b.azureObject = null; // Release reference to enable garbage collection
           }
         });
-        console.log(`✅ Cleared ${boundaryCount} boundary references`);
+        window.TowerScoutLogger.debug(`✅ Cleared ${boundaryCount} boundary references`);
       }
       this.boundaries = [];
-      console.log('✅ Azure Maps boundaries reset complete');
+      window.TowerScoutLogger.debug('✅ Azure Maps boundaries reset complete');
     }
 
     clearCircles() {
-      console.log(`🔄 Clearing ${this.activeShapes.circles.length} circle(s) from Azure Maps...`);
+      window.TowerScoutLogger.debug(`🔄 Clearing ${this.activeShapes.circles.length} circle(s) from Azure Maps...`);
 
       if (this.activeShapes.circles.length === 0) {
-        console.log('✅ No circles to clear');
+        window.TowerScoutLogger.debug('✅ No circles to clear');
         return;
       }
 
@@ -941,7 +1135,7 @@
         try {
           // Get all shapes from data source
           const allShapes = this.searchDataSource.getShapes();
-          console.log(`  - searchDataSource BEFORE cleanup: ${allShapes.length} total shapes`);
+          window.TowerScoutLogger.debug(`  - searchDataSource BEFORE cleanup: ${allShapes.length} total shapes`);
 
           // Filter to separate circles from other shapes using PROPERTIES (not object references)
           // Object reference matching with .includes() doesn't work reliably with Azure Maps
@@ -958,23 +1152,23 @@
             }
           });
 
-          console.log(`  - Circle shapes found: ${circleShapes.length}`);
-          console.log(`  - Non-circle shapes to preserve: ${nonCircleShapes.length}`);
+          window.TowerScoutLogger.debug(`  - Circle shapes found: ${circleShapes.length}`);
+          window.TowerScoutLogger.debug(`  - Non-circle shapes to preserve: ${nonCircleShapes.length}`);
 
           // Clear entire data source
           this.searchDataSource.clear();
-          console.log('  - Cleared all shapes from searchDataSource');
+          window.TowerScoutLogger.debug('  - Cleared all shapes from searchDataSource');
 
           // Re-add only non-circle shapes
           if (nonCircleShapes.length > 0) {
             this.searchDataSource.add(nonCircleShapes);
-            console.log(`  - Re-added ${nonCircleShapes.length} non-circle shape(s)`);
+            window.TowerScoutLogger.debug(`  - Re-added ${nonCircleShapes.length} non-circle shape(s)`);
           }
 
           // Verify final state
           const afterShapes = this.searchDataSource.getShapes();
-          console.log(`  - searchDataSource AFTER cleanup: ${afterShapes.length} total shapes`);
-          console.log('  - ✅ Circle removal complete');
+          window.TowerScoutLogger.debug(`  - searchDataSource AFTER cleanup: ${afterShapes.length} total shapes`);
+          window.TowerScoutLogger.debug('  - ✅ Circle removal complete');
 
         } catch (e) {
           console.warn('  - Failed to clear circles:', e.message);
@@ -986,36 +1180,36 @@
       if (this.drawingManager) {
         try {
           const drawingSource = this.drawingManager.getSource();
-          console.log('  - Drawing manager source exists:', !!drawingSource);
+          window.TowerScoutLogger.debug('  - Drawing manager source exists:', !!drawingSource);
 
           if (drawingSource) {
             // Get all shapes from drawing source and remove circles
             const allShapes = drawingSource.getShapes();
-            console.log(`  - Total shapes in drawing source: ${allShapes.length}`);
+            window.TowerScoutLogger.debug(`  - Total shapes in drawing source: ${allShapes.length}`);
 
             const circleShapes = allShapes.filter(shape => {
               const props = shape.getProperties();
-              console.log('  - Shape properties:', props);
+              window.TowerScoutLogger.debug('  - Shape properties:', props);
               return props && props.type === 'boundary' && props.isCircle;
             });
 
-            console.log(`  - Circle shapes found in drawing source: ${circleShapes.length}`);
+            window.TowerScoutLogger.debug(`  - Circle shapes found in drawing source: ${circleShapes.length}`);
 
             if (circleShapes.length > 0) {
               drawingSource.remove(circleShapes);
-              console.log(`  - Removed ${circleShapes.length} circle(s) from drawing manager source`);
+              window.TowerScoutLogger.debug(`  - Removed ${circleShapes.length} circle(s) from drawing manager source`);
             } else {
               // If no circles found by properties, try removing ALL shapes and re-add non-circles
-              console.log('  - No circles found with properties, trying comprehensive clear...');
+              window.TowerScoutLogger.debug('  - No circles found with properties, trying comprehensive clear...');
               const nonCircleBoundaries = this.boundaries.filter(b => !b.isCircle);
 
               // Clear everything from drawing source
               drawingSource.clear();
-              console.log('  - Cleared all shapes from drawing manager source');
+              window.TowerScoutLogger.debug('  - Cleared all shapes from drawing manager source');
 
               // Re-add non-circle boundaries if any
               if (nonCircleBoundaries.length > 0) {
-                console.log(`  - Re-adding ${nonCircleBoundaries.length} non-circle boundaries`);
+                window.TowerScoutLogger.debug(`  - Re-adding ${nonCircleBoundaries.length} non-circle boundaries`);
               }
             }
           }
@@ -1029,13 +1223,13 @@
       const beforeCount = this.boundaries.length;
       this.boundaries = this.boundaries.filter(b => !b.isCircle);
       const removedCount = beforeCount - this.boundaries.length;
-      console.log(`  - Removed ${removedCount} circle boundary reference(s)`);
+      window.TowerScoutLogger.debug(`  - Removed ${removedCount} circle boundary reference(s)`);
 
       // Step 4: Clear tracking array
       const clearedCount = this.activeShapes.circles.length;
       this.activeShapes.circles = [];
 
-      console.log(`✅ Cleared ${clearedCount} circle(s)`);
+      window.TowerScoutLogger.debug(`✅ Cleared ${clearedCount} circle(s)`);
     }
 
     addBoundary(b) {
@@ -1047,7 +1241,7 @@
         this.map.sources.add(this.searchDataSource);
 
         // Add all the necessary layers since initializeSearchBox wasn't called
-        console.log('Adding missing layers for boundary display');
+        window.TowerScoutLogger.debug('Adding missing layers for boundary display');
 
         // Add layer for search result markers (only for point features, not boundaries)
         this.map.layers.add(new atlas.layer.BubbleLayer(this.searchDataSource, null, {
@@ -1096,7 +1290,7 @@
       // TASK-041 Phase 2 Step 2.2: Track circle boundaries for cleanup
       if (b.isCircle) {
         this.activeShapes.circles.push(feature);
-        console.log('  - Tracked circle in activeShapes (total:', this.activeShapes.circles.length + ')');
+        window.TowerScoutLogger.debug('  - Tracked circle in activeShapes (total:', this.activeShapes.circles.length + ')');
       }
     }
 
@@ -1126,36 +1320,32 @@
     }
 
     retrieveDrawnBoundaries() {
-      console.log('🔍 Retrieving drawn boundaries from Azure Maps...');
-      console.log('  - newShapes array length:', this.newShapes.length);
-      console.log('  - drawingManager exists:', !!this.drawingManager);
+      window.TowerScoutLogger.debug('🔍 Retrieving drawn boundaries from Azure Maps...');
+      window.TowerScoutLogger.debug('  - newShapes array length:', this.newShapes.length);
+      window.TowerScoutLogger.debug('  - drawingManager exists:', !!this.drawingManager);
 
       let polys = [];
+      const shapes = this.getPendingBoundaryShapes();
 
-      // TASK-041 Debug: Check if drawing manager has shapes we didn't capture
-      if (this.drawingManager) {
-        const source = this.drawingManager.getSource();
-        const allShapes = source.getShapes();
-        console.log('  - Drawing manager source shapes:', allShapes.length);
+      window.TowerScoutLogger.debug('  - Drawing manager source shapes:', shapes.length);
 
-        // If we have shapes in drawing manager but not in newShapes, use those
-        if (allShapes.length > 0 && this.newShapes.length === 0) {
-          console.log('  ⚠️ Found shapes in drawing manager that were not captured in event');
-          this.newShapes = allShapes;
-        }
+      const validation = this.validateDrawnShapes({ shapes });
+      if (!validation.valid) {
+        console.warn('⚠️ Invalid drawn Azure boundary detected, leaving shape in place for editing');
+        return [];
       }
 
-      for (let shape of this.newShapes) {
-        console.log('  - Processing shape:', shape.getType());
+      for (let shape of shapes) {
+        window.TowerScoutLogger.debug('  - Processing shape:', shape.getType());
         let geometry = shape.toJson().geometry;
 
         if (geometry.type === 'Polygon') {
-          let coordinates = geometry.coordinates[0];
+          let coordinates = this.extractBoundaryPointsFromShape(shape);
           let poly = [];
           for (let coord of coordinates) {
             poly.push([coord[0], coord[1]]); // [lng, lat]
           }
-          console.log('  ✅ Created PolygonBoundary with', poly.length, 'points');
+          window.TowerScoutLogger.debug('  ✅ Created PolygonBoundary with', poly.length, 'points');
           polys.push(new PolygonBoundary(poly));
         } else if (geometry.type === 'Rectangle') {
           // Handle rectangle if Azure Maps provides this type
@@ -1164,23 +1354,23 @@
           let maxLng = Math.max(...coords.map(c => c[0]));
           let minLat = Math.min(...coords.map(c => c[1]));
           let maxLat = Math.max(...coords.map(c => c[1]));
-          console.log('  ✅ Created SimpleBoundary (rectangle)');
+          window.TowerScoutLogger.debug('  ✅ Created SimpleBoundary (rectangle)');
           polys.push(new SimpleBoundary([minLng, maxLat, maxLng, minLat]));
         }
       }
 
-      console.log('📊 Total boundaries retrieved:', polys.length);
+      window.TowerScoutLogger.debug('📊 Total boundaries retrieved:', polys.length);
       this.clearShapes();
       return polys;
     }
 
     hasShapes() {
-      return this.newShapes.length !== 0;
+      return this.getPendingBoundaryShapes().length !== 0;
     }
 
     addShapes() {
-      console.log('🏗️ Azure Maps addShapes() called');
-      console.log(`  - newShapes array length: ${this.newShapes.length}`);
+      window.TowerScoutLogger.debug('🏗️ Azure Maps addShapes() called');
+      window.TowerScoutLogger.debug(`  - newShapes array length: ${this.newShapes.length}`);
 
       // TASK-033: Validation - Check if shapes exist
       if (this.newShapes.length === 0) {
@@ -1248,14 +1438,14 @@
 
           // TASK-033: Geocode manual tower location to get address
           this.geocodeDetection(det);
-
-          det.update();
           addedCount++;
         }
       }
 
       // TASK-033: Cleanup and user feedback
       this.newShapes = [];
+      this.drawingContext = null;
+      this.pendingDrawingContext = null;
 
       // Turn off drawing mode
       if (this.drawingManager) {
@@ -1263,7 +1453,6 @@
       }
 
       Detection.generateList();
-      adjustConfidence();
 
       // TASK-033 Phase 4: Lock provider switching after manual towers added
       if (typeof lockProviderSwitching === 'function') {
@@ -1271,7 +1460,7 @@
       }
 
       // TASK-033: User feedback
-      console.log(`✅ Successfully added ${addedCount} manual tower(s)`);
+      window.TowerScoutLogger.debug(`✅ Successfully added ${addedCount} manual tower(s)`);
       TowerScoutErrorHandler.showUserNotification(
         `Successfully added ${addedCount} manual tower(s)`,
         'success',
@@ -1286,7 +1475,7 @@
         const lat = center[1];
         const lng = center[0];
 
-        console.log(`🌍 Geocoding manual tower at ${lat}, ${lng}...`);
+        window.TowerScoutLogger.debug(`🌍 Geocoding manual tower at ${lat}, ${lng}...`);
 
         const response = await fetch('/api/geocode/reverse', {
           method: 'POST',
@@ -1296,7 +1485,7 @@
           body: JSON.stringify({
             lat: lat,
             lng: lng,
-            provider: 'auto'
+            provider: document.querySelector('#providers input[name="provider"]:checked')?.value || 'azure'
           })
         });
 
@@ -1310,7 +1499,7 @@
           detection.address = data.address;
           detection.addressConfidence = data.confidence;
           detection.addressProvider = data.provider;
-          console.log(`✅ Geocoded address: ${data.address}`);
+          window.TowerScoutLogger.debug(`✅ Geocoded address: ${data.address}`);
         } else {
           // Fallback to coordinates
           detection.address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
@@ -1338,6 +1527,9 @@
     clearShapes() {
       // Remove unsaved drawn polygons only
       // Note: To delete saved manual towers, uncheck them in the detection list
+      this.drawingContext = null;
+      this.pendingDrawingContext = null;
+
       // Clear all drawn shapes from newShapes array
       for (let shape of this.newShapes) {
         this.drawingManager.getSource().remove(shape);
@@ -1351,7 +1543,7 @@
         if (drawingSource) {
           const allDrawnShapes = drawingSource.getShapes();
           if (allDrawnShapes && allDrawnShapes.length > 0) {
-            console.log(`🧹 Clearing ${allDrawnShapes.length} shapes from Azure drawing manager layer`);
+            window.TowerScoutLogger.debug(`🧹 Clearing ${allDrawnShapes.length} shapes from Azure drawing manager layer`);
             drawingSource.clear();
           }
         }
@@ -1375,8 +1567,8 @@
         });
 
         if (manualShapes.length > 0) {
-          console.log(`🗑️ Removing ${manualShapes.length} manual tower shapes from Azure Maps`);
-          this.detectionDataSource.remove(manualShapes);
+          window.TowerScoutLogger.debug(`🗑️ Removing ${manualShapes.length} manual tower shapes from Azure Maps`);
+          this.removeDetectionShapes(manualShapes);
         }
       }
 
@@ -1384,7 +1576,18 @@
       let dets = [];
       for (let det of providerManager.getDetections()) {
         if (det.conf !== 1.0) {
+          const oldId = det.id;
           det.id = dets.length;
+
+          if (det.azureFeature && det.azureFeature.properties) {
+            det.azureFeature.properties.detectionId = det.id;
+          }
+
+          if (det.azureShape && typeof det.azureShape.setProperties === 'function') {
+            det.azureShape.setProperties({ detectionId: det.id });
+            this.reindexDetectionShape(oldId, det.id, det.azureShape);
+          }
+
           dets.push(det);
         }
       }
@@ -1402,7 +1605,7 @@
       // Azure Maps native search integration - NO Google dependency
       this.resetBoundaries();
 
-      console.log("Azure Maps native search for: " + query);
+      window.TowerScoutLogger.debug("Azure Maps native search for: " + query);
 
       // Use Azure Maps Search API directly with proper coordinate handling
       this.searchAddress(query).then(searchResults => {
@@ -1413,11 +1616,11 @@
           const lng = result.position.lon;
           const lat = result.position.lat;
 
-          console.log(`Azure Maps result: ${result.address.freeformAddress} at [${lng}, ${lat}]`);
+          window.TowerScoutLogger.debug(`Azure Maps result: ${result.address.freeformAddress} at [${lng}, ${lat}]`);
 
           // Set map view to the search result using correct Azure coordinates
-          console.log('🎯 Centering Azure Maps on search result:', [lng, lat]);
-          console.log('🗺️ Map instance available:', !!this.map);
+          window.TowerScoutLogger.debug('🎯 Centering Azure Maps on search result:', [lng, lat]);
+          window.TowerScoutLogger.debug('🗺️ Map instance available:', !!this.map);
 
           // Use correct Azure Maps API methods
           if (this.map) {
@@ -1429,7 +1632,7 @@
               duration: 1500
             });
 
-            console.log('🎯 Azure Maps setCamera called with fly animation');
+            window.TowerScoutLogger.debug('🎯 Azure Maps setCamera called with fly animation');
           } else {
             console.error('❌ Azure Maps instance not available for centering');
           }
@@ -1440,16 +1643,16 @@
           // USER JOURNEY FIX: Do NOT auto-create boundary on search
           // User should manually define search area using Circle or Polygon tools
           // This matches Google Maps behavior (center only, no auto-boundary)
-          console.log('✅ Azure Maps search complete - map centered, no auto-boundary');
-          console.log('💡 User can now define search area using Circle or Polygon tools');
+          window.TowerScoutLogger.debug('✅ Azure Maps search complete - map centered, no auto-boundary');
+          window.TowerScoutLogger.debug('💡 User can now define search area using Circle or Polygon tools');
 
           // Final verification of map center using proper Azure Maps methods
           setTimeout(() => {
             if (this.map) {
               try {
                 const camera = this.map.getCamera();
-                console.log('🔍 Final map state - Center:', camera.center, 'Zoom:', camera.zoom);
-                console.log('🎯 Expected center:', [lng, lat]);
+                window.TowerScoutLogger.debug('🔍 Final map state - Center:', camera.center, 'Zoom:', camera.zoom);
+                window.TowerScoutLogger.debug('🎯 Expected center:', [lng, lat]);
 
                 // Verify the centering worked
                 const actualCenter = camera.center;
@@ -1457,9 +1660,9 @@
                 const expectedLat = lat;
 
                 if (actualCenter && Math.abs(actualCenter[0] - expectedLng) < 0.01 && Math.abs(actualCenter[1] - expectedLat) < 0.01) {
-                  console.log('✅ Map successfully centered on search result!');
+                  window.TowerScoutLogger.debug('✅ Map successfully centered on search result!');
                 } else {
-                  console.log('⚠️ Map centering may not have worked as expected');
+                  window.TowerScoutLogger.debug('⚠️ Map centering may not have worked as expected');
                 }
               } catch (error) {
                 console.error('❌ Error checking map state:', error);
@@ -1468,11 +1671,11 @@
           }, 2000);
 
           // Note: Google Maps synchronization disabled when Azure is primary provider
-          console.log('✅ Azure Maps search completed successfully');
+          window.TowerScoutLogger.debug('✅ Azure Maps search completed successfully');
         } else {
           console.warn("Azure Maps search returned no results for: " + query);
           // Show user-friendly message instead of silent fallback
-          console.log('🔍 No results found for:', query);
+          window.TowerScoutLogger.debug('🔍 No results found for:', query);
           // Could add a non-intrusive notification here instead of alert
         }
       }).catch(error => {
@@ -1485,7 +1688,7 @@
     async searchAddress(query) {
       // Azure Maps Search API integration with enhanced error handling
       try {
-        console.log('🔍 Azure Maps search request:', query);
+        window.TowerScoutLogger.debug('🔍 Azure Maps search request:', query);
 
         // Clean and prepare query for Azure Maps Search
         const cleanQuery = query.trim();
@@ -1495,7 +1698,7 @@
 
         const response = await fetch(url);
 
-        console.log('🌐 Azure search proxy response status:', response.status);
+        window.TowerScoutLogger.debug('🌐 Azure search proxy response status:', response.status);
 
         if (!response.ok) {
           const errorText = await response.text();
@@ -1513,10 +1716,10 @@
         }
 
         const data = await response.json();
-        console.log('✅ Azure Maps search results:', data.results ? data.results.length : 0, 'results found');
+        window.TowerScoutLogger.debug('✅ Azure Maps search results:', data.results ? data.results.length : 0, 'results found');
 
         if (data.results && data.results.length > 0) {
-          console.log('📍 First result:', data.results[0].address?.freeformAddress || 'No address');
+          window.TowerScoutLogger.debug('📍 First result:', data.results[0].address?.freeformAddress || 'No address');
         }
 
         return data.results || [];
@@ -1530,12 +1733,7 @@
 
     cleanupDrawingManager() {
       if (this.drawingManager) {
-        console.log('🧹 Cleaning up Azure DrawingManager...');
-
-        // Remove event listeners
-        if (this.map && this.map.events) {
-          this.map.events.remove('drawingcomplete', this.drawingManager);
-        }
+        window.TowerScoutLogger.debug('🧹 Resetting Azure DrawingManager state before provider switch...');
 
         // Clear drawn shapes
         try {
@@ -1547,23 +1745,13 @@
           console.warn('⚠️ Error clearing drawing source:', e.message);
         }
 
-        // Dispose drawing manager if method exists
-        if (typeof this.drawingManager.dispose === 'function') {
-          try {
-            this.drawingManager.dispose();
-          } catch (e) {
-            console.warn('⚠️ Error disposing drawing manager:', e.message);
-          }
-        }
-
-        this.drawingManager = null;
-        console.log('✅ Azure DrawingManager cleaned up');
+        window.TowerScoutLogger.debug('✅ Azure DrawingManager preserved for reuse');
       }
     }
 
     cleanupMapListeners() {
       if (this.map && this.map.events && this.mapEventListeners.length > 0) {
-        console.log(`🧹 Cleaning up ${this.mapEventListeners.length} Azure map listeners...`);
+        window.TowerScoutLogger.debug(`🧹 Cleaning up ${this.mapEventListeners.length} Azure map listeners...`);
 
         for (const listener of this.mapEventListeners) {
           try {
@@ -1574,27 +1762,41 @@
         }
 
         this.mapEventListeners = [];
-        console.log('✅ Azure map listeners cleaned up');
+        window.TowerScoutLogger.debug('✅ Azure map listeners cleaned up');
       }
     }
 
     cleanupSearch() {
-      console.log('🧹 Cleaning up Azure search infrastructure...');
+      window.TowerScoutLogger.debug('🧹 Cleaning up Azure search infrastructure...');
 
-      // Remove search result markers and boundaries
-      if (this.searchDataSource) {
+      const removeDataSource = (dataSource, layerRefs = []) => {
+        if (!dataSource) {
+          return;
+        }
+
         try {
-          this.searchDataSource.clear();
+          dataSource.clear();
 
-          // Remove layers that reference this data source
           if (this.map && this.map.layers) {
+            layerRefs.forEach((layerRef) => {
+              if (!layerRef) {
+                return;
+              }
+
+              try {
+                this.map.layers.remove(layerRef);
+              } catch (e) {
+                console.warn('⚠️ Error removing tracked layer:', e.message);
+              }
+            });
+
             const layers = this.map.layers.getLayers();
             if (layers && Array.isArray(layers)) {
               layers.forEach(layer => {
                 try {
                   if (layer && typeof layer.getSource === 'function') {
                     const layerSource = layer.getSource();
-                    if (layerSource === this.searchDataSource) {
+                    if (layerSource === dataSource) {
                       this.map.layers.remove(layer);
                     }
                   }
@@ -1605,30 +1807,36 @@
             }
           }
 
-          // Remove data source
           if (this.map && this.map.sources) {
             try {
-              this.map.sources.remove(this.searchDataSource);
+              this.map.sources.remove(dataSource);
             } catch (e) {
-              console.warn('⚠️ Error removing search data source:', e.message);
+              console.warn('⚠️ Error removing Azure data source:', e.message);
             }
           }
-
-          this.searchDataSource = null;
         } catch (e) {
           console.warn('⚠️ Error during search cleanup:', e.message);
         }
-      }
+      };
+
+      removeDataSource(this.searchDataSource);
+      removeDataSource(this.detectionDataSource, [this.detectionPolygonLayer, this.detectionLineLayer]);
+
+      this.searchDataSource = null;
+      this.detectionDataSource = null;
+      this.detectionPolygonLayer = null;
+      this.detectionLineLayer = null;
+      this.clearDetectionShapeIndex(true);
 
       // Clear SearchURL and reset initialization flag
       this.searchURL = null;
       this.searchInitialized = false;
 
-      console.log('✅ Azure search infrastructure cleaned up');
+      window.TowerScoutLogger.debug('✅ Azure search infrastructure cleaned up');
     }
 
     cleanup() {
-      console.log('🧹 Starting Azure Maps cleanup...');
+      window.TowerScoutLogger.debug('🧹 Starting Azure Maps cleanup...');
 
       try {
         // 1. Cleanup drawing manager
@@ -1648,10 +1856,38 @@
           this.clearShapes();
         }
 
-        console.log('✅ Azure Maps cleanup complete');
+        window.TowerScoutLogger.debug('✅ Azure Maps cleanup complete');
       } catch (error) {
         console.error('❌ Error during Azure Maps cleanup:', error);
         // Don't throw - allow cleanup to complete partially
+      }
+    }
+
+    restore() {
+      window.TowerScoutLogger.debug('🔄 Restoring Azure Maps components after provider switch...');
+
+      try {
+        if (this.map && typeof this.map.resize === 'function') {
+          this.map.resize();
+        }
+
+        if (!this.drawingManager) {
+          window.TowerScoutLogger.debug('Re-initializing Azure drawing tools after provider switch...');
+          this.initializeDrawingTools();
+        } else {
+          providerManager.markInitialized('azure', 'drawingManagerReady');
+        }
+
+        if (!this.searchDataSource || !this.detectionDataSource) {
+          window.TowerScoutLogger.debug('Re-initializing Azure data sources after provider switch...');
+          this.initializeSearchBox();
+        } else {
+          providerManager.markInitialized('azure', 'dataSourceReady');
+        }
+
+        window.TowerScoutLogger.debug('✅ Azure Maps restoration complete');
+      } catch (error) {
+        console.error('❌ Error during Azure Maps restoration:', error);
       }
     }
 
@@ -1667,5 +1903,5 @@
   // Export to window for global access (IIFE pattern)
   window.AzureMap = AzureMap;
 
-  console.log('✅ AzureMap module loaded');
+  window.TowerScoutLogger.debug('✅ AzureMap module loaded');
 })();

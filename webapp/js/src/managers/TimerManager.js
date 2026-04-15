@@ -10,7 +10,7 @@
     constructor() {
       this.timers = new Set();
       this.intervals = new Set();
-      console.log('🔧 TimerManager initialized');
+      window.TowerScoutLogger.debug('🔧 TimerManager initialized');
     }
 
     setTimeout(callback, delay, ...args) {
@@ -49,7 +49,7 @@
     }
 
     clearAll() {
-      console.log(`🧹 Cleaning up ${this.timers.size} timers and ${this.intervals.size} intervals`);
+      window.TowerScoutLogger.debug(`🧹 Cleaning up ${this.timers.size} timers and ${this.intervals.size} intervals`);
 
       this.timers.forEach(timer => clearTimeout(timer));
       this.intervals.forEach(interval => clearInterval(interval));
@@ -69,5 +69,5 @@
   // Create global instance
   window.timerManager = new TimerManager();
 
-  console.log('✅ TimerManager module loaded');
+  window.TowerScoutLogger.debug('✅ TimerManager module loaded');
 })();

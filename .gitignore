@@ -9,6 +9,8 @@ build/
 
 # Testing
 .pytest_cache/
+pytest-cache-files-*/
+.agent_work/pytest-cache-files-*/
 .coverage
 htmlcov/
 *.cover
@@ -23,6 +25,7 @@ package-lock.json
 npm-debug.log
 yarn.lock
 .npm
+tests/frontend/detection-workflow.local.json
 
 # Flask
 instance/
@@ -43,6 +46,9 @@ webapp/cache/**/*.cache
 # Environment variables (contains secrets)
 .env
 webapp/.env
+webapp/config/.env
+webapp/config/.env.backup.*
+webapp/config/.env.lock
 *.env
 !.env.example
 apikey.txt
@@ -75,14 +81,23 @@ Thumbs.db
 
 # Uploads and temporary files
 uploads/*
+contents.txt
 webapp/uploads/*
 !uploads/.gitkeep
 temp/*
 webapp/temp/*
+webapp/tmp*/
 *.tmp
 *.bak
 tmp/
 webapp/tmp.py
+
+# Local analysis artifacts
+.agent_work/context/analysis/browser-runs/
+.agent_work/tasks/completed/TASK-053/evidence/browser-runs/
+.agent_work/tmp/
+.agent_work/pytest-temp/
+.agent_work/scripts/__pycache__/
 
 # Data files
 data/*
@@ -94,6 +109,5 @@ train/*
 towerscout.pem
 hosting/connect-tc.sh
 
-# GitHub workflows (managed separately)
-.github/*
+# GitHub repo policy and workflow files are intentionally tracked
 

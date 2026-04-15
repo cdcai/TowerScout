@@ -32,6 +32,7 @@ from pathlib import Path
 from ts_geocoding import GeocodingResult, GeocodingProvider
 from ts_logging import get_api_logger
 from ts_errors import ConfigurationError
+from ts_paths import get_geocoding_cache_dir
 
 
 @dataclass
@@ -44,6 +45,12 @@ class CacheEntry:
     lng: float
     timestamp: float
     hit_count: int = 1
+
+    @staticmethod
+    def is_unavailable_address(address: Optional[str]) -> bool:
+        """Identify fallback placeholder addresses that should not be reused."""
+        normalized = (address or "").strip()
+        return normalized.lower().startswith("address unavailable")
     
     @classmethod
     def from_geocoding_result(cls, result: GeocodingResult) -> 'CacheEntry':
@@ -59,12 +66,14 @@ class CacheEntry:
     
     def to_geocoding_result(self) -> GeocodingResult:
         """Convert cache entry back to geocoding result."""
+        is_unavailable = self.is_unavailable_address(self.address)
         return GeocodingResult(
             address=self.address,
             provider=GeocodingProvider(self.provider),
             confidence=self.confidence,
             coordinates=(self.lat, self.lng),
-            success=bool(self.address and self.address != "Address unavailable")
+            success=bool(self.address and not is_unavailable),
+            error_message="Cached fallback address" if is_unavailable else None
         )
     
     def is_expired(self, max_age_seconds: int = 86400) -> bool:
@@ -97,8 +106,8 @@ class GeocodingCache:
         
         # Setup file-based cache directory
         if cache_dir is None:
-            cache_dir = os.path.join(os.path.dirname(__file__), 'cache', 'geocoding')
-        
+            cache_dir = get_geocoding_cache_dir()
+
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.cache_file = self.cache_dir / 'geocoding_cache.json'
@@ -165,13 +174,24 @@ class GeocodingCache:
         except Exception as e:
             self.logger.error(f"Failed to save file cache: {e}")
     
-    def _generate_cache_key(self, lat: float, lng: float, radius: Optional[float] = None) -> str:
+    def _normalize_provider_key(self, provider: Optional[Union[str, GeocodingProvider]]) -> str:
+        """Normalize provider input for cache isolation."""
+        if isinstance(provider, GeocodingProvider):
+            return provider.value
+        if isinstance(provider, str) and provider.strip():
+            return provider.strip().lower()
+        return "auto"
+
+    def _generate_cache_key(self, lat: float, lng: float,
+                            provider: Optional[Union[str, GeocodingProvider]] = None,
+                            radius: Optional[float] = None) -> str:
         """
         Generate cache key for coordinates with optional clustering.
         
         Args:
             lat: Latitude
             lng: Longitude
+            provider: Provider dimension for cache isolation
             radius: Clustering radius override (uses instance default if None)
             
         Returns:
@@ -192,8 +212,10 @@ class GeocodingCache:
             cluster_lat = lat
             cluster_lng = lng
         
+        provider_key = self._normalize_provider_key(provider)
+
         # Create hash for cache key
-        key_string = f"geocode:{cluster_lat:.8f},{cluster_lng:.8f}"
+        key_string = f"geocode:{provider_key}:{cluster_lat:.8f},{cluster_lng:.8f}"
         return hashlib.md5(key_string.encode()).hexdigest()
     
     def _calculate_distance(self, lat1: float, lng1: float, lat2: float, lng2: float) -> float:
@@ -221,18 +243,21 @@ class GeocodingCache:
         
         return R * c
     
-    def get(self, lat: float, lng: float) -> Optional[GeocodingResult]:
+    def get(self, lat: float, lng: float,
+            provider: Optional[Union[str, GeocodingProvider]] = None) -> Optional[GeocodingResult]:
         """
         Get cached geocoding result for coordinates.
         
         Args:
             lat: Latitude coordinate
             lng: Longitude coordinate
+            provider: Preferred provider for this lookup
             
         Returns:
             Cached GeocodingResult if found and valid, None otherwise
         """
-        cache_key = self._generate_cache_key(lat, lng)
+        provider_key = self._normalize_provider_key(provider)
+        cache_key = self._generate_cache_key(lat, lng, provider=provider_key)
         
         # Try Redis first
         if self.redis_client:
@@ -251,7 +276,7 @@ class GeocodingCache:
                             ex=self.max_cache_age
                         )
                         
-                        self.logger.debug(f"Redis cache hit for {lat}, {lng}")
+                        self.logger.debug(f"Redis cache hit for {lat}, {lng} ({provider_key})")
                         return entry.to_geocoding_result()
                     else:
                         # Expired entry - remove from Redis
@@ -265,21 +290,32 @@ class GeocodingCache:
             entry = self.file_cache[cache_key]
             
             if not entry.is_expired(self.max_cache_age):
+                if entry.is_unavailable_address(entry.address):
+                    del self.file_cache[cache_key]
+                    self._save_file_cache()
+                    self.logger.debug(
+                        f"Removed unavailable-address cache entry for {lat}, {lng} ({provider_key})"
+                    )
+                    return None
+
                 # Check if cached coordinates are within clustering radius
                 distance = self._calculate_distance(lat, lng, entry.lat, entry.lng)
                 if distance <= self.clustering_radius:
                     entry.hit_count += 1
-                    self.logger.debug(f"File cache hit for {lat}, {lng} (distance: {distance:.1f}m)")
+                    self.logger.debug(
+                        f"File cache hit for {lat}, {lng} ({provider_key}, distance: {distance:.1f}m)"
+                    )
                     return entry.to_geocoding_result()
             else:
                 # Expired entry - remove from file cache
                 del self.file_cache[cache_key]
                 self._save_file_cache()
         
-        self.logger.debug(f"Cache miss for {lat}, {lng}")
+        self.logger.debug(f"Cache miss for {lat}, {lng} ({provider_key})")
         return None
     
-    def put(self, lat: float, lng: float, result: GeocodingResult):
+    def put(self, lat: float, lng: float, result: GeocodingResult,
+            provider: Optional[Union[str, GeocodingProvider]] = None):
         """
         Store geocoding result in cache.
         
@@ -287,8 +323,16 @@ class GeocodingCache:
             lat: Original latitude coordinate
             lng: Original longitude coordinate  
             result: GeocodingResult to cache
+            provider: Preferred provider for this cache entry
         """
-        cache_key = self._generate_cache_key(lat, lng)
+        if (not result.success) or CacheEntry.is_unavailable_address(result.address):
+            self.logger.debug(
+                f"Skipping cache store for unsuccessful geocode at {lat}, {lng}"
+            )
+            return
+
+        provider_key = self._normalize_provider_key(provider or result.provider)
+        cache_key = self._generate_cache_key(lat, lng, provider=provider_key)
         entry = CacheEntry.from_geocoding_result(result)
         
         # Store original coordinates in cache entry
@@ -303,7 +347,7 @@ class GeocodingCache:
                     json.dumps(asdict(entry)),
                     ex=self.max_cache_age
                 )
-                self.logger.debug(f"Stored in Redis cache: {lat}, {lng}")
+                self.logger.debug(f"Stored in Redis cache: {lat}, {lng} ({provider_key})")
             except Exception as e:
                 self.logger.warning(f"Redis cache store failed: {e}")
         
@@ -311,7 +355,9 @@ class GeocodingCache:
         self.file_cache[cache_key] = entry
         self._save_file_cache()
         
-        self.logger.debug(f"Stored in file cache: {lat}, {lng} -> {result.address[:50]}")
+        self.logger.debug(
+            f"Stored in file cache: {lat}, {lng} ({provider_key}) -> {result.address[:50]}"
+        )
     
     def get_cache_stats(self) -> Dict[str, Any]:
         """

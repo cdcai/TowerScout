@@ -17,5 +17,5 @@
   // - Review progress tracking
   // - Custom review workflows
 
-  console.log('✅ DetectionReview module loaded');
+  window.TowerScoutLogger.debug('✅ DetectionReview module loaded');
 })();

@@ -488,3 +488,34 @@ ul, #myUL {
 .active {
     display: block;
 }
+
+.modal-overlay {
+    padding: 12px;
+}
+
+.modal-container.setup-wizard,
+.modal-container.settings-screen {
+    width: 100%;
+}
+
+.modal-container.setup-wizard {
+    padding: 18px;
+}
+
+.wizard-progress {
+    grid-template-columns: 1fr;
+}
+
+.wizard-actions,
+.key-input-group {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.settings-content {
+    padding: 16px 18px 20px;
+}
+
+.modal-header {
+    padding: 18px 18px 0;
+}

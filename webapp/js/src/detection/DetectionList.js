@@ -9,12 +9,29 @@
   function adjustConfidence() {
     // Validate DOM elements are available
     if (!confSlider || !reviewCheckBox) {
-      console.error('❌ Required DOM elements not initialized for adjustConfidence');
+      console.error('âŒ Required DOM elements not initialized for adjustConfidence');
       return;
     }
 
     providerManager.setMinConfidence(confSlider.value / 100);
-    for (let det of providerManager.getDetections()) {
+    const detections = providerManager.getDetections();
+    const addressVisibility = new Map();
+
+    for (let det of detections) {
+      let meetsInside = reviewCheckBox.checked || det.inside;
+      // TASK-043 FIX: Use max confidence from either classifier for filtering
+      // This preserves both YOLOv5 and EfficientNet detections while allowing slider to work
+      let maxConf = Math.max(det.conf, det.secondary || 0);
+      let meetsConf = maxConf >= Detection_minConfidence;
+
+      const groupId = det.firstDet ? det.firstDet.id : det.id;
+      addressVisibility.set(
+        groupId,
+        Boolean(addressVisibility.get(groupId)) || (meetsConf && meetsInside)
+      );
+    }
+
+    for (let det of detections) {
       let meetsInside = reviewCheckBox.checked || det.inside;
       // TASK-043 FIX: Use max confidence from either classifier for filtering
       // This preserves both YOLOv5 and EfficientNet detections while allowing slider to work
@@ -23,9 +40,7 @@
 
       // TASK-033 Phase 3: Defensive check for firstDet (may be null during restoration)
       if (det.firstDet) {
-        let maxAddrConf = Math.max(det.firstDet.maxConf, det.firstDet.maxSecondary || 0);
-        let meetsAddrConf = maxAddrConf >= Detection_minConfidence;
-        det.firstDet.showAddr(meetsAddrConf && meetsInside);
+        det.firstDet.showAddr(Boolean(addressVisibility.get(det.firstDet.id)));
       }
 
       det.show(meetsConf && meetsInside);
@@ -46,12 +61,12 @@
   function changeReviewMode() {
     // Validate DOM elements are available
     if (!reviewCheckBox || !confSlider) {
-      console.error('❌ Required DOM elements not initialized for changeReviewMode');
+      console.error('âŒ Required DOM elements not initialized for changeReviewMode');
       return;
     }
 
     const mode = reviewCheckBox.checked ? 'Label' : 'Find';
-    console.log(`🔄 Switching review mode to: ${mode}`);
+    window.TowerScoutLogger.debug(`ðŸ”„ Switching review mode to: ${mode}`);
 
     if (reviewCheckBox.checked) {
       confSlider.value = 0;  // Label mode: show all detections in tiles
@@ -59,17 +74,10 @@
       confSlider.value = Math.round(DEFAULT_CONFIDENCE * 100);  // Find mode: only inside boundary
     }
 
-    // Adjust confidence filtering (updates list visibility)
+    // Adjust confidence filtering (updates list visibility and map overlays)
     adjustConfidence();
 
-    // FIX NEW-ISSUE-003: Force map visibility update for all detections
-    // adjustConfidence() updates the list, but we need to explicitly update map markers
-    console.log(`🗺️ Updating map visibility for ${Detection_detections.length} detections`);
-    for (let det of Detection_detections) {
-      det.update();  // This will correctly show/hide map markers based on new mode
-    }
-
-    console.log(`✅ Review mode switched to: ${mode}`);
+    window.TowerScoutLogger.debug(`âœ… Review mode switched to: ${mode}`);
   }
 
   /**
@@ -95,7 +103,7 @@
         }
       })
       .catch(error => {
-        console.log('Could not fetch API usage:', error);
+        window.TowerScoutLogger.debug('Could not fetch API usage:', error);
       });
   }
 
@@ -107,7 +115,6 @@
   function afterAugment() {
     Detection.sort();
     Detection.generateList();
-    adjustConfidence();
   }
 
   // Expose functions to global scope for inline HTML handlers and legacy code
@@ -116,5 +123,5 @@
   window.updateApiUsageDisplay = updateApiUsageDisplay;
   window.afterAugment = afterAugment;
 
-  console.log('✅ DetectionList module loaded');
+  window.TowerScoutLogger.debug('âœ… DetectionList module loaded');
 })();

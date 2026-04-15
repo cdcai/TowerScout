@@ -9,7 +9,7 @@ cd webapp
 python towerscout.py dev
 ```
 
-**Frontend Development Workflow** (Updated March 2026):
+**Frontend Development Workflow** (Updated Sprint 03 - March 18, 2026):
 ```bash
 # Work with modular source files in webapp/js/src/
 # Edit any file in src/ directories
@@ -19,7 +19,7 @@ cd webapp
 node build.js
 
 # Manual build if needed
-# Output: webapp/js/towerscout.js (319.0 KB)
+# Output: webapp/js/towerscout.js (412.8 KB - includes Sprint 03 enhancements)
 # Build time: < 2 seconds
 ```
 
@@ -42,7 +42,7 @@ webapp/js/src/
 └── utils/                 # Shared utilities
 ```
 
-See [`AGENTS.md/towerscout-domain.md`](./towerscout-domain.md#frontend-architecture-sprint-02---march-2026) for complete architecture details.
+See [`AGENTS.md/towerscout-domain.md`](./towerscout-domain.md#frontend-architecture-sprint-03---completed-march-18-2026) for complete architecture details.
 
 **Local Deployment Docker Strategy:**
 ```dockerfile
@@ -91,9 +91,9 @@ ENV AZURE_MAPS_KEY=""
 - **Console Logging:** Review browser console for TASK-045 boundary clearing logs, provider state transitions
 - **Network Tab:** Monitor API requests for rate limiting (geocoding ~370 detections max)
 
-**Testing Procedures** (Established Sprint 01-02):
+**Testing Procedures** (Established Sprint 01-03):
 
-**Manual Testing Methodology** (TASK-042):
+**Manual Testing Methodology** (Sprint 02 - TASK-042):
 - **4-Stage User Journey Validation**:
   1. Stage 0: Application initialization and provider availability
   2. Stage 1: Location search and boundary definition
@@ -104,32 +104,62 @@ ENV AZURE_MAPS_KEY=""
   - Check for JavaScript errors (should be zero)
   - Verify state transitions logged correctly
   - Monitor memory usage during operations
-  - Validate deprecation warnings guide migration
+  - Validate deprecation warnings guide migration (Sprint 03 - cleaned up)
 
 - **Cross-Provider Testing**:
   - Test workflows on both Google Maps and Azure Maps
   - Verify provider switching maintains state correctly
   - Confirm visual consistency across providers
 
-**Performance Benchmarks** (Validated TASK-042):
+**Performance Benchmarks** (Validated Sprint 02 - TASK-042):
 - **Small Area (24 tiles)**: ~70 seconds, ~158 detections
 - **Medium Area (57 tiles)**: ~160 seconds, ~430 detections
 - **Browser Responsiveness**: Excellent throughout processing
-- **Memory Management**: 0.7% decrease in 20-cycle stress test
-- **Geocoding Limit**: ~370 detections before rate limiting
-- **<100 Tiles Target**: ~30 seconds (mission-critical performance target)
+- **Memory Management**: 0.7% decrease in 20-cycle stress test (exceptional)
+- **Geocoding Limit**: ~370 detections before rate limiting (Azure Maps API constraint)
+- **<100 Tiles Target**: ~30 seconds (mission-critical performance target validated)
 
-**Known Issues & Limitations** (Updated March 2026):
-- **NEW-ISSUE-006**: Provider switching detection visibility (HIGH - Planned Sprint 03)
-- **Geocoding Rate Limiting**: ~370 detections max (WORKING AS DESIGNED - Azure Maps API constraint)
-- **Stage 4 Testing**: Dataset management requires external data (deferred, not blocking)
+**Sprint 03 Achievements** (March 11-18, 2026):
+- ✅ Google Maps API migration completed (TASK-039 Phases 5-6)
+- ✅ Manual tower addition feature restored (TASK-033)
+- ✅ Export system enhanced with ML/Manual source tracking (TASK-036)
+- ✅ Drawing mode UX with context-aware notifications
+- ✅ Integration testing: 13 scenarios validated, all passing
+- ✅ Dataset upload error handling (ISSUE-001)
+- ✅ Provider switching detection visibility (ISSUE-002)
+- ✅ Deprecation warnings cleanup (property descriptor timing fixes)
+- **Sprint Metrics**: 8/8 tasks completed, 56 hours effort, completed 6 days early
 
-**Resolved Issues** (Sprint 01-02):
-- ✅ Memory leaks (TASK-041) - Exceptional cleanup performance
-- ✅ Interactive highlighting bugs (TASK-031) - Bidirectional list↔map working
-- ✅ Azure Maps visual consistency (TASK-040) - Transparency and styling fixed
-- ✅ Provider synchronization race conditions (TASK-043) - ProviderStateManager pattern
-- ✅ Boundary accumulation bug (TASK-045) - Independent detection runs validated
+**Sprint 04 Current Focus** (March 19 - April 4, 2026):
+- 🔴 **TASK-046**: Setup Wizard and Settings Screen (PRIMARY - 40-50 hours)
+  - First-launch wizard for API key configuration
+  - In-app settings modal (eliminate manual .env editing)
+  - Docker-compatible configuration persistence
+  - Performance metrics display and system controls
+- 🟡 **ISSUE-003**: Large Dataset Performance Investigation (2-4 hours discovery)
+  - Benchmark performance with 500+ detections
+  - Identify optimization opportunities
+  - Test memory usage and geocoding limits
+- UI polish, console logging simplification, legacy code cleanup
+
+**Known Issues & Limitations** (Updated Sprint 04 - March 18, 2026):
+- **ISSUE-003**: Large dataset performance investigation (MEDIUM - Sprint 04 discovery phase)
+  - Performance with 500+ detections needs benchmarking
+  - Memory usage patterns require profiling
+  - Geocoding rate limits (~370 detections) may need pagination strategy
+- **Geocoding Rate Limiting**: ~370 detections max per run (WORKING AS DESIGNED - Azure Maps API constraint)
+
+**Resolved Issues** (Sprint 01-03):
+- ✅ Memory leaks (TASK-041, Sprint 02) - Exceptional cleanup performance
+- ✅ Interactive highlighting bugs (TASK-031, Sprint 02) - Bidirectional list↔map working
+- ✅ Azure Maps visual consistency (TASK-040, Sprint 02) - Transparency and styling fixed
+- ✅ Provider synchronization race conditions (TASK-043, Sprint 02) - ProviderStateManager pattern
+- ✅ Boundary accumulation bug (TASK-045, Sprint 02) - Independent detection runs validated
+- ✅ Google Maps SearchBox deprecation (TASK-039, Sprint 03) - PlaceAutocompleteElement migration
+- ✅ Google Maps DrawingManager deprecation (TASK-039, Sprint 03) - Custom drawing implementation
+- ✅ Dataset upload errors (ISSUE-001, Sprint 03) - Comprehensive error handling
+- ✅ Provider switching detection visibility (ISSUE-002, Sprint 03) - restore() method fix
+- ✅ Deprecation warnings (Sprint 03) - Property descriptor timing fixes
 
 **Deployment Strategy:**
 - **Current Strategy:** Docker containerization for local deployment
@@ -271,3 +301,41 @@ refactor(maps): abstract map provider interface for better testability
 - **Hardware Detection:** Platform-specific batch sizing and optimization
 - **Memory Management:** Constraint handling for 8GB systems
 - **CPU Processing:** Progress indicators and optimization for CPU-only processing
+
+---
+
+## 📚 Sprint Planning & Tracking
+
+For detailed sprint information, task status, and historical context:
+
+- [Active Sprint Tasks](../.agent_work/current-tasks.md) - Sprint 04 objectives and detailed task descriptions
+- [Historical Completions](../.agent_work/completed-tasks.md) - Sprint 01-03 completed work with metrics
+- [Task Backlog](../.agent_work/task-backlog.md) - Future work prioritization and planning
+- [Sprint 03 Retrospective](../.agent_work/context/status/SPRINT-03-RETROSPECTIVE.md) - Recent sprint learnings and achievements
+- [Sprint 04 Plan](../.agent_work/context/status/SPRINT-04-PLAN.md) - Current sprint detailed planning and objectives
+- [Sprint Metrics Q1 2026](../.agent_work/context/status/SPRINT-METRICS-2026-Q1.md) - Velocity tracking, completion rates, and trends
+
+---
+
+## 📊 Testing Resources
+
+For comprehensive testing methodologies, procedures, and results:
+
+- [User Journey Guide](../.agent_work/context/guides/USER-JOURNEY-GUIDE.md) - 4-stage testing methodology (Stages 0-3 validated)
+- [Phase 5 Integration Testing Guide](../.agent_work/context/status/PHASE-5-INTEGRATION-TESTING-GUIDE.md) - 13-scenario validation procedures
+- [Phase 5 Test Results](../.agent_work/context/status/PHASE-5-TEST-RESULTS.md) - Sprint 03 integration testing outcomes
+- [Manual Verification Phase 3](../tests/integration/MANUAL_VERIFICATION_PHASE3.md) - Detection and result review testing
+- [Manual Verification Phase 4](../tests/integration/MANUAL_VERIFICATION_PHASE4.md) - Export and dataset management testing
+
+---
+
+## 🏗️ Architecture & Implementation
+
+For detailed architectural patterns and implementation guidance:
+
+- [Developer Architecture Guide](../.agent_work/context/guides/Developer-Architecture-Guide.md) - Comprehensive architecture reference
+- [Global Variable Migration Patterns](../.agent_work/decisions/015-global-variable-migration-patterns.md) - ProviderStateManager migration guide
+- [Provider Lock Decision](../.agent_work/decisions/014-provider-lock-after-detection.md) - Provider switching design rationale
+- [Memory Leak Solution Design](../.agent_work/context/analysis/MEMORY-LEAK-SOLUTION-DESIGN.md) - Lifecycle management patterns (TASK-041)
+- [Frontend Code Review](../.agent_work/context/analysis/FRONTEND-CODE-REVIEW.md) - Deep dive into JavaScript architecture
+- [Mapping Workflow Deep Dive](../.agent_work/context/analysis/MAPPING-WORKFLOW-DEEP-DIVE.md) - Detection pipeline analysis

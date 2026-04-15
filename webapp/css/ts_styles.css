@@ -16,18 +16,44 @@
 /*grid arrangement*/
 .fheader {
     grid-area: fheader;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .fsearch {
     grid-area: fsearch;
+    display: flex;
+    align-items: center;
+    min-width: 0;
 }
 
 .freview {
     grid-area: freview;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.ffilter {
+    grid-area: ffilter;
+    font-size: smaller;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .fversion {
     grid-area: fversion;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    white-space: nowrap;
 }
 
 .fmodel {
@@ -39,7 +65,12 @@
 }
 
 .fadd {
-    grid-area: fadd;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: 12px;
 }
 
 .fdetect {
@@ -58,10 +89,35 @@
 .ftowers {
     grid-area: ftowers;
     font-size: smaller;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 .fsave {
-    grid-area: fsave;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+.frightactions {
+    grid-area: frightactions;
+    display: grid;
+    grid-template-rows: 50px 50px;
+    gap: 5px;
+    align-content: end;
+    padding: 0 !important;
+    background: transparent !important;
+}
+
+.frightactions > div {
+    min-height: 50px;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 8px 10px;
 }
 
 /* Azure Maps and Google Maps specific styling */
@@ -100,15 +156,79 @@
 }
 
 #search {
-    vertical-align: 10%;
-    width: 30%;
+    flex: 1 1 320px;
+    min-width: 220px;
+    max-width: 420px;
+    width: auto;
+    vertical-align: middle;
 }
 
 /* TASK-039 Phase 4B: Constrain PlaceAutocompleteElement Web Component size */
+#mapsearchui {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    flex-wrap: nowrap;
+}
+
 #google-autocomplete-container {
-    display: inline;
-    width: 40%;
-    vertical-align: 10%;
+    flex: 1 1 320px;
+    min-width: 220px;
+    max-width: 420px;
+    width: auto;
+    vertical-align: middle;
+}
+
+#location {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+#geometry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+#radius {
+    width: 86px;
+    min-width: 86px;
+}
+
+#geometry button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.app-title {
+    display: block;
+    width: 100%;
+    font-size: 1.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.action-row-button {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 6px;
+    font-size: 11px;
+    line-height: 13px;
+    white-space: nowrap;
+}
+
+.geometry-button {
+    border-radius: 4px;
 }
 
 /* Target the actual Web Component element */
@@ -143,11 +263,12 @@ gmp-place-autocomplete::part(input) {
         'fheader fsearch fversion'
         'fmodel fmap fdetect'
         'fmodel fmap freview'
+        'fmodel fmap ffilter'
         'fmodel fmap ftowers'
-        'fmodel fmap fadd'
-        'fuploadmodel fmap fsave'
-        'ftext ftext ftext';
-    grid-template-rows: 50px 50px 40px 1fr 50px 50px 120px;
+        'fmodel fmap ftowers'
+        'fuploadmodel fmap ftowers'
+        'ftext ftext frightactions';
+    grid-template-rows: 50px 50px 40px 40px 1fr 50px 50px 120px;
     grid-template-columns: 12% 1fr 30%;
     grid-gap: 5px;
     padding: 10px;
@@ -379,6 +500,101 @@ a.hover_inline:hover {
     display: inline;
 }
 
+.version-link {
+    display: inline-flex !important;
+    align-items: center;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.geometry-unit {
+    flex: 0 0 auto;
+}
+
+.geometry-divider {
+    display: inline-block;
+    width: 1px;
+    height: 22px;
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.filter-label {
+    flex: 0 0 auto;
+}
+
+.filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ffilter .slider {
+    flex: 1 1 auto;
+    width: auto;
+    margin: 0;
+}
+
+.filter-value {
+    flex: 0 0 52px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.review-group,
+.review-mode {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.review-detection,
+.review-mode,
+.review-tile {
+    flex: 1 1 auto;
+}
+
+.review-detection {
+    justify-content: flex-start;
+}
+
+.review-mode {
+    justify-content: center;
+}
+
+.review-tile {
+    justify-content: flex-end;
+}
+
+.review-input {
+    width: 34px;
+    min-width: 34px;
+    height: 26px;
+    padding: 2px 4px;
+    text-align: center;
+}
+
+.freview button {
+    min-width: 24px;
+    height: 26px;
+    padding: 1px 6px;
+    font-size: 12px;
+    line-height: 14px;
+}
+
+.freview .switch {
+    transform: scale(0.85);
+    transform-origin: center;
+}
+
+#checkBoxes {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
 /* Remove default bullets */
 ul,
 #myUL {
@@ -491,4 +707,232 @@ input:checked+.knob:before {
 
 .knob.round:before {
     border-radius: 50%;
+}
+
+.setup-required-active .grid-container {
+    filter: blur(2px);
+    pointer-events: none;
+    user-select: none;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 12, 28, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+    padding: 24px;
+}
+
+.modal-container.setup-wizard,
+.modal-container.settings-screen {
+    width: min(720px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    background: rgba(7, 24, 52, 0.96);
+    border: 1px solid rgba(142, 196, 255, 0.22);
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+.modal-container.setup-wizard {
+    padding: 28px;
+}
+
+.wizard-progress {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.wizard-progress .step {
+    padding: 10px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.72);
+    text-align: center;
+    font-size: 12px;
+}
+
+.wizard-progress .step.active,
+.wizard-progress .step.complete {
+    background: rgba(74, 119, 212, 0.85);
+    color: #fff;
+}
+
+.wizard-step h2,
+.settings-section h3,
+.modal-header h2 {
+    margin-top: 0;
+}
+
+.wizard-helper,
+.help-text {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 13px;
+}
+
+.wizard-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.wizard-input,
+.form-control {
+    width: 100%;
+    margin-top: 6px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    color: #fff;
+}
+
+.wizard-input:focus,
+.form-control:focus {
+    outline: none;
+    border-color: rgba(110, 182, 222, 0.9);
+}
+
+.provider-selection label {
+    display: block;
+    margin-bottom: 12px;
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.provider-selection input {
+    margin-right: 8px;
+}
+
+.validation-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    margin-left: 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.validation-indicator.valid {
+    background: rgba(39, 174, 96, 0.18);
+    color: #7ddaa5;
+}
+
+.validation-indicator.invalid {
+    background: rgba(231, 76, 60, 0.18);
+    color: #ff9b91;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 28px 0;
+}
+
+.close-btn {
+    border: 0;
+    background: transparent;
+    color: #fff;
+    font-size: 30px;
+    cursor: pointer;
+}
+
+.settings-content {
+    padding: 20px 28px 28px;
+}
+
+.settings-section {
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-section:last-child {
+    margin-bottom: 0;
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+.key-input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-icon,
+.settings-btn {
+    white-space: nowrap;
+}
+
+.resource-links ul {
+    margin: 0;
+    padding: 0;
+}
+
+.resource-links li {
+    margin-bottom: 10px;
+}
+
+.resource-links a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 400;
+}
+
+.resource-links a:visited {
+    color: #ffffff;
+}
+
+.resource-links a:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.resource-links a:focus-visible {
+    color: #ffffff;
+    outline: 2px solid rgba(255, 255, 255, 0.8);
+    outline-offset: 2px;
+    border-radius: 4px;
+    text-decoration: underline;
+}
+
+.performance-stats {
+    padding: 16px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.performance-stats p {
+    margin: 0 0 8px;
+}
+
+.performance-stats p:last-child {
+    margin-bottom: 0;
+}
+
+.control-group {
+    margin-bottom: 16px;
+}
+
+.settings-btn {
+    margin-right: 0;
+    width: 28%;
+    min-width: 115px;
 }

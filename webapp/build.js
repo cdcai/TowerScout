@@ -29,6 +29,7 @@ const MODULE_ORDER = [
     'src/managers/TimerManager.js',
     'src/managers/EventListenerManager.js',
     'src/managers/ErrorHandler.js',
+    'src/utils/polygonValidation.js',
 
     // Stage 2: Boundaries
     'src/boundaries/CircleBoundary.js',
@@ -56,6 +57,8 @@ const MODULE_ORDER = [
     'src/utils/coordinates.js',
     'src/utils/imagery.js',
     'src/utils/apiHelpers.js',
+    'src/setup-wizard.js',
+    'src/settings.js',
 
     // MUST LOAD AFTER ALL CLASSES (exposes to window)
     'src/globals.js',

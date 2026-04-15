@@ -1,0 +1,134 @@
+name: TowerScout CI/CD Testing Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.11, 3.12]
+
+    steps:
+    - uses: actions/checkout@v5
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gdal-bin libgdal-dev
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r webapp/requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Lint with flake8
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 webapp/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Treat all errors as warnings for now (can be made stricter later)
+        flake8 webapp/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    
+    - name: Format check with black
+      run: |
+        black --check --diff webapp/
+      continue-on-error: true  # Historical formatting drift is advisory until a dedicated repo-wide reformat pass lands
+    
+    - name: Type check with mypy
+      run: |
+        # Start with basic type checking, can be made stricter later
+        mypy webapp/ --ignore-missing-imports --no-strict-optional
+      continue-on-error: true  # Don't fail build on type errors initially
+    
+    - name: Security check with bandit
+      run: |
+        bandit -r webapp/ -f json -o bandit-report.json
+        bandit -r webapp/
+      continue-on-error: true  # Don't fail build on security warnings initially
+    
+    - name: Run unit tests
+      env:
+        # Mock environment variables for testing
+        GOOGLE_API_KEY: test_google_key_123
+        AZURE_MAPS_SUBSCRIPTION_KEY: test_azure_key_456
+        FLASK_SECRET_KEY: test_secret_key_for_sessions
+        FLASK_ENV: testing
+      run: |
+        pytest tests/unit/ -v --cov=webapp --cov-report=xml --cov-report=term-missing
+    
+    - name: Run integration tests
+      env:
+        # Mock environment variables for testing
+        GOOGLE_API_KEY: test_google_key_123
+        AZURE_MAPS_SUBSCRIPTION_KEY: test_azure_key_456
+        FLASK_SECRET_KEY: test_secret_key_for_sessions
+        FLASK_ENV: testing
+      run: |
+        pytest tests/integration/ -v --cov=webapp --cov-append --cov-report=xml --cov-report=term-missing
+      continue-on-error: true  # Don't fail build on integration test failures initially
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+      continue-on-error: true
+
+    - name: Archive test results
+      uses: actions/upload-artifact@v6
+      if: always()
+      with:
+        name: test-results-${{ matrix.python-version }}
+        path: |
+          coverage.xml
+          bandit-report.json
+          .pytest_cache/
+        if-no-files-found: ignore
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v5
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Build Docker image (local deployment test)
+      run: |
+        docker build -t towerscout:test .
+      continue-on-error: true  # Don't fail if Dockerfile doesn't exist yet
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+      continue-on-error: true
+    
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v4
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+      continue-on-error: true

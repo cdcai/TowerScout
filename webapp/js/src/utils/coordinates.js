@@ -34,5 +34,5 @@
   window.rad = rad;
   window.getDistance = getDistance;
 
-  console.log('✅ Coordinate utilities loaded');
+  window.TowerScoutLogger.debug('✅ Coordinate utilities loaded');
 })();

@@ -23,18 +23,16 @@ Date: January 2026
 import requests
 import time
 import os
-import urllib3
 from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
-from flask import session
+from flask import has_request_context, session
 
 from ts_errors import TowerScoutError, ConfigurationError, NetworkError
 from ts_logging import get_api_logger
 
-# Suppress SSL warnings for local development on Windows
-# Note: For production deployment, proper SSL certificates should be configured
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+TRUTHY_ENV_VALUES = {'1', 'true', 'yes', 'on'}
+INSECURE_TLS_ENV_VAR = 'TOWERSCOUT_ALLOW_INSECURE_TLS'
 
 
 class GeocodingProvider(Enum):
@@ -140,6 +138,7 @@ class GeocodingService:
         self.logger = get_api_logger()
         self.rate_limit = rate_limit_requests_per_minute
         self.preferred_provider = preferred_provider
+        self.verify_tls = os.getenv(INSECURE_TLS_ENV_VAR, '').strip().lower() not in TRUTHY_ENV_VALUES
         
         # Load API keys from parameters or environment
         self.azure_key = azure_key or os.getenv('AZURE_MAPS_SUBSCRIPTION_KEY')
@@ -161,6 +160,27 @@ class GeocodingService:
             self.logger.info("Google Maps geocoding enabled")
         
         self.logger.info(f"Geocoding service initialized with {len(self.providers)} provider(s)")
+        if not self.verify_tls:
+            self.logger.warning(
+                "Geocoding requests are running with TLS verification disabled because "
+                "%s is enabled.",
+                INSECURE_TLS_ENV_VAR,
+            )
+
+    def _request(self, url: str, params: Dict[str, Any]) -> requests.Response:
+        return requests.get(
+            url,
+            params=params,
+            timeout=10,
+            verify=self.verify_tls,
+        )
+
+    def _track_request(self, provider: GeocodingProvider, success: bool):
+        """Update request counters only when a Flask request context exists."""
+        if not has_request_context():
+            return
+
+        self._update_session_usage(provider, success)
     
     def _get_session_usage(self) -> SessionApiUsage:
         """Get or create session API usage tracking."""
@@ -203,7 +223,8 @@ class GeocodingService:
             usage['failed_requests'] += 1
         
         session['geocoding_usage'] = usage
-        session.permanent = True  # Ensure session persists
+        if has_request_context():
+            session.permanent = True  # Ensure session persists
     
     def _check_rate_limit(self) -> bool:
         """Check if request is within rate limits for this session."""
@@ -252,9 +273,7 @@ class GeocodingService:
             }
             
             self.logger.debug(f"Azure Maps geocoding request: {lat}, {lng}")
-            # Note: verify=False bypasses SSL verification for local development
-            # For production, ensure proper SSL certificates are installed
-            response = requests.get(url, params=params, timeout=10, verify=False)
+            response = self._request(url, params)
             response.raise_for_status()
             
             data = response.json()
@@ -327,9 +346,7 @@ class GeocodingService:
             }
             
             self.logger.debug(f"Google Maps geocoding request: {lat}, {lng}")
-            # Note: verify=False bypasses SSL verification for local development
-            # For production, ensure proper SSL certificates are installed
-            response = requests.get(url, params=params, timeout=10, verify=False)
+            response = self._request(url, params)
             response.raise_for_status()
             
             data = response.json()
@@ -408,9 +425,10 @@ class GeocodingService:
         effective_preference = preferred_provider if preferred_provider is not None else self.preferred_provider
         
         self.logger.info(f"Reverse geocoding: {lat}, {lng} (preferred: {effective_preference})")
-        
+
         # Determine provider order based on preference
         provider_order = self._get_provider_order(effective_preference)
+        last_error_message = None
         
         # Try each provider in order
         for provider in provider_order:
@@ -430,11 +448,13 @@ class GeocodingService:
                     self.logger.info(f"Geocoding successful via {provider.value}: {result.address}")
                     return result
                 else:
+                    last_error_message = result.error_message or f"{provider.value} returned no address"
                     self.logger.debug(f"Provider {provider.value} returned no address, trying next")
                     continue
             
             except (NetworkError, GeocodingError) as e:
                 self.logger.warning(f"Provider {provider.value} failed: {e}")
+                last_error_message = str(e)
                 self._update_session_usage(provider, False)
                 continue
         
@@ -446,7 +466,7 @@ class GeocodingService:
             confidence=0.0,
             coordinates=(lat, lng),
             success=False,
-            error_message="All geocoding providers failed"
+            error_message=last_error_message or "All geocoding providers failed"
         )
     
     def forward_geocode_unified(self, query: str, preferred_provider: str = "auto") -> List[GeocodingResult]:
@@ -506,7 +526,7 @@ class GeocodingService:
                 'typeahead': 'true'
             }
             
-            response = requests.get(url, params=params, timeout=10)
+            response = self._request(url, params)
             self._track_request(GeocodingProvider.AZURE_MAPS, response.status_code == 200)
             
             if response.status_code == 429:
@@ -539,8 +559,8 @@ class GeocodingService:
             
             return results
             
-        except requests.Timeout:
-            self.logger.warning("Azure Maps forward geocoding timeout")
+        except requests.RequestException as e:
+            self.logger.warning(f"Azure Maps forward geocoding request failed: {e}")
             return []
         except Exception as e:
             self.logger.error(f"Azure Maps forward geocoding error: {e}")
@@ -560,7 +580,7 @@ class GeocodingService:
                 'key': self.google_key
             }
             
-            response = requests.get(url, params=params, timeout=10)
+            response = self._request(url, params)
             self._track_request(GeocodingProvider.GOOGLE_MAPS, response.status_code == 200)
             
             if response.status_code == 429:
@@ -594,8 +614,8 @@ class GeocodingService:
             
             return results
             
-        except requests.Timeout:
-            self.logger.warning("Google Maps forward geocoding timeout")
+        except requests.RequestException as e:
+            self.logger.warning(f"Google Maps forward geocoding request failed: {e}")
             return []
         except Exception as e:
             self.logger.error(f"Google Maps forward geocoding error: {e}")

@@ -84,7 +84,7 @@
           // BUT prevent race condition from concurrent bounds_changed events
           // Use GLOBAL element reference and flag
           if (!globalAutocompleteElement && !isGloballyInitializingSearch) {
-            console.log('🔄 Autocomplete element missing, reinitializing...');
+            window.TowerScoutLogger.debug('🔄 Autocomplete element missing, reinitializing...');
             this.initializeSearch();
           }
 
@@ -101,6 +101,52 @@
       // Note: Event listener setup moved to initializeSearch() method
     }
 
+    extractBoundaryPointsFromShape(shape) {
+      if (typeof shape.bounds !== 'undefined') {
+        const ne = shape.bounds.getNorthEast();
+        const sw = shape.bounds.getSouthWest();
+        return [
+          [sw.lng(), ne.lat()],
+          [ne.lng(), ne.lat()],
+          [ne.lng(), sw.lat()],
+          [sw.lng(), sw.lat()],
+          [sw.lng(), ne.lat()]
+        ];
+      }
+
+      const points = [];
+      shape.getPath().forEach((point) => {
+        points.push([point.lng(), point.lat()]);
+      });
+      return points;
+    }
+
+    validateDrawnShapes(options = {}) {
+      const showNotification = options.showNotification === true;
+      const label = options.label || 'custom shape';
+      const remediation = options.remediation || 'edit_or_redraw';
+      const shapes = options.shapes || this.newShapes;
+      const polygons = [];
+
+      for (const shape of shapes) {
+        const points = this.extractBoundaryPointsFromShape(shape);
+        if (points) {
+          polygons.push(points);
+        }
+      }
+
+      const validation = window.PolygonValidation.validatePolygonCollection(polygons);
+      if (!validation.valid && showNotification) {
+        TowerScoutErrorHandler.showUserNotification(
+          window.PolygonValidation.getUserMessage(validation, label, { remediation }),
+          'warning',
+          6000
+        );
+      }
+
+      return validation;
+    }
+
     // TASK-039 Phase 4B: Initialize PlaceAutocompleteElement Web Component
     // Extracted into separate method for reuse during provider switching
     initializeSearch() {
@@ -109,18 +155,18 @@
       const input = document.getElementById('search');
       if (input) {
         input.style.display = 'none';
-        console.log('🔧 Standard search input hidden for Google Maps');
+        window.TowerScoutLogger.debug('🔧 Standard search input hidden for Google Maps');
       }
 
       // CRITICAL: Use GLOBAL flag to prevent concurrent initialization across ALL instances
       if (isGloballyInitializingSearch) {
-        console.log('⚠️ [GLOBAL] Search initialization already in progress, skipping...');
+        window.TowerScoutLogger.debug('⚠️ [GLOBAL] Search initialization already in progress, skipping...');
         return;
       }
 
       // Skip if GLOBAL element already exists
       if (globalAutocompleteElement) {
-        console.log('✅ [GLOBAL] PlaceAutocompleteElement already initialized (skipping)');
+        window.TowerScoutLogger.debug('✅ [GLOBAL] PlaceAutocompleteElement already initialized (skipping)');
         // Store reference to this instance too for backward compatibility
         this.autocompleteElement = globalAutocompleteElement;
         return;
@@ -128,14 +174,14 @@
 
       // Set GLOBAL flag to prevent concurrent calls
       isGloballyInitializingSearch = true;
-      console.log('🔧 Initializing PlaceAutocompleteElement Web Component... [VERSION: 2026-03-11-FIX8-GLOBAL]');
+      window.TowerScoutLogger.debug('🔧 Initializing PlaceAutocompleteElement Web Component... [VERSION: 2026-03-11-FIX8-GLOBAL]');
 
       // DIAGNOSTIC: Check what's actually in the DOM RIGHT NOW
       const allElements = document.querySelectorAll('gmp-place-autocomplete');
-      console.log(`🔍 [DIAGNOSTIC] DOM contains ${allElements.length} gmp-place-autocomplete element(s) BEFORE creation`);
+      window.TowerScoutLogger.debug(`🔍 [DIAGNOSTIC] DOM contains ${allElements.length} gmp-place-autocomplete element(s) BEFORE creation`);
       if (allElements.length > 0) {
         allElements.forEach((el, idx) => {
-          console.log(`   └─ Element ${idx + 1}: parent=${el.parentElement?.id || 'unknown'}, display=${el.style.display}`);
+          window.TowerScoutLogger.debug(`   └─ Element ${idx + 1}: parent=${el.parentElement?.id || 'unknown'}, display=${el.style.display}`);
         });
       }
 
@@ -152,7 +198,7 @@
       if (existingElements.length > 0) {
         console.warn(`⚠️ Found ${existingElements.length} orphaned gmp-place-autocomplete element(s), removing...`);
         existingElements.forEach((el, idx) => {
-          console.log(`🧹 Removing orphaned element ${idx + 1}/${existingElements.length}`);
+          window.TowerScoutLogger.debug(`🧹 Removing orphaned element ${idx + 1}/${existingElements.length}`);
           if (el.parentElement) {
             el.parentElement.removeChild(el);
           }
@@ -173,7 +219,7 @@
         if (childCount > 0) {
           console.warn(`⚠️ Container has ${childCount} child(ren) RIGHT BEFORE append, clearing...`);
           while (container.firstChild) {
-            console.log('🧹🧹 Removing child immediately before append');
+            window.TowerScoutLogger.debug('🧹🧹 Removing child immediately before append');
             container.removeChild(container.firstChild);
           }
         }
@@ -183,9 +229,12 @@
 
         // CRITICAL: Set explicit width/height constraints on both container and Web Component
         // Web Components with Shadow DOM ignore external CSS, so we use inline styles
-        container.style.display = 'inline-block';
-        container.style.width = '40%';
-        container.style.verticalAlign = '10%';
+        container.style.display = 'block';
+        container.style.flex = '1 1 320px';
+        container.style.minWidth = '220px';
+        container.style.maxWidth = '420px';
+        container.style.width = 'auto';
+        container.style.verticalAlign = 'middle';
 
         // Set size on the Web Component element itself to match Azure search input
         autocompleteElement.style.width = '100%';
@@ -204,12 +253,12 @@
           console.error(`❌ DUPLICATE DETECTED: Found ${finalCheck.length} gmp-place-autocomplete elements after append!`);
           // Keep only the last one (our new element), remove all others
           for (let i = 0; i < finalCheck.length - 1; i++) {
-            console.log(`🧹🧹🧹 Emergency removal of duplicate ${i + 1}`);
+            window.TowerScoutLogger.debug(`🧹🧹🧹 Emergency removal of duplicate ${i + 1}`);
             container.removeChild(finalCheck[i]);
           }
         }
 
-        console.log('📐 PlaceAutocompleteElement sizing applied: container width 30%, height 21px (matches Azure)');
+        window.TowerScoutLogger.debug('📐 PlaceAutocompleteElement sizing applied for flex search layout, height 21px (matches Azure)');
       } else {
         console.error('❌ google-autocomplete-container not found in DOM');
         isGloballyInitializingSearch = false;  // Clear GLOBAL flag on error
@@ -222,7 +271,7 @@
 
       // DIAGNOSTIC: Verify only ONE element exists after creation
       const allElementsAfterCreation = document.querySelectorAll('gmp-place-autocomplete');
-      console.log(`🔍 [DIAGNOSTIC] DOM contains ${allElementsAfterCreation.length} gmp-place-autocomplete element(s) AFTER creation`);
+      window.TowerScoutLogger.debug(`🔍 [DIAGNOSTIC] DOM contains ${allElementsAfterCreation.length} gmp-place-autocomplete element(s) AFTER creation`);
       if (allElementsAfterCreation.length > 1) {
         console.error(`❌ [DIAGNOSTIC] DUPLICATE CREATION - ${allElementsAfterCreation.length} elements exist!`);
         allElementsAfterCreation.forEach((el, idx) => {
@@ -235,7 +284,7 @@
       autocompleteElement.addEventListener('gmp-select', async (event) => {
         // Only handle if Google Maps is the current provider
         if (currentProvider !== 'google') {
-          console.log('Ignoring Google Places search - not current provider');
+          window.TowerScoutLogger.debug('Ignoring Google Places search - not current provider');
           return;
         }
 
@@ -245,7 +294,7 @@
           const placePrediction = event.placePrediction;
 
           if (!placePrediction) {
-            console.log('No place prediction available');
+            window.TowerScoutLogger.debug('No place prediction available');
             return;
           }
 
@@ -258,7 +307,7 @@
           });
 
           if (!place.location) {
-            console.log("No location available for selected place.");
+            window.TowerScoutLogger.debug("No location available for selected place.");
             return;
           }
 
@@ -296,7 +345,7 @@
         }
 
         // Google Maps handles its own search through PlaceAutocompleteElement
-        console.log('Google Maps handling search through PlaceAutocompleteElement Web Component');
+        window.TowerScoutLogger.debug('Google Maps handling search through PlaceAutocompleteElement Web Component');
         this.getBoundsPolygon(input.value, this.places[0]);
       });
 
@@ -308,22 +357,22 @@
 
       // Clear GLOBAL initialization flag
       isGloballyInitializingSearch = false;
-      console.log('✅ [GLOBAL] PlaceAutocompleteElement initialized successfully');
+      window.TowerScoutLogger.debug('✅ [GLOBAL] PlaceAutocompleteElement initialized successfully');
     }
 
     // TASK-039: Custom polygon drawing implementation
-    enablePolygonDrawing() {
+    enablePolygonDrawing(contextOverride = null) {
       if (this.isDrawing) {
-        console.log('Drawing already in progress');
+        window.TowerScoutLogger.debug('Drawing already in progress');
         return;
       }
 
-      console.log('🎨 Enabling custom polygon drawing mode');
+      window.TowerScoutLogger.debug('🎨 Enabling custom polygon drawing mode');
 
-      // Track drawing context based on whether detections exist
+      // Track drawing context explicitly when the triggering action is known.
       const hasDetections = window.providerManager && window.providerManager.getDetectionsLength() > 0;
-      this.drawingContext = hasDetections ? 'manual' : 'search';
-      console.log('📍 Drawing context:', this.drawingContext, '(detections:', hasDetections ? 'YES' : 'NO', ')');
+      this.drawingContext = contextOverride || (hasDetections ? 'manual' : 'search');
+      window.TowerScoutLogger.debug('📍 Drawing context:', this.drawingContext, '(detections:', hasDetections ? 'YES' : 'NO', ')');
 
       // Show persistent instructions based on context (0 timeout = persistent until polygon complete)
       const message = this.drawingContext === 'search'
@@ -382,12 +431,12 @@
           }
         }
 
-        console.log(`Point added: ${event.latLng.lat()}, ${event.latLng.lng()} (Total: ${this.currentDrawingPoints.length})`);
+        window.TowerScoutLogger.debug(`Point added: ${event.latLng.lat()}, ${event.latLng.lng()} (Total: ${this.currentDrawingPoints.length})`);
       });
 
       // Add right-click (contextmenu) listener to complete polygon
       this.drawingRightClickListener = this.map.addListener('rightclick', (event) => {
-        console.log('🖱️ Right-click detected - completing polygon');
+        window.TowerScoutLogger.debug('🖱️ Right-click detected - completing polygon');
         if (!this.isDrawing) return;
 
         // Prevent default context menu
@@ -408,7 +457,7 @@
         return;
       }
 
-      console.log(`✅ Completing polygon with ${this.currentDrawingPoints.length} points`);
+      window.TowerScoutLogger.debug(`✅ Completing polygon with ${this.currentDrawingPoints.length} points`);
 
       // Create final polygon
       const polygon = new google.maps.Polygon({
@@ -424,10 +473,12 @@
 
       // Store shape (matching current pattern for compatibility)
       this.newShapes.push(polygon);
-      console.log(`new polygon with ${this.currentDrawingPoints.length} points`);
+      window.TowerScoutLogger.debug(`new polygon with ${this.currentDrawingPoints.length} points`);
 
       // Capture context BEFORE cleanup resets it
       const completionContext = this.drawingContext;
+
+      const validation = this.validateDrawnShapes({ shapes: [polygon] });
 
       // Dismiss persistent drawing instruction notification
       if (this.drawingNotificationId) {
@@ -438,6 +489,15 @@
       // Clean up drawing state (this resets drawingContext to null)
       this.cancelDrawing();
 
+      if (!validation.valid) {
+        TowerScoutErrorHandler.showUserNotification(
+          window.PolygonValidation.getUserMessage(validation, 'custom shape', { remediation: 'edit_or_redraw' }),
+          'warning',
+          6000
+        );
+        return;
+      }
+
       // Context-aware completion notification using captured context
       const message = completionContext === 'search'
         ? 'Polygon complete! Click "Custom Shape" again to use as search area, or "Estimate Tiles" to proceed.'
@@ -446,12 +506,12 @@
       TowerScoutErrorHandler.showUserNotification(
         message,
         'success',
-        6000
+        9000
       );
     }
 
     cancelDrawing() {
-      console.log('🛑 Cancelling drawing mode');
+      window.TowerScoutLogger.debug('🛑 Cancelling drawing mode');
 
       // Dismiss persistent notification if exists
       if (this.drawingNotificationId) {
@@ -491,6 +551,12 @@
     }
 
     retrieveDrawnBoundaries() {
+      const validation = this.validateDrawnShapes();
+      if (!validation.valid) {
+        console.warn('⚠️ Invalid drawn Google boundary detected, leaving shape in place for editing');
+        return [];
+      }
+
       let polys = [];
 
       for (let s of this.newShapes) {
@@ -501,8 +567,7 @@
           polys.push(new SimpleBoundary([sw.lng(), ne.lat(), ne.lng(), sw.lat()]));
         } else {
           // polygons do not
-          let poly = [];
-          s.getPath().forEach((e, i) => { poly.push([e.lng(), e.lat()]); });
+          let poly = this.extractBoundaryPointsFromShape(s);
           polys.push(new PolygonBoundary(poly));
         }
       }
@@ -560,8 +625,6 @@
 
           // TASK-033: Geocode manual tower location to get address
           this.geocodeDetection(det);
-
-          det.update();
         }
       }
       this.newShapes = [];
@@ -573,7 +636,6 @@
       }
 
       Detection.generateList();
-      adjustConfidence();
 
       // TASK-033 Phase 4: Lock provider switching after manual towers added
       if (typeof lockProviderSwitching === 'function') {
@@ -588,7 +650,7 @@
         const lat = center[1];
         const lng = center[0];
 
-        console.log(`🌍 Geocoding manual tower at ${lat}, ${lng}...`);
+        window.TowerScoutLogger.debug(`🌍 Geocoding manual tower at ${lat}, ${lng}...`);
 
         const response = await fetch('/api/geocode/reverse', {
           method: 'POST',
@@ -598,7 +660,7 @@
           body: JSON.stringify({
             lat: lat,
             lng: lng,
-            provider: 'auto'
+            provider: document.querySelector('#providers input[name="provider"]:checked')?.value || 'google'
           })
         });
 
@@ -612,7 +674,7 @@
           detection.address = data.address;
           detection.addressConfidence = data.confidence;
           detection.addressProvider = data.provider;
-          console.log(`✅ Geocoded address: ${data.address}`);
+          window.TowerScoutLogger.debug(`✅ Geocoded address: ${data.address}`);
         } else {
           // Fallback to coordinates
           detection.address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
@@ -689,7 +751,7 @@
 
       // Handle null/undefined place for Enter-to-search fallback
       const hasPlace = place && place.geometry && place.formatted_address;
-      console.log("Querying place outline for: " + query + (hasPlace ? (" (" + place.name + ")") : " (no Place)"));
+      window.TowerScoutLogger.debug("Querying place outline for: " + query + (hasPlace ? (" (" + place.name + ")") : " (no Place)"));
       if (query[0] === '"' && query.endsWith('"')) {
         // hand this to openstreetmap "as is"
         query = query.substring(1, query.length - 1);
@@ -723,7 +785,7 @@
             // No Azure Maps dependency - Google provider handles Google Maps only
             return;
           }
-          console.log(" Display name: " + x['display_name'] + ": " + x['boundingbox']);
+          window.TowerScoutLogger.debug(" Display name: " + x['display_name'] + ": " + x['boundingbox']);
           if (x["geojson"]["type"] == "Polygon" || x["geojson"]["type"] == "MultiPolygon") {
             let bounds = null;
             let ps = x["geojson"]["coordinates"];
@@ -731,12 +793,12 @@
               if (x["geojson"]["type"] == "MultiPolygon") {
                 p = p[0];
               }
-              //console.log(" Polygon: " + p);
+              //window.TowerScoutLogger.debug(" Polygon: " + p);
               //let polyData = parseLatLngArray(p);
               googleMap.addBoundary(new PolygonBoundary(p));
               // Only update Google Maps when Google is the provider
             }
-            //console.log(bounds.toUrlValue());
+            //window.TowerScoutLogger.debug(bounds.toUrlValue());
           } else if (x["geojson"]["type"] == "LineString" || x["geojson"]["type"] == "Point") {
             googleMap.map.fitBounds(place.geometry.viewport, 0)
           }
@@ -757,7 +819,7 @@
       // Auto-recreate if missing (e.g., after provider switch)
       // BUT prevent race condition from concurrent calls - use GLOBAL references
       if (!globalAutocompleteElement && !isGloballyInitializingSearch) {
-        console.log('🔄 PlaceAutocompleteElement not found in biasSearchBox, reinitializing...');
+        window.TowerScoutLogger.debug('🔄 PlaceAutocompleteElement not found in biasSearchBox, reinitializing...');
         this.initializeSearch();
       }
 
@@ -766,25 +828,32 @@
         if (bounds) {
           // Pass LatLngBounds directly to locationBias property
           globalAutocompleteElement.locationBias = bounds;
-          console.log('🎯 PlaceAutocompleteElement biased to current map bounds');
+          window.TowerScoutLogger.debug('🎯 PlaceAutocompleteElement biased to current map bounds');
         }
       }
     }
 
     getBounds() {
       let bounds = this.map.getBounds();
+      if (!bounds) {
+        const center = this.map.getCenter();
+        if (center && typeof center.lng === 'function' && typeof center.lat === 'function') {
+          return [center.lng(), center.lat(), center.lng(), center.lat()];
+        }
+        return [nyc[0], nyc[1], nyc[0], nyc[1]];
+      }
       let ne = bounds.getNorthEast();
       let sw = bounds.getSouthWest();
       return [sw.lng(), ne.lat(), ne.lng(), sw.lat()];
     }
 
     fitBounds(x1, y1, x2, y2) {
-      let bounds = google.maps.LatLngBounds({
+      let bounds = {
         north: y1,
         south: y2,
         east: x2,
         west: x1
-      });
+      };
       this.map.fitBounds(bounds);
     }
 
@@ -826,16 +895,22 @@
     }
 
     colorMapRect(o, color) {
+      if (!o.mapRect) {
+        return;
+      }
       o.mapRect.setOptions({ strokeColor: color, fillColor: color, fillOpacity: o.opacity });
     }
 
     updateMapRect(o, onoff) {
+      if (!o.mapRect) {
+        return;
+      }
       let r = o.mapRect;
       r.setMap(onoff ? this.map : null)
     }
 
     resetBoundaries() {
-      console.log('🧹 Google Maps: Resetting boundaries...');
+      window.TowerScoutLogger.debug('🧹 Google Maps: Resetting boundaries...');
       const boundaryCount = this.boundaries.length;
 
       for (let b of this.boundaries) {
@@ -850,14 +925,14 @@
       this.activeShapes.circles = [];
       this.activeShapes.polygons = [];
 
-      console.log(`✅ Google Maps: Removed ${boundaryCount} boundaries from map`);
+      window.TowerScoutLogger.debug(`✅ Google Maps: Removed ${boundaryCount} boundaries from map`);
     }
 
     clearCircles() {
-      console.log(`🔄 Clearing ${this.activeShapes.circles.length} circle(s) from Google Maps...`);
+      window.TowerScoutLogger.debug(`🔄 Clearing ${this.activeShapes.circles.length} circle(s) from Google Maps...`);
 
       if (this.activeShapes.circles.length === 0) {
-        console.log('✅ No circles to clear');
+        window.TowerScoutLogger.debug('✅ No circles to clear');
         return;
       }
 
@@ -867,19 +942,19 @@
           circle.setMap(null);
         }
       }
-      console.log('  - Removed circle polygons from map');
+      window.TowerScoutLogger.debug('  - Removed circle polygons from map');
 
       // Step 2: Filter circles from boundaries array
       const beforeCount = this.boundaries.length;
       this.boundaries = this.boundaries.filter(b => !b.isCircle);
       const removedCount = beforeCount - this.boundaries.length;
-      console.log(`  - Removed ${removedCount} circle boundary reference(s)`);
+      window.TowerScoutLogger.debug(`  - Removed ${removedCount} circle boundary reference(s)`);
 
       // Step 3: Clear tracking array
       const clearedCount = this.activeShapes.circles.length;
       this.activeShapes.circles = [];
 
-      console.log(`✅ Cleared ${clearedCount} circle(s)`);
+      window.TowerScoutLogger.debug(`✅ Cleared ${clearedCount} circle(s)`);
     }
 
     addBoundary(b) {
@@ -909,7 +984,7 @@
       // TASK-041 Phase 2 Step 2.2: Track circle boundaries for cleanup
       if (b.isCircle) {
         this.activeShapes.circles.push(poly);
-        console.log('  - Tracked circle in activeShapes (total:', this.activeShapes.circles.length + ')');
+        window.TowerScoutLogger.debug('  - Tracked circle in activeShapes (total:', this.activeShapes.circles.length + ')');
       }
 
 
@@ -949,7 +1024,7 @@
 
     cleanupDrawingManager() {
       if (this.drawingManager) {
-        console.log('🧹 Cleaning up Google DrawingManager...');
+        window.TowerScoutLogger.debug('🧹 Cleaning up Google DrawingManager...');
 
         // Remove all event listeners from drawing manager
         try {
@@ -969,13 +1044,13 @@
 
         // TASK-033: Don't null drawingManager to prevent errors in legacy code paths
         // this.drawingManager = null;
-        console.log('✅ Google DrawingManager cleaned up (reference preserved)');
+        window.TowerScoutLogger.debug('✅ Google DrawingManager cleaned up (reference preserved)');
       }
     }
 
     cleanupMapListeners() {
       if (this.mapEventListeners.length > 0) {
-        console.log(`🧹 Cleaning up ${this.mapEventListeners.length} Google map listeners...`);
+        window.TowerScoutLogger.debug(`🧹 Cleaning up ${this.mapEventListeners.length} Google map listeners...`);
 
         for (const listener of this.mapEventListeners) {
           try {
@@ -988,16 +1063,16 @@
         }
 
         this.mapEventListeners = [];
-        console.log('✅ Google map listeners cleaned up');
+        window.TowerScoutLogger.debug('✅ Google map listeners cleaned up');
       }
     }
 
     cleanupSearch() {
-      console.log('🧹 Cleaning up Google search infrastructure...');
+      window.TowerScoutLogger.debug('🧹 Cleaning up Google search infrastructure...');
 
       // DIAGNOSTIC: Check what's in the DOM before cleanup
       const allElementsBefore = document.querySelectorAll('gmp-place-autocomplete');
-      console.log(`🔍 [DIAGNOSTIC] DOM contains ${allElementsBefore.length} gmp-place-autocomplete element(s) BEFORE cleanup`);
+      window.TowerScoutLogger.debug(`🔍 [DIAGNOSTIC] DOM contains ${allElementsBefore.length} gmp-place-autocomplete element(s) BEFORE cleanup`);
 
       // TASK-039 Phase 4B: Remove PlaceAutocompleteElement Web Component (use GLOBAL reference)
       const container = document.getElementById('google-autocomplete-container');
@@ -1007,7 +1082,7 @@
           // Remove from DOM
           if (container && globalAutocompleteElement.parentElement === container) {
             container.removeChild(globalAutocompleteElement);
-            console.log('✅ [GLOBAL] PlaceAutocompleteElement removed from container');
+            window.TowerScoutLogger.debug('✅ [GLOBAL] PlaceAutocompleteElement removed from container');
           }
 
           // Clear event listeners
@@ -1017,7 +1092,7 @@
 
           globalAutocompleteElement = null;
           this.autocompleteElement = null;
-          console.log('✅ [GLOBAL] autocompleteElement reference cleared');
+          window.TowerScoutLogger.debug('✅ [GLOBAL] autocompleteElement reference cleared');
 
         } catch (e) {
           console.warn('⚠️ Error cleaning up PlaceAutocompleteElement:', e.message);
@@ -1027,17 +1102,17 @@
       // DEFENSIVE: Clear ALL remaining children from container
       if (container) {
         while (container.firstChild) {
-          console.log('🧹 Removing orphaned child from autocomplete container');
+          window.TowerScoutLogger.debug('🧹 Removing orphaned child from autocomplete container');
           container.removeChild(container.firstChild);
         }
         container.style.display = 'none';
-        console.log('✅ Container cleared and hidden');
+        window.TowerScoutLogger.debug('✅ Container cleared and hidden');
       }
 
       // Show the original input for other providers
       if (this.originalInput) {
         this.originalInput.style.display = 'inline';
-        console.log('✅ Original search input restored');
+        window.TowerScoutLogger.debug('✅ Original search input restored');
       }
 
       // Clear GLOBAL initialization flag in case it was stuck
@@ -1048,7 +1123,7 @@
 
       // DIAGNOSTIC: Verify cleanup actually removed the elements
       const allElementsAfter = document.querySelectorAll('gmp-place-autocomplete');
-      console.log(`🔍 [DIAGNOSTIC] DOM contains ${allElementsAfter.length} gmp-place-autocomplete element(s) AFTER cleanup`);
+      window.TowerScoutLogger.debug(`🔍 [DIAGNOSTIC] DOM contains ${allElementsAfter.length} gmp-place-autocomplete element(s) AFTER cleanup`);
       if (allElementsAfter.length > 0) {
         console.error('❌ [DIAGNOSTIC] Cleanup FAILED - elements still in DOM!');
         allElementsAfter.forEach((el, idx) => {
@@ -1056,11 +1131,11 @@
         });
       }
 
-      console.log('✅ [GLOBAL] Google search infrastructure cleaned up');
+      window.TowerScoutLogger.debug('✅ [GLOBAL] Google search infrastructure cleaned up');
     }
 
     cleanup() {
-      console.log('🧹 Starting Google Maps cleanup...');
+      window.TowerScoutLogger.debug('🧹 Starting Google Maps cleanup...');
 
       try {
         // 1. Cleanup drawing manager
@@ -1080,7 +1155,7 @@
           this.clearShapes();
         }
 
-        console.log('✅ Google Maps cleanup complete');
+        window.TowerScoutLogger.debug('✅ Google Maps cleanup complete');
       } catch (error) {
         console.error('❌ Error during Google Maps cleanup:', error);
         // Don't throw - allow cleanup to complete partially
@@ -1089,17 +1164,17 @@
 
     // ISSUE-002 FIX: Restore method to re-attach components after provider switch
     restore() {
-      console.log('🔄 Restoring Google Maps components after provider switch...');
+      window.TowerScoutLogger.debug('🔄 Restoring Google Maps components after provider switch...');
 
       try {
         // Re-initialize search if needed
         if (this.map) {
-          console.log('🔍 Re-biasing search to current map bounds...');
+          window.TowerScoutLogger.debug('🔍 Re-biasing search to current map bounds...');
           // Trigger bounds_changed to update PlaceAutocompleteElement
           google.maps.event.trigger(this.map, 'bounds_changed');
         }
 
-        console.log('✅ Google Maps restoration complete');
+        window.TowerScoutLogger.debug('✅ Google Maps restoration complete');
       } catch (error) {
         console.error('❌ Error during Google Maps restoration:', error);
         // Don't throw - allow app to continue even if restoration has issues
@@ -1111,5 +1186,5 @@
   // Export to window for global access (IIFE pattern)
   window.GoogleMap = GoogleMap;
 
-  console.log('✅ GoogleMap module loaded');
+  window.TowerScoutLogger.debug('✅ GoogleMap module loaded');
 })();

@@ -1,0 +1,69 @@
+TOWERSCOUT TESTER GUIDE: YOLO CACHE RECOVERY
+===========================================
+
+Last reviewed: 2026-04-09
+Audience: Windows testers using TowerScout locally
+
+WHEN TO USE THIS
+================
+
+Use these steps if TowerScout fails during `Find Towers` with an error like:
+- `No module named 'pkg_resources'`
+- or a message that says TowerScout could not refresh its pinned YOLOv5 Torch Hub cache
+
+This usually means your computer still has an older cached YOLOv5 Torch Hub snapshot, or the pinned TowerScout cache could not be refreshed cleanly.
+
+PREFERRED FIX
+=============
+
+1. Pull the latest TowerScout changes.
+2. Start the app again.
+3. Try `Find Towers` once more while connected to the internet.
+
+The latest TowerScout code should now:
+- load YOLOv5 from a pinned upstream commit instead of the moving default branch
+- ignore old `ultralytics_yolov5_master` caches during normal runtime
+- clear a bad pinned cache automatically if it finds one
+- retry one fresh download
+
+If that works, you are done.
+
+MANUAL FALLBACK
+===============
+
+If the error still happens, manually delete the cached YOLOv5 Torch Hub files and try again.
+
+If you are using `Miniconda Prompt` or `cmd.exe`, run:
+
+```bat
+rmdir /s /q "%USERPROFILE%\.cache\torch\hub\ultralytics_yolov5_master"
+rmdir /s /q "%USERPROFILE%\.cache\torch\hub\ultralytics_yolov5_1d62daa3c6b8ec15fdb319c0a2e341d8b56ec86c"
+del /f /q "%USERPROFILE%\.cache\torch\hub\master.zip"
+del /f /q "%USERPROFILE%\.cache\torch\hub\main.zip"
+del /f /q "%USERPROFILE%\.cache\torch\hub\1d62daa3c6b8ec15fdb319c0a2e341d8b56ec86c.zip"
+```
+
+Then restart TowerScout from the `webapp` folder:
+
+```bat
+python towerscout.py dev
+```
+
+Then try `Find Towers` again.
+
+IMPORTANT
+=========
+
+- You must be connected to the internet for the refresh to work.
+- GitHub access must be allowed on your machine/network.
+- This error is about the cached YOLO code, not your model weights.
+- On current TowerScout builds, older `master` cache folders are not the normal runtime path anymore.
+
+IF IT STILL FAILS
+=================
+
+Please report back with:
+- the exact new error message
+- whether you pulled the latest TowerScout changes first
+- whether the cache-delete commands ran successfully
+- whether GitHub is reachable from your machine

@@ -11,11 +11,13 @@ Bridge the gap between requirements and implementation.
   - **`current-tasks.md`**: Active sprint tasks and immediate work (primary source of truth for current work)
   - **`task-backlog.md`**: Future tasks organized by priority and dependencies
   - **`completed-tasks.md`**: Historical task completion record (last 4 weeks + archived)
-- **Individual task files**: `.agent_work/tasks/TASK-XXX-brief-name.md` for detailed task execution tracking (Type B/C only).
+- **Individual task files**: current sprint task docs live in `.agent_work/tasks/active/`, prior-sprint task docs live in `.agent_work/tasks/completed/`, and `.agent_work/tasks/` root should not hold loose task docs.
 - **Context Documentation**: Organized supporting documentation:
   - **`context/guides/`**: User-facing documentation, setup guides, deployment instructions
-  - **`context/analysis/`**: Technical reality checks, provider comparisons, architecture assessments
-  - **`context/status/`**: Progress tracking, workflow documents, commit readiness reports
+  - **`context/analysis/`**: Cross-task technical analysis and reality checks only
+  - **`context/status/`**: Active/current sprint status, retrospectives, and live workflow documents
+
+Use `.github/instructions/spec-driven-approach.instructions.md` as the authoritative source for `.agent_work` organization rules. If this AGENTS copy differs, follow the `.github` version.
 
 ## Integration Guidelines
 
@@ -41,6 +43,53 @@ Bridge the gap between requirements and implementation.
 - Create decision records for all architectural choices
 - Full impact analysis and migration planning
 - Examples: API key security fix, model optimization, major refactoring
+
+---
+
+### Real-World Examples from Sprint 03
+
+**Type A Example: ISSUE-001 (Dataset Upload Error Handling)**
+- **Scope**: Bug fix for dataset upload error handling
+- **Effort**: 3 hours (investigation + implementation + testing)
+- **Approach**: Abbreviated workflow - focused on implementation
+- **Key Changes**:
+  - Added try-except blocks for zipfile andJSON parsing errors
+  - Implemented HTTP status checking before JSON parsing
+  - User-friendly error notifications via TowerScoutErrorHandler
+- **Documentation**: Streamlined action log in integration test results
+- **Outcome**: Zero regressions, all upload scenarios passing
+
+**Type B Example: TASK-033 (Manual Tower Addition Feature)**
+- **Scope**: Feature development - restore manual tower drawing and export
+- **Effort**: 14.5 hours (saved 8 hours via discovery phase)
+- **Approach**: Full 6-phase spec-driven workflow
+- **Key Phases**:
+  - ANALYZE: Discovered existing infrastructure (TASK-019) during investigation
+  - DESIGN: Adapted plan to leverage existing drawing tools (8-hour savings)
+  - IMPLEMENT: Integration over recreation strategy
+  - VALIDATE: 10 of 13 acceptance criteria met (77%)
+- **Documentation**: Complete task file with requirements, design, implementation log
+- **Outcome**: Feature fully restored, CSV export enhanced with ML/Manual source column
+
+**Type C Example: TASK-039 (Google Maps API Migration)**
+- **Scope**: Architecture change - migrate from deprecated APIs to quarterly version
+- **Effort**: 23 hours total (Phases 5-6 in Sprint 03)
+- **Approach**: Full spec-driven workflow with enhanced documentation
+- **Key Decisions**:
+  - Replace SearchBox with PlaceAutocompleteElement Web Component
+  - Custom polygon drawing replaces deprecated DrawingManager
+  - Quarterly version with automatic minor updates
+- **Documentation**: Complete decision records, migration patterns, testing validation
+- **Outcome**: Zero deprecation warnings, modern API usage, improved UX
+
+**Sprint 03 Workflow Effectiveness Validation**:
+- **Tasks Completed**: 8 of 8 (100%)
+- **Sprint Completion**: 6 days ahead of schedule
+- **Zero Regressions**: All legacy features operational
+- **Quality**: Clean console output, comprehensive testing
+- **Learning**: Discovery phases save significant time (TASK-033: 8 hours saved)
+
+---
 
 ### User Interaction Protocol
 
@@ -438,8 +487,8 @@ Each requirement must be:
 ```
 
 **Individual Task File Organization:**
-- **Active work**: Individual task files accessible via `tasks/active/` (symlinked for quick access)
-- **Completed work**: Files moved to `tasks/completed/` upon task completion
+- **Active work**: Keep current sprint task files in `tasks/active/`, even if they are already marked `COMPLETED`
+- **Completed work**: Move the finished sprint batch to `tasks/completed/` during sprint closeout
 - **Complex tasks**: Maintain subfolder structure (e.g., `TASK-008/`) for multi-phase work
 
 **Task File Naming Convention:**
@@ -536,8 +585,8 @@ Use abbreviated entries in Action Documentation Template format for tracking Typ
 2. **Sprint Planning**: Move 3-5 tasks from `task-backlog.md` to `current-tasks.md`
 3. **Task Start (Type B/C)**:
    - Update status to IN_PROGRESS in `current-tasks.md`
-   - Create task file: `.agent_work/tasks/TASK-XXX-brief-name.md`
-   - Create symlink in `tasks/active/` for quick access
+   - Create task file: `.agent_work/tasks/active/TASK-XXX-brief-name.md`
+   - Create an optional same-ID support folder under `tasks/active/` when the task needs local decision memos, proof docs, or evidence
 4. **Implementation**:
    - Log all work in Implementation Log section of task file
    - Update `current-tasks.md` status to reflect progress
@@ -547,7 +596,7 @@ Use abbreviated entries in Action Documentation Template format for tracking Typ
    - Ensure all acceptance criteria are verified
 6. **Completion**:
    - Update status to COMPLETED in `current-tasks.md`
-   - Move individual task file from `tasks/active/` to `tasks/completed/`
+   - Keep the task file in `tasks/active/` for the rest of the sprint, then move the finished sprint batch to `tasks/completed/` during sprint closeout
    - During sprint retrospective, move entry to `completed-tasks.md`
 
 **Task Start (Type A):**
@@ -569,8 +618,8 @@ Use abbreviated entries in Action Documentation Template format for tracking Typ
 - **Maintenance**: Weekly archival from `completed-tasks.md` to reduce cognitive load
 
 **Task File Organization:**
-- **Active tasks**: Keep individual task files in `tasks/active/` (symlinked for quick access)
-- **Completed tasks**: Move individual task files to `tasks/completed/` upon completion
+- **Active tasks**: `tasks/active/` contains the current sprint task files
+- **Completed tasks**: `tasks/completed/` contains prior-sprint task files
 - **Complex tasks**: Maintain subfolder structure (e.g., `TASK-008/`) for multi-phase work
 - **Preservation**: All detailed task documentation preserved for historical reference
 
@@ -637,7 +686,7 @@ Use abbreviated entries in Action Documentation Template format for tracking Typ
 - [ ] **Effort estimation** - refine effort estimates based on recent completion times
 
 **File Organization:**
-- [ ] **Task file movement** - move completed individual task files from `tasks/active/` to `tasks/completed/`
+- [ ] **Task file movement** - move the finished sprint batch from `tasks/active/` to `tasks/completed/` at sprint closeout
 - [ ] **Context file review** - update any analysis documents affected by sprint work
 - [ ] **Cross-reference validation** - ensure all links between task files and context files are valid
 
@@ -662,3 +711,46 @@ Use abbreviated entries in Action Documentation Template format for tracking Typ
 - [ ] **Sprint transition**: Template for moving tasks between files and folders
 - [ ] **Task creation**: Standard template application and proper folder placement
 - [ ] **Status change**: Automatic timestamp updates for task transitions and file movements
+
+---
+
+## 📚 Workflow Examples & Validation
+
+For real-world examples of the spec-driven workflow in practice:
+
+### Completed Task Examples
+- [Completed Tasks Archive](../.agent_work/tasks/completed/) - Browse individual task files showing workflow execution
+  - `TASK-033-manual-tower-addition.md` - Type B feature development example
+  - `TASK-036-export-system.md` - Type B with infrastructure discovery
+  - `TASK-039-google-maps-api-migration.md` - Type C architecture change
+  - `TASK-041-memory-management.md` - Type C performance optimization
+  - `TASK-043-global-variable-deprecation.md` - Type C refactoring
+
+### Sprint Retrospectives (Workflow Validation)
+- [Sprint 03 Retrospective](../.agent_work/context/status/SPRINT-03-RETROSPECTIVE.md) - Recent sprint workflow effectiveness analysis
+  - 8 of 8 tasks completed (100%)
+  - Completed 6 days ahead of schedule
+  - Discovery phase savings (TASK-033: 8 hours saved)
+  - Zero regressions across all changes
+- [Sprint 01 Retrospective](../.agent_work/context/status/SPRINT-01-RETROSPECTIVE.md) - Initial workflow establishment
+- [Sprint 02 Retrospective](../.agent_work/context/status/SPRINT-02-RETROSPECTIVE.md) - Workflow refinement
+
+### Decision Record Examples
+- [Decision Records](../.agent_work/decisions/) - Architectural decision documentation
+  - `003-security-first-approach.md` - Security design principles
+  - `014-provider-lock-after-detection.md` - Provider switching constraints
+  - `015-global-variable-migration-patterns.md` - Migration patterns and rationale
+
+### Testing & Validation Methodology
+- [Phase 5 Integration Testing Guide](../.agent_work/context/status/PHASE-5-INTEGRATION-TESTING-GUIDE.md) - Comprehensive validation procedures
+- [Phase 5 Test Results](../.agent_work/context/status/PHASE-5-TEST-RESULTS.md) - Sprint 03 testing outcomes
+- [User Journey Guide](../.agent_work/context/guides/USER-JOURNEY-GUIDE.md) - 4-stage testing methodology
+
+### Task Management Files
+- [Current Sprint Tasks](../.agent_work/current-tasks.md) - Active Sprint 04 work (primary source of truth)
+- [Task Backlog](../.agent_work/task-backlog.md) - Future work prioritization
+- [Completed Tasks](../.agent_work/completed-tasks.md) - Historical sprint completions (last 4 weeks)
+
+### Requirements & Design Documentation
+- [Requirements](../.agent_work/requirements.md) - Project requirements in EARS notation
+- [Design](../.agent_work/design.md) - Technical architecture and implementation considerations

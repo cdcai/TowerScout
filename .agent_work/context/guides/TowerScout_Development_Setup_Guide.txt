@@ -1,876 +1,443 @@
-TOWERSCOUT DEVELOPMENT ENVIRONMENT SETUP GUIDE
-==============================================
-
-This guide provides step-by-step instructions to set up a complete TowerScout development environment on a new system and continue work from the current state.
-
-SYSTEM REQUIREMENTS
-==================
-
-Hardware Requirements:
-- 8GB+ RAM (16GB recommended for GPU processing)
-- 10GB+ available disk space
-- GPU with CUDA support (optional - CPU fallback available)
-- Reliable internet connection for downloading dependencies and model weights
-
-Software Requirements:
-- Windows 10/11, macOS 10.15+, or Linux (Ubuntu 20.04+ recommended)
-- Git 2.30+
-- Python 3.12+ (3.12.x specifically recommended)
-- VS Code (recommended IDE) or PyCharm
-- Docker Desktop (optional but recommended for deployment testing)
-
-STEP 1: INITIAL SYSTEM SETUP
-============================
-
-1.1 Install Git
----------------
-Windows: Download from https://git-scm.com/download/win
-macOS: Install via Homebrew: brew install git
-Linux: sudo apt update && sudo apt install git
-
-Verify installation: git --version
-
-1.2 Install Python 3.12
------------------------
-Windows: 
-- Download from https://www.python.org/downloads/
-- During installation, check "Add Python to PATH"
-- Verify: python --version and pip --version
-
-macOS:
-- Use Homebrew: brew install python@3.12
-- Add to PATH if needed
-- Verify: python3.12 --version
-
-Linux (Ubuntu):
-- sudo apt update
-- sudo apt install software-properties-common
-- sudo add-apt-repository ppa:deadsnakes/ppa
-- sudo apt install python3.12 python3.12-pip python3.12-venv
-- Verify: python3.12 --version
-
-1.3 Install VS Code (Recommended)
----------------------------------
-Download from: https://code.visualstudio.com/
-Install recommended extensions:
-- Python
-- Pylance
-- Python Debugger
-- GitLens
-- Docker (if using Docker)
-
-1.4 Install Docker Desktop (Optional)
-------------------------------------
-Download from: https://www.docker.com/products/docker-desktop
-Required for testing containerized deployment
-Follow platform-specific installation instructions
-
-STEP 2: CLONE REPOSITORY AND SETUP PROJECT
-==========================================
-
-2.1 Clone the Repository
-------------------------
-Open terminal/command prompt and navigate to desired project directory:
-
-git clone https://github.com/J-Schulein/TowerScout.git
-cd TowerScout
-
-# Switch to the improvements branch (where current work is)
-git checkout improvements
-
-# Verify you're on the correct branch
-git branch
-# Should show: * improvements
-
-2.2 Set Up Python Virtual Environment
-------------------------------------
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-# Windows (Command Prompt):
-venv\Scripts\activate
-
-# Windows (PowerShell):
-venv\Scripts\Activate.ps1
-
-# macOS/Linux:
-source venv/bin/activate
-
-# Verify activation - prompt should show (venv)
-
-2.3 Install Python Dependencies
-------------------------------
-# Upgrade pip first
-pip install --upgrade pip
-
-# Install main dependencies
-cd webapp
-pip install -r requirements.txt
-
-# Install development dependencies (from project root)
-cd ..
-pip install -r requirements-dev.txt
-
-# If requirements-dev.txt doesn't exist yet, install these manually:
-pip install pytest pytest-cov black flake8 mypy
-
-STEP 3: DOWNLOAD MODEL WEIGHTS
-=============================
-
-The ML models are not stored in git due to size. Download them manually:
-
-3.1 Create Model Directories
-----------------------------
-mkdir -p webapp/model_params/yolov5
-mkdir -p webapp/model_params/EN
-
-3.2 Download YOLOv5 Weights
---------------------------
-# Download newest.pt from Google Drive (link in project documentation)
-# Place in: webapp/model_params/yolov5/newest.pt
-
-# If you have access to the original Google Drive:
-# https://drive.google.com/file/d/[FILE_ID]/view
-# Download and save as webapp/model_params/yolov5/newest.pt
-
-3.3 Download EfficientNet Weights
----------------------------------
-# Download b5_unweighted_best.pt from Google Drive
-# Place in: webapp/model_params/EN/b5_unweighted_best.pt
-
-# Alternative: Copy from existing TowerScout installation if available
-
-3.4 Verify Model Files
-----------------------
-# Check that files exist and have reasonable sizes
-ls -la webapp/model_params/yolov5/newest.pt        # Should be ~50-100MB
-ls -la webapp/model_params/EN/b5_unweighted_best.pt # Should be ~20-50MB
-
-STEP 4: ENVIRONMENT CONFIGURATION
+TOWERSCOUT DEVELOPMENT SETUP GUIDE
 =================================
 
-4.1 Create Environment Variables File
-------------------------------------
-Create .env file by copying the example template:
-
-# Copy the template (recommended)
-cp webapp/.env.example webapp/.env  # Linux/macOS
-copy webapp\.env.example webapp\.env  # Windows
-
-# OR manually create .env file in webapp/ directory
-# touch webapp/.env  # Linux/macOS
-
-Edit webapp/.env with your actual values:
-
-# Required API Keys (get from cloud providers)
-GOOGLE_API_KEY=your_google_maps_api_key_here
-AZURE_MAPS_SUBSCRIPTION_KEY=your_azure_maps_subscription_key_here
-BING_API_KEY=your_bing_maps_api_key_here  # Legacy provider
-
-# Required Flask Configuration
-FLASK_SECRET_KEY=your_flask_secret_key_here  # Generate with: python -c "import secrets; print(secrets.token_hex(32))"
-FLASK_ENV=development
-FLASK_DEBUG=true
-
-# Application Settings (optional, defaults provided)
-MAX_TILES=100000
-MAX_TILES_SESSION=100000
-UPLOAD_FOLDER=uploads
-
-4.2 Obtain API Keys
-------------------
-Google Maps API:
-1. Go to https://console.cloud.google.com/
-Azure Maps API (Primary - OPERATIONAL):
-1. Go to https://portal.azure.com/
-2. Create Azure Maps Account resource
-3. Navigate to Keys and Endpoint
-4. Copy Primary Key
-5. Add key to .env file as AZURE_MAPS_SUBSCRIPTION_KEY
-6. ✅ Azure Maps provider is fully operational with 32% performance improvement
-
-Google Maps API (Alternative):
-1. Go to https://console.cloud.google.com/
-2. Create new project or select existing
-3. Enable Maps JavaScript API and Static Maps API
-4. Create API key in Credentials section
-5. Add key to .env file as GOOGLE_API_KEY
-
-Bing Maps API (DEPRECATED):
-1. ⚠️  Bing Maps provider is deprecated and no longer recommended
-2. Azure Maps provides equivalent functionality with better performance
-3. Legacy support maintained for existing configurations only
-4. Migrate to Azure Maps for new deployments
-
-4.3 Generate Secret Key
-----------------------
-# Generate secure secret key for Flask sessions
-python -c "import secrets; print(secrets.token_hex(32))"
-# Copy output to SECRET_KEY in .env file
-
-STEP 5: DATABASE AND GEOGRAPHIC DATA SETUP
-==========================================
-
-5.1 Verify Geographic Data
---------------------------
-# Check that Census TIGER data exists
-ls webapp/data/tl_2025_us_zcta520/
-
-# Files should include:
-# - tl_2025_us_zcta520.shp
-# - tl_2025_us_zcta520.dbf
-# - tl_2025_us_zcta520.shx
-# - tl_2025_us_zcta520.prj
-
-# If missing, download from:
-# https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html
-
-5.2 Create Upload Directory
---------------------------
-mkdir -p webapp/uploads
-mkdir -p webapp/flask_session
-
-# Set permissions (Linux/macOS)
-chmod 755 webapp/uploads
-chmod 755 webapp/flask_session
-
-STEP 6: VERIFY INSTALLATION
-==========================
-
-6.1 Run Basic Tests
-------------------
-# From project root, run existing tests
-pytest tests/ -v
-
-# Should show tests passing (some may be skipped if components not ready)
-
-6.2 Test Flask Application
--------------------------
-# From webapp directory
-cd webapp
-python towerscout.py dev
-
-# Should start without errors and show:
-# * Running on http://127.0.0.1:5000
-# * Debug mode: on
-
-# Open browser to http://127.0.0.1:5000
-# Should see TowerScout interface
-
-6.3 Test Core Components
------------------------
-# Test model imports and core systems
-cd webapp
-python -c "
-from ts_yolov5 import TSYolov5
-from ts_en import TSEfficientNet
-from ts_azure_maps import AzureMaps
-from ts_errors import TowerScoutError
-from ts_logging import setup_logging
-from ts_validation import validate_polygon
-print('All core systems import successfully')
-"
-
-# Should complete without errors
-# If Azure Maps key not configured, that component will show a warning but won't fail
-
-STEP 7: IDE CONFIGURATION
-========================
-
-7.1 VS Code Setup
-----------------
-# Open project in VS Code
-code .
-
-# Configure Python interpreter:
-# 1. Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
-# 2. Type "Python: Select Interpreter"
-# 3. Choose the venv interpreter: ./venv/Scripts/python.exe (Windows) or ./venv/bin/python (macOS/Linux)
-
-# Install recommended extensions if prompted
-
-7.2 Configure Debugging
-----------------------
-Create .vscode/launch.json:
-
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Python: Flask",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/webapp/towerscout.py",
-            "args": ["dev"],
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/webapp",
-            "env": {
-                "FLASK_ENV": "development",
-                "FLASK_DEBUG": "1"
-            },
-            "jinja": true
-        },
-        {
-            "name": "Python: Pytest",
-            "type": "python",
-            "request": "launch",
-            "module": "pytest",
-            "args": ["tests/", "-v"],
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}"
-        }
-    ]
-}
-
-7.3 Configure Linting
----------------------
-Create .vscode/settings.json:
-
-{
-    "python.linting.enabled": true,
-    "python.linting.flake8Enabled": true,
-    "python.linting.pylintEnabled": false,
-    "python.formatting.provider": "black",
-    "python.formatting.blackArgs": ["--line-length=88"],
-    "editor.formatOnSave": true,
-    "python.testing.pytestEnabled": true,
-    "python.testing.pytestArgs": ["tests"],
-    "python.testing.unittestEnabled": false
-}
-
-STEP 8: VERIFY CURRENT PROJECT STATE
-====================================
-
-8.1 Check Current Branch and Status
------------------------------------
-git status
-git log --oneline -10
-
-# Should show you're on 'improvements' branch
-# Recent commits should include Sprint 01-02 achievements
-
-8.2 Project Status Summary (Updated March 2026)
------------------------------------------------
-SPRINT 01 COMPLETED (December 2025 - January 2026):
-✅ TASK-001: API Key Security Migration
-✅ TASK-002: Input Validation System
-✅ TASK-006: Azure Maps Provider Implementation
-✅ TASK-007: Error Handling Infrastructure
-✅ TASK-008: Logging System Implementation
-✅ TASK-021: Frontend Detection Display Debugging
-✅ TASK-030: Azure Maps Independence & Performance (32% improvement)
-
-SPRINT 02 COMPLETED (February - March 2026):
-✅ TASK-038: Frontend Refactoring (Modularization)
-   - 5,272-line monolithic towerscout.js → 27 modular files
-   - 7 directories: managers/, boundaries/, providers/, detection/, ui/, utils/, src/
-   - Concatenation-based build system with pre-commit hooks
-   - Build time: <2 seconds, bundle: 319.0 KB
-
-✅ TASK-041: State Management Improvements
-   - ProviderStateManager centralized state management
-   - Mutex-protected detection array mutations
-   - Progress timer lifecycle management
-   - Memory management: 0.7% DECREASE in 20-cycle stress test
-
-✅ TASK-042: Manual Testing Validation
-   - 4-stage user journey validation methodology
-   - Performance benchmarks: 24 tiles ~70s, 57 tiles ~160s
-   - Zero JavaScript errors in console throughout workflow
-   - Cross-provider testing validated
-
-✅ TASK-043: Global Variable Deprecation System
-   - Property descriptors with migration warnings
-   - Progressive migration from 150+ global variable references
-   - Decision record with migration patterns documented
-
-✅ TASK-045: Boundary Accumulation Bug Fix
-   - Fixed stale boundaries appearing in independent detection runs
-   - Validated with 3 consecutive independent tests
-   - Clear-and-rebuild pattern documented
-
-CURRENT ARCHITECTURE:
-- Frontend: Modular JavaScript with 27 files, IIFE pattern, mutex-protected state
-- Backend: Flask with async tile processing, lazy-loaded ML models
-- State Management: ProviderStateManager with deprecation guidance
-- Map Providers: Azure Maps (primary), Google Maps (alternative)
-- Build System: Concatenation-based, pre-commit hooks, <2s builds
-- Testing: Manual 4-stage validation, unit tests, integration tests
-
-8.3 Verify Core Systems
------------------------
-# Test that Sprint 01-02 systems are operational:
-
-# 1. Frontend modular architecture
-cd webapp/js/src
-ls -la  # Should show: boundaries/, detection/, managers/, providers/, ui/, utils/
-cd ../..
-
-# 2. Build system
-node build.js  # Should complete in <2 seconds, output bundle size
-
-# 3. Environment configuration
-python -c "
-import os
-from dotenv import load_dotenv
-load_dotenv()
-assert os.getenv('GOOGLE_API_KEY') or os.getenv('AZURE_MAPS_SUBSCRIPTION_KEY'), 'API key missing'
-print('✅ Environment variables configured')
-"
-
-# 4. Core backend systems (Sprint 01)
-python -c "
-import sys
-sys.path.append('webapp')
-from ts_yolov5 import TSYolov5
-from ts_en import TSEfficientNet
-from ts_azure_maps import AzureMaps
-from ts_errors import TowerScoutError
-from ts_logging import setup_logging
-from ts_validation import validate_polygon
-print('✅ All Sprint 01 backend systems operational')
-"
-
-# 5. State management (Sprint 02)
-# Start Flask app and open browser console
-# Should see: "✅ TowerScout initialized successfully"
-# Should see deprecation warnings for global variable usage (expected during migration)
-
-8.4 Performance Expectations
-----------------------------
-Based on TASK-042 validation:
-
-Detection Performance:
-- 24 tiles: ~70 seconds (~158 detections)
-- 57 tiles: ~160 seconds (~430 detections)
-- Mission-critical target: <100 tiles in ~30 seconds
-
-Memory Management (TASK-041):
-- Baseline: 28.6 MB
-- After 20 detection cycles: 28.4 MB
-- Change: -0.7% (memory DECREASED!)
-
-Build System:
-- Build time: <2 seconds
-- Bundle size: 319.0 KB
-- Source files: 27 modules across 7 directories
-
-Geocoding Limits:
-- Azure Maps: ~370 detections per batch (rate limiting)
-- Google Maps: Higher limits but slower response
-
-8.5 Identify Next Tasks
-----------------------
-# Current priorities (refer to .agent_work/current-tasks.md):
-# SPRINT 03 (Planned):
-# 🔄 TASK-044: Documentation Updates (IN PROGRESS)
-# ⏳ TASK-046: Complete Global Variable Migration (20 critical globals remaining)
-# ⏳ TASK-047: Enhanced Error Boundaries
-# ⏳ TASK-048: Provider Switching Visibility Improvements (NEW-ISSUE-006)
-
-# SPRINT 04+ (Backlog):
-# ⏳ TASK-035: Docker containerization for easy local deployment
-# ⏳ TASK-031: Create user-friendly onboarding guides
-# ⏳ TASK-032: Optimize image processing performance
-# ⏳ TASK-009: Azure Key Vault Integration (DEFERRED - optional for enterprise)
-# ⏳ TASK-004: Basic Authentication System
-
-STEP 9: TROUBLESHOOTING COMMON ISSUES
-=====================================
-
-9.1 Python/Pip Issues
----------------------
-Issue: "python not found"
-Solution: Ensure Python is in PATH, use full path, or try python3/python3.12
-
-Issue: "pip install fails"
-Solution: Upgrade pip: python -m pip install --upgrade pip
-
-Issue: "Permission denied"
-Solution: Use virtual environment, avoid sudo/admin installation
-
-9.2 Model Loading Issues
------------------------
-Issue: "Model file not found"
-Solution: Verify model files exist in correct directories with correct names
-
-Issue: "CUDA out of memory"
-Solution: Reduce batch size in ts_yolov5.py or force CPU mode
-
-Issue: "Torch/CUDA version mismatch"
-Solution: Reinstall PyTorch with correct CUDA version for your GPU
-
-9.3 API Key Issues
------------------
-Issue: "API key not loaded"
-Solution: Verify webapp/.env file exists and contains correct keys
-
-Issue: "Maps not loading"
-Solution: Check API key validity and quota limits in cloud console
-
-Issue: "Azure Maps authentication failed"
-Solution: Verify AZURE_MAPS_SUBSCRIPTION_KEY in .env file, check Azure portal for key status
-
-Issue: "No map providers available"
-Solution: At least one API key (Google, Azure, or Bing) must be configured
-
-9.4 Flask Application Issues
----------------------------
-Issue: "Port already in use"
-Solution: Kill process on port 5000 or use different port
-
-Issue: "Template not found"
-Solution: Ensure working directory is webapp/ when running towerscout.py
-
-Issue: "Session errors"
-Solution: Clear flask_session directory and restart application
-
-9.5 Frontend Build Issues (Sprint 02)
--------------------------------------
-Issue: "towerscout.js outdated after source changes"
-Solution: Run node build.js to rebuild bundle, or git pre-commit hook should auto-rebuild
-
-Issue: "Build script fails"
-Solution: Ensure Node.js installed (node --version), check build.js syntax
-
-Issue: "Module dependencies out of order"
-Solution: Check build.js sourceFiles array follows dependency order (config → store → managers → providers → ui → main)
-
-9.6 Detection Workflow Issues
------------------------------
-Issue: "Stale boundaries appearing in detection results" (RESOLVED - TASK-045)
-Status: ✅ FIXED in Sprint 02
-Solution: Update to latest improvements branch. Fix: Clear-and-rebuild pattern with resetBoundaries() before detection.
-If still occurring: Verify both providers synchronized, check console for boundary clearing logs.
-
-Issue: "Interactive highlighting not working" (RESOLVED - TASK-042)
-Status: ✅ FIXED in Sprint 02
-Solution: Update to latest improvements branch. Fix: Bidirectional event handlers (marker ↔ list item) with proper event listener management.
-If still occurring: Check browser console for JavaScript errors, verify EventListenerManager tracking listeners.
-
-Issue: "Memory increases after multiple detections" (RESOLVED - TASK-041)
-Status: ✅ FIXED in Sprint 02
-Solution: Update to latest improvements branch. Fix: ProviderStateManager with mutex-protected state and lifecycle managers.
-Performance: Memory now DECREASES by 0.7% after 20 detection cycles.
-If still occurring: Clear browser cache, check for orphaned timers in console.
-
-Issue: "Azure Maps visual inconsistency with Google Maps" (RESOLVED - TASK-040)
-Status: ✅ FIXED in Sprint 01
-Solution: Update to latest improvements branch. Fix: Transparency and styling parity between providers.
-If still occurring: Verify Azure Maps SDK version matches ts_azure_maps.py requirements.
-
-Issue: "Race conditions during provider switching" (RESOLVED - TASK-043)
-Status: ✅ FIXED in Sprint 02
-Solution: Update to latest improvements branch. Fix: ProviderStateManager initialization tracking with phase management.
-If still occurring: Check console for deprecation warnings, ensure using providerManager API not globals.
-
-9.7 Geocoding Rate Limiting (KNOWN LIMITATION)
-----------------------------------------------
-Issue: "Detections stop at ~370 results"
-Status: ⚠️  Expected behavior with Azure Maps
-Explanation: Azure Maps geocoding API has rate limits (~370 requests per batch)
-Solution: 
-- For <370 detections: No action needed
-- For >370 detections: Results processed in batches, some addresses may be incomplete
-- Alternative: Switch to Google Maps provider (higher limits but slower)
-Mitigation: Batch processing and retry logic implemented in ts_geocoding.py
-
-9.8 Provider Switching Visibility (KNOWN ISSUE - NEW-ISSUE-006)
----------------------------------------------------------------
-Issue: "Provider switch completes instantly - user can't tell change in progress"
-Status: ⚠️  Planned for Sprint 03 (TASK-048)
-Explanation: No loading indicator during provider map initialization
-Workaround: Wait 1-2 seconds after clicking provider switch button
-Planned Fix: Add loading overlay, initialization progress indicators
-
-9.9 JavaScript Console Warnings (EXPECTED DURING MIGRATION)
------------------------------------------------------------
-Warning: "[DEPRECATED] Direct access to window.googleMap..."
-Status: ⏳ Expected during global variable migration (Sprint 02-03)
-Explanation: Property descriptors guide migration from globals to ProviderStateManager
-Expected Count: ~150+ warnings during typical session
-Action: No action needed - warnings guide refactoring, not errors
-Timeline: Complete migration planned for TASK-046 (Sprint 03)
-
-STEP 10: DEVELOPMENT WORKFLOW
+Last reviewed: 2026-04-09
+Audience: developers and technical contributors
+
+PURPOSE
+=======
+
+This guide reflects the current TowerScout repository state. It replaces older setup instructions that still assumed the `improvements` branch, manual `.env` editing as the primary setup path, and Sprint 02/03-era architecture.
+
+CURRENT REALITY CHECK
+=====================
+
+- Use `feature-sprint-05` for the current Sprint 05 task state, including the completed `TASK-051` runtime-dependency updates.
+- Use `feature-sprint-04-closeout` only if you explicitly need the pre-Sprint 05 closeout snapshot.
+- Setup Wizard and Settings are implemented. Normal provider-key setup can now happen in the browser.
+- Google Maps and Azure Maps are the supported setup paths. Bing remains legacy compatibility only.
+- Docker is not part of the active local development path. There is no `Dockerfile` in the repo today.
+- ZIP code shapefile data is already tracked in `webapp/data/tl_2025_us_zcta520/`. You should not need to download it separately.
+- Model weights are still not stored in git. You must provide them locally before the app can start successfully.
+
+SYSTEM REQUIREMENTS
+===================
+
+Recommended:
+- Windows 10/11, macOS, or Linux
+- Git 2.30+
+- Python 3.12 recommended, Python 3.11 also supported in CI
+- `pip` from the same Python installation
+- Node.js 16+ if you will rebuild frontend assets or run browser smoke tests
+- 10 GB+ free disk space
+- Reliable internet connection for dependency installation and live provider APIs
+- One valid Google Maps key or Azure Maps key for normal app usage
+
+Optional:
+- CUDA-capable GPU for faster detection
+- VS Code, Cursor, or another IDE
+
+NOT required for current local development:
+- Docker Desktop
+
+QUICK START
+===========
+
+1. Clone the repo and switch to the branch you need.
+2. Create a Python virtual environment.
+3. Install Python dependencies.
+4. Install Node dependencies only if you need frontend builds or browser tests.
+5. Download the two model weight files into `webapp/model_params/`.
+6. Start the app with `python towerscout.py dev`.
+7. Complete Setup Wizard in the browser if no provider key is already saved.
+
+STEP 1: CLONE THE REPOSITORY
 ============================
 
-10.1 Daily Development Routine
-------------------------------
-1. Pull latest changes: git pull origin improvements
-2. Activate virtual environment: venv/Scripts/activate (Windows) or source venv/bin/activate (Unix)
-3. Check for dependency updates: pip install -r requirements.txt
-4. Run tests to ensure everything works: pytest tests/
-5. Start development server: cd webapp && python towerscout.py dev
+Typical clone:
 
-10.2 Making Changes
-------------------
-1. Create feature branch: git checkout -b feature/your-feature-name
-2. Make changes following project coding standards
-3. Run tests: pytest tests/
-4. Run linting: flake8 webapp/
-5. Format code: black webapp/
-6. Commit changes: git add . && git commit -m "descriptive message"
-7. Push to repository: git push origin feature/your-feature-name
+```bash
+git clone https://github.com/J-Schulein/TowerScout.git
+cd TowerScout
+```
 
-10.3 Frontend Development Workflow (Updated Sprint 02)
-------------------------------------------------------
-# Modular source files located in webapp/js/src/
-# Bundle generated at webapp/js/towerscout.js
+If you want the current Sprint 05 application state:
 
-# Manual build (when source files change):
-cd webapp
-node build.js
+```bash
+git checkout feature-sprint-05
+```
 
-# Verify build output:
-# - Should complete in <2 seconds
-# - Shows module count and bundle size (~319 KB)
-# - Creates webapp/js/towerscout.js
+If you need the Sprint 04 closeout application state instead:
 
-# Automatic build via pre-commit hook:
-# - Git hook automatically rebuilds when src/ files staged
-# - No manual build.js needed if using git workflow
-# - Hook adds towerscout.js to commit automatically
+```bash
+git checkout feature-sprint-04-closeout
+```
 
-# Frontend file structure:
-webapp/js/src/
-├── config.js              # Configuration constants
-├── store.js               # ProviderStateManager (state management)
-├── globals.js             # Global utilities
-├── managers/              # Lifecycle managers (timer, event, error)
-├── boundaries/            # Boundary implementations (circle, polygon, rectangle)
-├── providers/             # Map providers (Google Maps, Azure Maps)
-├── detection/             # Detection display and confidence filtering
-├── ui/                    # UI modules (search, controls, results)
-├── utils/                 # Utility functions
-└── towerscout.js          # Main initialization (loaded last)
+If you are continuing active development work, use the branch assigned to your task instead of assuming `improvements`.
 
-10.4 Testing Workflow
---------------------
-# Run all tests
-pytest tests/ -v
+STEP 2: CREATE A PYTHON VIRTUAL ENVIRONMENT
+===========================================
 
-# Run specific test file
-pytest tests/unit/test_validation.py -v
+Windows PowerShell:
 
-# Run with coverage
-pytest tests/ --cov=webapp --cov-report=html
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
 
-# Manual frontend testing (4-stage methodology from TASK-042):
-# 1. Start Flask: cd webapp && python towerscout.py dev
-# 2. Open browser: http://127.0.0.1:5000
-# 3. Open console: F12 (verify "✅ TowerScout initialized successfully")
-# 4. Execute user journey:
-#    - Stage 0: Initialization (verify both providers load)
-#    - Stage 1: Location search (address, zipcode, manual polygon)
-#    - Stage 2: Detection execution (verify progress, results display)
-#    - Stage 3: Result review (list↔map highlighting, confidence filtering, export)
-# 5. Monitor console for errors (should be zero JavaScript errors)
-# 6. Check memory tab for leaks (memory should remain stable or decrease)
+If Python 3.12 is not installed, replace `3.12` with `3.11`.
 
-# Run linting
-flake8 webapp/
+macOS/Linux:
 
-# Format code
-black webapp/
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+```
 
-STEP 11: RESUMING SPECIFIC WORK
-==============================
-
-11.1 Current Work Context (Updated March 2026)
-----------------------------------------------
-Based on .agent_work/current-tasks.md, the immediate priorities are:
-
-SPRINT 02 CLOSEOUT (IN PROGRESS):
-1. TASK-044: Documentation Updates
-   - Update AGENTS.md folder with Sprint 01-02 achievements
-   - Update setup guides with troubleshooting and performance expectations
-   - Create Developer-Architecture-Guide.md with ProviderStateManager details
-   - Status: FINAL TASK of Sprint 02 (4 of 5 complete)
-
-SPRINT 03 PRIORITIES (NEXT):
-1. TASK-046: Complete Global Variable Migration
-   - Migrate remaining 20 critical globals to ProviderStateManager
-   - Remove property descriptor deprecation warnings
-   - Complete state encapsulation
-   - Estimated: 8-12 hours
-
-2. TASK-047: Enhanced Error Boundaries
-   - Add user-friendly error recovery UI
-   - Implement retry mechanisms for failed operations
-   - Add diagnostic information for troubleshooting
-   - Estimated: 8-12 hours
-
-3. TASK-048: Provider Switching Visibility
-   - Add loading overlay during provider initialization
-   - Show initialization progress indicators
-   - Address NEW-ISSUE-006
-   - Estimated: 4-6 hours
-
-11.2 Files to Focus On (Sprint 02-03 Priorities)
-------------------------------------------------
-Frontend State Management (Sprint 02-03):
-- webapp/js/src/store.js (ProviderStateManager implementation)
-- webapp/js/src/managers/ (lifecycle managers: timer, event, error)
-- webapp/js/src/providers/ (Google Maps, Azure Maps implementations)
-- webapp/js/src/detection/ (detection display, confidence filtering)
-- webapp/js/src/ui/ (search, controls, results display)
-- webapp/js/build.js (build system for modular frontend)
-
-Backend Core Systems (Sprint 01):
-- webapp/towerscout.py (main Flask app with error handling)
-- webapp/ts_azure_maps.py (Azure Maps provider - optimized 32%)
-- webapp/ts_errors.py (error handling system)
-- webapp/ts_logging.py (logging system with sanitization)
-- webapp/ts_validation.py (comprehensive input validation)
-- webapp/ts_geocoding.py (geocoding with caching and rate limiting)
-
-Testing and Documentation:
-- tests/unit/ & tests/integration/ (expanded test structure)
-- tests/frontend/ (frontend testing scripts and HTML test harness)
-- .agent_work/tasks/ (detailed task specifications and progress)
-- .agent_work/context/ (guides, analysis, status documentation)
-- AGENTS.md/ (agent instructions updated for Sprint 01-02)
-
-11.3 Development Commands (Current Sprint Context)
---------------------------------------------------
-# Start development server with full frontend stack
-cd webapp
-node build.js  # Rebuild frontend bundle if needed
-python towerscout.py dev
-
-# Run in VS Code debugger
-# Use "Python: Flask" launch configuration
-
-# Test Sprint 01-02 systems
-python -c "
-import sys
-sys.path.append('webapp')
-
-# Sprint 01: Backend systems
-from ts_validation import validate_polygon
-from ts_azure_maps import AzureMaps
-from ts_errors import TowerScoutError
-from ts_logging import setup_logging
-print('✅ Sprint 01 backend systems operational')
-
-# Sprint 02: Build system
-import subprocess
-result = subprocess.run(['node', 'build.js'], cwd='webapp', capture_output=True)
-if result.returncode == 0:
-    print('✅ Sprint 02 build system operational')
-else:
-    print('❌ Build system error:', result.stderr.decode())
-"
-
-# Monitor frontend state management (Sprint 02)
-# 1. Start Flask app: cd webapp && python towerscout.py dev
-# 2. Open browser console (F12)
-# 3. Verify initialization: "✅ TowerScout initialized successfully"
-# 4. Test provider switching: Click Azure Maps ↔ Google Maps buttons
-# 5. Check deprecation warnings: Should see ~150+ migration guidance messages
-# 6. Draw boundaries and run detection: Monitor console for state transitions
-# 7. Check memory: Performance tab should show stable or decreasing memory
-
-11.4 Sprint 02 Achievements to Verify
--------------------------------------
-Feature: Frontend Modularization (TASK-038)
-Verify: Check webapp/js/src/ has 7 directories with 27 files
-Test: Run node build.js, verify <2 second completion
-Expected: 319.0 KB bundle, no build errors
-
-Feature: State Management (TASK-041)
-Verify: ProviderStateManager in webapp/js/src/store.js
-Test: Run 20-cycle detection workflow, monitor memory in browser
-Expected: Memory should remain stable or decrease (validated: -0.7%)
-
-Feature: Manual Testing (TASK-042)
-Verify: 4-stage user journey documented
-Test: Execute full workflow (init → search → detect → review)
-Expected: Zero JavaScript errors, smooth highlighting, accurate results
-
-Feature: Global Variable Deprecation (TASK-043)
-Verify: Property descriptors in store.js with migration warnings
-Test: Use app normally, check console for deprecation messages
-Expected: ~150+ warnings guide migration, app functions normally
-
-Feature: Boundary Accumulation Fix (TASK-045)
-Verify: resetBoundaries() called before detection in search.js
-Test: Run 3 consecutive independent detections
-Expected: Each run shows only current boundaries, no accumulation
-
-STEP 12: ADDITIONAL RESOURCES
-============================
-
-12.1 Documentation Locations
-----------------------------
-- README.md: Basic project overview
-- tasks.md: Detailed implementation plan and progress
-- .agent_work/: Detailed specifications and design documents
-- Model/: Jupyter notebooks for ML model training and evaluation
-
-12.2 Key Configuration Files
----------------------------
-- .env: Environment variables (create locally, never commit)
-- webapp/requirements.txt: Python dependencies
-- requirements-dev.txt: Development dependencies
-- pytest.ini: Test configuration
-- .vscode/: VS Code IDE settings
-
-12.3 Important URLs and References
----------------------------------
-- Repository: https://github.com/J-Schulein/TowerScout
-- Branch: improvements
-- Google Maps API: https://console.cloud.google.com/
-- Bing Maps API: https://www.bingmapsportal.com/
-- Census TIGER Data: https://www.census.gov/geographies/mapping-files/
-
-QUICK START CHECKLIST
-====================
-
-□ Install Git, Python 3.12, VS Code
-□ Clone repository and checkout 'improvements' branch  
-□ Create and activate virtual environment
-□ Install dependencies (requirements.txt + requirements-dev.txt)
-□ Download model weights to model_params/ directories
-□ Create .env file with API keys and configuration
-□ Verify geographic data exists in webapp/data/
-□ Run tests to verify installation: pytest tests/
-□ Start Flask app: cd webapp && python towerscout.py dev
-□ Open http://127.0.0.1:5000 in browser
-□ Configure VS Code with Python interpreter and debugging
-□ Review current task priorities in tasks.md
-□ Begin work on TASK-003 (Error Handling Infrastructure)
-
-EMERGENCY CONTACTS AND BACKUP PLANS
+STEP 3: INSTALL PYTHON DEPENDENCIES
 ===================================
 
-If you encounter issues:
-1. Check this setup guide troubleshooting section
-2. Review error messages carefully and search online
-3. Check GitHub Issues for similar problems
-4. Create new GitHub Issue with detailed error information
-5. Refer to original TowerScout documentation in repository
+From the repository root:
 
-Backup Development Options:
-- Use Docker container for isolated environment
-- Try different Python version if 3.12 unavailable
-- Use cloud development environment (GitHub Codespaces, etc.)
-- Set up on different operating system if needed
+```bash
+python -m pip install --upgrade pip
+pip install -r webapp/requirements.txt
+pip install -r requirements-dev.txt
+```
 
-Data Backup:
-- All code is in Git repository (ensure regular commits)
-- Model weights can be re-downloaded if lost
-- Configuration in .env file should be backed up separately
-- No critical data stored locally (stateless application)
+Notes:
+- `webapp/requirements.txt` is the runtime dependency list.
+- `webapp/requirements.txt` now includes the current verified runtime gaps `psutil` and `tqdm`.
+- `webapp/requirements.txt` also explicitly includes `packaging`, `pandas`, and a pinned `ultralytics` version because the local YOLOv5 runtime imports those directly at runtime.
+- The Sprint 05 validated CPU baseline now pins `numpy==1.26.4` explicitly and keeps TowerScout on a NumPy 1 contract until a coordinated NumPy 2 migration is approved.
+- The runtime manifest now satisfies the local YOLOv5 runtime minimums for `Pillow` and `Requests`, so first detection should not auto-upgrade core packages in-process.
+- `requirements-dev.txt` adds pytest, linting, type-checking, and security tools.
+- TowerScout now loads YOLOv5 from its vendored local runtime snapshot under `webapp/vendor/yolov5_local/`.
+- YOLOv5 initialization no longer depends on Torch Hub cache state or first-run GitHub access.
 
-This guide should get you fully set up and ready to continue TowerScout development from exactly where you left off. The key is ensuring all dependencies are installed correctly and the environment variables are configured properly.
+OPTIONAL: CUDA-ENABLED PYTORCH
+==============================
 
-Setup Guide Version History:
-- v1.0: Initial setup guide (December 2025)
-- v1.1: Updated for Azure Maps integration and current project state (January 2026)
-- v1.2: Azure Maps Primary Provider & Weekly Maintenance Update (January 2026)
-- v1.3: Sprint 01-02 Achievements, Frontend Modularization, Performance Expectations (March 2026)
+CPU-only installs remain supported and are the default proof path for this repo.
+Installing `webapp/requirements.txt` gives the validated CPU baseline only.
 
-Last Updated: March 2026
+If you want GPU acceleration on a CUDA-compatible NVIDIA machine:
+- install a CUDA-enabled PyTorch build for `torch==2.2.1` and `torchvision==0.17.1`
+- use the official PyTorch install selector or previous-versions page to choose the correct CUDA wheel/index for your machine
+- after that install is present, TowerScout will use CUDA automatically when `torch.cuda.is_available()` is true
+
+Useful official references:
+- https://pytorch.org/get-started/locally/
+- https://pytorch.org/get-started/previous-versions/
+
+You do not need a separate TowerScout setting to enable CUDA.
+
+TLS NOTE
+========
+
+TowerScout now verifies TLS certificates by default for runtime network calls.
+
+If you are on a narrow local recovery path and must temporarily bypass certificate verification, set:
+
+```bash
+TOWERSCOUT_ALLOW_INSECURE_TLS=1
+```
+
+Use that only as a short-lived local exception. It is not part of the validated default runtime contract.
+
+STEP 4: INSTALL NODE DEPENDENCIES IF NEEDED
+===========================================
+
+You only need Node.js tooling if you will rebuild the frontend bundle or run browser-based smoke tests.
+
+```bash
+npm install
+```
+
+Current frontend tooling notes:
+- `package.json` requires Node.js `>=16.0.0`
+- the primary build command is `node webapp/build.js`
+- `npm run build` is an equivalent wrapper when your shell allows `npm`
+- browser smoke scripts use Puppeteer and expect a locally installed browser
+- `npm run test:stage-0` invokes `bash validate_stage_0.sh`, so Windows users need Git Bash or WSL for that one script
+- if Windows PowerShell blocks `npm.ps1`, use `npm.cmd run <script>` or call the underlying `node ...` command directly
+
+STEP 5: DOWNLOAD REQUIRED MODEL FILES
+=====================================
+
+The application expects both model files to exist locally before startup.
+
+Required files:
+- `webapp/model_params/yolov5/newest.pt`
+- `webapp/model_params/EN/b5_unweighted_best.pt`
+
+If the directories do not exist, create them first.
+
+Windows PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force webapp\model_params\yolov5
+New-Item -ItemType Directory -Force webapp\model_params\EN
+```
+
+macOS/Linux:
+
+```bash
+mkdir -p webapp/model_params/yolov5
+mkdir -p webapp/model_params/EN
+```
+
+Current download links referenced by the repo README:
+- YOLOv5 weights: https://drive.google.com/file/d/1EBxgqr6MrkAkEv1vJ2ftZiSjs6w865wf/view?usp=drive_link
+- EfficientNet weights: https://drive.google.com/file/d/1Cs3nXQddNf-Y0HYO8a5Yvm6mNB-Rx8HP/view?usp=drive_link
+
+Sanity check after download:
+- `newest.pt` is currently about 175 MB in the local workspace
+- `b5_unweighted_best.pt` is currently about 119 MB in the local workspace
+
+If either file is missing, TowerScout can fail before the server starts.
+
+STEP 6: CONFIGURE PROVIDER KEYS
+===============================
+
+Recommended path for normal local use:
+- Start the app first.
+- Open the browser.
+- Let Setup Wizard validate and save your Google or Azure key.
+
+Canonical config location:
+- `webapp/config/.env`
+
+Legacy path still recognized:
+- `webapp/.env`
+
+Important notes:
+- At least one valid provider key is required for normal use.
+- Setup Wizard saves Google/Azure keys and `DEFAULT_MAP_PROVIDER`.
+- Bing is not part of the new setup flow and should not be treated as the primary path.
+- If `FLASK_SECRET_KEY` is missing, the app can still boot for local work, but it uses a temporary in-memory secret and session state will not be stable across restarts.
+
+If you want to pre-seed configuration manually, copy the template to the canonical path:
+
+Windows PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force webapp\config
+Copy-Item webapp\.env.example webapp\config\.env
+```
+
+macOS/Linux:
+
+```bash
+mkdir -p webapp/config
+cp webapp/.env.example webapp/config/.env
+```
+
+Minimum useful manual values:
+
+```env
+AZURE_MAPS_SUBSCRIPTION_KEY=your_real_azure_key
+DEFAULT_MAP_PROVIDER=azure
+FLASK_SECRET_KEY=generate_a_random_secret_here
+FLASK_ENV=development
+FLASK_DEBUG=true
+```
+
+or
+
+```env
+GOOGLE_API_KEY=your_real_google_key
+DEFAULT_MAP_PROVIDER=google
+FLASK_SECRET_KEY=generate_a_random_secret_here
+FLASK_ENV=development
+FLASK_DEBUG=true
+```
+
+Generate a secret key if needed:
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+STEP 7: RUN THE APPLICATION
+===========================
+
+From the `webapp` directory:
+
+```bash
+cd webapp
+python towerscout.py dev
+```
+
+Expected behavior:
+- the app serves on `http://localhost:5000`
+- if no valid provider key is configured yet, Setup Wizard appears first
+- filesystem-backed sessions are stored in `webapp/flask_session`
+- temporary run data is stored in `webapp/temp/session`
+
+Current startup behavior worth knowing:
+- EfficientNet is loaded during startup unless `TOWERSCOUT_LAZY_MODEL_INIT` is enabled
+- YOLOv5 models are discovered from `webapp/model_params/yolov5/`
+- the default YOLO model is loaded on demand in `dev` mode
+- TowerScout loads YOLOv5 from the vendored local runtime under `webapp/vendor/yolov5_local/`
+- first YOLOv5 initialization no longer depends on Torch Hub cache state or GitHub reachability
+
+STEP 8: VERIFY THE INSTALLATION
+===============================
+
+Basic backend checks:
+
+```bash
+pytest tests/unit -v
+pytest tests/integration -v
+```
+
+Frontend bundle rebuild:
+
+```bash
+node webapp/build.js
+```
+
+Browser smoke test prerequisites:
+- TowerScout already running locally
+- Setup Wizard completed so the app is not in setup-required mode
+- `tests/frontend/detection-workflow.local.json` exists
+- the AOI in that file has been replaced with a safe local test area
+- Chrome or Edge is installed locally
+
+Browser smoke commands:
+
+```bash
+npm run test:browser:detect
+npm run test:browser:detect:google
+npm run test:browser:detect:azure
+```
+
+If Windows PowerShell blocks `npm`, use:
+- `npm.cmd run test:browser:detect`
+- `npm.cmd run test:browser:detect:google`
+- `npm.cmd run test:browser:detect:azure`
+
+The smoke harness will fail fast if:
+- the app is not reachable at `http://localhost:5000`
+- the app is still in setup-required mode
+- `tests/frontend/detection-workflow.local.json` is missing
+- no local Chrome or Edge executable is found
+
+Test command note:
+- A failing test is not automatically a setup problem. Some branch snapshots may still contain in-progress test failures unrelated to local environment setup.
+
+COMMON DEVELOPMENT COMMANDS
+===========================
+
+Run the app:
+
+```bash
+cd webapp
+python towerscout.py dev
+```
+
+Rebuild frontend bundle:
+
+```bash
+node webapp/build.js
+```
+
+Run unit tests:
+
+```bash
+pytest tests/unit -v
+```
+
+Run integration tests:
+
+```bash
+pytest tests/integration -v
+```
+
+Format Python:
+
+```bash
+black webapp tests
+```
+
+Lint Python:
+
+```bash
+flake8 webapp tests
+```
+
+Type-check Python:
+
+```bash
+mypy webapp --ignore-missing-imports --no-strict-optional
+```
+
+Security scan:
+
+```bash
+bandit -r webapp
+```
+
+TROUBLESHOOTING
+===============
+
+Problem: TowerScout crashes before the server starts
+- Most common cause: missing model files
+- Check for:
+  - `webapp/model_params/yolov5/newest.pt`
+  - `webapp/model_params/EN/b5_unweighted_best.pt`
+
+Problem: YOLOv5 load fails with a local runtime error
+- Re-run `pip install -r webapp/requirements.txt`
+- Confirm the repo still contains `webapp/vendor/yolov5_local/` and `webapp/model_params/yolov5/newest.pt`
+- This no longer depends on first-run GitHub access, so treat it as a local dependency or workspace issue
+
+Problem: CUDA is available on the machine but TowerScout still runs on CPU
+- Check which PyTorch build is installed
+- A CUDA-capable GPU alone is not enough; the Python environment also needs a CUDA-enabled PyTorch build for the pinned TowerScout versions
+- If `torch.cuda.is_available()` is false, TowerScout will correctly fall back to CPU
+
+Problem: Setup Wizard appears every time
+- Check `webapp/config/.env`
+- Make sure the saved provider key is real and not placeholder text
+- Restart the app after manual edits
+
+Problem: No providers are available
+- At least one valid Google or Azure key is required
+- Bing alone should not be treated as the expected path
+
+Problem: Session behavior resets after every restart
+- Add a stable `FLASK_SECRET_KEY` to `webapp/config/.env`
+
+Problem: Frontend changes do not appear
+- Rebuild the bundle with `node webapp/build.js`
+
+Problem: Browser smoke test says setup is still required
+- Complete Setup Wizard in the running app first
+
+Problem: Browser smoke test says fixture is missing
+- Copy `tests/frontend/detection-workflow.example.json` to `tests/frontend/detection-workflow.local.json`
+- Replace the placeholder AOI before running the harness
+
+Problem: Port 5000 is already in use
+- Stop the other process using port 5000, or free the port before restarting TowerScout
+
+Problem: You want to clear session and temp state during local debugging
+- stop the app
+- clear `webapp/flask_session/`
+- clear `webapp/temp/session/`
+- restart the app
+
+CURRENT PROJECT STATUS
+======================
+
+As of 2026-04-07, the setup guidance should assume:
+- Setup Wizard and Settings exist
+- config save/status/reset/performance endpoints exist
+- estimate-first detection flow exists
+- progress and cancel support exist
+- Google and Azure live workflows are active priorities
+- Docker work is still pending
+
+If this guide disagrees with an older repo document that still references `improvements`, manual-only `.env` setup, missing Setup Wizard support, or Sprint 02/03 known issues as current blockers, prefer this guide.

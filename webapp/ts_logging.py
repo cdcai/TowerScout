@@ -16,6 +16,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 import json
 import re
+from ts_paths import get_log_dir
 
 
 def sanitize_sensitive_data(message: str) -> str:
@@ -126,7 +127,7 @@ class TowerScoutLogger:
     _configured: bool = False
     
     @classmethod
-    def configure(cls, log_level: str = "INFO", log_dir: str = "logs", 
+    def configure(cls, log_level: str = "INFO", log_dir: Optional[str] = None,
                   console_output: bool = True, json_logs: bool = False):
         """
         Configure logging system for TowerScout.
@@ -140,6 +141,9 @@ class TowerScoutLogger:
         if cls._configured:
             return
         
+        if log_dir is None:
+            log_dir = str(get_log_dir())
+
         # Create logs directory
         os.makedirs(log_dir, exist_ok=True)
         
@@ -309,7 +313,7 @@ def replace_print_with_logging():
 try:
     # Auto-configure with environment variables if available
     log_level = os.getenv('TOWERSCOUT_LOG_LEVEL', 'INFO')
-    log_dir = os.getenv('TOWERSCOUT_LOG_DIR', 'logs')
+    log_dir = str(get_log_dir())
     console_output = os.getenv('TOWERSCOUT_CONSOLE_LOGS', 'true').lower() == 'true'
     json_logs = os.getenv('TOWERSCOUT_JSON_LOGS', 'false').lower() == 'true'
     

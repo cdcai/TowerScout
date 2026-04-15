@@ -12,15 +12,90 @@
 # YOLOv5 detector class
 
 import math
-import torch
 import os
-from PIL import Image
-from ts_imgutil import crop
 import threading
-from ts_errors import ModelLoadError, ProcessingError, ResourceError
+from importlib import metadata
+
+import torch
+from packaging.version import InvalidVersion, Version
+from PIL import Image
+
+from ts_imgutil import crop
+from ts_errors import ModelLoadError, ProcessingError
 from ts_logging import get_ml_logger
+from ts_yolov5_local import load_local_yolov5_model as _load_local_yolov5_model
 
 logger = get_ml_logger()
+
+YOLOV5_RUNTIME_DEPENDENCIES = {
+    'numpy': {'max_version_exclusive': '2.0.0'},
+    'pillow': {'min_version': '10.3.0'},
+    'requests': {'min_version': '2.32.2'},
+    'packaging': {},
+    'pandas': {},
+    'opencv-python': {},
+    'seaborn': {},
+    'tqdm': {},
+    'ultralytics': {},
+}
+
+
+def _format_dependency_mismatch(dist_name, spec, installed_version):
+    requirement_parts = []
+    min_version = spec.get('min_version')
+    max_version_exclusive = spec.get('max_version_exclusive')
+    if min_version:
+        requirement_parts.append(f'>={min_version}')
+    if max_version_exclusive:
+        requirement_parts.append(f'<{max_version_exclusive}')
+    requirement_text = ', '.join(requirement_parts)
+    return (
+        f'{dist_name} requires {requirement_text}, '
+        f'but TowerScout found {installed_version}.'
+    )
+
+
+def _validate_runtime_dependencies():
+    """Fail before model load if the local runtime cannot satisfy TowerScout's YOLO path."""
+    mismatches = []
+
+    for dist_name, spec in YOLOV5_RUNTIME_DEPENDENCIES.items():
+        try:
+            installed_version = metadata.version(dist_name)
+        except metadata.PackageNotFoundError:
+            mismatches.append(
+                f'{dist_name} is not installed but is required by the local YOLOv5 runtime.'
+            )
+            continue
+
+        try:
+            installed = Version(installed_version)
+        except InvalidVersion:
+            mismatches.append(
+                f'{dist_name} has an unreadable installed version: {installed_version}.'
+            )
+            continue
+
+        min_version = spec.get('min_version')
+        if min_version and installed < Version(min_version):
+            mismatches.append(
+                _format_dependency_mismatch(dist_name, spec, installed_version)
+            )
+            continue
+
+        max_version_exclusive = spec.get('max_version_exclusive')
+        if max_version_exclusive and installed >= Version(max_version_exclusive):
+            mismatches.append(
+                _format_dependency_mismatch(dist_name, spec, installed_version)
+            )
+
+    if mismatches:
+        mismatch_text = ' '.join(mismatches)
+        raise RuntimeError(
+            'TowerScout runtime dependency check failed before YOLO initialization. '
+            'Update the local environment with `pip install -r webapp/requirements.txt` '
+            f'and rerun detection. {mismatch_text}'
+        )
 
 
 class YOLOv5_Detector:
@@ -35,10 +110,12 @@ class YOLOv5_Detector:
                     model_name="YOLOv5",
                     model_path=filename
                 )
+
+            _validate_runtime_dependencies()
             
             # Model loading with error handling
             try:
-                self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=filename)
+                self.model = _load_local_yolov5_model(filename)
                 logger.info("YOLOv5 model loaded successfully")
             except Exception as e:
                 raise ModelLoadError(
@@ -79,7 +156,16 @@ class YOLOv5_Detector:
                     cause=e
                 )
 
-    def detect(self, tiles, events, id, crop_tiles=False, secondary=None, perf_metrics=None):
+    def detect(
+        self,
+        tiles,
+        events,
+        id,
+        crop_tiles=False,
+        secondary=None,
+        perf_metrics=None,
+        progress_callback=None,
+    ):
         try:
             logger.info(f"Starting YOLOv5 detection on {len(tiles)} tiles")
             
@@ -196,6 +282,17 @@ class YOLOv5_Detector:
                             continue
 
                     logger.debug(f"Batch {i//self.batch_size + 1}/{chunks} completed")
+
+                    if progress_callback is not None:
+                        try:
+                            progress_callback(
+                                batches_completed=(i // self.batch_size) + 1,
+                                batches_total=chunks,
+                                tiles_processed=min(tile_count, i + len(tile_batch)),
+                                tiles_total=tile_count
+                            )
+                        except Exception as callback_error:
+                            logger.debug(f"Progress callback failed: {callback_error}")
                     
                     # Track memory usage after batch (helpful for monitoring memory leaks)
                     if perf_metrics:

@@ -26,6 +26,10 @@
   window.Detection_detectionsAugmented = 0;
   window.Detection_current = null;
 
+  function logDeprecatedAssignment(message) {
+    window.TowerScoutLogger.debug(message);
+  }
+
   // TASK-043 Phase 2: Detection state deprecation with soft migration
   // Provides backward compatibility while encouraging migration to providerManager
   Object.defineProperty(window, 'Detection_detections', {
@@ -38,7 +42,7 @@
       return [];
     },
     set(value) {
-      console.warn('⚠️ Direct Detection_detections assignment deprecated. Use providerManager.setDetections() instead.');
+      logDeprecatedAssignment('⚠️ Direct Detection_detections assignment deprecated. Use providerManager.setDetections() instead.');
       if (window.providerManager) {
         window.providerManager.setDetections(value);
       }
@@ -53,7 +57,7 @@
       return window.DEFAULT_CONFIDENCE;
     },
     set(value) {
-      console.warn('⚠️ Direct Detection_minConfidence assignment deprecated. Use providerManager.setMinConfidence() instead.');
+      logDeprecatedAssignment('⚠️ Direct Detection_minConfidence assignment deprecated. Use providerManager.setMinConfidence() instead.');
       if (window.providerManager) {
         window.providerManager.setMinConfidence(value);
       }
@@ -67,7 +71,7 @@
       return window.providerManager ? window.providerManager.getProvider() : null;
     },
     set(value) {
-      console.warn('Direct currentProvider assignment deprecated. Use providerManager.switchProvider()');
+      logDeprecatedAssignment('Direct currentProvider assignment deprecated. Use providerManager.switchProvider()');
       // Allow for backward compatibility but log warning
       if (window.providerManager) {
         window.providerManager.currentProvider = value;
@@ -80,7 +84,7 @@
       return window.providerManager ? window.providerManager.getMap() : null;
     },
     set(value) {
-      console.warn('Direct currentMap assignment deprecated. Use providerManager.switchProvider()');
+      logDeprecatedAssignment('Direct currentMap assignment deprecated. Use providerManager.switchProvider()');
       // Allow for backward compatibility but log warning
       if (window.providerManager) {
         window.providerManager.currentMap = value;
@@ -95,7 +99,7 @@
       return window.providerManager ? window.providerManager.getGoogleMap() : null;
     },
     set(value) {
-      console.warn('⚠️ Direct window.googleMap assignment deprecated. Use providerManager.setGoogleMap() instead.');
+      logDeprecatedAssignment('⚠️ Direct window.googleMap assignment deprecated. Use providerManager.setGoogleMap() instead.');
       // Allow for backward compatibility but log warning
       if (window.providerManager) {
         window.providerManager.setGoogleMap(value);
@@ -108,7 +112,7 @@
       return window.providerManager ? window.providerManager.getAzureMap() : null;
     },
     set(value) {
-      console.warn('⚠️ Direct window.azureMap assignment deprecated. Use providerManager.setAzureMap() instead.');
+      logDeprecatedAssignment('⚠️ Direct window.azureMap assignment deprecated. Use providerManager.setAzureMap() instead.');
       // Allow for backward compatibility but log warning
       if (window.providerManager) {
         window.providerManager.setAzureMap(value);
@@ -123,7 +127,7 @@
       return window.providerManager ? window.providerManager.getCurrentElement() : null;
     },
     set(value) {
-      console.warn('⚠️ Direct window.currentElement assignment deprecated. Use providerManager.setCurrentElement() instead.');
+      logDeprecatedAssignment('⚠️ Direct window.currentElement assignment deprecated. Use providerManager.setCurrentElement() instead.');
       if (window.providerManager) {
         window.providerManager.setCurrentElement(value);
       }
@@ -135,7 +139,7 @@
       return window.providerManager ? window.providerManager.getCurrentAddrElement() : null;
     },
     set(value) {
-      console.warn('⚠️ Direct window.currentAddrElement assignment deprecated. Use providerManager.setCurrentAddrElement() instead.');
+      logDeprecatedAssignment('⚠️ Direct window.currentAddrElement assignment deprecated. Use providerManager.setCurrentAddrElement() instead.');
       if (window.providerManager) {
         window.providerManager.setCurrentAddrElement(value);
       }
@@ -147,7 +151,7 @@
       return window.providerManager ? window.providerManager.getIsInitializing() : true;
     },
     set(value) {
-      console.warn('⚠️ Direct window.isInitializing assignment deprecated. Use providerManager.setIsInitializing() instead.');
+      logDeprecatedAssignment('⚠️ Direct window.isInitializing assignment deprecated. Use providerManager.setIsInitializing() instead.');
       if (window.providerManager) {
         window.providerManager.setIsInitializing(value);
       }
@@ -161,7 +165,7 @@
       return window.providerManager ? window.providerManager.getTilesArrayDirect() : [];
     },
     set(value) {
-      console.warn('⚠️ Direct Tile_tiles assignment deprecated. Use providerManager.setTiles() instead.');
+      logDeprecatedAssignment('⚠️ Direct Tile_tiles assignment deprecated. Use providerManager.setTiles() instead.');
       if (window.providerManager) {
         window.providerManager.setTiles(value);
       }
@@ -170,7 +174,7 @@
 
   // Initialize DOM references safely after DOM is ready
   window.initializeDOMReferences = function () {
-    console.log('🔧 Initializing DOM references...');
+    window.TowerScoutLogger.debug('🔧 Initializing DOM references...');
 
     window.input = document.getElementById("search");
     window.upload = document.getElementById("upload_file");
@@ -210,7 +214,7 @@
       }
     };
 
-    console.log('✅ DOM references initialized');
+    window.TowerScoutLogger.debug('✅ DOM references initialized');
   };
 
   // TASK-033 Phase 4: Provider lock/unlock functions
@@ -247,7 +251,7 @@
         label.style.cursor = 'not-allowed';
       });
 
-      console.log('🔒 Provider switching locked (detections present)');
+      window.TowerScoutLogger.debug('🔒 Provider switching locked (detections present)');
     }
   };
 
@@ -283,11 +287,11 @@
         label.style.cursor = '';
       });
 
-      console.log('🔓 Provider switching unlocked (no detections)');
+      window.TowerScoutLogger.debug('🔓 Provider switching unlocked (no detections)');
     } else {
-      console.log(`🔒 Provider switching remains locked (${detections.length} detection(s) present)`);
+      window.TowerScoutLogger.debug(`🔒 Provider switching remains locked (${detections.length} detection(s) present)`);
     }
   };
 
-  console.log('✅ Globals module loaded');
+  window.TowerScoutLogger.debug('✅ Globals module loaded');
 })();

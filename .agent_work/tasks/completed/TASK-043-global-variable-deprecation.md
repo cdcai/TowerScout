@@ -574,7 +574,7 @@ Created comprehensive documentation for future development:
 - Deprecation notices on legacy access methods (`getDetectionsArrayDirect`)
 
 **B. Migration Patterns Document** (created for future tasks):
-File: `.agent_work/decisions/TASK-043-global-variable-migration-patterns.md`
+File: `.agent_work/decisions/015-global-variable-migration-patterns.md`
 
 Contains:
 - Property descriptor pattern for soft deprecation

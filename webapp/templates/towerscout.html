@@ -16,6 +16,163 @@ Licensed under CC-BY-NC-SA-4.0
 
 <head>
   <title>TowerScout</title>
+  <script>
+    (function initializeTowerScoutLogger() {
+      if (window.TowerScoutLogger) {
+        return;
+      }
+
+      const storageKey = 'debugMode';
+      const originalLog = typeof console !== 'undefined' && typeof console.log === 'function'
+        ? console.log.bind(console)
+        : function () {};
+      const originalInfo = typeof console !== 'undefined' && typeof console.info === 'function'
+        ? console.info.bind(console)
+        : originalLog;
+      const originalWarn = typeof console !== 'undefined' && typeof console.warn === 'function'
+        ? console.warn.bind(console)
+        : originalLog;
+      const originalError = typeof console !== 'undefined' && typeof console.error === 'function'
+        ? console.error.bind(console)
+        : originalLog;
+      const originalDebug = typeof console !== 'undefined' && typeof console.debug === 'function'
+        ? console.debug.bind(console)
+        : originalLog;
+      const pendingOutputLines = [];
+
+      function readDebugPreference() {
+        try {
+          return window.localStorage.getItem(storageKey) === 'true';
+        } catch (_error) {
+          return false;
+        }
+      }
+
+      function formatArg(arg) {
+        if (arg instanceof Error) {
+          return arg.stack || arg.message;
+        }
+
+        if (typeof arg === 'string') {
+          return arg;
+        }
+
+        if (arg === null || arg === undefined) {
+          return String(arg);
+        }
+
+        if (typeof arg === 'number' || typeof arg === 'boolean' || typeof arg === 'bigint') {
+          return String(arg);
+        }
+
+        try {
+          return JSON.stringify(arg);
+        } catch (_error) {
+          return String(arg);
+        }
+      }
+
+      function getOutputElement() {
+        return document.getElementById('output');
+      }
+
+      function appendOutputLine(text) {
+        const output = getOutputElement();
+
+        if (!output) {
+          pendingOutputLines.push(text);
+          return;
+        }
+
+        while (pendingOutputLines.length > 0) {
+          const pendingLine = pendingOutputLines.shift();
+          output.appendChild(document.createTextNode(pendingLine));
+          output.appendChild(document.createElement('br'));
+        }
+
+        output.appendChild(document.createTextNode(text));
+        output.appendChild(document.createElement('br'));
+        output.scrollTop = output.scrollHeight;
+      }
+
+      function logToOutput(args, prefix) {
+        const text = args.map(formatArg).join(' ');
+        if (!text) {
+          return;
+        }
+
+        appendOutputLine(prefix ? `${prefix}${text}` : text);
+      }
+
+      function flushPendingOutput() {
+        const output = getOutputElement();
+        if (!output || pendingOutputLines.length === 0) {
+          return;
+        }
+
+        while (pendingOutputLines.length > 0) {
+          const pendingLine = pendingOutputLines.shift();
+          output.appendChild(document.createTextNode(pendingLine));
+          output.appendChild(document.createElement('br'));
+        }
+
+        output.scrollTop = output.scrollHeight;
+      }
+
+      function applyDebugMode(enabled) {
+        window.TOWERSCOUT_DEBUG = enabled === true;
+        return window.TOWERSCOUT_DEBUG;
+      }
+
+      function setDebugMode(enabled) {
+        const normalized = applyDebugMode(enabled);
+
+        try {
+          window.localStorage.setItem(storageKey, String(normalized));
+        } catch (_error) {
+          // Ignore storage failures in restricted/private browser contexts.
+        }
+
+        return normalized;
+      }
+
+      window.TowerScoutLogger = {
+        info(...args) {
+          logToOutput(args, '');
+
+          if (window.TOWERSCOUT_DEBUG) {
+            originalInfo(...args);
+          }
+        },
+        debug(...args) {
+          if (window.TOWERSCOUT_DEBUG) {
+            logToOutput(args, '');
+            originalLog(...args);
+          }
+        },
+        trace(...args) {
+          if (window.TOWERSCOUT_DEBUG) {
+            originalDebug(...args);
+          }
+        },
+        warn(...args) {
+          logToOutput(args, 'Warning: ');
+          originalWarn(...args);
+        },
+        error(...args) {
+          logToOutput(args, 'Error: ');
+          originalError(...args);
+        },
+        isDebugEnabled() {
+          return window.TOWERSCOUT_DEBUG === true;
+        },
+        setDebugMode
+      };
+
+      applyDebugMode(readDebugPreference());
+      document.addEventListener('DOMContentLoaded', flushPendingOutput, { once: true });
+    })();
+  </script>
   <link rel="stylesheet" media="screen and (min-device-width: 1200px)" href="/css/ts_styles.css">
   <link rel="stylesheet" media="screen and (max-device-width: 1200px)" href="/css/ts_styles_mobile.css">
 </head>
@@ -63,37 +220,170 @@ Licensed under CC-BY-NC-SA-4.0
   </div>
   <div id="progress_div"
     style="display:none;z-index:2000;position:absolute; justify-content:center; align-items: center;top:0px; left:0px;width:100%;height:100%; background-color: lightgrey; opacity: 0.7;">
-    <div style="width:30%;height:12%">
-      <progress id="progress" style="width:100%; vertical-align:middle;height:50%" max="100" value="0">
+    <div style="width:min(520px, 90vw); min-height:170px; display:flex; flex-direction:column; gap:12px; background:rgba(255,255,255,0.96); padding:18px 20px; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.25); color:#1f2933;">
+      <div id="progress_status_title" style="font-size:18px; font-weight:700; line-height:1.2;">
+        Preparing detection
+      </div>
+      <div id="progress_status_detail" style="font-size:13px; line-height:1.45; min-height:2.8em;">
+        Waiting for detection progress updates...
+      </div>
+      <progress id="progress" style="width:100%; vertical-align:middle;height:22px" max="100" value="0">
       </progress>
-      <br>
-      <center>
+      <div style="display:flex; justify-content:center;">
         <button onclick="cancelRequest()">Cancel</button>
-      </center>
+      </div>
+    </div>
+  </div>
+  <div id="setup_wizard_div" class="modal-overlay" style="display:none;">
+    <div class="modal-container setup-wizard">
+      <div class="wizard-progress">
+        <span class="step active" data-step="1">1. Welcome</span>
+        <span class="step" data-step="2">2. API Keys</span>
+        <span class="step" data-step="3">3. Provider</span>
+        <span class="step" data-step="4">4. Info</span>
+        <span class="step" data-step="5">5. Done</span>
+      </div>
+      <div class="wizard-step" data-step="1">
+        <h2>Welcome to TowerScout</h2>
+        <p>Complete setup to unlock map and detection features.</p>
+        <p class="wizard-helper">You only need one valid provider key to get started.</p>
+        <button class="btn btn-primary" onclick="SetupWizard.nextStep()">Get Started</button>
+      </div>
+      <div class="wizard-step" data-step="2" style="display:none;">
+        <h2>Configure API Keys</h2>
+        <div class="form-group">
+          <label for="wizard_google_key">Google Maps API Key</label>
+          <input type="password" id="wizard_google_key" class="form-control wizard-input" />
+          <span class="validation-indicator" id="google_key_status"></span>
+        </div>
+        <div class="form-group">
+          <label for="wizard_azure_key">Azure Maps Subscription Key</label>
+          <input type="password" id="wizard_azure_key" class="form-control wizard-input" />
+          <span class="validation-indicator" id="azure_key_status"></span>
+        </div>
+        <p id="wizard_validation_message" class="wizard-helper"></p>
+        <div class="wizard-actions">
+          <button class="btn" onclick="SetupWizard.prevStep()">Back</button>
+          <button class="btn btn-primary" id="wizard_validate_button" onclick="SetupWizard.validateAndNext()">Validate Keys</button>
+        </div>
+      </div>
+      <div class="wizard-step" data-step="3" style="display:none;">
+        <h2>Choose Default Detection Provider</h2>
+        <p class="wizard-helper">This controls the backend imagery provider used for detections.</p>
+        <div class="provider-selection">
+          <label id="wizard_google_provider_option"><input type="radio" name="default_provider" value="google" checked> Google Maps</label>
+          <label id="wizard_azure_provider_option"><input type="radio" name="default_provider" value="azure"> Azure Maps</label>
+        </div>
+        <div class="wizard-actions">
+          <button class="btn" onclick="SetupWizard.prevStep()">Back</button>
+          <button class="btn btn-primary" onclick="SetupWizard.nextStep()">Next</button>
+        </div>
+      </div>
+      <div class="wizard-step" data-step="4" style="display:none;">
+        <h2>Performance Guidance</h2>
+        <div id="wizard_performance_stats" class="performance-stats">
+          <p>Loading recent performance data...</p>
+        </div>
+        <p class="wizard-helper">Hardware and map provider choice can affect end-to-end throughput.</p>
+        <div class="wizard-actions">
+          <button class="btn" onclick="SetupWizard.prevStep()">Back</button>
+          <button class="btn btn-primary" id="wizard_save_button" onclick="SetupWizard.saveAndReview()">Save Configuration</button>
+        </div>
+      </div>
+      <div class="wizard-step" data-step="5" style="display:none;">
+        <h2>Setup Complete</h2>
+        <p>API configuration is saved and TowerScout is ready.</p>
+        <button class="btn btn-primary" onclick="SetupWizard.complete()">Start Using TowerScout</button>
+      </div>
+    </div>
+  </div>
+  <div id="settings_div" class="modal-overlay" style="display:none;">
+    <div class="modal-container settings-screen">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button class="close-btn" onclick="Settings.close()" aria-label="Close settings">×</button>
+      </div>
+      <div class="settings-content">
+        <div class="settings-section">
+          <h3>API Keys</h3>
+          <p class="help-text">Leave a field blank to keep the current stored value.</p>
+          <div class="form-group">
+            <label for="settings_google_key">Google Maps API Key</label>
+            <div class="key-input-group">
+              <input type="password" id="settings_google_key" class="form-control wizard-input" />
+              <button class="btn btn-icon" type="button" onclick="Settings.toggleKeyVisibility('google')">Show</button>
+              <span class="validation-indicator" id="settings_google_status"></span>
+            </div>
+            <p id="settings_google_preview" class="help-text"></p>
+          </div>
+          <div class="form-group">
+            <label for="settings_azure_key">Azure Maps Subscription Key</label>
+            <div class="key-input-group">
+              <input type="password" id="settings_azure_key" class="form-control wizard-input" />
+              <button class="btn btn-icon" type="button" onclick="Settings.toggleKeyVisibility('azure')">Show</button>
+              <span class="validation-indicator" id="settings_azure_status"></span>
+            </div>
+            <p id="settings_azure_preview" class="help-text"></p>
+          </div>
+          <div class="form-group">
+            <label for="settings_default_provider">Default Detection Provider</label>
+            <select id="settings_default_provider" class="form-control wizard-input">
+              <option value="google">Google Maps</option>
+              <option value="azure">Azure Maps</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" type="button" onclick="Settings.saveKeys()">Save Configuration</button>
+        </div>
+        <div class="settings-section">
+          <h3>Resource Links</h3>
+          <div class="resource-links">
+            <ul>
+              <li><a href="https://groups.ischool.berkeley.edu/TowerScout/" target="_blank">Project Overview</a></li>
+              <li><a href="https://groups.ischool.berkeley.edu/TowerScout/" target="_blank">Documentation Placeholder</a></li>
+              <li><a href="https://groups.ischool.berkeley.edu/TowerScout/" target="_blank">Video Guide Placeholder</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="settings-section">
+          <h3>Performance</h3>
+          <div id="settings_performance_stats" class="performance-stats">
+            <p>Loading recent performance data...</p>
+          </div>
+        </div>
+        <div class="settings-section">
+          <h3>System</h3>
+          <div class="control-group">
+            <label for="debug_mode_toggle">
+              <input type="checkbox" id="debug_mode_toggle" onchange="Settings.toggleDebugMode()">
+              Enable debug mode
+            </label>
+            <p class="help-text">Applies immediately to extra detail in the app output panel and browser console. Core status messages remain visible.</p>
+          </div>
+          <button class="btn" type="button" onclick="Settings.clearCache()">Clear Cache</button>
+        </div>
+      </div>
     </div>
   </div>
   <div class="grid-container">
 
     <div class="fheader">
-      TowerScout
+      <span class="app-title">TowerScout</span>
     </div>
 
     <div class="fsearch">
-      <div id="mapsearchui" style="display:block;height:auto">
+      <div id="mapsearchui" style="height:auto">
         <span id="location">Location:&nbsp;</span>
-        <input type="text" id="search" style="display:inline;" placeholder="Search ...">
+        <input type="text" id="search" placeholder="Search ...">
         <!-- TASK-039 Phase 4B: Container for PlaceAutocompleteElement Web Component -->
         <!-- Note: Width constraint set via JavaScript to ensure Web Component respects sizing -->
         <div id="google-autocomplete-container" style="display:none;"></div>
-        <span style="float: right;" id="geometry">
-          <input type='text' id='radius' style='width:20%;vertical-align:10%'>&nbsp;m
-          <button onclick="circleBoundary()" id="radiusbutton" style="vertical-align:10%;">Circle</button>
-          <span
-            style="display: inline-block; width:1px; height:80%; vertical-align:-8%; background:white; margin: 0 2px;">&nbsp;</span>
-          <button onclick="enableCustomDrawing()" id="drawnbutton" style="vertical-align:10%;">Custom shape</button>
-          <span
-            style="display: inline-block; width:1px; height:80%; vertical-align:-8%; background:white; margin: 0 2px;">&nbsp;</span>
-          <button onclick="clearBoundaries()" style="vertical-align:10%;">Clear</button>
+        <span id="geometry">
+          <input type='text' id='radius'>&nbsp;<span class="geometry-unit">m</span>
+          <button class="btn geometry-button" onclick="circleBoundary()" id="radiusbutton">Circle</button>
+          <span class="geometry-divider">&nbsp;</span>
+          <button class="btn geometry-button" onclick="enableCustomDrawing()" id="drawnbutton">Custom shape</button>
+          <span class="geometry-divider">&nbsp;</span>
+          <button class="btn geometry-button" onclick="clearBoundaries()">Clear</button>
         </span>
       </div>
       <div id="uploadsearchui" style="display:none;">
@@ -102,8 +392,8 @@ Licensed under CC-BY-NC-SA-4.0
       </div>
     </div>
 
-    <div id="fversion" class="fversion" style="text-align: right;">
-      <a class="hover" onclick="about()">About TowerScout</a>
+    <div id="fversion" class="fversion">
+      <button id="settings_button" class="btn settings-btn" type="button" onclick="Settings.open()">Settings</button>
     </div>
 
     <div class="fmodel" style="font-size:smaller; overflow-y:hidden;white-space: nowrap; overflow-x: hidden;">
@@ -150,31 +440,38 @@ Licensed under CC-BY-NC-SA-4.0
       <button id="find" class="btn" onclick='getObjects()'>Find towers</button>
     </div>
 
-    <div class="ffilter" id="ffilter" style="font-size: smaller;display:none">
-      Min. Confidence:&nbsp;<input type="range" min="0" max="100" value="35" class="slider" id="conf"
-        style="vertical-align:-25%; width:60%">
-      &nbsp;<span style="float:right">&nbsp;%</span><span id='confpercent' style="float:right">35</span><br>
+    <div class="ffilter" id="ffilter" style="display:none">
+      <span class="filter-label">Min. Confidence</span>
+      <div class="filter-controls">
+        <input type="range" min="0" max="100" value="35" class="slider" id="conf">
+        <span class="filter-value"><span id='confpercent'>35</span>&nbsp;%</span>
+      </div>
       <!-- <input type="checkbox" id="inside" checked style="vertical-align:-10%">&nbsp;Enforce boundary -->
     </div>
 
-    <div class="freview" id="freview" style="font-size: smaller;">
-      <span style="float: left;">
+    <div class="freview" id="freview">
+      <span class="review-group review-detection">
         <button onclick="Detection.prev()">&lt;</button>
-        Det. <input type="text" id="detection" style="width:30px;"
-          onkeydown="if (event.keyCode == 13) { Detection.number(); return false; }">&nbsp;
+        <span>Det.</span>
+        <input type="text" id="detection" class="review-input"
+          onkeydown="if (event.keyCode == 13) { Detection.number(); return false; }">
         <button onclick="Detection.next()">&gt;</button>
       </span>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Find&nbsp;
-      <label class="switch" style="vertical-align:-8%">
-        <input type="checkbox" id="review">
-        <span class="knob round"></span>
-      </label>
-      &nbsp;Label
-      <span style="float: right;">
+      <span class="review-mode">
+        <span>Find</span>
+        <label class="switch">
+          <input type="checkbox" id="review">
+          <span class="knob round"></span>
+        </label>
+        <span>Label</span>
+      </span>
+      <span class="review-group review-tile">
         <button onclick="Tile.prev()">&lt;</button>
-        Tile <input type="text" id="tile" style="width:30px;"
-          onkeydown="if (event.keyCode == 13) { Tile.number(); return false; }">&nbsp;
-        <button onclick="Tile.next()">&gt;</button></span>
+        <span>Tile</span>
+        <input type="text" id="tile" class="review-input"
+          onkeydown="if (event.keyCode == 13) { Tile.number(); return false; }">
+        <button onclick="Tile.next()">&gt;</button>
+      </span>
     </div>
 
 
@@ -188,26 +485,30 @@ Licensed under CC-BY-NC-SA-4.0
       </p>
     </div>
 
-    <div class="fadd" id="fadd" style="overflow-y:hidden;white-space: nowrap; overflow-x: hidden;font-size: smaller;">
-      <button id="enableDrawingButton" class="btn" onclick="enableCustomDrawing()" style="width:25%; height:100%"
-        title="Start drawing polygons around towers">Add Towers</button>
-      <button id="addbutton" class="btn" onclick="currentMap.addShapes()" style="width:25%; height:100%"
-        title="Save drawn polygons as manual detections">Save Towers</button>
-      <button class="btn" onclick="currentMap.clearShapes()" style="width:25%; height:100%"
-        title="Remove unsaved drawn polygons">Clear</button>
-      <button class="btn" onclick="currentMap.clearAll()" style="width:25%; height:100%"
-        title="Remove all manual tower detections">Clear all</button>
-    </div>
+    <div class="frightactions">
+      <div class="fadd action-row" id="fadd">
+        <button id="enableDrawingButton" class="btn action-row-button" onclick="enableManualTowerDrawing()"
+          title="Start drawing polygons around towers">Add Towers</button>
+        <button id="addbutton" class="btn action-row-button" onclick="currentMap.addShapes()"
+          title="Save drawn polygons as manual detections">Save Towers</button>
+        <button class="btn action-row-button" onclick="currentMap.clearShapes()"
+          title="Remove unsaved drawn polygons">Clear</button>
+        <button class="btn action-row-button" onclick="currentMap.clearAll()"
+          title="Remove all manual tower detections">Clear all</button>
+      </div>
 
-    <div class="fsave" id="fsave" style="overflow-y:hidden;white-space: nowrap; overflow-x: hidden;font-size: smaller;">
-      <button class="btn" onclick="download_csv(),download_kml()" style="width:33%; height:100%">Download
-        results</button>
-      <button class="btn" onclick="download_dataset()" style="width:33%; height:100%">Download
-        dataset</button>
-      <button class="btn" onclick="document.getElementById('upload_dataset').click()"
-        style="width:33%; height:100%">Restore
-        dataset</button>
-      <input type="file" id="upload_dataset" style="display:none" />
+      <div class="fsave action-row" id="fsave">
+        <button class="btn action-row-button" onclick="download_csv(),download_kml()"
+          title="Download the current detection results as CSV and KML files">Download
+          results</button>
+        <button class="btn action-row-button" onclick="download_dataset()"
+          title="Download the current tiles, labels, and metadata as a dataset archive">Download
+          dataset</button>
+        <button class="btn action-row-button" onclick="document.getElementById('upload_dataset').click()"
+          title="Restore a previously exported dataset archive into the current session">Restore
+          dataset</button>
+        <input type="file" id="upload_dataset" style="display:none" />
+      </div>
     </div>
 
     <div class="ftext" style="font-size: smaller;">
@@ -225,20 +526,21 @@ Licensed under CC-BY-NC-SA-4.0
     type="text/css" />
   <!-- Load Azure Maps SDK in correct order -->
   <script src="https://atlas.microsoft.com/sdk/javascript/mapcontrol/3.0/atlas.min.js"
-    onload="console.log('Azure Maps main SDK loaded')"></script>
+    onload="window.TowerScoutLogger.debug('Azure Maps main SDK loaded')"></script>
   <!-- CRITICAL FIX: Add missing Service SDK for search functionality -->
   <script src="https://atlas.microsoft.com/sdk/javascript/service/2.0/atlas-service.min.js"
-    onload="console.log('Azure Maps service SDK loaded')"></script>
+    onload="window.TowerScoutLogger.debug('Azure Maps service SDK loaded')"></script>
   <script src="https://atlas.microsoft.com/sdk/javascript/drawing/1.0/atlas-drawing.min.js"
-    onload="console.log('Azure Maps drawing SDK loaded')"></script>
+    onload="window.TowerScoutLogger.debug('Azure Maps drawing SDK loaded')"></script>
 
   <!-- Google Maps SDK will be loaded dynamically when needed -->
   <script>
-    console.log('Google Maps will be loaded dynamically via proxy system');
+    window.TowerScoutLogger.debug('Google Maps will be loaded dynamically via proxy system');
   </script>
   <script>
     // API keys now secure on server - using proxy endpoints
     let dev = "{{ dev }}";
+    window.needsSetup = {{ needs_setup | tojson }};
 
     // Provider availability (set by backend validation)
     const availableProviders = {{ available_providers | tojson }};
@@ -247,9 +549,9 @@ Licensed under CC-BY-NC-SA-4.0
     const gak = availableProviders.includes('google') ? true : null;
     const aak = availableProviders.includes('azure') ? true : null;
 
-    console.log('Available providers:', availableProviders);
-    console.log('Google available:', !!gak);
-    console.log('Azure available:', !!aak);
+    window.TowerScoutLogger.debug('Available providers:', availableProviders);
+    window.TowerScoutLogger.debug('Google available:', !!gak);
+    window.TowerScoutLogger.debug('Azure available:', !!aak);
 
     // Map proxy configuration
     const MAP_PROXY_CONFIG = {
@@ -271,19 +573,19 @@ Licensed under CC-BY-NC-SA-4.0
     // Initialize Azure Maps when SDK is ready
     function initAzureMaps() {
       if (checkAzureMapsLoaded()) {
-        console.log('Azure Maps SDK loaded, initializing...');
+        window.TowerScoutLogger.debug('Azure Maps SDK loaded, initializing...');
         try {
           initAzureMap();
         } catch (error) {
           console.error('Azure Maps initialization error:', error.message);
           // Fallback to Google Maps if Azure fails
           if (typeof google !== 'undefined' && google.maps) {
-            console.log('Falling back to Google Maps');
+            window.TowerScoutLogger.debug('Falling back to Google Maps');
             setMapProvider('google');
           }
         }
       } else {
-        console.log('Azure Maps SDK not ready, retrying in 100ms...');
+        window.TowerScoutLogger.debug('Azure Maps SDK not ready, retrying in 100ms...');
         setTimeout(initAzureMaps, 100);
       }
     }
@@ -292,7 +594,7 @@ Licensed under CC-BY-NC-SA-4.0
     async function loadGoogleMaps() {
       // Skip if Google Maps already loaded
       if (typeof google !== 'undefined' && google.maps) {
-        console.log('Google Maps already loaded');
+        window.TowerScoutLogger.debug('Google Maps already loaded');
         return Promise.resolve();
       }
 
@@ -308,7 +610,7 @@ Licensed under CC-BY-NC-SA-4.0
         return new Promise((resolve, reject) => {
           // Create temporary callback
           window.initGoogleMapCallback = function () {
-            console.log('Google Maps loaded via dynamic loading with API key');
+            window.TowerScoutLogger.debug('Google Maps loaded via dynamic loading with API key');
             delete window.initGoogleMapCallback; // Cleanup
             initGoogleMap();
             resolve();
@@ -332,14 +634,14 @@ Licensed under CC-BY-NC-SA-4.0
 
     // Initialize maps - Deferred to towerscout.js to prevent race conditions
     // Provider initialization handled by unified DOMContentLoaded handler in towerscout.js
-    console.log('📋 Template loaded - map initialization deferred to towerscout.js');
+    window.TowerScoutLogger.debug('📋 Template loaded - map initialization deferred to towerscout.js');
 
     // Backend provider detection still available for reference
     async function getBackendProviders() {
       try {
         const response = await fetch('/getproviders');
         const providers = await response.json();
-        console.log('🗺️ Backend providers available:', providers.map(p => p.id));
+        window.TowerScoutLogger.debug('🗺️ Backend providers available:', providers.map(p => p.id));
         return providers;
       } catch (error) {
         console.error('❌ Error fetching backend providers:', error);
@@ -354,11 +656,11 @@ Licensed under CC-BY-NC-SA-4.0
     // DEBUG: Add Azure Maps debugging if debug parameter is present
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('debug') === 'azure') {
-      console.log('🔧 [DEBUG MODE] Loading Azure Maps debug script...');
+      window.TowerScoutLogger.debug('🔧 [DEBUG MODE] Loading Azure Maps debug script...');
       const debugScript = document.createElement('script');
       debugScript.src = '/js/azure_maps_debug.js';
       debugScript.onload = () => {
-        console.log('🔧 [DEBUG MODE] Azure Maps debug script loaded');
+        window.TowerScoutLogger.debug('🔧 [DEBUG MODE] Azure Maps debug script loaded');
       };
       document.head.appendChild(debugScript);
     }
