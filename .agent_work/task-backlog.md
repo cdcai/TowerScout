@@ -1,9 +1,9 @@
 # Task Backlog - Future Work Prioritization
 
-**Last Updated**: April 14, 2026  
+**Last Updated**: April 28, 2026  
 **Sprint 04 Completed**: March 19 - April 6, 2026  
-**Sprint 05 Active**: April 7 - April 25, 2026  
-**Next Sprint Planning**: Sprint 06 Prep - April 25, 2026  
+**Sprint 05 Active**: April 7 - active extension after April 25, 2026  
+**Next Sprint Planning**: Sprint 06 Prep after `TASK-063` / `TASK-064` / `TASK-025` rebaseline and v1 operational contracts are explicit  
 
 ---
 
@@ -64,14 +64,47 @@
 
 ---
 
+### **TASK-063: Pre-Docker Release Hardening And CI Reproducibility Gate** 🔴
+**Status**: IN_SPRINT_05 - MOVED TO current-tasks.md  
+**Type**: C (Security / Release Engineering / Deployment Readiness)  
+**Priority**: CRITICAL  
+**Estimated Effort**: 1-2 days (8-16 hours)  
+**Target Sprint**: Sprint 05 extension / pre-Docker gate
+
+**See**: [current-tasks.md](./current-tasks.md#task-063-pre-docker-release-hardening-and-ci-reproducibility-gate) and [TASK-063 task file](./tasks/active/TASK-063-pre-docker-release-hardening.md) for full details
+
+---
+
+### **TASK-064: Targeted Runtime Responsiveness And Inference Baseline** 🔴
+**Status**: IN_SPRINT_05 - MOVED TO current-tasks.md  
+**Type**: B/C (Runtime Responsiveness / Performance Validation)  
+**Priority**: HIGH  
+**Estimated Effort**: 0.5-1 day (4-8 hours)  
+**Target Sprint**: Sprint 05 extension / pre-Docker sign-off gate
+
+**See**: [current-tasks.md](./current-tasks.md#task-064-targeted-runtime-responsiveness-and-inference-baseline) and [TASK-064 task file](./tasks/active/TASK-064-runtime-responsiveness-inference-baseline.md) for full details
+
+---
+
 ### **TASK-025: Docker Containerization** 🔴
 **Status**: IN_SPRINT_05 - MOVED TO current-tasks.md  
-**Type**: A (Infrastructure)  
+**Type**: C (Infrastructure / Deployment Readiness)  
 **Priority**: HIGH  
 **Estimated Effort**: 1-2 days (8-16 hours)  
-**Target Sprint**: Sprint 05
+**Target Sprint**: Sprint 05 after `TASK-063` and `TASK-064`
 
-**See**: [current-tasks.md](./current-tasks.md#task-025-docker-containerization) for full details
+**See**: [current-tasks.md](./current-tasks.md#task-025-docker-containerization) and [TASK-025 task file](./tasks/active/TASK-025-docker-containerization.md) for full details
+
+---
+
+### **TASK-054: Local Launch UX** 🟡
+**Status**: IN_SPRINT_05 - MOVED TO current-tasks.md (post-Docker stretch goal)  
+**Type**: B (Deployment UX / Local Supportability)  
+**Priority**: MEDIUM  
+**Estimated Effort**: 1-2 days (8-12 hours)  
+**Target Sprint**: Sprint 05 stretch / Sprint 06 carry-forward
+
+**See**: [current-tasks.md](./current-tasks.md#task-054-local-launch-ux) and [TASK-054 task file](./tasks/active/TASK-054-local-launch-ux.md) for full details
 
 ---
 
@@ -82,7 +115,7 @@
 **Estimated Effort**: 2-3 days (16-24 hours)  
 **Target Sprint**: Sprint 05
 
-**See**: [current-tasks.md](./current-tasks.md#task-029-multi-provider-fallback) for full details
+**See**: [current-tasks.md](./current-tasks.md#task-029-multi-provider-fallback) and [TASK-029 task file](./tasks/active/TASK-029-multi-provider-fallback.md) for full details
 
 ---
 
@@ -95,7 +128,7 @@
 **Estimated Effort**: 3-5 days (24-40 hours)  
 **Target Sprint**: Sprint 06 or Sprint 07
 
-**Objective**: Move long-running detection work out of the request thread and introduce durable run/job state suitable for containerized deployment.
+**Objective**: Move long-running detection work out of the request thread and introduce a local job-runner boundary plus durable run/job state suitable for the v1 single-user local deployment model.
 
 **Issues Addressed**:
 - `UT-011` synchronous detection request path blocks long-running ML work
@@ -105,11 +138,15 @@
 
 **Requirements**:
 - Background job lifecycle for detection start, status, cancellation, and result completion
-- Durable job/run identity and shared backing state rather than process-local assumptions
+- Durable job/run identity and local backing state rather than request/thread-local assumptions
 - Clear migration path for progress polling and cancellation
 - Explicit handling of temp files, cleanup, and retry semantics outside the request thread
+- Explicit contract for app-close/restart behavior, with best-effort active workflow continuity acceptable for v1 unless upgraded later
+- Use SQLite as the default planned local durable metadata store unless `TASK-058` design validation finds a blocker
+- Define schema/versioning/recovery behavior for job metadata, progress state, cancellation state, and asset/run manifest references
+- Keep the metadata store local and single-user rather than turning this into a shared-service architecture
 
-**User Value**: Makes the deployed application more reliable under real long-running workloads and better aligned with containerized execution.
+**User Value**: Makes the deployed application more reliable under real long-running workloads and better aligned with containerized execution without prematurely designing for shared multi-user deployment.
 
 ---
 
@@ -120,7 +157,7 @@
 **Estimated Effort**: 3-5 days (24-40 hours)  
 **Target Sprint**: Sprint 06 or Sprint 07
 
-**Objective**: Reduce change risk in `towerscout.py` by extracting clearer backend layers and completing the migration away from raw `print()` logging in production code paths.
+**Objective**: Reduce change risk in `towerscout.py` by extracting clearer backend layers after the job/state seams are in place and completing the migration away from raw `print()` logging in production code paths.
 
 **Issues Addressed**:
 - `UT-008` `towerscout.py` remains a high-risk monolith
@@ -131,6 +168,7 @@
 - Move detection orchestration, session/state helpers, and route concerns into clearer modules
 - Replace remaining production `print()` usage with structured logging in the active backend runtime
 - Preserve existing detection behavior and route contracts during the decomposition
+- Sequence decomposition after `TASK-058` so route/service boundaries follow the actual execution and state ownership seams
 
 **User Value**: Makes future reliability and deployment changes safer and easier to reason about.
 
@@ -364,7 +402,7 @@
 | Sprint 02 | 14-21 days | 5/5 (100%) | ✅ Complete | N/A | Architecture work |
 | Sprint 03 | 8 days (14 planned) | 8/8 (100%) | ✅ Complete | +40.2 KB | Ahead of schedule |
 | Sprint 04 | 19 days (16 planned) | 7/7 core + 1 closeout (100%) | ✅ Complete | +33.3 KB | Extended for stabilization |
-| Sprint 05 | 19 days planned | TBD | 🏃 In Planning | TBD | Deployment readiness |
+| Sprint 05 | Active extension after April 25 | TBD | 🏃 In Planning | TBD | Deployment readiness and v1 operational contracts |
 
 **Trend Analysis**:
 - Consistent 100% core task completion across all sprints
@@ -381,9 +419,13 @@
 - 🏃 Runtime hardening and local YOLO ownership (Sprint 05)
 - 🏃 Runtime dependency verification (Sprint 05)
 - 🏃 Integration testing baseline (Sprint 05)
+- 🏃 Pre-Docker release hardening and v1 operational gates (Sprint 05 extension)
 - 🏃 Docker containerization (Sprint 05)
+- 🏃 Launcher and support UX over Docker (Sprint 05 stretch / Sprint 06 carry-forward)
 
 ### **Phase 2: Performance and Reliability (Sprint 06-07)**
+- Local background job runner and durable run state
+- Backend layer decomposition after job/state seams are clearer
 - CPU optimization
 - Enhanced error handling
 - Multi-provider fallback
@@ -432,4 +474,5 @@
 - [Current Tasks](./current-tasks.md) - Sprint 05 active work
 - [Completed Tasks](./completed-tasks.md) - Historical completion record
 - [Sprint 05 Plan](./context/status/SPRINT-05-PLAN.md) - Sprint 05 detailed planning (create at kickoff)
+- [TowerScout Path Forward After Plan Sufficiency Review](./context/analysis/TOWERSCOUT-PATH-FORWARD-POST-SUFFICIENCY-REVIEW-2026-04-28.md) - Consolidated path forward and execution gates
 - [Sprint 04 Retrospective](./context/status/SPRINT-04-RETROSPECTIVE.md) - Sprint 04 lessons learned

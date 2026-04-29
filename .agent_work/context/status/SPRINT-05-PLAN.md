@@ -1,10 +1,10 @@
 # Sprint 05 Plan - Runtime Determinism, Docker Readiness, and Local Launch Foundations
 
-**Sprint Period**: April 7 - April 25, 2026 (19 days)  
+**Sprint Period**: April 7 - active extension after April 25, 2026  
 **Planning Date**: April 6, 2026  
-**Updated Through**: April 13, 2026  
-**Sprint Focus**: Runtime hardening, reproducible inference, Docker readiness, and bounded local launch UX follow-through  
-**Target Capacity**: 70-80 hours  
+**Updated Through**: April 28, 2026  
+**Sprint Focus**: Runtime hardening, reproducible inference, pre-Docker release gates, Docker readiness, and bounded local launch UX follow-through  
+**Target Capacity**: 76-118 hours after the final review gates (original planning target was 70-80 hours)  
 **Expected Bundle Growth**: +10-20 KB (infrastructure-heavy sprint)
 
 ---
@@ -22,6 +22,9 @@ The main Sprint 05 plan updates since the April 6 planning session are:
 3. `TASK-054` remains a post-Docker stretch task for launch UX, and `TASK-029` stays behind it.
 4. Runtime path normalization remains pre-sprint closeout work, not active Sprint 05 feature delivery.
 5. The detailed Sprint 05 scope is synchronized with [current-tasks.md](../../current-tasks.md).
+6. `TASK-063` is now the pre-Docker release-hardening gate added from the second senior-engineer review.
+7. The April 28 plan sufficiency review confirms the plan is sufficient if v1 scope stays narrow and release, persistence, security, and support contracts are explicit before Docker becomes the baseline.
+8. `TASK-064` is now the targeted runtime responsiveness and inference baseline gate added from the final path-forward review.
 
 ---
 
@@ -29,7 +32,7 @@ The main Sprint 05 plan updates since the April 6 planning session are:
 
 ### Primary Goal
 
-Deliver Docker containerization (`TASK-025`) only after the runtime contract is corrected, locally owned, and validated through a current smoke-test baseline.
+Deliver Docker containerization (`TASK-025`) only after the runtime contract is corrected, locally owned, validated through a current smoke-test baseline, and cleared through the pre-Docker release-hardening and targeted responsiveness/performance gates.
 
 ### Secondary Goals
 
@@ -37,8 +40,10 @@ Deliver Docker containerization (`TASK-025`) only after the runtime contract is 
 2. Complete `TASK-056` first-run reliability and runtime determinism hardening.
 3. Complete `TASK-057` local YOLO runtime ownership and Torch Hub independence.
 4. Complete `TASK-052` current integration smoke-test baseline on the corrected runtime.
-5. Deliver `TASK-054` local launch UX MVP only if Docker baseline work lands cleanly.
-6. Consider `TASK-029`, `TASK-026`, or deferred Sprint 04 quick wins only if capacity remains.
+5. Complete `TASK-063` pre-Docker release hardening before Docker work starts.
+6. Complete `TASK-064` targeted runtime responsiveness and inference baseline before Docker sign-off.
+7. Deliver `TASK-054` local launch UX MVP only if Docker baseline work lands cleanly.
+8. Consider `TASK-029`, `TASK-026`, or deferred Sprint 04 quick wins only if capacity remains.
 
 ### Planning Assumptions
 
@@ -56,6 +61,8 @@ Deliver Docker containerization (`TASK-025`) only after the runtime contract is 
 - Correct the confirmed first-run and runtime-determinism blockers before defining the smoke baseline.
 - Replace the remaining Hub/GitHub YOLO runtime dependency with a TowerScout-owned local loader.
 - Rebuild the smoke-test baseline around the current live app boot and route surface.
+- Resolve or explicitly accept the second-review release-hardening findings before Docker starts.
+- Document the v1 release boundary, supported/unsupported environments, and minimum support diagnostics before Docker starts.
 - Deliver Docker build/run behavior with persistent state mounted correctly.
 - Preserve Setup Wizard, Settings, and current detection workflow behavior in the Docker environment.
 
@@ -63,6 +70,7 @@ Deliver Docker containerization (`TASK-025`) only after the runtime contract is 
 
 - Broad architecture rewrite beyond `TASK-056` and `TASK-057`
 - Large validation-harness rewrites beyond `TASK-052`
+- Release-hardening and CI policy folded into `TASK-025`
 - Startup-pipeline redesign folded into `TASK-025`
 - Multi-provider fallback as an assumed in-sprint commitment
 
@@ -70,6 +78,8 @@ Deliver Docker containerization (`TASK-025`) only after the runtime contract is 
 
 `TASK-056` owns immediate first-run/runtime hardening.  
 `TASK-057` owns local YOLO runtime ownership.  
+`TASK-063` owns pre-Docker dependency, CI, residual YOLO/Torch Hub audit, upload/TLS, metrics-log, v1 release-boundary, and support-diagnostics gates.  
+`TASK-064` owns targeted ProviderStateManager responsiveness cleanup and `torch.inference_mode()` benchmark evidence.  
 `TASK-025` owns container build/run behavior.  
 `TASK-054` owns launcher, browser-open behavior, readiness polling, and any follow-on startup UX.
 
@@ -165,49 +175,116 @@ Deliver Docker containerization (`TASK-025`) only after the runtime contract is 
 - `pytest --collect-only tests -q` remains clean
 - Current smoke path exists and runs against the corrected live route surface
 
-### `TASK-025: Docker Containerization`
+### `TASK-063: Pre-Docker Release Hardening And CI Reproducibility Gate`
 
 **Why fifth**:
-- Docker work should start only after runtime and validation baselines are credible.
+- The second senior review identified release-quality risks that should not be normalized into the Docker baseline.
+- These risks are adjacent to Docker but should stay separate from Docker implementation so `TASK-025` remains testable and rollback-friendly.
+
+**Key outputs**:
+- Reviewed and patched dependency baseline, or owner-approved explicit risk acceptance where a patch must defer
+- Tracked frontend reproducibility policy for the current build pipeline
+- CI security action pinning, workflow permission review, and release-candidate gate interpretation
+- Pinned third-party GitHub Action review/update cadence
+- Dependency repeatability policy for Python, frontend, and large runtime assets
+- Residual YOLO/Torch Hub audit proving no supported runtime path falls back to nondeterministic bootstrap behavior
+- First-release support boundary for `.pt` model upload and insecure TLS escape hatches
+- Upload-limit alignment across Flask, Waitress, and `.pt` support policy
+- Provider API key restriction guidance for Google and Azure
+- Single authoritative performance-log file contract
+- V1 release boundary and minimum support diagnostics contract
+
+**Exit criteria**:
+- Trivy action no longer uses floating `@master`
+- Release-relevant third-party GitHub Actions are pinned to reviewed immutable references or owner-approved
+- Pinned third-party GitHub Actions have a recurring review/update cadence
+- Workflow permissions are reviewed for release readiness
+- Dependency repeatability policy is documented
+- Frontend lockfile/reproducibility decision is reflected in tracked files or documentation
+- Residual YOLO/Torch Hub behavior is audited and documented
+- `.pt` model upload and insecure TLS behavior are explicitly gated, disabled, or documented as local/trusted exceptions
+- Flask upload limits, Waitress request-body limits, and `.pt` upload policy are aligned or owner-approved
+- Provider API key restriction guidance is documented
+- `performance.log` is no longer both a structured logging target and CSV metrics target
+- Supported/unsupported v1 environments and minimum support diagnostics are documented
+- Any unresolved item is recorded as an owner-approved explicit risk acceptance before `TASK-025` starts
+
+### `TASK-064: Targeted Runtime Responsiveness And Inference Baseline`
+
+**Why sixth**:
+- The final path-forward review identified two low-cost runtime risks that should not wait for broad frontend modernization or CPU optimization.
+- Keeping this task separate prevents Docker from absorbing frontend/runtime tuning work while still avoiding normalization of known responsiveness/performance uncertainty.
+
+**Key outputs**:
+- ProviderStateManager busy-wait / main-thread locking cleanup or owner-approved explicit risk acceptance
+- Preserved Google/Azure provider switching behavior
+- `torch.inference_mode()` benchmark evidence against the active inference path
+- Apply/defer/reject decision for the benchmarked optimization
+
+**Exit criteria**:
+- Frontend build succeeds after any ProviderStateManager changes
+- Focused provider/browser validation is recorded
+- Inference benchmark evidence is recorded
+- Any deferred performance work is linked to `TASK-026`
+- Any unresolved targeted finding has an owner-approved risk note covering issue, deferral rationale, user/release impact, mitigation, review timing, and follow-up owner/task
+
+### `TASK-025: Docker Containerization`
+
+**Why seventh**:
+- Docker work should start only after runtime, validation, and release-hardening baselines are credible.
 
 **Key outputs**:
 - Dockerfile and Compose configuration
 - Persistent mount strategy
 - Stable runtime environment contract
-- Documented model-weight handling strategy
+- Versioned v1 runtime/persistence contract
+- Documented first-run asset/bootstrap strategy
+- Container readiness/health contract for `TASK-054`
 
 **Required decisions during Phase 1**:
-- Model weights in image layer vs runtime download vs host volume
-- Minimum supported platform target (`AMD64` required, `ARM64` stretch)
+- Large runtime asset strategy and full asset inventory
+- Minimum supported platform target (`AMD64` first, CPU baseline, NVIDIA/CUDA accelerated path on compatible `AMD64` hosts)
+- Persistence categories and secret-key continuity
+- Cache and geocode data durability classification
 - Container health/readiness approach for later launcher support
+- User-facing distribution shape (GitHub release package plus registry-backed image delivery)
+- Upload-limit/request-body behavior inherited from `TASK-063`
+- Explicit unsupported-environment wording for Mac, ARM64, offline, air-gapped, VDI, shared deployment, and native installer behavior
 
 **Exit criteria**:
 - Container builds successfully
 - Setup Wizard works in Docker
 - Settings persist across restarts
+- First-run asset bootstrap succeeds or fails with clear recovery guidance
 - Detection workflow validated in container
+- Runtime/persistence/asset contracts are documented and validated against the container
+- Cache and geocode data durability classification is documented
 
 ### `TASK-054: Local Launch UX`
 
-**Why sixth**:
+**Why eighth**:
 - It depends on a stable Docker baseline.
 - It should improve local UX without destabilizing `TASK-025` delivery.
 
 **Phase 1 target**:
-- Launcher MVP (`start.bat` first)
+- Launcher MVP (`start.bat` first) for supported Windows-based local deployment
 - Browser auto-open after readiness wait
-- Basic troubleshooting path (`stop` / `logs` guidance or scripts)
+- Basic troubleshooting path (`stop` / `logs` / status guidance or scripts)
+- User-visible handling of first-run asset download delays/failures
+- Support diagnostics guidance for log locations, startup failures, version/asset visibility, and sensitive local artifact handling
 
 **Phase 2 target**:
 - Lightweight readiness endpoint or equivalent readiness contract
-- Documented first-run / repeat-run behavior
+- Documented first-run / repeat-run / failure behavior
 
 **Phase 3 target**:
 - Evaluate deferred warm-start UX for models and ZIP data
 
 **Exit criteria for Sprint 05 success**:
-- A local user can launch Docker with minimal or no manual CLI interaction
+- A supported local user can start/stop/view logs with minimal or no manual Docker CLI interaction
 - Browser opens only after the app shell is reachable
+- First-run asset/bootstrap delays are explained rather than hidden
+- Support-log and status collection paths are documented for limited/manual support
 
 ### `TASK-029: Multi-Provider Fallback`
 
@@ -239,19 +316,28 @@ This remains a stretch goal and should only begin after `TASK-054` if capacity r
 | Apr 14-17 | `TASK-057` local YOLO runtime ownership and Torch Hub independence | 12-20h |
 | Apr 18-20 | `TASK-052` current integration smoke-test baseline | 6-10h |
 
-### Week 3: April 21-25
+### Week 3 / Sprint Extension: April 21 onward
 
-**Focus**: containerize the corrected baseline, then decide whether any launch-UX stretch capacity remains
+**Focus**: complete pre-Docker release hardening and the targeted responsiveness/performance gate, then containerize the corrected baseline if both gates clear
 
 | Date | Tasks | Hours |
 |------|-------|-------|
-| Apr 21-23 | `TASK-025` Phase 1-2: Docker strategy, Dockerfile, and Compose configuration | 10-16h |
-| Apr 23-24 | `TASK-025` Phase 3-4: volume mounts, validation, and documentation | 8-12h |
-| Apr 24-25 | Stretch decision: `TASK-054` Phase 1 only if Docker baseline lands cleanly | 0-8h |
-| Apr 25 | Sprint 05 retrospective | 2-4h |
+| Apr 21 | `TASK-062` pre-Docker runtime cleanup and loader hardening | 6-10h |
+| Apr 28-29 | `TASK-063` pre-Docker release hardening and CI reproducibility gate | 8-16h |
+| After `TASK-063` | `TASK-064` targeted runtime responsiveness and inference baseline | 4-8h |
+| After `TASK-064` | `TASK-025` Phase 1-2: Docker strategy, Dockerfile, and Compose configuration | 10-16h |
+| After `TASK-025` Phase 2 | `TASK-025` Phase 3-4: volume mounts, validation, and documentation | 8-12h |
+| Stretch after Docker | `TASK-054` Phase 1 only if Docker baseline lands cleanly | 0-8h |
+| Closeout | Sprint 05 retrospective / Sprint 06 handoff | 2-4h |
 
-**Total Sprint Effort**: `64-94 hours`  
-**Planning Target**: `70-80 hours`
+**Total Sprint Effort**: `76-118 hours` after the final-review gates  
+**Original Planning Target**: `70-80 hours`
+
+**April 28 replan note**:
+- `TASK-063` is now a pre-Docker gate based on the second senior-engineer review.
+- The plan sufficiency assessment confirms the sequence is viable only if v1 release boundary, persistence, CI/security, and support contracts are explicit.
+- The final path-forward review adds `TASK-064` as a bounded responsiveness/performance gate before Docker starts.
+- Docker and launcher work should slip behind that gate rather than compressing validation.
 
 ---
 
@@ -263,7 +349,7 @@ This remains a stretch goal and should only begin after `TASK-054` if capacity r
 `TASK-025` grows to absorb runtime hardening, smoke-test work, or launch UX.
 
 **Mitigation**:
-- Keep `TASK-056`, `TASK-057`, `TASK-052`, and `TASK-054` explicitly separate.
+- Keep `TASK-056`, `TASK-057`, `TASK-052`, `TASK-063`, `TASK-064`, and `TASK-054` explicitly separate.
 - Treat any startup-UX redesign as `TASK-054` or Sprint 06 work.
 
 ### Risk 2: Persistent-State Misconfiguration
@@ -311,6 +397,42 @@ Sprint planning assumes Sprint 03 pace instead of a sustainable infrastructure p
 - Ship Phase 1 first.
 - Defer Phase 3 warm-start UX if Docker baseline or readiness work consumes capacity.
 
+### Risk 7: Release-Hardening Drift Into Docker
+
+**Risk**:
+Dependency patching, CI policy, upload/TLS gating, and metrics-log cleanup get mixed into `TASK-025`.
+
+**Mitigation**:
+- Keep `TASK-063` separate and complete it before Docker starts.
+- Record any unresolved `TASK-063` item as owner-approved explicit risk acceptance before `TASK-025`.
+
+### Risk 8: Known Supportability Gaps Become Part Of The Baseline
+
+**Risk**:
+The Docker image ships with ambiguous frontend reproducibility, floating CI security action references, unsafe upload assumptions, or ambiguous performance logs.
+
+**Mitigation**:
+- Treat `TASK-063` as a release-quality gate, not an optional cleanup.
+- Keep Docker validation blocked until the known findings are fixed or owner-approved.
+
+### Risk 9: Operational Contracts Stay Implicit
+
+**Risk**:
+The plan proceeds with the right sequence but leaves v1 support boundary, persistence behavior, asset recovery, and diagnostics as assumptions.
+
+**Mitigation**:
+- Use the path-forward analysis as the planning contract.
+- Require `TASK-063` and `TASK-025` to record the release boundary, persistence map, asset contract, and support diagnostics before Docker is treated as release-ready.
+
+### Risk 10: Targeted Responsiveness Findings Become Docker Noise
+
+**Risk**:
+ProviderStateManager locking behavior or a low-cost inference-mode optimization is discovered during Docker validation, creating avoidable confusion about whether the issue is frontend state, ML runtime behavior, or containerization.
+
+**Mitigation**:
+- Keep `TASK-064` separate from Docker.
+- Resolve, measure, or owner-approve these two targeted findings before `TASK-025` begins.
+
 ---
 
 ## Definition of Done
@@ -322,17 +444,39 @@ Sprint planning assumes Sprint 03 pace instead of a sustainable infrastructure p
 - `TASK-056` complete
 - `TASK-057` complete
 - `TASK-052` complete
+- `TASK-063` complete
+- Trivy action no longer uses floating `@master`
+- Release-relevant third-party GitHub Actions pinned to reviewed immutable references or owner-approved
+- Pinned third-party GitHub Actions have a recurring review/update cadence
+- Workflow permissions reviewed for release readiness
+- Frontend lockfile/reproducibility policy decided
+- Dependency repeatability policy documented for Python dependencies, frontend dependencies, and runtime assets
+- Residual YOLO/Torch Hub behavior audited
+- `.pt` model upload and insecure TLS support boundaries decided
+- Flask upload limits, Waitress request-body limits, and `.pt` upload policy aligned
+- Provider API key restriction guidance documented for Google and Azure
+- `performance.log` has one authoritative format contract
+- V1 supported/unsupported environment boundary documented
+- Minimum support diagnostics contract documented
+- `TASK-064` complete
+- ProviderStateManager busy-wait / main-thread locking behavior removed or owner-approved
+- `torch.inference_mode()` benchmark decision recorded before Docker sign-off
+- Any unresolved `TASK-063` or `TASK-064` finding has owner-approved risk acceptance documenting issue, deferral rationale, user/release impact, mitigation, review timing, and follow-up owner/task
 - `TASK-025` Phase 1-3 complete
 - Setup Wizard functional in Docker
 - Settings save/load validated with persistence
 - Detection workflow validated in Docker
+- Durable and writable mount behavior validated and documented
+- Cache and geocode data durability classified for v1
 - Docker Compose configuration validated
+- First-run asset bootstrap and recovery path validated
+- Container readiness/health behavior available for launcher polling
 - No regressions against Sprint 04 core behavior
 
 ### Should-Have
 
 - `TASK-025` Phase 4 complete
-- `AMD64` support validated
+- `AMD64` CPU baseline validated and CUDA-enabled `AMD64` path documented
 - `TASK-054` Phase 1 launcher MVP complete
 - Deferred Sprint 04 quick wins reconsidered only if capacity remains
 
@@ -340,8 +484,8 @@ Sprint planning assumes Sprint 03 pace instead of a sustainable infrastructure p
 
 - `TASK-054` Phase 2 either complete or cleanly deferred with documented readiness approach
 - `TASK-029` investigation begins after `TASK-054`
-- `ARM64` support validated
-- Docker Hub publishing path documented
+- `ARM64` / Mac follow-on plan documented
+- Container registry publishing path documented
 - Warm-start UX feasibility assessed for Sprint 06
 
 ---
@@ -350,6 +494,9 @@ Sprint planning assumes Sprint 03 pace instead of a sustainable infrastructure p
 
 - A new user can install and run a first detection without in-process package upgrades.
 - YOLO initialization works on the validated host baseline without first-run GitHub dependence.
+- Known release-hardening findings are fixed or owner-approved before Docker starts.
+- Targeted responsiveness/performance findings from `TASK-064` are fixed, measured, or owner-approved before Docker starts.
+- V1 operational contracts are explicit before Docker becomes the baseline.
 - A new user can run `docker compose up` and complete Setup Wizard.
 - Configuration persists across container restarts.
 - Detection workflow works end-to-end in the Docker environment.
@@ -364,9 +511,11 @@ Sprint planning assumes Sprint 03 pace instead of a sustainable infrastructure p
 - [Sprint Planning Session - 2026-04-06](./SPRINT-PLANNING-SESSION-2026-04-06.md)
 - [Metrics Report - 2026-04](./METRICS-REPORT-2026-04.md)
 - [Removal Candidates - Containerization](../analysis/REMOVAL-CANDIDATES-CONTAINERIZATION.md)
+- [Senior Engineering Review Response Memo V2](../analysis/SENIOR-ENGINEERING-REVIEW-RESPONSE-MEMO-V2-2026-04-28.md)
+- [TowerScout Path Forward After Plan Sufficiency Review](../analysis/TOWERSCOUT-PATH-FORWARD-POST-SUFFICIENCY-REVIEW-2026-04-28.md)
 - [Sprint 04 Retrospective](./SPRINT-04-RETROSPECTIVE.md)
 
 ---
 
-**Status**: Sprint 05 plan re-sequenced around runtime hardening, local YOLO ownership, and Docker readiness gates  
-**Next Action**: Execute `TASK-056`, then `TASK-057`, then `TASK-052`, then begin `TASK-025` Phase 1
+**Status**: Sprint 05 plan re-sequenced around runtime hardening, local YOLO ownership, release hardening, targeted responsiveness/performance validation, v1 operational contracts, and Docker readiness gates  
+**Next Action**: Execute `TASK-063`, complete `TASK-064`, then begin `TASK-025` Phase 1 only after the release-hardening, final-review, and sufficiency-review gates are resolved or owner-approved with documented impact, mitigation, and follow-up plan
