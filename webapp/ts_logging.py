@@ -183,9 +183,10 @@ class TowerScoutLogger:
         error_handler.setFormatter(TowerScoutFormatter(json_format=json_logs))
         root_logger.addHandler(error_handler)
         
-        # Performance log handler - For timing and performance metrics
+        # Structured performance event handler. CSV detection metrics use
+        # ts_performance.PerformanceLogger and webapp/logs/performance.log.
         perf_handler = logging.handlers.RotatingFileHandler(
-            filename=os.path.join(log_dir, 'performance.log'),
+            filename=os.path.join(log_dir, 'performance_events.jsonl'),
             maxBytes=5 * 1024 * 1024,  # 5MB
             backupCount=3,
             encoding='utf-8'

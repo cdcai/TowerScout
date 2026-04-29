@@ -22,6 +22,7 @@ tests/**/__pycache__/
 # Node.js / NPM
 node_modules/
 package-lock.json
+!package-lock.json
 npm-debug.log
 yarn.lock
 .npm
@@ -110,4 +111,3 @@ towerscout.pem
 hosting/connect-tc.sh
 
 # GitHub repo policy and workflow files are intentionally tracked
-

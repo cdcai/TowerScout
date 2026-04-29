@@ -230,6 +230,7 @@ def test_uploadmodel_saves_valid_model_into_runtime_directory(client, monkeypatc
     validated_file.filename = "custom-model.pt"
     monkeypatch.setattr(towerscout, "YOLO_MODEL_DIR", model_dir)
     monkeypatch.setattr(towerscout, "EN_MODEL_DIR", model_dir)
+    monkeypatch.setattr(towerscout, "MODEL_UPLOAD_ENABLED", True)
 
     with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch.object(
         towerscout.TowerScoutValidator,
@@ -246,6 +247,19 @@ def test_uploadmodel_saves_valid_model_into_runtime_directory(client, monkeypatc
     assert response.data == b"ok"
     validated_file.save.assert_called_once_with(str(model_dir / "custom-model.pt"))
     mock_add_model.assert_called_once_with("custom-model.pt")
+
+
+def test_uploadmodel_disabled_by_default_blocks_model_upload(client, monkeypatch):
+    monkeypatch.setattr(towerscout, "MODEL_UPLOAD_ENABLED", False)
+
+    response = client.post(
+        "/uploadmodel",
+        data={"model": (io.BytesIO(b"fake-model-weights"), "upload.pt")},
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 403
+    assert b"Model upload is disabled" in response.data
 
 
 def test_getdataset_exports_archive_with_current_session_contract(client):

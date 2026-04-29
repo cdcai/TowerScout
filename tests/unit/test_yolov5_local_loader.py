@@ -71,8 +71,8 @@ def test_validate_runtime_dependencies_reports_missing_required_local_loader_imp
 
         versions = {
             "numpy": "1.26.4",
-            "pillow": "10.3.0",
-            "requests": "2.32.2",
+            "pillow": "12.2.0",
+            "requests": "2.33.1",
             "packaging": "25.0",
             "pandas": "2.3.3",
             "opencv-python": "4.9.0.80",

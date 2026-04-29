@@ -15,7 +15,7 @@
         "puppeteer": "24.19.0"
     },
     "engines": {
-        "node": ">=16.0.0"
+        "node": ">=18.0.0"
     },
     "keywords": [
         "towerscout",

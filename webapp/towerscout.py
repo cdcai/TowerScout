@@ -1209,6 +1209,36 @@ def start_zipcodes():
 # Flask boilerplate stuff
 app = Flask(__name__)
 
+
+def _get_max_request_body_size() -> int:
+    configured_value = os.getenv('TOWERSCOUT_MAX_REQUEST_BODY_BYTES', '').strip()
+    if not configured_value:
+        return TowerScoutValidator.MAX_FILE_SIZE
+
+    try:
+        max_bytes = int(configured_value)
+    except ValueError:
+        logger.warning(
+            "Invalid TOWERSCOUT_MAX_REQUEST_BODY_BYTES=%s; using default %s",
+            configured_value,
+            TowerScoutValidator.MAX_FILE_SIZE,
+        )
+        return TowerScoutValidator.MAX_FILE_SIZE
+
+    if max_bytes <= 0:
+        logger.warning(
+            "TOWERSCOUT_MAX_REQUEST_BODY_BYTES must be positive; using default %s",
+            TowerScoutValidator.MAX_FILE_SIZE,
+        )
+        return TowerScoutValidator.MAX_FILE_SIZE
+
+    return max_bytes
+
+
+MAX_REQUEST_BODY_SIZE = _get_max_request_body_size()
+TowerScoutValidator.MAX_FILE_SIZE = MAX_REQUEST_BODY_SIZE
+MODEL_UPLOAD_ENABLED = os.getenv('TOWERSCOUT_ENABLE_MODEL_UPLOAD', '').strip().lower() in {'1', 'true', 'yes', 'on'}
+
 # Configure Flask from environment variables
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
 if not app.config['SECRET_KEY']:
@@ -1216,6 +1246,7 @@ if not app.config['SECRET_KEY']:
     logger.warning("FLASK_SECRET_KEY not configured. Using a temporary in-memory secret for setup-required mode.")
 
 app.config['UPLOAD_FOLDER'] = str(UPLOAD_DIR)
+app.config['MAX_CONTENT_LENGTH'] = MAX_REQUEST_BODY_SIZE
 app.config['FLASK_ENV'] = os.getenv('FLASK_ENV', 'development')
 app.config['DEBUG'] = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
 app.config['SETUP_REQUIRED'] = needs_setup
@@ -1396,6 +1427,7 @@ def map_func():
     return render_template('towerscout.html',
                            available_providers=available_providers,
                            needs_setup=needs_setup,
+                           model_upload_enabled=MODEL_UPLOAD_ENABLED,
                            dev=dev)
 
 
@@ -2206,6 +2238,12 @@ def drawResult(r, im):
 @ app.route('/uploadmodel', methods=['POST'])
 def upload_model():
     api_logger.info("Model upload requested")
+
+    if not MODEL_UPLOAD_ENABLED:
+        api_logger.warning("Model upload rejected because TOWERSCOUT_ENABLE_MODEL_UPLOAD is not enabled")
+        return jsonify({
+            'error': 'Model upload is disabled for this release. Install trusted model files through the configured model volume or enable the local-admin upload override.'
+        }), 403
     
     # Rate limiting (stricter for model uploads)
     client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ['REMOTE_ADDR'])
@@ -2888,4 +2926,4 @@ if __name__ == '__main__':
         dev = 1
 
     logger.info("Starting Waitress server on http://localhost:5000/")
-    serve(app, host='0.0.0.0', port=5000)
+    serve(app, host='0.0.0.0', port=5000, max_request_body_size=MAX_REQUEST_BODY_SIZE)

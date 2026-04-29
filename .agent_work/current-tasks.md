@@ -415,8 +415,8 @@ These are current-branch closeout items for `feature-sprint-04-closeout`. Comple
 
 ---
 
-### **TASK-063: Pre-Docker Release Hardening And CI Reproducibility Gate** 🔴
-**Status**: NOT_STARTED  
+### **TASK-063: Pre-Docker Release Hardening And CI Reproducibility Gate** ✅
+**Status**: COMPLETED
 **Type**: C (Security / Release Engineering / Deployment Readiness)  
 **Priority**: CRITICAL  
 **Estimated Effort**: 1-2 days (8-16 hours)  
@@ -551,7 +551,7 @@ Runtime-path normalization is complete. Docker work should treat the following a
 - ✅ TASK-055 - YOLO Torch Hub pinned-ref hardening
 - 🟡 TASK-052 - current integration smoke-test baseline
 - ✅ TASK-062 - pre-Docker runtime cleanup and loader hardening
-- 🔴 TASK-063 - pre-Docker release hardening and CI reproducibility gate
+- 🟡 TASK-063 - pre-Docker release hardening and CI reproducibility gate
 - 🔴 TASK-064 - targeted runtime responsiveness and inference baseline gate
 
 **Notes**:
@@ -748,20 +748,20 @@ Runtime-path normalization is complete. Docker work should treat the following a
 - [x] TASK-057 complete: Active YOLO load path no longer depends on Torch Hub / GitHub at runtime
 - [x] TASK-052 complete: Current integration smoke test in place on the corrected runtime contract
 - [x] TASK-062 complete: Senior-review cleanup landed on the host baseline before Docker starts
-- [ ] TASK-063 complete: Dependency, CI, upload/TLS, and metrics-log release-hardening findings resolved or owner-approved
-- [ ] Trivy action no longer uses a floating `@master` reference
-- [ ] Release-relevant third-party GitHub Actions pinned to reviewed immutable references or owner-approved
-- [ ] Pinned third-party GitHub Actions have a recurring review/update cadence
-- [ ] Workflow permissions reviewed for release readiness
-- [ ] Frontend lockfile/reproducibility policy decided and reflected in tracked files or documentation
-- [ ] Dependency repeatability policy documented for Python dependencies, frontend dependencies, and runtime assets
-- [ ] Residual YOLO/Torch Hub audit proves no supported runtime path falls back to nondeterministic bootstrap behavior
-- [ ] `.pt` model upload support boundary decided before release packaging
-- [ ] Flask upload limits, Waitress request-body limits, and `.pt` upload policy aligned
-- [ ] Provider API key restriction guidance documented for Google and Azure
-- [ ] `performance.log` has one authoritative file-format contract
-- [ ] V1 release boundary documented: supported Windows/AMD64 single-user local release and unsupported environments named explicitly
-- [ ] Minimum support diagnostics contract documented for log locations, startup failures, asset/version visibility, and sensitive-data handling
+- [x] TASK-063 complete: Dependency, CI, upload/TLS, and metrics-log release-hardening findings resolved or owner-approved
+- [x] Trivy action no longer uses a floating `@master` reference
+- [x] Release-relevant third-party GitHub Actions pinned to reviewed immutable references or owner-approved
+- [x] Pinned third-party GitHub Actions have a recurring review/update cadence
+- [x] Workflow permissions reviewed for release readiness
+- [x] Frontend lockfile/reproducibility policy decided and reflected in tracked files or documentation
+- [x] Dependency repeatability policy documented for Python dependencies, frontend dependencies, and runtime assets
+- [x] Residual YOLO/Torch Hub audit proves no supported runtime path falls back to nondeterministic bootstrap behavior
+- [x] `.pt` model upload support boundary decided before release packaging
+- [x] Flask upload limits, Waitress request-body limits, and `.pt` upload policy aligned
+- [x] Provider API key restriction guidance documented for Google and Azure
+- [x] `performance.log` has one authoritative file-format contract
+- [x] V1 release boundary documented: supported Windows/AMD64 single-user local release and unsupported environments named explicitly
+- [x] Minimum support diagnostics contract documented for log locations, startup failures, asset/version visibility, and sensitive-data handling
 - [ ] TASK-064 complete: ProviderStateManager responsiveness and `torch.inference_mode()` benchmark findings resolved or owner-approved
 - [ ] ProviderStateManager busy-wait / main-thread locking behavior removed or owner-approved
 - [ ] `torch.inference_mode()` benchmark decision recorded before Docker sign-off

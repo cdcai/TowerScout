@@ -29,8 +29,8 @@ logger = get_ml_logger()
 
 YOLOV5_RUNTIME_DEPENDENCIES = {
     'numpy': {'max_version_exclusive': '2.0.0'},
-    'pillow': {'min_version': '10.3.0'},
-    'requests': {'min_version': '2.32.2'},
+    'pillow': {'min_version': '12.2.0'},
+    'requests': {'min_version': '2.33.1'},
     'packaging': {},
     'pandas': {},
     'opencv-python': {},
