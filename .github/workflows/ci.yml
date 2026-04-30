@@ -10,6 +10,30 @@ permissions:
   contents: read
 
 jobs:
+  frontend-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+    - name: Set up Node 18
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+
+    - name: Install frontend dependencies
+      env:
+        PUPPETEER_SKIP_DOWNLOAD: 'true'
+      run: npm ci
+
+    - name: Rebuild frontend bundle
+      run: node webapp/build.js
+
+    - name: Run ProviderStateManager regression test
+      run: node tests/integration/test_task_064_provider_state_manager.js
+
   test:
     runs-on: ubuntu-latest
     strategy:

@@ -151,7 +151,8 @@ class EN_Classifier:
 
                 # and feed into model
                 # this is 1-... because the secondary has class 0 as tower
-                output = 1 - torch.sigmoid(self.model(input).cpu()).item()
+                with torch.inference_mode():
+                    output = 1 - torch.sigmoid(self.model(input).cpu()).item()
                 # print(" inspected: YOLOv5 conf:",round(conf,2), end=", ")
                 # print(" secondary result:", round(output,2))
                 if self.save_debug_images:
@@ -172,6 +173,4 @@ class EN_Classifier:
 
             det.append(p2)
             count += 1
-
-
 

@@ -11,6 +11,7 @@
       this.currentProvider = null;
       this.currentMap = null;
       this.switchingInProgress = false;
+      this.providerSwitchQueue = Promise.resolve();
       this.initializationPromises = new Map();
       this.isInitializing = true;
       window.TowerScoutLogger.debug('🔧 ProviderStateManager initialized');
@@ -53,22 +54,21 @@
     }
 
     async switchProvider(targetProvider, mapInstance = null) {
-      if (this.switchingInProgress) {
-        console.warn('🚫 Provider switch already in progress, queuing request...');
-        // Wait for current switch to complete
-        await new Promise(resolve => {
-          const checkSwitching = () => {
-            if (!this.switchingInProgress) {
-              resolve();
-            } else {
-              window.timerManager.setTimeout(checkSwitching, 50);
-            }
-          };
-          checkSwitching();
-        });
-        return;
-      }
+      const switchTask = this.providerSwitchQueue.then(() =>
+        this._performProviderSwitch(targetProvider, mapInstance)
+      );
 
+      this.providerSwitchQueue = switchTask.catch(error => {
+        window.TowerScoutLogger.debug(`Provider switch queue recovered after failure: ${error.message}`);
+      });
+
+      return switchTask;
+    }
+
+    async _performProviderSwitch(targetProvider, mapInstance = null) {
+      if (this.switchingInProgress) {
+        throw new Error('Provider switch already in progress');
+      }
       window.TowerScoutLogger.debug(`🔄 Switching provider from ${this.currentProvider} to ${targetProvider}`);
       this.switchingInProgress = true;
 
@@ -224,6 +224,19 @@
         throw error;
       } finally {
         this.switchingInProgress = false;
+      }
+    }
+
+    runSynchronousStateMutation(lockName, operationName, mutation) {
+      if (this[lockName]) {
+        throw new Error(`${operationName} already in progress`);
+      }
+
+      try {
+        this[lockName] = true;
+        return mutation();
+      } finally {
+        this[lockName] = false;
       }
     }
 
@@ -390,20 +403,7 @@
      * @throws {Error} If another update is in progress or mapInstance is invalid
      */
     async setCurrentMapAtomic(mapInstance, provider) {
-      // Wait for lock to be available (simple async lock)
-      while (this.mapStateLock) {
-        await new Promise(resolve => {
-          if (window.timerManager) {
-            window.timerManager.setTimeout(resolve, 10);
-          } else {
-            setTimeout(resolve, 10);
-          }
-        });
-      }
-
-      try {
-        this.mapStateLock = true;
-
+      return this.runSynchronousStateMutation('mapStateLock', 'Map state update', () => {
         if (!mapInstance) {
           throw new Error('Cannot set null map instance');
         }
@@ -418,9 +418,8 @@
         this.currentMap = mapInstance;
 
         window.TowerScoutLogger.debug(`🔒 Current map set atomically: ${provider}`);
-      } finally {
-        this.mapStateLock = false;
-      }
+        return true;
+      });
     }
 
     // ========================================
@@ -461,18 +460,10 @@
      * Clear detections array with mutex protection
      */
     clearDetections() {
-      // Acquire lock
-      while (this.detectionLock) {
-        // Busy wait (synchronous operation, should be fast)
-      }
-
-      try {
-        this.detectionLock = true;
+      this.runSynchronousStateMutation('detectionLock', 'Clear detections', () => {
         this.detectionArray.length = 0;
         window.TowerScoutLogger.debug('🧹 Detections array cleared');
-      } finally {
-        this.detectionLock = false;
-      }
+      });
     }
 
     /**
@@ -480,16 +471,9 @@
      * @param {Detection} detection - Detection object to add
      */
     addDetection(detection) {
-      while (this.detectionLock) {
-        // Busy wait
-      }
-
-      try {
-        this.detectionLock = true;
+      this.runSynchronousStateMutation('detectionLock', 'Add detection', () => {
         this.detectionArray.push(detection);
-      } finally {
-        this.detectionLock = false;
-      }
+      });
     }
 
     /**
@@ -497,17 +481,10 @@
      * @param {Function} compareFn - Optional comparison function for Array.sort()
      */
     sortDetections(compareFn) {
-      while (this.detectionLock) {
-        // Busy wait
-      }
-
-      try {
-        this.detectionLock = true;
+      this.runSynchronousStateMutation('detectionLock', 'Sort detections', () => {
         this.detectionArray.sort(compareFn);
         window.TowerScoutLogger.debug(`🔀 Detections sorted: ${this.detectionArray.length} items`);
-      } finally {
-        this.detectionLock = false;
-      }
+      });
     }
 
     /**
@@ -554,14 +531,7 @@
      * @throws {Error} If progress operation already active
      */
     startProgressTimer(callback, interval = 1000) {
-      // Acquire lock
-      while (this.progressLock) {
-        // Busy wait
-      }
-
-      try {
-        this.progressLock = true;
-
+      return this.runSynchronousStateMutation('progressLock', 'Start progress timer', () => {
         if (this.progressActive) {
           throw new Error('Progress operation already active. Call stopProgressTimer() first.');
         }
@@ -587,24 +557,14 @@
 
         this.progressActive = true;
         return this.progressTimerId;
-
-      } finally {
-        this.progressLock = false;
-      }
+      });
     }
 
     /**
      * Stop progress timer ensuring cleanup on all exit paths
      */
     stopProgressTimer() {
-      // Acquire lock
-      while (this.progressLock) {
-        // Busy wait
-      }
-
-      try {
-        this.progressLock = true;
-
+      this.runSynchronousStateMutation('progressLock', 'Stop progress timer', () => {
         if (this.progressTimerId !== null) {
           // Use TimerManager if available for tracked cleanup
           if (window.timerManager && window.timerManager.clearInterval) {
@@ -617,10 +577,7 @@
         }
 
         this.progressActive = false;
-
-      } finally {
-        this.progressLock = false;
-      }
+      });
     }
 
     /**
@@ -687,18 +644,10 @@
      * Clear tiles array with mutex protection
      */
     clearTiles() {
-      // Acquire lock
-      while (this.tileLock) {
-        // Busy wait (synchronous operation, should be fast)
-      }
-
-      try {
-        this.tileLock = true;
+      this.runSynchronousStateMutation('tileLock', 'Clear tiles', () => {
         this.tileArray.length = 0;
         window.TowerScoutLogger.debug('🧹 Tile array cleared');
-      } finally {
-        this.tileLock = false;
-      }
+      });
     }
 
     /**
@@ -706,16 +655,9 @@
      * @param {Tile} tile - Tile object to add
      */
     addTile(tile) {
-      while (this.tileLock) {
-        // Busy wait
-      }
-
-      try {
-        this.tileLock = true;
+      this.runSynchronousStateMutation('tileLock', 'Add tile', () => {
         this.tileArray.push(tile);
-      } finally {
-        this.tileLock = false;
-      }
+      });
     }
 
     // =============================================================================    // UI State Management (Phase 1 - Sprint 03)

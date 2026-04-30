@@ -74,18 +74,7 @@ class ProviderStateManager {
 
   async switchProvider(targetProvider, mapInstance = null) {
     if (this.switchingInProgress) {
-      console.warn('🚫 Provider switch already in progress, queuing request...');
-      // Wait for current switch to complete
-      await new Promise(resolve => {
-        const checkSwitching = () => {
-          if (!this.switchingInProgress) {
-            resolve();
-          } else {
-            timerManager.setTimeout(checkSwitching, 50);
-          }
-        };
-        checkSwitching();
-      });
+      console.warn('Provider switch already in progress');
       return;
     }
 
@@ -5009,4 +4998,3 @@ if (document.readyState === 'loading') {
     document.dispatchEvent(event);
   }, 0);
 }
-

@@ -467,7 +467,7 @@ These are current-branch closeout items for `feature-sprint-04-closeout`. Comple
 ---
 
 ### **TASK-064: Targeted Runtime Responsiveness And Inference Baseline** 🔴
-**Status**: NOT_STARTED  
+**Status**: COMPLETED
 **Type**: B/C (Runtime Responsiveness / Performance Validation)  
 **Priority**: HIGH  
 **Estimated Effort**: 0.5-1 day (4-8 hours)  
@@ -762,10 +762,10 @@ Runtime-path normalization is complete. Docker work should treat the following a
 - [x] `performance.log` has one authoritative file-format contract
 - [x] V1 release boundary documented: supported Windows/AMD64 single-user local release and unsupported environments named explicitly
 - [x] Minimum support diagnostics contract documented for log locations, startup failures, asset/version visibility, and sensitive-data handling
-- [ ] TASK-064 complete: ProviderStateManager responsiveness and `torch.inference_mode()` benchmark findings resolved or owner-approved
-- [ ] ProviderStateManager busy-wait / main-thread locking behavior removed or owner-approved
-- [ ] `torch.inference_mode()` benchmark decision recorded before Docker sign-off
-- [ ] Any unresolved `TASK-063` or `TASK-064` finding has owner-approved risk acceptance documenting issue, deferral rationale, user/release impact, mitigation, review timing, and follow-up owner/task
+- [x] TASK-064 complete: ProviderStateManager responsiveness and `torch.inference_mode()` benchmark findings resolved or owner-approved
+- [x] ProviderStateManager busy-wait / main-thread locking behavior removed or owner-approved
+- [x] `torch.inference_mode()` benchmark decision recorded before Docker sign-off
+- [x] Any unresolved `TASK-063` or `TASK-064` finding has owner-approved risk acceptance documenting issue, deferral rationale, user/release impact, mitigation, review timing, and follow-up owner/task
 - [ ] TASK-025 Phase 1-3 complete: Docker container builds and runs on the corrected baseline
 - [ ] Setup Wizard functional in Docker environment
 - [ ] Settings save/load works with volume mounts

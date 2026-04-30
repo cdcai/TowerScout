@@ -110,6 +110,18 @@ Create the Docker runtime baseline for TowerScout's supported v1 local deploymen
 **Validation**: `.agent_work` validation passed after synchronized planning updates.  
 **Next**: Confirm gate status before starting Docker implementation.
 
+### 2026-04-30 - PR 6 Readiness Follow-Up Intake
+**Objective**: Record the remaining follow-up items from the final `TASK-064` PR-readiness review before Docker work starts.
+**Context**: PR #6 addressed the direct `TASK-064` review findings by adding PR-time frontend CI coverage and a provider-switch queue-recovery test. The remaining reviewer concerns are Docker/startup documentation and local Windows `test:stage-0` portability.
+**Decision**: Treat Docker documentation, persistence/run guidance, and container validation as `TASK-025` implementation work. Treat the Windows/Bash `test:stage-0` issue as a tooling portability follow-up unless it blocks Docker validation.
+**Execution**: Added this intake note rather than expanding PR #6 into Docker implementation or frontend build modernization.
+**Output**:
+- `TASK-025` should include explicit Docker user/support documentation for persistence mounts, supported hosts, first-run assets, diagnostics, and recovery paths.
+- `TASK-025` should not rely on `npm run test:stage-0` as the only frontend validation path on Windows unless the Bash dependency is replaced or a portable equivalent is provided.
+- Azure browser smoke remains an accepted local-provider-readiness caveat for `TASK-064`; Docker validation should still exercise configured provider readiness and report failures as provider/environment issues rather than container regressions when appropriate.
+**Validation**: This is a planning intake note; implementation validation remains pending under `TASK-025`.
+**Next**: Start `TASK-025` from latest `main` after PR #6 lands and verify these notes during the initial Docker audit/validation pass.
+
 ---
 
 ## Validation Results
