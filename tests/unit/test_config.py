@@ -1,5 +1,6 @@
 import shutil
 import uuid
+import os
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -130,6 +131,30 @@ def test_update_env_file_preserves_existing_comments(temp_config_root, monkeypat
     assert "DEFAULT_MAP_PROVIDER=google" in contents
     backups = list((temp_config_root / "config").glob(".env.backup.*"))
     assert backups
+
+
+def test_ensure_persistent_flask_secret_key_generates_missing_secret(temp_config_root, monkeypatch):
+    _write_env(temp_config_root, "DEFAULT_MAP_PROVIDER=azure\n")
+    monkeypatch.setattr(ts_config, "get_base_dir", lambda: temp_config_root)
+    monkeypatch.delenv("FLASK_SECRET_KEY", raising=False)
+
+    secret = ts_config.ensure_persistent_flask_secret_key()
+
+    contents = (temp_config_root / "config" / ".env").read_text(encoding="utf-8")
+    assert secret
+    assert f"FLASK_SECRET_KEY={secret}" in contents
+    assert "GOOGLE_API_KEY" not in contents
+
+
+def test_ensure_persistent_flask_secret_key_reuses_existing_secret(temp_config_root, monkeypatch):
+    _write_env(temp_config_root, "FLASK_SECRET_KEY=existing-secret\n")
+    monkeypatch.setattr(ts_config, "get_base_dir", lambda: temp_config_root)
+    monkeypatch.delenv("FLASK_SECRET_KEY", raising=False)
+
+    secret = ts_config.ensure_persistent_flask_secret_key()
+
+    assert secret == "existing-secret"
+    assert os.environ["FLASK_SECRET_KEY"] == "existing-secret"
 
 
 def test_get_env_status_detects_placeholder_values(temp_config_root, monkeypatch):

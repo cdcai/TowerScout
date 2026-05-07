@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 import os
+import secrets
 import shutil
 import tempfile
 from contextlib import contextmanager
@@ -26,6 +27,7 @@ CONFIG_ENV_FILENAME = ".env"
 GOOGLE_ENV_VAR = "GOOGLE_API_KEY"
 AZURE_ENV_VAR = "AZURE_MAPS_SUBSCRIPTION_KEY"
 DEFAULT_PROVIDER_ENV_VAR = "DEFAULT_MAP_PROVIDER"
+FLASK_SECRET_KEY_ENV_VAR = "FLASK_SECRET_KEY"
 SUPPORTED_PROVIDERS = {"google", "azure"}
 VALIDATION_TIMEOUT_SECONDS = 5
 PERFORMANCE_LOG_HEADERS = (
@@ -433,6 +435,22 @@ def update_env_file(updates: Dict[str, str]) -> bool:
             raise
 
     return True
+
+
+def ensure_persistent_flask_secret_key() -> str:
+    """Return a stable Flask secret, creating it in config/.env when missing."""
+    env_path = ensure_env_file()
+    env_values = dotenv_values(env_path) if env_path.exists() else {}
+    file_secret = str(env_values.get(FLASK_SECRET_KEY_ENV_VAR) or "").strip()
+    if file_secret:
+        os.environ[FLASK_SECRET_KEY_ENV_VAR] = file_secret
+        return file_secret
+
+    env_secret = str(os.getenv(FLASK_SECRET_KEY_ENV_VAR, "") or "").strip()
+    secret_value = env_secret or secrets.token_urlsafe(48)
+    update_env_file({FLASK_SECRET_KEY_ENV_VAR: secret_value})
+    os.environ[FLASK_SECRET_KEY_ENV_VAR] = secret_value
+    return secret_value
 
 
 def get_env_status() -> Dict[str, Any]:

@@ -1,0 +1,8 @@
+services:
+  towerscout:
+    image: ${TOWERSCOUT_IMAGE:-towerscout:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTORCH_INDEX_URL: ${PYTORCH_INDEX_URL:-https://download.pytorch.org/whl/cpu}

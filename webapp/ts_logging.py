@@ -109,7 +109,7 @@ class TowerScoutFormatter(logging.Formatter):
                     
                 return json.dumps(log_entry)
             else:
-                return super().format(record)
+                return sanitize_sensitive_data(super().format(record))
         finally:
             # Restore original message
             record.msg = original_msg
@@ -150,6 +150,7 @@ class TowerScoutLogger:
         # Set up root logger
         root_logger = logging.getLogger('towerscout')
         root_logger.setLevel(getattr(logging, log_level.upper()))
+        root_logger.propagate = False
         
         # Remove existing handlers to avoid duplicates
         root_logger.handlers.clear()

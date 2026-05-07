@@ -7,6 +7,8 @@ the pre-Sprint 05 detection contract.
 
 import json
 import io
+import shutil
+import uuid
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -71,6 +73,102 @@ def test_provider_and_key_routes_match_current_boot_contract(client, monkeypatch
     engines = json.loads(engines_response.data)
     assert len(engines) >= 1
     assert any(entry["id"] == "newest" for entry in engines)
+
+
+def test_health_and_readiness_routes_match_container_contract(client):
+    health_response = client.get("/api/health")
+
+    assert health_response.status_code == 200
+    assert health_response.get_json() == {
+        "status": "ok",
+        "service": "towerscout",
+    }
+
+    with patch.object(
+        towerscout.ts_runtime,
+        "build_readiness_payload",
+        return_value={
+            "state": "ready",
+            "components": {},
+            "version": {},
+            "runtime": {},
+            "recovery": [],
+        },
+    ):
+        readiness_response = client.get("/api/readiness")
+
+    assert readiness_response.status_code == 200
+    assert readiness_response.get_json()["state"] == "ready"
+
+
+def test_readiness_route_uses_503_for_fatal_state(client):
+    with patch.object(
+        towerscout.ts_runtime,
+        "build_readiness_payload",
+        return_value={
+            "state": "fatal",
+            "components": {},
+            "version": {},
+            "runtime": {},
+            "recovery": ["Check container volume permissions."],
+        },
+    ):
+        readiness_response = client.get("/api/readiness")
+
+    assert readiness_response.status_code == 503
+    assert readiness_response.get_json()["state"] == "fatal"
+
+
+def test_startup_preload_switch_supports_asset_light_container_start(monkeypatch):
+    monkeypatch.delenv(towerscout.STARTUP_PRELOAD_ENV_VAR, raising=False)
+    assert towerscout.should_preload_startup_assets() is True
+
+    monkeypatch.setenv(towerscout.STARTUP_PRELOAD_ENV_VAR, "0")
+    assert towerscout.should_preload_startup_assets() is False
+
+    monkeypatch.setenv(towerscout.STARTUP_PRELOAD_ENV_VAR, "false")
+    assert towerscout.should_preload_startup_assets() is False
+
+    monkeypatch.setenv(towerscout.STARTUP_PRELOAD_ENV_VAR, "1")
+    assert towerscout.should_preload_startup_assets() is True
+
+
+def test_model_catalog_handles_empty_asset_volume(monkeypatch):
+    original_engines = dict(towerscout.engines)
+    original_default = towerscout.engine_default
+    empty_model_dir = (
+        Path(".agent_work")
+        / "pytest-temp"
+        / f"task025-empty-models-{uuid.uuid4().hex}"
+    )
+    empty_model_dir.mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(towerscout, "YOLO_MODEL_DIR", empty_model_dir)
+    towerscout.engines.clear()
+    try:
+        assert towerscout.load_model_catalog() is False
+        assert towerscout.engine_default is None
+        assert towerscout.engines == {}
+    finally:
+        towerscout.engines.clear()
+        towerscout.engines.update(original_engines)
+        towerscout.engine_default = original_default
+        shutil.rmtree(empty_model_dir, ignore_errors=True)
+
+
+def test_ensure_yolo_config_dir_creates_config_path(monkeypatch):
+    config_dir = (
+        Path(".agent_work")
+        / "pytest-temp"
+        / f"task025-yolo-config-{uuid.uuid4().hex}"
+    )
+    monkeypatch.setenv("YOLO_CONFIG_DIR", str(config_dir))
+
+    try:
+        assert towerscout.ensure_yolo_config_dir() == str(config_dir)
+        assert config_dir.is_dir()
+    finally:
+        shutil.rmtree(config_dir, ignore_errors=True)
 
 
 def test_config_status_and_session_reset_routes_match_current_contract(client):

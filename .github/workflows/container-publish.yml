@@ -1,0 +1,68 @@
+name: TowerScout Container Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag to publish, for example v0.1.0-rc1"
+        required: true
+        type: string
+      push_latest:
+        description: "Also publish the latest tag"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@885d1462b80bc1c1c7f0b00334ad271f09369c55 # v2
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build and push image
+        id: build
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          tag="${{ inputs.tag }}"
+          push_latest="${{ inputs.push_latest }}"
+
+          tags=(--tag "$image:$tag")
+          if [ "$push_latest" = "true" ]; then
+            tags+=(--tag "$image:latest")
+          fi
+
+          docker buildx build \
+            --platform linux/amd64 \
+            "${tags[@]}" \
+            --push \
+            --metadata-file image-metadata.json \
+            .
+
+          digest="$(python -c 'import json; print(json.load(open("image-metadata.json", encoding="utf-8"))["containerimage.digest"])')"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "image=$image" >> "$GITHUB_STEP_SUMMARY"
+          echo "tag=$tag" >> "$GITHUB_STEP_SUMMARY"
+          echo "digest=$digest" >> "$GITHUB_STEP_SUMMARY"
+          echo "pinned=$image@$digest" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload image metadata
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: image-metadata-${{ steps.build.outputs.tag }}
+          path: image-metadata.json
+          if-no-files-found: error

@@ -40,6 +40,7 @@ from ts_logging import (
 )
 from ts_performance import PerformanceMetrics
 import ts_config
+import ts_runtime
 import torch
 from shutil import rmtree
 import zipfile
@@ -138,9 +139,21 @@ exit_events = ExitEvents()
 secondary_en = None
 secondary_en_lock = threading.Lock()
 LAZY_MODEL_INIT = os.getenv('TOWERSCOUT_LAZY_MODEL_INIT', '').strip().lower() in ('1', 'true', 'yes', 'on')
+STARTUP_PRELOAD_ENV_VAR = "TOWERSCOUT_STARTUP_PRELOAD"
 progress_tracker = DetectionProgressTracker()
 SESSION_TMP_ROOT = get_session_tmp_root()
 SESSION_ID_KEY = "ts_session_id"
+
+
+def ensure_yolo_config_dir() -> str | None:
+    configured_dir = os.getenv("YOLO_CONFIG_DIR", "").strip()
+    if not configured_dir:
+        return None
+    os.makedirs(configured_dir, exist_ok=True)
+    return configured_dir
+
+
+ensure_yolo_config_dir()
 
 # on-demand instantiate YOLOv5 model
 def get_engine(e):
@@ -174,6 +187,25 @@ def get_custom_models():
     for f in os.listdir(YOLO_MODEL_DIR):
         if f.endswith(".pt") and not find_model(f):
             add_model(f)
+
+
+def should_preload_startup_assets() -> bool:
+    configured_value = os.getenv(STARTUP_PRELOAD_ENV_VAR, "").strip().lower()
+    if not configured_value:
+        return True
+    return configured_value not in {"0", "false", "no", "off"}
+
+
+def load_model_catalog() -> bool:
+    global engine_default
+    get_custom_models()
+    if not engines:
+        engine_default = None
+        logger.warning("No YOLO model weights found in %s.", YOLO_MODEL_DIR)
+        return False
+
+    engine_default = sorted(engines.items(), key=lambda x: -x[1]['ts'])[0][0]
+    return True
 
 
 def add_model(m):
@@ -1240,10 +1272,22 @@ TowerScoutValidator.MAX_FILE_SIZE = MAX_REQUEST_BODY_SIZE
 MODEL_UPLOAD_ENABLED = os.getenv('TOWERSCOUT_ENABLE_MODEL_UPLOAD', '').strip().lower() in {'1', 'true', 'yes', 'on'}
 
 # Configure Flask from environment variables
-app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
-if not app.config['SECRET_KEY']:
-    app.config['SECRET_KEY'] = secrets.token_hex(32)
-    logger.warning("FLASK_SECRET_KEY not configured. Using a temporary in-memory secret for setup-required mode.")
+if os.getenv('FLASK_ENV', 'development').lower() == 'testing':
+    app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY') or secrets.token_hex(32)
+elif os.getenv('TOWERSCOUT_DISABLE_SECRET_PERSISTENCE', '').strip().lower() in {'1', 'true', 'yes', 'on'}:
+    app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY') or secrets.token_hex(32)
+    logger.warning("Persistent FLASK_SECRET_KEY handling disabled by TOWERSCOUT_DISABLE_SECRET_PERSISTENCE.")
+else:
+    try:
+        app.config['SECRET_KEY'] = ts_config.ensure_persistent_flask_secret_key()
+        logger.info("FLASK_SECRET_KEY loaded from persistent runtime configuration.")
+    except Exception as secret_error:
+        app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY') or secrets.token_hex(32)
+        logger.error(
+            "Failed to persist FLASK_SECRET_KEY. Falling back to process-local secret: %s",
+            secret_error,
+            exc_info=True,
+        )
 
 app.config['UPLOAD_FOLDER'] = str(UPLOAD_DIR)
 app.config['MAX_CONTENT_LENGTH'] = MAX_REQUEST_BODY_SIZE
@@ -1541,6 +1585,20 @@ def _mask_key_preview(key: str) -> str:
     if len(key) <= 8:
         return "*" * len(key)
     return f"{key[:4]}{'*' * max(len(key) - 8, 4)}{key[-4:]}"
+
+
+@app.route('/api/health', methods=['GET'])
+def get_health():
+    """Return cheap process liveness for container engines and launchers."""
+    return jsonify(ts_runtime.build_health_payload())
+
+
+@app.route('/api/readiness', methods=['GET'])
+def get_readiness():
+    """Return redacted structured runtime readiness for launchers and support."""
+    payload = ts_runtime.build_readiness_payload()
+    status_code = 503 if payload.get('state') == 'fatal' else 200
+    return jsonify(payload), status_code
 
 
 @app.route('/api/config/validate-key', methods=['POST'])
@@ -2915,13 +2973,19 @@ if __name__ == '__main__':
     # app.run(debug = True)
     # app.secret_key = 'super secret key'
     # app.config['SESSION_TYPE'] = 'filesystem'
-    get_custom_models()
-    engine_default = sorted(engines.items(),key=lambda x:-x[1]['ts'])[0][0]
+    model_catalog_available = load_model_catalog()
 
 
     if len(sys.argv) <= 1 or sys.argv[1] != 'dev':
-        start_zipcodes()
-        get_engine(engine_default)
+        if should_preload_startup_assets():
+            start_zipcodes()
+            if model_catalog_available:
+                get_engine(engine_default)
+        else:
+            logger.info(
+                "Startup asset preload disabled by %s; readiness will report asset state.",
+                STARTUP_PRELOAD_ENV_VAR,
+            )
     else:
         dev = 1
 

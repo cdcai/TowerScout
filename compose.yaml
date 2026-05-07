@@ -1,0 +1,43 @@
+services:
+  towerscout:
+    image: ${TOWERSCOUT_IMAGE:-ghcr.io/j-schulein/towerscout:latest}
+    ports:
+      - "${TOWERSCOUT_PORT:-5000}:5000"
+    environment:
+      FLASK_ENV: production
+      TOWERSCOUT_CONTAINER_ENGINE: ${TOWERSCOUT_CONTAINER_ENGINE:-}
+      TOWERSCOUT_IMAGE_DIGEST: ${TOWERSCOUT_IMAGE_DIGEST:-}
+      TOWERSCOUT_LAZY_MODEL_INIT: "1"
+      TOWERSCOUT_STARTUP_PRELOAD: "0"
+      TOWERSCOUT_MAX_REQUEST_BODY_BYTES: ${TOWERSCOUT_MAX_REQUEST_BODY_BYTES:-52428800}
+      TOWERSCOUT_VERIFY_ASSET_HASHES: ${TOWERSCOUT_VERIFY_ASSET_HASHES:-0}
+      TOWERSCOUT_ALLOW_INSECURE_TLS: ${TOWERSCOUT_ALLOW_INSECURE_TLS:-0}
+      REQUESTS_CA_BUNDLE: ${REQUESTS_CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}
+      SSL_CERT_FILE: ${SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}
+      YOLO_CONFIG_DIR: ${YOLO_CONFIG_DIR:-/app/webapp/cache/ultralytics}
+    volumes:
+      - towerscout_config:/app/webapp/config
+      - towerscout_model_params:/app/webapp/model_params
+      - towerscout_data:/app/webapp/data
+      - towerscout_logs:/app/webapp/logs
+      - towerscout_flask_session:/app/webapp/flask_session
+      - towerscout_session_temp:/app/webapp/temp/session
+      - towerscout_uploads:/app/webapp/uploads
+      - towerscout_cache:/app/webapp/cache
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json, urllib.request; data=json.load(urllib.request.urlopen('http://127.0.0.1:5000/api/health', timeout=3)); raise SystemExit(0 if data.get('status') == 'ok' else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  towerscout_config:
+  towerscout_model_params:
+  towerscout_data:
+  towerscout_logs:
+  towerscout_flask_session:
+  towerscout_session_temp:
+  towerscout_uploads:
+  towerscout_cache:

@@ -1,9 +1,9 @@
 # Current Tasks - Active Sprint
 
-**Sprint Period**: April 7 - active extension after April 25, 2026 (Sprint 05)  
-**Last Updated**: April 28, 2026  
-**Focus**: Runtime determinism, local YOLO runtime ownership, smoke-baseline validation, pre-Docker release hardening, v1 operational contracts, Docker readiness, and launch UX follow-through  
-**Status**: 🆕 **SPRINT 05 EXTENSION / REPLAN** - Docker is gated behind `TASK-063` as of April 28, 2026
+**Sprint Period**: April 7 - active extension after April 25, 2026 (Sprint 05)
+**Last Updated**: May 7, 2026
+**Focus**: Runtime determinism, local YOLO runtime ownership, smoke-baseline validation, pre-container release hardening, v1 operational contracts, OCI/GitHub-first release readiness, and launch UX follow-through
+**Status**: **SPRINT 05 EXTENSION / TASK-025 COMPLETE / PR #7 OPEN** - `TASK-025` has the local OCI image, Compose profile, persistent runtime volumes, asset manifest/import path, health/readiness contract, Windows helper wrappers, containerized smoke validation, local release-package helper, GHCR digest publication, Google TLS CA path, and Podman-with-Docker-engine-unavailable runtime path validated. Remaining release-support caveats are handed off to `TASK-065` and launcher UX remains under `TASK-054`.
 
 ---
 
@@ -140,10 +140,10 @@ These are current-branch closeout items for `feature-sprint-04-closeout`. Comple
 4. Establish the current integration smoke-test baseline on that corrected runtime (`TASK-052`)
 5. Complete the review-driven pre-Docker release-hardening and operational gate (`TASK-063`)
 6. Complete the targeted runtime responsiveness and inference baseline gate (`TASK-064`)
-7. Deliver Docker containerization (`TASK-025`) only after the corrected and hardened baseline exists and the v1 runtime/persistence contract is explicit
-8. Keep `TASK-054` as a post-Docker stretch goal and defer `TASK-029` / `TASK-026` unless meaningful Sprint 05 capacity remains
+7. Deliver Docker-compatible / OCI containerization (`TASK-025`) only after the corrected and hardened baseline exists and the v1 runtime/persistence/release-package contract is explicit
+8. Keep `TASK-054` as a post-container stretch goal and defer `TASK-029` / `TASK-026` unless meaningful Sprint 05 capacity remains
 
-**Key Principle**: Keep `TASK-025` focused on container build/run behavior. Use `TASK-056`, `TASK-057`, `TASK-052`, `TASK-062`, `TASK-063`, and `TASK-064` as explicit prerequisites so Docker acceptance criteria stay clear and runtime-risk changes remain isolated. Treat launcher/browser UX as follow-on work under `TASK-054` rather than silently expanding Docker scope. Treat background jobs and durable run state as `TASK-058` follow-on architecture work, not as a Docker prerequisite.
+**Key Principle**: Keep `TASK-025` focused on container build/run behavior, GitHub-first release packaging, runtime persistence, asset bootstrap, and engine-aware validation. Use `TASK-056`, `TASK-057`, `TASK-052`, `TASK-062`, `TASK-063`, and `TASK-064` as explicit prerequisites so container acceptance criteria stay clear and runtime-risk changes remain isolated. Treat launcher/browser UX as follow-on work under `TASK-054` rather than silently expanding container scope. Treat background jobs and durable run state as `TASK-058` follow-on architecture work, not as a container prerequisite.
 
 ---
 
@@ -480,7 +480,7 @@ These are current-branch closeout items for `feature-sprint-04-closeout`. Comple
 - Audit and remove or owner-approve ProviderStateManager busy-wait / main-thread locking behavior
 - Preserve current Google/Azure provider switching behavior while cleaning the targeted responsiveness issue
 - Run a narrow `torch.inference_mode()` benchmark against the active under-100-tile CPU inference baseline or equivalent repeatable fixture
-- Record a measured apply/defer/reject decision for `torch.inference_mode()` before Docker sign-off
+- Record a measured apply/defer/reject decision for `torch.inference_mode()` before container sign-off
 
 **Validation**:
 - `node webapp/build.js`
@@ -499,33 +499,37 @@ These are current-branch closeout items for `feature-sprint-04-closeout`. Comple
 - This task is not broad CPU optimization; that remains `TASK-026`.
 - This task starts after `TASK-063` resolves or explicitly accepts release-hardening findings and must complete before `TASK-025` starts.
 
-**User Value**: Reduces avoidable responsiveness and inference-performance uncertainty before the Docker baseline locks in current runtime behavior.
+**User Value**: Reduces avoidable responsiveness and inference-performance uncertainty before the container baseline locks in current runtime behavior.
 
 ---
 
-### **TASK-025: Docker Containerization** 🔴
-**Status**: NOT_STARTED  
-**Type**: C (Infrastructure / Deployment Readiness)  
-**Priority**: HIGH  
-**Estimated Effort**: 1-2 days (8-16 hours)  
-**Target Sprint**: Sprint 05  
+### **TASK-025: Docker / OCI Containerization** 🟡
+**Status**: COMPLETED - PR #7 OPEN
+**Type**: C (Infrastructure / Deployment Readiness)
+**Priority**: HIGH
+**Estimated Effort**: 1-2 days (8-16 hours)
+**Target Sprint**: Sprint 05
 **Task File**: `.agent_work/tasks/active/TASK-025-docker-containerization.md`
 
-**Objective**: Create the Docker baseline for supported local deployment on top of the corrected Sprint 05 runtime and smoke baseline, leaving launcher-first user experience to `TASK-054`.
+**Objective**: Create the Docker-compatible / OCI baseline for supported local deployment on top of the corrected Sprint 05 runtime and smoke baseline, with GitHub Releases as the preferred user-facing delivery path and launcher-first user experience left to `TASK-054`.
 
 **Requirements**:
-- Multi-stage Dockerfile and Docker Compose configuration for the corrected host baseline
+- Multi-stage Dockerfile/Containerfile-compatible image definition and Compose-compatible configuration for the corrected host baseline
+- GitHub Release ZIP package contract for normal end users, including quick start, `compose.yaml`, `.env` template, scripts, pinned GHCR image reference by digest, optional OCI archive fallback, asset manifest, checksums, troubleshooting, and recovery guidance
+- Clear boundary that local clone-and-build from GitHub is a developer/support path, not the default normal-user path
 - Environment variable management with stable secret-key continuity
 - Explicit persistence strategy for runtime state across restart/update events
 - Versioned v1 runtime/persistence contract, including cache and geocode durability decisions
 - First-run asset bootstrap strategy for large runtime assets
+- Checksummed manifest and manual/restricted-network asset bundle fallback
 - Supported-platform contract (`AMD64` first, CPU baseline, NVIDIA/CUDA on compatible `AMD64` hosts)
 - Container validation against the existing `TASK-052` smoke contract
-- Health/readiness contract suitable for `TASK-054` launcher polling
-- Written v1 runtime and persistence contract before Docker validation is considered complete
+- `/api/health` and structured `/api/readiness` contract suitable for `TASK-054` launcher polling, including `starting`, `setup_required`, `degraded`, `ready`, and `fatal` states
+- Podman compatibility spike or explicit owner-approved risk acceptance before Podman is promised as the supported open-source runtime
+- Written v1 runtime, persistence, release-package, and host-runtime contract before container validation is considered complete
 
 **Current Runtime Persistence Surfaces**:
-Runtime-path normalization is complete. Docker work should treat the following as the active persistence contract:
+Runtime-path normalization is complete. Container work should treat the following as the active persistence contract:
 
 1. **`webapp/config/`**
 2. **`webapp/flask_session/`**
@@ -547,35 +551,61 @@ Runtime-path normalization is complete. Docker work should treat the following a
 - ✅ TASK-056 - first-run reliability and runtime determinism hardening
 - ✅ TASK-057 - local YOLO runtime ownership and Torch Hub independence
 - ✅ TASK-046 (completed) - setup wizard/settings volume-mount behavior
-- 🟡 TASK-051 - runtime dependency verification and split
+- ✅ TASK-051 - runtime dependency verification and split
 - ✅ TASK-055 - YOLO Torch Hub pinned-ref hardening
-- 🟡 TASK-052 - current integration smoke-test baseline
+- ✅ TASK-052 - current integration smoke-test baseline
 - ✅ TASK-062 - pre-Docker runtime cleanup and loader hardening
-- 🟡 TASK-063 - pre-Docker release hardening and CI reproducibility gate
-- 🔴 TASK-064 - targeted runtime responsiveness and inference baseline gate
+- ✅ TASK-063 - pre-Docker release hardening and CI reproducibility gate
+- ✅ TASK-064 - targeted runtime responsiveness and inference baseline gate
 
 **Notes**:
-- Treat Docker as Phase 1 of local deployment, not the final end-user UX or installer model
+- Treat the OCI/container contract as Phase 1 of local deployment, not the final end-user UX or installer model
+- Treat Podman as the preferred open-source Windows runtime target after client feedback, with one adjustment mark: do not promise it until Windows Podman Desktop / Podman machine, Compose/provider, proxy/certificate, volume, and support behavior are validated or explicitly risk-accepted
+- Treat GitHub Releases as the default user-facing release control plane; keep source clone/build as a developer/support path
+- Use registry-first, bundle-assisted distribution: GitHub Release ZIP for users, GHCR image pinned by digest for the runtime, and optional OCI image archive only for restricted-network fallback
 - Keep focused on container build/run behavior and persistence correctness
 - Do NOT absorb runtime hardening, YOLO ownership redesign, background-job redesign, or launcher/browser UX into this task
 - Reuse the `TASK-052` smoke contract against the containerized app rather than inventing a separate Docker-only validation path
-- Start only after `TASK-063` and `TASK-064` resolve findings or record owner-approved explicit risk acceptances
+- Started after `TASK-063` and `TASK-064` resolved findings without unresolved owner-risk-acceptance blockers
 - Current app uses filesystem-backed Flask sessions and writes to `webapp/config/.env`
 - Final Docker volume decisions should use the normalized `webapp/` runtime contract, not historical folder duplication
 - Docker delivery must provide writable session storage, stable `FLASK_SECRET_KEY`, persistent writable mount for `webapp/config/`, and clear recovery behavior when first-run bootstrap fails
 - TASK-025 Phase 1 must explicitly lock the large-asset strategy and full asset inventory: YOLO weights, EfficientNet project weights, EfficientNet base-model bootstrap behavior, and ZIP-code data/version
 - TASK-025 Phase 1 must produce the v1 runtime/persistence map: durable, writable-runtime, and cleanup-safe/best-effort state
 - TASK-025 Phase 1 must classify cache and geocode data as durable, best-effort, or cleanup-safe for v1
-- Docker runtime configuration must preserve the upload-limit/request-body policy decided in `TASK-063`
+- Container runtime configuration must preserve the upload-limit/request-body policy decided in `TASK-063`
 - Large runtime assets should use a first-run download-plus-persist strategy unless a specific asset is intentionally baked into the image
 - Phase 1 must classify the normalized runtime surfaces by durability: restart/update-durable vs writable-only vs cleanup-safe
 - Supported-host contract for first release is `AMD64` first with CPU required; NVIDIA/CUDA is an accelerated path on compatible `AMD64` hosts, while `ARM64` and Mac remain follow-on targets
-- User-facing distribution should remain a GitHub release package, with container images hosted in a registry behind the scenes
+- User-facing distribution should remain a GitHub Release ZIP package, with a pinned GHCR image reference by digest and optional OCI image archive fallback for restricted networks
+- 2026-05-07 local Docker Desktop validation is complete for the developer/support build path: Dockerfile check passed, `towerscout:local` built, Compose started healthy, `/api/health` returned ok, `/api/readiness` returned setup-required/degraded with persisted secret and writable volumes, and secret persistence survived restart
+- Windows execution policy blocked direct `.ps1` helper execution; `.cmd` wrappers were added and validated for start/status/logs/stop
+- 2026-05-07 Docker named-volume asset import is validated: local `webapp/model_params/` and `webapp/data/` assets copied into volumes, hash-verified readiness returned assets `ok`, and the in-container model catalog detected `newest`
+- 2026-05-07 Azure Settings persistence is validated across container restart; readiness is now `ready` with assets `ok`, Azure configured, Google not configured, and persisted secret present
+- 2026-05-07 Google validation failure is a container TLS trust issue (`CERTIFICATE_VERIFY_FAILED` for `maps.googleapis.com`), not an invalid-key response; log/error redaction was tightened after exception tracebacks exposed provider-key material in validation failures
+- 2026-05-07 containerized `TASK-052` smoke passed inside Docker with real model assets: YOLO `newest` loaded, controlled imagery failure returned 502, progress title was `Imagery download failed`, and post-smoke readiness remained `ready`
+- Containerized smoke initially surfaced a non-blocking Ultralytics config warning; this is remediated with `YOLO_CONFIG_DIR=/app/webapp/cache/ultralytics`, and the smoke was rerun successfully without the unwritable-config warning
+- 2026-05-07 packaged asset import helper is implemented and validated: `scripts/import-assets.cmd -Source webapp -Engine docker -Build -VerifyHashes` copied model/data assets into named volumes and returned `asset_status=ok`
+- 2026-05-07 local GitHub Release control-package helper is implemented and validated: `scripts/package-release.cmd` staged Compose/docs/scripts/asset manifest metadata, wrote `IMAGE.txt`, generated `SHA256SUMS.txt`, produced a ZIP plus `.zip.sha256`, and verified required package files in `.agent_work/pytest-temp/release-package/`
+- 2026-05-07 Windows Podman WSL runtime spike passed for the Podman engine path: `towerscout:local` was loaded into Podman, `start.cmd -Engine podman` ran on port `5001`, readiness reported Podman runtime and writable volumes, `import-assets.cmd -Engine podman -VerifyHashes` returned `asset_status=ok`, and the containerized `TASK-052` smoke passed with real model load
+- Podman support caveat: this host's `podman compose` delegates to Docker Desktop's bundled `docker-compose.exe`; Podman now works with Docker Desktop's engine unavailable, but a Docker-Desktop-free Compose provider still needs validation before promising Podman broadly on machines without Docker Desktop installed
+- 2026-05-07 Google TLS inspection path validated: imported the CDC/Zscaler `CDC-G2-ZSH` CA chain into the container config volume, built `/app/webapp/config/certs/towerscout-ca-bundle.pem`, recreated Docker with `REQUESTS_CA_BUNDLE` and `SSL_CERT_FILE` pointing at that bundle, confirmed `/api/config/validate-key` now returns a normal Google invalid-key response instead of `502`, and owner-confirmed real Google key entry worked in the UI
+- 2026-05-07 local `.env` CA persistence validated: Docker Compose recreate picked up `REQUESTS_CA_BUNDLE` and `SSL_CERT_FILE` from git-ignored `.env`; readiness returned `ready` with Azure and Google configured, assets `ok`, and persisted secret present
+- 2026-05-07 Podman Docker-engine-stopped validation attempt was inconclusive: `podman-compose` is not installed, `podman compose` still started TowerScout on port `5001`, but `docker version` still returned server `29.4.1` after `wsl --terminate docker-desktop`; Docker Desktop then reported manually paused, was unpaused by the owner, and the Docker validation service was restored to `ready`
+- 2026-05-07 GHCR publication and digest validation passed: workflow run `25511018110` published `ghcr.io/j-schulein/towerscout:task-025-0b5d0a7`, digest `sha256:e27340947a48082433dcc996beb12c0050f6e9a2c2f20e44b4148923ab9ffa30`; Docker manifest inspect, Docker pull, isolated release-image Compose startup on port `5002`, and real-digest release package generation all passed
+- 2026-05-07 GHCR workflow artifact-name follow-up validated: run `25511697887` succeeded after `steps.build.outputs.tag` patch and uploaded `image-metadata-task-025-03c6084`
+- 2026-05-07 temporary feature-branch GHCR publish trigger retired after validation; `.github/workflows/container-publish.yml` is back to manual `workflow_dispatch` publishing so routine branch pushes do not create incidental images
+- 2026-05-07 Podman with Docker Desktop fully quit passed: Docker daemon calls failed against `dockerDesktopLinuxEngine`, running WSL distros were only Podman, `start.cmd -Engine podman` ran TowerScout on port `5001`, health returned `ok`, readiness reported `runtime.container_engine: podman` and assets `ok`, containerized `TASK-052` smoke passed, Docker remained unavailable, and the Podman service was stopped afterward
+- 2026-05-07 Docker Desktop restore after Podman validation passed: Docker engine returned as `29.4.1`, Docker Compose service came back healthy on port `5000`, `/api/health` returned `ok`, `/api/readiness` returned `ready` with assets `ok`, Azure and Google configured, persisted secret present, and CA bundle env vars still pointed at `/app/webapp/config/certs/towerscout-ca-bundle.pem`
+- Docker-Desktop-free Podman Compose-provider validation remains the main `TASK-025` runtime caveat before promising Podman broadly on hosts without Docker Desktop installed
+- Completion handoff: `TASK-025` is complete for the container/runtime baseline. `TASK-065` owns Docker-Desktop-free Podman Compose-provider validation, hosted asset download/bootstrap decisions, optional OCI archive fallback implementation, Buildx Node 20 action maintenance, and broad release-readiness regression validation.
+- Default persistence should use named volumes; any host-visible data-directory profile is optional and must be documented/validated separately
+- Open-source runtime/tooling preference is addressed by the Podman-first target; TowerScout application license suitability remains a separate product/legal clarification
 - Treat Docker Desktop / WSL2 access constraints on managed machines as a live product risk; do not over-specialize the image around Docker as if it is guaranteed to be the permanent end-user delivery model
 - Treat the current filesystem-session and temp-path contract as an explicit containment requirement for the first Docker milestone, not as a solved architecture problem
 - Without these, first-launch setup may fail or saved configuration lost on container replacement
 
-**User Value**: Establishes the supported Docker runtime baseline that later launcher and release-package work can target safely
+**User Value**: Establishes the supported OCI/container runtime baseline and GitHub-first release package contract that later launcher work can target safely
 
 ---
 
@@ -587,7 +617,7 @@ Runtime-path normalization is complete. Docker work should treat the following a
 **Target Sprint**: Sprint 05 (post-Docker stretch goal)  
 **Task File**: `.agent_work/tasks/active/TASK-054-local-launch-ux.md`
 
-**Objective**: Deliver a launcher-first local startup flow over the Docker baseline so supported users can start, stop, and troubleshoot TowerScout without relying on raw Docker CLI workflows.
+**Objective**: Deliver a launcher-first local startup flow over the selected OCI/container runtime baseline so supported users can start, stop, and troubleshoot TowerScout without relying on raw container CLI workflows.
 
 **Requirements**:
 - Host-side launcher flow for supported local deployment targets (`start.bat` first, cross-platform follow-up only if later scope changes justify it)
@@ -595,17 +625,17 @@ Runtime-path normalization is complete. Docker work should treat the following a
 - Clear separation between "container is up", "application shell is reachable", and "first-run asset/bootstrap work is still in progress"
 - User-facing startup experience that works with the existing Setup Wizard flow instead of bypassing it
 - Start/stop/logs/status surface suitable for routine use and first-line support
-- Troubleshooting path for common launch failures (Docker not running, port conflict, startup timeout, failed first-run asset bootstrap, restricted network/proxy behavior)
+- Troubleshooting path for common launch failures (selected engine not running, Podman machine/WSL2/Hyper-V failures where applicable, Docker Desktop licensing/endpoint issues where applicable, port conflict, startup timeout, failed first-run asset bootstrap, restricted network/proxy behavior)
 - Support diagnostics guidance for log locations, version/asset manifest visibility, and sensitive local artifact handling
-- Release-package-friendly entrypoint that can later be wrapped by a more managed installer if Docker proves insufficient on managed machines
+- GitHub Release-package-friendly entrypoint that can later be wrapped by a more managed installer if desktop container runtimes prove insufficient on managed machines
 
 **Proposed Delivery Phases**:
 1. **Phase 1 - Launcher MVP**
-   - Add launcher script(s) for local Docker startup
+   - Add launcher script(s) for the selected local runtime startup
    - Wait for reachable app shell before opening the browser
-   - Add companion stop/logs guidance or scripts so users are not forced into raw Docker CLI usage for routine support
+   - Add companion stop/logs guidance or scripts so users are not forced into raw container CLI usage for routine support
    - Surface first-run download delays and bootstrap failures clearly instead of hiding them behind a generic startup wait
-   - Document where logs live and how a user/support contact can identify app, Docker, network, provider-key, and asset-bootstrap failures
+   - Document where logs live and how a user/support contact can identify app, selected-engine, network, provider-key, and asset-bootstrap failures
 2. **Phase 2 - Readiness + Browser Orchestration**
    - Add or formalize a lightweight startup/readiness endpoint for launcher polling
    - Ensure browser launch targets the correct localhost port and only happens once per launch attempt
@@ -613,17 +643,19 @@ Runtime-path normalization is complete. Docker work should treat the following a
 3. **Phase 3 - Deferred Warm-Initialization UX**
    - Evaluate whether model/ZIP warm initialization can happen after the app shell is served
    - If feasible within Sprint 05 capacity, expose startup status to the frontend so setup/loading UI can distinguish "page is available" from "runtime is fully warm"
-   - Defer this phase to Sprint 06 if Docker baseline or launcher MVP consumes available capacity
+   - Defer this phase to Sprint 06 if container baseline or launcher MVP consumes available capacity
 
 **Dependencies**:
 - 🟡 TASK-052 - current integration smoke-test baseline
-- 🔴 TASK-025 - Docker containerization baseline complete enough to support a stable local launcher target
+- 🔴 TASK-025 - Docker-compatible / OCI containerization baseline complete enough to support a stable local launcher target
+- TASK-065 - release-support follow-through for Docker-Desktop-free Podman Compose-provider validation and final runtime support language
 
 **Notes**:
 - Do NOT absorb this task into TASK-025. The launcher/browser UX is a separate user-experience layer with different failure modes and rollback concerns.
 - Container code should not be responsible for opening the host browser; browser launch should be driven by the host-side launcher.
-- Treat this as the bridge from Docker-first engineering delivery to a locally understandable product experience, not as proof that Docker is viable on every managed machine.
+- Treat this as the bridge from container-first engineering delivery to a locally understandable product experience, not as proof that any desktop container runtime is viable on every managed machine.
 - Do not widen this task into native-installer work, cross-platform packaging promises, or runtime architecture redesign.
+- Do not promise Podman broadly on hosts without Docker Desktop installed until `TASK-065` validates a Docker-Desktop-free Compose provider or explicitly risk-accepts that gap.
 - If Sprint 05 tightens, ship Phase 1 first and defer background warm-initialization redesign.
 
 **User Value**: Reduces or eliminates command-line interaction for local users while keeping Setup Wizard and startup behavior understandable.
@@ -652,7 +684,7 @@ Runtime-path normalization is complete. Docker work should treat the following a
 - Provider abstraction layer ✅ COMPLETED
 
 **Notes**:
-- May be deferred to Sprint 06 if Docker work requires more time.
+- May be deferred to Sprint 06 if container work requires more time.
 - Do not let this task imply offline, air-gapped, or provider-key-free operation.
 
 **User Value**: Improved reliability when one provider experiences issues
@@ -730,9 +762,9 @@ Runtime-path normalization is complete. Docker work should treat the following a
 | Apr 21 | TASK-062: Pre-Docker runtime cleanup and loader hardening | 6-10h |
 | Apr 28-29 | TASK-063: Pre-Docker release hardening and CI reproducibility gate | 8-16h |
 | After TASK-063 | TASK-064: Targeted runtime responsiveness and inference baseline | 4-8h |
-| After TASK-064 | TASK-025 Phase 1-2: Docker strategy, Dockerfile, and compose config | 10-16h |
+| After TASK-064 | TASK-025 Phase 1-2: OCI strategy, image definition, Compose-compatible config, and GitHub Release package contract | 10-16h |
 | After TASK-025 Phase 2 | TASK-025 Phase 3-4: volume mounts, validation, and documentation | 8-12h |
-| Stretch after Docker | TASK-054 Phase 1 only if Docker baseline lands cleanly | 0-8h |
+| Stretch after container baseline | TASK-054 Phase 1 only if selected runtime baseline lands cleanly | 0-8h |
 | Closeout | Sprint 05 retrospective / Sprint 06 handoff | 2-4h |
 
 **Total Sprint Effort**: 76-118 hours after the final review gates (original planning target was 70-80h)
@@ -764,30 +796,32 @@ Runtime-path normalization is complete. Docker work should treat the following a
 - [x] Minimum support diagnostics contract documented for log locations, startup failures, asset/version visibility, and sensitive-data handling
 - [x] TASK-064 complete: ProviderStateManager responsiveness and `torch.inference_mode()` benchmark findings resolved or owner-approved
 - [x] ProviderStateManager busy-wait / main-thread locking behavior removed or owner-approved
-- [x] `torch.inference_mode()` benchmark decision recorded before Docker sign-off
+- [x] `torch.inference_mode()` benchmark decision recorded before container sign-off
 - [x] Any unresolved `TASK-063` or `TASK-064` finding has owner-approved risk acceptance documenting issue, deferral rationale, user/release impact, mitigation, review timing, and follow-up owner/task
-- [ ] TASK-025 Phase 1-3 complete: Docker container builds and runs on the corrected baseline
-- [ ] Setup Wizard functional in Docker environment
-- [ ] Settings save/load works with volume mounts
-- [ ] Detection workflow validated in container
-- [ ] All required durable and writable mount behaviors tested and documented
-- [ ] Cache and geocode data durability classified for v1
-- [ ] Docker Compose configuration validated
-- [ ] First-run asset bootstrap and recovery path validated
-- [ ] Container readiness/health behavior exists for `TASK-054`
-- [ ] Zero regressions from Sprint 04 functionality
+- [x] TASK-025 Phase 1-3 complete: OCI/container image builds and runs on the corrected baseline
+- [x] Setup Wizard functional in container environment
+- [x] Settings save/load works with volume mounts
+- [x] Detection workflow validated in container
+- [x] All required durable and writable mount behaviors tested and documented
+- [x] Cache and geocode data durability classified for v1
+- [x] Compose-compatible configuration validated
+- [x] GitHub Release ZIP package contract documented and validated enough for normal-user delivery, including GHCR image digest pinning and optional OCI archive fallback caveat
+- [x] Podman compatibility spike completed enough for the selected Podman-first target (engine/runtime path passed; Docker-engine-unavailable path passed; Docker-Desktop-free Compose-provider validation remains a support caveat before promising Podman on hosts without Docker Desktop installed)
+- [x] First-run asset import/recovery path validated; hosted network downloader remains optional future work
+- [x] Container readiness/health behavior exists for `TASK-054`, including `/api/health` and structured `/api/readiness`
+- [x] Task-025 focused regression surfaces passed; broad Sprint 04 browser/provider regression validation is deferred to `TASK-065` release-readiness follow-through
 
 ### Should-Have (Secondary Goals)
-- [ ] TASK-025 Phase 4 complete: Full Docker documentation
-- [ ] `AMD64` CPU baseline validated and CUDA-enabled `AMD64` path documented for compatible hosts
-- [ ] TASK-054 Phase 1 complete: launcher MVP for local Docker startup
+- [x] TASK-025 Phase 4 complete: Full GitHub-first, engine-aware container documentation
+- [x] `AMD64` CPU baseline validated and CUDA-enabled `AMD64` path documented for compatible hosts
+- [ ] TASK-054 Phase 1 complete: launcher MVP for selected local runtime startup
 - [ ] Browser Refresh Warning Fix (if capacity allows)
 - [ ] Error Handling Standardization (if capacity allows)
 
 ### Nice-to-Have (Stretch Goals)
 - [ ] TASK-054 Phase 2 complete or cleanly deferred with documented readiness approach
 - [ ] `ARM64` / Mac follow-on plan documented without blocking first release
-- [ ] Container registry publishing path documented
+- [x] Container registry publishing path documented
 - [ ] Performance optimization in containerized environment
 - [ ] TASK-029 investigation started only if all runtime and Docker gates land early
 
@@ -797,11 +831,11 @@ Runtime-path normalization is complete. Docker work should treat the following a
 - YOLO initialization no longer depends on first-run GitHub access
 - Release-hardening and targeted responsiveness/performance findings are either fixed or tracked as owner-approved explicit risk acceptances
 - April 28 sufficiency-review gates are reflected in release, persistence, security, and support contracts
-- Docker container starts successfully on first attempt
+- Container starts successfully on first attempt using the selected validation path
 - All TASK-046 features work in containerized environment
 - Documentation includes troubleshooting guide
 - All automated tests passing in container
-- Container image size reasonable (<2GB with models)
+- Container image size reasonable, with heaviest model/data assets externalized unless intentionally included
 
 ---
 
@@ -809,36 +843,36 @@ Runtime-path normalization is complete. Docker work should treat the following a
 
 **Key Decisions**:
 1. **Sequencing is critical**: `TASK-051` and `TASK-055` are already complete, `TASK-056`, `TASK-057`, `TASK-052`, and `TASK-062` are complete, and `TASK-063` should clear before `TASK-025`
-2. **`TASK-025` scope discipline**: Do NOT absorb runtime hardening, YOLO ownership redesign, smoke-baseline work, release-hardening, or CI policy work into the Docker task
-3. **`TASK-054` stays separate**: Launcher/browser UX work starts only after the Docker baseline is stable enough to target
+2. **`TASK-025` scope discipline**: Do NOT absorb runtime hardening, YOLO ownership redesign, smoke-baseline work, release-hardening, or CI policy work into the container task
+3. **`TASK-054` stays separate**: Launcher/browser UX work starts only after the selected container runtime baseline is stable enough to target
 4. **Current `dev` lazy-loading behavior remains intentional**: do not expand Sprint 05 scope to "fix" that
-5. **Volume mount testing remains mandatory**: explicitly test Setup Wizard save/load in Docker against the current filesystem-session contract
-6. **Model-weight strategy is a Phase 1 Docker decision**: do not defer layer/download/volume treatment until late Docker validation
+5. **Volume mount testing remains mandatory**: explicitly test Setup Wizard save/load in the selected container runtime against the current filesystem-session contract
+6. **Model-weight strategy is a Phase 1 container decision**: do not defer layer/download/volume treatment until late validation
 7. **Second-review gate**: `TASK-063` owns dependency/reproducibility, CI security action pinning and review cadence, `.pt` upload and upload-limit support boundary, insecure TLS support boundary, provider-key restriction guidance, metrics-file contract cleanup, residual YOLO/Torch Hub audit, v1 release boundary, and support diagnostics contract
-8. **Final-review gate**: `TASK-064` owns targeted ProviderStateManager responsiveness cleanup and `torch.inference_mode()` benchmark evidence before Docker sign-off
+8. **Final-review gate**: `TASK-064` owns targeted ProviderStateManager responsiveness cleanup and `torch.inference_mode()` benchmark evidence before container sign-off
 9. **Risk acceptance governance**: Any unresolved `TASK-063` or `TASK-064` finding requires owner approval after the impact, mitigation, review timing, and follow-up plan are documented
 10. **Fallback plan**: If the added runtime gates consume Sprint 05 capacity, defer `TASK-054` and `TASK-029` rather than compressing `TASK-025`
 
 **Risk Mitigation**:
 - `TASK-056` corrects first-run failures before the smoke baseline is defined
-- `TASK-057` prevents Docker from being built on top of a runtime contract that still depends on Torch Hub / GitHub
-- `TASK-052` provides regression protection during Docker work
-- `TASK-063` prevents known release, CI, and supportability gaps from being normalized into the Docker baseline
-- `TASK-064` prevents targeted responsiveness/performance uncertainty from being normalized into the Docker baseline
+- `TASK-057` prevents containerization from being built on top of a runtime contract that still depends on Torch Hub / GitHub
+- `TASK-052` provides regression protection during container work
+- `TASK-063` prevents known release, CI, and supportability gaps from being normalized into the container baseline
+- `TASK-064` prevents targeted responsiveness/performance uncertainty from being normalized into the container baseline
 - `TASK-025` must turn the v1 runtime/persistence/asset contracts into tested container behavior
 - `TASK-054` must make logs, status, and first-run failure modes visible enough for limited/manual support
 - Keep `TASK-025` phases separate for easier rollback if needed
 - Keep `TASK-054` phased so launcher MVP can ship without forcing startup-pipeline redesign into the same sprint
 - Use a conservative planning pace around 3.5-4.0 hrs/day instead of Sprint 03 peak velocity
-- Document all Docker-specific configuration decisions
+- Document all engine-specific configuration decisions
 
 **Success Indicators**:
 - A new user can install and run a first detection without in-process package upgrades
 - YOLO initialization works on the validated host baseline without first-run GitHub dependence
-- A new user can run `docker compose up` and complete Setup Wizard
+- A new user can use the GitHub Release package and selected runtime path to complete Setup Wizard
 - Configuration persists across container restarts
 - Detection workflow works end-to-end in container
-- A user can launch the local Docker deployment with minimal or no manual CLI interaction once `TASK-054` lands
+- A user can launch the local container deployment with minimal or no manual CLI interaction once `TASK-054` lands
 - No manual `.env` editing required
 
 ---
@@ -850,7 +884,7 @@ Runtime-path normalization is complete. Docker work should treat the following a
 - [Sprint 04 Retrospective](./context/status/SPRINT-04-RETROSPECTIVE.md)
 - [Task Backlog](./task-backlog.md)
 - [Completed Tasks](./completed-tasks.md)
-- [Docker Requirements Analysis](./context/analysis/REMOVAL-CANDIDATES-CONTAINERIZATION.md)
+- [Containerization Requirements Analysis](./context/analysis/REMOVAL-CANDIDATES-CONTAINERIZATION.md)
 - [Senior Engineering Review Response Memo V2](./context/analysis/SENIOR-ENGINEERING-REVIEW-RESPONSE-MEMO-V2-2026-04-28.md)
 
 ---

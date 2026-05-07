@@ -1,0 +1,63 @@
+# Git and local tooling
+.git/
+.github/
+.agent_work/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node dependencies and local artifacts
+node_modules/
+npm-debug.log
+.npm/
+tests/frontend/detection-workflow.local.json
+
+# Secrets and local runtime state
+.env
+*.env
+!*.env.example
+apikey.txt
+webapp/.env
+webapp/apikey.txt
+webapp/config/.env
+webapp/config/.env.backup.*
+webapp/config/.env.lock
+
+# Large runtime assets are mounted or bootstrapped from the asset manifest.
+model_params/
+webapp/model_params/
+data/
+webapp/data/
+*.pt
+*.pth
+*.onnx
+yolov5s.pt
+webapp/yolov5s.pt
+yolov5/
+
+# Writable runtime paths
+logs/
+webapp/logs/
+cache/
+webapp/cache/
+flask_session/
+webapp/flask_session/
+uploads/
+webapp/uploads/
+temp/
+webapp/temp/
+tmp/
+webapp/tmp*/
+*.tmp
+*.bak
+
+# Non-runtime project areas
+Model/
+SyntheticData/
+TowerScoutSite/
+tests/
+requirements-dev.txt

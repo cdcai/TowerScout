@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "manifest_version": "towerscout-v1-assets-2026-05-05",
+  "description": "TowerScout v1 runtime asset manifest for model weights and ZIP-code boundary data.",
+  "assets": [
+    {
+      "id": "yolo-newest",
+      "kind": "model",
+      "label": "YOLOv5 cooling-tower detector weights",
+      "path": "model_params/yolov5/newest.pt",
+      "required": true,
+      "bytes": 175084429,
+      "sha256": "27315E156D8370D51D9C2A3C047C4BF5CC0C8AE1521036BDF800B7A8A81554E6",
+      "source": "TowerScout release asset",
+      "recovery": "Import the release asset bundle or rerun the TowerScout asset bootstrap before detection."
+    },
+    {
+      "id": "efficientnet-b5-project-weights",
+      "kind": "model",
+      "label": "EfficientNet-B5 secondary classifier project weights",
+      "path": "model_params/EN/b5_unweighted_best.pt",
+      "required": true,
+      "bytes": 118567303,
+      "sha256": "645113BADFCD17A1F9B451AABB54BF80E115A4FAACEB65E0CE3FC8DBFB108A5D",
+      "source": "TowerScout release asset",
+      "recovery": "Import the release asset bundle or rerun the TowerScout asset bootstrap before detection."
+    },
+    {
+      "id": "zcta-2025-cpg",
+      "kind": "zipcode-data",
+      "label": "2025 US ZCTA shapefile code page",
+      "path": "data/tl_2025_us_zcta520/tl_2025_us_zcta520.cpg",
+      "required": true,
+      "bytes": 5,
+      "sha256": "3AD3031F5503A4404AF825262EE8232CC04D4EA6683D42C5DD0A2F2A27AC9824",
+      "source": "US Census ZCTA release data",
+      "recovery": "Import the release ZIP-code data bundle."
+    },
+    {
+      "id": "zcta-2025-dbf",
+      "kind": "zipcode-data",
+      "label": "2025 US ZCTA shapefile attributes",
+      "path": "data/tl_2025_us_zcta520/tl_2025_us_zcta520.dbf",
+      "required": true,
+      "bytes": 2838798,
+      "sha256": "FB1CD7305831772FD375607A0561D9A7C9F126ED665D10D2D51E9A9772853D06",
+      "source": "US Census ZCTA release data",
+      "recovery": "Import the release ZIP-code data bundle."
+    },
+    {
+      "id": "zcta-2025-prj",
+      "kind": "zipcode-data",
+      "label": "2025 US ZCTA shapefile projection",
+      "path": "data/tl_2025_us_zcta520/tl_2025_us_zcta520.prj",
+      "required": true,
+      "bytes": 165,
+      "sha256": "0B9041E921D9EBB43247D314608FE9E38A0B008EE793067FC1806199EA1FB9DD",
+      "source": "US Census ZCTA release data",
+      "recovery": "Import the release ZIP-code data bundle."
+    },
+    {
+      "id": "zcta-2025-shp",
+      "kind": "zipcode-data",
+      "label": "2025 US ZCTA shapefile geometry",
+      "path": "data/tl_2025_us_zcta520/tl_2025_us_zcta520.shp",
+      "required": true,
+      "bytes": 822559684,
+      "sha256": "3A701EEBDF9982269F87AA19C49CCC6596CA303126E4901DD2EE814F22A591B4",
+      "source": "US Census ZCTA release data",
+      "recovery": "Import the release ZIP-code data bundle."
+    },
+    {
+      "id": "zcta-2025-shp-ea-metadata",
+      "kind": "zipcode-data",
+      "label": "2025 US ZCTA shapefile extended metadata",
+      "path": "data/tl_2025_us_zcta520/tl_2025_us_zcta520.shp.ea.iso.xml",
+      "required": false,
+      "bytes": 17697,
+      "sha256": "648571DEA5799CF2011781635FD20AE7DEBD23DF34DA09CE37519F4202B166EA",
+      "source": "US Census ZCTA release data",
+      "recovery": "Import the release ZIP-code data bundle."
+    },
+    {
+      "id": "zcta-2025-shp-metadata",
+      "kind": "zipcode-data",
+      "label": "2025 US ZCTA shapefile metadata",
+      "path": "data/tl_2025_us_zcta520/tl_2025_us_zcta520.shp.iso.xml",
+      "required": false,
+      "bytes": 50682,
+      "sha256": "AEA0E75009756CA5B6FFF899C5053D8CBB91E5EBC17A67938B01977404CBE9F0",
+      "source": "US Census ZCTA release data",
+      "recovery": "Import the release ZIP-code data bundle."
+    },
+    {
+      "id": "zcta-2025-shx",
+      "kind": "zipcode-data",
+      "label": "2025 US ZCTA shapefile index",
+      "path": "data/tl_2025_us_zcta520/tl_2025_us_zcta520.shx",
+      "required": true,
+      "bytes": 270428,
+      "sha256": "804A57259FC72A56E04FAE9B02617814E5C8F9853B353134FEF418973A227775",
+      "source": "US Census ZCTA release data",
+      "recovery": "Import the release ZIP-code data bundle."
+    }
+  ]
+}

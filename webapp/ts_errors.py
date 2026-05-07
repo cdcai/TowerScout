@@ -11,6 +11,28 @@ Date: December 2025
 import traceback
 from typing import Optional, Dict, Any
 from datetime import datetime
+import re
+
+
+def _sanitize_error_detail(value: Any) -> Any:
+    """Redact provider credentials from structured error responses."""
+    if isinstance(value, dict):
+        return {key: _sanitize_error_detail(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_sanitize_error_detail(item) for item in value]
+    if not isinstance(value, str):
+        return value
+
+    value = re.sub(r'AIza[0-9A-Za-z\-_]{35}', 'AIza***REDACTED***', value)
+    value = re.sub(r'subscription-key=[0-9A-Za-z\-_]+', 'subscription-key=***REDACTED***', value)
+    value = re.sub(
+        r'([?&])(key|apikey|api_key|token|access_token)=([^&\s]+)',
+        r'\1\2=***REDACTED***',
+        value,
+        flags=re.IGNORECASE,
+    )
+    value = re.sub(r'Authorization:\s*[^\s]+', 'Authorization: ***REDACTED***', value, flags=re.IGNORECASE)
+    return value
 
 
 class TowerScoutError(Exception):
@@ -49,15 +71,15 @@ class TowerScoutError(Exception):
             "type": self.__class__.__name__,
             "code": self.error_code,
             "message": self.user_message,
-            "technical_message": self.message,
+            "technical_message": _sanitize_error_detail(self.message),
             "timestamp": self.timestamp,
-            "details": self.details
+            "details": _sanitize_error_detail(self.details)
         }
         
         if self.cause:
             error_dict["cause"] = {
                 "type": self.cause.__class__.__name__,
-                "message": str(self.cause)
+                "message": _sanitize_error_detail(str(self.cause))
             }
             
         return error_dict

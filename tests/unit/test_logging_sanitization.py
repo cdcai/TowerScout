@@ -108,6 +108,28 @@ class TestLoggingSanitization(unittest.TestCase):
         # Verify API key is redacted (generic pattern catches it)
         self.assertIn('***REDACTED***', log_output)
         self.assertNotIn('AIzaSyDEXAMPLE1234567890abcdefghijklmno', log_output)
+
+    def test_formatter_sanitizes_exception_tracebacks(self):
+        """Test that exception tracebacks are redacted in human-readable logs."""
+        logger = logging.getLogger('test_exception_sanitization')
+        logger.setLevel(logging.INFO)
+        logger.handlers.clear()
+
+        stream = StringIO()
+        handler = logging.StreamHandler(stream)
+        handler.setFormatter(TowerScoutFormatter(json_format=False))
+        logger.addHandler(handler)
+
+        try:
+            raise RuntimeError(
+                "Failed URL /maps/api/staticmap?key=AIzaSyDEXAMPLE1234567890abcdefghijklmno"
+            )
+        except RuntimeError:
+            logger.exception("Provider validation failed")
+
+        log_output = stream.getvalue()
+        self.assertIn('key=***REDACTED***', log_output)
+        self.assertNotIn('AIzaSyDEXAMPLE1234567890abcdefghijklmno', log_output)
     
     def test_sanitize_handles_non_string_input(self):
         """Test that sanitize handles non-string inputs gracefully."""
