@@ -89,6 +89,7 @@ The GitHub Release control package is assembled by `scripts/package-release.cmd`
 - Compose runtime configuration
 - `.env.example` with the selected image reference
 - Windows `.cmd` wrappers and PowerShell helpers for start, stop, logs, status, asset import, and TLS CA import
+- top-level `start.bat` launcher that starts Compose, polls `/api/readiness`, and opens the browser after the app shell is reachable
 - this runtime contract and the quick start
 - `webapp/asset_manifest.v1.json`
 - `IMAGE.txt`

@@ -95,12 +95,14 @@ function Copy-ReleaseItem {
 }
 
 $releaseFiles = @(
+    "start.bat",
     "compose.yaml",
     ".env.example",
     "docs\oci-quick-start.md",
     "docs\oci-runtime-contract.md",
     "webapp\asset_manifest.v1.json",
     "scripts\lib\TowerScoutCompose.ps1",
+    "scripts\launch.ps1",
     "scripts\start.cmd",
     "scripts\start.ps1",
     "scripts\stop.cmd",

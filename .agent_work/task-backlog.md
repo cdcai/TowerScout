@@ -3,7 +3,7 @@
 **Last Updated**: May 7, 2026
 **Sprint 04 Completed**: March 19 - April 6, 2026
 **Sprint 05 Active**: April 7 - active extension after April 25, 2026
-**Next Sprint Planning**: Sprint 06 Prep after `TASK-025` PR review and release-support follow-through scoping
+**Next Sprint Planning**: Sprint 06 Prep after `TASK-054` launcher planning and `TASK-065` release-support follow-through scoping
 
 ---
 
@@ -87,7 +87,7 @@
 ---
 
 ### **TASK-025: Docker / OCI Containerization** 🟡
-**Status**: COMPLETED IN current-tasks.md - PR #7 OPEN
+**Status**: COMPLETED IN current-tasks.md - MERGED TO MAIN
 **Type**: C (Infrastructure / Deployment Readiness)
 **Priority**: HIGH
 **Estimated Effort**: 1-2 days (8-16 hours)

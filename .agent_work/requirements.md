@@ -7,12 +7,12 @@ This document specifies requirements for transforming TowerScout from a student 
 **DEPLOYMENT MODEL**: **LOCAL DEPLOYMENT** - TowerScout will be deployed on individual user devices (epidemiologists, researchers, health departments) rather than as a hosted service.
 
 **Current State**: Student prototype requiring technical setup  
-**Target State**: User-friendly, locally-deployable tool with Docker containerization and cross-platform support
+**Target State**: User-friendly, locally-deployable tool with the merged `TASK-025` Docker-compatible / OCI container baseline, GitHub-first release packaging, and a launcher-first local startup path
 
 **Key Implications**:
 - **Authentication eliminated**: Physical access control sufficient for local deployment
 - **Enterprise features simplified**: Focus on ease of installation over complex multi-tenant features
-- **Hardware compatibility critical**: Must work across diverse local hardware (AMD64, ARM64, CPU-only systems)
+- **Hardware compatibility critical**: V1 targets Windows 11/AMD64 CPU-first local use; Podman is the preferred open-source Windows runtime target after release-support gates, Docker Desktop is secondary where licensed/approved, and ARM64, Mac, offline, VDI, shared deployment, and broader runtime hosts remain follow-on targets unless explicitly validated
 - **User experience paramount**: No IT support means excellent error messages and setup guidance essential
 
 ---
@@ -170,8 +170,8 @@ This document specifies requirements for transforming TowerScout from a student 
 **Type**: B  
 **EARS**: WHEN new users install TowerScout, THE SYSTEM SHALL provide a streamlined setup process requiring minimal technical knowledge  
 **Acceptance Criteria**:
-- ✅ Create Docker containerization for one-command deployment (**UPDATED**: Multi-architecture with embedded models)
-- ~~Auto-download required model weights on first run~~ **CHANGED**: Embed models in container (~1.2GB)
+- ✅ Create Docker-compatible / OCI containerization and GitHub Release packaging for simplified deployment (**UPDATED**: Windows 11/AMD64 CPU-first with manifest-managed assets and a GitHub Release ZIP plus GHCR-by-digest package model)
+- Auto-bootstrap required model/data assets on first run using a checksummed manifest, with manual/restricted-network bundle fallback
 - ✅ Provide setup wizard for initial configuration (**UPDATED**: Integrated into main interface, not separate)
 - ✅ Add comprehensive documentation with screenshots
 - ~~Support both standard API keys and Azure Key Vault configuration~~ **SIMPLIFIED**: Standard API keys only for local deployment
@@ -212,19 +212,20 @@ This document specifies requirements for transforming TowerScout from a student 
 - Include provider selection and recommendation
 - Support configuration updates through settings interface
 
-### LOC-002: Multi-Architecture Docker Distribution
+### LOC-002: OCI Container Release Package
 **Priority**: CRITICAL  
 **Type**: C  
-**EARS**: WHEN users deploy TowerScout, THE SYSTEM SHALL support both AMD64 and ARM64 architectures through Docker Hub  
+**EARS**: WHEN users deploy TowerScout, THE SYSTEM SHALL provide a GitHub Release ZIP package backed by a Docker-compatible / OCI image and Compose-compatible runtime configuration
 **Acceptance Criteria**:
-- Create Docker container supporting AMD64 and ARM64 platforms
-- Embed ML model weights (~1.2GB total) in container for offline operation
-- Enable one-command deployment: `docker run -p 5000:5000 towerscout:latest`
-- Startup time under 15 seconds including PyTorch hub downloads
-- Automatic GitHub Actions builds pushing to Docker Hub
-- Handle platform-specific dependencies (GDAL/Fiona compilation)
-- Support Apple Silicon MPS acceleration when available
-- Provide container health checks for monitoring
+- Create Docker-compatible / OCI image targeting the validated AMD64 CPU baseline
+- Provide Compose-compatible configuration for the selected runtime host
+- Publish user-facing release package through GitHub Releases
+- Include quick-start docs, `compose.yaml`, `.env` template, scripts, pinned GHCR image reference by digest, optional OCI archive fallback, asset manifest, checksums, troubleshooting, and recovery guidance
+- Treat Podman as the preferred open-source Windows runtime target after release-support gates; `TASK-025` validated the Windows WSL engine path, while `TASK-065` still owns Docker-Desktop-free Compose-provider validation
+- Preserve Docker-compatible developer/support path where licensing and endpoint policy allow
+- Keep source clone-and-build as a developer/support path, not the default normal-user deployment path
+- Do not promise ARM64, Mac, offline, VDI, or shared deployment until separately validated
+- Provide `/api/health` and structured `/api/readiness` checks for launcher and validation use, including `starting`, `setup_required`, `degraded`, `ready`, and `fatal` readiness states
 
 ### LOC-003: CPU Performance Optimization
 **Priority**: HIGH  
@@ -257,13 +258,13 @@ This document specifies requirements for transforming TowerScout from a student 
 **Type**: B  
 **EARS**: WHERE advanced users want custom models, THE SYSTEM SHALL support optional volume-based model updates  
 **Acceptance Criteria**:
-- Default deployment uses embedded models (no user action required)
-- Advanced users can optionally mount `/app/model_params` volume
+- Default deployment uses manifest-managed release assets with no manual model path setup for normal users
+- Advanced users can optionally use the documented assets volume or host-visible asset profile
 - Model validation prevents incompatible models from loading
 - Rollback capability if custom models fail
 - Clear documentation separating basic vs advanced usage
 - Model versioning and compatibility checking
-- No interference with normal embedded model operation
+- No interference with normal manifest-managed model operation
 
 ---
 
@@ -378,12 +379,12 @@ This document specifies requirements for transforming TowerScout from a student 
 ### DEP-001: Containerization
 **Priority**: MEDIUM  
 **Type**: C  
-**EARS**: THE SYSTEM SHALL support Docker deployment for simplified installation and scaling  
+**EARS**: THE SYSTEM SHALL support Docker-compatible / OCI deployment for simplified local installation
 **Acceptance Criteria**:
-- Create production Dockerfile
-- Add docker-compose configuration
-- Implement health check endpoints
-- Document container deployment
+- Create production Dockerfile/Containerfile-compatible image definition
+- Add Compose-compatible configuration
+- Implement `/api/health` and structured `/api/readiness` endpoints
+- Document GitHub Release ZIP deployment, pinned GHCR image digest reference, optional OCI archive fallback, selected runtime-host prerequisites, and developer/support clone-build path
 
 ### DEP-002: Configuration Management
 **Priority**: MEDIUM  

@@ -1,6 +1,6 @@
 # TASK-025: Docker / OCI Containerization
 
-**Status**: COMPLETED - PR #7 OPEN
+**Status**: COMPLETED - MERGED TO MAIN
 **Priority**: HIGH
 **Type**: C (Infrastructure / Deployment Readiness)
 **Estimated Effort**: 1-2 days (8-16 hours)
@@ -993,6 +993,7 @@ These decisions are accepted as the starting contract for `TASK-025`. The only a
 **Decision**: Complete `TASK-025` and hand deferred release-support items to `TASK-065`, with launcher UX still owned by `TASK-054`.
 **Execution**:
 - Updated this task status to `COMPLETED - PR #7 OPEN`.
+- Follow-up cleanup corrected the task header to `COMPLETED - MERGED TO MAIN` after PR #7 merged.
 - Updated `.agent_work/current-tasks.md` to mark `TASK-025` complete and to classify broad Sprint 04 regression validation as release-readiness follow-through rather than a hidden Task-025 blocker.
 - Added `TASK-065` to `.agent_work/task-backlog.md` for Docker-Desktop-free Podman Compose-provider validation, hosted asset download/bootstrap decisions, optional OCI archive fallback implementation, Buildx Node 20 action maintenance, and broad release-readiness regression validation.
 **Output**:

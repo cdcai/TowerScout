@@ -73,7 +73,7 @@ Do not stack:
 
 Examples:
 
-- `feat(task-025): add Dockerfile and compose baseline`
+- `feat(task-025): add OCI image and compose baseline`
 - `test(task-025): reuse smoke contract in container flow`
 - `docs(task-054): document launcher behavior`
 

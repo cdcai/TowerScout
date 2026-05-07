@@ -3,7 +3,7 @@
 **Sprint Period**: April 7 - active extension after April 25, 2026 (Sprint 05)
 **Last Updated**: May 7, 2026
 **Focus**: Runtime determinism, local YOLO runtime ownership, smoke-baseline validation, pre-container release hardening, v1 operational contracts, OCI/GitHub-first release readiness, and launch UX follow-through
-**Status**: **SPRINT 05 EXTENSION / TASK-025 COMPLETE / PR #7 OPEN** - `TASK-025` has the local OCI image, Compose profile, persistent runtime volumes, asset manifest/import path, health/readiness contract, Windows helper wrappers, containerized smoke validation, local release-package helper, GHCR digest publication, Google TLS CA path, and Podman-with-Docker-engine-unavailable runtime path validated. Remaining release-support caveats are handed off to `TASK-065` and launcher UX remains under `TASK-054`.
+**Status**: **SPRINT 05 EXTENSION / TASK-025 MERGED / TASK-054 PHASE 1 COMPLETE** - `TASK-025` has the local OCI image, Compose profile, persistent runtime volumes, asset manifest/import path, health/readiness contract, Windows helper wrappers, containerized smoke validation, local release-package helper, GHCR digest publication, Google TLS CA path, and Podman-with-Docker-engine-unavailable runtime path validated. `TASK-054` Phase 1 now provides the Windows-first launcher MVP over that runtime contract. Remaining release-support caveats are handed off to `TASK-065`.
 
 ---
 
@@ -504,7 +504,7 @@ These are current-branch closeout items for `feature-sprint-04-closeout`. Comple
 ---
 
 ### **TASK-025: Docker / OCI Containerization** 🟡
-**Status**: COMPLETED - PR #7 OPEN
+**Status**: COMPLETED - MERGED TO MAIN
 **Type**: C (Infrastructure / Deployment Readiness)
 **Priority**: HIGH
 **Estimated Effort**: 1-2 days (8-16 hours)
@@ -610,7 +610,7 @@ Runtime-path normalization is complete. Container work should treat the followin
 ---
 
 ### **TASK-054: Local Launch UX** 🟡
-**Status**: NOT_STARTED  
+**Status**: COMPLETED - PHASE 1 MVP
 **Type**: B (Deployment UX / Local Launch Flow)  
 **Priority**: MEDIUM  
 **Estimated Effort**: 1-2 days (8-12 hours)  
@@ -631,11 +631,12 @@ Runtime-path normalization is complete. Container work should treat the followin
 
 **Proposed Delivery Phases**:
 1. **Phase 1 - Launcher MVP**
-   - Add launcher script(s) for the selected local runtime startup
-   - Wait for reachable app shell before opening the browser
-   - Add companion stop/logs guidance or scripts so users are not forced into raw container CLI usage for routine support
-   - Surface first-run download delays and bootstrap failures clearly instead of hiding them behind a generic startup wait
-   - Document where logs live and how a user/support contact can identify app, selected-engine, network, provider-key, and asset-bootstrap failures
+- Add launcher script(s) for the selected local runtime startup
+- Wait for reachable app shell before opening the browser
+- Add companion stop/logs guidance or scripts so users are not forced into raw container CLI usage for routine support
+- Surface first-run download delays and bootstrap failures clearly instead of hiding them behind a generic startup wait
+- Document where logs live and how a user/support contact can identify app, selected-engine, network, provider-key, and asset-bootstrap failures
+  - Completed through top-level `start.bat`, `scripts/launch.ps1`, release-package inclusion, quick-start diagnostics/troubleshooting updates, owner UX confirmation, and focused failure-path validation
 2. **Phase 2 - Readiness + Browser Orchestration**
    - Add or formalize a lightweight startup/readiness endpoint for launcher polling
    - Ensure browser launch targets the correct localhost port and only happens once per launch attempt
@@ -646,8 +647,8 @@ Runtime-path normalization is complete. Container work should treat the followin
    - Defer this phase to Sprint 06 if container baseline or launcher MVP consumes available capacity
 
 **Dependencies**:
-- 🟡 TASK-052 - current integration smoke-test baseline
-- 🔴 TASK-025 - Docker-compatible / OCI containerization baseline complete enough to support a stable local launcher target
+- ✅ TASK-052 - current integration smoke-test baseline
+- ✅ TASK-025 - Docker-compatible / OCI containerization baseline merged and complete enough to support a stable local launcher target
 - TASK-065 - release-support follow-through for Docker-Desktop-free Podman Compose-provider validation and final runtime support language
 
 **Notes**:
@@ -657,6 +658,14 @@ Runtime-path normalization is complete. Container work should treat the followin
 - Do not widen this task into native-installer work, cross-platform packaging promises, or runtime architecture redesign.
 - Do not promise Podman broadly on hosts without Docker Desktop installed until `TASK-065` validates a Docker-Desktop-free Compose provider or explicitly risk-accepts that gap.
 - If Sprint 05 tightens, ship Phase 1 first and defer background warm-initialization redesign.
+
+**Completion Summary**:
+- Added top-level `start.bat` as the release-user entrypoint.
+- Added `scripts/launch.ps1` to start Compose, poll `/api/readiness`, report readiness/config/asset status, and open the browser after the app shell is reachable.
+- Updated release packaging to include the launcher.
+- Updated quick-start and runtime-contract docs with launcher usage, support diagnostics, troubleshooting, and sensitive-artifact handling.
+- Validated the normal launcher path with Docker, confirmed owner-facing messaging, and checked invalid engine, invalid timeout, and unreachable-readiness support paths.
+- Phase 2 readiness UX is cleanly deferred unless `TASK-065` release-support work shows the MVP needs more polish.
 
 **User Value**: Reduces or eliminates command-line interaction for local users while keeping Setup Wizard and startup behavior understandable.
 
@@ -814,12 +823,12 @@ Runtime-path normalization is complete. Container work should treat the followin
 ### Should-Have (Secondary Goals)
 - [x] TASK-025 Phase 4 complete: Full GitHub-first, engine-aware container documentation
 - [x] `AMD64` CPU baseline validated and CUDA-enabled `AMD64` path documented for compatible hosts
-- [ ] TASK-054 Phase 1 complete: launcher MVP for selected local runtime startup
+- [x] TASK-054 Phase 1 complete: launcher MVP for selected local runtime startup
 - [ ] Browser Refresh Warning Fix (if capacity allows)
 - [ ] Error Handling Standardization (if capacity allows)
 
 ### Nice-to-Have (Stretch Goals)
-- [ ] TASK-054 Phase 2 complete or cleanly deferred with documented readiness approach
+- [x] TASK-054 Phase 2 complete or cleanly deferred with documented readiness approach
 - [ ] `ARM64` / Mac follow-on plan documented without blocking first release
 - [x] Container registry publishing path documented
 - [ ] Performance optimization in containerized environment

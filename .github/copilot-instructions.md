@@ -1,6 +1,6 @@
 # TowerScout AI Coding Guide (Expanded Updated Draft)
 
-This expanded draft is intended to function as a high-context replacement candidate for `.github/copilot-instructions.md` if the project wants a single, authoritative guidance file for agent context. It preserves much more of the original document's project context, guardrails, and workflow guidance, while correcting stale or superseded claims against the current repository state as of 2026-04-06.
+This expanded draft is intended to function as a high-context replacement candidate for `.github/copilot-instructions.md` if the project wants a single, authoritative guidance file for agent context. It preserves much more of the original document's project context, guardrails, and workflow guidance, while correcting stale or superseded claims against the current repository state as of 2026-05-07.
 
 ## Mission and Product Context
 
@@ -21,7 +21,9 @@ The project still carries public-health workflow expectations:
 - Sprint 04 is in wrap-up, with most planned implementation work completed.
 - Setup Wizard and Settings are implemented in the repo.
 - Detection progress, estimate/detect separation, and cancel handling are implemented in the repo.
-- Docker containerization is still planned work, not implemented work.
+- `TASK-025` Docker-compatible / OCI containerization is merged on `main`: the repo now has a `Dockerfile`, Compose configuration, health/readiness endpoints, persistent runtime volume contract, release-package helper scripts, GHCR publish workflow, asset/TLS import helpers, and OCI runtime documentation.
+- The current post-`TASK-025` direction is GitHub-first and engine-aware: GitHub Releases should be the normal user-facing release control plane, a GitHub Release ZIP plus pinned GHCR image digest is the preferred package shape, Podman is the preferred open-source Windows runtime target after validated support gates, and Docker compatibility remains useful for development/support where licensing and endpoint policy allow.
+- Podman engine/runtime behavior has been validated on the Windows WSL host, including while Docker Desktop's engine was unavailable. A Docker-Desktop-free Podman Compose provider remains a `TASK-065` release-support gate before promising Podman broadly on hosts without Docker Desktop installed.
 - The repo contains substantial recent architecture and workflow changes that are not reflected in the original `copilot-instructions.md`.
 
 ### Sprint 04 Summary
@@ -62,7 +64,7 @@ At the current tracker state, Sprint 04 wrap-up records `TASK-046`, `TASK-047`, 
 5. **Cleanup and Audit Work Clarified the Path to Sprint 05**
    - `TASK-050` produced a full-repo stale-code/performance audit.
    - `TASK-049` removed low-risk tracked artifacts, repaired the pytest collection gate, and archived stale helper/test surfaces without discarding historical context.
-   - Remaining work was cleanly split into `TASK-051` and `TASK-052` so Docker work can start from a narrower, better-defined foundation.
+   - Remaining work was cleanly split into `TASK-051` and `TASK-052` so container work can start from a narrower, better-defined foundation.
 
 **Sprint 04 Outcome:**
 
@@ -79,9 +81,9 @@ The current path forward is centered on Sprint 05 intake and deployment readines
 
 1. `TASK-051`: runtime dependency verification and split
 2. `TASK-052`: current integration smoke-test baseline
-3. `TASK-025`: Docker containerization
-4. `TASK-026`: CPU optimization follow-on work
-5. `TASK-029`: multi-provider fallback and reliability improvements
+3. `TASK-054`: local launch UX over the merged `TASK-025` runtime contract
+4. `TASK-065`: release packaging and runtime support follow-through
+5. `TASK-026` / `TASK-029`: CPU optimization and multi-provider reliability follow-on work
 
 ### Important Status Correction
 
@@ -501,25 +503,37 @@ Current CI includes:
 - `bandit` as non-blocking
 - unit tests
 - integration tests as non-blocking
-- placeholder Docker build check that tolerates a missing Dockerfile
+- Docker image build check on `main`
 - Trivy security scan
 
-Do not describe Docker build validation as fully implemented CI coverage yet.
+Do not describe container release validation as fully automated CI coverage yet. CI can build the image on `main`, and the manual GHCR publish workflow can publish a digest-pinned image, but full asset-backed release validation and Docker-Desktop-free Podman Compose-provider validation remain release-support follow-through.
 
-## Docker and Deployment Strategy
+## Container And Deployment Strategy
 
 ### Current Reality
 
-Docker containerization remains planned work. There is no `Dockerfile` in the repo today.
+Docker-compatible / OCI containerization is now implemented as the `TASK-025` baseline. The repo includes a multi-stage `Dockerfile`, `compose.yaml`, `compose.build.yaml`, health/readiness endpoints, runtime persistence docs, release package helper scripts, asset import helpers, TLS CA import helpers, and a manual GHCR publish workflow.
 
-### TASK-025 Guardrails
+The current product direction is:
 
-When Docker work begins, the current app architecture requires:
+- use the merged OCI-compatible container contract rather than a Docker Desktop-specific product path
+- make GitHub Releases the default user-facing delivery control plane
+- treat Podman as the preferred open-source Windows runtime target after validated support gates; the engine path passed on this host, while Docker-Desktop-free Compose-provider validation remains a `TASK-065` gate
+- preserve Docker compatibility for development/support fallback where licensing and endpoint policy allow
+- keep local source clone/build as a developer/support path, not the preferred normal-user install path
+- package normal users through a GitHub Release ZIP with `compose.yaml`, `.env` template, scripts, docs, manifest/checksums, and a pinned GHCR image digest; reserve OCI image archives for restricted-network fallback
+- manage large model/data assets through a checksummed manifest/bootstrap process, staged activation, and restricted-network/manual bundle fallback
+- clarify TowerScout's application license suitability separately from runtime-tooling choice
+
+### Post-TASK-025 Guardrails
+
+The merged container baseline must preserve:
 
 - writable filesystem-backed session storage
 - stable `FLASK_SECRET_KEY`
 - persistent writable config storage for `webapp/config/`
 - awareness that setup/settings persist configuration to disk, not just in memory
+- `/api/health` and structured `/api/readiness` states for launcher and support use
 
 Without those constraints, first-launch setup may fail or saved configuration may be lost when the container is replaced.
 
@@ -678,16 +692,16 @@ The original guidance benefited from explicitly naming recent completed work. Th
 
 1. verify runtime dependencies and separate true runtime requirements from drift
 2. establish a current integration smoke-test baseline
-3. implement Docker containerization with setup/config/session requirements in mind
-4. continue CPU optimization and deployment-readiness work
-5. revisit multi-provider fallback and broader reliability improvements
+3. implement `TASK-054` local launch UX over the merged container/runtime baseline
+4. complete `TASK-065` release packaging and runtime support follow-through before broad release-support promises
+5. continue CPU optimization, multi-provider fallback, and broader reliability work
 
 ### Practical Agent Takeaway
 
 If this file becomes the single project-context source, an agent should leave with the following understanding:
 
 - the app is no longer missing setup/settings
-- the repo is in a late pre-containerization state
+- the repo has a merged Docker-compatible / OCI container baseline, and the next gap is local launcher/support UX
 - filesystem sessions and disk-backed config writes are real architectural constraints
 - Google and Azure workflows are both important
 - outbreak-investigation workflows are the highest-value legacy surface to preserve

@@ -18,6 +18,8 @@ The release package is expected to include:
 
 - `compose.yaml`
 - `.env.example`
+- `start.bat`
+- `scripts/launch.ps1`
 - `scripts/start.cmd` / `scripts/start.ps1`
 - `scripts/stop.cmd` / `scripts/stop.ps1`
 - `scripts/logs.cmd` / `scripts/logs.ps1`
@@ -62,16 +64,16 @@ Use that digest reference when generating the release package.
 
 ## First Run
 
-1. Copy `.env.example` to `.env` in the package directory.
-2. Set `TOWERSCOUT_IMAGE` to the release image reference provided with the GitHub Release. Release packages should use a pinned digest.
-3. Start TowerScout:
+1. Start TowerScout from the package directory:
 
-```powershell
-.\scripts\start.cmd
+```cmd
+start.bat
 ```
 
-4. Open `http://localhost:5000`.
-5. Use the Setup Wizard to configure Google Maps or Azure Maps.
+2. Wait for the launcher to report readiness.
+3. Use the Setup Wizard to configure Google Maps or Azure Maps after the browser opens.
+
+The launcher creates `.env` from `.env.example` when `.env` is missing, starts the selected container engine, polls `/api/readiness`, and opens `http://127.0.0.1:5000` only after the application shell is reachable. Release packages should already pin `TOWERSCOUT_IMAGE` to an immutable digest in `.env.example`.
 
 Provider keys are normally saved through Setup Wizard or Settings into the persistent `towerscout_config` volume. Do not put provider secrets in `.env` unless a site-specific support procedure requires it.
 
@@ -80,7 +82,7 @@ Provider keys are normally saved through Setup Wizard or Settings into the persi
 For developer/support use from a source checkout:
 
 ```powershell
-.\scripts\start.cmd -Build
+.\start.bat -Build
 ```
 
 This uses `compose.build.yaml` and builds `towerscout:local` from the local Dockerfile.
@@ -90,7 +92,7 @@ This uses `compose.build.yaml` and builds `towerscout:local` from the local Dock
 Scripts auto-detect the engine. To force one:
 
 ```powershell
-.\scripts\start.cmd -Engine docker
+.\start.bat -Engine docker
 .\scripts\status.cmd -Engine podman
 ```
 
@@ -117,6 +119,22 @@ Remaining Podman support caveat:
 
 `status.ps1` calls Compose `ps` and then polls `/api/readiness`. A `fatal` readiness state returns a nonzero exit code.
 
+The launcher accepts `-NoBrowser` for support checks, `-TimeoutSeconds <seconds>` for slow starts, and `-Port <port>` when `TOWERSCOUT_PORT` is changed.
+
+## Support Diagnostics
+
+For first-line support, collect:
+
+- `scripts\status.cmd` output
+- `scripts\logs.cmd -Tail 200` output
+- `IMAGE.txt`
+- `webapp\asset_manifest.v1.json`
+- `SHA256SUMS.txt`
+
+The readiness payload includes the app version, image digest, asset manifest version, selected container engine, provider configuration status, asset status, and writable-path checks. The default log volume is `towerscout_logs`, mounted in the container at `/app/webapp/logs`.
+
+Do not share `.env`, provider keys, local CA bundles, uploaded investigation files, exported datasets, cached provider responses, or named-volume contents unless a site-specific support procedure explicitly approves that handling.
+
 ## TLS Inspection
 
 If provider key validation fails with "Could not reach the provider validation service" while the container logs show `CERTIFICATE_VERIFY_FAILED`, the container does not trust the certificate authority used by the local network, proxy, or endpoint inspection tool.
@@ -138,7 +156,7 @@ After import, set both variables in `.env` and recreate the container:
 ```powershell
 REQUESTS_CA_BUNDLE=/app/webapp/config/certs/towerscout-ca-bundle.pem
 SSL_CERT_FILE=/app/webapp/config/certs/towerscout-ca-bundle.pem
-.\scripts\start.cmd
+.\start.bat
 ```
 
 The helper verifies Google TLS with an invalid test key. A successful TLS fix returns a normal provider invalid-key response instead of a certificate verification error.
@@ -215,3 +233,25 @@ Routine CI and first-run setup should not hash large assets on every readiness p
 ```
 
 This stops the container but keeps named volumes intact.
+
+## Launcher Troubleshooting
+
+If `start.bat` times out, run:
+
+```powershell
+.\scripts\status.cmd
+.\scripts\logs.cmd -Tail 200
+```
+
+Common causes:
+
+- Selected engine is not installed, not running, or blocked by local endpoint policy.
+- WSL2, Hyper-V, virtualization, or Compose provider is not ready or approved on the workstation.
+- Podman machine is not created or running; check `podman machine list`.
+- Docker Desktop is unavailable, unlicensed for the site, or blocked by procurement or endpoint policy.
+- The configured port is already in use; set `TOWERSCOUT_PORT` in `.env` or pass `-Port <port>`.
+- Required runtime assets are missing or corrupt; import the asset bundle with `scripts\import-assets.cmd`.
+- Restricted network, proxy, or TLS inspection blocks provider-key validation or image pulls.
+- No provider key is configured yet; open Setup Wizard when readiness reports `setup_required`.
+
+On Windows startup failures, the launcher prints lightweight host diagnostics. It checks whether `wsl.exe` is available, prints `wsl --status` when possible, and prints `podman machine list` for Podman failures. Treat these as support hints; the selected Docker or Podman engine remains the source of truth for whether TowerScout can start.

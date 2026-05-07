@@ -949,11 +949,11 @@ def manage_configuration():
 
 ## 🚀 DEPLOYMENT ARCHITECTURE
 
-### Docker Containerization
+### OCI Containerization And GitHub Release Packaging
 
 ```dockerfile
-# Production Dockerfile Strategy
-FROM python:3.12-slim AS base
+# Production OCI image strategy
+FROM python:3.11-slim AS base
 
 # Security: Don't run as root
 RUN useradd --create-home --shell /bin/bash app
@@ -967,13 +967,24 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY --chown=app:app . /app
 WORKDIR /app
 
-# Health check
+# Health/readiness check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s \
-    CMD curl -f http://localhost:5000/health || exit 1
+    CMD curl -f http://localhost:5000/api/health || exit 1
 
 EXPOSE 5000
-CMD ["python", "towerscout.py"]
+CMD ["waitress-serve", "--host=0.0.0.0", "--port=5000", "towerscout:app"]
 ```
+
+The v1 release package should be GitHub-first and engine-aware:
+
+- GitHub Release ZIP package is the normal user-facing delivery path.
+- Package includes quick start, `compose.yaml`, `.env` template, scripts, Compose-compatible config, pinned GHCR image reference by digest, optional OCI archive fallback, asset manifest, checksums, troubleshooting, and recovery guidance.
+- Podman is the preferred open-source Windows runtime target after validated support gates. The Windows WSL engine/runtime path passed during `TASK-025`, including while Docker Desktop's engine was unavailable; Docker-Desktop-free Compose-provider validation remains a `TASK-065` release-support gate before broad support promises. Docker compatibility remains useful for developer/support fallback where licensing and endpoint policy allow.
+- Large model/data assets are manifest-managed and persisted to durable storage rather than committed to git; assets should be staged before activation and verified with SHA-256.
+- Local source clone/build is a developer/support path, not the default normal-user installation path.
+- The application license/open-source suitability question is tracked separately from runtime-tooling choice.
+- Baseline CI should prove image build/start and health/readiness without heavyweight private assets; release-candidate validation should run real asset bootstrap and detection smoke.
+- Runtime readiness should expose `/api/health` for liveness and `/api/readiness` with `starting`, `setup_required`, `degraded`, `ready`, and `fatal` states for launcher/support use.
 
 ### Health Monitoring
 
