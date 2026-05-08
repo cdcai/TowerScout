@@ -15,7 +15,7 @@ $ErrorActionPreference = "Stop"
 . "$PSScriptRoot\lib\TowerScoutCompose.ps1"
 
 $repoRoot = Get-TowerScoutRepoRoot
-$appUrl = "http://127.0.0.1:$Port"
+$appUrl = "http://localhost:$Port"
 $readinessUrl = "$appUrl/api/readiness"
 
 function Initialize-TowerScoutEnvFile {
@@ -174,6 +174,7 @@ $env:TOWERSCOUT_CONTAINER_ENGINE = $effectiveEngine
 $env:TOWERSCOUT_PORT = "$Port"
 
 Write-Host "Starting TowerScout with $effectiveEngine on $appUrl..."
+Write-TowerScoutComposeProviderSummary -Engine $effectiveEngine
 
 $composeArgs = @("up", "-d")
 if ($Build) {

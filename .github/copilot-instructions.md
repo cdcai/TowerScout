@@ -23,7 +23,7 @@ The project still carries public-health workflow expectations:
 - Detection progress, estimate/detect separation, and cancel handling are implemented in the repo.
 - `TASK-025` Docker-compatible / OCI containerization is merged on `main`: the repo now has a `Dockerfile`, Compose configuration, health/readiness endpoints, persistent runtime volume contract, release-package helper scripts, GHCR publish workflow, asset/TLS import helpers, and OCI runtime documentation.
 - The current post-`TASK-025` direction is GitHub-first and engine-aware: GitHub Releases should be the normal user-facing release control plane, a GitHub Release ZIP plus pinned GHCR image digest is the preferred package shape, Podman is the preferred open-source Windows runtime target after validated support gates, and Docker compatibility remains useful for development/support where licensing and endpoint policy allow.
-- Podman engine/runtime behavior has been validated on the Windows WSL host, including while Docker Desktop's engine was unavailable. A Docker-Desktop-free Podman Compose provider remains a `TASK-065` release-support gate before promising Podman broadly on hosts without Docker Desktop installed.
+- Podman engine/runtime behavior has been validated on the Windows WSL host, including while Docker Desktop's engine was unavailable. `TASK-065` also validated a Docker-Desktop-free Compose-provider path with `podman-compose 1.5.0`; Podman support language should explicitly require a running Podman machine and approved Compose provider.
 - The repo contains substantial recent architecture and workflow changes that are not reflected in the original `copilot-instructions.md`.
 
 ### Sprint 04 Summary
@@ -77,13 +77,13 @@ Sprint 04 materially changed what an agent should assume about the project. The 
 
 ### Immediate Path Forward
 
-The current path forward is centered on Sprint 05 intake and deployment readiness:
+The current path forward is centered on post-`TASK-054` release-support follow-through and Sprint 06 intake:
 
 1. `TASK-051`: runtime dependency verification and split
 2. `TASK-052`: current integration smoke-test baseline
-3. `TASK-054`: local launch UX over the merged `TASK-025` runtime contract
-4. `TASK-065`: release packaging and runtime support follow-through
-5. `TASK-026` / `TASK-029`: CPU optimization and multi-provider reliability follow-on work
+3. `TASK-054`: local launch UX over the merged `TASK-025` runtime contract - Phase 1 MVP complete
+4. `TASK-065`: release packaging and runtime support follow-through - next active release-support gate
+5. `TASK-026` / `TASK-029`: CPU optimization and multi-provider reliability follow-on work after release-support scope is settled
 
 ### Important Status Correction
 
@@ -506,7 +506,7 @@ Current CI includes:
 - Docker image build check on `main`
 - Trivy security scan
 
-Do not describe container release validation as fully automated CI coverage yet. CI can build the image on `main`, and the manual GHCR publish workflow can publish a digest-pinned image, but full asset-backed release validation and Docker-Desktop-free Podman Compose-provider validation remain release-support follow-through.
+Do not describe container release validation as fully automated CI coverage yet. CI can build the image on `main`, and the manual GHCR publish workflow can publish a digest-pinned image, but full asset-backed release validation remains release-support follow-through. `TASK-065` validated the Docker-Desktop-free Podman Compose-provider path with `podman-compose 1.5.0`; keep Podman support language tied to a running Podman machine and approved Compose provider.
 
 ## Container And Deployment Strategy
 
@@ -518,7 +518,7 @@ The current product direction is:
 
 - use the merged OCI-compatible container contract rather than a Docker Desktop-specific product path
 - make GitHub Releases the default user-facing delivery control plane
-- treat Podman as the preferred open-source Windows runtime target after validated support gates; the engine path passed on this host, while Docker-Desktop-free Compose-provider validation remains a `TASK-065` gate
+- treat Podman as the preferred open-source Windows runtime target after validated support gates; the engine path passed on this host, and `TASK-065` validated `podman-compose 1.5.0` as the Docker-Desktop-free Compose provider
 - preserve Docker compatibility for development/support fallback where licensing and endpoint policy allow
 - keep local source clone/build as a developer/support path, not the preferred normal-user install path
 - package normal users through a GitHub Release ZIP with `compose.yaml`, `.env` template, scripts, docs, manifest/checksums, and a pinned GHCR image digest; reserve OCI image archives for restricted-network fallback
@@ -692,7 +692,7 @@ The original guidance benefited from explicitly naming recent completed work. Th
 
 1. verify runtime dependencies and separate true runtime requirements from drift
 2. establish a current integration smoke-test baseline
-3. implement `TASK-054` local launch UX over the merged container/runtime baseline
+3. complete `TASK-054` local launch UX over the merged container/runtime baseline
 4. complete `TASK-065` release packaging and runtime support follow-through before broad release-support promises
 5. continue CPU optimization, multi-provider fallback, and broader reliability work
 

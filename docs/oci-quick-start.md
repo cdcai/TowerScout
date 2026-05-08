@@ -1,6 +1,6 @@
 # TowerScout OCI Quick Start
 
-This guide covers the v1 local container package shape for TowerScout. It is engine-aware: the same Compose files are intended to work with a validated Docker or Podman host. The current Windows Podman spike validates the Podman engine path, including while Docker Desktop's engine is unavailable; a Docker-Desktop-free Compose provider still needs validation before promising Podman broadly on hosts without Docker Desktop installed.
+This guide covers the v1 local container package shape for TowerScout. It is engine-aware: the same Compose files are intended to work with a validated Docker or Podman host. The current Windows Podman validation covers the Podman engine path, including while Docker Desktop's engine is unavailable, and a Docker-Desktop-free Compose-provider path using `podman-compose`.
 
 ## Supported V1 Target
 
@@ -44,7 +44,7 @@ Release maintainers can assemble the control package from a source checkout:
 
 This creates `dist\towerscout-v0.1.0\`, `dist\towerscout-v0.1.0.zip`, and `dist\towerscout-v0.1.0.zip.sha256`. The package includes `IMAGE.txt` for the release image reference and `SHA256SUMS.txt` for the files inside the package.
 
-If `-ImageDigest` is omitted, the package is suitable for local validation only. Release packages should pin `TOWERSCOUT_IMAGE` to an immutable digest reference.
+Release package generation requires `-ImageDigest` with an immutable `sha256:<digest>` reference. For developer-only local validation with a mutable image tag, pass `-AllowMutableImage` explicitly.
 
 ## Publishing The GHCR Image
 
@@ -73,7 +73,9 @@ start.bat
 2. Wait for the launcher to report readiness.
 3. Use the Setup Wizard to configure Google Maps or Azure Maps after the browser opens.
 
-The launcher creates `.env` from `.env.example` when `.env` is missing, starts the selected container engine, polls `/api/readiness`, and opens `http://127.0.0.1:5000` only after the application shell is reachable. Release packages should already pin `TOWERSCOUT_IMAGE` to an immutable digest in `.env.example`.
+The launcher creates `.env` from `.env.example` when `.env` is missing, starts the selected container engine, polls `/api/readiness`, and opens `http://localhost:5000` only after the application shell is reachable. Release packages should already pin `TOWERSCOUT_IMAGE` to an immutable digest in `.env.example`.
+
+If you open the browser manually, use `http://localhost:<port>` rather than `http://127.0.0.1:<port>`. The Azure Maps browser SDK passed release validation from the `localhost` origin and may reject some `127.0.0.1` browser requests due provider CORS behavior.
 
 Provider keys are normally saved through Setup Wizard or Settings into the persistent `towerscout_config` volume. Do not put provider secrets in `.env` unless a site-specific support procedure requires it.
 
@@ -96,18 +98,23 @@ Scripts auto-detect the engine. To force one:
 .\scripts\status.cmd -Engine podman
 ```
 
-Docker Desktop use depends on license, procurement, endpoint policy, and local installation approval. Podman is the preferred open-source runtime target for V1, with one release-support caveat: a Docker-Desktop-free Compose provider must be validated before promising Podman broadly on hosts without Docker Desktop installed.
+Docker Desktop use depends on license, procurement, endpoint policy, and local installation approval. Podman is the preferred open-source runtime target for V1 when Podman and a working Compose provider are installed and approved on the workstation.
 
-On Windows, `podman compose` is a wrapper around an external Compose provider such as `docker-compose` or `podman-compose`. The TowerScout scripts call `podman compose` for the Podman path, but release validation must confirm the target workstation has a working Compose provider that can talk to the Podman machine.
+On Windows, `podman compose` is a wrapper around an external Compose provider such as `docker-compose` or `podman-compose`. The TowerScout scripts call `podman compose` for the Podman path, and release validation has confirmed the package can run with `podman-compose` selected explicitly through `PODMAN_COMPOSE_PROVIDER` while the Docker Desktop daemon is unavailable.
 
 Validated Podman checks on the current host:
 
 - Podman WSL engine startup, named volumes, asset import, readiness, and containerized smoke behavior.
 - Podman startup and containerized smoke while Docker Desktop is fully quit and the Docker daemon is unreachable.
+- Podman startup, readiness, status, and containerized smoke through `podman-compose 1.5.0` selected as the external Compose provider instead of Docker Desktop's bundled `docker-compose.exe`.
 
-Remaining Podman support caveat:
+Podman support prerequisites:
 
-- Docker-Desktop-free Compose provider validation, such as `podman-compose` or another approved provider, to confirm the package can work without Docker Desktop installed.
+- Podman machine is created and running.
+- A Compose provider such as `podman-compose` or another approved provider is installed and can talk to the Podman socket.
+- If Docker Compose is installed but should not be used, set `PODMAN_COMPOSE_PROVIDER` to the approved provider path before running TowerScout.
+
+The launcher prints the selected Compose-provider information during startup. For Podman, it also validates that a `PODMAN_COMPOSE_PROVIDER` override points to an existing file or command before starting the application.
 
 ## Status And Logs
 
@@ -139,10 +146,25 @@ Do not share `.env`, provider keys, local CA bundles, uploaded investigation fil
 
 If provider key validation fails with "Could not reach the provider validation service" while the container logs show `CERTIFICATE_VERIFY_FAILED`, the container does not trust the certificate authority used by the local network, proxy, or endpoint inspection tool.
 
+If provider key validation returns an internal error and the logs mention an invalid or missing `REQUESTS_CA_BUNDLE` / `SSL_CERT_FILE` path, the selected runtime volume does not contain the CA bundle named in `.env`. This can happen when switching between Docker and Podman because each engine has its own named volumes. Re-run the CA import helper for the selected engine.
+
 Preferred fix: import the local root/intermediate CA into the persistent config volume and use a combined bundle that keeps the container's normal Debian CA roots:
 
 ```powershell
 .\scripts\import-tls-ca.cmd -Thumbprint <windows-certificate-thumbprint>
+```
+
+For Podman:
+
+```powershell
+.\scripts\import-tls-ca.cmd -Engine podman -Thumbprint <windows-certificate-thumbprint>
+```
+
+The helper verifies the combined CA bundle by making a provider request with an invalid test key. It uses `-VerifyProvider auto` by default, which follows `DEFAULT_MAP_PROVIDER` when available and otherwise uses Google. For Azure-first or Google-blocked sites, choose the provider explicitly or skip remote verification:
+
+```powershell
+.\scripts\import-tls-ca.cmd -Engine podman -Thumbprint <windows-certificate-thumbprint> -VerifyProvider azure
+.\scripts\import-tls-ca.cmd -Engine podman -Thumbprint <windows-certificate-thumbprint> -VerifyProvider none
 ```
 
 The helper can also import an exported PEM/CER/CRT file:
@@ -188,6 +210,8 @@ These volumes can contain provider keys, addresses, coordinates, uploaded files,
 
 TowerScout readiness reports missing or corrupt required assets as `degraded`. Import or bootstrap assets into the named volumes according to the release asset instructions, then restart TowerScout.
 
+The v1 release package does not implement hosted asset download/bootstrap. Assets are expected to be supplied as a release asset bundle, site-provided bundle, or support-provided bundle and imported with `scripts\import-assets.cmd`. A hosted downloader can be added later after the asset host, checksum policy, retry behavior, proxy/TLS handling, and restricted-network fallback are designed and validated.
+
 For a GitHub Release package, place the asset bundle next to the scripts with this layout:
 
 ```text
@@ -225,6 +249,12 @@ $env:TOWERSCOUT_VERIFY_ASSET_HASHES = "1"
 ```
 
 Routine CI and first-run setup should not hash large assets on every readiness poll.
+
+## Restricted Networks
+
+The v1 control package expects the selected engine to pull the pinned `TOWERSCOUT_IMAGE` digest from GHCR unless the image is already present in the local engine image store. A bundled OCI image archive is not part of the supported v1 release package.
+
+For restricted-network sites, the supported v1 fallback is a support-managed preload of the pinned image into the selected Docker or Podman image store, followed by normal package startup and asset import. A first-class OCI archive workflow should be treated as follow-on release engineering work and validated separately before it is promised in user-facing instructions.
 
 ## Stop
 

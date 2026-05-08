@@ -272,6 +272,8 @@ Deliver Docker-compatible / OCI containerization (`TASK-025`) now that the runti
 
 ### `TASK-054: Local Launch UX`
 
+**Current status**: Phase 1 launcher MVP is complete and merged. Phase 2 readiness UX is cleanly deferred unless release-support validation under `TASK-065` shows the MVP needs more polish.
+
 **Why eighth**:
 - It depends on a stable selected container runtime baseline.
 - It should improve local UX without destabilizing `TASK-025` delivery.
@@ -296,9 +298,24 @@ Deliver Docker-compatible / OCI containerization (`TASK-025`) now that the runti
 - First-run asset/bootstrap delays are explained rather than hidden
 - Support-log and status collection paths are documented for limited/manual support
 
+### `TASK-065: Release Packaging And Runtime Support Follow-Through`
+
+**Why next**:
+- It owns the release-support caveats intentionally deferred from `TASK-025`.
+- It consumes the `TASK-054` launcher/support docs and validates the runtime claims those docs depend on.
+- It controls whether Podman can be promised broadly on Windows hosts without Docker Desktop installed.
+
+**Initial target**:
+- Keep Podman support language aligned with the `TASK-065` validation of `podman-compose 1.5.0` as a Docker-Desktop-free Compose provider.
+- Decide final Podman/Docker support language.
+- Decide hosted asset download/bootstrap scope.
+- Decide optional OCI image archive fallback scope for restricted-network use.
+- Follow up on deferred GitHub Actions runtime warnings.
+- Run broad release-readiness regression across setup, settings, provider switching, and detection surfaces.
+
 ### `TASK-029: Multi-Provider Fallback`
 
-This remains a stretch goal and should only begin after `TASK-054` if capacity remains.
+This remains a stretch goal and should only begin after `TASK-065` release-support follow-through if capacity remains.
 
 ---
 
@@ -488,12 +505,13 @@ ProviderStateManager locking behavior or a low-cost inference-mode optimization 
 - `TASK-025` Phase 4 complete
 - `AMD64` CPU baseline validated and CUDA-enabled `AMD64` path documented
 - `TASK-054` Phase 1 launcher MVP complete
+- `TASK-065` release-support follow-through scoped for Sprint 06 intake
 - Deferred Sprint 04 quick wins reconsidered only if capacity remains
 
 ### Nice-to-Have
 
 - `TASK-054` Phase 2 either complete or cleanly deferred with documented readiness approach
-- `TASK-029` investigation begins after `TASK-054`
+- `TASK-029` investigation begins after `TASK-065`
 - `ARM64` / Mac follow-on plan documented
 - Container registry publishing path documented
 - Warm-start UX feasibility assessed for Sprint 06

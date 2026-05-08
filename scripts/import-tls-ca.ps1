@@ -10,7 +10,10 @@ param(
 
     [string] $ContainerCertificateName = "local-ca.pem",
 
-    [string] $BundleName = "towerscout-ca-bundle.pem"
+    [string] $BundleName = "towerscout-ca-bundle.pem",
+
+    [ValidateSet("auto", "google", "azure", "none")]
+    [string] $VerifyProvider = "auto"
 )
 
 $ErrorActionPreference = "Stop"
@@ -125,6 +128,93 @@ $containerCertDir = "/app/webapp/config/certs"
 $containerCertPath = "$containerCertDir/$ContainerCertificateName"
 $containerBundlePath = "$containerCertDir/$BundleName"
 
+function Resolve-TowerScoutTlsVerifyProvider {
+    if ($VerifyProvider -ne "auto") {
+        return $VerifyProvider
+    }
+
+    $defaultProvider = $env:DEFAULT_MAP_PROVIDER
+    if ([string]::IsNullOrWhiteSpace($defaultProvider)) {
+        $envPath = Join-Path (Get-TowerScoutRepoRoot) ".env"
+        if (Test-Path -LiteralPath $envPath -PathType Leaf) {
+            $providerLine = Get-Content -LiteralPath $envPath |
+                Where-Object { $_ -match "^\s*DEFAULT_MAP_PROVIDER\s*=" } |
+                Select-Object -Last 1
+            if (-not [string]::IsNullOrWhiteSpace($providerLine)) {
+                $defaultProvider = ($providerLine -replace "^\s*DEFAULT_MAP_PROVIDER\s*=", "").Trim()
+            }
+        }
+    }
+
+    if ($defaultProvider -match "^(?i:azure)$") {
+        return "azure"
+    }
+
+    return "google"
+}
+
+function Get-TowerScoutTlsVerificationScript {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("google", "azure")]
+        [string] $Provider
+    )
+
+    if ($Provider -eq "azure") {
+        return "import requests; r=requests.get('https://atlas.microsoft.com/map/attribution', params={'api-version':'2024-04-01','subscription-key':'invalid'}, timeout=10); print('azure_tls_status=' + str(r.status_code)); print('azure_tls_body=' + r.text[:80].replace(chr(10), ' ')); raise SystemExit(0 if r.status_code in (200, 401, 403) else 1)"
+    }
+
+    return "import requests; r=requests.get('https://maps.googleapis.com/maps/api/geocode/json?address=test&key=invalid', timeout=10); print('google_tls_status=' + str(r.status_code)); print('google_tls_body=' + r.text[:80].replace(chr(10), ' ')); raise SystemExit(0 if r.status_code == 200 else 1)"
+}
+
+function Copy-TowerScoutCertificateIntoContainer {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $LocalPath,
+
+        [Parameter(Mandatory = $true)]
+        [string] $ContainerPath
+    )
+
+    Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -ComposeArguments @(
+        "cp",
+        $LocalPath,
+        "towerscout:$ContainerPath"
+    )
+    if ($script:TowerScoutComposeExitCode -eq 0) {
+        return
+    }
+
+    $copyExitCode = $script:TowerScoutComposeExitCode
+    $command = Get-TowerScoutComposeCommand -Engine $Engine
+    if ([string] $command["Executable"] -ne "podman") {
+        exit $copyExitCode
+    }
+
+    Write-Host "Compose provider did not support cp; falling back to direct podman cp."
+    $projectName = (Split-Path (Get-TowerScoutRepoRoot) -Leaf).ToLowerInvariant()
+    $containerId = & podman ps `
+        --filter "label=io.podman.compose.project=$projectName" `
+        --filter "label=io.podman.compose.service=towerscout" `
+        --format "{{.ID}}" |
+        Select-Object -First 1
+
+    if ([string]::IsNullOrWhiteSpace($containerId)) {
+        $containerId = & podman ps `
+            --filter "label=com.docker.compose.project=$projectName" `
+            --filter "label=com.docker.compose.service=towerscout" `
+            --format "{{.ID}}" |
+            Select-Object -First 1
+    }
+
+    if ([string]::IsNullOrWhiteSpace($containerId)) {
+        throw "Could not locate the running TowerScout Podman container for direct copy fallback."
+    }
+
+    & podman cp $LocalPath "${containerId}:$ContainerPath"
+    $script:TowerScoutComposeExitCode = $LASTEXITCODE
+}
+
 try {
     Write-Host "Starting TowerScout container so the persistent config volume is available..."
     Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -ComposeArguments @("up", "-d", "towerscout")
@@ -146,11 +236,7 @@ try {
     }
 
     Write-Host "Importing TLS CA certificate from $sourceDescription..."
-    Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -ComposeArguments @(
-        "cp",
-        $tempPem,
-        "towerscout:$containerCertPath"
-    )
+    Copy-TowerScoutCertificateIntoContainer -LocalPath $tempPem -ContainerPath $containerCertPath
     if ($script:TowerScoutComposeExitCode -ne 0) {
         exit $script:TowerScoutComposeExitCode
     }
@@ -169,21 +255,27 @@ try {
         exit $script:TowerScoutComposeExitCode
     }
 
-    $pythonVerify = "import requests; r=requests.get('https://maps.googleapis.com/maps/api/geocode/json?address=test&key=invalid', timeout=10); print('google_tls_status=' + str(r.status_code)); print('google_tls_body=' + r.text[:80].replace(chr(10), ' ')); raise SystemExit(0 if r.status_code == 200 else 1)"
-    Write-Host "Verifying Google TLS through the combined CA bundle..."
-    Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -ComposeArguments @(
-        "exec",
-        "-T",
-        "towerscout",
-        "env",
-        "REQUESTS_CA_BUNDLE=$containerBundlePath",
-        "SSL_CERT_FILE=$containerBundlePath",
-        "python",
-        "-c",
-        $pythonVerify
-    )
-    if ($script:TowerScoutComposeExitCode -ne 0) {
-        exit $script:TowerScoutComposeExitCode
+    $resolvedVerifyProvider = Resolve-TowerScoutTlsVerifyProvider
+    if ($resolvedVerifyProvider -eq "none") {
+        Write-Host "Skipping remote TLS verification by request."
+    }
+    else {
+        $pythonVerify = Get-TowerScoutTlsVerificationScript -Provider $resolvedVerifyProvider
+        Write-Host "Verifying $resolvedVerifyProvider TLS through the combined CA bundle..."
+        Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -ComposeArguments @(
+            "exec",
+            "-T",
+            "towerscout",
+            "env",
+            "REQUESTS_CA_BUNDLE=$containerBundlePath",
+            "SSL_CERT_FILE=$containerBundlePath",
+            "python",
+            "-c",
+            $pythonVerify
+        )
+        if ($script:TowerScoutComposeExitCode -ne 0) {
+            exit $script:TowerScoutComposeExitCode
+        }
     }
 
     Write-Host "Imported CA bundle:"

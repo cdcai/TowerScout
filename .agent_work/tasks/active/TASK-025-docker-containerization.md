@@ -100,7 +100,7 @@ These decisions are accepted as the starting contract for `TASK-025`. The only a
 - [x] Compose-compatible configuration exists for supported local deployment.
 - [x] Docker Desktop licensing/endpoint approval and Podman Desktop/Podman machine feasibility are documented as host-runtime gates, not hidden application assumptions.
 - [x] Validation and launcher-facing status language is engine-aware enough to support Docker or Podman without rewriting the application runtime contract.
-- [x] Podman compatibility spike is completed for this host before Podman is treated as the preferred open-source local runtime target; Docker-Desktop-free Compose-provider validation remains a support caveat before promising Podman broadly on hosts without Docker Desktop installed.
+- [x] Podman compatibility spike is completed for this host before Podman is treated as the preferred open-source local runtime target; `TASK-065` later validated `podman-compose 1.5.0` as the Docker-Desktop-free Compose provider.
 - [x] GitHub Release package contract is documented, including release notes, quick start, scripts, Compose-compatible config, pinned GHCR image reference by digest, optional OCI archive fallback, asset manifest, checksums, troubleshooting, and recovery guidance.
 - [x] Local clone-and-build is documented as a developer/support path rather than the default normal-user deployment path.
 - [x] Versioned v1 runtime/persistence contract exists and covers config, secret key, assets, exports/imports, logs, sessions, temp, uploads, cache, and geocode data.
@@ -976,7 +976,7 @@ These decisions are accepted as the starting contract for `TASK-025`. The only a
 **Decision**: Mark completed acceptance criteria and current-sprint checklist items only where there is explicit implementation, documentation, or validation evidence. Keep Docker-Desktop-free Podman Compose-provider validation, broad Sprint 04 regression coverage, the Buildx Node 20 warning, and hosted asset downloader work as caveats/follow-ups rather than hidden blockers.
 **Execution**:
 - Updated `docs/oci-runtime-contract.md` with explicit persistence classifications for config, assets, logs, sessions, temp, uploads, and cache/geocode data.
-- Updated `docs/oci-runtime-contract.md` and `docs/oci-quick-start.md` to reflect that Podman works while Docker Desktop's engine is unavailable, while Docker-Desktop-free Compose-provider validation remains a support caveat.
+- Updated `docs/oci-runtime-contract.md` and `docs/oci-quick-start.md` to reflect that Podman works while Docker Desktop's engine is unavailable. At this point in `TASK-025`, Docker-Desktop-free Compose-provider validation was still a support caveat; `TASK-065` later validated `podman-compose 1.5.0`.
 - Updated `current-tasks.md` and this task's acceptance checklist to mark validated gates complete and leave broad regression/support caveats open.
 **Output**:
 - Task-025 is now in closeout/PR preparation status.
@@ -1021,7 +1021,7 @@ These decisions are accepted as the starting contract for `TASK-025`. The only a
 - Release-package documentation baseline through `docs/oci-quick-start.md` and `docs/oci-runtime-contract.md`.
 - Local GitHub Release control-package assembly through `scripts/package-release.cmd`, including package staging, `IMAGE.txt`, `SHA256SUMS.txt`, ZIP creation, and ZIP checksum output.
 - Windows Podman WSL runtime spike: Podman engine startup, named volumes, asset-light readiness, asset import, and containerized `TASK-052` smoke.
-- Podman with Docker Desktop engine unavailable: Docker daemon calls failed, `docker-desktop` was not running in WSL, Podman started TowerScout on port `5001`, readiness reported Podman runtime with assets `ok`, and the containerized `TASK-052` smoke passed. Docker-Desktop-free Compose-provider validation remains a support caveat because `podman compose` still used Docker Desktop's bundled `docker-compose.exe`.
+- Podman with Docker Desktop engine unavailable: Docker daemon calls failed, `docker-desktop` was not running in WSL, Podman started TowerScout on port `5001`, readiness reported Podman runtime with assets `ok`, and the containerized `TASK-052` smoke passed. At this point in `TASK-025`, Docker-Desktop-free Compose-provider validation was still a support caveat because `podman compose` used Docker Desktop's bundled `docker-compose.exe`; `TASK-065` later validated `podman-compose 1.5.0`.
 - Google TLS inspection CA import path: Windows CA thumbprint export with chain, combined container CA bundle, and TowerScout Google validation endpoint reaching provider-level invalid-key response instead of TLS `502`.
 - Local `.env` persistence for the combined TLS CA bundle path, validated across Docker Compose recreate.
 - GHCR publish and pull-by-digest path: feature-branch image published to `ghcr.io/j-schulein/towerscout:task-025-0b5d0a7`, pinned digest validated by manifest inspect, Docker pull, release-image Compose startup, and release-package generation.

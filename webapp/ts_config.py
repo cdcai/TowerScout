@@ -52,6 +52,7 @@ PERFORMANCE_LOG_HEADERS = (
     "phase_timings_json",
 )
 INSECURE_TLS_ENV_VAR = "TOWERSCOUT_ALLOW_INSECURE_TLS"
+TLS_CA_BUNDLE_ENV_VARS = ("REQUESTS_CA_BUNDLE", "SSL_CERT_FILE")
 TRUTHY_ENV_VALUES = {"1", "true", "yes", "on"}
 
 PLACEHOLDER_PATTERNS = (
@@ -180,9 +181,37 @@ def _allow_insecure_tls() -> bool:
     return os.getenv(INSECURE_TLS_ENV_VAR, "").strip().lower() in TRUTHY_ENV_VALUES
 
 
+def _configured_tls_bundle_error() -> NetworkError | None:
+    for env_var in TLS_CA_BUNDLE_ENV_VARS:
+        configured_path = os.getenv(env_var, "").strip()
+        if not configured_path:
+            continue
+
+        if not Path(configured_path).is_file():
+            return NetworkError(
+                f"Configured TLS CA bundle path does not exist: {env_var}={configured_path}",
+                user_message=(
+                    "The configured TLS CA bundle was not found. "
+                    "Run scripts/import-tls-ca.cmd for the selected Docker or Podman engine, "
+                    "or update REQUESTS_CA_BUNDLE and SSL_CERT_FILE to a valid certificate bundle."
+                ),
+                details={
+                    "env_var": env_var,
+                    "configured_path": configured_path,
+                    "support_action": "Run scripts/import-tls-ca.cmd for the selected container engine.",
+                },
+            )
+
+    return None
+
+
 def _validation_get(url: str, params: Dict[str, Any]) -> requests.Response:
     verify_tls = not _allow_insecure_tls()
     if verify_tls:
+        bundle_error = _configured_tls_bundle_error()
+        if bundle_error is not None:
+            raise bundle_error
+
         response = requests.get(
             url,
             params=params,
@@ -344,6 +373,16 @@ def validate_api_key(provider: str, key: str) -> Dict[str, Any]:
             f"{validated_provider} validation request failed",
             cause=exc,
             user_message="Could not reach the provider validation service."
+        ) from exc
+    except OSError as exc:
+        raise NetworkError(
+            f"{validated_provider} validation request failed because TLS configuration is invalid",
+            cause=exc,
+            user_message=(
+                "The configured TLS CA bundle could not be used. "
+                "Run scripts/import-tls-ca.cmd for the selected Docker or Podman engine, "
+                "or update REQUESTS_CA_BUNDLE and SSL_CERT_FILE to a valid certificate bundle."
+            ),
         ) from exc
 
     result["provider"] = validated_provider

@@ -1,9 +1,9 @@
 # Task Backlog - Future Work Prioritization
 
-**Last Updated**: May 7, 2026
+**Last Updated**: May 8, 2026
 **Sprint 04 Completed**: March 19 - April 6, 2026
 **Sprint 05 Active**: April 7 - active extension after April 25, 2026
-**Next Sprint Planning**: Sprint 06 Prep after `TASK-054` launcher planning and `TASK-065` release-support follow-through scoping
+**Next Sprint Planning**: Sprint 06 Prep after `TASK-065` release-support follow-through scoping
 
 ---
 
@@ -100,7 +100,7 @@
 ---
 
 ### **TASK-054: Local Launch UX** 🟡
-**Status**: IN_SPRINT_05 - MOVED TO current-tasks.md (post-container stretch goal)
+**Status**: COMPLETED IN current-tasks.md - MERGED TO MAIN
 **Type**: B (Deployment UX / Local Supportability)
 **Priority**: MEDIUM
 **Estimated Effort**: 1-2 days (8-12 hours)
@@ -113,11 +113,11 @@
 ## SPRINT 06 RELEASE-SUPPORT FOLLOW-THROUGH CANDIDATES
 
 ### **TASK-065: Release Packaging And Runtime Support Follow-Through** 🟡
-**Status**: NOT_STARTED
+**Status**: READY FOR INTAKE - MOVED TO current-tasks.md
 **Type**: B/C (Release Engineering / Runtime Supportability)
 **Priority**: HIGH
 **Estimated Effort**: 1-2 days (8-16 hours)
-**Target Sprint**: Sprint 06
+**Target Sprint**: Sprint 06 intake / post-`TASK-054` release-support gate
 
 **Objective**: Close the release-support items intentionally deferred from `TASK-025` without reopening the completed container/runtime baseline.
 
@@ -126,7 +126,7 @@
 - `TASK-054`: Local launcher UX, where runtime-provider messaging or release-package startup behavior overlaps
 
 **Requirements**:
-- WHEN Podman is described as broadly supported on Windows hosts without Docker Desktop installed, THE PROJECT SHALL validate a Docker-Desktop-free Compose provider such as `podman-compose` or another approved provider.
+- WHEN Podman is described as broadly supported on Windows hosts without Docker Desktop installed, THE PROJECT SHALL require a running Podman machine and an approved Compose provider such as the `podman-compose 1.5.0` path validated under `TASK-065`.
 - WHEN release assets are hosted externally, THE PROJECT SHALL decide whether to implement hosted asset download/bootstrap beyond the validated manual/restricted-network import path.
 - WHEN restricted-network release packages are supported, THE PROJECT SHALL either implement and validate the optional OCI image archive fallback or document it as intentionally unsupported for the release.
 - WHEN GitHub Actions warnings indicate pinned-action runtime drift, THE PROJECT SHALL update or risk-accept the affected actions before release readiness sign-off.
@@ -135,7 +135,119 @@
 **Scope Notes**:
 - This is follow-through for release support promises, not a blocker for merging the `TASK-025` container baseline.
 - Keep launcher workflow implementation in `TASK-054`; use this task to validate or document the runtime/package support claims that launcher docs depend on.
-- Preserve the `TASK-025` evidence that Podman works on this host while Docker Desktop's engine is unavailable, while keeping Docker-Desktop-free Compose-provider validation as a separate release-support gate.
+- Preserve the `TASK-025` evidence that Podman works on this host while Docker Desktop's engine is unavailable and the `TASK-065` evidence that `podman-compose 1.5.0` works as the Docker-Desktop-free Compose provider.
+
+**See**: [current-tasks.md](./current-tasks.md#task-065-release-packaging-and-runtime-support-follow-through) and [TASK-065 task file](./tasks/active/TASK-065-release-packaging-runtime-support.md) for full details.
+
+---
+
+### **TASK-066: Release Candidate Validation Gate**
+**Status**: NOT_STARTED
+**Type**: C (Release Engineering / Validation)
+**Priority**: CRITICAL
+**Estimated Effort**: 1-2 days (8-16 hours)
+**Target Sprint**: Sprint 06 release-readiness gate
+
+**Objective**: Establish a repeatable release-candidate validation checklist before v1 release packaging is treated as ready for non-developer users.
+
+**Dependencies**:
+- `TASK-065`: Release-support validation findings and PR review follow-through complete
+- Current GitHub Release package shape and runtime-provider support language agreed
+
+**Requirements**:
+- WHEN a release candidate is assembled, THE PROJECT SHALL validate the launcher, release ZIP contents, pinned image digest, checksums, manifest, provider setup, and local runtime startup from a clean user-facing path.
+- WHEN a release candidate is tested, THE PROJECT SHALL record evidence for Google and Azure setup, provider detection smoke coverage, asset import, TLS CA import, and first-run restart behavior.
+- WHEN validation fails, THE PROJECT SHALL document the blocker, remediation, and retest evidence before release sign-off.
+
+**User Value**: Converts Task-065's one-host validation into a durable release gate reviewers and maintainers can repeat.
+
+---
+
+### **TASK-067: CI Release Gate Tightening**
+**Status**: NOT_STARTED
+**Type**: C (CI / Release Engineering)
+**Priority**: CRITICAL
+**Estimated Effort**: 1-2 days (8-16 hours)
+**Target Sprint**: Sprint 06 release-readiness gate
+
+**Objective**: Promote the highest-value release checks from manual validation into CI or documented required checks where automation is practical.
+
+**Dependencies**:
+- `TASK-065`: Current release helper behavior and CI failure remediation complete
+- `TASK-066`: Release candidate validation checklist defined
+
+**Requirements**:
+- WHEN a pull request changes release packaging, launcher behavior, runtime-provider scripts, or container setup, THE PROJECT SHALL run targeted automated checks that catch digest, manifest, script, and packaging regressions.
+- WHEN a check remains platform-specific or environment-sensitive, THE PROJECT SHALL explicitly document whether it is required, advisory, or manual for v1.
+- WHEN GitHub branch protection is updated, THE PROJECT SHALL align required checks with the maintained CI baseline.
+
+**User Value**: Reduces the chance that release-package regressions depend solely on manual reviewer attention.
+
+---
+
+### **TASK-068: Windows Test Portability And Script Validation**
+**Status**: NOT_STARTED
+**Type**: B/C (Testing / Developer Experience)
+**Priority**: HIGH
+**Estimated Effort**: 0.5-1 day (4-8 hours)
+**Target Sprint**: Sprint 06
+
+**Objective**: Decide whether Windows-focused PowerShell release-helper tests should remain Windows-only or gain cross-platform PowerShell Core coverage in CI.
+
+**Dependencies**:
+- `TASK-065`: Current Windows-only skip for `scripts/package-release.ps1` tests merged
+
+**Requirements**:
+- WHEN release helper tests run on non-Windows CI agents, THE PROJECT SHALL either install/use supported PowerShell Core intentionally or skip those tests with clear rationale.
+- WHEN Windows-only behavior is required, THE PROJECT SHALL keep the test marker and documentation explicit so failures are not mistaken for missing coverage.
+- WHEN cross-platform script validation is added, THE PROJECT SHALL avoid weakening Windows release-helper behavior.
+
+**User Value**: Keeps CI honest about what it validates and prevents platform mismatch failures from hiding real regressions.
+
+---
+
+### **TASK-069: License And Release Policy Review**
+**Status**: NOT_STARTED
+**Type**: C (Legal / Release Policy / Governance)
+**Priority**: CRITICAL
+**Estimated Effort**: 0.5-1 day technical prep, plus owner/legal review time
+**Target Sprint**: Sprint 06 release-readiness gate
+
+**Objective**: Confirm TowerScout's application license, third-party dependency license posture, runtime tooling assumptions, and release-distribution policy before v1 release.
+
+**Dependencies**:
+- `TASK-025`: OCI runtime and dependency baseline established
+- `TASK-065`: Runtime-provider and release-package support language clarified
+- Owner or legal reviewer availability for final policy decision
+
+**Requirements**:
+- WHEN v1 release assets are prepared, THE PROJECT SHALL include a license review outcome covering the application license, third-party dependencies, bundled scripts, documentation, runtime-tooling guidance, and whether Docker Desktop licensing concerns affect user-facing instructions.
+- WHEN license ownership or distribution terms are uncertain, THE PROJECT SHALL record the decision as blocked on owner/legal review rather than implying technical approval is legal approval.
+- WHEN a license decision is made, THE PROJECT SHALL update the relevant release documentation and, if the decision has durable architecture or policy implications, record it in `.agent_work/decisions/`.
+
+**User Value**: Prevents release readiness from being blocked late by licensing uncertainty and separates technical runtime support from legal distribution decisions.
+
+---
+
+### **TASK-070: Restricted-Network Package Enhancements**
+**Status**: NOT_STARTED
+**Type**: B/C (Release Engineering / Offline Support)
+**Priority**: HIGH
+**Estimated Effort**: 1-3 days (8-24 hours)
+**Target Sprint**: Sprint 06 or Sprint 07
+
+**Objective**: Decide and implement the next restricted-network support layer beyond the v1 baseline of preloaded images plus local asset import.
+
+**Dependencies**:
+- `TASK-065`: v1 scope confirmed as no hosted asset downloader and no bundled OCI archive
+- `TASK-066`: Release candidate validation gate defined
+
+**Requirements**:
+- WHEN restricted-network users need support beyond preloaded image plus local asset import, THE PROJECT SHALL choose between a bundled OCI archive, support-prepared media, hosted asset bootstrap when allowed, or a documented manual procedure.
+- WHEN an OCI archive option is selected, THE PROJECT SHALL implement checksum validation, import instructions, and runtime-provider validation for the chosen engine path.
+- WHEN the option is deferred, THE PROJECT SHALL keep v1 documentation explicit that restricted-network support requires support-managed image preload and local asset import.
+
+**User Value**: Gives restricted-network deployments a clear next path without expanding Task-065's already validated v1 scope.
 
 ---
 
@@ -421,6 +533,7 @@
 ### **Sprint 06 Preview**
 - CPU optimization for wider deployment
 - Enhanced error handling and reliability
+- Release candidate validation, CI release gates, and license/release policy review
 - Optional: Mobile responsiveness or multi-provider fallback completion
 - Continue polish and quality improvements
 

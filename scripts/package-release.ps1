@@ -7,6 +7,8 @@ param(
 
     [string] $ImageDigest = "",
 
+    [switch] $AllowMutableImage,
+
     [switch] $NoZip,
 
     [switch] $Force
@@ -26,6 +28,24 @@ if ([string]::IsNullOrWhiteSpace($Image)) {
 }
 if ([string]::IsNullOrWhiteSpace($ImageDigest)) {
     $ImageDigest = $env:TOWERSCOUT_IMAGE_DIGEST
+}
+
+$digestPattern = "sha256:[0-9a-f]{64}"
+if ([string]::IsNullOrWhiteSpace($ImageDigest) -and $Image -match "@($digestPattern)$") {
+    $ImageDigest = $Matches[1]
+}
+
+if ([string]::IsNullOrWhiteSpace($ImageDigest)) {
+    if (-not $AllowMutableImage) {
+        throw "Release packaging requires -ImageDigest with sha256:<64 lowercase hex>. Use -AllowMutableImage only for local validation packages."
+    }
+}
+elseif ($ImageDigest -notmatch "^$digestPattern$") {
+    throw "ImageDigest must match sha256:<64 lowercase hex>."
+}
+
+if (($Image -match "@($digestPattern)$") -and -not [string]::IsNullOrWhiteSpace($ImageDigest) -and $Matches[1] -ne $ImageDigest) {
+    throw "Image already contains digest $($Matches[1]), which does not match -ImageDigest $ImageDigest."
 }
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
@@ -141,6 +161,12 @@ if (-not [string]::IsNullOrWhiteSpace($ImageDigest)) {
     if ($Image -notmatch "@sha256:") {
         $effectiveImage = "$Image@$ImageDigest"
     }
+    else {
+        $effectiveImage = $Image
+    }
+}
+elseif ($AllowMutableImage) {
+    Write-Warning "Creating a local-validation package with a mutable image reference. Do not use this package as a release artifact."
 }
 
 @"
@@ -151,8 +177,8 @@ Image: $effectiveImage
 Image digest: $ImageDigest
 Generated UTC: $((Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"))
 
-Release packages should pin TOWERSCOUT_IMAGE to an immutable digest reference.
-If Image digest is blank, this package is suitable for local validation only.
+Release packages pin TOWERSCOUT_IMAGE to an immutable digest reference.
+If Image digest is blank, this package was generated with -AllowMutableImage and is suitable for local validation only.
 "@ | Set-Content -LiteralPath (Join-Path $stagePath "IMAGE.txt") -Encoding ASCII
 
 $envSource = Join-Path $stagePath ".env.example"

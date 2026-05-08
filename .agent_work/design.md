@@ -979,7 +979,7 @@ The v1 release package should be GitHub-first and engine-aware:
 
 - GitHub Release ZIP package is the normal user-facing delivery path.
 - Package includes quick start, `compose.yaml`, `.env` template, scripts, Compose-compatible config, pinned GHCR image reference by digest, optional OCI archive fallback, asset manifest, checksums, troubleshooting, and recovery guidance.
-- Podman is the preferred open-source Windows runtime target after validated support gates. The Windows WSL engine/runtime path passed during `TASK-025`, including while Docker Desktop's engine was unavailable; Docker-Desktop-free Compose-provider validation remains a `TASK-065` release-support gate before broad support promises. Docker compatibility remains useful for developer/support fallback where licensing and endpoint policy allow.
+- Podman is the preferred open-source Windows runtime target after validated support gates. The Windows WSL engine/runtime path passed during `TASK-025`, including while Docker Desktop's engine was unavailable; `TASK-065` validated `podman-compose 1.5.0` as a Docker-Desktop-free Compose provider. Docker compatibility remains useful for developer/support fallback where licensing and endpoint policy allow.
 - Large model/data assets are manifest-managed and persisted to durable storage rather than committed to git; assets should be staged before activation and verified with SHA-256.
 - Local source clone/build is a developer/support path, not the default normal-user installation path.
 - The application license/open-source suitability question is tracked separately from runtime-tooling choice.

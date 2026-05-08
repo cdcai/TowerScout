@@ -12,7 +12,7 @@ Deliver a launcher-first local startup and support flow over the selected OCI/co
 
 `TASK-054` is the local UX layer over the `TASK-025` runtime contract. It must not become container implementation, native installer work, cross-platform packaging, or background-job architecture.
 
-After the `TASK-025` merge, this task should assume the normal user path is a GitHub Release ZIP package that wraps the merged OCI/runtime contract. Podman is the preferred open-source Windows runtime target after release-support gates; `TASK-025` validated the Windows WSL engine path, including while Docker Desktop's engine was unavailable, while Docker-Desktop-free Compose-provider validation remains under `TASK-065`. Docker-compatible paths remain useful for developer/support fallback where licensing and endpoint policy allow.
+After the `TASK-025` merge, this task should assume the normal user path is a GitHub Release ZIP package that wraps the merged OCI/runtime contract. Podman is the preferred open-source Windows runtime target after release-support gates; `TASK-025` validated the Windows WSL engine path, including while Docker Desktop's engine was unavailable, and `TASK-065` validated `podman-compose 1.5.0` as a Docker-Desktop-free Compose provider. Docker-compatible paths remain useful for developer/support fallback where licensing and endpoint policy allow.
 
 ## Requirements (EARS Notation)
 
@@ -50,7 +50,7 @@ After the `TASK-025` merge, this task should assume the normal user path is a Gi
 
 - `TASK-025`: Docker-compatible / OCI containerization baseline
 - `TASK-063`: Pre-Docker release hardening and CI reproducibility gate
-- `TASK-065`: Release packaging and runtime support follow-through for Docker-Desktop-free Podman Compose-provider validation and final support language
+- `TASK-065`: Release packaging and runtime support follow-through for final Podman/Docker support language and remaining release-support gates
 
 ## Implementation Plan
 
@@ -60,7 +60,7 @@ After the `TASK-025` merge, this task should assume the normal user path is a Gi
 4. Add first-run asset/bootstrap status and failure guidance.
 5. Document routine startup, shutdown, support-log, and troubleshooting flows.
 6. Validate clean first launch, repeat launch, startup timeout, and selected-engine-not-running behavior.
-7. Coordinate with `TASK-065` before broad Podman support language depends on Docker-Desktop-free Compose-provider behavior.
+7. Coordinate with `TASK-065` so broad Podman support language names the validated Podman machine and Compose-provider prerequisites.
 
 ---
 
@@ -95,7 +95,7 @@ After the `TASK-025` merge, this task should assume the normal user path is a Gi
 
 ### 2026-05-07 - Post-TASK-025 Merge Reconciliation
 **Objective**: Reconcile `TASK-054` with the merged `TASK-025` baseline without starting launcher implementation.
-**Context**: PR #7 merged `TASK-025` into `main`, making the Docker-compatible / OCI runtime baseline available for the launcher task. Podman engine behavior passed on this host, including with Docker Desktop's engine unavailable, but Docker-Desktop-free Compose-provider validation is intentionally deferred to `TASK-065`.
+**Context**: PR #7 merged `TASK-025` into `main`, making the Docker-compatible / OCI runtime baseline available for the launcher task. Podman engine behavior passed on this host, including with Docker Desktop's engine unavailable; `TASK-065` later validated `podman-compose 1.5.0` as the Docker-Desktop-free Compose provider.
 **Decision**: Mark this task ready for Phase 1 planning while keeping implementation unstarted. Keep the launcher scope pointed at the merged `TASK-025` scripts, Compose files, and readiness contract, and keep final Podman support language gated by `TASK-065`.
 **Execution**: Updated task status, target sprint, objective context, dependencies, and implementation-plan wording.
 **Output**: `TASK-054` is aligned to the post-merge runtime baseline and ready for a separate Phase 1 planning/implementation start.
@@ -188,5 +188,5 @@ After the `TASK-025` merge, this task should assume the normal user path is a Gi
 
 ### Issues Identified
 
-- Launcher validation used Docker on this host. Broad Podman support language remains gated by `TASK-065`, especially Docker-Desktop-free Compose-provider validation.
+- Launcher validation used Docker on this host. `TASK-065` now owns remaining release-support language and regression gates after validating the Docker-Desktop-free Podman Compose-provider path.
 - Phase 2 readiness UX is cleanly deferred. The MVP already consumes structured readiness and opens the browser after shell availability; further polish should be driven by release-support findings rather than added speculatively.

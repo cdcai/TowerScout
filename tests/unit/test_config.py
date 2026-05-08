@@ -82,6 +82,54 @@ def test_validate_api_key_fails_closed_on_ssl_error_by_default(mock_get, monkeyp
 
 
 @patch("ts_config.requests.get")
+def test_validate_api_key_reports_missing_configured_tls_bundle(mock_get, monkeypatch, temp_config_root):
+    missing_bundle = temp_config_root / "missing-ca-bundle.pem"
+    monkeypatch.delenv("TOWERSCOUT_ALLOW_INSECURE_TLS", raising=False)
+    monkeypatch.setenv("REQUESTS_CA_BUNDLE", str(missing_bundle))
+    monkeypatch.delenv("SSL_CERT_FILE", raising=False)
+
+    with pytest.raises(NetworkError) as exc_info:
+        ts_config.validate_api_key("google", "google-test-key")
+
+    assert "TLS CA bundle was not found" in exc_info.value.user_message
+    assert exc_info.value.details["env_var"] == "REQUESTS_CA_BUNDLE"
+    assert exc_info.value.details["configured_path"] == str(missing_bundle)
+    mock_get.assert_not_called()
+
+
+@patch("ts_config.requests.get")
+def test_validate_api_key_reports_missing_ssl_cert_file_bundle(mock_get, monkeypatch, temp_config_root):
+    missing_bundle = temp_config_root / "missing-ssl-cert-file.pem"
+    monkeypatch.delenv("TOWERSCOUT_ALLOW_INSECURE_TLS", raising=False)
+    monkeypatch.delenv("REQUESTS_CA_BUNDLE", raising=False)
+    monkeypatch.setenv("SSL_CERT_FILE", str(missing_bundle))
+
+    with pytest.raises(NetworkError) as exc_info:
+        ts_config.validate_api_key("google", "google-test-key")
+
+    assert "TLS CA bundle was not found" in exc_info.value.user_message
+    assert exc_info.value.details["env_var"] == "SSL_CERT_FILE"
+    assert exc_info.value.details["configured_path"] == str(missing_bundle)
+    mock_get.assert_not_called()
+
+
+@patch("ts_config.requests.get")
+def test_validate_api_key_reports_unusable_configured_tls_bundle(mock_get, monkeypatch, temp_config_root):
+    bundle_path = temp_config_root / "bad-ca-bundle.pem"
+    bundle_path.write_text("not a certificate bundle", encoding="utf-8")
+    monkeypatch.delenv("TOWERSCOUT_ALLOW_INSECURE_TLS", raising=False)
+    monkeypatch.setenv("REQUESTS_CA_BUNDLE", str(bundle_path))
+    monkeypatch.delenv("SSL_CERT_FILE", raising=False)
+    mock_get.side_effect = OSError("invalid certificate bundle")
+
+    with pytest.raises(NetworkError) as exc_info:
+        ts_config.validate_api_key("google", "google-test-key")
+
+    assert "TLS CA bundle could not be used" in exc_info.value.user_message
+    assert mock_get.call_count == 1
+
+
+@patch("ts_config.requests.get")
 def test_validate_api_key_can_bypass_tls_when_explicit_env_set(mock_get, monkeypatch):
     monkeypatch.setenv("TOWERSCOUT_ALLOW_INSECURE_TLS", "1")
     static_response = Mock(status_code=200)

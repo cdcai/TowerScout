@@ -3,7 +3,7 @@
 **Sprint Period**: April 7 - active extension after April 25, 2026 (Sprint 05)
 **Last Updated**: May 7, 2026
 **Focus**: Runtime determinism, local YOLO runtime ownership, smoke-baseline validation, pre-container release hardening, v1 operational contracts, OCI/GitHub-first release readiness, and launch UX follow-through
-**Status**: **SPRINT 05 EXTENSION / TASK-025 MERGED / TASK-054 PHASE 1 COMPLETE** - `TASK-025` has the local OCI image, Compose profile, persistent runtime volumes, asset manifest/import path, health/readiness contract, Windows helper wrappers, containerized smoke validation, local release-package helper, GHCR digest publication, Google TLS CA path, and Podman-with-Docker-engine-unavailable runtime path validated. `TASK-054` Phase 1 now provides the Windows-first launcher MVP over that runtime contract. Remaining release-support caveats are handed off to `TASK-065`.
+**Status**: **SPRINT 05 EXTENSION / TASK-025 MERGED / TASK-054 PHASE 1 COMPLETE / TASK-065 READY** - `TASK-025` has the local OCI image, Compose profile, persistent runtime volumes, asset manifest/import path, health/readiness contract, Windows helper wrappers, containerized smoke validation, local release-package helper, GHCR digest publication, Google TLS CA path, and Podman-with-Docker-engine-unavailable runtime path validated. `TASK-054` Phase 1 now provides the Windows-first launcher MVP over that runtime contract. Remaining release-support caveats are scoped under `TASK-065`.
 
 ---
 
@@ -588,8 +588,8 @@ Runtime-path normalization is complete. Container work should treat the followin
 - 2026-05-07 packaged asset import helper is implemented and validated: `scripts/import-assets.cmd -Source webapp -Engine docker -Build -VerifyHashes` copied model/data assets into named volumes and returned `asset_status=ok`
 - 2026-05-07 local GitHub Release control-package helper is implemented and validated: `scripts/package-release.cmd` staged Compose/docs/scripts/asset manifest metadata, wrote `IMAGE.txt`, generated `SHA256SUMS.txt`, produced a ZIP plus `.zip.sha256`, and verified required package files in `.agent_work/pytest-temp/release-package/`
 - 2026-05-07 Windows Podman WSL runtime spike passed for the Podman engine path: `towerscout:local` was loaded into Podman, `start.cmd -Engine podman` ran on port `5001`, readiness reported Podman runtime and writable volumes, `import-assets.cmd -Engine podman -VerifyHashes` returned `asset_status=ok`, and the containerized `TASK-052` smoke passed with real model load
-- Podman support caveat: this host's `podman compose` delegates to Docker Desktop's bundled `docker-compose.exe`; Podman now works with Docker Desktop's engine unavailable, but a Docker-Desktop-free Compose provider still needs validation before promising Podman broadly on machines without Docker Desktop installed
-- 2026-05-07 Google TLS inspection path validated: imported the CDC/Zscaler `CDC-G2-ZSH` CA chain into the container config volume, built `/app/webapp/config/certs/towerscout-ca-bundle.pem`, recreated Docker with `REQUESTS_CA_BUNDLE` and `SSL_CERT_FILE` pointing at that bundle, confirmed `/api/config/validate-key` now returns a normal Google invalid-key response instead of `502`, and owner-confirmed real Google key entry worked in the UI
+- Podman support update: `TASK-065` validated `podman-compose 1.5.0` as a Docker-Desktop-free Compose provider while Docker Desktop daemon access was unavailable; Podman support language should now name the Podman machine and Compose-provider prerequisites explicitly
+- 2026-05-07 TLS inspection path validated: imported a local TLS inspection CA chain into the container config volume, built `/app/webapp/config/certs/towerscout-ca-bundle.pem`, recreated Docker with `REQUESTS_CA_BUNDLE` and `SSL_CERT_FILE` pointing at that bundle, confirmed `/api/config/validate-key` now returns a normal provider invalid-key response instead of `502`, and owner-confirmed real provider key entry worked in the UI
 - 2026-05-07 local `.env` CA persistence validated: Docker Compose recreate picked up `REQUESTS_CA_BUNDLE` and `SSL_CERT_FILE` from git-ignored `.env`; readiness returned `ready` with Azure and Google configured, assets `ok`, and persisted secret present
 - 2026-05-07 Podman Docker-engine-stopped validation attempt was inconclusive: `podman-compose` is not installed, `podman compose` still started TowerScout on port `5001`, but `docker version` still returned server `29.4.1` after `wsl --terminate docker-desktop`; Docker Desktop then reported manually paused, was unpaused by the owner, and the Docker validation service was restored to `ready`
 - 2026-05-07 GHCR publication and digest validation passed: workflow run `25511018110` published `ghcr.io/j-schulein/towerscout:task-025-0b5d0a7`, digest `sha256:e27340947a48082433dcc996beb12c0050f6e9a2c2f20e44b4148923ab9ffa30`; Docker manifest inspect, Docker pull, isolated release-image Compose startup on port `5002`, and real-digest release package generation all passed
@@ -597,8 +597,8 @@ Runtime-path normalization is complete. Container work should treat the followin
 - 2026-05-07 temporary feature-branch GHCR publish trigger retired after validation; `.github/workflows/container-publish.yml` is back to manual `workflow_dispatch` publishing so routine branch pushes do not create incidental images
 - 2026-05-07 Podman with Docker Desktop fully quit passed: Docker daemon calls failed against `dockerDesktopLinuxEngine`, running WSL distros were only Podman, `start.cmd -Engine podman` ran TowerScout on port `5001`, health returned `ok`, readiness reported `runtime.container_engine: podman` and assets `ok`, containerized `TASK-052` smoke passed, Docker remained unavailable, and the Podman service was stopped afterward
 - 2026-05-07 Docker Desktop restore after Podman validation passed: Docker engine returned as `29.4.1`, Docker Compose service came back healthy on port `5000`, `/api/health` returned `ok`, `/api/readiness` returned `ready` with assets `ok`, Azure and Google configured, persisted secret present, and CA bundle env vars still pointed at `/app/webapp/config/certs/towerscout-ca-bundle.pem`
-- Docker-Desktop-free Podman Compose-provider validation remains the main `TASK-025` runtime caveat before promising Podman broadly on hosts without Docker Desktop installed
-- Completion handoff: `TASK-025` is complete for the container/runtime baseline. `TASK-065` owns Docker-Desktop-free Podman Compose-provider validation, hosted asset download/bootstrap decisions, optional OCI archive fallback implementation, Buildx Node 20 action maintenance, and broad release-readiness regression validation.
+- Docker-Desktop-free Podman Compose-provider validation is no longer pending after the `TASK-065` `podman-compose 1.5.0` pass; release docs must still name Podman machine and Compose-provider prerequisites
+- Completion handoff: `TASK-025` is complete for the container/runtime baseline. `TASK-065` owns final support-language alignment, hosted asset download/bootstrap decisions, optional OCI archive fallback implementation, Buildx Node 20 action maintenance, and broad release-readiness regression validation.
 - Default persistence should use named volumes; any host-visible data-directory profile is optional and must be documented/validated separately
 - Open-source runtime/tooling preference is addressed by the Podman-first target; TowerScout application license suitability remains a separate product/legal clarification
 - Treat Docker Desktop / WSL2 access constraints on managed machines as a live product risk; do not over-specialize the image around Docker as if it is guaranteed to be the permanent end-user delivery model
@@ -649,14 +649,14 @@ Runtime-path normalization is complete. Container work should treat the followin
 **Dependencies**:
 - ✅ TASK-052 - current integration smoke-test baseline
 - ✅ TASK-025 - Docker-compatible / OCI containerization baseline merged and complete enough to support a stable local launcher target
-- TASK-065 - release-support follow-through for Docker-Desktop-free Podman Compose-provider validation and final runtime support language
+- TASK-065 - release-support follow-through for final runtime support language after Docker-Desktop-free Podman Compose-provider validation
 
 **Notes**:
 - Do NOT absorb this task into TASK-025. The launcher/browser UX is a separate user-experience layer with different failure modes and rollback concerns.
 - Container code should not be responsible for opening the host browser; browser launch should be driven by the host-side launcher.
 - Treat this as the bridge from container-first engineering delivery to a locally understandable product experience, not as proof that any desktop container runtime is viable on every managed machine.
 - Do not widen this task into native-installer work, cross-platform packaging promises, or runtime architecture redesign.
-- Do not promise Podman broadly on hosts without Docker Desktop installed until `TASK-065` validates a Docker-Desktop-free Compose provider or explicitly risk-accepts that gap.
+- Podman support language must name the validated prerequisites: a running Podman machine and an approved Compose provider such as `podman-compose`.
 - If Sprint 05 tightens, ship Phase 1 first and defer background warm-initialization redesign.
 
 **Completion Summary**:
@@ -668,6 +668,45 @@ Runtime-path normalization is complete. Container work should treat the followin
 - Phase 2 readiness UX is cleanly deferred unless `TASK-065` release-support work shows the MVP needs more polish.
 
 **User Value**: Reduces or eliminates command-line interaction for local users while keeping Setup Wizard and startup behavior understandable.
+
+---
+
+### **TASK-065: Release Packaging And Runtime Support Follow-Through** 🟡
+**Status**: IN_PROGRESS
+**Type**: B/C (Release Engineering / Runtime Supportability)
+**Priority**: HIGH
+**Estimated Effort**: 1-2 days (8-16 hours)
+**Target Sprint**: Sprint 06 intake / post-`TASK-054` release-support gate
+**Task File**: `.agent_work/tasks/active/TASK-065-release-packaging-runtime-support.md`
+
+**Objective**: Close the release-support items intentionally deferred from `TASK-025` and informed by `TASK-054`, without reopening the completed OCI/container runtime baseline or launcher MVP.
+
+**Requirements**:
+- Keep Podman support language aligned with the validated `podman-compose 1.5.0` provider path and name the Podman machine / Compose-provider prerequisites explicitly
+- Hosted asset download/bootstrap is out of scope for the v1 control package; use the validated manifest-backed local asset import path
+- Optional OCI image archive fallback is unsupported for the v1 control package; restricted-network support should preload the pinned image through a site/support procedure
+- GitHub Actions Buildx runtime warning is addressed by updating both Buildx action uses to a pinned `v4.0.0` SHA
+- Run a broad release-readiness browser/provider regression pass covering Sprint 04 setup/settings/provider/detection surfaces beyond focused `TASK-025` container validation
+- Keep launcher, quick-start, OCI runtime, and support diagnostics language aligned with actual validation evidence and caveats
+- Fix missing TLS CA bundle handling so provider-key validation returns a clear setup/support error instead of a generic 500
+
+**Dependencies**:
+- ✅ TASK-025 - Docker-compatible / OCI container runtime baseline complete and merged
+- ✅ TASK-054 - Local launcher UX Phase 1 MVP complete and merged
+
+**Notes**:
+- This is release-support follow-through, not a reopening of the completed container baseline.
+- Keep launcher implementation in `TASK-054`; use this task to validate or document the runtime/package support claims that launcher docs depend on.
+- Preserve the `TASK-025` evidence that Podman works on this host while Docker Desktop's engine is unavailable and the `TASK-065` evidence that `podman-compose 1.5.0` works as the external Compose provider.
+- Broad browser/provider regression is documented in `.agent_work/tasks/active/TASK-065/evidence/TASK-065-browser-provider-regression.md`: Google detection passed on the Podman runtime; Azure detection passed from `localhost`; Azure failed from `127.0.0.1` due provider CORS preflight behavior, so the release launcher now opens `http://localhost:<port>`.
+- 2026-05-08 Podman setup-wizard credential entry initially failed because `.env` pointed `REQUESTS_CA_BUNDLE` / `SSL_CERT_FILE` at `/app/webapp/config/certs/towerscout-ca-bundle.pem`, but the Podman config volume did not contain that bundle. Importing the local TLS inspection CA into the Podman volume fixed real Google/Azure key entry. `scripts/import-tls-ca.ps1` now falls back to direct `podman cp` when `podman-compose` lacks Compose `cp`; backend handling now returns a clear provider-validation support error for missing configured CA bundle paths instead of a generic internal error.
+- Post-change launcher validation passed with Podman on `http://localhost:5001`: readiness `ready`, assets `ok`, config `ok`.
+- Release package assembly check passed into ignored `dist\towerscout-task065-validation`; staged package includes the updated `localhost` launcher, Podman provider guidance, TLS CA helper, quick start, runtime contract, manifest, checksums, and release control scripts.
+- Task-065 is implementation-complete pending release-owner review of the support language and commit/PR checkpoint.
+- Reviewer context has been consolidated in `.agent_work/tasks/active/TASK-065/TASK-025-TO-065-RELEASE-READINESS-ANALYSIS.md`.
+- PR #9 reviewer hardening pass addressed the immediate recommendations: evidence redaction, immutable digest enforcement with explicit local-validation escape hatch, provider-aware TLS CA verification, Compose-provider reporting, and focused tests. Broader CI gate tightening, Windows/Podman automation, license policy review, and clean-machine release-candidate validation remain follow-up/release-candidate gates.
+
+**User Value**: Turns the completed container and launcher baseline into release-support language and validation evidence that can be trusted by non-technical local users and first-line support.
 
 ---
 
@@ -815,7 +854,7 @@ Runtime-path normalization is complete. Container work should treat the followin
 - [x] Cache and geocode data durability classified for v1
 - [x] Compose-compatible configuration validated
 - [x] GitHub Release ZIP package contract documented and validated enough for normal-user delivery, including GHCR image digest pinning and optional OCI archive fallback caveat
-- [x] Podman compatibility spike completed enough for the selected Podman-first target (engine/runtime path passed; Docker-engine-unavailable path passed; Docker-Desktop-free Compose-provider validation remains a support caveat before promising Podman on hosts without Docker Desktop installed)
+- [x] Podman compatibility spike completed enough for the selected Podman-first target (engine/runtime path passed; Docker-engine-unavailable path passed; `TASK-065` later validated `podman-compose 1.5.0` as the Docker-Desktop-free Compose provider)
 - [x] First-run asset import/recovery path validated; hosted network downloader remains optional future work
 - [x] Container readiness/health behavior exists for `TASK-054`, including `/api/health` and structured `/api/readiness`
 - [x] Task-025 focused regression surfaces passed; broad Sprint 04 browser/provider regression validation is deferred to `TASK-065` release-readiness follow-through
