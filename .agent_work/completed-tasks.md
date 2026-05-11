@@ -1,13 +1,66 @@
 # Completed Tasks
 
-**Last Updated**: April 6, 2026  
+**Last Updated**: May 8, 2026  
 **Sprint 01 Performance**: 7 of 7 tasks completed (100%), ~32 hours actual effort  
 **Sprint 02 Performance**: 5 of 5 tasks completed (100%), ~61 hours actual effort  
 **Sprint 03 Performance**: 8 of 8 tasks completed (100%), ~56 hours actual effort (March 11-18, 2026)  
 **Sprint 04 Performance**: 7 of 7 core tasks completed (100%), 19 days actual (March 19 - April 6, 2026)  
+**Sprint 05 Performance**: 10 completed task files moved to `tasks/completed/`; `TASK-065` carried into Sprint 06 release-support review  
 **Archive Locations**: 
 - Tasks completed before December 19, 2025: `context/archive/2026-01-16-archived-completed-tasks.md`
 - TASK-034 (January 7, 2026): `context/archive/2026-02/2026-02-12-archived-task-034.md`
+- May 2026 context cleanup: `context/archive/2026-05/`
+
+---
+
+## SPRINT 05 COMPLETED TASKS (April 7 - May 8, 2026)
+
+**Sprint Summary**: Sprint 05 delivered TowerScout's corrected runtime and first OCI/local-release baseline. The sprint extended beyond the original window to absorb runtime determinism, local YOLO ownership, release hardening, container validation, GHCR digest publication, Podman evidence, and launcher MVP work.
+
+**Sprint Goal**: Establish a reliable local runtime baseline, then package that baseline through an OCI-compatible container contract and launcher-first user path.
+
+**Sprint Status**: COMPLETE for finished task artifacts. `TASK-065` remains active as Sprint 06 release-support carry-forward pending release-owner support-language review and commit/PR checkpoint.
+
+### Sprint 05 Overview
+
+**Primary Objectives Achieved**:
+1. `TASK-051`: Runtime dependency verification and split completed.
+2. `TASK-055`: YOLO Torch Hub pinned-ref hardening completed.
+3. `TASK-056`: First-run reliability and runtime determinism hardening completed.
+4. `TASK-057`: Local YOLO runtime ownership and Torch Hub independence completed.
+5. `TASK-052`: Current integration smoke-test baseline completed.
+6. `TASK-062`: Pre-Docker runtime cleanup and YOLO loader hardening completed.
+7. `TASK-063`: Pre-Docker release hardening and CI reproducibility gate completed.
+8. `TASK-064`: Targeted runtime responsiveness and inference baseline completed.
+9. `TASK-025`: Docker-compatible / OCI containerization completed and merged to `main`.
+10. `TASK-054`: Local Launch UX Phase 1 MVP completed.
+
+**Key Outcomes**:
+- TowerScout now owns its active YOLO runtime path rather than depending on mutable Torch Hub runtime bootstrap behavior.
+- The maintained integration smoke baseline validates current app boot, route availability, and bounded detection readiness.
+- Release hardening clarified dependency repeatability, CI action pinning, provider-key guidance, upload/TLS boundaries, metrics-log contracts, v1 support scope, and support diagnostics.
+- OCI runtime work added Docker-compatible image build/run behavior, Compose configuration, persistent runtime volumes, asset manifest/import support, health/readiness endpoints, release packaging helpers, and GHCR digest validation.
+- Podman validation moved from a hypothesis to concrete evidence, including Docker-engine-unavailable runtime validation and later `podman-compose 1.5.0` provider validation under `TASK-065`.
+- Launcher work added a Windows-first startup path over the container runtime and release package.
+
+**Carried Forward**:
+- `TASK-065`: Release packaging and runtime support follow-through is implementation-complete but remains active pending release-owner review and PR/commit checkpoint.
+- Release-candidate validation, CI release gate tightening, Windows script portability, license/release policy review, and restricted-network package enhancements remain backlog work.
+
+**Retrospective**: See [SPRINT-05-RETROSPECTIVE-ANALYSIS-2026-05-08.md](./context/analysis/SPRINT-05-RETROSPECTIVE-ANALYSIS-2026-05-08.md).
+
+### Sprint 05 Task Files
+
+- [TASK-051 runtime dependency audit and decision gate](./tasks/completed/TASK-051-runtime-dependency-audit-and-decision-gate.md)
+- [TASK-055 YOLO Torch Hub pinned-ref hardening](./tasks/completed/TASK-055-yolo-torch-hub-pinned-ref-hardening.md)
+- [TASK-056 first-run reliability and runtime determinism hardening](./tasks/completed/TASK-056-first-run-reliability-and-runtime-determinism-hardening.md)
+- [TASK-057 local YOLO runtime ownership and offline readiness](./tasks/completed/TASK-057-local-yolo-runtime-ownership-and-offline-readiness.md)
+- [TASK-052 current integration smoke-test baseline](./tasks/completed/TASK-052-current-integration-smoke-test-baseline.md)
+- [TASK-062 pre-Docker runtime cleanup and YOLO loader hardening](./tasks/completed/TASK-062-pre-docker-runtime-cleanup-and-yolo-loader-hardening.md)
+- [TASK-063 pre-Docker release hardening](./tasks/completed/TASK-063-pre-docker-release-hardening.md)
+- [TASK-064 runtime responsiveness and inference baseline](./tasks/completed/TASK-064-runtime-responsiveness-inference-baseline.md)
+- [TASK-025 Docker / OCI containerization](./tasks/completed/TASK-025-docker-containerization.md)
+- [TASK-054 local launch UX](./tasks/completed/TASK-054-local-launch-ux.md)
 
 ---
 
@@ -1165,7 +1218,7 @@ Building on TASK-041's ProviderStateManager foundation, this task addressed the 
 - Exceptional memory performance (decreased 0.7% in stress testing)
 - 5 critical issues resolved through architectural improvements
 
-**Sprint Retrospective**: See [SPRINT-01-RETROSPECTIVE.md](context/status/SPRINT-01-RETROSPECTIVE.md)
+**Sprint Retrospective**: See [SPRINT-01-RETROSPECTIVE.md](context/archive/2026-05/status/SPRINT-01-RETROSPECTIVE.md)
 
 ### **TASK-041: Implement Deep Dive Priority 2 (State Management & Memory Cleanup)** ✅
 **Status**: ✅ COMPLETE  
@@ -1355,13 +1408,14 @@ Deep Dive analysis identified ISSUE-001, 003, 004 as symptoms of systemic proble
 - `context/archive/2026-02/2026-03-02-archived-task-030.md` - TASK-030 (completed January 16, 2026)
 - `context/archive/2026-02/2026-02-12-archived-task-034.md` - TASK-034 (completed January 7, 2026)
 - `context/archive/2026-01-16-archived-completed-tasks.md` - 9 tasks (November 30 - December 23, 2025)
+- `context/archive/2026-05/tasks-older-than-3-months/` - individual task artifacts for TASK-001, TASK-002, TASK-003, TASK-005, TASK-008, TASK-021, TASK-022, TASK-023, TASK-024, and TASK-030
 
 **Archived Tasks**: TASK-001, TASK-002, TASK-003, TASK-005, TASK-008, TASK-021, TASK-022, TASK-023, TASK-024, TASK-030, TASK-034
 
 **Task File References**: Individual detailed task files available in `tasks/completed/`:
-- Recent tasks: TASK-031, TASK-037, TASK-038, TASK-040, TASK-041 (individual .md files)
-- Archived tasks: Available in archive and individual task files
-- Complex tasks: TASK-008, TASK-030 (multi-phase folder structure)
+- Recent and prior-sprint task files from February 2026 onward remain in `tasks/completed/`
+- Archived task summaries are available in `context/archive/`
+- Individual task artifacts older than three months are available in `context/archive/2026-05/tasks-older-than-3-months/`
 
 **Next Review**: Archive tasks older than 4 weeks during weekly maintenance (Fridays)  
-**Next Monthly Archive**: March 30, 2026
+**Next Monthly Archive**: June 1, 2026

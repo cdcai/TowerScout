@@ -16,6 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
+    # TODO: Migrate to a supported Node LTS after validating the current build and Puppeteer smoke paths.
     - name: Set up Node 18
       uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       with:
@@ -137,7 +138,7 @@ jobs:
     - name: Build Docker image (local deployment test)
       run: |
         docker build -t towerscout:test .
-      continue-on-error: true  # Don't fail if Dockerfile doesn't exist yet
+      continue-on-error: true  # Advisory until Sprint 06 release gates decide whether image build should be merge-blocking
 
   security:
     runs-on: ubuntu-latest

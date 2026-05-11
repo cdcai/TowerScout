@@ -373,7 +373,7 @@ Each requirement must be:
 │   ├── status/                       # Progress tracking
 │   └── archive/                      # Archived context files
 └── tasks/
-    ├── active/                       # Symlinks to current individual task files
+    ├── active/                       # Current sprint individual task files and task support folders
     ├── completed/                    # Completed individual task files
     └── [transition files]            # New tasks before organization
 

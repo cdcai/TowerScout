@@ -196,8 +196,8 @@ Replace Bing Maps frontend radio button with complete Azure Maps Web SDK v3.0 in
 **Decision**: Systematically debug authentication pipeline and validate full integration with main TowerScout application
 **Execution**:
 - **Authentication Debugging**: Identified root cause of 401 Unauthorized errors as .env file formatting issue
-  - **Problem**: Leading space in .env file: `AZURE_MAPS_SUBSCRIPTION_KEY= 7G19...` (space after =)
-  - **Solution**: Removed space: `AZURE_MAPS_SUBSCRIPTION_KEY=7G19...` (no space after =)
+  - **Problem**: Leading space in .env file: `AZURE_MAPS_SUBSCRIPTION_KEY= <redacted>` (space after =)
+  - **Solution**: Removed space: `AZURE_MAPS_SUBSCRIPTION_KEY=<redacted>` (no space after =)
   - **Tools Created**: `test_azure_auth.py`, `test_azure_sas_debug.py`, `azure_maps_setup_guide.py`
 - **API Validation**: Comprehensive testing of Azure Maps API endpoints
   - Search Address: HTTP 200 ✓ (JSON response received)

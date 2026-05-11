@@ -1,623 +1,91 @@
-# Task Backlog - Future Work Prioritization
+# Task Backlog - Remaining Work
 
-**Last Updated**: May 8, 2026
-**Sprint 04 Completed**: March 19 - April 6, 2026
-**Sprint 05 Active**: April 7 - active extension after April 25, 2026
-**Next Sprint Planning**: Sprint 06 Prep after `TASK-065` release-support follow-through scoping
-
----
-
-## 🚀 SPRINT 05 ACTIVE TASKS (Moved to current-tasks.md)
-
-### **TASK-051: Runtime Dependency Verification and Split** 🔴
-**Status**: IN_SPRINT_05 - MOVED TO current-tasks.md  
-**Type**: C (Architecture / Deployment Readiness)  
-**Priority**: CRITICAL  
-**Estimated Effort**: 4-8 hours  
-**Target Sprint**: Sprint 05
-
-**See**: [current-tasks.md](./current-tasks.md#task-051-runtime-dependency-verification-and-split) for full details
+**Last Updated**: May 11, 2026  
+**Planning State**: Sprint 05 completed work has been removed from the backlog. `TASK-065` remains in `current-tasks.md` as the active carry-forward item. Sprint 06 planning now prioritizes the missing user-facing release package, asset bundle, and validation contract before broader end-user testing.  
+**Ordering Method**: The ordered backlog below is based on current project value, dependency shape, and the shortest credible path to a v1 local release that non-technical pilot users can install and run.
 
 ---
 
-### **TASK-056: First-Run Reliability and Runtime Determinism Hardening** 🔴
-**Status**: IN_SPRINT_05 - MOVED TO current-tasks.md  
-**Type**: C (Runtime Hardening / Deployment Readiness)  
-**Priority**: CRITICAL  
-**Estimated Effort**: 12-20 hours  
-**Target Sprint**: Sprint 05
+## Cleanup Notes
 
-**See**: [current-tasks.md](./current-tasks.md#task-056-first-run-reliability-and-runtime-determinism-hardening) for full details
-
----
-
-### **TASK-057: Local YOLO Runtime Ownership and Torch Hub Independence** 🔴
-**Status**: IN_SPRINT_05 - MOVED TO current-tasks.md  
-**Type**: C (Runtime Architecture / Deployment Readiness)  
-**Priority**: CRITICAL  
-**Estimated Effort**: 12-20 hours  
-**Target Sprint**: Sprint 05
-
-**See**: [current-tasks.md](./current-tasks.md#task-057-local-yolo-runtime-ownership-and-torch-hub-independence) for full details
+- Removed completed or current-task-only backlog entries for `TASK-051`, `TASK-052`, `TASK-054`, `TASK-055`, `TASK-056`, `TASK-057`, `TASK-062`, `TASK-063`, `TASK-064`, `TASK-025`, and `TASK-065`.
+- Kept `TASK-029` in the backlog because it was not started.
+- Archived the not-started `TASK-029` active task artifact under `.agent_work/context/archive/2026-05/not-started-task-artifacts/`; the backlog row below is now the planning source for that task until it is selected.
+- Added release-readiness tasks for asset delivery, end-user package documentation, clean-machine UAT planning, runtime preflight, GPU/CUDA scope, and provider-key release policy.
+- Moved mobile responsiveness, NumPy 2 migration, Sprint 04 deferred quick wins, advanced filtering, performance dashboard, and user preferences out of the ordered release backlog. They remain visible in the parking lot / technical-debt register below.
 
 ---
 
-### **TASK-052: Current Integration Smoke Test Baseline** 🔴
-**Status**: IN_SPRINT_05 - MOVED TO current-tasks.md  
-**Type**: A (Quality / Validation)  
-**Priority**: CRITICAL  
-**Estimated Effort**: 4-8 hours  
-**Target Sprint**: Sprint 05
+## Ordered Remaining Backlog
 
-**See**: [current-tasks.md](./current-tasks.md#task-052-current-integration-smoke-test-baseline) for full details
-
----
-
-### **TASK-062: Pre-Docker Runtime Cleanup And YOLO Loader Hardening** 🟡
-**Status**: IN_SPRINT_05 - MOVED TO current-tasks.md  
-**Type**: C (Runtime Hardening / Deployment Readiness)  
-**Priority**: HIGH  
-**Estimated Effort**: 6-10 hours  
-**Target Sprint**: Sprint 05
-
-**See**: [current-tasks.md](./current-tasks.md) for full details
-
----
-
-### **TASK-063: Pre-Docker Release Hardening And CI Reproducibility Gate** 🔴
-**Status**: IN_SPRINT_05 - MOVED TO current-tasks.md  
-**Type**: C (Security / Release Engineering / Deployment Readiness)  
-**Priority**: CRITICAL  
-**Estimated Effort**: 1-2 days (8-16 hours)  
-**Target Sprint**: Sprint 05 extension / pre-Docker gate
-
-**See**: [current-tasks.md](./current-tasks.md#task-063-pre-docker-release-hardening-and-ci-reproducibility-gate) and [TASK-063 task file](./tasks/active/TASK-063-pre-docker-release-hardening.md) for full details
+| Order | Task | Status | Type | Estimated Effort | Key Dependencies | Recommended Disposition And Rationale |
+|---:|---|---|---|---|---|---|
+| 1 | `TASK-072` Release Asset Bundle Contract | NOT_STARTED | C (Release Engineering / Asset Governance) | 1-2 days (8-16h) | `TASK-065`; current asset manifest | Add and keep first. Define exactly how model weights and ZIP-code data are bundled, versioned, checksummed, distributed, placed next to the release package, imported, verified, and matched to a TowerScout release. This must precede end-user docs and meaningful user testing. |
+| 2 | `TASK-071` End-User Release Package Documentation | NOT_STARTED | B/C (Documentation / User Enablement) | 1-2 days (8-16h) | `TASK-072`; release package shape | Add and keep second. Produce the package-based quick start and full user guide that tell a non-technical Windows pilot user what to download, where assets go, how to launch, how to configure provider keys, how to validate success, and how to report problems. |
+| 3 | `TASK-066` Release Candidate Validation Gate | NOT_STARTED | C (Release Engineering / Validation) | 1-2 days (8-16h) | `TASK-065`; `TASK-071`; `TASK-072`; agreed release package shape | Keep as the bridge between internal release readiness and external user testing. Prove the release ZIP, pinned image digest, checksums, manifest, asset import, provider setup, TLS CA import, first-run restart behavior, and bounded detection from a clean user-facing path. |
+| 4 | `TASK-073` Clean-Machine Pilot / UAT Execution Plan | NOT_STARTED | B/C (User Testing / Release Validation) | 0.5-1 day (4-8h) | `TASK-066`; draft user package docs | Add and keep. Define pilot tester instructions, acceptance checklist, environment capture, friction logging, issue-report workflow, success criteria, and support escalation before asking end users to test. |
+| 5 | `TASK-069` License And Release Policy Review | NOT_STARTED | C (Legal / Release Policy / Governance) | 0.5-1 day technical prep plus owner/legal review | `TASK-025`; `TASK-065`; owner/legal availability | Keep near the front. Technical release readiness is not the same as permission to distribute; this can block v1 late if deferred. |
+| 6 | `TASK-076` Provider API Key Exposure And Restriction Policy | NOT_STARTED | C (Security / Release Policy) | 0.5-1.5 days (4-12h) | Current setup/settings and provider-loading behavior; `TASK-069` alignment | Add and keep before broader release. Browser map SDK keys are still exposed to the client through provider-loading routes. Decide and document whether v1 accepts this with strict provider-side key restrictions, referrer limits, quota controls, and user guidance, or whether further proxy/auth changes are required before wider distribution. |
+| 7 | `TASK-074` Runtime Prerequisite Preflight | NOT_STARTED | B/C (Launcher / Supportability) | 1-2 days (8-16h) | `TASK-071`; launcher/runtime scripts | Add and keep as high leverage. Provide a user/support preflight that checks engine presence, Podman machine state, Compose provider, WSL/virtualization hints, port availability, disk space, asset presence, TLS bundle path, and provider setup state before or during launch. |
+| 8 | `TASK-067` CI Release Gate Tightening | NOT_STARTED | C (CI / Release Engineering) | 1-2 days (8-16h) | `TASK-066` checklist | Keep. Once the release-candidate checklist exists, promote the highest-value digest, manifest, packaging, and launcher checks into CI or documented required/manual gates. Keep scope narrow and release-protective. |
+| 9 | `TASK-068` Windows Test Portability And Script Validation | NOT_STARTED | B/C (Testing / Developer Experience) | 0.5-1 day (4-8h) | `TASK-065`; current release helper tests | Keep as a release-support follow-up. Decide whether PowerShell release-helper coverage stays Windows-only or gains explicit PowerShell Core coverage in CI. |
+| 10 | `TASK-075` GPU / CUDA Support Decision | NOT_STARTED | C (Runtime Policy / Hardware Compatibility) | 0.5-1 day (4-8h) | Current CPU baseline; `TASK-051` CUDA audit | Add and keep as a decision gate, not an implementation promise. Decide whether v1 is explicitly CPU-only or whether GPU/CUDA support will be documented and validated under a specific install/runtime path. |
+| 11 | `TASK-070` Restricted-Network Package Enhancements | NOT_STARTED | B/C (Release Engineering / Offline Support) | 1-3 days (8-24h) | `TASK-066`; normal connected release path validated | Keep, but after the normal connected release path is validated. This should not block v1 unless restricted-network support becomes a launch requirement. |
+| 12 | `TASK-058` Background Detection Jobs And Durable Run State | NOT_STARTED | C (Architecture / Reliability) | 3-5 days (24-40h) | Release baseline stable; current progress/cancel contract understood | Keep as the highest-value post-release architecture work. Long-running detection should not stay bound to request/thread-local assumptions, but this should not preempt the release package path unless release work intentionally pauses. |
+| 13 | `TASK-059` Backend Layer Decomposition And Logging Consolidation | NOT_STARTED | C (Architecture / Maintainability) | 3-5 days (24-40h) | `TASK-058` | Keep after `TASK-058`. Route/service boundaries should follow the actual job and state ownership model rather than be guessed first. |
+| 14 | `TASK-027` Enhanced Error Handling | NOT_STARTED | A/B (Reliability / UX) | 1-2 days (8-16h) | Existing logging and support diagnostics | Keep. Better user-facing recovery, retry, and troubleshooting messages compound release-support value. Fold any still-relevant Sprint 04 deferred error-handler quick wins into this task. |
+| 15 | `TASK-026` CPU Optimization | NOT_STARTED | C (Performance) | 2-3 days (16-24h) | Current inference baseline; release host assumptions | Keep. CPU-only performance matters for the selected local deployment baseline, but it should follow release-candidate validation so optimization starts from a stable package. |
+| 16 | `TASK-029` Multi-Provider Fallback | NOT_STARTED | B (Reliability) | 2-3 days (16-24h) | Provider abstraction; improved error handling preferred | Keep, but not before release gates. Automatic fallback can improve reliability, but it must preserve provider provenance and avoid masking unsafe/no-key conditions. |
+| 17 | `TASK-060` Frontend Build Modernization | NOT_STARTED | B (Frontend Infrastructure) | 1-2 days (8-16h) | Stable release branch or explicit modernization window | Keep. Manual ordered concatenation is maintenance risk, but changing the build pipeline is not necessary for the immediate release gate. |
 
 ---
 
-### **TASK-064: Targeted Runtime Responsiveness And Inference Baseline** 🔴
-**Status**: IN_SPRINT_05 - MOVED TO current-tasks.md  
-**Type**: B/C (Runtime Responsiveness / Performance Validation)  
-**Priority**: HIGH  
-**Estimated Effort**: 0.5-1 day (4-8 hours)  
-**Target Sprint**: Sprint 05 extension / pre-container sign-off gate
+## Parking Lot / Technical-Debt Register
 
-**See**: [current-tasks.md](./current-tasks.md#task-064-targeted-runtime-responsiveness-and-inference-baseline) and [TASK-064 task file](./tasks/active/TASK-064-runtime-responsiveness-inference-baseline.md) for full details
+These items should not compete with the Sprint 06 release-readiness lane. Keep them visible for later planning, but do not treat them as ordered v1 release blockers unless new evidence changes their priority.
 
----
-
-### **TASK-025: Docker / OCI Containerization** 🟡
-**Status**: COMPLETED IN current-tasks.md - MERGED TO MAIN
-**Type**: C (Infrastructure / Deployment Readiness)
-**Priority**: HIGH
-**Estimated Effort**: 1-2 days (8-16 hours)
-**Target Sprint**: Sprint 05 after `TASK-063` and `TASK-064`
-
-**Current Direction**: Finalized pre-task direction is GitHub-first and OCI-compatible: GitHub Release ZIP for normal users, pinned GHCR image reference by digest, optional OCI image archive for restricted-network fallback, Podman as the preferred open-source Windows runtime target after the required validation spike, Docker-compatible fallback where licensed/approved, and source clone/build as a developer/support path.
-
-**See**: [current-tasks.md](./current-tasks.md#task-025-docker-containerization) and [TASK-025 task file](./tasks/active/TASK-025-docker-containerization.md) for full details
+| Item | Status | Recommended Handling | Rationale |
+|---|---|---|---|
+| `TASK-028` Mobile Responsiveness | PARKED | Move to later field-use backlog | The v1 supported target is Windows 11 AMD64 local desktop use. Mobile/tablet improvement is useful later but not required before first local release validation. |
+| `TASK-061` Coordinated NumPy 2 Runtime Migration | TECH_DEBT | Track in dependency maintenance register | Important eventually, but the current release baseline intentionally holds a NumPy 1.x stack. Do not mix this into Sprint 06 unless a security/support issue forces it. |
+| Sprint 04 Deferred Quick Wins | MERGE | Fold into `TASK-027` or close if stale | Browser refresh warning and error-handler standardization should not survive as a standalone backlog item. |
+| Advanced Filtering | PARKED | Revisit after pilot feedback | Valuable only if larger-result-set review becomes a confirmed user bottleneck. |
+| Performance Dashboard | PARKED / RESHAPE | Reconsider as lightweight support diagnostics if needed | Current release needs actionable status/log/preflight output more than an in-app dashboard. |
+| User Preferences | PARKED | Revisit after repeated-user workflow evidence | Setup and Settings already cover part of this value. Add preference surface only when pilot feedback shows real need. |
 
 ---
 
-### **TASK-054: Local Launch UX** 🟡
-**Status**: COMPLETED IN current-tasks.md - MERGED TO MAIN
-**Type**: B (Deployment UX / Local Supportability)
-**Priority**: MEDIUM
-**Estimated Effort**: 1-2 days (8-12 hours)
-**Target Sprint**: Sprint 05 stretch / Sprint 06 carry-forward
+## Sprint 06 Selection Guidance
 
-**See**: [current-tasks.md](./current-tasks.md#task-054-local-launch-ux) and [TASK-054 task file](./tasks/active/TASK-054-local-launch-ux.md) for full details
+Do not automatically select this whole list for Sprint 06. A conservative Sprint 06 should close `TASK-065`, then execute a small release-readiness slice in dependency order:
 
----
+1. `TASK-072` to settle the asset bundle contract.
+2. `TASK-071` to write package-based end-user docs against that contract.
+3. `TASK-066` to validate the package/docs/assets path from a clean user-facing environment.
+4. `TASK-073` to prepare external pilot / UAT execution after the internal release-candidate gate.
+5. `TASK-069` and `TASK-076` to resolve release-policy and provider-key exposure boundaries before broadening distribution.
 
-## SPRINT 06 RELEASE-SUPPORT FOLLOW-THROUGH CANDIDATES
+`TASK-074`, `TASK-067`, and `TASK-068` are high-value follow-through if capacity remains or if `TASK-066` exposes friction that should be automated before external testing.
 
-### **TASK-065: Release Packaging And Runtime Support Follow-Through** 🟡
-**Status**: READY FOR INTAKE - MOVED TO current-tasks.md
-**Type**: B/C (Release Engineering / Runtime Supportability)
-**Priority**: HIGH
-**Estimated Effort**: 1-2 days (8-16 hours)
-**Target Sprint**: Sprint 06 intake / post-`TASK-054` release-support gate
-
-**Objective**: Close the release-support items intentionally deferred from `TASK-025` without reopening the completed container/runtime baseline.
-
-**Dependencies**:
-- `TASK-025`: Docker-compatible / OCI container runtime baseline complete and PR reviewed
-- `TASK-054`: Local launcher UX, where runtime-provider messaging or release-package startup behavior overlaps
-
-**Requirements**:
-- WHEN Podman is described as broadly supported on Windows hosts without Docker Desktop installed, THE PROJECT SHALL require a running Podman machine and an approved Compose provider such as the `podman-compose 1.5.0` path validated under `TASK-065`.
-- WHEN release assets are hosted externally, THE PROJECT SHALL decide whether to implement hosted asset download/bootstrap beyond the validated manual/restricted-network import path.
-- WHEN restricted-network release packages are supported, THE PROJECT SHALL either implement and validate the optional OCI image archive fallback or document it as intentionally unsupported for the release.
-- WHEN GitHub Actions warnings indicate pinned-action runtime drift, THE PROJECT SHALL update or risk-accept the affected actions before release readiness sign-off.
-- WHEN release support language is finalized, THE PROJECT SHALL run a broad browser/provider regression pass covering the Sprint 04 setup/settings/provider/detection surfaces beyond the focused `TASK-025` container validation.
-
-**Scope Notes**:
-- This is follow-through for release support promises, not a blocker for merging the `TASK-025` container baseline.
-- Keep launcher workflow implementation in `TASK-054`; use this task to validate or document the runtime/package support claims that launcher docs depend on.
-- Preserve the `TASK-025` evidence that Podman works on this host while Docker Desktop's engine is unavailable and the `TASK-065` evidence that `podman-compose 1.5.0` works as the Docker-Desktop-free Compose provider.
-
-**See**: [current-tasks.md](./current-tasks.md#task-065-release-packaging-and-runtime-support-follow-through) and [TASK-065 task file](./tasks/active/TASK-065-release-packaging-runtime-support.md) for full details.
+If the release path pauses, `TASK-058` is the best next architecture investment. It should precede `TASK-059`.
 
 ---
 
-### **TASK-066: Release Candidate Validation Gate**
-**Status**: NOT_STARTED
-**Type**: C (Release Engineering / Validation)
-**Priority**: CRITICAL
-**Estimated Effort**: 1-2 days (8-16 hours)
-**Target Sprint**: Sprint 06 release-readiness gate
+## Historical Performance Snapshot
 
-**Objective**: Establish a repeatable release-candidate validation checklist before v1 release packaging is treated as ready for non-developer users.
-
-**Dependencies**:
-- `TASK-065`: Release-support validation findings and PR review follow-through complete
-- Current GitHub Release package shape and runtime-provider support language agreed
-
-**Requirements**:
-- WHEN a release candidate is assembled, THE PROJECT SHALL validate the launcher, release ZIP contents, pinned image digest, checksums, manifest, provider setup, and local runtime startup from a clean user-facing path.
-- WHEN a release candidate is tested, THE PROJECT SHALL record evidence for Google and Azure setup, provider detection smoke coverage, asset import, TLS CA import, and first-run restart behavior.
-- WHEN validation fails, THE PROJECT SHALL document the blocker, remediation, and retest evidence before release sign-off.
-
-**User Value**: Converts Task-065's one-host validation into a durable release gate reviewers and maintainers can repeat.
+| Sprint | Duration | Outcome | Notes |
+|---|---:|---|---|
+| Sprint 01 | February 4-18, 2026 | Complete | Foundation, memory, and UX work |
+| Sprint 02 | February-March 2026 | Complete | Architecture work |
+| Sprint 03 | March 11-18, 2026 | Complete | Legacy feature restoration and Google Maps API migration |
+| Sprint 04 | March 19-April 6, 2026 | Complete | Setup/settings, performance investigation, cleanup, detection stabilization |
+| Sprint 05 | April 7-May 8, 2026 | Closeout | Runtime determinism, local YOLO ownership, smoke baseline, release hardening, OCI packaging, launcher MVP |
 
 ---
 
-### **TASK-067: CI Release Gate Tightening**
-**Status**: NOT_STARTED
-**Type**: C (CI / Release Engineering)
-**Priority**: CRITICAL
-**Estimated Effort**: 1-2 days (8-16 hours)
-**Target Sprint**: Sprint 06 release-readiness gate
-
-**Objective**: Promote the highest-value release checks from manual validation into CI or documented required checks where automation is practical.
-
-**Dependencies**:
-- `TASK-065`: Current release helper behavior and CI failure remediation complete
-- `TASK-066`: Release candidate validation checklist defined
-
-**Requirements**:
-- WHEN a pull request changes release packaging, launcher behavior, runtime-provider scripts, or container setup, THE PROJECT SHALL run targeted automated checks that catch digest, manifest, script, and packaging regressions.
-- WHEN a check remains platform-specific or environment-sensitive, THE PROJECT SHALL explicitly document whether it is required, advisory, or manual for v1.
-- WHEN GitHub branch protection is updated, THE PROJECT SHALL align required checks with the maintained CI baseline.
-
-**User Value**: Reduces the chance that release-package regressions depend solely on manual reviewer attention.
-
----
-
-### **TASK-068: Windows Test Portability And Script Validation**
-**Status**: NOT_STARTED
-**Type**: B/C (Testing / Developer Experience)
-**Priority**: HIGH
-**Estimated Effort**: 0.5-1 day (4-8 hours)
-**Target Sprint**: Sprint 06
-
-**Objective**: Decide whether Windows-focused PowerShell release-helper tests should remain Windows-only or gain cross-platform PowerShell Core coverage in CI.
-
-**Dependencies**:
-- `TASK-065`: Current Windows-only skip for `scripts/package-release.ps1` tests merged
-
-**Requirements**:
-- WHEN release helper tests run on non-Windows CI agents, THE PROJECT SHALL either install/use supported PowerShell Core intentionally or skip those tests with clear rationale.
-- WHEN Windows-only behavior is required, THE PROJECT SHALL keep the test marker and documentation explicit so failures are not mistaken for missing coverage.
-- WHEN cross-platform script validation is added, THE PROJECT SHALL avoid weakening Windows release-helper behavior.
-
-**User Value**: Keeps CI honest about what it validates and prevents platform mismatch failures from hiding real regressions.
-
----
-
-### **TASK-069: License And Release Policy Review**
-**Status**: NOT_STARTED
-**Type**: C (Legal / Release Policy / Governance)
-**Priority**: CRITICAL
-**Estimated Effort**: 0.5-1 day technical prep, plus owner/legal review time
-**Target Sprint**: Sprint 06 release-readiness gate
-
-**Objective**: Confirm TowerScout's application license, third-party dependency license posture, runtime tooling assumptions, and release-distribution policy before v1 release.
-
-**Dependencies**:
-- `TASK-025`: OCI runtime and dependency baseline established
-- `TASK-065`: Runtime-provider and release-package support language clarified
-- Owner or legal reviewer availability for final policy decision
-
-**Requirements**:
-- WHEN v1 release assets are prepared, THE PROJECT SHALL include a license review outcome covering the application license, third-party dependencies, bundled scripts, documentation, runtime-tooling guidance, and whether Docker Desktop licensing concerns affect user-facing instructions.
-- WHEN license ownership or distribution terms are uncertain, THE PROJECT SHALL record the decision as blocked on owner/legal review rather than implying technical approval is legal approval.
-- WHEN a license decision is made, THE PROJECT SHALL update the relevant release documentation and, if the decision has durable architecture or policy implications, record it in `.agent_work/decisions/`.
-
-**User Value**: Prevents release readiness from being blocked late by licensing uncertainty and separates technical runtime support from legal distribution decisions.
-
----
-
-### **TASK-070: Restricted-Network Package Enhancements**
-**Status**: NOT_STARTED
-**Type**: B/C (Release Engineering / Offline Support)
-**Priority**: HIGH
-**Estimated Effort**: 1-3 days (8-24 hours)
-**Target Sprint**: Sprint 06 or Sprint 07
-
-**Objective**: Decide and implement the next restricted-network support layer beyond the v1 baseline of preloaded images plus local asset import.
-
-**Dependencies**:
-- `TASK-065`: v1 scope confirmed as no hosted asset downloader and no bundled OCI archive
-- `TASK-066`: Release candidate validation gate defined
-
-**Requirements**:
-- WHEN restricted-network users need support beyond preloaded image plus local asset import, THE PROJECT SHALL choose between a bundled OCI archive, support-prepared media, hosted asset bootstrap when allowed, or a documented manual procedure.
-- WHEN an OCI archive option is selected, THE PROJECT SHALL implement checksum validation, import instructions, and runtime-provider validation for the chosen engine path.
-- WHEN the option is deferred, THE PROJECT SHALL keep v1 documentation explicit that restricted-network support requires support-managed image preload and local asset import.
-
-**User Value**: Gives restricted-network deployments a clear next path without expanding Task-065's already validated v1 scope.
-
----
-
-### **TASK-029: Multi-Provider Fallback** 🟡
-**Status**: IN_SPRINT_05 - MOVED TO current-tasks.md (stretch goal)  
-**Type**: B (Reliability)  
-**Priority**: MEDIUM  
-**Estimated Effort**: 2-3 days (16-24 hours)  
-**Target Sprint**: Sprint 05
-
-**See**: [current-tasks.md](./current-tasks.md#task-029-multi-provider-fallback) and [TASK-029 task file](./tasks/active/TASK-029-multi-provider-fallback.md) for full details
-
----
-
-## 🔧 POST-CONTAINERIZATION RELIABILITY AND ARCHITECTURE FOLLOW-ON
-
-### **TASK-058: Background Detection Jobs and Durable Run State** 🟡
-**Status**: NOT_STARTED  
-**Type**: C (Architecture / Reliability)  
-**Priority**: HIGH  
-**Estimated Effort**: 3-5 days (24-40 hours)  
-**Target Sprint**: Sprint 06 or Sprint 07
-
-**Objective**: Move long-running detection work out of the request thread and introduce a local job-runner boundary plus durable run/job state suitable for the v1 single-user local deployment model.
-
-**Issues Addressed**:
-- `UT-011` synchronous detection request path blocks long-running ML work
-- `UT-015` filesystem sessions and session-persisted paths make deployment state too local
-- `UT-016` asyncio download plumbing adds complexity with limited benefit
-- follow-on hardening beyond `UT-013` stable session identity
-
-**Requirements**:
-- Background job lifecycle for detection start, status, cancellation, and result completion
-- Durable job/run identity and local backing state rather than request/thread-local assumptions
-- Clear migration path for progress polling and cancellation
-- Explicit handling of temp files, cleanup, and retry semantics outside the request thread
-- Explicit contract for app-close/restart behavior, with best-effort active workflow continuity acceptable for v1 unless upgraded later
-- Use SQLite as the default planned local durable metadata store unless `TASK-058` design validation finds a blocker
-- Define schema/versioning/recovery behavior for job metadata, progress state, cancellation state, and asset/run manifest references
-- Keep the metadata store local and single-user rather than turning this into a shared-service architecture
-
-**User Value**: Makes the deployed application more reliable under real long-running workloads and better aligned with containerized execution without prematurely designing for shared multi-user deployment.
-
----
-
-### **TASK-059: Backend Layer Decomposition and Logging Consolidation** 🟡
-**Status**: NOT_STARTED  
-**Type**: C (Architecture / Maintainability)  
-**Priority**: HIGH  
-**Estimated Effort**: 3-5 days (24-40 hours)  
-**Target Sprint**: Sprint 06 or Sprint 07
-
-**Objective**: Reduce change risk in `towerscout.py` by extracting clearer backend layers after the job/state seams are in place and completing the migration away from raw `print()` logging in production code paths.
-
-**Issues Addressed**:
-- `UT-008` `towerscout.py` remains a high-risk monolith
-- remaining work from `UT-009` production request paths still use `print()` instead of structured logging
-
-**Requirements**:
-- Extract bounded runtime layers without changing user-facing behavior
-- Move detection orchestration, session/state helpers, and route concerns into clearer modules
-- Replace remaining production `print()` usage with structured logging in the active backend runtime
-- Preserve existing detection behavior and route contracts during the decomposition
-- Sequence decomposition after `TASK-058` so route/service boundaries follow the actual execution and state ownership seams
-
-**User Value**: Makes future reliability and deployment changes safer and easier to reason about.
-
----
-
-### **TASK-060: Frontend Build Modernization** 🟡
-**Status**: NOT_STARTED  
-**Type**: B (Frontend Infrastructure)  
-**Priority**: MEDIUM  
-**Estimated Effort**: 1-2 days (8-16 hours)  
-**Target Sprint**: Sprint 06 or Sprint 07
-
-**Objective**: Replace the manual ordered-concatenation frontend build with a module-aware bundling workflow.
-
-**Issues Addressed**:
-- `UT-012` frontend build still depends on manual ordered concatenation
-
-**Requirements**:
-- Adopt a supported bundling workflow with explicit module resolution
-- Preserve the current frontend runtime behavior and Flask integration contract
-- Document the new dev/build workflow
-- Keep generated assets and source ownership clear
-- Remove or fully refresh stale commented extracted-code scaffolds in `webapp/js/src/towerscout.js`, including the legacy `ProviderStateManager` block that no longer mirrors the live `src/managers/ProviderStateManager.js` queue/fail-fast semantics
-
-**User Value**: Reduces frontend maintenance risk and makes future UI changes easier to validate.
-
----
-
-### **TASK-061: Coordinated NumPy 2 Runtime Migration** 🟡
-**Status**: NOT_STARTED  
-**Type**: C (Dependency / Runtime Compatibility)  
-**Priority**: MEDIUM  
-**Estimated Effort**: 1-2 days (8-16 hours)  
-**Target Sprint**: Sprint 07+
-
-**Objective**: Intentionally validate and migrate the runtime stack from the Sprint 05 NumPy 1 containment baseline to a coordinated NumPy 2-compatible stack.
-
-**Issues Addressed**:
-- full follow-on resolution path for `UT-005` NumPy 2 compatibility across Shapely and OpenCV
-
-**Requirements**:
-- Upgrade Shapely/OpenCV/NumPy together rather than piecemeal
-- Revalidate the YOLO and imagery import paths on the upgraded stack
-- Re-run first-run and smoke-level proofs against the coordinated dependency set
-- Update runtime documentation to reflect the new dependency baseline
-
-**User Value**: Removes the deferred NumPy 1 containment decision and modernizes the runtime stack safely.
-
----
-
-## 🔴 HIGH PRIORITY - Sprint 06 Candidates
-
-### **TASK-026: CPU Optimization** 🟡
-**Status**: NOT_STARTED  
-**Type**: C (Performance)  
-**Priority**: HIGH  
-**Estimated Effort**: 2-3 days (16-24 hours)  
-**Target Sprint**: Sprint 06
-
-**Objective**: Optimize detection pipeline for CPU-only deployment scenarios
-
-**Requirements**:
-- torch.quantization implementation for model compression
-- Hardware detection and batch size optimization
-- Progress indicators for CPU processing
-- Memory management for 8GB constraints
-
-**Technical Notes**: Apply model quantization, optimize batch sizes for different hardware profiles
-
-**User Value**: Better performance on systems without dedicated GPU hardware
-
----
-
-## 🟡 MEDIUM PRIORITY - Sprint 06 Candidates
-
-### **TASK-027: Enhanced Error Handling** 🟡
-**Status**: NOT_STARTED  
-**Type**: A (Infrastructure)  
-**Priority**: MEDIUM  
-**Estimated Effort**: 1-2 days (8-16 hours)  
-**Target Sprint**: Sprint 06
-
-**Objective**: Improve user experience with better error messages and recovery
-
-**Requirements**:
-- User-friendly error messages for non-technical users
-- Graceful degradation for API failures
-- Retry mechanisms with exponential backoff
-- Error reporting and logging improvements
-
-**Dependencies**: Enhanced logging system ✅ COMPLETED (Sprint 04)
-
-**Notes**: Could include standardization of error handling patterns from Sprint 04 deferred quick win
-
-**User Value**: Better user experience when errors occur, clearer troubleshooting guidance
-
----
-
-### **TASK-028: Mobile Responsiveness** 🟡
-**Status**: NOT_STARTED  
-**Type**: B (UI/UX)  
-**Priority**: MEDIUM  
-**Estimated Effort**: 2 days (16 hours)  
-**Target Sprint**: Sprint 06 or Sprint 07
-
-**Objective**: Improve mobile device compatibility for field investigators
-
-**Requirements**:
-- Responsive design for tablet/mobile polygon drawing
-- Touch-friendly interface elements
-- Optimized map controls for small screens
-- Progressive loading for mobile networks
-
-**Notes**: Important for field outbreak investigation teams
-
-**User Value**: Enables field investigators to use TowerScout on tablets and mobile devices
-
----
-
-### **Sprint 04 Deferred Quick Wins** 🟢
-**Status**: NOT_STARTED  
-**Priority**: LOW-MEDIUM  
-**Total Estimated Effort**: 4-6 hours
-
-**Browser Refresh Warning Fix** (2-3 hours)
-- Debug `window.onbeforeunload` inconsistencies
-- Cross-browser compatibility testing
-- Implement reliable solution
-
-**Error Handling Pattern Standardization** (2-3 hours)
-- Remove deprecated `fatalError()` references
-- Standardize on `TowerScoutErrorHandler`
-- Update documentation
-
-**Notes**: Could be absorbed into TASK-027 or completed independently if Sprint 05 has capacity
-
----
-
-## 🔵 LOW PRIORITY - Backlog
-
-### **Future Enhancement: Advanced Filtering** 🔵
-**Type**: B (Feature)  
-**Priority**: LOW  
-**Estimated Effort**: 3-4 days (24-32 hours)
-
-**Objective**: Add advanced filtering and search capabilities for large result sets
-
-**Ideas**:
-- Enhanced confidence threshold controls
-- Geographic filtering (distance, administrative boundaries)
-- Historical detection tracking
-- Batch operations on filtered results
-- Saved search areas and filters
-
-**User Value**: Better management of large detection result sets
-
----
-
-### **Future Enhancement: Performance Dashboard** 🔵
-**Type**: A (Monitoring)  
-**Priority**: LOW  
-**Estimated Effort**: 2 days (16 hours)
-
-**Objective**: Create diagnostic dashboard for troublemaking and optimization
-
-**Ideas**:
-- Real-time processing time metrics
-- GPU/CPU utilization monitoring
-- API usage tracking and quota management
-- System health indicators
-- Detection accuracy statistics
-
-**User Value**: Better troubleshooting and performance monitoring
-
----
-
-### **Future Enhancement: User Preferences** 🔵
-**Type**: B (UX)  
-**Priority**: LOW  
-**Estimated Effort**: 1-2 days (8-16 hours)
-
-**Objective**: Add user preference storage and customization
-
-**Ideas**:
-- Persistent default map provider selection
-- Saved search areas and recent searches
-- Custom confidence thresholds per use case
-- Interface layout preferences
-- Detection notification preferences
-
-**Notes**: Partially addressed by Sprint 04 Settings screen - this would expand those capabilities
-
-**User Value**: More personalized user experience, faster workflow for repeat users
-
----
-
-## 📅 Sprint Planning Guidelines
-
-### **Sprint Capacity Management**
-- **Sprint Duration**: 2-3 weeks (14-21 calendar days, 10-15 working days)
-- **Estimated Velocity**: 8-12 days of focused work per sprint
-- **Target Hours**: 60-80 hours per sprint (accommodating complexity and validation)
-
-### **Task Selection Criteria**
-1. **Dependencies**: Respect task dependencies and prerequisites
-2. **Strategic Value**: Prioritize deployment readiness and user-facing improvements
-3. **Risk Management**: Balance high-risk architecture work with safe improvements
-4. **Validation**: Include adequate testing and validation time
-5. **Documentation**: Budget time for proper documentation
-
-### **Sprint 05 Focus**
-- Runtime hardening and first-run reliability
-- Local YOLO runtime ownership and Torch Hub-independent initialization
-- Deployment readiness (containerization)
-- Validation infrastructure
-- Minimal feature development
-- Conservative risk profile
-
-### **Sprint 06 Preview**
-- CPU optimization for wider deployment
-- Enhanced error handling and reliability
-- Release candidate validation, CI release gates, and license/release policy review
-- Optional: Mobile responsiveness or multi-provider fallback completion
-- Continue polish and quality improvements
-
----
-
-## 📊 Historical Sprint Performance
-
-| Sprint | Duration | Tasks | Completion | Bundle Change | Notes |
-|--------|----------|-------|------------|---------------|-------|
-| Sprint 01 | 14 days | 7/7 (100%) | ✅ Complete | N/A | Foundation work |
-| Sprint 02 | 14-21 days | 5/5 (100%) | ✅ Complete | N/A | Architecture work |
-| Sprint 03 | 8 days (14 planned) | 8/8 (100%) | ✅ Complete | +40.2 KB | Ahead of schedule |
-| Sprint 04 | 19 days (16 planned) | 7/7 core + 1 closeout (100%) | ✅ Complete | +33.3 KB | Extended for stabilization |
-| Sprint 05 | Active extension after April 25 | TBD | 🏃 In Planning | TBD | Deployment readiness and v1 operational contracts |
-
-**Trend Analysis**:
-- Consistent 100% core task completion across all sprints
-- Sprint 03 completed early, Sprint 04 extended - both appropriate for work type
-- Bundle size growing but staying under control (currently 446.1 KB vs 500 KB target)
-- Strong validation discipline established in Sprint 04
-
----
-
-## 🎯 Long-Term Roadmap
-
-### **Phase 1: Deployment Readiness (Sprint 04-05)** ✅ In Progress
-- ✅ Setup wizard and settings (Sprint 04)
-- 🏃 Runtime hardening and local YOLO ownership (Sprint 05)
-- 🏃 Runtime dependency verification (Sprint 05)
-- 🏃 Integration testing baseline (Sprint 05)
-- 🏃 Pre-container release hardening and v1 operational gates (Sprint 05 extension)
-- 🏃 Docker-compatible / OCI containerization and GitHub-first release packaging (Sprint 05)
-- 🏃 Launcher and support UX over selected container runtime (Sprint 05 stretch / Sprint 06 carry-forward)
-
-### **Phase 2: Performance and Reliability (Sprint 06-07)**
-- Local background job runner and durable run state
-- Backend layer decomposition after job/state seams are clearer
-- CPU optimization
-- Enhanced error handling
-- Multi-provider fallback
-- Mobile responsiveness
-
-### **Phase 3: Advanced Features (Sprint 08+)**
-- Advanced filtering and search
-- Performance dashboard
-- User preferences expansion
-- Historical tracking
-
-### **Phase 4: Scale and Polish (Sprint 09+)**
-- Large-scale deployment support
-- Advanced monitoring
-- Additional provider integrations
-- Community features
-
----
-
-## 📝 Notes
-
-**Adding New Tasks**:
-1. Use the appropriate template from `task-backlog.md`
-2. Assign priority and estimated effort
-3. Document dependencies and acceptance criteria
-4. Link to related documentation
-
-**Sprint Planning Process**:
-1. Review completed sprint retrospective
-2. Move completed tasks to `completed-tasks.md`
-3. Select 3-5 tasks from backlog based on capacity and priorities
-4. Move selected tasks to `current-tasks.md`
-5. Update dependencies and estimates
-6. Create sprint plan document
-
-**Priority Definitions**:
-- 🔴 **CRITICAL**: Blocking issues, security, or hard deadlines
-- 🟡 **HIGH**: Important for user experience or strategic goals
-- 🟢 **MEDIUM**: Valuable improvements, not immediate blockers
-- 🔵 **LOW**: Nice-to-have enhancements, backlog items
-
----
-
-## 🔗 Related Documentation
-
-- [Current Tasks](./current-tasks.md) - Sprint 05 active work
-- [Completed Tasks](./completed-tasks.md) - Historical completion record
-- [Sprint 05 Plan](./context/status/SPRINT-05-PLAN.md) - Sprint 05 detailed planning (create at kickoff)
-- [TowerScout Path Forward After Plan Sufficiency Review](./context/analysis/TOWERSCOUT-PATH-FORWARD-POST-SUFFICIENCY-REVIEW-2026-04-28.md) - Consolidated path forward and execution gates
-- [Sprint 04 Retrospective](./context/status/SPRINT-04-RETROSPECTIVE.md) - Sprint 04 lessons learned
+## Related Documentation
+
+- [Current Tasks](./current-tasks.md)
+- [Completed Tasks](./completed-tasks.md)
+- [Sprint 05 Retrospective Analysis](./context/analysis/SPRINT-05-RETROSPECTIVE-ANALYSIS-2026-05-08.md)
+- [Sprint 06 Plan](./context/status/SPRINT-06-PLAN.md)
