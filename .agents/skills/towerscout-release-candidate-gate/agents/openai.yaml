@@ -1,0 +1,7 @@
+interface:
+  display_name: 'TowerScout: Release Candidate Gate'
+  short_description: Release validation
+  default_prompt: Use $towerscout-release-candidate-gate to validate the current branch
+    as a release candidate.
+policy:
+  allow_implicit_invocation: true
