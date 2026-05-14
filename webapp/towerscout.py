@@ -5,8 +5,9 @@
 # TowerScout Team:
 # Karen Wong, Gunnar Mein, Thaddeus Segura, Jia Lu
 #
-# Licensed under CC-BY-NC-SA-4.0
-# (see LICENSE.TXT in the root of the repository for details)
+# Release licensing is composite. See LICENSE, NOTICE,
+# THIRD_PARTY_NOTICES.md, MODEL_LICENSES.md, DATA_LICENSES.md, and
+# PROVIDER_TERMS.md in the root of the repository for details.
 #
 
 # import basic functionality
@@ -73,6 +74,17 @@ logger.info("TowerScout starting")
 # Load environment variables from config/.env if available, otherwise legacy .env
 script_dir = get_base_dir()
 env_path = ts_config.ensure_env_file()
+COMPLIANCE_NOTICE_FILES = (
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md",
+    "MODEL_LICENSES.md",
+    "DATA_LICENSES.md",
+    "PROVIDER_TERMS.md",
+    "SOURCE.txt",
+    "SBOM.txt",
+    "release-manifest.v1.json",
+)
 
 logger.info("TowerScout environment bootstrap starting")
 logger.info("Current working directory: %s", os.getcwd())
@@ -1413,6 +1425,44 @@ def remove_upload(path):
 @app.route('/css/<path:path>')
 def send_css(path):
     return send_from_directory(str(CSS_DIR), path)
+
+
+@app.route('/license')
+def release_license_notice():
+    """Expose release source and license notices from the local browser app."""
+    repo_root = script_dir.parent
+    sections = []
+    for relative_path in COMPLIANCE_NOTICE_FILES:
+        notice_path = repo_root / relative_path
+        if not notice_path.is_file():
+            continue
+        try:
+            notice_text = notice_path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            notice_text = notice_path.read_text(encoding="utf-8", errors="replace")
+        sections.append(f"===== {relative_path} =====\n{notice_text.strip()}")
+
+    yolo_license_path = script_dir / "vendor" / "yolov5_local" / "LICENSE"
+    if yolo_license_path.is_file():
+        try:
+            yolo_license_text = yolo_license_path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            yolo_license_text = yolo_license_path.read_text(
+                encoding="utf-8",
+                errors="replace",
+            )
+        sections.append(
+            "===== webapp/vendor/yolov5_local/LICENSE =====\n"
+            f"{yolo_license_text.strip()}"
+        )
+
+    if not sections:
+        sections.append(
+            "TowerScout release license notices are missing from this runtime. "
+            "Use the release package SOURCE.txt and THIRD_PARTY_NOTICES.md."
+        )
+
+    return Response("\n\n".join(sections), mimetype="text/plain; charset=utf-8")
 
 # main page route
 

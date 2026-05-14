@@ -11,9 +11,9 @@ TowerScout has been used by local health departments:
 - The Los Angeles County Enterprise GIS (eGIS) team and Department of Public Health used TowerScout to build an initial dataset of likely cooling tower locations across the County.  The work was the [2023 NACo Achievement Award Winner, Information Technology (Best in Category)](https://www.naco.org/resources/award-programs/towerscout-adaptation-%E2%80%93-automated-image-analysis-identify-cooling-towers). 
 
 **Additional files**
-* <a target="_blank" href="https://drive.google.com/file/d/1EBxgqr6MrkAkEv1vJ2ftZiSjs6w865wf/view?usp=drive_link">YOLOv5 weights</a>
-* <a target="_blank" href="https://drive.google.com/file/d/1Cs3nXQddNf-Y0HYO8a5Yvm6mNB-Rx8HP/view?usp=drive_link">EfficientNet weights</a>
-* <a target="_blank" href="https://www2.census.gov/geo/tiger/TIGER2019/ZCTA5/">ZCTA5 shapefile</a>
+* YOLOv5 detector weights - distributed through the release asset bundle and treated as YOLO-derived/AGPL-governed unless separate written model terms say otherwise.
+* EfficientNet weights - distributed through the release asset bundle when project distribution authority is confirmed.
+* ZCTA shapefile data - distributed according to `DATA_LICENSES.md` and the release asset manifest.
 
 This is a proof of concept and is not intended for commercial use. Users should adhere to terms of service when using tools and resources from any imagery and data providers. 
 
@@ -73,14 +73,15 @@ Please cite the following publication and this GitHub repository when utilizing 
 
 
 ## Additional files
-* [YOLOv5 weights](https://drive.google.com/file/d/1EBxgqr6MrkAkEv1vJ2ftZiSjs6w865wf/view?usp=drive_link)
-* [EfficientNet weights](https://drive.google.com/file/d/1Cs3nXQddNf-Y0HYO8a5Yvm6mNB-Rx8HP/view?usp=drive_link)
-* [ZCTA5 shapefile](https://www2.census.gov/geo/tiger/TIGER2019/ZCTA5/)
+* YOLOv5 detector weights - see `MODEL_LICENSES.md` and `webapp/asset_manifest.v1.json`.
+* EfficientNet weights - see `MODEL_LICENSES.md` and `webapp/asset_manifest.v1.json`.
+* ZCTA shapefile data - see `DATA_LICENSES.md` and `webapp/asset_manifest.v1.json`.
 
 This is a proof of concept and is not intended for commercial use. Users should adhere to terms of service when using tools and resources from any imagery and data providers. 
 
 
 ## License
 
-Licensed under [CC-BY-NC-SA-4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
-(See [LICENSE.TXT](https://github.com/TowerScout/TowerScout/blob/main/LICENSE.TXT) in the root of the repository for details.)
+The YOLO-enabled release is a composite-license package. TowerScout-authored code may be Apache-2.0 where ownership and relicensing authority are confirmed, but the current YOLO-enabled package/image is distributed with AGPL-3.0 obligations because it includes Ultralytics YOLOv5 runtime source and YOLO-derived detector weights.
+
+See `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.md`, `MODEL_LICENSES.md`, `DATA_LICENSES.md`, and `PROVIDER_TERMS.md`. The generated release control ZIP is authoritative for release-specific source, checksum, image digest, SBOM-reference, and manifest metadata. The running local app also exposes the source/license notice at `/license`.

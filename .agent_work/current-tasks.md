@@ -1,9 +1,9 @@
 # Current Tasks - Active Sprint
 
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
-**Last Updated**: May 11, 2026  
-**Focus**: Produce a V1 RC1 / pilot-ready release path by closing release-support carry-forward work, defining the asset bundle contract, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.  
-**Status**: Sprint 06 committed lane selected. `TASK-065` remains the active carry-forward item; `TASK-072`, `TASK-071`, `TASK-066`, and `TASK-073` are selected for Sprint 06 planning and detailed active task documentation.
+**Last Updated**: May 14, 2026
+**Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
+**Status**: Sprint 06 committed lane selected. `TASK-065` and `TASK-072` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-071` is the next documentation dependency; `TASK-066` and `TASK-073` remain selected for Sprint 06.
 
 ---
 
@@ -28,7 +28,7 @@ Sprint 05 delivered the runtime and release-readiness foundation that Sprint 04 
 
 ## Sprint 06 Goal
 
-Produce and internally validate a V1 RC1 / pilot-ready local release package path for Windows 11 AMD64 users, including asset delivery, end-user documentation, release policy boundaries, and a clean-machine validation gate.
+Produce and internally validate a V1 RC1 / pilot-ready local release package path for Windows 11 AMD64 users, including AGPL-compliant YOLO release notices, asset delivery, end-user documentation, release policy boundaries, and a clean-machine validation gate.
 
 Sprint 06 is not intended to declare final V1 completion. Final V1 completion should wait until pilot/UAT feedback has been triaged, install/launch/setup/detection blockers have been fixed or explicitly accepted, and remaining work has been sorted into V1 patch items or the V2 roadmap.
 
@@ -37,7 +37,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 ## Active Carry-Forward
 
 ### **TASK-065: Release Packaging And Runtime Support Follow-Through**
-**Status**: IN_PROGRESS - implementation-complete pending release-owner support-language review and commit/PR checkpoint  
+**Status**: COMPLETED - release-owner support-language review accepted on May 11, 2026  
 **Type**: B/C (Release Engineering / Runtime Supportability)  
 **Priority**: HIGH  
 **Estimated Effort**: 1-2 days (8-16 hours)  
@@ -55,9 +55,9 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 - Release package assembly validation passed into ignored `dist/towerscout-task065-validation`.
 - Reviewer hardening addressed evidence redaction, immutable digest enforcement, provider-aware TLS CA verification, Compose-provider reporting, and focused tests.
 
-**Remaining Before Close**:
-- Release owner reviews the final support language and residual caveats.
-- Commit/PR checkpoint records the release-support updates.
+**Closeout Status**:
+- Release owner accepted the final support language and residual caveats on May 11, 2026.
+- Commit checkpoint `2280b68 chore(task-065): complete release support validation` records the release-support updates.
 - Follow-up tasks remain in the backlog for clean-machine release-candidate validation, CI gate tightening, Windows/Podman automation, license policy review, and restricted-network package enhancements.
 
 **Validation Notes**:
@@ -73,7 +73,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 ## Sprint 06 Committed Lane
 
 ### **TASK-072: Release Asset Bundle Contract**
-**Status**: NOT_STARTED - selected for Sprint 06  
+**Status**: COMPLETED - V1 RC1 asset bundle contract documented
 **Type**: C (Release Engineering / Asset Governance)  
 **Priority**: CRITICAL  
 **Estimated Effort**: 1-2 days (8-16 hours)  
@@ -84,7 +84,33 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 
 **Dependencies**: `TASK-065`; current `webapp/asset_manifest.v1.json`; release package shape.
 
+**Closeout Status**:
+- Durable contract created at `docs/release-asset-bundle-contract.md`.
+- Release package generation now includes the asset bundle contract doc.
+- Asset ZIP root layout is `model_params/`, `data/`, and `asset_manifest.v1.json`; users extract those entries into the package `assets/` directory before import.
+- External asset ZIP publication is allowed only for the accepted `agpl-yolo` release posture when the release manifest and model notices label YOLO weights as YOLO-derived/AGPL-governed unless separate written terms say otherwise.
+
 **User Value**: Removes the largest current ambiguity in the local release path: what non-git assets users need, where those assets come from, and exactly where they go.
+
+### **TASK-069: License And Release Policy Review**
+**Status**: SIGN_OFF_RECORDED - sufficient to merge PR #11 as internal Sprint 06 RC baseline
+**Type**: C (Legal / Release Policy / Governance)
+**Priority**: CRITICAL
+**Estimated Effort**: 0.5-1 day technical prep plus owner/legal review
+**Target Sprint**: Sprint 06 V1 RC1
+**Task Folder**: `.agent_work/tasks/active/TASK-069/`
+
+**Objective**: Convert the prior Apache-only public-release strategy into an AGPL-compliant YOLO-enabled RC/pilot release posture for review, with corrected notices, model/data terms, source-offer requirements, release control package compliance payload, and image generic notices/OCI labels.
+
+**Current Direction**:
+- The YOLO-enabled release track is `agpl-yolo`.
+- The ONNX/non-Ultralytics runtime migration is no longer a pre-RC blocker; it moves to a later permissive Apache-only release or runtime modernization path.
+- TowerScout-authored code may be Apache-2.0 where ownership and relicensing authority are confirmed, but the full YOLO-enabled package/image is not Apache-2.0-only.
+- The release control package must include corrected YOLO AGPL attribution, model/data/provider terms, release manifest, checksums, image digest metadata, SBOM reference, source notice, and revocation notes; the image carries generic compliance notices and OCI labels sufficient to match it to the control package by pinned digest.
+- Model weights may be published only with AGPL-compatible labeling or separate written terms.
+- Formal owner/legal/reviewer approval remains a later gate for broader distribution, model/data/provider publication, and the clean curated public release line; the current development/workshop repository history should not be published as-is without explicit review.
+
+**User Value**: Allows Sprint 06 to target a YOLO-enabled RC/pilot without waiting for detector runtime replacement, while keeping the release honest about AGPL obligations and source availability.
 
 ### **TASK-071: End-User Release Package Documentation**
 **Status**: NOT_STARTED - selected for Sprint 06  
@@ -94,9 +120,9 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **Target Sprint**: Sprint 06 V1 RC1  
 **Task File**: `.agent_work/tasks/active/TASK-071-end-user-release-docs.md`
 
-**Objective**: Produce the package-based quick start and full user guide that tell a non-technical Windows pilot user what to download, where assets go, how to launch, how to configure provider keys, how to validate success, and how to report problems.
+**Objective**: Produce the package-based quick start and full user guide that tell a non-technical Windows pilot user what to download, where assets go, how to launch, how to configure provider keys, how to validate success, how to find source/license notices, and how to report problems.
 
-**Dependencies**: `TASK-072`; release package shape; current OCI quick-start/runtime docs.
+**Dependencies**: `TASK-069`; `TASK-072`; release package shape; current OCI quick-start/runtime docs.
 
 **User Value**: Converts the engineered release package into a self-service pilot path instead of a support-only handoff.
 
@@ -110,7 +136,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 
 **Objective**: Internally prove the release package, asset bundle, docs, setup flow, restart persistence, and bounded detection path from a clean user-facing environment before external pilot/UAT begins.
 
-**Dependencies**: `TASK-065`; `TASK-071`; `TASK-072`; agreed release package shape.
+**Dependencies**: `TASK-065`; `TASK-069`; `TASK-071`; `TASK-072`; agreed release package shape.
 
 **User Value**: Prevents end-user testing from being dominated by known package/docs/asset gaps and produces evidence that the V1 RC1 path is actually usable.
 
@@ -136,8 +162,7 @@ These tasks are important for V1 RC1, but they are not yet active task files in 
 
 | Task | Recommended Handling | Reason |
 |---|---|---|
-| `TASK-069` License And Release Policy Review | Candidate for parallel Sprint 06 work | Distribution permission, runtime-tooling posture, and asset redistribution can block release late if deferred. |
-| `TASK-076` Provider API Key Exposure And Restriction Policy | Candidate for parallel Sprint 06 work | Browser map SDK keys remain client-visible; v1 needs an approved restriction/support policy or an engineering blocker. |
+| `TASK-076` Provider API Key Exposure And Restriction Policy | Candidate for parallel Sprint 06 work | Browser map SDK keys remain client-visible; v1 needs an approved restriction/support policy or an engineering blocker. AGPL does not change provider/API terms. |
 | `TASK-075` GPU / CUDA Support Decision | Candidate for early Sprint 06 decision | V1 should explicitly be CPU-only or document a validated CUDA support path. This should stay a decision task unless implementation is intentionally selected. |
 
 ---
@@ -151,13 +176,14 @@ Do not forget these follow-through tasks. They are intentionally kept in `.agent
 | `TASK-074` Runtime Prerequisite Preflight | Clean-machine validation shows users/support still have to manually reason through Podman/Docker/Compose/ports/assets/TLS. | Conditional but likely. This is the first candidate to pull in if launch friction remains high. |
 | `TASK-067` CI Release Gate Tightening | Release-candidate checks become repetitive, fragile, or too easy to skip manually. | Keep scope narrow: package assembly, image digest, manifest/checksum consistency, and launcher smoke behavior. |
 | `TASK-068` Windows Test Portability And Script Validation | Script validation remains environment-sensitive or PowerShell/Windows coverage is needed before external UAT. | Useful release-support follow-through, especially around Windows-first helper scripts. |
+| `TASK-077` Public Release Manifest And Asset Import Hardening | `TASK-069` AGPL release compliance needs a package payload, or `TASK-066` shows copy-then-verify import is too risky. | Pull forward the narrow compliance-payload slice now: release manifest, source URL/ref, checksums, image digest, SBOM reference, model/data terms, and revocation notes. Keep staged allowlist-only asset activation as follow-up unless validation makes it release-critical. |
 
 ---
 
 ## Sprint 06 Planning Guardrails
 
 - Treat Sprint 06 as a V1 RC1 / pilot-ready release-readiness sprint, not final V1 completion.
-- Do not start broad end-user testing until `TASK-072`, `TASK-071`, and `TASK-066` have produced a validated package/docs/assets path.
+- Do not start broad end-user testing until `TASK-069`, `TASK-072`, `TASK-071`, and `TASK-066` have produced a validated AGPL-compliant package/docs/assets path.
 - Do not start V2 work until pilot/UAT blockers are fixed or explicitly accepted.
 - Keep architecture follow-on work (`TASK-058`, `TASK-059`) behind release-candidate readiness unless the team intentionally pauses release work.
 - Keep parked tail work (`TASK-028`, `TASK-061`, Advanced Filtering, Performance Dashboard, User Preferences) out of Sprint 06 unless new evidence makes one of them release-critical.

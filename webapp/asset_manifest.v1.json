@@ -11,7 +11,7 @@
       "required": true,
       "bytes": 175084429,
       "sha256": "27315E156D8370D51D9C2A3C047C4BF5CC0C8AE1521036BDF800B7A8A81554E6",
-      "source": "TowerScout release asset",
+      "source": "YOLOv5-derived TowerScout detector weights; AGPL-3.0-governed unless separate written model terms apply",
       "recovery": "Import the release asset bundle or rerun the TowerScout asset bootstrap before detection."
     },
     {
@@ -22,7 +22,7 @@
       "required": true,
       "bytes": 118567303,
       "sha256": "645113BADFCD17A1F9B451AABB54BF80E115A4FAACEB65E0CE3FC8DBFB108A5D",
-      "source": "TowerScout release asset",
+      "source": "TowerScout project classifier weights; distribution authority must be confirmed in MODEL_LICENSES.md",
       "recovery": "Import the release asset bundle or rerun the TowerScout asset bootstrap before detection."
     },
     {

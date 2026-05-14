@@ -9,6 +9,10 @@ param(
 
     [switch] $AllowMutableImage,
 
+    [switch] $AllowMissingSourceRef,
+
+    [switch] $AllowDirtySource,
+
     [switch] $NoZip,
 
     [switch] $Force
@@ -49,6 +53,51 @@ if (($Image -match "@($digestPattern)$") -and -not [string]::IsNullOrWhiteSpace(
 }
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+
+$sourceRef = ""
+try {
+    $gitOutput = & git -C $repoRoot rev-parse HEAD 2>$null
+    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($gitOutput)) {
+        $sourceRef = ($gitOutput | Select-Object -First 1).Trim()
+    }
+}
+catch {
+    $sourceRef = ""
+}
+
+if ([string]::IsNullOrWhiteSpace($sourceRef)) {
+    if (-not $AllowMissingSourceRef) {
+        throw "Release packaging requires a git source ref. Use -AllowMissingSourceRef only for local validation packages."
+    }
+    Write-Warning "Creating a local-validation package without a source ref. Do not use this package as a release artifact."
+}
+
+$gitStatusChecked = $false
+$dirtyEntries = @()
+try {
+    $gitStatusOutput = & git -C $repoRoot status --porcelain 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        $gitStatusChecked = $true
+        $dirtyEntries = @($gitStatusOutput | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    }
+}
+catch {
+    $gitStatusChecked = $false
+}
+
+if (-not $gitStatusChecked) {
+    if (-not $AllowDirtySource) {
+        throw "Release packaging requires git working-tree status. Use -AllowDirtySource only for local validation packages."
+    }
+    Write-Warning "Creating a local-validation package without git dirty-tree verification."
+}
+elseif ($dirtyEntries.Count -gt 0) {
+    if (-not $AllowDirtySource) {
+        throw "Release packaging requires a clean git working tree. Commit or stash changes, or use -AllowDirtySource only for local validation packages."
+    }
+    Write-Warning "Creating a local-validation package from a dirty working tree. Do not use this package as a release artifact."
+}
+
 $outputPath = Join-Path $repoRoot $OutputDir
 if (-not (Test-Path -LiteralPath $outputPath -PathType Container)) {
     New-Item -ItemType Directory -Path $outputPath | Out-Null
@@ -118,8 +167,15 @@ $releaseFiles = @(
     "start.bat",
     "compose.yaml",
     ".env.example",
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md",
+    "MODEL_LICENSES.md",
+    "DATA_LICENSES.md",
+    "PROVIDER_TERMS.md",
     "docs\oci-quick-start.md",
     "docs\oci-runtime-contract.md",
+    "docs\release-asset-bundle-contract.md",
     "webapp\asset_manifest.v1.json",
     "scripts\lib\TowerScoutCompose.ps1",
     "scripts\launch.ps1",
@@ -150,10 +206,19 @@ Place the asset bundle here before running scripts\import-assets.cmd:
 
 assets\model_params\
 assets\data\
+assets\asset_manifest.v1.json
 
 Then run:
 
+scripts\import-assets.cmd -Source assets
+
+For release-candidate or support validation, use:
+
 scripts\import-assets.cmd -Source assets -VerifyHashes
+
+YOLO detector weights are treated as YOLO-derived/AGPL-governed for this
+release track unless separate written model terms say otherwise. See
+MODEL_LICENSES.md, DATA_LICENSES.md, and THIRD_PARTY_NOTICES.md.
 "@ | Set-Content -LiteralPath (Join-Path $assetDir "README.txt") -Encoding ASCII
 
 $effectiveImage = $Image
@@ -195,6 +260,105 @@ $envLines = $envLines | ForEach-Object {
     }
 }
 $envLines | Set-Content -LiteralPath $envSource -Encoding ASCII
+
+@"
+TowerScout corresponding source notice
+
+Version: $Version
+Release track: agpl-yolo
+Source ref: $sourceRef
+Generated UTC: $((Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"))
+
+The YOLO-enabled release package and image must have matching corresponding
+source available for the exact release ref. The source must include:
+
+- TowerScout source code.
+- Vendored Ultralytics YOLOv5 source under webapp/vendor/yolov5_local/.
+- TowerScout local YOLO patches and loader code.
+- Dockerfile, Compose files, launcher scripts, packaging scripts, requirements,
+  and asset import helpers.
+- Build, package, asset import, and run instructions.
+
+If the source ref is blank, this package was generated with
+-AllowMissingSourceRef and is suitable for local validation only.
+"@ | Set-Content -LiteralPath (Join-Path $stagePath "SOURCE.txt") -Encoding ASCII
+
+@"
+TowerScout SBOM reference
+
+Version: $Version
+Release track: agpl-yolo
+Image: $effectiveImage
+Generated UTC: $((Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"))
+
+Attach or publish an SBOM for the exact release package and container image.
+At minimum, the SBOM should cover Python packages from webapp/requirements.txt,
+frontend packages from package-lock.json, OS packages in the image, and the
+vendored YOLOv5 source snapshot.
+
+This file is a release-package reference, not the generated SBOM itself.
+"@ | Set-Content -LiteralPath (Join-Path $stagePath "SBOM.txt") -Encoding ASCII
+
+$manifest = [ordered]@{
+    schema_version = 1
+    track = "agpl-yolo"
+    release_version = $Version
+    release_statement = "TowerScout-authored code may be Apache-2.0 where confirmed, but the YOLO-enabled package/image is distributed with AGPL-3.0 obligations."
+    generated_utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+    image = $effectiveImage
+    image_digest = $ImageDigest
+    asset_manifest = "webapp/asset_manifest.v1.json"
+    compliance_files = @(
+        "LICENSE",
+        "NOTICE",
+        "THIRD_PARTY_NOTICES.md",
+        "MODEL_LICENSES.md",
+        "DATA_LICENSES.md",
+        "PROVIDER_TERMS.md",
+        "SOURCE.txt",
+        "SBOM.txt",
+        "IMAGE.txt",
+        "SHA256SUMS.txt"
+    )
+    release_artifacts = [ordered]@{
+        control_zip = if ($NoZip) { "" } else { "$packageName.zip" }
+        control_zip_sha256 = ""
+        image = $effectiveImage
+        image_digest = $ImageDigest
+        asset_manifest = "webapp/asset_manifest.v1.json"
+        asset_bundle_sha256 = ""
+    }
+    corresponding_source = [ordered]@{
+        source_ref = $sourceRef
+        source_offer = "See SOURCE.txt."
+        required_paths = @(
+            "webapp/vendor/yolov5_local/",
+            "webapp/ts_yolov5_local.py",
+            "webapp/ts_yolov5.py",
+            "Dockerfile",
+            "compose.yaml",
+            "scripts/",
+            "webapp/requirements.txt",
+            "package-lock.json"
+        )
+    }
+    runtime_components = [ordered]@{
+        yolo = [ordered]@{
+            name = "Ultralytics YOLOv5"
+            license = "AGPL-3.0"
+            vendored_path = "webapp/vendor/yolov5_local"
+            validated_upstream_commit = "1d62daa3c6b8ec15fdb319c0a2e341d8b56ec86c"
+        }
+    }
+    sbom = [ordered]@{
+        reference = "SBOM.txt"
+        status = "Release SBOM must be generated or attached for each release candidate."
+    }
+    revocation = [ordered]@{
+        notes = "Revoke and replace the release if the ZIP, image digest, model/data assets, source ref, SBOM, or notices are defective."
+    }
+}
+$manifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $stagePath "release-manifest.v1.json") -Encoding ASCII
 
 $checksumPath = Join-Path $stagePath "SHA256SUMS.txt"
 $stageFullPath = [System.IO.Path]::GetFullPath($stagePath).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar

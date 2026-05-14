@@ -1,0 +1,38 @@
+TowerScout YOLO-Enabled Release Licensing
+
+This file describes the intended license posture for the TowerScout
+YOLO-enabled release track. It is not a substitute for final owner/legal
+approval, and it does not remove stricter notices in individual files.
+
+TowerScout-authored code:
+
+TowerScout-authored source code that is confirmed as project-owned is intended
+to be distributed under the Apache License, Version 2.0. If a file carries a
+different notice, or if ownership has not been confirmed, that file remains
+subject to its existing notice until release review resolves it.
+
+YOLO-enabled distribution:
+
+The current detector runtime includes Ultralytics YOLOv5 source code vendored
+under webapp/vendor/yolov5_local/. That source is governed by the GNU Affero
+General Public License, Version 3.0, as shown in
+webapp/vendor/yolov5_local/LICENSE. The YOLO-enabled package and container
+image are therefore distributed with AGPL-3.0 obligations. Do not describe the
+full YOLO-enabled runtime distribution as Apache-2.0-only.
+
+Model and data assets:
+
+Model weights and ZIP-code data are governed by the model and data terms in
+MODEL_LICENSES.md and DATA_LICENSES.md. The YOLO detector weights are treated
+as YOLO-derived/AGPL-governed for this release track unless a separate written
+model license or permission record says otherwise.
+
+Provider terms:
+
+Google Maps, Azure Maps, and any other provider APIs are external services.
+Their terms are not granted by this repository license. See PROVIDER_TERMS.md.
+
+Release notices:
+
+See NOTICE and THIRD_PARTY_NOTICES.md for the source offer, third-party
+attribution, and package-level compliance notes.

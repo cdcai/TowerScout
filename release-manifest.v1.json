@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "track": "agpl-yolo",
+  "release_version": "template",
+  "release_statement": "TowerScout-authored code may be Apache-2.0 where confirmed, but the YOLO-enabled package/image is distributed with AGPL-3.0 obligations.",
+  "generated_utc": "",
+  "image": "",
+  "image_digest": "",
+  "asset_manifest": "webapp/asset_manifest.v1.json",
+  "compliance_files": [
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md",
+    "MODEL_LICENSES.md",
+    "DATA_LICENSES.md",
+    "PROVIDER_TERMS.md",
+    "SOURCE.txt",
+    "SBOM.txt",
+    "IMAGE.txt",
+    "SHA256SUMS.txt"
+  ],
+  "runtime_components": {
+    "yolo": {
+      "name": "Ultralytics YOLOv5",
+      "license": "AGPL-3.0",
+      "vendored_path": "webapp/vendor/yolov5_local",
+      "validated_upstream_commit": "1d62daa3c6b8ec15fdb319c0a2e341d8b56ec86c"
+    }
+  },
+  "release_artifacts": {
+    "control_zip": "",
+    "control_zip_sha256": "",
+    "image": "",
+    "image_digest": "",
+    "asset_manifest": "webapp/asset_manifest.v1.json",
+    "asset_bundle_sha256": ""
+  },
+  "corresponding_source": {
+    "source_ref": "",
+    "source_offer": "See SOURCE.txt in the generated release package.",
+    "required_paths": [
+      "webapp/vendor/yolov5_local/",
+      "webapp/ts_yolov5_local.py",
+      "webapp/ts_yolov5.py",
+      "Dockerfile",
+      "compose.yaml",
+      "scripts/",
+      "webapp/requirements.txt",
+      "package-lock.json"
+    ]
+  },
+  "sbom": {
+    "reference": "SBOM.txt",
+    "status": "Release SBOM must be generated or attached for each release candidate."
+  },
+  "revocation": {
+    "notes": "If the ZIP, image digest, model/data asset, source ref, or license notices are defective, revoke the affected release artifact and publish corrected artifacts with new checksums."
+  }
+}

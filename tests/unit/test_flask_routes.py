@@ -48,6 +48,21 @@ def test_index_route_renders_towerscout_shell(client):
 
     assert response.status_code == 200
     assert b"TowerScout" in response.data
+    assert b"/license" in response.data
+
+
+def test_license_route_exposes_release_notices(client):
+    response = client.get("/license")
+
+    assert response.status_code == 200
+    assert response.mimetype == "text/plain"
+    assert b"THIRD_PARTY_NOTICES.md" in response.data
+    assert b"Ultralytics YOLOv5" in response.data
+    assert b"AGPL-3.0" in response.data
+    assert b"SOURCE.txt" in response.data
+    assert b"SBOM.txt" in response.data
+    assert b"release-manifest.v1.json" in response.data
+    assert b"GNU AFFERO GENERAL PUBLIC LICENSE" in response.data
 
 
 def test_provider_and_key_routes_match_current_boot_contract(client, monkeypatch):

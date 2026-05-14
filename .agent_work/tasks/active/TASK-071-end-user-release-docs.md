@@ -8,7 +8,7 @@
 
 ## Objective
 
-Produce package-based end-user documentation for TowerScout V1 RC1 so a non-technical Windows pilot user can download the release package, place/import required assets, start TowerScout, complete first-run setup, validate success, and report problems without project tribal knowledge.
+Produce package-based end-user documentation for the TowerScout V1 RC1 `agpl-yolo` release track so a non-technical Windows pilot user can download the release package, place/import required assets, start TowerScout, complete first-run setup, find source/license notices, validate success, and report problems without project tribal knowledge.
 
 This task should replace or clearly distinguish older source/Conda tester guidance from the V1 RC1 package path.
 
@@ -28,6 +28,10 @@ This task should replace or clearly distinguish older source/Conda tester guidan
 
 **R-071-007**: WHEN older source-install tester guides remain in the repo, THE DOCUMENTATION SHALL make clear whether they are legacy/source-install guidance and not the preferred V1 RC1 pilot package path.
 
+**R-071-008**: WHEN the package docs describe the YOLO-enabled release, THE DOCUMENTATION SHALL state that the package/image is distributed with AGPL-3.0 obligations and is not Apache-2.0-only.
+
+**R-071-009**: WHEN users need source or license information, THE DOCUMENTATION SHALL point to the package compliance files and the running app `/license` page.
+
 ## Acceptance Criteria
 
 - [ ] A one-page V1 RC1 quick start exists for Windows 11 AMD64 pilot users.
@@ -35,6 +39,8 @@ This task should replace or clearly distinguish older source/Conda tester guidan
 - [ ] The docs explain release package download/extraction, asset placement/import, launch, first-run setup, validation, stop/restart, troubleshooting, and issue reporting.
 - [ ] The docs include sensitive-data handling guidance for `.env`, provider keys, logs, cached provider responses, uploaded files, and exported datasets.
 - [ ] The docs reflect the `TASK-072` asset bundle contract.
+- [ ] The docs reflect the `TASK-069` AGPL-compliant YOLO release posture.
+- [ ] The docs tell users where to find `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.md`, `MODEL_LICENSES.md`, `DATA_LICENSES.md`, `PROVIDER_TERMS.md`, `SOURCE.txt`, `SBOM.txt`, and `release-manifest.v1.json`.
 - [ ] The docs reflect current Podman/Docker support language from `TASK-065`.
 - [ ] The docs state the V1 RC1 support boundary, including CPU baseline and supported Windows target.
 - [ ] Older source/Conda testing guides are marked or linked in a way that avoids confusing pilot package users.
@@ -42,10 +48,12 @@ This task should replace or clearly distinguish older source/Conda tester guidan
 
 ## Dependencies
 
+- `TASK-069`: AGPL-compliant YOLO release posture and compliance payload.
 - `TASK-072`: release asset bundle contract.
 - `TASK-065`: release support language and runtime support caveats.
 - `docs/oci-quick-start.md`: current OCI quick-start baseline.
 - `docs/oci-runtime-contract.md`: current runtime contract.
+- `docs/release-asset-bundle-contract.md`: `TASK-072` asset bundle contract.
 - `.agent_work/context/guides/TowerScout_User_Testing_Guide.txt`: older source/venv tester guide to reconcile or label.
 - `.agent_work/context/guides/TowerScout_User_Testing_Guide_Windows_Miniconda.txt`: older source/Conda tester guide to reconcile or label.
 
@@ -55,7 +63,7 @@ This task should replace or clearly distinguish older source/Conda tester guidan
 2. Decide where V1 RC1 package docs should live, favoring `docs/` for release-package docs and `.agent_work/context/guides/` for internal tester/support handoff if needed.
 3. Draft a one-page quick start for pilot users.
 4. Draft a full package guide for support/testers.
-5. Integrate the `TASK-072` asset bundle contract.
+5. Integrate the `TASK-069` AGPL release posture and `TASK-072` asset bundle contract.
 6. Add troubleshooting and issue-report guidance aligned with `.agent_work/user-testing/`.
 7. Mark older source/Conda tester guides as legacy/source-install guidance if they remain.
 8. Hand off the docs to `TASK-066` for clean-machine validation.
@@ -71,7 +79,7 @@ This task should replace or clearly distinguish older source/Conda tester guidan
 **Execution**: Created `.agent_work/tasks/active/TASK-071-end-user-release-docs.md` and synchronized the task with `current-tasks.md`.  
 **Output**: Task file ready for intake.  
 **Validation**: Pending `.agent_work` validation after all Sprint 06 task files are created.  
-**Next**: Start documentation inventory and draft the V1 RC1 quick start once `TASK-072` provides the asset contract.
+**Next**: Start documentation inventory and draft the V1 RC1 quick start against the `agpl-yolo` compliance payload and completed asset contract.
 
 ---
 
@@ -86,6 +94,7 @@ This task should replace or clearly distinguish older source/Conda tester guidan
 - [ ] Quick start created - PENDING
 - [ ] Full package guide created - PENDING
 - [ ] Asset contract integrated - PENDING
+- [ ] AGPL release posture and source/license notice location integrated - PENDING
 - [ ] Troubleshooting guidance included - PENDING
 - [ ] Older guides reconciled or labeled - PENDING
 

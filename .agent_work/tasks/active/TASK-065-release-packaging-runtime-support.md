@@ -1,6 +1,6 @@
 # TASK-065: Release Packaging And Runtime Support Follow-Through
 
-**Status**: IN_PROGRESS
+**Status**: COMPLETED
 **Priority**: HIGH
 **Type**: B/C (Release Engineering / Runtime Supportability)
 **Estimated Effort**: 1-2 days (8-16 hours)
@@ -60,6 +60,15 @@ This task owns the evidence and support-language decisions needed before broad r
 ---
 
 ## Implementation Log
+
+### 2026-05-11 - Release Owner Acceptance And Task Closeout
+**Objective**: Close `TASK-065` after owner review of the final release-support language and caveats.
+**Context**: `TASK-065` was implementation-complete after Podman Compose-provider validation, package assembly validation, TLS CA support hardening, browser-provider regression, support-language updates, and reviewer hardening. The only remaining closeout gate was release-owner acceptance.
+**Decision**: Mark `TASK-065` complete based on owner acceptance of the final support language and residual caveats.
+**Execution**: Updated the active sprint tracker and this task file from pending owner review to completed status. Left the task file under `.agent_work/tasks/active/` per the Sprint 06 organization rule that current-sprint completed task files move to `tasks/completed/` only during sprint closeout.
+**Output**: `TASK-065` is completed and ready to unblock `TASK-072`, `TASK-071`, and `TASK-066` planning.
+**Validation**: Documentation validation to be run after the status update.
+**Next**: Start `TASK-072` release asset bundle contract as the next dependency in the Sprint 06 committed lane.
 
 ### 2026-05-08 - PR Review Hardening Pass
 **Objective**: Address the highest-value reviewer recommendations before treating PR #9 as merge-ready.
@@ -168,7 +177,7 @@ This task owns the evidence and support-language decisions needed before broad r
 ### Remaining Validation
 
 - `npm.cmd run test:stage-0` remains not runnable in this shell environment because the Windows `bash.exe` path resolves to WSL without `/bin/bash`.
-- Release owner should review the documented `localhost` browser-origin support language before final release sign-off.
+- Release owner accepted the documented `localhost` browser-origin support language and residual caveats on May 11, 2026.
 - Broader CI gate tightening, Windows/Podman automation, licensing policy review, and clean-machine release-candidate validation remain follow-up/release-candidate gates.
 
 ### 2026-05-08 Release Package Assembly Check
@@ -182,6 +191,6 @@ This task owns the evidence and support-language decisions needed before broad r
 
 ### Handoff Status
 
-Task-065 is implementation-complete pending release-owner review of the support language and a commit/PR checkpoint. No provider secrets were copied into task evidence; raw browser artifacts remain under ignored `.agent_work/context/analysis/browser-runs/`.
+Task-065 is complete. Release-owner review accepted the support language and residual caveats on May 11, 2026, and commit checkpoint `2280b68 chore(task-065): complete release support validation` records the release-support implementation updates. No provider secrets were copied into task evidence; raw browser artifacts remain under ignored `.agent_work/context/analysis/browser-runs/`.
 
 Reviewer context is summarized in `.agent_work/tasks/active/TASK-065/TASK-025-TO-065-RELEASE-READINESS-ANALYSIS.md`.

@@ -64,6 +64,7 @@ Tracked manifest: `/app/webapp/asset_manifest.v1.json`
 Default release import layout:
 
 ```text
+assets/asset_manifest.v1.json
 assets/model_params/
 assets/data/
 ```
@@ -71,7 +72,7 @@ assets/data/
 Windows import helper:
 
 ```powershell
-.\scripts\import-assets.cmd -Source assets -VerifyHashes
+.\scripts\import-assets.cmd -Source assets
 ```
 
 Readiness checks:
@@ -82,7 +83,11 @@ Readiness checks:
 
 SHA-256 verification is available with `TOWERSCOUT_VERIFY_ASSET_HASHES=1` for release validation and support diagnostics.
 
+For release-candidate or support validation, run `scripts/import-assets.cmd -Source assets -VerifyHashes` during import.
+
 Hosted asset download/bootstrap is out of scope for the v1 control package. The supported v1 path is manifest-backed asset import from a local bundle using `scripts/import-assets.cmd`, with optional SHA-256 verification for release-candidate and support validation. A hosted downloader requires a separate design for asset hosting, checksum enforcement, retries, proxy/TLS behavior, partial-download recovery, and restricted-network fallback.
+
+The asset ZIP root is `model_params/`, `data/`, and `asset_manifest.v1.json`. Users extract those entries into the package's `assets/` directory before import. The control package manifest remains authoritative; the asset ZIP manifest copy is used for release/support matching by manifest version and manifest file hash.
 
 ## Release Package Contract
 
@@ -93,6 +98,9 @@ The GitHub Release control package is assembled by `scripts/package-release.cmd`
 - Windows `.cmd` wrappers and PowerShell helpers for start, stop, logs, status, asset import, and TLS CA import
 - top-level `start.bat` launcher that starts Compose, polls `/api/readiness`, and opens the browser at `http://localhost:<port>` after the app shell is reachable
 - this runtime contract and the quick start
+- the release asset bundle contract
+- `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.md`, `MODEL_LICENSES.md`, `DATA_LICENSES.md`, and `PROVIDER_TERMS.md`
+- `SOURCE.txt`, `SBOM.txt`, and `release-manifest.v1.json`
 - `webapp/asset_manifest.v1.json`
 - `IMAGE.txt`
 - `SHA256SUMS.txt`
@@ -100,7 +108,13 @@ The GitHub Release control package is assembled by `scripts/package-release.cmd`
 
 Normal release packages must set `TOWERSCOUT_IMAGE` to an immutable registry digest reference such as `ghcr.io/j-schulein/towerscout@sha256:<digest>`. The package script requires `-ImageDigest` by default; packages without an image digest can be generated only by passing `-AllowMutableImage` and are for local validation or developer/support use only.
 
+Normal release packages must also record a git source ref and be generated from
+a clean working tree. `-AllowMissingSourceRef` and `-AllowDirtySource` are
+local-validation overrides only and must not be used for release artifacts.
+
 Current repository package target: `ghcr.io/j-schulein/towerscout`.
+
+The YOLO-enabled release track is `agpl-yolo`. TowerScout-authored code may be Apache-2.0 where ownership and relicensing authority are confirmed, but the package/image is not Apache-2.0-only because it includes Ultralytics YOLOv5 AGPL-3.0 runtime source and YOLO-derived detector weights. The running browser app exposes the packaged source/license notice at `/license`. The release control ZIP is authoritative for release-specific source, checksum, SBOM-reference, and manifest metadata; the image carries generic notices and OCI labels.
 
 Image publication is handled by the manual GitHub Actions workflow `.github/workflows/container-publish.yml`. The workflow requires `packages: write`, pushes a Linux/AMD64 image, uploads `image-metadata.json`, and reports the digest reference in the workflow summary.
 

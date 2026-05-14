@@ -4,25 +4,26 @@
 **Sprint Planning Baseline**: Sprint 06 release-readiness planning after Sprint 05 closeout  
 **Primary Source Backlog**: `.agent_work/task-backlog.md`  
 **Active Carry-Forward**: `TASK-065` remains in `.agent_work/current-tasks.md` pending release-owner support-language review and commit/PR checkpoint  
-**Recommended Sprint Theme**: V1 RC1 / pilot-ready release readiness, not final V1 completion or feature expansion
+**Recommended Sprint Theme**: V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release readiness, not final V1 completion or feature expansion
 
 ---
 
 ## Executive Summary
 
-Sprint 06 should turn the Sprint 05 runtime and release baseline into a V1 release candidate package that a non-technical Windows pilot user can realistically receive, understand, launch, configure, and test.
+Sprint 06 should turn the Sprint 05 runtime and release baseline into a V1 release candidate package that a non-technical Windows pilot user can realistically receive, understand, launch, configure, and test. Under the updated decision direction, this is a YOLO-enabled `agpl-yolo` release path, not an Apache-only release path.
 
 The sprint should not start with broad end-user testing. It should first settle the asset bundle contract and write package-based end-user documentation. Without those two pieces, testers will mostly discover already-known gaps around what to download, where model/data files go, and how to recognize a successful first run.
 
 The recommended Sprint 06 path is:
 
 1. Close `TASK-065`.
-2. Define the release asset bundle contract through `TASK-072`.
-3. Write end-user release package documentation through `TASK-071`.
-4. Run a clean-machine release-candidate validation gate through `TASK-066`.
-5. Prepare pilot / UAT execution through `TASK-073`.
-6. Resolve release policy and provider-key exposure boundaries through `TASK-069` and `TASK-076`.
-7. Use remaining capacity for preflight, narrow CI release gates, and Windows script validation.
+2. Promote `TASK-069` to active AGPL release-compliance work.
+3. Keep the completed `TASK-072` asset contract, revised for YOLO-derived/AGPL-governed weights.
+4. Write end-user release package documentation through `TASK-071`.
+5. Run a clean-machine release-candidate validation gate through `TASK-066`.
+6. Prepare pilot / UAT execution through `TASK-073`.
+7. Keep `TASK-076` near-active because provider/API terms are unaffected by the AGPL decision.
+8. Use remaining capacity for preflight, narrow CI release gates, and Windows script validation.
 
 Sprint 06 should be considered successful when TowerScout reaches **V1 RC1 / pilot-ready** status. Final V1 completion should wait until pilot/UAT feedback has been triaged, install/launch/setup/detection blockers have been fixed or explicitly accepted, and remaining work has been sorted into V1 patch items or the V2 roadmap.
 
@@ -45,16 +46,32 @@ For Sprint 06, this means the team should be able to hand a pilot user:
 
 ---
 
+## Task-069 Sign-Off Boundary
+
+Task-069 sign-off is sufficient to merge PR #11 as the Sprint 06 controlled-distribution, AGPL-governed YOLO-enabled RC planning and compliance baseline. This approval is scoped to the near-term RC path and is not final public open-source release approval.
+
+The RC package is not Apache-2.0-only because the current TowerScout detection path includes or depends on Ultralytics/YOLOv5 components and YOLO-derived detector weights.
+
+The release control package must carry AGPL-aware license text, third-party notices, model/data terms, provider terms, source-location/source-offer information, release manifest metadata, checksums, image/source identification, SBOM-reference information, and revocation notes. The container image must carry generic compliance notices and OCI labels sufficient to match it to the release control package by pinned digest.
+
+ONNX or other non-Ultralytics runtime migration is not a pre-RC blocker under this sign-off. Formal owner/legal/reviewer approval remains a later gate for broader distribution, model/data/provider publication, the clean curated public release line, and the final decision on whether the public release remains AGPL-governed with the YOLO path included or moves to a permissive Apache-compatible posture through runtime replacement or separately approved licensing.
+
+The longer-term public release plan should use a clean curated public release line rather than publishing the current working repository history as-is. The current repository should remain the development/workshop repo, while the public line should include only approved source code, public-safe documentation, tests, release scripts, license/notice files, and intentionally selected decision records. Internal planning material, broad `.agent_work/` history, model weights, raw data assets, scratch artifacts, and ambiguous third-party or historical content should be excluded unless explicitly reviewed and approved.
+
+The full Task-069 sign-off plan is recorded in `.agent_work/tasks/active/TASK-069/TASK-069-SIGN-OFF-PLAN-2026-05-14.md`.
+
+---
+
 ## Sprint Goal
 
-**Sprint 06 Goal**: Produce and internally validate a V1 RC1 / pilot-ready local release package path for Windows 11 AMD64 users, including asset delivery, end-user documentation, release policy boundaries, and a clean-machine validation gate.
+**Sprint 06 Goal**: Produce and internally validate a V1 RC1 / pilot-ready local release package path for Windows 11 AMD64 users, including AGPL-compliant YOLO notices, asset delivery, end-user documentation, release policy boundaries, and a clean-machine validation gate.
 
 ### Success Criteria
 
 - The release package and asset bundle relationship is documented and testable.
 - End-user docs explain exactly what to download, where to place assets, how to launch, how to configure provider keys, and how to verify success.
 - A clean-machine validation run proves the package/docs/assets path before external user testing begins.
-- Release policy and provider-key exposure risks are explicitly accepted, mitigated, or converted into blockers.
+- Release policy, model/data terms, source-offer obligations, and provider-key exposure risks are explicitly accepted, mitigated, or converted into blockers.
 - External pilot testing begins only after the internal release-candidate gate has produced actionable evidence.
 - Final V1 completion is explicitly reserved for after pilot/UAT blocker triage.
 
@@ -94,6 +111,7 @@ Sprint 06 should not attempt to deliver:
 - background-job architecture unless the release path intentionally pauses
 - backend decomposition unless `TASK-058` has already clarified durable job/state ownership
 - full restricted-network / offline package support unless it becomes a hard launch requirement
+- ONNX or other non-Ultralytics runtime migration as a pre-RC blocker; that moves to the later permissive Apache-only release/runtime modernization track
 
 ---
 
@@ -104,10 +122,11 @@ Sprint 06 should not attempt to deliver:
 | Order | Task | Purpose | Expected Deliverable |
 |---:|---|---|---|
 | 0 | `TASK-065` Release Packaging And Runtime Support Follow-Through | Close the active carry-forward release-support item. | Owner-reviewed support language and commit/PR checkpoint. |
-| 1 | `TASK-072` Release Asset Bundle Contract | Define how out-of-repo model/data assets are distributed and imported. | Asset bundle layout, naming/version rules, checksum policy, release matching rules, and import instructions. |
-| 2 | `TASK-071` End-User Release Package Documentation | Write docs for the actual package path. | User quick start, full package guide, troubleshooting, first-run screenshots/checklist, issue-reporting handoff. |
-| 3 | `TASK-066` Release Candidate Validation Gate | Internally prove the package/docs/assets path before external testing. | Clean-machine validation checklist, results, defects, and release-candidate pass/fail recommendation. |
-| 4 | `TASK-073` Clean-Machine Pilot / UAT Execution Plan | Prepare external tester workflow after internal validation. | Tester instructions, acceptance checklist, issue capture template, environment capture checklist, support escalation flow. |
+| 1 | `TASK-069` License And Release Policy Review | Implement the AGPL-compliant YOLO-enabled release posture. | Decision memo, corrected notices, model/data/provider terms, source offer, release control ZIP compliance payload, image generic notices/OCI labels, release manifest, SBOM reference, and revocation notes. |
+| 2 | `TASK-072` Release Asset Bundle Contract | Define how out-of-repo model/data assets are distributed and imported under the `agpl-yolo` track. | Asset bundle layout, naming/version rules, checksum policy, release matching rules, import instructions, and YOLO-derived/AGPL-governed model labeling. |
+| 3 | `TASK-071` End-User Release Package Documentation | Write docs for the actual AGPL-compliant package path. | User quick start, full package guide, source/license location, troubleshooting, first-run screenshots/checklist, issue-reporting handoff. |
+| 4 | `TASK-066` Release Candidate Validation Gate | Internally prove the package/docs/assets/source-notice path before external testing. | Clean-machine validation checklist, results, defects, and release-candidate pass/fail recommendation. |
+| 5 | `TASK-073` Clean-Machine Pilot / UAT Execution Plan | Prepare external tester workflow after internal validation. | Tester instructions, acceptance checklist, issue capture template, environment capture checklist, support escalation flow. |
 
 ### Policy Lane
 
@@ -115,8 +134,7 @@ These tasks should run early enough that they do not block release late. They ca
 
 | Task | Purpose | Expected Deliverable |
 |---|---|---|
-| `TASK-069` License And Release Policy Review | Confirm the repo license, model/data asset distribution rights, runtime-tooling posture, and pilot release boundary. | Release-policy memo with owner/legal decision or explicit blocker. |
-| `TASK-076` Provider API Key Exposure And Restriction Policy | Decide whether current browser SDK key exposure is acceptable for v1 with restrictions or needs additional engineering. | Provider-key policy, required key restrictions, user guidance, and go/no-go impact. |
+| `TASK-076` Provider API Key Exposure And Restriction Policy | Decide whether current browser SDK key exposure is acceptable for v1 with restrictions or needs additional engineering. AGPL does not change provider/API terms. | Provider-key policy, required key restrictions, user guidance, and go/no-go impact. |
 | `TASK-075` GPU / CUDA Support Decision | Decide whether v1 is CPU-only or includes a documented CUDA path. | Written decision and documentation update. Implementation only if explicitly selected later. |
 
 ### Follow-Through Lane
@@ -128,6 +146,7 @@ Select these only if committed-lane work is complete or if `TASK-066` exposes a 
 | `TASK-074` Runtime Prerequisite Preflight | Tester setup still depends too much on manual runtime diagnosis. | Preflight command or launcher-integrated checks for engine, Compose provider, Podman machine, WSL/virtualization hints, ports, disk, assets, TLS bundle, and provider setup state. |
 | `TASK-067` CI Release Gate Tightening | Manual release checks become repetitive or high-risk. | Narrow CI/manual gate coverage for package assembly, image digest, manifest/checksum consistency, and launcher smoke behavior. |
 | `TASK-068` Windows Test Portability And Script Validation | Script validation remains environment-sensitive. | Windows-first script validation proof and documented handling for PowerShell Core / CI gaps. |
+| `TASK-077` Public Release Manifest And Asset Import Hardening | Compliance payload needs to be package-visible, or `TASK-066` shows import activation risk. | Narrow Sprint 06 slice: release manifest, source URL/ref, checksums, image digest, SBOM reference, model/data terms, and revocation notes. Staged allowlist-only asset activation remains follow-up unless release-critical. |
 
 ---
 
@@ -144,13 +163,18 @@ Acceptance expectations:
 - Commit/PR checkpoint records the final `TASK-065` release-support updates.
 - Any unresolved caveat is moved to `TASK-066`, `TASK-067`, `TASK-068`, `TASK-069`, or `TASK-070`.
 
-### Phase 1: Define What Users Receive
+### Phase 1: Define The AGPL Release Payload
 
-**Task**: `TASK-072`  
-**Objective**: Make the asset delivery model concrete before docs and testing.
+**Tasks**: `TASK-069`, completed `TASK-072`, and narrow `TASK-077` compliance-payload slice
+**Objective**: Make the YOLO-enabled release honest, source-complete, notice-complete, and testable before docs and clean-machine validation.
 
 Acceptance expectations:
 
+- The release track is recorded as `agpl-yolo`.
+- Incorrect `YOLO | MIT` attribution is replaced with `Ultralytics YOLOv5 | AGPL-3.0`.
+- The release control ZIP includes `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.md`, `MODEL_LICENSES.md`, `DATA_LICENSES.md`, `PROVIDER_TERMS.md`, `SOURCE.txt`, `SBOM.txt`, `release-manifest.v1.json`, `IMAGE.txt`, and `SHA256SUMS.txt`; the image carries generic notices and OCI labels.
+- The package and running browser app expose the source/license location.
+- Matching corresponding source requirements are documented for the exact release package/image.
 - Asset bundle layout is defined, including:
   - `assets/model_params/yolov5/newest.pt`
   - `assets/model_params/EN/b5_unweighted_best.pt`
@@ -159,13 +183,13 @@ Acceptance expectations:
 - Required and optional files are mapped to `webapp/asset_manifest.v1.json`.
 - Checksum verification policy is defined for release-candidate validation and normal user import.
 - The relationship between GitHub Release ZIP, GHCR image digest, and asset bundle is explicit.
-- The source of each asset is documented, including any distribution constraints.
+- The source of each asset is documented, including YOLO-derived/AGPL-governed model labeling and any separate distribution constraints.
 - Restricted-network handling is either deferred to `TASK-070` or explicitly included if required.
 
 ### Phase 2: Write User-Facing Package Docs
 
 **Task**: `TASK-071`  
-**Objective**: Replace source-checkout tester guidance with package-based release guidance.
+**Objective**: Replace source-checkout tester guidance with package-based release guidance for the `agpl-yolo` release track.
 
 Acceptance expectations:
 
@@ -179,6 +203,8 @@ Acceptance expectations:
   - Setup Wizard provider-key entry
   - status/log commands
   - asset import
+  - source/license notice location
+  - model/data/provider terms
   - TLS CA import
   - reset/restart/stop
   - common failures
@@ -224,14 +250,13 @@ Acceptance expectations:
 - Support escalation path is explicit.
 - Pilot start criteria and stop criteria are documented.
 
-### Phase 5: Release Policy And Security Decisions
+### Phase 5: Remaining Security Decisions
 
-**Tasks**: `TASK-069`, `TASK-076`, `TASK-075`  
+**Tasks**: `TASK-076`, `TASK-075`
 **Objective**: Avoid late release blockers and implicit support promises.
 
 Acceptance expectations:
 
-- License/release policy is documented.
 - Provider key exposure posture is documented and approved or converted into an engineering blocker.
 - GPU/CUDA support is explicitly in scope or out of scope for v1.
 
@@ -245,6 +270,9 @@ Sprint 06 validation should focus on user-relevant release confidence.
 
 - `.agent_work/scripts/validate_agent_work.py`
 - release package assembly with immutable image digest
+- package inspection for `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.md`, `MODEL_LICENSES.md`, `DATA_LICENSES.md`, `PROVIDER_TERMS.md`, `SOURCE.txt`, `SBOM.txt`, `release-manifest.v1.json`, `IMAGE.txt`, and `SHA256SUMS.txt`
+- dependency/path scan proving YOLO is not labeled MIT and vendored YOLO is listed as AGPL-3.0
+- source match check confirming the source ref corresponds to the release ZIP and pinned image digest
 - asset import from the documented bundle layout
 - readiness after missing assets, after asset import, and after provider setup
 - launcher startup from `start.bat`
@@ -273,11 +301,12 @@ Sprint 06 validation should focus on user-relevant release confidence.
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| Asset distribution remains ambiguous | Testers cannot complete setup without support intervention. | Make `TASK-072` first in the committed lane. |
+| Asset distribution remains ambiguous | Testers cannot complete setup without support intervention. | Keep `TASK-072` aligned with the `TASK-069` AGPL release posture and model terms. |
 | Docs are written before the package shape is stable | Docs become stale immediately and confuse testers. | Complete asset/package contract before finalizing `TASK-071`. |
 | End-user testing starts too early | Feedback is dominated by known package/docs gaps. | Use `TASK-066` as the internal release-candidate gate before `TASK-073` external pilot. |
 | Provider SDK keys remain client-visible without policy | Release may expose unsupported security expectations. | Complete `TASK-076` before broad distribution. |
-| License/release posture is unresolved | Technical release may be blocked late. | Run `TASK-069` early and in parallel where possible. |
+| AGPL release posture is rejected by reviewers | YOLO-enabled RC cannot be public/compliant under this path. | Revert to restricted pilot now and move ONNX/non-Ultralytics runtime replacement back into the public-release blocker lane. |
+| Compliance payload is incomplete | The package may be source-incomplete or notice-incomplete. | Pull forward the narrow `TASK-077` manifest/source/SBOM/checksum/revocation slice. |
 | Runtime prerequisites remain too complex | Non-technical users fail before reaching TowerScout setup. | Add `TASK-074` if `TASK-066` shows prerequisite friction. |
 | Sprint expands into architecture and features | Release readiness slips again. | Keep `TASK-058`, `TASK-059`, mobile, filtering, dashboard, and preferences outside Sprint 06 unless the release lane intentionally pauses. |
 | GPU expectations remain implicit | Users with CUDA machines may expect acceleration that v1 does not support. | Complete `TASK-075` decision and update docs accordingly. |
@@ -289,10 +318,10 @@ Sprint 06 validation should focus on user-relevant release confidence.
 Sprint 06 can be considered successful if TowerScout reaches V1 RC1 / pilot-ready status and:
 
 - `TASK-065` is closed or intentionally carried with documented owner acceptance.
-- `TASK-072` and `TASK-071` are complete enough to give to a pilot user.
+- `TASK-069`, `TASK-072`, and `TASK-071` are complete enough to give to a pilot user.
 - `TASK-066` has produced clean-machine evidence and a release-candidate recommendation.
 - `TASK-073` has a ready tester workflow if the release candidate passes.
-- `TASK-069` and `TASK-076` are resolved or clearly blocking with owners and next actions.
+- `TASK-076` is resolved or clearly blocking with owners and next actions.
 - The backlog no longer treats parked tail work as active v1 release scope.
 
 Sprint 06 completion does not by itself mean final V1 completion. Final V1 requires pilot/UAT blocker triage after controlled external testing.
@@ -302,6 +331,8 @@ Sprint 06 completion does not by itself mean final V1 completion. Final V1 requi
 ## Sprint Deliverables
 
 - Release asset bundle contract.
+- AGPL-compliant YOLO release decision memo and corrected notices.
+- Release manifest, source notice, SBOM reference, checksums, image digest metadata, model/data/provider terms, and revocation notes.
 - Package-based end-user quick start.
 - Package-based full user guide / support guide.
 - Clean-machine release-candidate validation report.
@@ -317,6 +348,7 @@ Sprint 06 completion does not by itself mean final V1 completion. Final V1 requi
 
 Committed release-readiness lane:
 
+- `TASK-069` License And Release Policy Review
 - `TASK-072` Release Asset Bundle Contract
 - `TASK-071` End-User Release Package Documentation
 - `TASK-066` Release Candidate Validation Gate
@@ -324,7 +356,6 @@ Committed release-readiness lane:
 
 Policy lane:
 
-- `TASK-069` License And Release Policy Review
 - `TASK-076` Provider API Key Exposure And Restriction Policy
 - `TASK-075` GPU / CUDA Support Decision
 
@@ -333,6 +364,7 @@ Follow-through lane:
 - `TASK-074` Runtime Prerequisite Preflight
 - `TASK-067` CI Release Gate Tightening
 - `TASK-068` Windows Test Portability And Script Validation
+- `TASK-077` Public Release Manifest And Asset Import Hardening
 
 Deferred / parked:
 
@@ -354,6 +386,7 @@ Deferred / parked:
 5. Are provider keys site-owned, user-owned, or project-provided for pilot testing?
 6. Is CUDA acceleration expected by any pilot tester, or should v1 be explicitly CPU-only?
 7. What is the minimum detection smoke that proves the package path without creating a long or fragile user test?
+8. Will reviewers accept AGPL as the public/pilot release posture, or should the team revert to restricted pilot plus ONNX/non-Ultralytics migration before public release?
 
 ---
 
@@ -361,4 +394,4 @@ Deferred / parked:
 
 The recommended Sprint 06 planning decision is:
 
-**Run Sprint 06 as a V1 RC1 release-readiness sprint.** Do not start broad end-user testing until the asset contract and package docs are complete and `TASK-066` has validated the clean-machine release-candidate path. Do not start V2 until pilot/UAT blockers are fixed or explicitly accepted.
+**Run Sprint 06 as a V1 RC1 AGPL-compliant YOLO-enabled release-readiness sprint.** Do not start broad end-user testing until the AGPL compliance payload, asset contract, and package docs are complete and `TASK-066` has validated the clean-machine release-candidate path. Public Apache-only release becomes a later separate runtime migration track.

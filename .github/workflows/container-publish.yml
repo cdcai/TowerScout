@@ -46,6 +46,8 @@ jobs:
 
           docker buildx build \
             --platform linux/amd64 \
+            --build-arg TOWERSCOUT_RELEASE_VERSION="$tag" \
+            --build-arg TOWERSCOUT_SOURCE_REF="$GITHUB_SHA" \
             "${tags[@]}" \
             --push \
             --metadata-file image-metadata.json \

@@ -26,13 +26,40 @@ The release package is expected to include:
 - `scripts/status.cmd` / `scripts/status.ps1`
 - `scripts/import-assets.cmd` / `scripts/import-assets.ps1`
 - `scripts/import-tls-ca.cmd` / `scripts/import-tls-ca.ps1`
+- `LICENSE`
+- `NOTICE`
+- `THIRD_PARTY_NOTICES.md`
+- `MODEL_LICENSES.md`
+- `DATA_LICENSES.md`
+- `PROVIDER_TERMS.md`
+- `SOURCE.txt`
+- `SBOM.txt`
+- `release-manifest.v1.json`
 - `webapp/asset_manifest.v1.json`
 - `IMAGE.txt`
 - `SHA256SUMS.txt`
 - quick-start and runtime-contract documentation
+- release asset bundle contract documentation
 - a pinned GHCR image reference by digest
 
 Large model and ZIP-code assets are not stored in git and are not expected to be baked into the default source checkout.
+
+## Source And License Notices
+
+The YOLO-enabled package is the `agpl-yolo` release track. TowerScout-authored code may be Apache-2.0 where ownership and relicensing authority are confirmed, but the package and image are not Apache-2.0-only because they include Ultralytics YOLOv5 AGPL-3.0 runtime source and YOLO-derived detector weights.
+
+Users can review the source and license notice from the running app at:
+
+```text
+http://localhost:5000/license
+```
+
+Release packages include `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.md`, `MODEL_LICENSES.md`, `DATA_LICENSES.md`, `PROVIDER_TERMS.md`, `SOURCE.txt`, `SBOM.txt`, and `release-manifest.v1.json`. Do not remove these files from a release package or image.
+
+The release control ZIP is authoritative for release-specific metadata such as
+source ref, image digest, checksums, SBOM reference, and release manifest. The
+container image carries generic notices and OCI labels; it should be matched to
+the control ZIP by the pinned image digest in `IMAGE.txt`.
 
 ## Creating A Release Package
 
@@ -44,7 +71,7 @@ Release maintainers can assemble the control package from a source checkout:
 
 This creates `dist\towerscout-v0.1.0\`, `dist\towerscout-v0.1.0.zip`, and `dist\towerscout-v0.1.0.zip.sha256`. The package includes `IMAGE.txt` for the release image reference and `SHA256SUMS.txt` for the files inside the package.
 
-Release package generation requires `-ImageDigest` with an immutable `sha256:<digest>` reference. For developer-only local validation with a mutable image tag, pass `-AllowMutableImage` explicitly.
+Release package generation requires `-ImageDigest` with an immutable `sha256:<digest>` reference, a git source ref, and a clean working tree. For developer-only local validation with a mutable image tag, pass `-AllowMutableImage` explicitly. For local validation packages only, `-AllowMissingSourceRef` and `-AllowDirtySource` can bypass source-ref and clean-tree enforcement.
 
 ## Publishing The GHCR Image
 
@@ -137,6 +164,10 @@ For first-line support, collect:
 - `IMAGE.txt`
 - `webapp\asset_manifest.v1.json`
 - `SHA256SUMS.txt`
+- `release-manifest.v1.json`
+- `SOURCE.txt`
+- `SBOM.txt`
+- `THIRD_PARTY_NOTICES.md`
 
 The readiness payload includes the app version, image digest, asset manifest version, selected container engine, provider configuration status, asset status, and writable-path checks. The default log volume is `towerscout_logs`, mounted in the container at `/app/webapp/logs`.
 
@@ -210,12 +241,13 @@ These volumes can contain provider keys, addresses, coordinates, uploaded files,
 
 TowerScout readiness reports missing or corrupt required assets as `degraded`. Import or bootstrap assets into the named volumes according to the release asset instructions, then restart TowerScout.
 
-The v1 release package does not implement hosted asset download/bootstrap. Assets are expected to be supplied as a release asset bundle, site-provided bundle, or support-provided bundle and imported with `scripts\import-assets.cmd`. A hosted downloader can be added later after the asset host, checksum policy, retry behavior, proxy/TLS handling, and restricted-network fallback are designed and validated.
+The v1 release package does not implement hosted asset download/bootstrap. Assets are expected to be supplied as a release asset bundle, site-provided bundle, or support-provided bundle and imported with `scripts\import-assets.cmd`. For the YOLO-enabled `agpl-yolo` release track, YOLO detector weights must stay labeled as YOLO-derived/AGPL-governed unless separate written model terms say otherwise. A hosted downloader can be added later after the asset host, checksum policy, retry behavior, proxy/TLS handling, and restricted-network fallback are designed and validated.
 
 For a GitHub Release package, place the asset bundle next to the scripts with this layout:
 
 ```text
 assets/
+  asset_manifest.v1.json
   model_params/
     yolov5/
     EN/
@@ -228,6 +260,8 @@ Then import and verify it:
 ```powershell
 .\scripts\import-assets.cmd -Source assets
 ```
+
+The asset ZIP itself should not contain a top-level `assets/` directory. Its root should contain `model_params/`, `data/`, and `asset_manifest.v1.json`; extract those entries into the package's existing `assets/` directory. See `docs/release-asset-bundle-contract.md` for the release-matching, checksum, manifest-copy, and redistribution rules.
 
 For release-candidate or support validation, enable SHA-256 verification during import:
 
