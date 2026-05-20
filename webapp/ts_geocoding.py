@@ -30,9 +30,7 @@ from flask import has_request_context, session
 
 from ts_errors import TowerScoutError, ConfigurationError, NetworkError
 from ts_logging import get_api_logger
-
-TRUTHY_ENV_VALUES = {'1', 'true', 'yes', 'on'}
-INSECURE_TLS_ENV_VAR = 'TOWERSCOUT_ALLOW_INSECURE_TLS'
+from ts_tls import INSECURE_TLS_ENV_VAR, tls_verification_enabled, validate_configured_tls_bundle
 
 
 class GeocodingProvider(Enum):
@@ -41,7 +39,6 @@ class GeocodingProvider(Enum):
     GOOGLE_MAPS = "google_maps"
 
 
-@dataclass
 @dataclass
 class GeocodingResult:
     """Result from geocoding operation."""
@@ -138,7 +135,7 @@ class GeocodingService:
         self.logger = get_api_logger()
         self.rate_limit = rate_limit_requests_per_minute
         self.preferred_provider = preferred_provider
-        self.verify_tls = os.getenv(INSECURE_TLS_ENV_VAR, '').strip().lower() not in TRUTHY_ENV_VALUES
+        self.verify_tls = tls_verification_enabled()
         
         # Load API keys from parameters or environment
         self.azure_key = azure_key or os.getenv('AZURE_MAPS_SUBSCRIPTION_KEY')
@@ -168,12 +165,32 @@ class GeocodingService:
             )
 
     def _request(self, url: str, params: Dict[str, Any]) -> requests.Response:
-        return requests.get(
-            url,
-            params=params,
-            timeout=10,
-            verify=self.verify_tls,
-        )
+        if self.verify_tls:
+            validate_configured_tls_bundle()
+
+        try:
+            return requests.get(
+                url,
+                params=params,
+                timeout=10,
+                verify=self.verify_tls,
+            )
+        except requests.RequestException:
+            raise
+        except OSError as exc:
+            raise NetworkError(
+                "Configured TLS CA bundle could not be used for geocoding request",
+                user_message=(
+                    "The configured TLS CA bundle could not be used. "
+                    "Run scripts/import-tls-ca.cmd for the selected Docker or Podman engine, "
+                    "or update REQUESTS_CA_BUNDLE and SSL_CERT_FILE to a valid certificate bundle."
+                ),
+                details={
+                    "category": "tls_ca_bundle",
+                    "support_action": "Run scripts/import-tls-ca.cmd for the selected container engine.",
+                },
+                cause=exc,
+            ) from exc
 
     def _track_request(self, provider: GeocodingProvider, success: bool):
         """Update request counters only when a Flask request context exists."""
@@ -309,6 +326,8 @@ class GeocodingService:
                     error_message="No address found"
                 )
         
+        except NetworkError:
+            raise
         except requests.RequestException as e:
             self.logger.error(f"Azure Maps API error: {e}")
             # NetworkError accepts url and timeout, not provider/coordinates
@@ -384,6 +403,8 @@ class GeocodingService:
                     error_message=error_msg
                 )
         
+        except NetworkError:
+            raise
         except requests.RequestException as e:
             self.logger.error(f"Google Maps API error: {e}")
             # NetworkError accepts url and timeout, not provider/coordinates
@@ -416,6 +437,24 @@ class GeocodingService:
             RateLimitError: If session rate limit exceeded
             GeocodingError: If all providers fail
         """
+        fallback_provider = self.providers[0] if self.providers else GeocodingProvider.AZURE_MAPS
+        if self.verify_tls:
+            try:
+                validate_configured_tls_bundle()
+            except NetworkError as e:
+                self.logger.warning(
+                    "Geocoding skipped because TLS CA bundle configuration is invalid: %s",
+                    e.user_message,
+                )
+                return GeocodingResult(
+                    address="",
+                    provider=fallback_provider,
+                    confidence=0.0,
+                    coordinates=(lat, lng),
+                    success=False,
+                    error_message=e.user_message or str(e),
+                )
+
         # Check rate limits
         if not self._check_rate_limit():
             self.logger.warning("Rate limit exceeded for geocoding request")
@@ -452,7 +491,21 @@ class GeocodingService:
                     self.logger.debug(f"Provider {provider.value} returned no address, trying next")
                     continue
             
-            except (NetworkError, GeocodingError) as e:
+            except NetworkError as e:
+                self.logger.warning("Provider %s failed: %s", provider.value, e)
+                last_error_message = e.user_message or str(e)
+                if e.details.get("category") == "tls_ca_bundle":
+                    return GeocodingResult(
+                        address="",
+                        provider=provider,
+                        confidence=0.0,
+                        coordinates=(lat, lng),
+                        success=False,
+                        error_message=last_error_message,
+                    )
+                self._update_session_usage(provider, False)
+                continue
+            except GeocodingError as e:
                 self.logger.warning(f"Provider {provider.value} failed: {e}")
                 last_error_message = str(e)
                 self._update_session_usage(provider, False)
@@ -461,8 +514,8 @@ class GeocodingService:
         # All providers failed - return failure result
         self.logger.error(f"All geocoding providers failed for coordinates: {lat}, {lng}")
         return GeocodingResult(
-            address=f"Address unavailable - {lat:.6f}, {lng:.6f}",
-            provider=self.providers[0] if self.providers else GeocodingProvider.AZURE_MAPS,
+            address="",
+            provider=fallback_provider,
             confidence=0.0,
             coordinates=(lat, lng),
             success=False,
@@ -480,6 +533,16 @@ class GeocodingService:
         Returns:
             List of geocoding results (may be empty if no results found)
         """
+        if self.verify_tls:
+            try:
+                validate_configured_tls_bundle()
+            except NetworkError as e:
+                self.logger.warning(
+                    "Forward geocoding skipped because TLS CA bundle configuration is invalid: %s",
+                    e.user_message,
+                )
+                return []
+
         self.logger.info(f"Forward geocoding query: {query[:50]}... (preferred: {preferred_provider})")
         
         # Determine provider order based on preference

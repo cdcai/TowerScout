@@ -63,6 +63,16 @@
       }
     }
 
+    static escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[character]));
+    }
+
     constructor(x1, y1, x2, y2, classname, conf, tile, idInTile, inside, selected, secondary, address, addressConfidence, addressProvider) {
       // TASK-033 Phase 3: Manual towers (id_in_tile=-1) get purple outline, ML detections get red
       const isManual = (idInTile === -1);
@@ -180,7 +190,7 @@
           boxes += " onclick='Detection_detections[" + det.id + "].selectAddr(this.checked)'>";
           boxes += "<span class='address' id='addrlabel" + det.id + "'";
           boxes += " onclick='Detection.showDetection(" + det.id + ", true)'>"
-          boxes += det.address + "</span><br>";
+          boxes += Detection.escapeHtml(det.address) + "</span><br>";
           boxes += "<ul class='nested' id='towerslist" + det.id;
           boxes += "' style='text-indent:-25px; padding-left: 60px;'>";
           currentAddr = det.address;

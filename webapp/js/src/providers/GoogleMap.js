@@ -677,7 +677,7 @@
           window.TowerScoutLogger.debug(`✅ Geocoded address: ${data.address}`);
         } else {
           // Fallback to coordinates
-          detection.address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+          detection.address = `Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
           detection.addressConfidence = 0.0;
           detection.addressProvider = 'fallback';
           console.warn(`⚠️ Geocoding failed, using coordinates`);
@@ -690,7 +690,7 @@
         console.error('❌ Geocoding error:', error);
         // Fallback to coordinates
         const center = detection.getCenter();
-        detection.address = `${center[1].toFixed(6)}, ${center[0].toFixed(6)}`;
+        detection.address = `Coordinates: ${center[1].toFixed(6)}, ${center[0].toFixed(6)}`;
         detection.addressConfidence = 0.0;
         detection.addressProvider = 'error';
 

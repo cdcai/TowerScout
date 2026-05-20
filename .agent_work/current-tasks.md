@@ -1,9 +1,9 @@
 # Current Tasks - Active Sprint
 
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
-**Last Updated**: May 14, 2026
+**Last Updated**: May 20, 2026
 **Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
-**Status**: Sprint 06 committed lane selected. `TASK-065` and `TASK-072` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-071` is the next documentation dependency; `TASK-066` and `TASK-073` remain selected for Sprint 06.
+**Status**: Sprint 06 committed lane selected. `TASK-065` and `TASK-072` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-079` is added as a release-critical reliability hardening task before final package docs and clean-machine validation; `TASK-071`, `TASK-066`, and `TASK-073` remain selected for Sprint 06.
 
 ---
 
@@ -112,6 +112,27 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 
 **User Value**: Allows Sprint 06 to target a YOLO-enabled RC/pilot without waiting for detector runtime replacement, while keeping the release honest about AGPL obligations and source availability.
 
+### **TASK-079: RC1 Reliability Fixes And Performance Instrumentation**
+**Status**: COMPLETED - Phase 3 CPU optimization validated; single GPU-capable package plan handed to TASK-075
+**Type**: C (Release-Critical Reliability / Detection Workflow Hardening)
+**Priority**: CRITICAL
+**Estimated Effort**: Phase 1: 1-2 days (8-16 hours); Phase 2A/2B: 0.5-1 day investigation; Phase 3 follow-up depends on benchmark and GPU/CUDA evidence
+**Target Sprint**: Sprint 06 V1 RC1
+**Task File**: `.agent_work/tasks/active/TASK-079-rc1-reliability-fixes.md`
+
+**Objective**: Fix or harden the pre-RC reliability issues affecting detected-tower address display, Azure drawing-shape validation, and model-performance diagnosis without disrupting the V1 RC1 package, asset, provider setup, or readiness contracts.
+
+**Current Direction**:
+- Phase 1 code and validation are complete: shared geocoding TLS preflight, canonical coordinate fallback, neighboring geocache bucket lookup, Azure completed-shape validation cleanup, address escaping, additive model phase timing, and a 6-tile Azure bounded smoke with right-panel address and drawing-tool confirmation.
+- Phase 2A research is complete: the fixed 6-tile benchmark reproduced 41 raw detections and 9 EfficientNet candidates, but measured secondary-classifier time around `13.8s` rather than the live smoke's `69.48s`. EfficientNet batching is output-stable and can save roughly `15-20%` of CPU secondary time on benchmark fixtures, but it does not fully explain the live outlier.
+- Phase 2B research is complete: current code can auto-use CUDA only when CUDA-enabled PyTorch and visible NVIDIA devices are present; the RC package path currently installs CPU-only PyTorch wheels and has no Compose GPU reservation.
+- Phase 3 CPU optimization is complete: EfficientNet review-band candidates are batched with default batch size `8`, secondary-classifier subphase/candidate diagnostics are recorded, and EfficientNet now falls back to CPU if CUDA setup is visible but unusable.
+- RC1 remains CPU-safe by default. The approved follow-up direction is a single CUDA-capable package/image with CPU fallback, optional GPU launch overlay, explicit runtime diagnostics, and validation gates documented in `.agent_work/context/analysis/task-079-single-gpu-capable-package-plan.md`; the PR #14 review disposition adds shared device-policy resolution, EfficientNet per-chunk CUDA transfer, readiness diagnostics, GPU concurrency, and fixed-fixture parity as `TASK-075` entry criteria.
+
+**Dependencies**: `TASK-065`; `TASK-069`; `TASK-072`; current detection/geocoding/provider workflows. `TASK-071` and `TASK-066` should consume this task's outcomes for docs and clean-machine validation.
+
+**User Value**: Reduces the chance that RC1 pilot users encounter missing addresses, rejected valid Azure shapes, or unexplained slow detections, while keeping the release path supportable and measured.
+
 ### **TASK-071: End-User Release Package Documentation**
 **Status**: NOT_STARTED - selected for Sprint 06  
 **Type**: B/C (Documentation / User Enablement)  
@@ -163,7 +184,7 @@ These tasks are important for V1 RC1, but they are not yet active task files in 
 | Task | Recommended Handling | Reason |
 |---|---|---|
 | `TASK-076` Provider API Key Exposure And Restriction Policy | Candidate for parallel Sprint 06 work | Browser map SDK keys remain client-visible; v1 needs an approved restriction/support policy or an engineering blocker. AGPL does not change provider/API terms. |
-| `TASK-075` GPU / CUDA Support Decision | Candidate for early Sprint 06 decision | V1 should explicitly be CPU-only or document a validated CUDA support path. This should stay a decision task unless implementation is intentionally selected. |
+| `TASK-075` Single GPU-Capable Package Implementation | Candidate follow-up after `TASK-079` closeout | `TASK-079` produced the feasibility evidence and a source-backed plan. Start with shared `TOWERSCOUT_DEVICE` policy resolution, EfficientNet memory-bound CUDA chunking, readiness diagnostics, and fixed-fixture parity checks; keep the default launch CPU-safe and require CPU-only plus NVIDIA Docker Desktop WSL2 validation before changing RC support language. |
 
 ---
 

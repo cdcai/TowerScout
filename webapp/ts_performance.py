@@ -14,6 +14,7 @@ import json
 import os
 import threading
 from datetime import datetime
+from statistics import median
 from typing import Optional, Dict, Any, List
 from pathlib import Path
 from contextlib import contextmanager
@@ -29,6 +30,36 @@ except ImportError:
 from ts_logging import get_main_logger
 
 logger = get_main_logger()
+
+
+def _env_float(name: str, default: float, minimum: Optional[float] = None) -> float:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        logger.warning("%s must be a number; using %.2f", name, default)
+        return default
+    if minimum is not None and parsed < minimum:
+        logger.warning("%s must be >= %.2f; using %.2f", name, minimum, default)
+        return default
+    return parsed
+
+
+def _env_int(name: str, default: int, minimum: Optional[int] = None) -> int:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        logger.warning("%s must be an integer; using %s", name, default)
+        return default
+    if minimum is not None and parsed < minimum:
+        logger.warning("%s must be >= %s; using %s", name, minimum, default)
+        return default
+    return parsed
 
 
 class PerformanceMetrics:
@@ -78,6 +109,7 @@ class PerformanceMetrics:
         # Phase timing
         self.phase_timings = {}
         self._phase_start_times = {}
+        self.runtime_metadata = {}
         
         # Process tracking for memory
         self.process = psutil.Process()
@@ -95,6 +127,23 @@ class PerformanceMetrics:
             self.phase_timings[phase_name] = duration
             logger.debug(f"Performance tracking: Phase '{phase_name}' completed in {duration:.2f}s")
             del self._phase_start_times[phase_name]
+
+    def add_phase_duration(self, phase_name: str, duration_seconds: float):
+        """Accumulate timing for phases that run repeatedly inside a workflow."""
+        if duration_seconds < 0:
+            return
+        self.phase_timings[phase_name] = self.phase_timings.get(phase_name, 0.0) + duration_seconds
+        logger.debug(
+            "Performance tracking: Added %.2fs to phase '%s'",
+            duration_seconds,
+            phase_name,
+        )
+
+    def set_runtime_metadata(self, **metadata: Any):
+        """Record additive runtime metadata for diagnostics."""
+        for key, value in metadata.items():
+            if value is not None:
+                self.runtime_metadata[key] = value
     
     def update_memory_usage(self):
         """Update memory usage metrics."""
@@ -113,18 +162,89 @@ class PerformanceMetrics:
         except Exception as e:
             logger.warning(f"Failed to update memory usage: {e}")
     
-    def estimate_processing_time(self, tile_count: int, base_time_per_tile: float = 0.3) -> float:
+    def _recent_seconds_per_tile(self, sample_limit: int) -> List[float]:
+        """Return recent observed workflow seconds per tile, preferring this provider."""
+        json_log = get_log_dir() / "performance.jsonl"
+        if not json_log.exists():
+            return []
+
+        try:
+            lines = json_log.read_text(encoding="utf-8").splitlines()
+        except OSError as exc:
+            logger.debug("Could not read performance history for estimate: %s", exc)
+            return []
+
+        provider = (self.map_provider or "").strip().lower()
+        same_provider = []
+        all_providers = []
+
+        for line in reversed(lines):
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+                row_tiles = float(row.get("tile_count") or 0)
+                row_total = float(row.get("total_workflow_time_seconds") or 0)
+            except (TypeError, ValueError, json.JSONDecodeError):
+                continue
+
+            if row_tiles <= 0 or row_total <= 0:
+                continue
+
+            seconds_per_tile = row_total / row_tiles
+            all_providers.append(seconds_per_tile)
+            if provider and str(row.get("map_provider", "")).strip().lower() == provider:
+                same_provider.append(seconds_per_tile)
+
+            if len(same_provider) >= sample_limit:
+                break
+
+        samples = same_provider or all_providers[:sample_limit]
+        return samples[:sample_limit]
+
+    def estimate_processing_time(
+        self,
+        tile_count: int,
+        base_time_per_tile: Optional[float] = None,
+        fixed_overhead_seconds: float = 0.0,
+    ) -> float:
         """
         Estimate processing time based on tile count.
         
         Args:
             tile_count: Number of tiles to process
-            base_time_per_tile: Average seconds per tile (default: 0.3s)
+            base_time_per_tile: Average seconds per tile. If omitted, recent
+                performance history is used with a conservative CPU fallback.
+            fixed_overhead_seconds: Optional non-tile overhead, such as expected
+                first-use model initialization.
             
         Returns:
             Estimated time in seconds
         """
-        self.estimated_time_seconds = tile_count * base_time_per_tile
+        fallback_seconds_per_tile = _env_float(
+            "TOWERSCOUT_ESTIMATE_SECONDS_PER_TILE",
+            4.0,
+            minimum=0.1,
+        )
+        sample_limit = _env_int("TOWERSCOUT_ESTIMATE_HISTORY_SIZE", 6, minimum=1)
+
+        samples = []
+        if base_time_per_tile is None:
+            samples = self._recent_seconds_per_tile(sample_limit)
+            if samples:
+                base_time_per_tile = max(fallback_seconds_per_tile, median(samples))
+            else:
+                base_time_per_tile = fallback_seconds_per_tile
+
+        fixed_overhead_seconds = max(0.0, float(fixed_overhead_seconds or 0.0))
+        self.estimated_time_seconds = (
+            max(0, tile_count) * max(0.0, float(base_time_per_tile)) + fixed_overhead_seconds
+        )
+        self.set_runtime_metadata(
+            estimate_seconds_per_tile=round(float(base_time_per_tile), 3),
+            estimate_fixed_overhead_seconds=round(fixed_overhead_seconds, 3),
+            estimate_history_sample_count=len(samples),
+        )
         return self.estimated_time_seconds
     
     def finalize(self):
@@ -154,7 +274,8 @@ class PerformanceMetrics:
             'map_provider': self.map_provider,
             'detection_engine': self.detection_engine,
             'crop_tiles': self.crop_tiles,
-            'phase_timings': {k: round(v, 2) for k, v in self.phase_timings.items()}
+            'phase_timings': {k: round(v, 2) for k, v in self.phase_timings.items()},
+            'runtime_metadata': dict(self.runtime_metadata)
         }
     
     def to_csv_row(self) -> List[Any]:

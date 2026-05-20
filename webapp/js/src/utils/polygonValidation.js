@@ -161,8 +161,16 @@
     };
   }
 
-  function validatePolygonCollection(polygons) {
+  function validatePolygonCollection(polygons, options = {}) {
     if (!Array.isArray(polygons) || polygons.length === 0) {
+      if (options.requireNonEmpty === true) {
+        return {
+          valid: false,
+          reason: 'empty_collection',
+          polygons: []
+        };
+      }
+
       return {
         valid: true,
         polygons: []
@@ -204,6 +212,10 @@
         return `${prefix}draw at least 3 distinct points to create an enclosed area.`;
       case 'zero_area':
         return `${prefix}the polygon must enclose a non-zero area. ${getRemediationText()}`;
+      case 'empty_collection':
+        return `${prefix}draw at least one completed polygon or rectangle.`;
+      case 'unsupported_geometry':
+        return `${prefix}the completed drawing shape is unsupported. ${getRemediationText()}`;
       default:
         return `${prefix}the polygon is malformed. ${getRemediationText()}`;
     }

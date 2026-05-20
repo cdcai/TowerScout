@@ -17,6 +17,7 @@
 import torch
 import torch.nn as nn
 import os
+import time
 
 from efficientnet_pytorch import EfficientNet
 from torchvision import transforms
@@ -35,6 +36,22 @@ def _env_flag(name, default=False):
     if value is None:
         return default
     return value.strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+def _env_int(name, default, minimum=1):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        logger.warning("%s must be an integer; using %s", name, default)
+        return default
+    if parsed < minimum:
+        logger.warning("%s must be >= %s; using %s", name, minimum, default)
+        return default
+    return parsed
+
 
 class EN_Classifier:
 
@@ -75,14 +92,29 @@ class EN_Classifier:
                     cause=e
                 )
 
-            # GPU/CPU configuration with error handling
+            # GPU/CPU configuration with CPU fallback if CUDA setup is visible but unusable.
+            self.device = torch.device('cpu')
+            self.device_label = 'cpu'
             try:
                 if torch.cuda.is_available():
-                    self.model.cuda()
-                    checkpoint = torch.load(str(path_best))
-                    logger.info("EfficientNet loaded on CUDA")
+                    try:
+                        self.device = torch.device('cuda')
+                        self.model.to(self.device)
+                        checkpoint = torch.load(str(path_best), map_location=self.device)
+                        self.device_label = 'cuda'
+                        logger.info("EfficientNet loaded on CUDA")
+                    except Exception as cuda_error:
+                        logger.warning(
+                            "EfficientNet CUDA setup failed, falling back to CPU: %s",
+                            cuda_error,
+                        )
+                        self.device = torch.device('cpu')
+                        self.device_label = 'cpu'
+                        self.model.to(self.device)
+                        checkpoint = torch.load(str(path_best), map_location=self.device)
+                        logger.info("EfficientNet loaded on CPU after CUDA fallback")
                 else:
-                    checkpoint = torch.load(str(path_best), map_location=torch.device('cpu'))
+                    checkpoint = torch.load(str(path_best), map_location=self.device)
                     logger.info("EfficientNet loaded on CPU")
             except Exception as e:
                 raise ModelLoadError(
@@ -121,6 +153,8 @@ class EN_Classifier:
             transforms.Normalize(mean=(0.5553, 0.5080, 0.4960), std=(0.1844, 0.1982, 0.2017))
             ])
         self.save_debug_images = _env_flag('TOWERSCOUT_SAVE_EN_DEBUG_IMAGES', False)
+        self.batch_size = _env_int('TOWERSCOUT_EN_BATCH_SIZE', 8, minimum=1)
+        self.last_classify_stats = {}
         if self.save_debug_images:
             logger.info("EfficientNet debug image capture enabled")
     
@@ -132,34 +166,46 @@ class EN_Classifier:
     #
     # IMPORTANT: Confidence range for running EN.
     def classify(self, img, detections, min_conf=0.25, max_conf=0.65, batch_id=0):
-        count=0
+        total_start = time.time()
+        stats = {
+            'detections_total': len(detections),
+            'candidate_count': 0,
+            'batch_size': self.batch_size,
+            'device': self.device_label,
+            'batches': 0,
+            'crop_seconds': 0.0,
+            'transform_seconds': 0.0,
+            'stack_seconds': 0.0,
+            'forward_seconds': 0.0,
+            'attach_seconds': 0.0,
+            'debug_image_seconds': 0.0,
+            'total_seconds': 0.0,
+        }
         if self.save_debug_images:
             upload_dir = get_upload_dir()
-        for det in detections:
+
+        candidate_tensors = []
+        candidate_refs = []
+        debug_candidates = []
+
+        for count, det in enumerate(detections):
             x1,y1,x2,y2,conf = det[0:5]
 
             # only for certain confidence range
             if conf >= min_conf and conf <= max_conf:
+                stats['candidate_count'] += 1
+                crop_start = time.time()
                 det_img = cut_square_detection(img, x1, y1, x2, y2)
+                stats['crop_seconds'] += time.time() - crop_start
 
                 # now apply transformations
-                input = self.transform(det_img).unsqueeze(0)
-
-                # put on GPU if we have one
-                if torch.cuda.is_available():
-                    input = input.cuda()
-
-                # and feed into model
-                # this is 1-... because the secondary has class 0 as tower
-                with torch.inference_mode():
-                    output = 1 - torch.sigmoid(self.model(input).cpu()).item()
-                # print(" inspected: YOLOv5 conf:",round(conf,2), end=", ")
-                # print(" secondary result:", round(output,2))
+                transform_start = time.time()
+                candidate_tensors.append(self.transform(det_img))
+                stats['transform_seconds'] += time.time() - transform_start
+                candidate_refs.append((count, det))
                 if self.save_debug_images:
-                    debug_suffix = f"{batch_id+count:02}_conf_{round(conf, 2)}_p2_{round(output, 2)}"
-                    img.save(upload_dir / f"img_for_id_{debug_suffix}.jpg")
-                    det_img.save(upload_dir / f"id_{debug_suffix}.jpg")
-                p2 = output
+                    debug_candidates.append((count, conf, det_img))
+                continue
 
             elif conf < min_conf:
                 # print(" No chance: YOLOv5 conf:", round(conf,2))
@@ -172,5 +218,42 @@ class EN_Classifier:
                 p2 = 1
 
             det.append(p2)
-            count += 1
 
+        if candidate_tensors:
+            stack_start = time.time()
+            inputs = torch.stack(candidate_tensors)
+            stats['stack_seconds'] += time.time() - stack_start
+
+            if self.device_label == 'cuda':
+                inputs = inputs.to(self.device)
+
+            outputs = []
+            for offset in range(0, len(candidate_tensors), self.batch_size):
+                chunk = inputs[offset:offset + self.batch_size]
+                stats['batches'] += 1
+                forward_start = time.time()
+                # This is 1-... because the secondary has class 0 as tower.
+                with torch.inference_mode():
+                    batch_outputs = 1 - torch.sigmoid(self.model(chunk).cpu()).view(-1)
+                stats['forward_seconds'] += time.time() - forward_start
+                outputs.extend(float(value) for value in batch_outputs.tolist())
+
+            attach_start = time.time()
+            output_by_index = {}
+            for (count, det), output in zip(candidate_refs, outputs):
+                det.append(output)
+                output_by_index[count] = output
+            stats['attach_seconds'] += time.time() - attach_start
+
+            if self.save_debug_images:
+                debug_start = time.time()
+                for count, conf, det_img in debug_candidates:
+                    output = output_by_index[count]
+                    debug_suffix = f"{batch_id+count:02}_conf_{round(conf, 2)}_p2_{round(output, 2)}"
+                    img.save(upload_dir / f"img_for_id_{debug_suffix}.jpg")
+                    det_img.save(upload_dir / f"id_{debug_suffix}.jpg")
+                stats['debug_image_seconds'] += time.time() - debug_start
+
+        stats['total_seconds'] = time.time() - total_start
+        self.last_classify_stats = stats
+        return stats

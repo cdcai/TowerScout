@@ -188,6 +188,26 @@ def get_engine(e):
         return engines[e]['engine']
 
 
+def _engine_loaded(e):
+    if e is None:
+        e = engine_default
+    return e in engines and engines[e].get('engine') is not None
+
+
+def _estimate_model_initialization_overhead(e):
+    if _engine_loaded(e):
+        return 0.0
+
+    configured_value = os.getenv('TOWERSCOUT_ESTIMATE_COLD_MODEL_SECONDS', '12.0')
+    try:
+        return max(0.0, float(configured_value))
+    except (TypeError, ValueError):
+        api_logger.warning(
+            "TOWERSCOUT_ESTIMATE_COLD_MODEL_SECONDS must be numeric; using 12.0"
+        )
+        return 12.0
+
+
 def find_model(m):
     for engine in engines:
         if m == engines[engine]['file']:
@@ -528,6 +548,10 @@ def _detection_center(detection):
     )
 
 
+def _format_coordinate_address(lat, lng):
+    return f"Coordinates: {lat:.6f}, {lng:.6f}"
+
+
 def _detection_iou(first, second):
     left = max(first['x1'], second['x1'])
     right = min(first['x2'], second['x2'])
@@ -589,12 +613,29 @@ def _dedupe_detection_results(results):
     return deduped
 
 
+def _should_reverse_geocode_detection(detection):
+    """Return whether a detection should spend provider/cache geocoding work."""
+    return detection.get('class') == 0 and detection.get('inside', True)
+
+
 def _attach_detection_addresses(results, provider, perf_metrics=None, progress_callback=None):
     session['geocoding_limited'] = False
     if not results:
         return
 
-    api_logger.info("Starting address lookup for %s detection(s)", len(results))
+    geocoding_total = sum(1 for detection in results if _should_reverse_geocode_detection(detection))
+    geocoding_skipped_non_tower = sum(1 for detection in results if detection.get('class') != 0)
+    geocoding_skipped_outside = sum(
+        1
+        for detection in results
+        if detection.get('class') == 0 and not detection.get('inside', True)
+    )
+
+    api_logger.info(
+        "Starting address lookup for %s eligible detection(s) out of %s retained detection(s)",
+        geocoding_total,
+        len(results),
+    )
     if perf_metrics:
         perf_metrics.start_phase('geocoding')
     address_start_time = time.time()
@@ -606,8 +647,14 @@ def _attach_detection_addresses(results, provider, perf_metrics=None, progress_c
         preferred_provider=provider
     )
     geocoding_cache = create_geocoding_cache(clustering_radius_meters=clustering_radius)
-    geocoding_total = sum(1 for detection in results if detection.get('class') == 0)
     geocoding_processed = 0
+    geocoding_cache_hits = 0
+    geocoding_cache_misses = 0
+    geocoding_provider_calls = 0
+
+    def record_phase(phase_name, started_at):
+        if perf_metrics and hasattr(perf_metrics, "add_phase_duration"):
+            perf_metrics.add_phase_duration(phase_name, time.time() - started_at)
 
     if progress_callback is not None:
         progress_callback(0, geocoding_total)
@@ -620,10 +667,18 @@ def _attach_detection_addresses(results, provider, perf_metrics=None, progress_c
             continue
 
         center_lat, center_lng = _detection_center(detection)
+        if not detection.get('inside', True):
+            detection['address'] = _format_coordinate_address(center_lat, center_lng)
+            detection['address_confidence'] = 0.0
+            detection['address_provider'] = "outside_boundary"
+            continue
 
         try:
+            cache_lookup_start = time.time()
             cached_result = geocoding_cache.get(center_lat, center_lng, provider=provider)
+            record_phase('geocoding_cache_lookup', cache_lookup_start)
             if cached_result:
+                geocoding_cache_hits += 1
                 detection['address'] = cached_result.address
                 detection['address_confidence'] = cached_result.confidence
                 detection['address_provider'] = cached_result.provider.value
@@ -634,14 +689,23 @@ def _attach_detection_addresses(results, provider, perf_metrics=None, progress_c
                     progress_callback(geocoding_processed, geocoding_total)
                 continue
 
-            geocoding_result = geocoding_service.reverse_geocode(center_lat, center_lng, provider)
+            geocoding_cache_misses += 1
+            geocoding_provider_calls += 1
+            provider_request_start = time.time()
+            try:
+                geocoding_result = geocoding_service.reverse_geocode(center_lat, center_lng, provider)
+            finally:
+                record_phase('geocoding_provider_request', provider_request_start)
+
             if geocoding_result.success and geocoding_result.address:
                 detection['address'] = geocoding_result.address
                 detection['address_confidence'] = geocoding_result.confidence
                 detection['address_provider'] = geocoding_result.provider.value
+                cache_store_start = time.time()
                 geocoding_cache.put(center_lat, center_lng, geocoding_result, provider=provider)
+                record_phase('geocoding_cache_store', cache_store_start)
             else:
-                detection['address'] = f"{center_lat:.6f}, {center_lng:.6f}"
+                detection['address'] = _format_coordinate_address(center_lat, center_lng)
                 detection['address_confidence'] = 0.0
                 detection['address_provider'] = "fallback"
                 api_logger.warning(
@@ -652,17 +716,17 @@ def _attach_detection_addresses(results, provider, perf_metrics=None, progress_c
                 )
         except RateLimitError as e:
             session['geocoding_limited'] = True
-            detection['address'] = f"Address unavailable - {center_lat:.6f}, {center_lng:.6f}"
+            detection['address'] = _format_coordinate_address(center_lat, center_lng)
             detection['address_confidence'] = 0.0
             detection['address_provider'] = "rate_limited"
             api_logger.warning("Geocoding rate limited for %.6f, %.6f: %s", center_lat, center_lng, e)
         except GeocodingError as e:
-            detection['address'] = f"Address unavailable - {center_lat:.6f}, {center_lng:.6f}"
+            detection['address'] = _format_coordinate_address(center_lat, center_lng)
             detection['address_confidence'] = 0.0
             detection['address_provider'] = "fallback"
             api_logger.warning("Geocoding failed for %.6f, %.6f: %s", center_lat, center_lng, e)
         except Exception as e:
-            detection['address'] = f"Address unavailable - {center_lat:.6f}, {center_lng:.6f}"
+            detection['address'] = _format_coordinate_address(center_lat, center_lng)
             detection['address_confidence'] = 0.0
             detection['address_provider'] = "error"
             api_logger.error("Unexpected geocoding error for %.6f, %.6f: %s", center_lat, center_lng, e)
@@ -687,10 +751,28 @@ def _attach_detection_addresses(results, provider, perf_metrics=None, progress_c
     except Exception as e:
         api_logger.warning("Could not store geocoding usage: %s", e)
 
+    if perf_metrics and hasattr(perf_metrics, "set_runtime_metadata"):
+        perf_metrics.set_runtime_metadata(
+            geocoding_eligible_count=geocoding_total,
+            geocoding_skipped_non_tower_count=geocoding_skipped_non_tower,
+            geocoding_skipped_outside_boundary_count=geocoding_skipped_outside,
+            geocoding_cache_hits=geocoding_cache_hits,
+            geocoding_cache_misses=geocoding_cache_misses,
+            geocoding_provider_calls=geocoding_provider_calls,
+            geocoding_cache_radius_meters=clustering_radius,
+        )
+
     if perf_metrics:
         perf_metrics.end_phase('geocoding')
     address_time = time.time() - address_start_time
-    api_logger.info("Address lookup completed in %.2f seconds", address_time)
+    api_logger.info(
+        "Address lookup completed in %.2f seconds (eligible=%s, cache_hits=%s, provider_calls=%s, skipped_outside=%s)",
+        address_time,
+        geocoding_total,
+        geocoding_cache_hits,
+        geocoding_provider_calls,
+        geocoding_skipped_outside,
+    )
 
 
 def _run_detection_request():
@@ -776,7 +858,14 @@ def _run_detection_request():
         if exit_events.query(run_token):
             return cancelled_response('Detection was cancelled before tile preparation finished.')
 
+        perf_metrics.start_phase('model_initialization')
         det = get_engine(engine)
+        perf_metrics.end_phase('model_initialization')
+        if hasattr(perf_metrics, "set_runtime_metadata"):
+            perf_metrics.set_runtime_metadata(
+                model_batch_size=getattr(det, 'batch_size', None),
+                model_device=getattr(det, 'device_label', None),
+            )
         if exit_events.query(run_token):
             return cancelled_response('Detection was cancelled before model initialization finished.')
 
@@ -802,7 +891,10 @@ def _run_detection_request():
             ),
             counts=tile_stats,
         )
-        perf_metrics.estimate_processing_time(len(tiles))
+        perf_metrics.estimate_processing_time(
+            len(tiles),
+            fixed_overhead_seconds=_estimate_model_initialization_overhead(engine),
+        )
         session['last_detection_provider'] = provider
         api_logger.info(
             "Detection estimate for session %s: %s tile(s), ~%.1f seconds",
@@ -977,12 +1069,15 @@ def _run_detection_request():
 
         perf_metrics.start_phase('model_detection')
         model_start_time = time.time()
+        secondary_load_start = time.time()
+        secondary_classifier = get_secondary_classifier()
+        perf_metrics.add_phase_duration('model_secondary_classifier_load', time.time() - secondary_load_start)
         results_raw = det.detect(
             tiles,
             exit_events,
             run_token,
             crop_tiles=crop_tiles,
-            secondary=get_secondary_classifier(),
+            secondary=secondary_classifier,
             perf_metrics=perf_metrics,
             progress_callback=update_model_progress,
         )
@@ -1005,6 +1100,7 @@ def _run_detection_request():
 
         results = []
         raw_detection_count = 0
+        result_conversion_start = time.time()
         api_logger.info(
             "Starting detection post-processing for %s tile result(s)",
             len(results_raw),
@@ -1031,6 +1127,7 @@ def _run_detection_request():
 
             results += result
 
+        perf_metrics.add_phase_duration('model_coordinate_conversion', time.time() - result_conversion_start)
         api_logger.info(
             "Detection complete: %s detection(s) across %s tile(s)",
             len(results),
@@ -1052,6 +1149,7 @@ def _run_detection_request():
 
         inside_count = 0
         outside_count = 0
+        boundary_filter_start = time.time()
         for result in results:
             result['inside'] = ts_imgutil.resultIntersectsPolygons(
                 result['x1'],
@@ -1065,12 +1163,15 @@ def _run_detection_request():
             else:
                 outside_count += 1
 
+        perf_metrics.add_phase_duration('model_boundary_filtering', time.time() - boundary_filter_start)
         api_logger.info(
             "Boundary filtering complete: inside=%s outside=%s",
             inside_count,
             outside_count,
         )
+        dedupe_start = time.time()
         results = _dedupe_detection_results(results)
+        perf_metrics.add_phase_duration('model_duplicate_filtering', time.time() - dedupe_start)
         retained_detection_count = len(results)
         _update_detection_run(
             session_id,
@@ -1092,7 +1193,7 @@ def _run_detection_request():
             },
         )
 
-        geocoding_total = sum(1 for detection in results if detection.get('class') == 0)
+        geocoding_total = sum(1 for detection in results if _should_reverse_geocode_detection(detection))
 
         def update_geocoding_progress(processed_count, total_count):
             _update_detection_run(
@@ -1120,7 +1221,7 @@ def _run_detection_request():
             for detection in results:
                 if detection.get('class') == 0:
                     center_lat, center_lng = _detection_center(detection)
-                    detection['address'] = f"Address unavailable - {center_lat:.6f}, {center_lng:.6f}"
+                    detection['address'] = _format_coordinate_address(center_lat, center_lng)
                     detection['address_confidence'] = 0.0
                     detection['address_provider'] = "error"
                 else:
@@ -1859,21 +1960,34 @@ def reverse_geocode():
 
             return jsonify({
                 'success': False,
-                'address': f"{lat:.6f}, {lng:.6f}",
-                'provider': result.provider.value,
+                'address': _format_coordinate_address(lat, lng),
+                'provider': 'fallback',
                 'confidence': result.confidence,
                 'cached': False,
                 'error': result.error_message or 'No address found'
             })
-        except GeocodingError as e:
+        except RateLimitError as e:
+            api_logger.warning(f"Geocoding rate limited for {lat}, {lng}: {e}")
+            return jsonify({
+                'success': False,
+                'address': _format_coordinate_address(lat, lng),
+                'provider': 'rate_limited',
+                'confidence': 0.0,
+                'cached': False,
+                'error': str(e),
+                'error_type': e.__class__.__name__
+            })
+        except (GeocodingError, NetworkError) as e:
             api_logger.warning(f"Geocoding failed for {lat}, {lng}: {e}")
             # Return coordinates as fallback
             return jsonify({
                 'success': False,
-                'address': f"{lat:.6f}, {lng:.6f}",
+                'address': _format_coordinate_address(lat, lng),
                 'provider': 'fallback',
                 'confidence': 0.0,
-                'error': str(e)
+                'cached': False,
+                'error': getattr(e, 'user_message', None) or str(e),
+                'error_type': e.__class__.__name__
             })
         
     except ValueError as e:
@@ -2176,7 +2290,10 @@ def estimate_detection_tiles():
         )
 
         perf_metrics.tile_count = len(tiles)
-        perf_metrics.estimate_processing_time(len(tiles))
+        perf_metrics.estimate_processing_time(
+            len(tiles),
+            fixed_overhead_seconds=_estimate_model_initialization_overhead(engine),
+        )
         session['last_detection_provider'] = provider
 
         api_logger.info(
@@ -2703,12 +2820,20 @@ def write_contents_file(tmpdirname, tiles, keep_refs, keep_ids, additions, meta)
             manual_provider = session.get('last_detection_provider', 'auto')
 
             # Initialize geocoding service and cache for manual tower address lookup
-            geocoding_service = create_geocoding_service(
-                azure_key=azure_api_key,
-                google_key=google_api_key,
-                preferred_provider=manual_provider
-            )
-            geocoding_cache = create_geocoding_cache(clustering_radius_meters=50.0)
+            geocoding_service = None
+            geocoding_cache = None
+            try:
+                geocoding_service = create_geocoding_service(
+                    azure_key=azure_api_key,
+                    google_key=google_api_key,
+                    preferred_provider=manual_provider
+                )
+                geocoding_cache = create_geocoding_cache(clustering_radius_meters=50.0)
+            except Exception as geocode_init_error:
+                api_logger.warning(
+                    "Manual tower geocoding unavailable; coordinate fallback will be used: %s",
+                    geocode_init_error,
+                )
             
             results = json.loads(session['results'])
             
@@ -2763,6 +2888,9 @@ def write_contents_file(tmpdirname, tiles, keep_refs, keep_ids, additions, meta)
                 
                 # TASK-033 Phase 3: Reverse geocode manual tower location (with caching for performance)
                 try:
+                    if geocoding_service is None or geocoding_cache is None:
+                        raise GeocodingError("Manual tower geocoding is unavailable")
+
                     # Try cache first for performance
                     cached_result = geocoding_cache.get(center_lat, center_lng, provider=manual_provider)
                     if cached_result:
@@ -2789,9 +2917,9 @@ def write_contents_file(tmpdirname, tiles, keep_refs, keep_ids, additions, meta)
                                 manual_addr_provider,
                             )
                         else:
-                            manual_address = ""
+                            manual_address = _format_coordinate_address(center_lat, center_lng)
                             manual_addr_conf = 0.0
-                            manual_addr_provider = "manual"
+                            manual_addr_provider = "fallback"
                             api_logger.warning(
                                 "Manual tower geocoding returned no address tile=%s error=%s",
                                 tile_id,
@@ -2799,14 +2927,14 @@ def write_contents_file(tmpdirname, tiles, keep_refs, keep_ids, additions, meta)
                             )
                 except RateLimitError as e:
                     api_logger.warning("Geocoding rate limited for manual tower tile=%s: %s", tile_id, e)
-                    manual_address = f"Address unavailable - {center_lat:.6f}, {center_lng:.6f}"
+                    manual_address = _format_coordinate_address(center_lat, center_lng)
                     manual_addr_conf = 0.0
                     manual_addr_provider = "rate_limited"
                 except GeocodingError as e:
                     api_logger.warning("Reverse geocoding failed for manual tower tile=%s: %s", tile_id, e)
-                    manual_address = ""
+                    manual_address = _format_coordinate_address(center_lat, center_lng)
                     manual_addr_conf = 0.0
-                    manual_addr_provider = "manual"
+                    manual_addr_provider = "fallback"
                 except Exception as geocode_error:
                     api_logger.error(
                         "Unexpected geocoding error for manual tower tile=%s: %s",
@@ -2814,9 +2942,9 @@ def write_contents_file(tmpdirname, tiles, keep_refs, keep_ids, additions, meta)
                         geocode_error,
                         exc_info=True,
                     )
-                    manual_address = ""
+                    manual_address = _format_coordinate_address(center_lat, center_lng)
                     manual_addr_conf = 0.0
-                    manual_addr_provider = "manual"
+                    manual_addr_provider = "error"
                 
                 # Create detection object (TASK-033 Phase 3: Include all required fields)
                 detection = {

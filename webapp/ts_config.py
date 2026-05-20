@@ -21,6 +21,13 @@ import requests
 from dotenv import dotenv_values, load_dotenv
 
 from ts_errors import ConfigurationError, NetworkError
+from ts_tls import (
+    INSECURE_TLS_ENV_VAR,
+    TLS_CA_BUNDLE_ENV_VARS,
+    TRUTHY_ENV_VALUES,
+    allow_insecure_tls,
+    configured_tls_bundle_error,
+)
 from ts_validation import TowerScoutValidator, ValidationError as InputValidationError
 
 CONFIG_ENV_FILENAME = ".env"
@@ -51,10 +58,6 @@ PERFORMANCE_LOG_HEADERS = (
     "crop_tiles",
     "phase_timings_json",
 )
-INSECURE_TLS_ENV_VAR = "TOWERSCOUT_ALLOW_INSECURE_TLS"
-TLS_CA_BUNDLE_ENV_VARS = ("REQUESTS_CA_BUNDLE", "SSL_CERT_FILE")
-TRUTHY_ENV_VALUES = {"1", "true", "yes", "on"}
-
 PLACEHOLDER_PATTERNS = (
     "your_google_maps_api_key_here",
     "your_azure_maps_subscription_key_here",
@@ -178,31 +181,11 @@ def sanitize_api_key(key: str, field_name: str) -> str:
 
 
 def _allow_insecure_tls() -> bool:
-    return os.getenv(INSECURE_TLS_ENV_VAR, "").strip().lower() in TRUTHY_ENV_VALUES
+    return allow_insecure_tls()
 
 
 def _configured_tls_bundle_error() -> NetworkError | None:
-    for env_var in TLS_CA_BUNDLE_ENV_VARS:
-        configured_path = os.getenv(env_var, "").strip()
-        if not configured_path:
-            continue
-
-        if not Path(configured_path).is_file():
-            return NetworkError(
-                f"Configured TLS CA bundle path does not exist: {env_var}={configured_path}",
-                user_message=(
-                    "The configured TLS CA bundle was not found. "
-                    "Run scripts/import-tls-ca.cmd for the selected Docker or Podman engine, "
-                    "or update REQUESTS_CA_BUNDLE and SSL_CERT_FILE to a valid certificate bundle."
-                ),
-                details={
-                    "env_var": env_var,
-                    "configured_path": configured_path,
-                    "support_action": "Run scripts/import-tls-ca.cmd for the selected container engine.",
-                },
-            )
-
-    return None
+    return configured_tls_bundle_error()
 
 
 def _validation_get(url: str, params: Dict[str, Any]) -> requests.Response:

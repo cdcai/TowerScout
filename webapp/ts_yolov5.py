@@ -14,6 +14,7 @@
 import math
 import os
 import threading
+import time
 from importlib import metadata
 
 import torch
@@ -38,6 +39,21 @@ YOLOV5_RUNTIME_DEPENDENCIES = {
     'tqdm': {},
     'ultralytics': {},
 }
+
+
+def _env_int(name, default, minimum=1):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        logger.warning("%s must be an integer; using %s", name, default)
+        return default
+    if parsed < minimum:
+        logger.warning("%s must be >= %s; using %s", name, minimum, default)
+        return default
+    return parsed
 
 
 def _format_dependency_mismatch(dist_name, spec, installed_version):
@@ -126,21 +142,40 @@ class YOLOv5_Detector:
                 )
             
             # GPU/CPU configuration with error handling
-            if torch.cuda.is_available():
+            self.device_label = "cpu"
+            self.cuda_available = torch.cuda.is_available()
+            self.cuda_build_version = getattr(torch.version, "cuda", None)
+            self.cuda_device_name = None
+            if self.cuda_available:
                 try:
                     self.model.cuda()
+                    self.cuda_device_name = torch.cuda.get_device_name(0)
                     t = torch.cuda.get_device_properties(0).total_memory
                     r = torch.cuda.memory_reserved(0)
                     a = torch.cuda.memory_allocated(0)
                     f = r-a  # free inside reserved
-                    logger.info(f"CUDA enabled - Free GPU memory: {f:,} bytes")
-                    self.batch_size = 8  # For our Tesla K8, this means 8 batches can run in parallel
+                    logger.info(
+                        "CUDA enabled - device=%s build=%s free_gpu_memory=%s bytes",
+                        self.cuda_device_name,
+                        self.cuda_build_version,
+                        f"{f:,}",
+                    )
+                    self.batch_size = _env_int("TOWERSCOUT_YOLO_CUDA_BATCH_SIZE", 8)
+                    self.device_label = "cuda"
                 except Exception as e:
                     logger.warning(f"CUDA setup failed, falling back to CPU: {e}")
-                    self.batch_size = torch.get_num_threads()  # tuned to threads
+                    self.batch_size = _env_int(
+                        "TOWERSCOUT_YOLO_CPU_BATCH_SIZE",
+                        torch.get_num_threads(),
+                    )
+                    self.device_label = "cpu"
             else:
-                logger.info("CUDA not available, using CPU")
-                self.batch_size = torch.get_num_threads()  # tuned to threads
+                logger.info("CUDA not available, using CPU (torch_cuda_build=%s)", self.cuda_build_version)
+                self.batch_size = _env_int(
+                    "TOWERSCOUT_YOLO_CPU_BATCH_SIZE",
+                    torch.get_num_threads(),
+                )
+                self.device_label = "cpu"
             
             # add a semaphore so we don't run out of GPU memory between multiple clients
             self.semaphore = threading.Semaphore(8)
@@ -168,16 +203,80 @@ class YOLOv5_Detector:
     ):
         try:
             logger.info(f"Starting YOLOv5 detection on {len(tiles)} tiles")
+
+            def record_phase(phase_name, started_at):
+                if perf_metrics and hasattr(perf_metrics, "add_phase_duration"):
+                    perf_metrics.add_phase_duration(phase_name, time.time() - started_at)
             
             # Track memory before detection starts
             if perf_metrics:
                 perf_metrics.update_memory_usage()
+                if hasattr(perf_metrics, "set_runtime_metadata"):
+                    perf_metrics.set_runtime_metadata(
+                        model_device=self.device_label,
+                        model_batch_size=self.batch_size,
+                        model_tile_count=len(tiles),
+                        model_torch_threads=torch.get_num_threads(),
+                        model_torch_interop_threads=torch.get_num_interop_threads(),
+                        model_torch_cuda_build=getattr(self, "cuda_build_version", None),
+                        model_cuda_available=getattr(self, "cuda_available", False),
+                        model_cuda_device_name=getattr(self, "cuda_device_name", None),
+                        secondary_classifier_enabled=secondary is not None,
+                        secondary_classifier_device=getattr(secondary, "device_label", None),
+                        secondary_classifier_batch_size=getattr(secondary, "batch_size", None),
+                    )
             
             # Inference in batches
             tile_count = len(tiles)
             chunks = math.ceil(tile_count/self.batch_size)
             results = []
             count = 0
+            secondary_detection_total = 0
+            secondary_candidate_total = 0
+            secondary_batch_total = 0
+            secondary_total_seconds = 0.0
+
+            def record_secondary_stats(stats):
+                nonlocal secondary_detection_total
+                nonlocal secondary_candidate_total
+                nonlocal secondary_batch_total
+                nonlocal secondary_total_seconds
+
+                if not isinstance(stats, dict):
+                    return
+
+                if perf_metrics and hasattr(perf_metrics, "add_phase_duration"):
+                    phase_map = {
+                        'crop_seconds': 'model_secondary_crop',
+                        'transform_seconds': 'model_secondary_transform',
+                        'stack_seconds': 'model_secondary_stack',
+                        'forward_seconds': 'model_secondary_forward',
+                        'attach_seconds': 'model_secondary_attach',
+                        'debug_image_seconds': 'model_secondary_debug_image_save',
+                    }
+                    for stat_key, phase_name in phase_map.items():
+                        duration = stats.get(stat_key, 0.0)
+                        if duration:
+                            perf_metrics.add_phase_duration(phase_name, duration)
+
+                secondary_detection_total += int(stats.get('detections_total') or 0)
+                secondary_candidate_total += int(stats.get('candidate_count') or 0)
+                secondary_batch_total += int(stats.get('batches') or 0)
+                secondary_total_seconds += float(stats.get('total_seconds') or 0.0)
+
+                if perf_metrics and hasattr(perf_metrics, "set_runtime_metadata"):
+                    metadata = {
+                        "secondary_classifier_detection_count": secondary_detection_total,
+                        "secondary_classifier_candidate_count": secondary_candidate_total,
+                        "secondary_classifier_batches": secondary_batch_total,
+                        "secondary_classifier_device": stats.get('device'),
+                        "secondary_classifier_batch_size": stats.get('batch_size'),
+                    }
+                    if secondary_candidate_total:
+                        metadata["secondary_classifier_seconds_per_candidate"] = (
+                            secondary_total_seconds / secondary_candidate_total
+                        )
+                    perf_metrics.set_runtime_metadata(**metadata)
 
             for i in range(0, tile_count, self.batch_size):
                 try:
@@ -187,6 +286,7 @@ class YOLOv5_Detector:
                     
                     # Load images with error handling
                     img_batch = []
+                    image_loading_start = time.time()
                     for tile in tile_batch:
                         try:
                             img_batch.append(Image.open(tile['filename']))
@@ -197,11 +297,14 @@ class YOLOv5_Detector:
                                 operation="image_loading",
                                 cause=e
                             )
+                    record_phase('model_tile_image_loading', image_loading_start)
 
                     # crop the tiles if requested
                     if crop_tiles:
                         try:
+                            crop_start = time.time()
                             img_batch = [crop(img) for img in img_batch]
+                            record_phase('model_tile_cropping', crop_start)
                         except Exception as e:
                             logger.error(f"Image cropping failed: {e}")
                             raise ProcessingError(
@@ -212,14 +315,18 @@ class YOLOv5_Detector:
 
                     # retain a copy of the images
                     if secondary is not None:
+                        image_copy_start = time.time()
                         img_batch2 = [img.copy() for img in img_batch]
+                        record_phase('model_secondary_image_copy', image_copy_start)
                     else:
                         img_batch2 = [None] * len(img_batch)
 
                     # detect with semaphore protection
                     with self.semaphore:  # limit the number of jobs going on in parallel, because of GPU mem
                         try:
+                            inference_start = time.time()
                             result_obj = self.model(img_batch)
+                            record_phase('model_yolo_inference', inference_start)
                         except Exception as e:
                             logger.error(f"YOLOv5 model inference failed: {e}")
                             raise ProcessingError(
@@ -235,24 +342,32 @@ class YOLOv5_Detector:
                             return []
 
                     # get the important part
+                    result_extraction_start = time.time()
                     results_raw = result_obj.xyxyn
+                    record_phase('model_result_extraction', result_extraction_start)
 
                     # result is tile by tile
                     for (tile, img, result) in zip(tile_batch, img_batch2, results_raw):
                         try:
+                            result_tensor_start = time.time()
                             results_cpu = result.cpu().numpy().tolist()
+                            record_phase('model_result_tensor_conversion', result_tensor_start)
 
                             # secondary classifier processing
                             if secondary is not None:
                                 try:
                                     # classifier will append its own prob to every detection
-                                    secondary.classify(img, results_cpu, batch_id=count)
+                                    secondary_start = time.time()
+                                    secondary_stats = secondary.classify(img, results_cpu, batch_id=count)
+                                    record_phase('model_secondary_classifier_inference', secondary_start)
+                                    record_secondary_stats(secondary_stats)
                                     count += 1
                                 except Exception as e:
                                     logger.error(f"Secondary classifier failed: {e}")
                                     # Continue without secondary classification
                                     count += 1
 
+                            result_processing_start = time.time()
                             tile_results = [{
                                 'x1': item[0],
                                 'y1':item[1],
@@ -275,6 +390,7 @@ class YOLOv5_Detector:
                                     " "+str(tr['y2']-tr['y1'])+"\n"
                                 boxes.append(box)
                             tile['detections'] = boxes
+                            record_phase('model_result_conversion_filtering', result_processing_start)
                             
                         except Exception as e:
                             logger.error(f"Result processing failed for tile: {e}")

@@ -41,6 +41,9 @@ class TestGeocodingService(unittest.TestCase):
             {
                 'AZURE_MAPS_SUBSCRIPTION_KEY': '',
                 'GOOGLE_API_KEY': '',
+                'REQUESTS_CA_BUNDLE': '',
+                'SSL_CERT_FILE': '',
+                'TOWERSCOUT_ALLOW_INSECURE_TLS': '',
             },
             clear=False,
         )
@@ -177,6 +180,30 @@ class TestGeocodingService(unittest.TestCase):
         self.assertFalse(mock_get.call_args.kwargs['verify'])
 
     @patch('requests.get')
+    def test_reverse_geocode_reports_missing_tls_bundle_without_request(self, mock_get):
+        missing_bundle = Path.cwd() / ".agent_work" / "pytest-temp" / f"missing-ca-{uuid.uuid4().hex}.pem"
+        with patch.dict(os.environ, {'REQUESTS_CA_BUNDLE': str(missing_bundle)}, clear=False):
+            service = GeocodingService(azure_key=self.azure_key)
+
+            with patch('ts_geocoding.session', {}):
+                result = service.reverse_geocode(self.test_lat, self.test_lng)
+
+        self.assertFalse(result.success)
+        self.assertEqual(result.address, "")
+        self.assertIn("TLS CA bundle was not found", result.error_message)
+        mock_get.assert_not_called()
+
+    @patch('requests.get')
+    def test_forward_geocode_reports_missing_tls_bundle_without_request(self, mock_get):
+        missing_bundle = Path.cwd() / ".agent_work" / "pytest-temp" / f"missing-ca-{uuid.uuid4().hex}.pem"
+        with patch.dict(os.environ, {'REQUESTS_CA_BUNDLE': str(missing_bundle)}, clear=False):
+            service = GeocodingService(azure_key=self.azure_key)
+            results = service.forward_geocode_unified("Seattle", preferred_provider="azure")
+
+        self.assertEqual(results, [])
+        mock_get.assert_not_called()
+
+    @patch('requests.get')
     def test_provider_fallback(self, mock_get):
         """Test fallback from Azure Maps to Google Maps on failure."""
         # Mock Azure Maps failure and Google Maps success
@@ -225,9 +252,8 @@ class TestGeocodingService(unittest.TestCase):
             result = service.reverse_geocode(self.test_lat, self.test_lng)
         
         self.assertFalse(result.success)
-        self.assertIn("Address unavailable", result.address)
-        self.assertIn(str(self.test_lat), result.address)
-        self.assertIn(str(self.test_lng), result.address)
+        self.assertEqual(result.address, "")
+        self.assertIn("API Error", result.error_message)
 
     def test_rate_limiting(self):
         """Test session-based rate limiting."""
@@ -315,6 +341,69 @@ class TestGeocodingCache(unittest.TestCase):
         # Should retrieve cached result due to clustering
         self.assertIsNotNone(retrieved)
         self.assertEqual(retrieved.address, self.test_result.address)
+
+    def test_cache_clustering_checks_adjacent_grid_buckets(self):
+        """Nearby points across an internal grid boundary should share cache results."""
+        cache = GeocodingCache(cache_dir=self.temp_dir, clustering_radius_meters=100.0)
+        grid_size = cache.clustering_radius / 111000
+        base_lat, base_lng = cache._cluster_coordinates(self.test_lat, self.test_lng)
+        stored_lat = base_lat + (0.49 * grid_size)
+        query_lat = base_lat + (0.51 * grid_size)
+
+        stored_key = cache._generate_cache_key(stored_lat, base_lng, provider=self.test_result.provider)
+        query_key = cache._generate_cache_key(query_lat, base_lng, provider=self.test_result.provider)
+        self.assertNotEqual(stored_key, query_key)
+
+        cache.put(stored_lat, base_lng, self.test_result, provider=self.test_result.provider)
+        retrieved = cache.get(query_lat, base_lng, provider=self.test_result.provider)
+
+        self.assertIsNotNone(retrieved)
+        self.assertEqual(retrieved.address, self.test_result.address)
+
+    def test_cache_provider_aliases_reuse_same_entry(self):
+        """Map-provider aliases and geocoding-provider values should share cache keys."""
+        cache = GeocodingCache(cache_dir=self.temp_dir)
+
+        cache.put(self.test_lat, self.test_lng, self.test_result, provider="azure")
+
+        retrieved = cache.get(
+            self.test_lat,
+            self.test_lng,
+            provider=GeocodingProvider.AZURE_MAPS,
+        )
+
+        self.assertIsNotNone(retrieved)
+        self.assertEqual(retrieved.address, self.test_result.address)
+
+    def test_cache_reads_legacy_provider_alias_keys(self):
+        """Existing cache entries stored under legacy map-provider aliases remain readable."""
+        cache = GeocodingCache(cache_dir=self.temp_dir)
+        cluster_lat, cluster_lng = cache._cluster_coordinates(self.test_lat, self.test_lng)
+        legacy_key = cache._cache_key_for_cluster(cluster_lat, cluster_lng, "azure")
+        cache.file_cache[legacy_key] = CacheEntry.from_geocoding_result(self.test_result)
+
+        retrieved = cache.get(
+            self.test_lat,
+            self.test_lng,
+            provider=GeocodingProvider.AZURE_MAPS,
+        )
+
+        self.assertIsNotNone(retrieved)
+        self.assertEqual(retrieved.address, self.test_result.address)
+
+    def test_cache_does_not_store_coordinate_fallback_addresses(self):
+        cache = GeocodingCache(cache_dir=self.temp_dir)
+        fallback_result = GeocodingResult(
+            address="Coordinates: 47.620500, -122.349300",
+            provider=GeocodingProvider.AZURE_MAPS,
+            confidence=0.0,
+            coordinates=(self.test_lat, self.test_lng),
+            success=True
+        )
+
+        cache.put(self.test_lat, self.test_lng, fallback_result, provider=fallback_result.provider)
+
+        self.assertIsNone(cache.get(self.test_lat, self.test_lng, provider=fallback_result.provider))
 
     def test_cache_miss_outside_radius(self):
         """Test cache miss for locations outside clustering radius."""

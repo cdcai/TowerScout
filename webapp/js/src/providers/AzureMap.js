@@ -221,6 +221,26 @@
       return this.map;
     }
 
+    normalizeDrawingShape(eventOrShape) {
+      if (!eventOrShape) {
+        return null;
+      }
+
+      if (typeof eventOrShape.toJson === 'function') {
+        return eventOrShape;
+      }
+
+      if (eventOrShape.shape && typeof eventOrShape.shape.toJson === 'function') {
+        return eventOrShape.shape;
+      }
+
+      if (eventOrShape.data && typeof eventOrShape.data.toJson === 'function') {
+        return eventOrShape.data;
+      }
+
+      return null;
+    }
+
     getPendingBoundaryShapes() {
       if (this.newShapes.length > 0) {
         return this.newShapes;
@@ -238,12 +258,22 @@
     }
 
     extractBoundaryPointsFromShape(shape) {
-      const geometry = shape.toJson().geometry;
+      const normalizedShape = this.normalizeDrawingShape(shape);
+      if (!normalizedShape) {
+        return null;
+      }
+
+      const shapeJson = normalizedShape.toJson();
+      const geometry = shapeJson && shapeJson.geometry;
       if (!geometry || !geometry.coordinates || geometry.coordinates.length === 0) {
         return null;
       }
 
       if (geometry.type !== 'Polygon' && geometry.type !== 'Rectangle') {
+        return null;
+      }
+
+      if (!Array.isArray(geometry.coordinates[0]) || geometry.coordinates[0].length === 0) {
         return null;
       }
 
@@ -259,12 +289,29 @@
 
       for (const shape of shapes) {
         const points = this.extractBoundaryPointsFromShape(shape);
-        if (points) {
-          polygons.push(points);
+        if (!points) {
+          const validation = {
+            valid: false,
+            reason: 'unsupported_geometry',
+            polygons
+          };
+          if (showNotification) {
+            TowerScoutErrorHandler.showUserNotification(
+              window.PolygonValidation.getUserMessage(validation, label, { remediation }),
+              'warning',
+              6000
+            );
+          }
+          return validation;
         }
+
+        polygons.push(points);
       }
 
-      const validation = window.PolygonValidation.validatePolygonCollection(polygons);
+      const validation = window.PolygonValidation.validatePolygonCollection(
+        polygons,
+        { requireNonEmpty: options.requireNonEmpty === true }
+      );
       if (!validation.valid && showNotification) {
         TowerScoutErrorHandler.showUserNotification(
           window.PolygonValidation.getUserMessage(validation, label, { remediation }),
@@ -368,7 +415,7 @@
       // Listen for drawing completion events
       this.map.events.add('drawingcomplete', this.drawingManager, (drawingCompleteEvent) => {
         window.TowerScoutLogger.debug('🎨 Azure Maps drawingcomplete event fired');
-        let shape = drawingCompleteEvent;
+        let shape = this.normalizeDrawingShape(drawingCompleteEvent);
 
         // Dismiss persistent drawing instruction notification
         if (this.drawingNotificationId) {
@@ -387,13 +434,21 @@
         window.TowerScoutLogger.debug('✅ New Azure Maps shape captured');
         window.TowerScoutLogger.debug('  - Total shapes in newShapes array:', this.newShapes.length);
 
-        const validation = this.validateDrawnShapes({ shapes: [shape] });
+        const validation = this.validateDrawnShapes({ shapes: [shape], requireNonEmpty: true });
         if (!validation.valid) {
           TowerScoutErrorHandler.showUserNotification(
             window.PolygonValidation.getUserMessage(validation, 'custom shape', { remediation: 'clear_then_redraw' }),
             'warning',
             6000
           );
+          this.newShapes = this.newShapes.filter((pendingShape) => pendingShape !== shape);
+          if (this.drawingManager && this.drawingManager.getSource()) {
+            try {
+              this.drawingManager.getSource().remove(shape);
+            } catch (removeError) {
+              console.warn('Unable to remove invalid Azure drawing shape:', removeError);
+            }
+          }
           this.drawingContext = null;
           return;
         }
@@ -1329,14 +1384,14 @@
 
       window.TowerScoutLogger.debug('  - Drawing manager source shapes:', shapes.length);
 
-      const validation = this.validateDrawnShapes({ shapes });
+      const validation = this.validateDrawnShapes({ shapes, requireNonEmpty: true });
       if (!validation.valid) {
         console.warn('⚠️ Invalid drawn Azure boundary detected, leaving shape in place for editing');
         return [];
       }
 
       for (let shape of shapes) {
-        window.TowerScoutLogger.debug('  - Processing shape:', shape.getType());
+        window.TowerScoutLogger.debug('  - Processing shape:', typeof shape.getType === 'function' ? shape.getType() : 'shape');
         let geometry = shape.toJson().geometry;
 
         if (geometry.type === 'Polygon') {
@@ -1371,15 +1426,26 @@
     addShapes() {
       window.TowerScoutLogger.debug('🏗️ Azure Maps addShapes() called');
       window.TowerScoutLogger.debug(`  - newShapes array length: ${this.newShapes.length}`);
+      const shapes = this.getPendingBoundaryShapes();
 
       // TASK-033: Validation - Check if shapes exist
-      if (this.newShapes.length === 0) {
+      if (shapes.length === 0) {
         console.warn('⚠️ No shapes to add (newShapes array empty)');
         TowerScoutErrorHandler.showUserNotification(
           'Draw a polygon first. Click "Add Towers" to enable drawing, then click "Save Towers" to add detections.',
           'warning',
           4000
         );
+        return;
+      }
+
+      const validation = this.validateDrawnShapes({
+        shapes,
+        requireNonEmpty: true,
+        showNotification: true,
+        label: 'manual tower shape'
+      });
+      if (!validation.valid) {
         return;
       }
 
@@ -1398,11 +1464,9 @@
       let bounds;
       let addedCount = 0;
 
-      for (let shape of this.newShapes) {
-        let geometry = shape.toJson().geometry;
-
+      for (let shape of shapes) {
         // Calculate bounds for the shape
-        let coordinates = geometry.coordinates[0];
+        let coordinates = this.extractBoundaryPointsFromShape(shape);
         let lngs = coordinates.map(c => c[0]);
         let lats = coordinates.map(c => c[1]);
 
@@ -1502,7 +1566,7 @@
           window.TowerScoutLogger.debug(`✅ Geocoded address: ${data.address}`);
         } else {
           // Fallback to coordinates
-          detection.address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+          detection.address = `Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
           detection.addressConfidence = 0.0;
           detection.addressProvider = 'fallback';
           console.warn(`⚠️ Geocoding failed, using coordinates`);
@@ -1515,7 +1579,7 @@
         console.error('❌ Geocoding error:', error);
         // Fallback to coordinates
         const center = detection.getCenter();
-        detection.address = `${center[1].toFixed(6)}, ${center[0].toFixed(6)}`;
+        detection.address = `Coordinates: ${center[1].toFixed(6)}, ${center[0].toFixed(6)}`;
         detection.addressConfidence = 0.0;
         detection.addressProvider = 'error';
 

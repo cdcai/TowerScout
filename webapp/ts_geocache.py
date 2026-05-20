@@ -50,7 +50,8 @@ class CacheEntry:
     def is_unavailable_address(address: Optional[str]) -> bool:
         """Identify fallback placeholder addresses that should not be reused."""
         normalized = (address or "").strip()
-        return normalized.lower().startswith("address unavailable")
+        lowered = normalized.lower()
+        return lowered.startswith("address unavailable") or lowered.startswith("coordinates:")
     
     @classmethod
     def from_geocoding_result(cls, result: GeocodingResult) -> 'CacheEntry':
@@ -179,8 +180,50 @@ class GeocodingCache:
         if isinstance(provider, GeocodingProvider):
             return provider.value
         if isinstance(provider, str) and provider.strip():
-            return provider.strip().lower()
+            provider_key = provider.strip().lower()
+            aliases = {
+                "azure": GeocodingProvider.AZURE_MAPS.value,
+                "azure_maps": GeocodingProvider.AZURE_MAPS.value,
+                "azuremaps": GeocodingProvider.AZURE_MAPS.value,
+                "google": GeocodingProvider.GOOGLE_MAPS.value,
+                "google_maps": GeocodingProvider.GOOGLE_MAPS.value,
+                "googlemaps": GeocodingProvider.GOOGLE_MAPS.value,
+            }
+            return aliases.get(provider_key, provider_key)
         return "auto"
+
+    def _provider_key_aliases(self, provider: Optional[Union[str, GeocodingProvider]]) -> List[str]:
+        """Return canonical and legacy provider keys for cache lookup compatibility."""
+        provider_key = self._normalize_provider_key(provider)
+        aliases = [provider_key]
+
+        legacy_aliases = {
+            GeocodingProvider.AZURE_MAPS.value: ["azure"],
+            GeocodingProvider.GOOGLE_MAPS.value: ["google"],
+        }
+        for alias in legacy_aliases.get(provider_key, []):
+            if alias not in aliases:
+                aliases.append(alias)
+
+        return aliases
+
+    def _cluster_coordinates(self, lat: float, lng: float, radius: Optional[float] = None) -> Tuple[float, float]:
+        """Return the internal cache-grid coordinates for a lat/lng pair."""
+        if radius is None:
+            radius = self.clustering_radius
+
+        if radius > 0:
+            grid_size = radius / 111000
+            return (
+                round(lat / grid_size) * grid_size,
+                round(lng / grid_size) * grid_size,
+            )
+
+        return lat, lng
+
+    def _cache_key_for_cluster(self, cluster_lat: float, cluster_lng: float, provider_key: str) -> str:
+        key_string = f"geocode:{provider_key}:{cluster_lat:.8f},{cluster_lng:.8f}"
+        return hashlib.md5(key_string.encode()).hexdigest()
 
     def _generate_cache_key(self, lat: float, lng: float,
                             provider: Optional[Union[str, GeocodingProvider]] = None,
@@ -203,7 +246,7 @@ class GeocodingCache:
         # Round coordinates to clustering precision
         if radius > 0:
             # Calculate grid size based on clustering radius
-            # Approximate: 1 degree ≈ 111 km, so grid_size = radius / 111000
+            # Approximate: 1 degree is about 111 km, so grid_size = radius / 111000
             grid_size = radius / 111000
             cluster_lat = round(lat / grid_size) * grid_size
             cluster_lng = round(lng / grid_size) * grid_size
@@ -243,76 +286,120 @@ class GeocodingCache:
         
         return R * c
     
+    def _candidate_cache_keys(self, lat: float, lng: float,
+                              provider: Optional[Union[str, GeocodingProvider]] = None) -> List[str]:
+        """Return provider-scoped base and neighboring cache bucket keys."""
+        provider_keys = self._provider_key_aliases(provider)
+        if self.clustering_radius <= 0:
+            keys = []
+            seen = set()
+            for provider_key in provider_keys:
+                cache_key = self._cache_key_for_cluster(lat, lng, provider_key)
+                if cache_key not in seen:
+                    seen.add(cache_key)
+                    keys.append(cache_key)
+            return keys
+
+        grid_size = self.clustering_radius / 111000
+        base_lat, base_lng = self._cluster_coordinates(lat, lng)
+        keys = []
+        seen = set()
+
+        for provider_key in provider_keys:
+            for lat_offset in (-1, 0, 1):
+                for lng_offset in (-1, 0, 1):
+                    cache_key = self._cache_key_for_cluster(
+                        base_lat + (lat_offset * grid_size),
+                        base_lng + (lng_offset * grid_size),
+                        provider_key,
+                    )
+                    if cache_key not in seen:
+                        seen.add(cache_key)
+                        keys.append(cache_key)
+
+        return keys
+
+    def _entry_score(self, entry: CacheEntry, lat: float, lng: float) -> Optional[Tuple[float, float, float]]:
+        """Return deterministic cache-hit ordering fields, or None if unusable."""
+        if entry.is_expired(self.max_cache_age) or entry.is_unavailable_address(entry.address):
+            return None
+
+        distance = self._calculate_distance(lat, lng, entry.lat, entry.lng)
+        if self.clustering_radius > 0 and distance > self.clustering_radius:
+            return None
+
+        return distance, -entry.confidence, -entry.timestamp
+
     def get(self, lat: float, lng: float,
             provider: Optional[Union[str, GeocodingProvider]] = None) -> Optional[GeocodingResult]:
         """
-        Get cached geocoding result for coordinates.
-        
-        Args:
-            lat: Latitude coordinate
-            lng: Longitude coordinate
-            provider: Preferred provider for this lookup
-            
-        Returns:
-            Cached GeocodingResult if found and valid, None otherwise
+        Get cached geocoding result for coordinates, checking neighboring buckets.
+
+        When clustering is enabled, the nearest valid result inside the radius wins,
+        then higher confidence, then newest timestamp.
         """
         provider_key = self._normalize_provider_key(provider)
-        cache_key = self._generate_cache_key(lat, lng, provider=provider_key)
-        
-        # Try Redis first
+        cache_keys = self._candidate_cache_keys(lat, lng, provider=provider_key)
+        candidates = []
+
         if self.redis_client:
             try:
-                cached_data = self.redis_client.get(f"towerscout:geocoding:{cache_key}")
-                if cached_data:
+                for cache_key in cache_keys:
+                    redis_key = f"towerscout:geocoding:{cache_key}"
+                    cached_data = self.redis_client.get(redis_key)
+                    if not cached_data:
+                        continue
+
                     entry_data = json.loads(cached_data.decode())
                     entry = CacheEntry(**entry_data)
-                    
-                    if not entry.is_expired(self.max_cache_age):
-                        # Update hit count
-                        entry.hit_count += 1
-                        self.redis_client.set(
-                            f"towerscout:geocoding:{cache_key}",
-                            json.dumps(asdict(entry)),
-                            ex=self.max_cache_age
-                        )
-                        
-                        self.logger.debug(f"Redis cache hit for {lat}, {lng} ({provider_key})")
-                        return entry.to_geocoding_result()
-                    else:
-                        # Expired entry - remove from Redis
-                        self.redis_client.delete(f"towerscout:geocoding:{cache_key}")
-                        
+                    score = self._entry_score(entry, lat, lng)
+                    if score is None:
+                        self.redis_client.delete(redis_key)
+                        continue
+
+                    candidates.append((score, "redis", cache_key, entry))
             except Exception as e:
                 self.logger.warning(f"Redis cache lookup failed: {e}")
-        
-        # Try file cache
-        if cache_key in self.file_cache:
-            entry = self.file_cache[cache_key]
-            
-            if not entry.is_expired(self.max_cache_age):
-                if entry.is_unavailable_address(entry.address):
-                    del self.file_cache[cache_key]
-                    self._save_file_cache()
-                    self.logger.debug(
-                        f"Removed unavailable-address cache entry for {lat}, {lng} ({provider_key})"
-                    )
-                    return None
 
-                # Check if cached coordinates are within clustering radius
-                distance = self._calculate_distance(lat, lng, entry.lat, entry.lng)
-                if distance <= self.clustering_radius:
-                    entry.hit_count += 1
-                    self.logger.debug(
-                        f"File cache hit for {lat}, {lng} ({provider_key}, distance: {distance:.1f}m)"
-                    )
-                    return entry.to_geocoding_result()
-            else:
-                # Expired entry - remove from file cache
+        file_cache_changed = False
+        for cache_key in cache_keys:
+            entry = self.file_cache.get(cache_key)
+            if entry is None:
+                continue
+
+            score = self._entry_score(entry, lat, lng)
+            if score is None:
                 del self.file_cache[cache_key]
-                self._save_file_cache()
-        
-        self.logger.debug(f"Cache miss for {lat}, {lng} ({provider_key})")
-        return None
+                file_cache_changed = True
+                continue
+
+            candidates.append((score, "file", cache_key, entry))
+
+        if file_cache_changed:
+            self._save_file_cache()
+
+        if not candidates:
+            self.logger.debug(f"Cache miss for {lat}, {lng} ({provider_key})")
+            return None
+
+        score, source, cache_key, entry = min(candidates, key=lambda item: item[0])
+        entry.hit_count += 1
+
+        if source == "redis" and self.redis_client:
+            try:
+                self.redis_client.set(
+                    f"towerscout:geocoding:{cache_key}",
+                    json.dumps(asdict(entry)),
+                    ex=self.max_cache_age
+                )
+            except Exception as e:
+                self.logger.warning(f"Redis cache hit update failed: {e}")
+
+        distance = score[0]
+        self.logger.debug(
+            f"{source.capitalize()} cache hit for {lat}, {lng} ({provider_key}, distance: {distance:.1f}m)"
+        )
+        return entry.to_geocoding_result()
     
     def put(self, lat: float, lng: float, result: GeocodingResult,
             provider: Optional[Union[str, GeocodingProvider]] = None):
