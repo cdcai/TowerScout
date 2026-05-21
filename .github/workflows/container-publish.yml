@@ -12,6 +12,14 @@ on:
         required: true
         default: false
         type: boolean
+      pytorch_flavor:
+        description: "PyTorch wheel flavor to publish"
+        required: true
+        default: "cpu"
+        type: choice
+        options:
+          - cpu
+          - cuda121
 
 permissions:
   contents: read
@@ -38,14 +46,43 @@ jobs:
           image="ghcr.io/${GITHUB_REPOSITORY,,}"
           tag="${{ inputs.tag }}"
           push_latest="${{ inputs.push_latest }}"
+          pytorch_flavor="${{ inputs.pytorch_flavor }}"
 
-          tags=(--tag "$image:$tag")
+          case "$pytorch_flavor" in
+            cpu)
+              pytorch_index_url="https://download.pytorch.org/whl/cpu"
+              ;;
+            cuda121)
+              pytorch_index_url="https://download.pytorch.org/whl/cu121"
+              ;;
+            *)
+              echo "Unsupported PyTorch flavor: $pytorch_flavor" >&2
+              exit 1
+              ;;
+          esac
+
+          case "$tag" in
+            *-cpu|*-cuda121)
+              if [[ "$tag" != *-"$pytorch_flavor" ]]; then
+                echo "Tag $tag already ends with a different PyTorch flavor than $pytorch_flavor." >&2
+                exit 1
+              fi
+              published_tag="$tag"
+              ;;
+            *)
+              published_tag="$tag-$pytorch_flavor"
+              ;;
+          esac
+
+          tags=(--tag "$image:$published_tag")
           if [ "$push_latest" = "true" ]; then
-            tags+=(--tag "$image:latest")
+            tags+=(--tag "$image:latest-$pytorch_flavor")
           fi
 
           docker buildx build \
             --platform linux/amd64 \
+            --build-arg PYTORCH_INDEX_URL="$pytorch_index_url" \
+            --build-arg TOWERSCOUT_PYTORCH_FLAVOR="$pytorch_flavor" \
             --build-arg TOWERSCOUT_RELEASE_VERSION="$tag" \
             --build-arg TOWERSCOUT_SOURCE_REF="$GITHUB_SHA" \
             "${tags[@]}" \
@@ -55,10 +92,14 @@ jobs:
 
           digest="$(python -c 'import json; print(json.load(open("image-metadata.json", encoding="utf-8"))["containerimage.digest"])')"
           echo "image=$image" >> "$GITHUB_OUTPUT"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "base_tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "tag=$published_tag" >> "$GITHUB_OUTPUT"
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "pytorch_flavor=$pytorch_flavor" >> "$GITHUB_OUTPUT"
           echo "image=$image" >> "$GITHUB_STEP_SUMMARY"
-          echo "tag=$tag" >> "$GITHUB_STEP_SUMMARY"
+          echo "base_tag=$tag" >> "$GITHUB_STEP_SUMMARY"
+          echo "tag=$published_tag" >> "$GITHUB_STEP_SUMMARY"
+          echo "pytorch_flavor=$pytorch_flavor" >> "$GITHUB_STEP_SUMMARY"
           echo "digest=$digest" >> "$GITHUB_STEP_SUMMARY"
           echo "pinned=$image@$digest" >> "$GITHUB_STEP_SUMMARY"
 

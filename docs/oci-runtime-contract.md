@@ -94,6 +94,7 @@ The asset ZIP root is `model_params/`, `data/`, and `asset_manifest.v1.json`. Us
 The GitHub Release control package is assembled by `scripts/package-release.cmd` / `scripts/package-release.ps1`. It contains:
 
 - Compose runtime configuration
+- optional Docker GPU Compose overlay
 - `.env.example` with the selected image reference
 - Windows `.cmd` wrappers and PowerShell helpers for start, stop, logs, status, asset import, and TLS CA import
 - top-level `start.bat` launcher that starts Compose, polls `/api/readiness`, and opens the browser at `http://localhost:<port>` after the app shell is reachable
@@ -118,7 +119,22 @@ The YOLO-enabled release track is `agpl-yolo`. TowerScout-authored code may be A
 
 Image publication is handled by the manual GitHub Actions workflow `.github/workflows/container-publish.yml`. The workflow requires `packages: write`, pushes a Linux/AMD64 image, uploads `image-metadata.json`, and reports the digest reference in the workflow summary.
 
+The publish workflow requires an explicit PyTorch wheel flavor selection. `cpu` uses the CPU PyTorch wheel index. `cuda121` uses the CUDA 12.1 PyTorch wheel index and labels the image with `org.towerscout.pytorch.flavor`. The workflow publishes flavor-specific tags such as `v0.1.0-rc1-cuda121` and `latest-cuda121` to avoid CPU/CUDA tag collisions. Release evidence and the control package must record which flavor produced the pinned digest.
+
 Bundled OCI image archives are not part of the supported v1 release package. Restricted-network support for v1 should preload the pinned image into the selected engine image store through a site/support procedure, then use the normal control package. A packaged OCI archive fallback remains follow-on release engineering work until archive creation, checksum/signature handling, import UX, and Docker/Podman validation are implemented.
+
+## GPU Runtime Boundary
+
+The default package launcher uses `-Gpu off`, keeps `compose.gpu.yaml` out of the Compose invocation, and sets `TOWERSCOUT_DEVICE=cpu` for the launch process. This keeps the local release path CPU-safe.
+
+Docker GPU launch is opt-in through `scripts/launch.ps1 -Engine docker -Gpu auto|on` or `start.bat -Engine docker -Gpu auto|on`. GPU overlay use requests NVIDIA GPU devices through Docker Compose device reservations, and these modes set TowerScout's runtime policy:
+
+- `auto`: start without the GPU overlay unless `TOWERSCOUT_GPU_AUTO_OVERLAY=1` has been set in the shell or `.env` after workstation-specific Docker GPU validation; otherwise fall back to CPU with diagnostics.
+- `on`: always add `compose.gpu.yaml`, require CUDA, and fail readiness when CUDA is unavailable.
+
+Podman GPU launch is not part of the validated release path. Podman remains supported for CPU launch unless a later validation proves a Podman CDI GPU procedure.
+
+Readiness diagnostics verify CUDA with a lightweight CUDA tensor probe when `TOWERSCOUT_DEVICE=auto` or `cuda`; `torch.cuda.is_available()` alone is not treated as a sufficient release diagnostic.
 
 ## Upload Limit
 

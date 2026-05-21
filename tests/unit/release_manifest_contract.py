@@ -18,6 +18,7 @@ def assert_manifest_schema(manifest):
     assert isinstance(manifest["release_version"], str)
     assert isinstance(manifest["release_statement"], str)
     assert manifest["asset_manifest"] == "webapp/asset_manifest.v1.json"
+    assert manifest["pytorch_flavor"] in {"cpu", "cuda121"}
     assert REQUIRED_COMPLIANCE_FILES.issubset(set(manifest["compliance_files"]))
 
     release_artifacts = manifest["release_artifacts"]
@@ -26,10 +27,12 @@ def assert_manifest_schema(manifest):
         "control_zip_sha256",
         "image",
         "image_digest",
+        "pytorch_flavor",
         "asset_manifest",
         "asset_bundle_sha256",
     ]:
         assert key in release_artifacts
+    assert release_artifacts["pytorch_flavor"] == manifest["pytorch_flavor"]
 
     source = manifest["corresponding_source"]
     assert "source_ref" in source

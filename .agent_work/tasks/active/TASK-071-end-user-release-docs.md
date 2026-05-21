@@ -32,6 +32,8 @@ This task should replace or clearly distinguish older source/Conda tester guidan
 
 **R-071-009**: WHEN users need source or license information, THE DOCUMENTATION SHALL point to the package compliance files and the running app `/license` page.
 
+**R-071-010**: WHEN the docs mention GPU/CUDA behavior, THE DOCUMENTATION SHALL keep the default V1 RC1 launch path CPU-safe, describe `-Gpu off|auto|on` as optional Docker-first behavior, and state that NVIDIA host validation is required before making broad GPU support claims.
+
 ## Acceptance Criteria
 
 - [ ] A one-page V1 RC1 quick start exists for Windows 11 AMD64 pilot users.
@@ -43,6 +45,7 @@ This task should replace or clearly distinguish older source/Conda tester guidan
 - [ ] The docs tell users where to find `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.md`, `MODEL_LICENSES.md`, `DATA_LICENSES.md`, `PROVIDER_TERMS.md`, `SOURCE.txt`, `SBOM.txt`, and `release-manifest.v1.json`.
 - [ ] The docs reflect current Podman/Docker support language from `TASK-065`.
 - [ ] The docs state the V1 RC1 support boundary, including CPU baseline and supported Windows target.
+- [ ] The docs reflect `TASK-075` GPU language: default CPU-safe launch, optional Docker GPU overlay, no validated Podman GPU claim, and required readiness/status evidence.
 - [ ] Older source/Conda testing guides are marked or linked in a way that avoids confusing pilot package users.
 - [ ] `TASK-066` can use these docs as the only user-facing instructions for clean-machine validation.
 
@@ -51,6 +54,7 @@ This task should replace or clearly distinguish older source/Conda tester guidan
 - `TASK-069`: AGPL-compliant YOLO release posture and compliance payload.
 - `TASK-072`: release asset bundle contract.
 - `TASK-065`: release support language and runtime support caveats.
+- `TASK-075`: single GPU-capable package implementation, including CPU-safe default launch, optional Docker GPU overlay, and GPU validation boundaries.
 - `docs/oci-quick-start.md`: current OCI quick-start baseline.
 - `docs/oci-runtime-contract.md`: current runtime contract.
 - `docs/release-asset-bundle-contract.md`: `TASK-072` asset bundle contract.
@@ -80,6 +84,15 @@ This task should replace or clearly distinguish older source/Conda tester guidan
 **Output**: Task file ready for intake.  
 **Validation**: Pending `.agent_work` validation after all Sprint 06 task files are created.  
 **Next**: Start documentation inventory and draft the V1 RC1 quick start against the `agpl-yolo` compliance payload and completed asset contract.
+
+### 2026-05-20 - Task-075 GPU Documentation Handoff
+**Objective**: Record the GPU/CUDA documentation boundary produced by `TASK-075`.
+**Context**: `TASK-075` implemented shared ML device policy, a CUDA-capable proof image path, optional `compose.gpu.yaml`, and launcher `-Gpu off|auto|on` handling. Local validation proved CPU fallback and readiness diagnostics on a non-GPU host, but actual GPU execution still needs NVIDIA Docker Desktop WSL2 validation.
+**Decision**: User-facing docs must preserve a CPU-safe default and treat GPU as optional Docker-first behavior until GPU-host validation and fixed-fixture parity/timing evidence are complete.
+**Execution**: Added `R-071-010`, an acceptance criterion, and a dependency on `TASK-075`.
+**Output**: `TASK-071` is ready to consume the Task-075 GPU support boundary.
+**Validation**: Pending full Task-071 documentation implementation.
+**Next**: When writing the quick start and full package guide, mirror the `docs/oci-quick-start.md` and `docs/oci-runtime-contract.md` GPU language unless later validation changes it.
 
 ---
 

@@ -6,3 +6,4 @@ services:
       dockerfile: Dockerfile
       args:
         PYTORCH_INDEX_URL: ${PYTORCH_INDEX_URL:-https://download.pytorch.org/whl/cpu}
+        TOWERSCOUT_PYTORCH_FLAVOR: ${TOWERSCOUT_PYTORCH_FLAVOR:-cpu}

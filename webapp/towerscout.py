@@ -41,8 +41,8 @@ from ts_logging import (
 )
 from ts_performance import PerformanceMetrics
 import ts_config
+import ts_device
 import ts_runtime
-import torch
 from shutil import rmtree
 import zipfile
 import asyncio
@@ -131,7 +131,6 @@ MODEL_PARAMS_DIR = get_model_params_dir()
 YOLO_MODEL_DIR = get_yolov5_model_dir()
 EN_MODEL_DIR = get_en_model_dir()
 from PIL import Image, ImageDraw
-import torch
 import threading
 import gc
 import datetime
@@ -339,7 +338,16 @@ for existing_upload in UPLOAD_DIR.iterdir():
     if existing_upload.is_file():
         existing_upload.unlink()
 
-ml_logger.info(f"Torch CUDA: {'available' if torch.cuda.is_available() else 'not available'}")
+ml_runtime = ts_device.build_runtime_diagnostics()
+ml_logger.info(
+    "ML runtime startup diagnostics: policy=%s selected_device=%s torch=%s cuda_build=%s cuda_available=%s fallback=%s",
+    ml_runtime.get("requested_policy"),
+    ml_runtime.get("selected_device"),
+    ml_runtime.get("torch_version"),
+    ml_runtime.get("torch_cuda_build"),
+    ml_runtime.get("torch_cuda_available"),
+    ml_runtime.get("fallback_reason"),
+)
 
 
 def get_secondary_classifier():

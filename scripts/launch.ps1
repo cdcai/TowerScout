@@ -6,6 +6,9 @@ param(
 
     [int] $TimeoutSeconds = 180,
 
+    [ValidateSet("off", "auto", "on")]
+    [string] $Gpu = "off",
+
     [switch] $Build,
 
     [switch] $NoBrowser
@@ -175,12 +178,14 @@ $env:TOWERSCOUT_PORT = "$Port"
 
 Write-Host "Starting TowerScout with $effectiveEngine on $appUrl..."
 Write-TowerScoutComposeProviderSummary -Engine $effectiveEngine
+Set-TowerScoutGpuEnvironment -Gpu $Gpu -Build:$Build
+Write-TowerScoutGpuModeSummary -EngineName $effectiveEngine -Gpu $Gpu -Build:$Build
 
 $composeArgs = @("up", "-d")
 if ($Build) {
     $composeArgs += "--build"
 }
-Invoke-TowerScoutCompose -Engine $effectiveEngine -Build:$Build -ComposeArguments $composeArgs
+Invoke-TowerScoutCompose -Engine $effectiveEngine -Build:$Build -Gpu $Gpu -ComposeArguments $composeArgs
 if ($script:TowerScoutComposeExitCode -ne 0) {
     Write-Host "TowerScout container startup failed. Check the selected engine, Compose provider, and local permissions."
     Write-TowerScoutHostDiagnostics -EngineName $effectiveEngine

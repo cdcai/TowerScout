@@ -98,9 +98,11 @@ def test_package_release_stages_digest_pinned_image():
             "-OutputDir",
             str(output_dir),
             "-Image",
-            "ghcr.io/j-schulein/towerscout",
+            "ghcr.io/j-schulein/towerscout:pytest-digest-cuda121",
             "-ImageDigest",
             digest,
+            "-PytorchFlavor",
+            "cuda121",
             "-AllowDirtySource",
             "-NoZip",
             "-Force",
@@ -115,12 +117,16 @@ def test_package_release_stages_digest_pinned_image():
             (stage_path / "release-manifest.v1.json").read_text(encoding="utf-8")
         )
         assert_manifest_schema(release_manifest)
-        assert f"TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout@{digest}" in env_example
+        assert f"TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout:pytest-digest-cuda121@{digest}" in env_example
         assert f"TOWERSCOUT_IMAGE_DIGEST={digest}" in env_example
-        assert f"Image: ghcr.io/j-schulein/towerscout@{digest}" in image_txt
+        assert "TOWERSCOUT_PYTORCH_FLAVOR=cuda121" in env_example
+        assert f"Image: ghcr.io/j-schulein/towerscout:pytest-digest-cuda121@{digest}" in image_txt
+        assert "PyTorch flavor: cuda121" in image_txt
         assert release_manifest["track"] == "agpl-yolo"
         assert release_manifest["image_digest"] == digest
+        assert release_manifest["pytorch_flavor"] == "cuda121"
         assert release_manifest["release_artifacts"]["image_digest"] == digest
+        assert release_manifest["release_artifacts"]["pytorch_flavor"] == "cuda121"
         assert release_manifest["release_artifacts"]["control_zip"] == ""
         assert REQUIRED_COMPLIANCE_FILES.issubset(
             set(release_manifest["compliance_files"])
@@ -136,6 +142,7 @@ def test_package_release_stages_digest_pinned_image():
             "scripts\\import-assets.cmd -Source assets -VerifyHashes" in asset_readme
         )
         assert "YOLO-derived/AGPL-governed" in asset_readme
+        assert (stage_path / "compose.gpu.yaml").is_file()
         for relative_path in [
             "LICENSE",
             "NOTICE",
@@ -149,5 +156,35 @@ def test_package_release_stages_digest_pinned_image():
         ]:
             assert (stage_path / relative_path).is_file()
         assert (stage_path / "docs" / "release-asset-bundle-contract.md").is_file()
+    finally:
+        shutil.rmtree(output_path, ignore_errors=True)
+
+
+def test_package_release_rejects_unknown_pytorch_flavor():
+    package_id = f"pytest-flavor-{uuid.uuid4().hex}"
+    output_dir = Path(".agent_work") / "pytest-temp" / package_id
+    output_path = REPO_ROOT / output_dir
+    digest = "sha256:" + ("3" * 64)
+    try:
+        result = _run_package_release(
+            "-Version",
+            package_id,
+            "-OutputDir",
+            str(output_dir),
+            "-Image",
+            "ghcr.io/j-schulein/towerscout",
+            "-ImageDigest",
+            digest,
+            "-PytorchFlavor",
+            "gpu",
+            "-AllowDirtySource",
+            "-NoZip",
+            "-Force",
+        )
+
+        assert result.returncode != 0
+        assert "PytorchFlavor must be one of: cpu, cuda121" in (
+            result.stderr + result.stdout
+        )
     finally:
         shutil.rmtree(output_path, ignore_errors=True)

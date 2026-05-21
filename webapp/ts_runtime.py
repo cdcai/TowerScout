@@ -10,6 +10,7 @@ from typing import Any, Dict
 
 import ts_assets
 import ts_config
+import ts_device
 from ts_paths import (
     get_base_dir,
     get_flask_session_dir,
@@ -85,6 +86,28 @@ def build_health_payload() -> Dict[str, str]:
     }
 
 
+def _ml_runtime_recovery_message(ml_runtime: Dict[str, Any]) -> str:
+    if ml_runtime.get("fallback_reason") != "cuda_required_but_unavailable":
+        return "Check TOWERSCOUT_DEVICE and ML runtime configuration."
+
+    if not ml_runtime.get("torch_cuda_build"):
+        return (
+            "CUDA was required, but this TowerScout image appears to include CPU-only PyTorch. "
+            "Use a CUDA-capable TowerScout image or set TOWERSCOUT_DEVICE=auto or cpu."
+        )
+
+    if ml_runtime.get("cuda_probe_error"):
+        return (
+            "CUDA was required, but TowerScout could not complete a CUDA runtime probe. "
+            "Confirm NVIDIA container access or set TOWERSCOUT_DEVICE=auto or cpu."
+        )
+
+    return (
+        "CUDA was required, but PyTorch could not access CUDA. "
+        "Confirm NVIDIA container access or set TOWERSCOUT_DEVICE=auto or cpu."
+    )
+
+
 def build_readiness_payload() -> Dict[str, Any]:
     path_details = {
         name: _write_check(path)
@@ -98,10 +121,13 @@ def build_readiness_payload() -> Dict[str, Any]:
 
     config = _config_status()
     assets = _asset_status()
+    ml_runtime = ts_device.build_runtime_diagnostics()
 
     if path_errors or not config["secret_key_persisted"]:
         state = "fatal"
     elif assets["status"] == "error":
+        state = "fatal"
+    elif ml_runtime["status"] == "fatal":
         state = "fatal"
     elif config["needs_setup"]:
         state = "setup_required"
@@ -122,6 +148,8 @@ def build_readiness_payload() -> Dict[str, Any]:
             recovery.append("Repair the asset manifest packaged with TowerScout.")
         else:
             recovery.append("Import or bootstrap the missing runtime assets, then restart TowerScout.")
+    if ml_runtime["status"] == "fatal":
+        recovery.append(_ml_runtime_recovery_message(ml_runtime))
 
     return {
         "state": state,
@@ -129,6 +157,7 @@ def build_readiness_payload() -> Dict[str, Any]:
             "config": config,
             "assets": assets,
             "paths": path_details,
+            "ml_runtime": ml_runtime,
         },
         "version": {
             "app": os.getenv("TOWERSCOUT_VERSION", "development"),
@@ -138,8 +167,11 @@ def build_readiness_payload() -> Dict[str, Any]:
         "runtime": {
             "python": sys.version.split()[0],
             "platform": platform.platform(),
-            "cuda_requested": os.getenv("TOWERSCOUT_ENABLE_CUDA", "false").lower() in {"1", "true", "yes", "on"},
+            "device_policy": ml_runtime["requested_policy"],
+            "selected_device": ml_runtime["selected_device"],
+            "cuda_requested": ml_runtime["requested_policy"] == "cuda",
             "container_engine": os.getenv("TOWERSCOUT_CONTAINER_ENGINE", ""),
+            "pytorch_flavor": os.getenv("TOWERSCOUT_PYTORCH_FLAVOR", ""),
         },
         "recovery": recovery,
     }

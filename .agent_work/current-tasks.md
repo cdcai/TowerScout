@@ -3,7 +3,7 @@
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
 **Last Updated**: May 20, 2026
 **Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
-**Status**: Sprint 06 committed lane selected. `TASK-065` and `TASK-072` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-079` is added as a release-critical reliability hardening task before final package docs and clean-machine validation; `TASK-071`, `TASK-066`, and `TASK-073` remain selected for Sprint 06.
+**Status**: Sprint 06 committed lane selected. `TASK-065` and `TASK-072` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-079` is completed and `TASK-075` is active to implement the reviewed single GPU-capable package path before final package docs and clean-machine validation; `TASK-071`, `TASK-066`, and `TASK-073` remain selected for Sprint 06.
 
 ---
 
@@ -132,6 +132,32 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **Dependencies**: `TASK-065`; `TASK-069`; `TASK-072`; current detection/geocoding/provider workflows. `TASK-071` and `TASK-066` should consume this task's outcomes for docs and clean-machine validation.
 
 **User Value**: Reduces the chance that RC1 pilot users encounter missing addresses, rejected valid Azure shapes, or unexplained slow detections, while keeping the release path supportable and measured.
+
+### **TASK-075: Single GPU-Capable Package Implementation**
+**Status**: IN_PROGRESS - Phase 3 GPU overlay and launcher implemented; NVIDIA host validation pending
+**Type**: C (Runtime Policy / Hardware Compatibility / Release Packaging)
+**Priority**: CRITICAL
+**Estimated Effort**: 1-3 days (8-24 hours), split by validation availability
+**Target Sprint**: Sprint 06 V1 RC1
+**Task File**: `.agent_work/tasks/active/TASK-075-single-gpu-capable-package.md`
+
+**Objective**: Implement the reviewed single GPU-capable TowerScout package direction while preserving a CPU-safe default release path.
+
+**Current Direction**:
+- Phase 1 runtime policy is implemented: shared `TOWERSCOUT_DEVICE=auto|cpu|cuda` policy resolution lives in `webapp/ts_device.py`.
+- Readiness now includes non-loading `ml_runtime` diagnostics.
+- YOLO and EfficientNet report requested policy, selected device, CUDA build, CUDA availability, device name, and fallback reason.
+- EfficientNet CUDA batching now stacks and transfers candidate tensors per configured chunk.
+- GPU concurrency has an explicit conservative default through `TOWERSCOUT_GPU_CONCURRENCY`.
+- CUDA and CPU proof images now build from the current branch. The CUDA image uses `torch==2.2.1+cu121`, preserves CPU fallback on this non-GPU host, and fails closed with readiness guidance when `TOWERSCOUT_DEVICE=cuda` is required without an exposed GPU.
+- The local CUDA proof image is `7.11GB`; the current CPU proof image is `2.8GB`, making the size tradeoff about `4.31GB`.
+- Optional `compose.gpu.yaml` is implemented and included in release package staging.
+- `start.bat` / `scripts/launch.ps1` now support `-Gpu off|auto|on`; default `off` remains CPU-safe, `auto` only requests the overlay when a simple Docker/NVIDIA host preflight detects a GPU, and `on` explicitly requires CUDA.
+- GPU support claims remain pending NVIDIA Docker Desktop WSL2 host validation, fixed-fixture CPU/GPU parity, and timing evidence.
+
+**Dependencies**: `TASK-079`; `TASK-051`; `TASK-065`; `TASK-071`; `TASK-066`.
+
+**User Value**: Gives pilot users one package path that can accelerate on supported NVIDIA hosts while still launching predictably on CPU-only machines.
 
 ### **TASK-071: End-User Release Package Documentation**
 **Status**: NOT_STARTED - selected for Sprint 06  

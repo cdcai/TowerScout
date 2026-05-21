@@ -26,6 +26,7 @@ import PIL
 from ts_imgutil import cut_square_detection
 from ts_errors import ModelLoadError, ProcessingError
 from ts_logging import get_ml_logger
+from ts_device import DevicePolicyError, gpu_guard, select_model_device
 from ts_paths import get_en_model_dir, get_upload_dir
 
 logger = get_ml_logger()
@@ -92,45 +93,45 @@ class EN_Classifier:
                     cause=e
                 )
 
-            # GPU/CPU configuration with CPU fallback if CUDA setup is visible but unusable.
-            self.device = torch.device('cpu')
-            self.device_label = 'cpu'
             try:
-                if torch.cuda.is_available():
-                    try:
-                        self.device = torch.device('cuda')
-                        self.model.to(self.device)
-                        checkpoint = torch.load(str(path_best), map_location=self.device)
-                        self.device_label = 'cuda'
-                        logger.info("EfficientNet loaded on CUDA")
-                    except Exception as cuda_error:
-                        logger.warning(
-                            "EfficientNet CUDA setup failed, falling back to CPU: %s",
-                            cuda_error,
-                        )
-                        self.device = torch.device('cpu')
-                        self.device_label = 'cpu'
-                        self.model.to(self.device)
-                        checkpoint = torch.load(str(path_best), map_location=self.device)
-                        logger.info("EfficientNet loaded on CPU after CUDA fallback")
-                else:
-                    checkpoint = torch.load(str(path_best), map_location=self.device)
-                    logger.info("EfficientNet loaded on CPU")
+                checkpoint = torch.load(str(path_best), map_location=torch.device('cpu'))
+                self.model.load_state_dict(checkpoint)
+                logger.info("EfficientNet weights loaded on CPU")
             except Exception as e:
                 raise ModelLoadError(
-                    f"Failed to configure EfficientNet device: {str(e)}", 
+                    f"Failed to load EfficientNet weights: {str(e)}",
                     model_name="EfficientNet-B5",
                     model_path=str(path_best),
                     cause=e
                 )
 
             try:
-                self.model.load_state_dict(checkpoint)
+                self.device_selection = select_model_device(
+                    "EfficientNet",
+                    move_to_cuda=lambda: self.model.to(torch.device('cuda')),
+                    move_to_cpu=lambda: self.model.to(torch.device('cpu')),
+                )
+                self.device = torch.device(self.device_selection.selected_device)
+                self.device_label = self.device_selection.selected_device
+                self.device_fallback_reason = self.device_selection.fallback_reason
                 self.model.eval()
-                logger.info("EfficientNet weights loaded and model set to eval mode")
+                logger.info(
+                    "EfficientNet loaded on %s (policy=%s, fallback=%s)",
+                    self.device_label,
+                    self.device_selection.requested_policy,
+                    self.device_fallback_reason,
+                )
+            except DevicePolicyError as e:
+                raise ModelLoadError(
+                    str(e),
+                    model_name="EfficientNet-B5",
+                    model_path=str(path_best),
+                    user_message="EfficientNet device selection failed. Check GPU settings and try again.",
+                    cause=e,
+                )
             except Exception as e:
                 raise ModelLoadError(
-                    f"Failed to load EfficientNet weights: {str(e)}",
+                    f"Failed to configure EfficientNet device: {str(e)}",
                     model_name="EfficientNet-B5",
                     model_path=str(path_best),
                     cause=e
@@ -176,10 +177,13 @@ class EN_Classifier:
             'crop_seconds': 0.0,
             'transform_seconds': 0.0,
             'stack_seconds': 0.0,
+            'transfer_seconds': 0.0,
             'forward_seconds': 0.0,
             'attach_seconds': 0.0,
             'debug_image_seconds': 0.0,
             'total_seconds': 0.0,
+            'device_policy': getattr(getattr(self, 'device_selection', None), 'requested_policy', None),
+            'device_fallback_reason': getattr(self, 'device_fallback_reason', None),
         }
         if self.save_debug_images:
             upload_dir = get_upload_dir()
@@ -220,22 +224,25 @@ class EN_Classifier:
             det.append(p2)
 
         if candidate_tensors:
-            stack_start = time.time()
-            inputs = torch.stack(candidate_tensors)
-            stats['stack_seconds'] += time.time() - stack_start
-
-            if self.device_label == 'cuda':
-                inputs = inputs.to(self.device)
-
             outputs = []
             for offset in range(0, len(candidate_tensors), self.batch_size):
-                chunk = inputs[offset:offset + self.batch_size]
-                stats['batches'] += 1
-                forward_start = time.time()
-                # This is 1-... because the secondary has class 0 as tower.
-                with torch.inference_mode():
-                    batch_outputs = 1 - torch.sigmoid(self.model(chunk).cpu()).view(-1)
-                stats['forward_seconds'] += time.time() - forward_start
+                tensor_batch = candidate_tensors[offset:offset + self.batch_size]
+                stack_start = time.time()
+                chunk = torch.stack(tensor_batch)
+                stats['stack_seconds'] += time.time() - stack_start
+
+                with gpu_guard(self.device_label == 'cuda'):
+                    if self.device_label == 'cuda':
+                        transfer_start = time.time()
+                        chunk = chunk.to(self.device)
+                        stats['transfer_seconds'] += time.time() - transfer_start
+
+                    stats['batches'] += 1
+                    forward_start = time.time()
+                    # This is 1-... because the secondary has class 0 as tower.
+                    with torch.inference_mode():
+                        batch_outputs = 1 - torch.sigmoid(self.model(chunk).cpu()).view(-1)
+                    stats['forward_seconds'] += time.time() - forward_start
                 outputs.extend(float(value) for value in batch_outputs.tolist())
 
             attach_start = time.time()

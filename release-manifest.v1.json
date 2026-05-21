@@ -6,6 +6,7 @@
   "generated_utc": "",
   "image": "",
   "image_digest": "",
+  "pytorch_flavor": "cpu",
   "asset_manifest": "webapp/asset_manifest.v1.json",
   "compliance_files": [
     "LICENSE",
@@ -32,6 +33,7 @@
     "control_zip_sha256": "",
     "image": "",
     "image_digest": "",
+    "pytorch_flavor": "cpu",
     "asset_manifest": "webapp/asset_manifest.v1.json",
     "asset_bundle_sha256": ""
   },

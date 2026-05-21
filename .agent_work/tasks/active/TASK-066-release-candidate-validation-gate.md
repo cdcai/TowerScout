@@ -30,6 +30,8 @@ This task is the bridge between engineered release readiness and real user testi
 
 **R-066-008**: WHEN validation completes, THE TASK SHALL produce a pass/fail V1 RC1 recommendation and record remaining risks.
 
+**R-066-009**: WHEN the RC package includes the optional GPU path, THE VALIDATION SHALL prove the default CPU launch first and SHALL treat NVIDIA Docker Desktop WSL2 GPU validation as a separate evidence item before any GPU support claim.
+
 ## Acceptance Criteria
 
 - [ ] Release candidate package generated or obtained with immutable image digest.
@@ -42,6 +44,8 @@ This task is the bridge between engineered release readiness and real user testi
 - [ ] Provider setup and restart persistence verified.
 - [ ] At least one bounded detection smoke passes or a blocker is recorded.
 - [ ] Status/log support commands produce useful evidence.
+- [ ] CPU-safe default launch is verified with `-Gpu off` or equivalent default launcher behavior.
+- [ ] If GPU support is claimed for the RC, `-Gpu auto` and `-Gpu on` are validated on an NVIDIA Docker Desktop WSL2 host with readiness diagnostics, fixed-fixture CPU/GPU output parity, and timing evidence.
 - [ ] Time-to-first-run, manual interventions, confusing steps, and defects are recorded.
 - [ ] V1 RC1 pass/fail recommendation produced.
 
@@ -53,6 +57,7 @@ This task is the bridge between engineered release readiness and real user testi
 - `scripts/package-release.cmd` / `scripts/package-release.ps1`: package generation.
 - `scripts/import-assets.cmd` / `scripts/import-assets.ps1`: asset import.
 - `start.bat` and launcher scripts.
+- `TASK-075`: CPU-safe default launch, optional Docker GPU overlay, and GPU validation boundaries.
 - Optional: `TASK-074` if prerequisite friction becomes severe.
 
 ## Implementation Plan
@@ -80,6 +85,15 @@ This task is the bridge between engineered release readiness and real user testi
 **Output**: Task file ready for intake.  
 **Validation**: Pending `.agent_work` validation after all Sprint 06 task files are created.  
 **Next**: Wait for `TASK-072` and `TASK-071` deliverables, then build the validation checklist and execute the clean-machine gate.
+
+### 2026-05-20 - Task-075 GPU Validation Handoff
+**Objective**: Add GPU/CUDA validation expectations from `TASK-075`.
+**Context**: `TASK-075` proved CUDA-wheel CPU fallback locally and implemented optional Docker GPU overlay/launcher behavior. A running local Compose service prevented launcher smoke without disturbing the active app, and this host does not provide NVIDIA GPU validation.
+**Decision**: `TASK-066` should validate CPU launch as the default release path. GPU support remains a separate evidence item requiring an NVIDIA Docker Desktop WSL2 host and fixed-fixture parity/timing evidence.
+**Execution**: Added `R-066-009`, GPU-specific acceptance criteria, and a dependency on `TASK-075`.
+**Output**: The RC validation gate now has explicit CPU-default and GPU-claim boundaries.
+**Validation**: Pending Task-066 execution.
+**Next**: Include `-Gpu off`, `-Gpu auto`, and `-Gpu on` branches in the validation checklist, but only mark GPU support claimable after NVIDIA host evidence exists.
 
 ---
 

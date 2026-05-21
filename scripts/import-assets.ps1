@@ -4,6 +4,9 @@ param(
 
     [string] $Source = "assets",
 
+    [ValidateSet("off", "auto", "on")]
+    [string] $Gpu = "off",
+
     [switch] $Build,
 
     [switch] $VerifyHashes
@@ -33,13 +36,13 @@ if (-not (Test-Path -LiteralPath $dataSource -PathType Container)) {
 }
 
 Write-Host "Starting TowerScout container so named volumes are available..."
-Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -ComposeArguments @("up", "-d", "towerscout")
+Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @("up", "-d", "towerscout")
 if ($script:TowerScoutComposeExitCode -ne 0) {
     exit $script:TowerScoutComposeExitCode
 }
 
 Write-Host "Importing model assets from $modelSource..."
-Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -ComposeArguments @(
+Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @(
     "cp",
     (Join-Path $modelSource "."),
     "towerscout:/app/webapp/model_params/"
@@ -49,7 +52,7 @@ if ($script:TowerScoutComposeExitCode -ne 0) {
 }
 
 Write-Host "Importing data assets from $dataSource..."
-Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -ComposeArguments @(
+Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @(
     "cp",
     (Join-Path $dataSource "."),
     "towerscout:/app/webapp/data/"
@@ -62,7 +65,7 @@ $verifyArg = if ($VerifyHashes) { "True" } else { "False" }
 $python = "import ts_assets; s=ts_assets.build_asset_status(verify_hashes=$verifyArg); print('asset_status=' + s['status']); print('verify_hashes=' + str(s['verify_hashes'])); print('missing=' + ','.join(s['missing'])); print('corrupt=' + ','.join(s['corrupt'])); print('optional_missing=' + ','.join(s['optional_missing'])); raise SystemExit(0 if s['status'] == 'ok' else 1)"
 
 Write-Host "Verifying imported assets with TowerScout manifest..."
-Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -ComposeArguments @(
+Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @(
     "exec",
     "-T",
     "towerscout",

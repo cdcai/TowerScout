@@ -2,6 +2,9 @@ param(
     [ValidateSet("auto", "docker", "podman")]
     [string] $Engine = "auto",
 
+    [ValidateSet("off", "auto", "on")]
+    [string] $Gpu = "off",
+
     [switch] $Build,
 
     [string] $Thumbprint = "",
@@ -176,7 +179,7 @@ function Copy-TowerScoutCertificateIntoContainer {
         [string] $ContainerPath
     )
 
-    Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -ComposeArguments @(
+    Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @(
         "cp",
         $LocalPath,
         "towerscout:$ContainerPath"
@@ -217,13 +220,13 @@ function Copy-TowerScoutCertificateIntoContainer {
 
 try {
     Write-Host "Starting TowerScout container so the persistent config volume is available..."
-    Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -ComposeArguments @("up", "-d", "towerscout")
+    Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @("up", "-d", "towerscout")
     if ($script:TowerScoutComposeExitCode -ne 0) {
         exit $script:TowerScoutComposeExitCode
     }
 
     Write-Host "Creating container certificate directory..."
-    Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -ComposeArguments @(
+    Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @(
         "exec",
         "-T",
         "towerscout",
@@ -243,7 +246,7 @@ try {
 
     $bundleScript = "cat /etc/ssl/certs/ca-certificates.crt '$containerCertPath' > '$containerBundlePath' && chmod 0644 '$containerCertPath' '$containerBundlePath'"
     Write-Host "Building combined CA bundle at $containerBundlePath..."
-    Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -ComposeArguments @(
+    Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @(
         "exec",
         "-T",
         "towerscout",
@@ -262,7 +265,7 @@ try {
     else {
         $pythonVerify = Get-TowerScoutTlsVerificationScript -Provider $resolvedVerifyProvider
         Write-Host "Verifying $resolvedVerifyProvider TLS through the combined CA bundle..."
-        Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -ComposeArguments @(
+        Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @(
             "exec",
             "-T",
             "towerscout",

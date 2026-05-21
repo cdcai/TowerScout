@@ -17,6 +17,7 @@ Out of scope for v1: Mac, ARM64, air-gapped/offline installs, VDI, shared multi-
 The release package is expected to include:
 
 - `compose.yaml`
+- `compose.gpu.yaml`
 - `.env.example`
 - `start.bat`
 - `scripts/launch.ps1`
@@ -66,12 +67,12 @@ the control ZIP by the pinned image digest in `IMAGE.txt`.
 Release maintainers can assemble the control package from a source checkout:
 
 ```powershell
-.\scripts\package-release.cmd -Version v0.1.0 -Image ghcr.io/j-schulein/towerscout -ImageDigest sha256:<digest>
+.\scripts\package-release.cmd -Version v0.1.0 -Image ghcr.io/j-schulein/towerscout:v0.1.0-cuda121 -ImageDigest sha256:<digest> -PytorchFlavor cuda121
 ```
 
 This creates `dist\towerscout-v0.1.0\`, `dist\towerscout-v0.1.0.zip`, and `dist\towerscout-v0.1.0.zip.sha256`. The package includes `IMAGE.txt` for the release image reference and `SHA256SUMS.txt` for the files inside the package.
 
-Release package generation requires `-ImageDigest` with an immutable `sha256:<digest>` reference, a git source ref, and a clean working tree. For developer-only local validation with a mutable image tag, pass `-AllowMutableImage` explicitly. For local validation packages only, `-AllowMissingSourceRef` and `-AllowDirtySource` can bypass source-ref and clean-tree enforcement.
+Release package generation requires `-ImageDigest` with an immutable `sha256:<digest>` reference, a git source ref, a clean working tree, and an explicit or inferred PyTorch flavor (`cpu` or `cuda121`). For developer-only local validation with a mutable image tag, pass `-AllowMutableImage` explicitly. For local validation packages only, `-AllowMissingSourceRef` and `-AllowDirtySource` can bypass source-ref and clean-tree enforcement.
 
 ## Publishing The GHCR Image
 
@@ -88,6 +89,15 @@ ghcr.io/j-schulein/towerscout@sha256:<digest>
 ```
 
 Use that digest reference when generating the release package.
+
+The publish workflow has an explicit PyTorch wheel flavor input:
+
+- `cpu`: publishes the smaller CPU-wheel image.
+- `cuda121`: publishes the CUDA 12.1 PyTorch image for the single GPU-capable package path.
+
+The workflow publishes flavor-specific tags. For example, a workflow tag input of `v0.1.0-rc1` with `cuda121` publishes `v0.1.0-rc1-cuda121`; `push_latest` publishes `latest-cpu` or `latest-cuda121`, not an ambiguous `latest`.
+
+For RC1, record the chosen flavor with the image digest in the release package. A CUDA-capable image remains CPU-safe when launched with `-Gpu off`, but GPU execution is not a supported claim until NVIDIA Docker host validation, fixed-fixture CPU/GPU parity, and timing evidence are captured.
 
 ## First Run
 
@@ -115,6 +125,37 @@ For developer/support use from a source checkout:
 ```
 
 This uses `compose.build.yaml` and builds `towerscout:local` from the local Dockerfile.
+
+For developer/support validation of the CUDA-capable image path:
+
+```powershell
+.\start.bat -Engine docker -Build -Gpu auto
+```
+
+The GPU build path switches `PYTORCH_INDEX_URL` to the CUDA 12.1 PyTorch wheel index for `-Gpu auto` or `-Gpu on`. `-Gpu off -Build` always uses the CPU PyTorch wheel index so local support builds do not accidentally inherit a CUDA index from the shell.
+
+## Optional GPU Launch
+
+The default launcher mode is CPU-safe:
+
+```powershell
+.\start.bat -Gpu off
+```
+
+GPU launch is opt-in and currently Docker-first:
+
+```powershell
+.\start.bat -Engine docker -Gpu auto
+.\start.bat -Engine docker -Gpu on
+```
+
+- `-Gpu off` uses the default Compose file and sets `TOWERSCOUT_DEVICE=cpu`.
+- `-Gpu auto` sets `TOWERSCOUT_DEVICE=auto` and starts without the GPU overlay unless `TOWERSCOUT_GPU_AUTO_OVERLAY=1` has been set in the shell or `.env` after Docker GPU validation on that workstation. Without that explicit override, it uses CPU fallback.
+- `-Gpu on` adds `compose.gpu.yaml`, sets `TOWERSCOUT_DEVICE=cuda`, and fails readiness if CUDA is unavailable.
+
+GPU launch requires a CUDA-capable TowerScout image plus a Docker host with NVIDIA GPU support available to containers. Podman GPU launch is not validated for this release path; use the CPU-safe Podman launch unless support provides a site-specific GPU procedure.
+
+Before setting `TOWERSCOUT_GPU_AUTO_OVERLAY=1`, validate Docker GPU access with the site-approved NVIDIA Container Toolkit procedure. A host `nvidia-smi` result alone is not enough because Docker may still be unable to pass the GPU into the container.
 
 ## Engine Selection
 

@@ -10,6 +10,11 @@ import torch
 import ts_en
 
 
+class _FakeCudaProbe:
+    def cpu(self):
+        return self
+
+
 def test_classify_applies_confidence_branches_and_inference_mode(monkeypatch):
     classifier = object.__new__(ts_en.EN_Classifier)
     classifier.save_debug_images = False
@@ -79,12 +84,19 @@ def test_classify_batches_multiple_review_band_candidates(monkeypatch):
     monkeypatch.setattr(ts_en, "cut_square_detection", Mock(return_value="cropped-image"))
 
     batch_shapes = []
+    stack_sizes = []
+    real_stack = ts_en.torch.stack
+
+    def fake_stack(tensors):
+        stack_sizes.append(len(tensors))
+        return real_stack(tensors)
 
     def fake_model(input_tensor):
         batch_shapes.append(tuple(input_tensor.shape))
         return torch.zeros((input_tensor.shape[0], 1))
 
     classifier.model = Mock(side_effect=fake_model)
+    monkeypatch.setattr(ts_en.torch, "stack", fake_stack)
 
     detections = [
         [0, 0, 10, 10, 0.30],
@@ -96,6 +108,7 @@ def test_classify_batches_multiple_review_band_candidates(monkeypatch):
 
     assert [det[-1] for det in detections] == [0.5, 0.5, 0.5]
     assert batch_shapes == [(2, 3, 2, 2), (1, 3, 2, 2)]
+    assert stack_sizes == [2, 1]
     assert stats["candidate_count"] == 3
     assert stats["batches"] == 2
     assert stats["batch_size"] == 2
@@ -133,6 +146,8 @@ def test_efficientnet_init_falls_back_to_cpu_when_cuda_setup_fails(monkeypatch):
         monkeypatch.setattr(ts_en, "get_en_model_dir", lambda: scratch_dir)
         monkeypatch.setattr(ts_en.EfficientNet, "from_pretrained", Mock(return_value=fake_model))
         monkeypatch.setattr(ts_en.torch.cuda, "is_available", Mock(return_value=True))
+        monkeypatch.setattr(ts_en.torch.cuda, "get_device_name", Mock(return_value="NVIDIA Test GPU"))
+        monkeypatch.setattr(ts_en.torch, "zeros", Mock(return_value=_FakeCudaProbe()))
         monkeypatch.setattr(ts_en.torch, "load", torch_load)
 
         classifier = ts_en.EN_Classifier()
@@ -143,5 +158,6 @@ def test_efficientnet_init_falls_back_to_cpu_when_cuda_setup_fails(monkeypatch):
         assert fake_model.evaluated is True
         assert classifier.batch_size == 8
         torch_load.assert_called_once()
+        assert torch_load.call_args.kwargs["map_location"] == torch.device("cpu")
     finally:
         shutil.rmtree(scratch_dir, ignore_errors=True)

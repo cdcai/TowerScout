@@ -1,12 +1,14 @@
 from pathlib import Path
 import shutil
 import uuid
+from contextlib import contextmanager
 from unittest.mock import Mock, patch
 
 import torch
 from PIL import Image
 
 from ts_yolov5 import YOLOv5_Detector
+from ts_errors import ModelLoadError
 
 
 class _FakeEvents:
@@ -73,6 +75,73 @@ class _FakeSecondary:
         }
 
 
+def test_cuda_detect_keeps_gpu_guard_through_tensor_conversion(monkeypatch):
+    scratch_dir = Path(".agent_work/pytest-temp") / f"ts-yolo-gpu-guard-{uuid.uuid4().hex}"
+    scratch_dir.mkdir(parents=True, exist_ok=True)
+    tile_path = scratch_dir / "tile.jpg"
+    Image.new("RGB", (8, 8), "white").save(tile_path)
+    guard_state = {"active": False}
+    cpu_conversion_under_guard = []
+    secondary_guard_state = []
+
+    class FakeCudaTensor:
+        def cpu(self):
+            cpu_conversion_under_guard.append(guard_state["active"])
+            return self
+
+        def numpy(self):
+            return self
+
+        def tolist(self):
+            return [[0.1, 0.1, 0.2, 0.2, 0.5, 0.0]]
+
+    class FakeCudaResult:
+        names = {0: "cooling_tower"}
+        xyxyn = [FakeCudaTensor()]
+
+    class FakeCudaModel:
+        def __call__(self, _images):
+            return FakeCudaResult()
+
+    class FakeSecondary:
+        device_label = "cpu"
+        batch_size = 8
+
+        def classify(self, _img, detections, batch_id=0):
+            secondary_guard_state.append(guard_state["active"])
+            detections[0].append(0.8)
+            return {}
+
+    @contextmanager
+    def fake_gpu_guard(enabled):
+        guard_state["active"] = bool(enabled)
+        try:
+            yield
+        finally:
+            guard_state["active"] = False
+
+    try:
+        detector = object.__new__(YOLOv5_Detector)
+        detector.model = FakeCudaModel()
+        detector.batch_size = 4
+        detector.device_label = "cuda"
+        monkeypatch.setattr("ts_yolov5.gpu_guard", fake_gpu_guard)
+
+        results = detector.detect(
+            [{"filename": str(tile_path)}],
+            _FakeEvents(),
+            "test-run",
+            crop_tiles=False,
+            secondary=FakeSecondary(),
+        )
+
+        assert results[0][0]["secondary"] == 0.8
+        assert cpu_conversion_under_guard == [True]
+        assert secondary_guard_state == [False]
+    finally:
+        shutil.rmtree(scratch_dir, ignore_errors=True)
+
+
 def test_detect_records_secondary_classifier_subphase_metrics():
     scratch_dir = Path(".agent_work/pytest-temp") / f"ts-yolo-secondary-{uuid.uuid4().hex}"
     scratch_dir.mkdir(parents=True, exist_ok=True)
@@ -84,14 +153,6 @@ def test_detect_records_secondary_classifier_subphase_metrics():
         detector.model = _FakeModel()
         detector.batch_size = 4
         detector.device_label = "cpu"
-        detector.semaphore = type(
-            "NoOpSemaphore",
-            (),
-            {
-                "__enter__": lambda self: self,
-                "__exit__": lambda self, exc_type, exc, traceback: False,
-            },
-        )()
 
         perf_metrics = _FakePerfMetrics()
 
@@ -136,5 +197,48 @@ def test_detector_uses_configured_cpu_batch_size(monkeypatch):
 
         assert detector.batch_size == 3
         assert detector.device_label == "cpu"
+    finally:
+        shutil.rmtree(scratch_dir, ignore_errors=True)
+
+
+def test_detector_device_policy_cpu_skips_cuda_transfer(monkeypatch):
+    scratch_dir = Path(".agent_work/pytest-temp") / f"ts-yolo-policy-{uuid.uuid4().hex}"
+    scratch_dir.mkdir(parents=True, exist_ok=True)
+    model_path = scratch_dir / "newest.pt"
+    model_path.write_bytes(b"fake-model")
+    fake_model = Mock()
+    monkeypatch.setenv("TOWERSCOUT_DEVICE", "cpu")
+
+    try:
+        with patch("ts_yolov5._validate_runtime_dependencies"), \
+             patch("ts_yolov5._load_local_yolov5_model", return_value=fake_model), \
+             patch("ts_device.torch.cuda.is_available", return_value=True), \
+             patch("ts_device.torch.cuda.get_device_name", return_value="NVIDIA Test GPU"):
+            detector = YOLOv5_Detector(str(model_path))
+
+        assert detector.device_label == "cpu"
+        assert detector.device_selection.requested_policy == "cpu"
+        fake_model.cuda.assert_not_called()
+        fake_model.cpu.assert_called_once()
+    finally:
+        shutil.rmtree(scratch_dir, ignore_errors=True)
+
+
+def test_detector_device_policy_cuda_required_fails_when_unavailable(monkeypatch):
+    scratch_dir = Path(".agent_work/pytest-temp") / f"ts-yolo-policy-{uuid.uuid4().hex}"
+    scratch_dir.mkdir(parents=True, exist_ok=True)
+    model_path = scratch_dir / "newest.pt"
+    model_path.write_bytes(b"fake-model")
+    monkeypatch.setenv("TOWERSCOUT_DEVICE", "cuda")
+
+    try:
+        with patch("ts_yolov5._validate_runtime_dependencies"), \
+             patch("ts_yolov5._load_local_yolov5_model", return_value=Mock()), \
+             patch("ts_device.torch.cuda.is_available", return_value=False):
+            try:
+                YOLOv5_Detector(str(model_path))
+                assert False, "Expected CUDA-required model load failure"
+            except ModelLoadError as error:
+                assert "requires CUDA" in str(error)
     finally:
         shutil.rmtree(scratch_dir, ignore_errors=True)

@@ -13,6 +13,7 @@ RUN npm run build
 FROM python:3.11-slim-bookworm AS runtime
 
 ARG PYTORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
+ARG TOWERSCOUT_PYTORCH_FLAVOR=cpu
 ARG TOWERSCOUT_RELEASE_VERSION=container-local
 ARG TOWERSCOUT_SOURCE_REF=unknown
 
@@ -21,6 +22,7 @@ ENV PYTHONUNBUFFERED=1 \
     FLASK_ENV=production \
     TOWERSCOUT_LAZY_MODEL_INIT=1 \
     TOWERSCOUT_STARTUP_PRELOAD=0 \
+    TOWERSCOUT_PYTORCH_FLAVOR=${TOWERSCOUT_PYTORCH_FLAVOR} \
     YOLO_CONFIG_DIR=/app/webapp/cache/ultralytics \
     TOWERSCOUT_VERSION=${TOWERSCOUT_RELEASE_VERSION}
 
@@ -28,7 +30,8 @@ LABEL org.opencontainers.image.title="TowerScout" \
     org.opencontainers.image.description="TowerScout agpl-yolo runtime image; release-specific metadata is authoritative in the release control ZIP." \
     org.opencontainers.image.version="${TOWERSCOUT_RELEASE_VERSION}" \
     org.opencontainers.image.revision="${TOWERSCOUT_SOURCE_REF}" \
-    org.opencontainers.image.licenses="LicenseRef-TowerScout-agpl-yolo"
+    org.opencontainers.image.licenses="LicenseRef-TowerScout-agpl-yolo" \
+    org.towerscout.pytorch.flavor="${TOWERSCOUT_PYTORCH_FLAVOR}"
 
 WORKDIR /app
 
