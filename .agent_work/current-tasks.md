@@ -3,7 +3,7 @@
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
 **Last Updated**: May 22, 2026
 **Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
-**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, and `TASK-071` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` and `TASK-073` remain selected for Sprint 06.
+**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, and `TASK-071` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` local package validation passed after targeted script/runtime fixes, with final digest-pinned RC artifact validation still pending; `TASK-073` remains selected for Sprint 06.
 
 ---
 
@@ -183,7 +183,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **User Value**: Converts the engineered release package into a self-service pilot path instead of a support-only handoff.
 
 ### **TASK-066: Release Candidate Validation Gate**
-**Status**: NOT_STARTED - selected for Sprint 06  
+**Status**: IN_PROGRESS - local package path passed after fixes; final digest-pinned RC artifact validation pending
 **Type**: C (Release Engineering / Validation)  
 **Priority**: CRITICAL  
 **Estimated Effort**: 1-2 days (8-16 hours)  
@@ -193,6 +193,12 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **Objective**: Internally prove the release package, asset bundle, docs, setup flow, restart persistence, and bounded detection path from a clean user-facing environment before external pilot/UAT begins. Also evaluate PR16 follow-ups for visible CI/static-analysis release gates and Markdown-to-HTML generation or parity checks for Settings-linked docs.
 
 **Dependencies**: `TASK-065`; `TASK-069`; `TASK-071`; `TASK-072`; agreed release package shape.
+
+**Current State**:
+- Local Docker Desktop validation generated RC-style packages, imported all 9 manifest assets with hash verification, reached readiness `ready`, persisted Azure provider setup, and passed a bounded Azure detection smoke on the public local fixture.
+- Validation found and fixed three release-path blockers: non-default port asset import, stale model discovery after asset copy, and hidden EfficientNet first-use download.
+- Docker Desktop is the validated local engine. Podman image build on this host is blocked by base-image TLS certificate verification before TowerScout code runs.
+- Evidence is local-package evidence only because the package used a mutable local image and dirty-tree allowance. Final sign-off still needs the real digest-pinned RC package/image.
 
 **User Value**: Prevents end-user testing from being dominated by known package/docs/asset gaps and produces evidence that the V1 RC1 path is actually usable.
 

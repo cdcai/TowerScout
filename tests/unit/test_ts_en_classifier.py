@@ -144,7 +144,10 @@ def test_efficientnet_init_falls_back_to_cpu_when_cuda_setup_fails(monkeypatch):
 
     try:
         monkeypatch.setattr(ts_en, "get_en_model_dir", lambda: scratch_dir)
-        monkeypatch.setattr(ts_en.EfficientNet, "from_pretrained", Mock(return_value=fake_model))
+        from_name = Mock(return_value=fake_model)
+        from_pretrained = Mock(side_effect=AssertionError("from_pretrained should not run during RC package load"))
+        monkeypatch.setattr(ts_en.EfficientNet, "from_name", from_name)
+        monkeypatch.setattr(ts_en.EfficientNet, "from_pretrained", from_pretrained)
         monkeypatch.setattr(ts_en.torch.cuda, "is_available", Mock(return_value=True))
         monkeypatch.setattr(ts_en.torch.cuda, "get_device_name", Mock(return_value="NVIDIA Test GPU"))
         monkeypatch.setattr(ts_en.torch, "zeros", Mock(return_value=_FakeCudaProbe()))
@@ -157,7 +160,10 @@ def test_efficientnet_init_falls_back_to_cpu_when_cuda_setup_fails(monkeypatch):
         assert fake_model.loaded_checkpoint == {"weights": "ok"}
         assert fake_model.evaluated is True
         assert classifier.batch_size == 8
+        from_name.assert_called_once_with("efficientnet-b5", num_classes=1000)
+        from_pretrained.assert_not_called()
         torch_load.assert_called_once()
         assert torch_load.call_args.kwargs["map_location"] == torch.device("cpu")
+        assert torch_load.call_args.kwargs["weights_only"] is True
     finally:
         shutil.rmtree(scratch_dir, ignore_errors=True)

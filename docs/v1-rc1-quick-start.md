@@ -140,6 +140,14 @@ If you started with an explicit engine, use that same engine here:
 .\scripts\import-assets.cmd -Engine podman -Source assets
 ```
 
+If you started TowerScout on a non-default port, use that same `-Port` value
+when importing assets so the helper recreates the Compose service with the same
+port binding:
+
+```powershell
+.\scripts\import-assets.cmd -Source assets -Port 5001
+```
+
 For release-candidate or support validation, verify hashes during import:
 
 ```powershell
@@ -153,7 +161,9 @@ Or, with an explicit engine:
 ```
 
 The import helper uses the selected engine's named volumes. It should run after
-`.env` has been created by the launcher.
+`.env` has been created by the launcher. After copying assets, the helper
+restarts TowerScout so the running application discovers the imported model
+files before the first detection run.
 
 ## 6. Start Or Reopen TowerScout
 

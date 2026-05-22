@@ -62,6 +62,9 @@ Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256</code></pre>
         <p>Extract the asset ZIP root entries into the package <code>assets\</code> folder so it contains <code>model_params\</code>, <code>data\</code>, and <code>asset_manifest.v1.json</code>.</p>
         <pre><code>.\scripts\import-assets.cmd -Source assets
 .\scripts\import-assets.cmd -Source assets -VerifyHashes</code></pre>
+        <p>If TowerScout was started on a non-default port, pass the same port to the asset importer.</p>
+        <pre><code>.\scripts\import-assets.cmd -Source assets -Port 5001 -VerifyHashes</code></pre>
+        <p>The importer uses the selected engine's named volumes and restarts TowerScout after copying assets so imported model files are available before the first detection run.</p>
       </section>
       <section class="doc-section" id="gpu">
         <h2>GPU Boundary</h2>

@@ -223,10 +223,19 @@ Release-candidate or support validation import:
 .\scripts\import-assets.cmd -Source assets -VerifyHashes
 ```
 
+If the launcher was started with a non-default port, pass the same `-Port`
+value to the asset importer:
+
+```powershell
+.\scripts\import-assets.cmd -Source assets -Port 5001 -VerifyHashes
+```
+
 The importer copies assets into the selected engine's named volumes. It does
 not copy assets into another local package folder. The importer starts the
-container if needed so the named volumes are available; run the launcher once
-first so `.env` exists and the selected release image is pinned.
+container if needed so the named volumes are available, then restarts TowerScout
+after the copy so the running application discovers the imported model files.
+Run the launcher once first so `.env` exists and the selected release image is
+pinned.
 
 ## Starting Or Reopening TowerScout
 

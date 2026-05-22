@@ -4,8 +4,12 @@ param(
 
     [string] $Source = "assets",
 
+    [int] $Port = $(if ($env:TOWERSCOUT_PORT) { [int] $env:TOWERSCOUT_PORT } else { 5000 }),
+
     [ValidateSet("off", "auto", "on")]
     [string] $Gpu = "off",
+
+    [int] $RestartWaitSeconds = 120,
 
     [switch] $Build,
 
@@ -16,6 +20,7 @@ $ErrorActionPreference = "Stop"
 . "$PSScriptRoot\lib\TowerScoutCompose.ps1"
 
 $repoRoot = Get-TowerScoutRepoRoot
+$env:TOWERSCOUT_PORT = "$Port"
 $sourcePath = Resolve-Path -LiteralPath (Join-Path $repoRoot $Source) -ErrorAction SilentlyContinue
 if ($null -eq $sourcePath) {
     $sourcePath = Resolve-Path -LiteralPath $Source -ErrorAction SilentlyContinue
@@ -56,6 +61,71 @@ Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArgumen
     "cp",
     (Join-Path $dataSource "."),
     "towerscout:/app/webapp/data/"
+)
+if ($script:TowerScoutComposeExitCode -ne 0) {
+    exit $script:TowerScoutComposeExitCode
+}
+
+Write-Host "Restarting TowerScout so imported model assets are discovered..."
+Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @(
+    "restart",
+    "towerscout"
+)
+if ($script:TowerScoutComposeExitCode -ne 0) {
+    exit $script:TowerScoutComposeExitCode
+}
+
+Write-Host "Waiting for TowerScout to reload imported assets..."
+$waitPython = @'
+import json
+import sys
+import time
+import urllib.request
+
+timeout_seconds = int(sys.argv[1])
+deadline = time.time() + timeout_seconds
+last_status = str()
+
+
+def get_json(path):
+    with urllib.request.urlopen('http://127.0.0.1:5000' + path, timeout=3) as response:
+        return json.load(response)
+
+
+while time.time() < deadline:
+    try:
+        health = get_json('/api/health')
+        readiness = get_json('/api/readiness')
+        engines = get_json('/getengines')
+        assets = readiness.get('components', {}).get('assets', {})
+        health_status = health.get('status')
+        readiness_state = readiness.get('state')
+        asset_status = assets.get('status')
+        engine_count = len(engines) if isinstance(engines, list) else 0
+        last_status = 'health={} state={} asset_status={} engine_count={}'.format(
+            health_status,
+            readiness_state,
+            asset_status,
+            engine_count,
+        )
+        if health_status == 'ok' and asset_status == 'ok' and engine_count > 0:
+            print('post_import_' + last_status)
+            raise SystemExit(0)
+    except Exception as exc:
+        last_status = f'{type(exc).__name__}: {exc}'
+    time.sleep(2)
+
+print('post_import_wait_error=' + last_status)
+raise SystemExit(1)
+'@
+Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @(
+    "exec",
+    "-T",
+    "towerscout",
+    "python",
+    "-c",
+    $waitPython,
+    "$RestartWaitSeconds"
 )
 if ($script:TowerScoutComposeExitCode -ne 0) {
     exit $script:TowerScoutComposeExitCode
