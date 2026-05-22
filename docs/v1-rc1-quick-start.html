@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TowerScout V1 RC1 Quick Start</title>
+  <link rel="stylesheet" href="/docs/towerscout-docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <p class="eyebrow">TowerScout V1 RC1</p>
+    <h1>Quick Start</h1>
+    <p class="lead">The short Windows pilot path for extracting the package, importing assets, launching TowerScout, completing setup, and confirming readiness.</p>
+  </header>
+  <div class="doc-frame">
+    <nav class="doc-nav" aria-label="Quick start sections">
+      <h2>Steps</h2>
+      <a href="#prerequisites">Prerequisites</a>
+      <a href="#download">Download</a>
+      <a href="#verify">Verify</a>
+      <a href="#extract">Extract</a>
+      <a href="#start">Initialize</a>
+      <a href="#assets">Assets</a>
+      <a href="#gpu">GPU Boundary</a>
+      <a href="#setup">Setup</a>
+      <a href="#success">Confirm Success</a>
+      <a href="#license">Source/licenses</a>
+      <a href="#help">Help</a>
+    </nav>
+    <main class="doc-main">
+      <section class="doc-section" id="prerequisites">
+        <h2>Before You Start</h2>
+        <p>Confirm Windows 11 AMD64, Windows PowerShell, a modern browser, normal outbound internet access, enough disk space for the package/assets/container image, and one valid site/user-owned provider key.</p>
+        <p>Install one supported container engine: Podman with a running Podman machine and Compose provider, or Docker Desktop where it is licensed, approved, installed, and running.</p>
+        <p>You do not need Git, Python, Conda, Node.js, VS Code, or a source-code checkout for the normal package path.</p>
+        <p>If Docker Desktop or Podman is not already installed and approved on your workstation, or if you do not already have a valid restricted provider key, stop here and contact your site administrator or support lead before continuing.</p>
+        <p>If both Docker and Podman are installed, use <code>-Engine podman</code> consistently when validating the Podman path.</p>
+      </section>
+      <section class="doc-section" id="download">
+        <h2>Download The Release Files</h2>
+        <p>Use the control ZIP, control checksum, asset ZIP, and asset checksum for the same release version. The exact filenames can change by release.</p>
+      </section>
+      <section class="doc-section" id="verify">
+        <h2>Verify Downloads Before Extracting</h2>
+        <p>Compare each ZIP to its matching <code>.sha256</code> file before extracting either package. If either SHA-256 value does not match, stop and obtain a fresh copy of the release artifact.</p>
+        <pre><code>Get-FileHash .\towerscout-v0.1.0-rc1.zip -Algorithm SHA256
+Get-Content .\towerscout-v0.1.0-rc1.zip.sha256
+Get-FileHash .\towerscout-v0.1.0-rc1-assets-*.zip -Algorithm SHA256
+Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256</code></pre>
+      </section>
+      <section class="doc-section" id="extract">
+        <h2>Extract The Control Package</h2>
+        <p>Extract the control ZIP to a normal local folder such as <code>C:\Users\&lt;you&gt;\TowerScout-v0.1.0-rc1</code>. The folder should contain <code>start.bat</code>, Compose files, <code>scripts\</code>, <code>docs\</code>, and an empty <code>assets\</code> folder.</p>
+      </section>
+      <section class="doc-section" id="start">
+        <h2>Initialize The Package</h2>
+        <pre><code>.\start.bat</code></pre>
+        <p>The first launcher run creates <code>.env</code>, starts the selected engine, polls readiness, and opens <code>http://localhost:5000</code>. If support tells you to use Podman, run <code>.\start.bat -Engine podman</code> and reuse that engine value on helper commands.</p>
+      </section>
+      <section class="doc-section" id="assets">
+        <h2>Stage And Import Assets</h2>
+        <p>Extract the asset ZIP root entries into the package <code>assets\</code> folder so it contains <code>model_params\</code>, <code>data\</code>, and <code>asset_manifest.v1.json</code>.</p>
+        <pre><code>.\scripts\import-assets.cmd -Source assets
+.\scripts\import-assets.cmd -Source assets -VerifyHashes</code></pre>
+      </section>
+      <section class="doc-section" id="gpu">
+        <h2>GPU Boundary</h2>
+        <p>The default launch is CPU-safe. Optional Docker GPU launch uses <code>-Gpu auto</code> or <code>-Gpu on</code> only after workstation-specific NVIDIA Docker validation. Podman GPU launch is not validated for V1 RC1.</p>
+      </section>
+      <section class="doc-section" id="setup">
+        <h2>Complete Setup</h2>
+        <p>Use Setup Wizard or Settings to configure one valid Google Maps or Azure Maps key. Browser map SDK keys are client-visible, so V1 RC1 expects site/user-owned restricted keys.</p>
+      </section>
+      <section class="doc-section" id="success">
+        <h2>Confirm Success</h2>
+        <pre><code>.\scripts\status.cmd</code></pre>
+        <p>Readiness should become <code>ready</code> after provider setup and required assets are present.</p>
+      </section>
+      <section class="doc-section" id="license">
+        <h2>Source, Licenses, And Help</h2>
+        <p>Settings includes Resource Links for Project Overview, User Guide, Source/licenses, Video Guides, and the research article. The formatted source/license browser page is available at <a href="/license">/license</a>. Plain-text combined notices are available at <a href="/license.txt">/license.txt</a> for scripts, copy/paste, or archival use.</p>
+      </section>
+      <section class="doc-section" id="help">
+        <h2>If Something Fails</h2>
+        <pre><code>.\scripts\status.cmd
+.\scripts\logs.cmd -Tail 200</code></pre>
+        <p>Do not share provider keys, <code>.env</code>, raw screenshots, browser traces, raw logs, datasets, or sensitive AOIs unless your site has approved handling.</p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

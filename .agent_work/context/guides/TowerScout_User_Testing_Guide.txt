@@ -1,3 +1,11 @@
+LEGACY SOURCE-INSTALL GUIDE
+===========================
+
+This guide targets the older source/Python tester path for `feature-sprint-05`.
+It is not the preferred V1 RC1 Windows pilot package path. For V1 RC1, use
+`docs/v1-rc1-quick-start.md`, `docs/v1-rc1-package-guide.md`, and
+`docs/towerscout-user-guide.md`.
+
 TOWERSCOUT USER TESTING GUIDE
 =============================
 

@@ -155,7 +155,20 @@ def test_package_release_stages_digest_pinned_image():
             "release-manifest.v1.json",
         ]:
             assert (stage_path / relative_path).is_file()
-        assert (stage_path / "docs" / "release-asset-bundle-contract.md").is_file()
+        for relative_path in [
+            "v1-rc1-quick-start.md",
+            "v1-rc1-quick-start.html",
+            "v1-rc1-package-guide.md",
+            "towerscout-user-guide.md",
+            "towerscout-user-guide.html",
+            "project-overview.md",
+            "project-overview.html",
+            "towerscout-docs.css",
+            "oci-quick-start.md",
+            "oci-runtime-contract.md",
+            "release-asset-bundle-contract.md",
+        ]:
+            assert (stage_path / "docs" / relative_path).is_file()
     finally:
         shutil.rmtree(output_path, ignore_errors=True)
 

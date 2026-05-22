@@ -36,6 +36,8 @@ def _ensure_engine_catalog_loaded():
             towerscout.engines.items(),
             key=lambda item: -item[1]["ts"],
         )[0][0]
+
+
 @pytest.fixture
 def client():
     app.config["TESTING"] = True
@@ -49,10 +51,30 @@ def test_index_route_renders_towerscout_shell(client):
     assert response.status_code == 200
     assert b"TowerScout" in response.data
     assert b"/license" in response.data
+    assert b"/docs/project-overview.html" in response.data
+    assert b"/docs/towerscout-user-guide.html" in response.data
+    assert b"Documentation Placeholder" not in response.data
+    assert b"Video Guide Placeholder" not in response.data
 
 
 def test_license_route_exposes_release_notices(client):
     response = client.get("/license")
+
+    assert response.status_code == 200
+    assert response.mimetype == "text/html"
+    assert b"TowerScout Source/licenses" in response.data
+    assert b"/license.txt" in response.data
+    assert b"THIRD_PARTY_NOTICES.md" in response.data
+    assert b"Ultralytics YOLOv5" in response.data
+    assert b"AGPL-3.0" in response.data
+    assert b"SOURCE.txt" in response.data
+    assert b"SBOM.txt" in response.data
+    assert b"release-manifest.v1.json" in response.data
+    assert b"GNU AFFERO GENERAL PUBLIC LICENSE" in response.data
+
+
+def test_license_text_route_exposes_plain_text_notices(client):
+    response = client.get("/license.txt")
 
     assert response.status_code == 200
     assert response.mimetype == "text/plain"
@@ -63,6 +85,59 @@ def test_license_route_exposes_release_notices(client):
     assert b"SBOM.txt" in response.data
     assert b"release-manifest.v1.json" in response.data
     assert b"GNU AFFERO GENERAL PUBLIC LICENSE" in response.data
+
+
+def test_docs_routes_expose_package_local_docs(client):
+    index_response = client.get("/docs/")
+    overview_response = client.get("/docs/project-overview.html")
+    user_guide_response = client.get("/docs/towerscout-user-guide.html")
+    css_response = client.get("/docs/towerscout-docs.css")
+
+    assert index_response.status_code == 200
+    assert index_response.mimetype == "text/html"
+    assert b"TowerScout V1 RC1 Quick Start" in index_response.data
+    assert b"Before You Start" in index_response.data
+    assert b"You do not need Git, Python, Conda, Node.js, VS Code" in index_response.data
+
+    assert overview_response.status_code == 200
+    assert overview_response.mimetype == "text/html"
+    assert b"Project Overview" in overview_response.data
+    assert b"What Users Need Installed" in overview_response.data
+    assert b"source-code checkout" in overview_response.data
+
+    assert user_guide_response.status_code == 200
+    assert user_guide_response.mimetype == "text/html"
+    assert b"User Guide" in user_guide_response.data
+    assert b"Before Using This Guide" in user_guide_response.data
+    assert b"supported container engine is installed and running" in user_guide_response.data
+
+    assert css_response.status_code == 200
+    assert "text/css" in css_response.content_type
+
+
+@pytest.mark.parametrize("path", sorted(towerscout.PUBLIC_DOC_FILES))
+def test_each_public_doc_is_served(client, path):
+    response = client.get(f"/docs/{path}")
+
+    assert response.status_code == 200
+    assert response.data
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "../README.md",
+        "..%2FREADME.md",
+        "codex-skills/README.md",
+        "project-overview.html/",
+        "project-overview.html/../towerscout-user-guide.html",
+        "project-overview.html%5C..%5Ctowerscout-user-guide.html",
+    ],
+)
+def test_docs_route_rejects_non_public_docs(client, path):
+    response = client.get(f"/docs/{path}")
+
+    assert response.status_code == 404
 
 
 def test_provider_and_key_routes_match_current_boot_contract(client, monkeypatch):

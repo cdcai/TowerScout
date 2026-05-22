@@ -1,0 +1,179 @@
+:root {
+  color-scheme: light;
+  --bg: #f6f8fb;
+  --panel: #ffffff;
+  --text: #1f2933;
+  --muted: #5f6f7f;
+  --border: #d8e0e8;
+  --accent: #0f766e;
+  --accent-dark: #115e59;
+  --code: #eef4f7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.55;
+  color: var(--text);
+  background: var(--bg);
+}
+
+a {
+  color: var(--accent-dark);
+}
+
+.page-header {
+  padding: 40px 32px 28px;
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a7f3d0;
+}
+
+h1,
+h2,
+h3 {
+  margin-top: 0;
+  line-height: 1.2;
+}
+
+h1 {
+  margin-bottom: 12px;
+  font-size: 2rem;
+}
+
+.lead {
+  max-width: 820px;
+  margin: 0;
+  color: #dbeafe;
+  font-size: 1.05rem;
+}
+
+.doc-frame {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 24px;
+  width: min(1180px, calc(100% - 32px));
+  margin: 24px auto 48px;
+}
+
+.doc-nav,
+.doc-section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.doc-nav {
+  position: sticky;
+  top: 16px;
+  align-self: start;
+  padding: 18px;
+}
+
+.doc-nav h2 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+
+.doc-nav a {
+  display: block;
+  padding: 7px 0;
+  text-decoration: none;
+}
+
+.doc-main {
+  min-width: 0;
+}
+
+.doc-section {
+  padding: 24px;
+  margin-bottom: 18px;
+}
+
+.doc-section h2 {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+code,
+pre {
+  font-family: Consolas, "Courier New", monospace;
+}
+
+code {
+  background: var(--code);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+pre {
+  overflow-x: auto;
+  padding: 14px;
+  background: var(--code);
+  border-radius: 8px;
+}
+
+pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.notice-block {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.callout {
+  padding: 12px 14px;
+  border-left: 4px solid var(--accent);
+  background: #ecfdf5;
+  border-radius: 6px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 10px;
+  border: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #eef4f7;
+}
+
+@media (max-width: 820px) {
+  .page-header {
+    padding: 30px 18px 22px;
+  }
+
+  .doc-frame {
+    display: block;
+    width: min(100% - 24px, 760px);
+  }
+
+  .doc-nav {
+    position: static;
+    margin-bottom: 18px;
+  }
+
+  .doc-section {
+    padding: 18px;
+  }
+}

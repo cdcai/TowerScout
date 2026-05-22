@@ -1,9 +1,9 @@
 # Current Tasks - Active Sprint
 
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
-**Last Updated**: May 20, 2026
+**Last Updated**: May 22, 2026
 **Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
-**Status**: Sprint 06 committed lane selected. `TASK-065` and `TASK-072` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-079` is completed and `TASK-075` is active to implement the reviewed single GPU-capable package path before final package docs and clean-machine validation; `TASK-071`, `TASK-066`, and `TASK-073` remain selected for Sprint 06.
+**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, and `TASK-071` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` and `TASK-073` remain selected for Sprint 06.
 
 ---
 
@@ -160,7 +160,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **User Value**: Gives pilot users one package path that can accelerate on supported NVIDIA hosts while still launching predictably on CPU-only machines.
 
 ### **TASK-071: End-User Release Package Documentation**
-**Status**: NOT_STARTED - selected for Sprint 06  
+**Status**: COMPLETED - focused validation passed; ready for TASK-066
 **Type**: B/C (Documentation / User Enablement)  
 **Priority**: CRITICAL  
 **Estimated Effort**: 1-2 days (8-16 hours)  
@@ -169,7 +169,16 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 
 **Objective**: Produce the package-based quick start and full user guide that tell a non-technical Windows pilot user what to download, where assets go, how to launch, how to configure provider keys, how to validate success, how to find source/license notices, and how to report problems.
 
-**Dependencies**: `TASK-069`; `TASK-072`; release package shape; current OCI quick-start/runtime docs.
+**Dependencies**: `TASK-069`; `TASK-072`; `TASK-075`; release package shape; current OCI quick-start/runtime docs.
+
+**Closeout Status**:
+- Package-local Quick Start, Package Guide, User Guide, Project Overview, and styled HTML docs were added under `docs/`.
+- Settings Resource Links now point to package-local Project Overview, User Guide, Source/licenses, Video Guides, and TowerScout Research Article.
+- `/docs/` serves the package-local Quick Start, `/license` serves a styled HTML source/license page, and `/license.txt` remains available for plain-text notices.
+- Release package and runtime image assembly now include package-local docs needed by Resource Links.
+- Older source/Conda tester guides are labeled as legacy source-install guidance.
+- The Quick Start and support docs now explicitly list prerequisite software: Windows 11 AMD64, PowerShell, browser, outbound internet, disk space, one supported container engine, and provider key; they also state Git/Python/Conda/Node/VS Code are not required for the package path.
+- Focused Flask route, license, release package, docs-command, and agent-work validation passed with only the known `127.0.0.1` docs warning.
 
 **User Value**: Converts the engineered release package into a self-service pilot path instead of a support-only handoff.
 
@@ -181,7 +190,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **Target Sprint**: Sprint 06 V1 RC1  
 **Task File**: `.agent_work/tasks/active/TASK-066-release-candidate-validation-gate.md`
 
-**Objective**: Internally prove the release package, asset bundle, docs, setup flow, restart persistence, and bounded detection path from a clean user-facing environment before external pilot/UAT begins.
+**Objective**: Internally prove the release package, asset bundle, docs, setup flow, restart persistence, and bounded detection path from a clean user-facing environment before external pilot/UAT begins. Also evaluate PR16 follow-ups for visible CI/static-analysis release gates and Markdown-to-HTML generation or parity checks for Settings-linked docs.
 
 **Dependencies**: `TASK-065`; `TASK-069`; `TASK-071`; `TASK-072`; agreed release package shape.
 

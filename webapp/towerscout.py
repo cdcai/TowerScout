@@ -19,10 +19,11 @@ from ts_azure_maps import AzureMaps
 from ts_zipcode import Zipcode_Provider
 from ts_events import ExitEvents
 import ts_maps
-from flask import Flask, render_template, send_from_directory, request, session, Response, jsonify
+from flask import Flask, render_template, send_from_directory, request, session, Response, jsonify, abort as flask_abort
 from flask_session import Session
 from waitress import serve
 import json
+import html
 import time
 import os
 import math
@@ -50,6 +51,7 @@ from dotenv import load_dotenv
 from ts_progress import DetectionProgressTracker
 from ts_paths import (
     CSS_DIR,
+    DOCS_DIR,
     IMG_DIR,
     JS_DIR,
     SITE_DIR,
@@ -85,6 +87,19 @@ COMPLIANCE_NOTICE_FILES = (
     "SBOM.txt",
     "release-manifest.v1.json",
 )
+# Keep this allowlist synchronized with Settings Resource Links in
+# webapp/templates/towerscout.html, docs staged by scripts/package-release.ps1,
+# and route assertions in tests/unit/test_flask_routes.py.
+PUBLIC_DOC_FILES = {
+    "project-overview.html",
+    "project-overview.md",
+    "towerscout-docs.css",
+    "towerscout-user-guide.html",
+    "towerscout-user-guide.md",
+    "v1-rc1-package-guide.md",
+    "v1-rc1-quick-start.html",
+    "v1-rc1-quick-start.md",
+}
 
 logger.info("TowerScout environment bootstrap starting")
 logger.info("Current working directory: %s", os.getcwd())
@@ -1536,9 +1551,20 @@ def send_css(path):
     return send_from_directory(str(CSS_DIR), path)
 
 
-@app.route('/license')
-def release_license_notice():
-    """Expose release source and license notices from the local browser app."""
+@app.route('/docs/')
+def send_docs_index():
+    return send_docs('v1-rc1-quick-start.html')
+
+
+@app.route('/docs/<path:path>')
+def send_docs(path):
+    normalized_path = str(path).replace("\\", "/")
+    if normalized_path not in PUBLIC_DOC_FILES:
+        flask_abort(404)
+    return send_from_directory(str(DOCS_DIR), normalized_path)
+
+
+def _load_release_license_notice_sections():
     repo_root = script_dir.parent
     sections = []
     for relative_path in COMPLIANCE_NOTICE_FILES:
@@ -1549,7 +1575,7 @@ def release_license_notice():
             notice_text = notice_path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             notice_text = notice_path.read_text(encoding="utf-8", errors="replace")
-        sections.append(f"===== {relative_path} =====\n{notice_text.strip()}")
+        sections.append((relative_path, notice_text.strip()))
 
     yolo_license_path = script_dir / "vendor" / "yolov5_local" / "LICENSE"
     if yolo_license_path.is_file():
@@ -1560,18 +1586,89 @@ def release_license_notice():
                 encoding="utf-8",
                 errors="replace",
             )
-        sections.append(
-            "===== webapp/vendor/yolov5_local/LICENSE =====\n"
-            f"{yolo_license_text.strip()}"
-        )
+        sections.append(("webapp/vendor/yolov5_local/LICENSE", yolo_license_text.strip()))
 
     if not sections:
-        sections.append(
+        sections.append((
+            "Missing notices",
             "TowerScout release license notices are missing from this runtime. "
-            "Use the release package SOURCE.txt and THIRD_PARTY_NOTICES.md."
-        )
+            "Use the release package SOURCE.txt and THIRD_PARTY_NOTICES.md.",
+        ))
 
-    return Response("\n\n".join(sections), mimetype="text/plain; charset=utf-8")
+    return sections
+
+
+def _format_release_license_notice_text(sections):
+    return "\n\n".join(
+        f"===== {title} =====\n{text}"
+        for title, text in sections
+    )
+
+
+@app.route('/license.txt')
+def release_license_notice_text():
+    """Expose release source and license notices as plain text."""
+    return Response(
+        _format_release_license_notice_text(_load_release_license_notice_sections()),
+        mimetype="text/plain; charset=utf-8",
+    )
+
+
+@app.route('/license')
+def release_license_notice():
+    """Expose release source and license notices from the local browser app."""
+    sections = _load_release_license_notice_sections()
+    section_nav = "\n".join(
+        f'<a href="#notice-{index}">{html.escape(title)}</a>'
+        for index, (title, _text) in enumerate(sections)
+    )
+    section_html = "\n".join(
+        "<section class=\"doc-section\" id=\"notice-{index}\">"
+        "<h2>{title}</h2>"
+        "<pre class=\"notice-block\"><code>{text}</code></pre>"
+        "</section>".format(
+            index=index,
+            title=html.escape(title),
+            text=html.escape(text),
+        )
+        for index, (title, text) in enumerate(sections)
+    )
+
+    page = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TowerScout Source/licenses</title>
+  <link rel="stylesheet" href="/docs/towerscout-docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <p class="eyebrow">TowerScout V1 RC1</p>
+    <h1>Source/licenses</h1>
+    <p class="lead">Packaged source, license, provider, model, data, SBOM, release manifest, and third-party notices for this local TowerScout runtime.</p>
+  </header>
+
+  <div class="doc-frame">
+    <nav class="doc-nav" aria-label="Source and license notice sections">
+      <h2>Notices</h2>
+      {section_nav}
+    </nav>
+
+    <main class="doc-main">
+      <section class="doc-section">
+        <h2>Release Notice</h2>
+        <p>The YOLO-enabled V1 RC1 package/image is not Apache-2.0-only. It is distributed with AGPL-3.0 obligations because it includes Ultralytics YOLOv5 runtime source and YOLO-derived detector weights.</p>
+        <p>The release control ZIP is authoritative for release-specific source, image digest, checksum, SBOM, and manifest metadata.</p>
+        <p>Plain-text combined notices are available at <a href="/license.txt">/license.txt</a>.</p>
+      </section>
+      {section_html}
+    </main>
+  </div>
+</body>
+</html>"""
+
+    return Response(page, mimetype="text/html; charset=utf-8")
 
 # main page route
 

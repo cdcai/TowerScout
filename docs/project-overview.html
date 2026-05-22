@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TowerScout Project Overview</title>
+  <link rel="stylesheet" href="/docs/towerscout-docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <p class="eyebrow">TowerScout V1 RC1</p>
+    <h1>Project Overview</h1>
+    <p class="lead">TowerScout is a local web application for identifying likely cooling towers from satellite and aerial imagery during investigation and registry-building workflows.</p>
+  </header>
+  <div class="doc-frame">
+    <nav class="doc-nav" aria-label="Project overview sections">
+      <h2>Sections</h2>
+      <a href="#package">Package</a>
+      <a href="#prerequisites">Prerequisites</a>
+      <a href="#workflow">Workflow</a>
+      <a href="#boundary">Release Boundary</a>
+      <a href="#keys">Provider Keys</a>
+      <a href="#license">License And Source</a>
+    </nav>
+    <main class="doc-main">
+      <section class="doc-section" id="package">
+        <h2>What The Package Provides</h2>
+        <p>The V1 RC1 package provides a Windows-first local pilot path with a GitHub Release control ZIP, pinned GHCR image digest, Compose runtime configuration, CPU-safe default launch, optional Docker GPU controls, helper scripts, package-local docs, and release notices.</p>
+        <p>The normal pilot path is package-based. Source checkout, Python virtual environment, and Conda setup guides are legacy support material.</p>
+      </section>
+      <section class="doc-section" id="prerequisites">
+        <h2>What Users Need Installed</h2>
+        <p>Pilot users need Windows 11 AMD64, PowerShell, a modern browser, normal outbound internet access, and one approved container engine. The container engine can be Podman with a running Podman machine and Compose provider, or Docker Desktop where it is licensed and approved.</p>
+        <p>The package path does not require Git, Python, Conda, Node.js, VS Code, or a source-code checkout.</p>
+      </section>
+      <section class="doc-section" id="workflow">
+        <h2>Main Workflow</h2>
+        <ol>
+          <li>Start TowerScout from <code>start.bat</code>.</li>
+          <li>Import required model and ZIP-code assets.</li>
+          <li>Configure Google Maps or Azure Maps.</li>
+          <li>Define a search area and estimate tiles.</li>
+          <li>Run detection, review results, add manual corrections, and export approved outputs.</li>
+        </ol>
+      </section>
+      <section class="doc-section" id="boundary">
+        <h2>Release Boundary</h2>
+        <p>V1 RC1 targets Windows 11 AMD64, single-user local use, CPU baseline operation, normal outbound internet access, a Docker-compatible or OCI-compatible runtime with Compose support, and one site/user-owned restricted provider key.</p>
+        <p>GPU launch is optional and Docker-first. The default launch remains CPU-safe. Podman GPU launch is not validated for V1 RC1.</p>
+      </section>
+      <section class="doc-section" id="keys">
+        <h2>Provider Keys</h2>
+        <p>Browser map SDK keys are visible to someone with access to the running browser app. V1 RC1 expects site/user-owned restricted keys and does not support unrestricted shared TowerScout project keys.</p>
+      </section>
+      <section class="doc-section" id="license">
+        <h2>License And Source</h2>
+        <p>The YOLO-enabled V1 RC1 package/image is not Apache-2.0-only. It is distributed with AGPL-3.0 obligations because it includes Ultralytics YOLOv5 runtime source and YOLO-derived detector weights.</p>
+        <p>Source and license notices are available from Settings. The formatted browser page is available at <a href="/license">/license</a>, and plain-text combined notices are available at <a href="/license.txt">/license.txt</a>.</p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

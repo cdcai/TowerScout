@@ -13,6 +13,7 @@ from pathlib import Path
 
 
 BASE_DIR = Path(__file__).resolve().parent
+DOCS_DIR = BASE_DIR.parent / "docs"
 SITE_DIR = BASE_DIR.parent / "TowerScoutSite"
 JS_DIR = BASE_DIR / "js"
 IMG_DIR = BASE_DIR / "img"

@@ -32,6 +32,10 @@ This task is the bridge between engineered release readiness and real user testi
 
 **R-066-009**: WHEN the RC package includes the optional GPU path, THE VALIDATION SHALL prove the default CPU launch first and SHALL treat NVIDIA Docker Desktop WSL2 GPU validation as a separate evidence item before any GPU support claim.
 
+**R-066-010**: WHEN release-candidate validation identifies manual package, docs, or quality checks that should become repeatable gates, THE TASK SHALL produce a CI/static-analysis expansion recommendation with the intended blocking/advisory policy.
+
+**R-066-011**: WHEN user-facing docs are validated, THE TASK SHALL evaluate a Markdown-to-HTML generation or parity-check strategy so package-local Markdown docs and Settings-linked HTML docs do not drift over time.
+
 ## Acceptance Criteria
 
 - [ ] Release candidate package generated or obtained with immutable image digest.
@@ -46,6 +50,8 @@ This task is the bridge between engineered release readiness and real user testi
 - [ ] Status/log support commands produce useful evidence.
 - [ ] CPU-safe default launch is verified with `-Gpu off` or equivalent default launcher behavior.
 - [ ] If GPU support is claimed for the RC, `-Gpu auto` and `-Gpu on` are validated on an NVIDIA Docker Desktop WSL2 host with readiness diagnostics, fixed-fixture CPU/GPU output parity, and timing evidence.
+- [ ] CI/static-analysis expansion recommendation recorded, including visible route/package-staging checks, Windows package-script coverage, warning debt, and advisory-to-blocking gate candidates.
+- [ ] Markdown-to-HTML generation or parity-check recommendation recorded, including source-of-truth policy, package staging impact, and test coverage impact.
 - [ ] Time-to-first-run, manual interventions, confusing steps, and defects are recorded.
 - [ ] V1 RC1 pass/fail recommendation produced.
 
@@ -58,6 +64,8 @@ This task is the bridge between engineered release readiness and real user testi
 - `scripts/import-assets.cmd` / `scripts/import-assets.ps1`: asset import.
 - `start.bat` and launcher scripts.
 - `TASK-075`: CPU-safe default launch, optional Docker GPU overlay, and GPU validation boundaries.
+- `.github/workflows/ci.yml`: current automated CI/static-analysis baseline.
+- `TASK-067`: follow-up home for CI release-gate tightening if `TASK-066` recommends implementation beyond the RC validation task.
 - Optional: `TASK-074` if prerequisite friction becomes severe.
 
 ## Implementation Plan
@@ -71,7 +79,9 @@ This task is the bridge between engineered release readiness and real user testi
 7. Run a bounded detection smoke.
 8. Capture logs/status/readiness outputs and user-friction notes.
 9. Triage findings into blockers, follow-ups, or accepted risks.
-10. Produce a V1 RC1 pass/fail recommendation and hand off to `TASK-073`.
+10. Identify which manual RC validation checks should become visible CI/static-analysis gates and route implementation to `TASK-067` if needed.
+11. Evaluate whether Markdown docs should generate Settings-linked HTML docs, whether a parity test is enough for RC1, and what package-staging changes would be required.
+12. Produce a V1 RC1 pass/fail recommendation and hand off to `TASK-073`.
 
 ---
 
@@ -94,6 +104,15 @@ This task is the bridge between engineered release readiness and real user testi
 **Output**: The RC validation gate now has explicit CPU-default and GPU-claim boundaries.
 **Validation**: Pending Task-066 execution.
 **Next**: Include `-Gpu off`, `-Gpu auto`, and `-Gpu on` branches in the validation checklist, but only mark GPU support claimable after NVIDIA host evidence exists.
+
+### 2026-05-22 - PR16 Review Follow-Up Scope Added
+**Objective**: Add deferred documentation-maintenance and CI-quality recommendations from the PR16 readiness review to the release-candidate gate.
+**Context**: PR16 user documentation is close to merge-ready after targeted documentation fixes, but the review identified two broader follow-ups: visible CI/static-analysis expansion for package/docs validation and a durable Markdown-to-HTML generation or parity strategy for Settings-linked docs.
+**Decision**: Track the investigation and recommendation work in `TASK-066` because the release-candidate gate is where manual package validation, docs drift risk, and CI coverage gaps can be evaluated against the actual RC package path. Implementation of new CI gates can be routed to `TASK-067` if the validation evidence justifies it.
+**Execution**: Added `R-066-010`, `R-066-011`, acceptance criteria, dependencies, and implementation-plan steps for CI/static-analysis expansion and Markdown-to-HTML generation/parity evaluation.
+**Output**: `TASK-066` now explicitly includes the deferred PR16 readiness recommendations without blocking the narrow PR16 documentation patch.
+**Validation**: Pending `.agent_work` validation after the PR16 documentation updates.
+**Next**: During `TASK-066`, validate the package path first, then decide which checks should become automated gates before external UAT.
 
 ---
 

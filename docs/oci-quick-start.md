@@ -12,6 +12,19 @@ This guide covers the v1 local container package shape for TowerScout. It is eng
 
 Out of scope for v1: Mac, ARM64, air-gapped/offline installs, VDI, shared multi-user hosting, native installer behavior, and managed remote deployment.
 
+## Prerequisite Software
+
+The normal package path expects Windows PowerShell, a modern browser, normal
+outbound internet access, and one approved container engine. The Podman path
+requires a created and running Podman machine plus an approved Compose provider
+such as `podman-compose`. The Docker path requires Docker Desktop to be
+licensed, approved, installed, and running.
+
+Pilot users do not need Git, Python, Conda, Node.js, VS Code, or a source-code
+checkout for the package path. If both Docker and Podman are installed, use
+`-Engine podman` consistently when validating the Podman path because automatic
+engine selection can choose Docker first.
+
 ## Package Contents
 
 The release package is expected to include:
@@ -39,7 +52,7 @@ The release package is expected to include:
 - `webapp/asset_manifest.v1.json`
 - `IMAGE.txt`
 - `SHA256SUMS.txt`
-- quick-start and runtime-contract documentation
+- V1 RC1 quick start, package guide, user guide, project overview, and runtime-contract documentation
 - release asset bundle contract documentation
 - a pinned GHCR image reference by digest
 
