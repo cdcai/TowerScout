@@ -71,6 +71,12 @@ def get_base_dir() -> Path:
 
 
 def get_config_dir() -> Path:
+    configured_dir = os.getenv("TOWERSCOUT_CONFIG_DIR")
+    if configured_dir:
+        path = Path(configured_dir)
+        if not path.is_absolute():
+            path = get_base_dir() / path
+        return path
     return get_base_dir() / "config"
 
 

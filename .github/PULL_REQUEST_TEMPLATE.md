@@ -37,7 +37,7 @@ Rollback plan:
 - [ ] `.agent_work` task or status docs updated as needed
 - [ ] `README.md` updated if user-facing behavior changed
 - [ ] `.github` guidance updated if architecture or workflow changed
-- [ ] Legacy `AGENTS.md/` guidance updated or intentionally left alone if still referenced
+- [ ] No stale legacy agent guidance introduced
 - [ ] Complex logic is explained where needed
 
 ## Commit Checkpoint

@@ -3,7 +3,7 @@
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
 **Last Updated**: May 27, 2026
 **Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
-**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, and `TASK-071` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` digest-pinned Docker Desktop and Podman package runtime validation passed for CPU-default launch, with Flask route-test isolation, Podman Docker Hub source-build TLS, and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` remains selected for Sprint 06 but should start after the route-test timeout/isolation gap is fixed or explicitly accepted as an internal-only risk.
+**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, and `TASK-071` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` digest-pinned Docker Desktop and Podman package runtime validation passed for CPU-default launch, with Podman Docker Hub source-build TLS and NVIDIA GPU evidence still bounded follow-ups; `TASK-067` is active to resolve the Flask route-test timeout/isolation gap and remove stale legacy agent guidance before `TASK-073`.
 
 ---
 
@@ -183,7 +183,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **User Value**: Converts the engineered release package into a self-service pilot path instead of a support-only handoff.
 
 ### **TASK-066: Release Candidate Validation Gate**
-**Status**: IN_PROGRESS - digest-pinned Docker Desktop and Podman CPU-default package paths passed; route-test isolation, Podman source-build TLS, and NVIDIA GPU evidence pending
+**Status**: IN_PROGRESS - digest-pinned Docker Desktop and Podman CPU-default package paths passed; route-test isolation routed to TASK-067; Podman source-build TLS and NVIDIA GPU evidence pending
 **Type**: C (Release Engineering / Validation)  
 **Priority**: CRITICAL  
 **Estimated Effort**: 1-2 days (8-16 hours)  
@@ -204,8 +204,27 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 
 **User Value**: Prevents end-user testing from being dominated by known package/docs/asset gaps and produces evidence that the V1 RC1 path is actually usable.
 
+### **TASK-067: CI Release Gate Tightening**
+**Status**: VALIDATED - focused PR ready
+**Type**: C (CI / Release Engineering / Test Reliability)
+**Priority**: HIGH
+**Estimated Effort**: 0.5-1 day (4-8 hours)
+**Target Sprint**: Sprint 06 V1 RC1
+**Task File**: `.agent_work/tasks/active/TASK-067-ci-release-gate-tightening.md`
+
+**Objective**: Tighten the RC validation baseline where `TASK-066` exposed fragility: pytest route-test collection could hang without diagnostics, Flask route tests could touch local runtime config, and stale legacy `AGENTS.md/` guidance could confuse future agent work.
+
+**Dependencies**: `TASK-066`; current CI workflow; route-test coverage; `.github` guidance baseline.
+
+**Current State**:
+- Pytest timeout safeguards, CI timeout limits, route-test runtime path isolation, and legacy `AGENTS.md/` removal are implemented and locally validated in a focused follow-up branch.
+- Focused validation passed for Flask routes, runtime/config path helpers, Task-079 reliability coverage, CI workflow summary, `.agent_work` validation, and `git diff --check`.
+- This task intentionally keeps broader asset-backed package smoke checks advisory unless a later release-gate ratchet promotes them.
+
+**User Value**: Restores confidence in internal validation before external pilot prep and reduces the chance that future agents follow stale instructions.
+
 ### **TASK-073: Clean-Machine Pilot / UAT Execution Plan**
-**Status**: NOT_STARTED - selected for Sprint 06; recommended after Task-066 test-harness gap disposition
+**Status**: NOT_STARTED - selected for Sprint 06; recommended after TASK-067 route-test gap closeout
 **Type**: B/C (User Testing / Release Validation)  
 **Priority**: HIGH  
 **Estimated Effort**: 0.5-1 day (4-8 hours)  
@@ -214,7 +233,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 
 **Objective**: Define the controlled pilot/UAT workflow, tester instructions, acceptance checklist, environment capture, issue-report workflow, success criteria, and support escalation path.
 
-**Dependencies**: `TASK-066`; draft user package docs; owner-accepted disposition of the Flask route-test timeout/isolation gap.
+**Dependencies**: `TASK-066`; `TASK-067`; draft user package docs.
 
 **User Value**: Ensures external testing starts from a repeatable, evidence-producing workflow instead of ad hoc feedback collection.
 
@@ -238,7 +257,6 @@ Do not forget these follow-through tasks. They are intentionally kept in `.agent
 | Task | Pull Into Sprint 06 If | Notes |
 |---|---|---|
 | `TASK-074` Runtime Prerequisite Preflight | Clean-machine validation shows users/support still have to manually reason through Podman/Docker/Compose/ports/assets/TLS. | Conditional but likely. This is the first candidate to pull in if launch friction remains high. |
-| `TASK-067` CI Release Gate Tightening | Release-candidate checks become repetitive, fragile, too easy to skip manually, or capable of hanging without diagnostics. | Keep scope narrow: package assembly, image digest, manifest/checksum consistency, launcher smoke behavior, pytest timeout safeguards, docs/license route visibility checks, and removal or archival of the stale legacy `AGENTS.md/` guidance after preserving any unique current-value content. |
 | `TASK-068` Windows Test Portability And Script Validation | Script validation remains environment-sensitive, Flask route tests load local runtime config, or PowerShell/Windows coverage is needed before external UAT. | Useful release-support follow-through, especially around Windows-first helper scripts and isolating tests from local `.env`, logs, uploads, sessions, and cache paths. |
 | `TASK-077` Public Release Manifest And Asset Import Hardening | `TASK-069` AGPL release compliance needs a package payload, or `TASK-066` shows copy-then-verify import is too risky. | Pull forward the narrow compliance-payload slice now: release manifest, source URL/ref, checksums, image digest, SBOM reference, model/data terms, and revocation notes. Keep staged allowlist-only asset activation as follow-up unless validation makes it release-critical. |
 

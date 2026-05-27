@@ -929,11 +929,11 @@ Fixes: TASK-045
 ### Documentation Requirements
 
 **Update When**:
-- Adding new features → Update AGENTS.md/towerscout-domain.md
-- Changing architecture → Update AGENTS.md/architecture.md
-- Modifying state management → Update this guide
-- Adding API endpoints → Update AGENTS.md/dev-workflow.md
-- Resolving issues → Update .agent_work/context/guides/TowerScout_Development_Setup_Guide.txt troubleshooting
+- Adding new features -> Update `.github/copilot-instructions.md` when project context or workflows change
+- Changing architecture -> Update `.github/copilot-instructions.md`, relevant `.github/instructions/` guidance, and this guide
+- Modifying state management -> Update this guide
+- Adding API endpoints -> Update `.github/copilot-instructions.md` and relevant task documentation
+- Resolving issues -> Update `.agent_work/context/guides/TowerScout_Development_Setup_Guide.txt` troubleshooting when the issue affects setup or operations
 
 ---
 
@@ -941,10 +941,10 @@ Fixes: TASK-045
 
 ### Documentation
 
-- **Project Overview**: [AGENTS.md/towerscout-domain.md](../../../AGENTS.md/towerscout-domain.md)
-- **Architecture Patterns**: [AGENTS.md/architecture.md](../../../AGENTS.md/architecture.md)
-- **Development Workflows**: [AGENTS.md/dev-workflow.md](../../../AGENTS.md/dev-workflow.md)
-- **Security Practices**: [AGENTS.md/security.md](../../../AGENTS.md/security.md)
+- **Project Overview and Architecture**: [.github/copilot-instructions.md](../../../.github/copilot-instructions.md)
+- **Spec-Driven Workflow**: [.github/instructions/spec-driven-approach.instructions.md](../../../.github/instructions/spec-driven-approach.instructions.md)
+- **Repository Management**: [.github/instructions/github-repo-management.instructions.md](../../../.github/instructions/github-repo-management.instructions.md)
+- **Security and Release Notes**: [.github/copilot-instructions.md](../../../.github/copilot-instructions.md)
 - **Setup Guide**: [TowerScout_Development_Setup_Guide.txt](TowerScout_Development_Setup_Guide.txt)
 
 ### Decision Records
@@ -963,4 +963,4 @@ Fixes: TASK-045
 
 ---
 
-**This guide is actively maintained. Last updated: March 2026 (Sprint 02 completion)**
+**This guide is actively maintained. Last updated: May 2026 (Sprint 06 RC1 cleanup)**

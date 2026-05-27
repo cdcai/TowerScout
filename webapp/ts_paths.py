@@ -64,19 +64,21 @@ def get_en_model_dir() -> Path:
 
 
 def get_map_cache_dir() -> Path:
-    return ensure_dir(CACHE_DIR / "maps")
+    cache_root = _resolve_app_path(os.getenv("TOWERSCOUT_CACHE_DIR"), "cache")
+    return ensure_dir(cache_root / "maps")
 
 
 def get_geocoding_cache_dir() -> Path:
-    return ensure_dir(CACHE_DIR / "geocoding")
+    cache_root = _resolve_app_path(os.getenv("TOWERSCOUT_CACHE_DIR"), "cache")
+    return ensure_dir(cache_root / "geocoding")
 
 
 def get_flask_session_dir() -> Path:
-    return ensure_dir(BASE_DIR / "flask_session")
+    return ensure_dir(_resolve_app_path(os.getenv("TOWERSCOUT_FLASK_SESSION_DIR"), "flask_session"))
 
 
 def get_temp_dir() -> Path:
-    return ensure_dir(TEMP_DIR)
+    return ensure_dir(_resolve_app_path(os.getenv("TOWERSCOUT_TEMP_DIR"), "temp"))
 
 
 def get_session_tmp_root() -> Path:

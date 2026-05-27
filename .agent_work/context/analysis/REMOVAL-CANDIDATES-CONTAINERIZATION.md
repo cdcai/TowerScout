@@ -3,6 +3,7 @@
 **Created**: April 6, 2026  
 **Purpose**: Track files and folders that are candidates for removal, retention, or deferral as TowerScout moves toward Docker containerization  
 **Status**: Updated after runtime path normalization closeout validation
+**Supersession Note**: The April 2026 recommendation to retain `AGENTS.md/` was superseded during Sprint 06 RC1 cleanup. Current-value agent guidance now lives in `.github/copilot-instructions.md` and `.github/instructions/`.
 
 ---
 
@@ -107,11 +108,11 @@ Runtime-path normalization is now in place.
 
 ---
 
-## AGENTS.md Documentation
+## Legacy Agent Documentation
 
 | Directory | Status | Reason | Action | Priority |
 |-----------|--------|--------|--------|----------|
-| `AGENTS.md/` | RETAIN | Development/agent reference docs, not runtime content | Keep in repo; likely exclude from runtime image | LOW |
+| `AGENTS.md/` | REMOVE | Superseded by `.github/copilot-instructions.md` and `.github/instructions/` | Removed during Sprint 06 RC1 cleanup | DONE |
 
 ---
 
@@ -155,7 +156,6 @@ These are image-scope recommendations, not delete-from-repo recommendations:
 - `Model/**`
 - `SyntheticData/**`
 - `tests/**` (if not needed in the runtime image)
-- `AGENTS.md/**`
 - `.agent_work/**`
 - `.git/**`
 - `pytest-cache-files-*/**`

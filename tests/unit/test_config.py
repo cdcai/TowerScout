@@ -26,6 +26,11 @@ def temp_config_root():
         shutil.rmtree(root, ignore_errors=True)
 
 
+@pytest.fixture(autouse=True)
+def use_function_local_config_dir(monkeypatch):
+    monkeypatch.delenv("TOWERSCOUT_CONFIG_DIR", raising=False)
+
+
 def _write_env(root: Path, contents: str) -> Path:
     env_path = root / "config" / ".env"
     env_path.write_text(contents, encoding="utf-8")

@@ -4,6 +4,8 @@ import uuid
 from unittest.mock import patch
 
 import ts_runtime
+import ts_config
+import ts_paths
 from ts_zipcode import Zipcode_Provider
 
 
@@ -18,6 +20,24 @@ def test_zipcode_provider_uses_app_anchored_data_path(monkeypatch):
     mock_read_file.assert_called_once_with(expected_path)
 
 
+def test_runtime_path_helpers_honor_test_overrides(monkeypatch):
+    scratch_root = Path.cwd() / ".agent_work" / "pytest-temp" / f"task067-paths-{uuid.uuid4().hex}"
+    monkeypatch.setenv("TOWERSCOUT_CONFIG_DIR", str(scratch_root / "config"))
+    monkeypatch.setenv("TOWERSCOUT_CACHE_DIR", str(scratch_root / "cache"))
+    monkeypatch.setenv("TOWERSCOUT_TEMP_DIR", str(scratch_root / "temp"))
+    monkeypatch.setenv("TOWERSCOUT_FLASK_SESSION_DIR", str(scratch_root / "flask_session"))
+
+    try:
+        assert ts_config.get_config_dir() == scratch_root / "config"
+        assert ts_paths.get_map_cache_dir() == scratch_root / "cache" / "maps"
+        assert ts_paths.get_geocoding_cache_dir() == scratch_root / "cache" / "geocoding"
+        assert ts_paths.get_temp_dir() == scratch_root / "temp"
+        assert ts_paths.get_session_tmp_root() == scratch_root / "temp" / "session"
+        assert ts_paths.get_flask_session_dir() == scratch_root / "flask_session"
+    finally:
+        shutil.rmtree(scratch_root, ignore_errors=True)
+
+
 def test_readiness_payload_reports_setup_required_without_raw_provider_keys(monkeypatch):
     scratch_root = Path.cwd() / ".agent_work" / "pytest-temp" / f"task025-runtime-{uuid.uuid4().hex}"
     config_dir = scratch_root / "config"
@@ -26,6 +46,7 @@ def test_readiness_payload_reports_setup_required_without_raw_provider_keys(monk
     env_path.write_text("FLASK_SECRET_KEY=persisted-secret\n", encoding="utf-8")
 
     try:
+        monkeypatch.delenv("TOWERSCOUT_CONFIG_DIR", raising=False)
         monkeypatch.setattr(ts_runtime.ts_config, "get_base_dir", lambda: scratch_root)
         monkeypatch.setattr(ts_runtime, "get_log_dir", lambda: scratch_root / "logs")
         monkeypatch.setattr(ts_runtime, "get_flask_session_dir", lambda: scratch_root / "flask_session")
@@ -69,6 +90,7 @@ def test_readiness_payload_reports_manifest_errors_as_fatal(monkeypatch):
     )
 
     try:
+        monkeypatch.delenv("TOWERSCOUT_CONFIG_DIR", raising=False)
         monkeypatch.setattr(ts_runtime.ts_config, "get_base_dir", lambda: scratch_root)
         monkeypatch.setattr(ts_runtime, "get_log_dir", lambda: scratch_root / "logs")
         monkeypatch.setattr(ts_runtime, "get_flask_session_dir", lambda: scratch_root / "flask_session")

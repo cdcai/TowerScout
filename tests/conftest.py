@@ -13,11 +13,32 @@ import pytest
 from unittest.mock import Mock, patch
 
 # Set import-time defaults before any test module imports application code.
-os.environ.setdefault('GOOGLE_API_KEY', 'test_google_key_123')
-os.environ.setdefault('AZURE_MAPS_SUBSCRIPTION_KEY', 'test_azure_key_456')
-os.environ.setdefault('FLASK_SECRET_KEY', 'test_secret_key_for_sessions')
-os.environ.setdefault('FLASK_ENV', 'testing')
-os.environ.setdefault('TOWERSCOUT_LAZY_MODEL_INIT', '1')
+TEST_RUNTIME_ROOT = Path(__file__).resolve().parent.parent / ".agent_work" / "pytest-temp" / "runtime-bootstrap"
+TEST_RUNTIME_PATHS = {
+    "TOWERSCOUT_CONFIG_DIR": TEST_RUNTIME_ROOT / "config",
+    "TOWERSCOUT_LOG_DIR": TEST_RUNTIME_ROOT / "logs",
+    "TOWERSCOUT_CACHE_DIR": TEST_RUNTIME_ROOT / "cache",
+    "TOWERSCOUT_TEMP_DIR": TEST_RUNTIME_ROOT / "temp",
+    "TOWERSCOUT_FLASK_SESSION_DIR": TEST_RUNTIME_ROOT / "flask_session",
+    "UPLOAD_DIR": TEST_RUNTIME_ROOT / "uploads",
+    "YOLO_CONFIG_DIR": TEST_RUNTIME_ROOT / "yolo_config",
+    "TORCH_HOME": TEST_RUNTIME_ROOT / "torch_home",
+}
+
+for path in TEST_RUNTIME_PATHS.values():
+    path.mkdir(parents=True, exist_ok=True)
+
+(TEST_RUNTIME_PATHS["TOWERSCOUT_CONFIG_DIR"] / ".env").write_text("", encoding="utf-8")
+
+os.environ.update({
+    'GOOGLE_API_KEY': 'test_google_key_123',
+    'AZURE_MAPS_SUBSCRIPTION_KEY': 'test_azure_key_456',
+    'BING_API_KEY': 'test_bing_key_789',
+    'FLASK_SECRET_KEY': 'test_secret_key_for_sessions',
+    'FLASK_ENV': 'testing',
+    'TOWERSCOUT_LAZY_MODEL_INIT': '1',
+    **{key: str(path) for key, path in TEST_RUNTIME_PATHS.items()},
+})
 
 # Add webapp directory to Python path for all tests
 WEBAPP_DIR = Path(__file__).parent.parent / 'webapp'

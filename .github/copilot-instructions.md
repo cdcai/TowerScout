@@ -729,4 +729,4 @@ An agent should leave with the following understanding:
 - `.agent_work/current-tasks.md`
 - `.agent_work/task-backlog.md`
 - `.agent_work/completed-tasks.md`
-- `AGENTS.md/` is legacy split guidance from earlier sprints. Prefer this file and `.github/instructions/` for current agent context unless a legacy-specific detail is intentionally needed.
+- Legacy split guidance under `AGENTS.md/` was removed after current-value context was consolidated here and in `.github/instructions/`.

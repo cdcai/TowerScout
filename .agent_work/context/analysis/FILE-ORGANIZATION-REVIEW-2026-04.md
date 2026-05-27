@@ -4,6 +4,7 @@
 **Purpose**: Identify misplaced files, consolidation opportunities, and organizational improvements  
 **Scope**: Full repository structure review  
 **Status**: Updated after runtime path normalization closeout validation
+**Supersession Note**: The April 2026 recommendation to retain `AGENTS.md/` was superseded during Sprint 06 RC1 cleanup. Current-value agent guidance now lives in `.github/copilot-instructions.md` and `.github/instructions/`.
 
 ---
 
@@ -122,8 +123,8 @@ Do not move or split these directories before runtime path normalization. Revisi
 
 **Current state**:
 - `.agent_work/README.md` already exists.
-- `AGENTS.md/README.md` already exists.
-- `.agent_work/tasks/active/` is currently empty.
+- `AGENTS.md/` was removed after current guidance was consolidated under `.github/`.
+- `.agent_work/tasks/active/` contains the active Sprint 06 task files.
 
 **Assessment**:
 This is mostly a workflow-clarity issue, not a broken structure.
@@ -131,12 +132,12 @@ This is mostly a workflow-clarity issue, not a broken structure.
 **Recommendation**: MAINTAIN AND CLARIFY
 
 1. Keep `.agent_work/` as active planning and delivery context.
-2. Keep `AGENTS.md/` as stable reference/onboarding guidance.
+2. Keep `.github/copilot-instructions.md` and `.github/instructions/` as stable reference/onboarding guidance.
 3. Clarify `tasks/active/` usage only if the team wants to enforce symlinked active-task workflow.
 
 **Do not treat these as missing-work items**:
 - create a new `.agent_work` overview file
-- create a new `AGENTS.md` overview file
+- recreate a new `AGENTS.md` overview file
 
 Those actions are already obsolete.
 
@@ -216,7 +217,6 @@ These are good `.dockerignore` candidates, but they are not necessarily delete-f
 - `/Model/`
 - `/SyntheticData/`
 - `/tests/` (if not needed in the runtime image)
-- `/AGENTS.md/`
 - `/.agent_work/`
 - `/.git/`
 - `/hosting/` if kept only as operator reference outside the runtime image
