@@ -1,9 +1,9 @@
 # Current Tasks - Active Sprint
 
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
-**Last Updated**: May 22, 2026
+**Last Updated**: May 27, 2026
 **Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
-**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, and `TASK-071` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` local package validation passed after targeted script/runtime fixes, with final digest-pinned RC artifact validation still pending; `TASK-073` remains selected for Sprint 06.
+**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, and `TASK-071` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` digest-pinned Docker Desktop and Podman package runtime validation passed for CPU-default launch, with Flask route-test isolation, Podman Docker Hub source-build TLS, and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` remains selected for Sprint 06 but should start after the route-test timeout/isolation gap is fixed or explicitly accepted as an internal-only risk.
 
 ---
 
@@ -183,7 +183,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **User Value**: Converts the engineered release package into a self-service pilot path instead of a support-only handoff.
 
 ### **TASK-066: Release Candidate Validation Gate**
-**Status**: IN_PROGRESS - local package path passed after fixes; final digest-pinned RC artifact validation pending
+**Status**: IN_PROGRESS - digest-pinned Docker Desktop and Podman CPU-default package paths passed; route-test isolation, Podman source-build TLS, and NVIDIA GPU evidence pending
 **Type**: C (Release Engineering / Validation)  
 **Priority**: CRITICAL  
 **Estimated Effort**: 1-2 days (8-16 hours)  
@@ -195,15 +195,17 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **Dependencies**: `TASK-065`; `TASK-069`; `TASK-071`; `TASK-072`; agreed release package shape.
 
 **Current State**:
-- Local Docker Desktop validation generated RC-style packages, imported all 9 manifest assets with hash verification, reached readiness `ready`, persisted Azure provider setup, and passed a bounded Azure detection smoke on the public local fixture.
+- Final Docker Desktop validation generated the RC control package with GHCR digest `sha256:55aabd73a0cbdb76a1d48f427e9fe74dcab63ed87f2a15d32d9709de3ce1a232`, imported all 9 manifest assets with hash verification, reached readiness `ready`, persisted Azure provider setup, and passed a bounded Azure detection smoke on the public local fixture.
 - Validation found and fixed three release-path blockers: non-default port asset import, stale model discovery after asset copy, and hidden EfficientNet first-use download.
-- Docker Desktop is the validated local engine. Podman image build on this host is blocked by base-image TLS certificate verification before TowerScout code runs.
-- Evidence is local-package evidence only because the package used a mutable local image and dirty-tree allowance. Final sign-off still needs the real digest-pinned RC package/image.
+- Docker Desktop and Podman package runtime paths are validated for CPU-default launch against the digest-pinned GHCR image. On this host, `podman compose` delegates to Docker Compose v5.1.3 as its external provider.
+- Podman source-build/base-image pulls from Docker Hub still fail TLS certificate verification inside the Podman VM before TowerScout code runs; this does not block the normal GHCR package path but remains a developer/build-path caveat.
+- GPU acceleration remains unclaimed until NVIDIA Docker Desktop WSL2 host validation, fixed-fixture parity, and timing evidence pass.
+- Repeated broad pytest review commands isolated a non-runtime test-harness gap: `tests/unit/test_flask_routes.py` can stall during collection because it imports the full production Flask module and local `.env` path before fixtures isolate config. This should be fixed or explicitly accepted before broad `TASK-073` pilot prep.
 
 **User Value**: Prevents end-user testing from being dominated by known package/docs/asset gaps and produces evidence that the V1 RC1 path is actually usable.
 
 ### **TASK-073: Clean-Machine Pilot / UAT Execution Plan**
-**Status**: NOT_STARTED - selected for Sprint 06  
+**Status**: NOT_STARTED - selected for Sprint 06; recommended after Task-066 test-harness gap disposition
 **Type**: B/C (User Testing / Release Validation)  
 **Priority**: HIGH  
 **Estimated Effort**: 0.5-1 day (4-8 hours)  
@@ -212,7 +214,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 
 **Objective**: Define the controlled pilot/UAT workflow, tester instructions, acceptance checklist, environment capture, issue-report workflow, success criteria, and support escalation path.
 
-**Dependencies**: `TASK-066`; draft user package docs.
+**Dependencies**: `TASK-066`; draft user package docs; owner-accepted disposition of the Flask route-test timeout/isolation gap.
 
 **User Value**: Ensures external testing starts from a repeatable, evidence-producing workflow instead of ad hoc feedback collection.
 
@@ -236,8 +238,8 @@ Do not forget these follow-through tasks. They are intentionally kept in `.agent
 | Task | Pull Into Sprint 06 If | Notes |
 |---|---|---|
 | `TASK-074` Runtime Prerequisite Preflight | Clean-machine validation shows users/support still have to manually reason through Podman/Docker/Compose/ports/assets/TLS. | Conditional but likely. This is the first candidate to pull in if launch friction remains high. |
-| `TASK-067` CI Release Gate Tightening | Release-candidate checks become repetitive, fragile, or too easy to skip manually. | Keep scope narrow: package assembly, image digest, manifest/checksum consistency, and launcher smoke behavior. |
-| `TASK-068` Windows Test Portability And Script Validation | Script validation remains environment-sensitive or PowerShell/Windows coverage is needed before external UAT. | Useful release-support follow-through, especially around Windows-first helper scripts. |
+| `TASK-067` CI Release Gate Tightening | Release-candidate checks become repetitive, fragile, too easy to skip manually, or capable of hanging without diagnostics. | Keep scope narrow: package assembly, image digest, manifest/checksum consistency, launcher smoke behavior, pytest timeout safeguards, docs/license route visibility checks, and removal or archival of the stale legacy `AGENTS.md/` guidance after preserving any unique current-value content. |
+| `TASK-068` Windows Test Portability And Script Validation | Script validation remains environment-sensitive, Flask route tests load local runtime config, or PowerShell/Windows coverage is needed before external UAT. | Useful release-support follow-through, especially around Windows-first helper scripts and isolating tests from local `.env`, logs, uploads, sessions, and cache paths. |
 | `TASK-077` Public Release Manifest And Asset Import Hardening | `TASK-069` AGPL release compliance needs a package payload, or `TASK-066` shows copy-then-verify import is too risky. | Pull forward the narrow compliance-payload slice now: release manifest, source URL/ref, checksums, image digest, SBOM reference, model/data terms, and revocation notes. Keep staged allowlist-only asset activation as follow-up unless validation makes it release-critical. |
 
 ---

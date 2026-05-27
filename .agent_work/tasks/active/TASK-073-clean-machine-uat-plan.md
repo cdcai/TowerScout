@@ -1,6 +1,6 @@
 # TASK-073: Clean-Machine Pilot / UAT Execution Plan
 
-**Status**: NOT_STARTED  
+**Status**: NOT_STARTED - wait for TASK-066 test-harness gap disposition before broad pilot prep
 **Priority**: HIGH  
 **Type**: B/C (User Testing / Release Validation)  
 **Estimated Effort**: 0.5-1 day (4-8 hours)  
@@ -26,6 +26,8 @@ This task should make external testing repeatable, bounded, and evidence-produci
 
 **R-073-006**: WHEN pilot/UAT completes, THE PROJECT SHALL decide whether V1 is complete, needs V1 patch work, or requires another release candidate.
 
+**R-073-007**: BEFORE broad external pilot/UAT prep begins, THE PROJECT SHALL confirm that the `TASK-066` Flask route-test timeout/isolation gap is fixed or explicitly accepted as an internal-only validation risk.
+
 ## Acceptance Criteria
 
 - [ ] Pilot/UAT start criteria are documented.
@@ -37,12 +39,14 @@ This task should make external testing repeatable, bounded, and evidence-produci
 - [ ] Support escalation path is documented.
 - [ ] Blocker triage rules distinguish V1 blockers, V1 patch candidates, and V2 backlog items.
 - [ ] V1 completion gate after pilot/UAT is documented.
+- [ ] `TASK-066` route-test timeout/isolation gap is fixed or explicitly accepted before pilot launch.
 
 ## Dependencies
 
 - `TASK-066`: release candidate validation gate.
 - `TASK-071`: end-user release package documentation.
 - `TASK-072`: release asset bundle contract.
+- `TASK-067` / `TASK-068`: likely follow-up homes if the route-test timeout/isolation gap is fixed before pilot prep.
 - `.agent_work/user-testing/README.md`: existing user-testing workspace rules.
 - `.agent_work/user-testing/issue-tracker.md`: issue tracking surface.
 - `.agent_work/user-testing/instructions/TESTER-ISSUE-REPORT-CHECKLIST.txt`: existing tester issue report checklist.
@@ -51,12 +55,13 @@ This task should make external testing repeatable, bounded, and evidence-produci
 
 1. Review the user-testing workspace and existing tester report checklist.
 2. Pull relevant clean-machine findings from `TASK-066`.
-3. Define pilot start criteria and stop criteria.
-4. Draft a bounded acceptance checklist for testers.
-5. Draft environment capture and support evidence collection instructions.
-6. Define issue triage rules for V1 blockers, V1 patch candidates, and V2 backlog items.
-7. Link the UAT plan to the Sprint 06 plan and user-testing workspace.
-8. Prepare handoff guidance for pilot testers and first-line support.
+3. Confirm the `TASK-066` Flask route-test timeout/isolation gap is fixed or explicitly accepted.
+4. Define pilot start criteria and stop criteria.
+5. Draft a bounded acceptance checklist for testers.
+6. Draft environment capture and support evidence collection instructions.
+7. Define issue triage rules for V1 blockers, V1 patch candidates, and V2 backlog items.
+8. Link the UAT plan to the Sprint 06 plan and user-testing workspace.
+9. Prepare handoff guidance for pilot testers and first-line support.
 
 ---
 
@@ -70,6 +75,14 @@ This task should make external testing repeatable, bounded, and evidence-produci
 **Output**: Task file ready for intake.  
 **Validation**: Pending `.agent_work` validation after all Sprint 06 task files are created.  
 **Next**: Wait for `TASK-066` findings, then build the pilot/UAT checklist and handoff flow.
+
+### 2026-05-27 - Pre-Pilot Test-Harness Dependency Added
+**Objective**: Carry forward the `TASK-066` route-test timeout/isolation finding before starting UAT planning.
+**Context**: `TASK-066` package-runtime validation passed with boundaries, but repeated broad pytest review commands isolated a test-harness gap in `tests/unit/test_flask_routes.py`: the module can stall during collection because it imports the full production Flask app and local `.env` path before fixtures isolate config.
+**Decision**: `TASK-073` should not start broad external pilot prep until this gap is fixed or the owner explicitly accepts it as an internal-only validation risk. The issue does not require Docker Desktop or Podman to reproduce and should be routed to `TASK-067` and/or `TASK-068` if fixed before pilot prep.
+**Output**: Added a requirement, acceptance criterion, dependency note, and implementation-plan step for the route-test gap disposition.
+**Validation**: Pending `.agent_work` validation.
+**Next**: Complete `TASK-066` review disposition, then either fix the route-test isolation/timeout issue or explicitly accept the risk before drafting the pilot/UAT workflow.
 
 ---
 

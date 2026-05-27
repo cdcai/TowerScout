@@ -19,6 +19,7 @@ Closes:
 - [ ] Maintained smoke coverage run as needed
 - [ ] Advisory validation noted if relevant
 - [ ] Manual testing completed if relevant
+- [ ] Long-running validation has a timeout, cleanup path, or documented advisory gap
 
 Test results:
 
@@ -35,7 +36,8 @@ Rollback plan:
 
 - [ ] `.agent_work` task or status docs updated as needed
 - [ ] `README.md` updated if user-facing behavior changed
-- [ ] `AGENTS.md` or `.github` guidance updated if architecture or workflow changed
+- [ ] `.github` guidance updated if architecture or workflow changed
+- [ ] Legacy `AGENTS.md/` guidance updated or intentionally left alone if still referenced
 - [ ] Complex logic is explained where needed
 
 ## Commit Checkpoint

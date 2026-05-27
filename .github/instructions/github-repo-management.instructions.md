@@ -103,15 +103,19 @@ Required checks should match the repo's real maintained baseline.
 
 Required:
 
-- lint and format checks the repo already treats as merge-blocking
+- lint checks the repo already treats as merge-blocking
 - current unit-test baseline
 - maintained smoke coverage relevant to the touched area
 
 Advisory until explicitly promoted:
 
+- Black format check while historical formatting drift remains unresolved
 - `mypy`
 - `bandit`
 - broader integration or browser suites that are still environment-sensitive or non-blocking
+- container image build checks and asset-backed release-package smoke until `TASK-066`/`TASK-067` promotes them
+
+Validation commands should be bounded. If a pytest module stalls during collection or a runtime smoke can wait indefinitely, split the command, add a timeout or explicit cleanup path, and record the gap instead of repeatedly running broad commands without diagnostics.
 
 ## Transition And Baseline Tags
 

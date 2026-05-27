@@ -1,6 +1,6 @@
 # TowerScout AI Coding Guide
 
-This is the primary high-context guidance file for AI coding agents working in the TowerScout repository. It preserves project context, guardrails, and workflow guidance while reflecting the current repository state as of 2026-05-11.
+This is the primary high-context guidance file for AI coding agents working in the TowerScout repository. It preserves project context, guardrails, and workflow guidance while reflecting the current repository state as of 2026-05-27.
 
 ## Mission and Product Context
 
@@ -23,9 +23,10 @@ The project still carries public-health workflow expectations:
 - Setup Wizard and Settings are implemented in the repo.
 - Detection progress, estimate/detect separation, and cancel handling are implemented in the repo.
 - `TASK-025` Docker-compatible / OCI containerization is merged on `main`: the repo now has a `Dockerfile`, Compose configuration, health/readiness endpoints, persistent runtime volume contract, release-package helper scripts, GHCR publish workflow, asset/TLS import helpers, and OCI runtime documentation.
-- The current post-`TASK-025` direction is GitHub-first and engine-aware: GitHub Releases should be the normal user-facing release control plane, a GitHub Release ZIP plus pinned GHCR image digest is the preferred package shape, Podman is the preferred open-source Windows runtime target after validated support gates, and Docker compatibility remains useful for development/support where licensing and endpoint policy allow.
-- Podman engine/runtime behavior has been validated on the Windows WSL host, including while Docker Desktop's engine was unavailable. `TASK-065` also validated a Docker-Desktop-free Compose-provider path with `podman-compose 1.5.0`; Podman support language should explicitly require a running Podman machine and approved Compose provider.
-- `TASK-065` remains the active release-support carry-forward item, with `TASK-072`, `TASK-071`, `TASK-066`, and `TASK-073` selected for the Sprint 06 committed lane.
+- The current release direction is GitHub-first and engine-aware: GitHub Releases should be the normal user-facing release control plane, a release ZIP plus pinned GHCR image digest is the preferred package shape, and Docker Desktop is the primary controlled RC1 pilot runtime unless owner-approved support boundaries say otherwise.
+- `TASK-071`, `TASK-072`, and `TASK-079` are complete enough to feed the RC path. `TASK-075` has implemented the single GPU-capable package direction with CPU-safe default launch; broad GPU acceleration claims remain pending NVIDIA Docker Desktop WSL2 validation.
+- `TASK-066` has validated the digest-pinned Docker Desktop and Podman package runtime paths for CPU-default launch. Podman evidence is qualified: on the validation host, `podman compose` delegated to Docker Compose v5.1.3, and Podman source-build/base-image pulls from Docker Hub still fail TLS certificate verification inside the Podman VM.
+- `TASK-073` remains selected for Sprint 06, but broad external pilot/UAT prep should wait until the `TASK-066` Flask route-test timeout/isolation gap is fixed or explicitly accepted as an internal-only validation risk.
 
 ### Completed Sprint 04 Summary
 
@@ -78,13 +79,13 @@ Sprint 04 materially changed what an agent should assume about the project. The 
 
 ### Immediate Path Forward
 
-The current path forward is centered on Sprint 06 V1 RC1 / pilot-ready release readiness:
+The current path forward is centered on finishing Sprint 06 V1 RC1 / pilot-ready release readiness:
 
-1. `TASK-065`: close release packaging and runtime support follow-through, including owner-reviewed support language and a commit/PR checkpoint.
-2. `TASK-072`: define the release asset bundle contract for model weights and ZIP-code data.
-3. `TASK-071`: produce end-user release package documentation for the package-based Windows pilot path.
-4. `TASK-066`: validate the release candidate from a clean user-facing environment before external pilot/UAT.
-5. `TASK-073`: prepare clean-machine pilot / UAT execution after the internal release-candidate gate.
+1. Close out `TASK-066` with the digest-pinned Docker/Podman validation evidence and bounded caveats.
+2. Fix or explicitly accept the Flask route-test timeout/isolation gap before broad `TASK-073` pilot prep.
+3. Route the timeout/isolation fix to `TASK-067` and/or `TASK-068` if it is handled before pilot prep.
+4. Keep GPU acceleration support language bounded until NVIDIA Docker Desktop WSL2 validation, CPU/GPU parity, and timing evidence exist.
+5. Start `TASK-073` only after the release-candidate gate has either passed or recorded owner-accepted residual risks.
 
 `TASK-026` CPU optimization and `TASK-029` multi-provider fallback remain follow-on backlog work unless Sprint 06 evidence makes them release-critical.
 
@@ -513,7 +514,9 @@ Current CI includes:
 
 Node 18 is now end-of-life. Treat migration of the frontend CI/runtime baseline to a supported Node LTS line as CI maintenance work that should be validated against the current build and Puppeteer smoke paths before changing the workflow.
 
-Do not describe container release validation as fully automated CI coverage yet. CI can attempt to build the image on `main`, and the manual GHCR publish workflow can publish a digest-pinned image, but full asset-backed release validation remains Sprint 06 release-candidate follow-through. `TASK-065` validated the Docker-Desktop-free Podman Compose-provider path with `podman-compose 1.5.0`; keep Podman support language tied to a running Podman machine and approved Compose provider.
+Current CI does not yet have per-job or per-pytest timeout safeguards. If pytest stalls during collection, especially around `tests/unit/test_flask_routes.py`, split the command and capture diagnostics rather than repeatedly running broad suites. The route-test bootstrap should be isolated from real local `.env`, logs, uploads, sessions, and cache paths before it is treated as a fast release gate.
+
+Do not describe container release validation as fully automated CI coverage yet. CI can attempt to build the image on `main`, and the manual GHCR publish workflow can publish a digest-pinned image, but full asset-backed release validation remains Sprint 06 release-candidate follow-through. `TASK-066` validated the digest-pinned Docker Desktop and Podman package-runtime paths, but Podman support language must distinguish package runtime, Docker-Desktop-free Compose-provider coverage, and source-build/base-image TLS behavior.
 
 ## Container And Deployment Strategy
 
@@ -525,11 +528,13 @@ The current product direction is:
 
 - use the merged OCI-compatible container contract rather than a Docker Desktop-specific product path
 - make GitHub Releases the default user-facing delivery control plane
-- treat Podman as the preferred open-source Windows runtime target after validated support gates; the engine path passed on this host, and `TASK-065` validated `podman-compose 1.5.0` as the Docker-Desktop-free Compose provider
+- treat Docker Desktop as the primary controlled RC1 pilot engine unless the pilot cohort requires a different runtime
+- treat Podman as a qualified package-runtime option when a running Podman machine and approved Compose provider are available; do not claim Docker-Desktop-free Podman coverage from validation that delegated to Docker Desktop's Compose binary
 - preserve Docker compatibility for development/support fallback where licensing and endpoint policy allow
 - keep local source clone/build as a developer/support path, not the preferred normal-user install path
 - package normal users through a GitHub Release ZIP with `compose.yaml`, `.env` template, scripts, docs, manifest/checksums, and a pinned GHCR image digest; reserve OCI image archives for restricted-network fallback
-- manage large model/data assets through a checksummed manifest/bootstrap process, staged activation, and restricted-network/manual bundle fallback
+- manage large model/data assets through the release asset bundle contract, extracted package-local `assets/` layout, import helper, readiness checks, and manifest hash verification
+- preserve the single GPU-capable package direction with CPU-safe default launch; optional GPU launch is support-claimable only after NVIDIA Docker Desktop WSL2 validation
 - clarify TowerScout's application license suitability separately from runtime-tooling choice
 
 ### Post-TASK-025 Guardrails
@@ -697,12 +702,11 @@ The original guidance benefited from explicitly naming recent completed work. Th
 
 ### Sprint 06 Priority Sequence
 
-1. Close `TASK-065` release packaging and runtime support follow-through before broad release-support promises.
-2. Complete `TASK-072` release asset bundle contract so model/data asset distribution is explicit and testable.
-3. Complete `TASK-071` end-user release package documentation against the actual package and asset contract.
-4. Run `TASK-066` release-candidate validation from a clean user-facing environment.
-5. Complete `TASK-073` clean-machine pilot / UAT execution planning before asking external users to test.
-6. Keep `TASK-026`, `TASK-029`, architecture work, and V2 feature work behind release-candidate readiness unless new evidence makes one release-critical.
+1. Finish `TASK-066` release-candidate validation evidence with the Docker Desktop, qualified Podman, GPU, and test-harness boundaries clearly recorded.
+2. Fix or explicitly accept the `tests/unit/test_flask_routes.py` timeout/isolation gap before broad external pilot prep.
+3. Route pytest timeout safeguards, route-test isolation, and CI release-gate tightening to `TASK-067` and/or `TASK-068`.
+4. Complete `TASK-073` clean-machine pilot / UAT execution planning before asking external users to test.
+5. Keep `TASK-026`, `TASK-029`, architecture work, and V2 feature work behind release-candidate readiness unless new evidence makes one release-critical.
 
 ### Practical Agent Takeaway
 
@@ -710,6 +714,9 @@ An agent should leave with the following understanding:
 
 - the app is no longer missing setup/settings
 - the repo has a merged Docker-compatible / OCI container baseline and local launcher MVP
+- the release path now uses a digest-pinned GHCR image and package-local asset import flow
+- CPU-default Docker Desktop and qualified Podman package-runtime validation have passed, while GPU and Docker-Desktop-free Podman claims remain bounded
+- local/CI pytest timeout safeguards and Flask route-test isolation remain follow-up work before broad pilot prep
 - filesystem sessions and disk-backed config writes are real architectural constraints
 - Google and Azure workflows are both important
 - outbreak-investigation workflows are the highest-value legacy surface to preserve
@@ -722,6 +729,4 @@ An agent should leave with the following understanding:
 - `.agent_work/current-tasks.md`
 - `.agent_work/task-backlog.md`
 - `.agent_work/completed-tasks.md`
-- `AGENTS.md/architecture.md`
-- `AGENTS.md/dev-workflow.md`
-- `AGENTS.md/security.md`
+- `AGENTS.md/` is legacy split guidance from earlier sprints. Prefer this file and `.github/instructions/` for current agent context unless a legacy-specific detail is intentionally needed.
