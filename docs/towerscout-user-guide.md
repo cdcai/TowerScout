@@ -10,12 +10,17 @@ Use `docs/v1-rc1-quick-start.md` for first-run package setup and
 
 This guide assumes the package setup work is already complete:
 
-- A supported container engine is installed and running.
+- Docker Desktop is installed, approved, and running for the primary RC1 pilot
+  path, or support has explicitly directed you to a qualified Podman path.
 - Required model and ZIP-code assets are imported.
 - TowerScout opens at `http://localhost:5000`.
 - At least one provider key is configured through Setup Wizard or Settings.
 
 If any of those are not true, start with `docs/v1-rc1-quick-start.md`.
+
+When this guide shows package commands, run them from Windows PowerShell opened
+in the extracted TowerScout package folder. Commands that begin with `.\` run a
+script from that folder.
 
 ## What TowerScout Does
 
@@ -201,13 +206,13 @@ After restore:
 Use:
 
 ```powershell
-.\scripts\stop.cmd
+.\scripts\stop.cmd -Engine docker
 ```
 
 Restart later with:
 
 ```powershell
-.\start.bat
+.\start.bat -Engine docker -Gpu off
 ```
 
 The V1 RC1 package stores provider configuration, assets, logs, sessions,
@@ -253,8 +258,9 @@ When reporting a problem, include:
 
 - What you were trying to do.
 - The release package version.
-- Whether you used Docker or Podman.
-- The readiness state from `scripts\status.cmd`.
+- Whether you used Docker Desktop or support-directed Podman.
+- The readiness state from `scripts\status.cmd -Engine docker`, or the same
+  command with the explicitly selected engine.
 - A reviewed and redacted summary of recent logs if support asks for it.
 
 Do not share provider keys, `.env`, raw logs, raw screenshots, browser network

@@ -16,6 +16,8 @@
     <nav class="doc-nav" aria-label="Quick start sections">
       <h2>Steps</h2>
       <a href="#prerequisites">Prerequisites</a>
+      <a href="#stop-support">Stop Points</a>
+      <a href="#commands">Run Commands</a>
       <a href="#download">Download</a>
       <a href="#verify">Verify</a>
       <a href="#extract">Extract</a>
@@ -24,21 +26,41 @@
       <a href="#gpu">GPU Boundary</a>
       <a href="#setup">Setup</a>
       <a href="#success">Confirm Success</a>
+      <a href="#stop">Stop/Restart</a>
       <a href="#license">Source/licenses</a>
       <a href="#help">Help</a>
     </nav>
     <main class="doc-main">
       <section class="doc-section" id="prerequisites">
         <h2>Before You Start</h2>
-        <p>Confirm Windows 11 AMD64, Windows PowerShell, a modern browser, normal outbound internet access, enough disk space for the package/assets/container image, and one valid site/user-owned provider key.</p>
-        <p>Install one supported container engine: Podman with a running Podman machine and Compose provider, or Docker Desktop where it is licensed, approved, installed, and running.</p>
+        <p>Confirm Windows 11 AMD64, Windows PowerShell, a modern browser, normal outbound internet access, at least <code>15 GB</code> free disk space, and one valid site/user-owned provider key. <code>25 GB</code> free is a better target for first setup.</p>
+        <p>Docker Desktop with the WSL 2 backend is the primary V1 RC1 pilot engine. During Docker Desktop installation, keep the WSL 2 backend selected when prompted, start Docker Desktop from the Windows Start menu, and wait until Docker Desktop reports that it is running.</p>
+        <p>Docker's current Windows requirements include WSL <code>2.1.5</code> or later, 8 GB RAM, and hardware virtualization enabled in BIOS/UEFI. If your workstation is managed by IT, ask your site administrator before installing WSL, Docker Desktop, Podman, or provider credentials.</p>
+        <pre><code>wsl --status
+wsl --list --verbose
+docker --version
+docker compose version</code></pre>
+        <p>Expected result: WSL is installed, any listed Linux distribution uses version <code>2</code>, and Docker commands print version information while Docker Desktop is running.</p>
+        <p>Podman is a qualified package-runtime option only when support tells you to use it and the workstation already has a running Podman machine plus a working Compose provider such as <code>podman-compose</code>.</p>
         <p>You do not need Git, Python, Conda, Node.js, VS Code, or a source-code checkout for the normal package path.</p>
-        <p>If Docker Desktop or Podman is not already installed and approved on your workstation, or if you do not already have a valid restricted provider key, stop here and contact your site administrator or support lead before continuing.</p>
-        <p>If both Docker and Podman are installed, use <code>-Engine podman</code> consistently when validating the Podman path.</p>
+        <p>If Docker Desktop is not already installed and approved on your workstation, or if you do not already have a valid restricted provider key, stop here and contact your site administrator or support lead before continuing.</p>
+        <p>If both Docker and Podman are installed, the launcher can choose Docker first. If support tells you to use Podman, use <code>-Engine podman</code> consistently on every helper command.</p>
+      </section>
+      <section class="doc-section" id="stop-support">
+        <h2>Stop And Contact Support</h2>
+        <p>Stop before continuing if Docker Desktop is not installed, not approved, or cannot start; WSL is unavailable or shows version <code>1</code> without administrator approval to update it; a checksum does not match; asset import reports missing, corrupt, or hash-failed files; TowerScout reports <code>fatal</code>; or provider validation repeatedly fails after you confirm the key is correct.</p>
+        <p>Do not share provider keys, <code>.env</code>, raw logs, raw screenshots, private AOIs, browser network traces, cached provider responses, or exported datasets unless your site has an approved handling procedure.</p>
+      </section>
+      <section class="doc-section" id="commands">
+        <h2>How To Run Commands</h2>
+        <p>Use Windows PowerShell, not the WSL/Ubuntu terminal, for package commands. Open File Explorer, open the extracted TowerScout package folder, click the address bar, type <code>powershell</code>, and press Enter.</p>
+        <p>Expected result: a PowerShell window opens with the package folder in the prompt. Paste one command at a time and press Enter. Commands that start with <code>.\</code> run scripts from that folder.</p>
       </section>
       <section class="doc-section" id="download">
-        <h2>Download The Release Files</h2>
-        <p>Use the control ZIP, control checksum, asset ZIP, and asset checksum for the same release version. The exact filenames can change by release.</p>
+        <h2>Get The Release Files</h2>
+        <p>Open the TowerScout GitHub repository in your browser, go to the <code>Releases</code> page, and open the release that support told you to use. In the release <code>Assets</code> section, download all four TowerScout release files into the same local folder.</p>
+        <p>Download the Application Package ZIP, Application Package checksum, Model &amp; Data Package ZIP, and Model &amp; Data Package checksum from the same release. Do not use GitHub's automatic <code>Source code (zip)</code> or <code>Source code (tar.gz)</code> downloads for normal pilot setup.</p>
+        <p>The release version must match between the Application Package and the Model &amp; Data Package. If the versions differ, stop and download the matching files from the same GitHub release.</p>
       </section>
       <section class="doc-section" id="verify">
         <h2>Verify Downloads Before Extracting</h2>
@@ -47,24 +69,27 @@
 Get-Content .\towerscout-v0.1.0-rc1.zip.sha256
 Get-FileHash .\towerscout-v0.1.0-rc1-assets-*.zip -Algorithm SHA256
 Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256</code></pre>
+        <p>The hash from <code>Get-FileHash</code> must match the value in the matching <code>.sha256</code> file. Uppercase and lowercase are not important, but the letters and numbers must otherwise be the same.</p>
       </section>
       <section class="doc-section" id="extract">
-        <h2>Extract The Control Package</h2>
-        <p>Extract the control ZIP to a normal local folder such as <code>C:\Users\&lt;you&gt;\TowerScout-v0.1.0-rc1</code>. The folder should contain <code>start.bat</code>, Compose files, <code>scripts\</code>, <code>docs\</code>, and an empty <code>assets\</code> folder.</p>
+        <h2>Extract The Application Package</h2>
+        <p>Extract the Application Package ZIP to a normal local folder such as <code>C:\Users\&lt;you&gt;\TowerScout-v0.1.0-rc1</code>. The folder should contain <code>start.bat</code>, Compose files, <code>scripts\</code>, <code>docs\</code>, and an empty <code>assets\</code> folder.</p>
       </section>
       <section class="doc-section" id="start">
         <h2>Initialize The Package</h2>
-        <pre><code>.\start.bat</code></pre>
-        <p>The first launcher run creates <code>.env</code>, starts the selected engine, polls readiness, and opens <code>http://localhost:5000</code>. If support tells you to use Podman, run <code>.\start.bat -Engine podman</code> and reuse that engine value on helper commands.</p>
+        <pre><code>.\start.bat -Engine docker -Gpu off</code></pre>
+        <p>The first launcher run creates <code>.env</code>, starts Docker, polls readiness, and opens <code>http://localhost:5000</code>. Expected result: PowerShell prints that TowerScout is starting with Docker, then reports a readiness state. If the browser does not open, leave PowerShell open and manually open <code>http://localhost:5000</code>.</p>
+        <p>The first launch may download the TowerScout container image from GHCR. This can take several minutes. Keep the PowerShell window open while Docker downloads and starts the image.</p>
+        <p>If support tells you to use Podman, run <code>.\start.bat -Engine podman -Gpu off</code> and reuse that engine value on helper commands.</p>
       </section>
       <section class="doc-section" id="assets">
-        <h2>Stage And Import Assets</h2>
-        <p>Extract the asset ZIP root entries into the package <code>assets\</code> folder so it contains <code>model_params\</code>, <code>data\</code>, and <code>asset_manifest.v1.json</code>.</p>
-        <pre><code>.\scripts\import-assets.cmd -Source assets
-.\scripts\import-assets.cmd -Source assets -VerifyHashes</code></pre>
+        <h2>Stage And Import Model &amp; Data</h2>
+        <p>Extract the Model &amp; Data Package ZIP root entries into the package <code>assets\</code> folder so it contains <code>model_params\</code>, <code>data\</code>, and <code>asset_manifest.v1.json</code> directly inside <code>assets\</code>.</p>
+        <p>If you see <code>assets\assets\model_params</code>, the files are nested one level too deep. Move the inner <code>model_params</code>, <code>data</code>, and <code>asset_manifest.v1.json</code> entries up one level before importing. If you are unsure, stop and ask support.</p>
+        <pre><code>.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180</code></pre>
         <p>If TowerScout was started on a non-default port, pass the same port to the asset importer.</p>
-        <pre><code>.\scripts\import-assets.cmd -Source assets -Port 5001 -VerifyHashes</code></pre>
-        <p>The importer uses the selected engine's named volumes and restarts TowerScout after copying assets so imported model files are available before the first detection run.</p>
+        <pre><code>.\scripts\import-assets.cmd -Engine docker -Source assets -Port 5001 -VerifyHashes -RestartWaitSeconds 180</code></pre>
+        <p>The importer uses the selected engine's named volumes and restarts TowerScout after copying assets so imported model files are available before the first detection run. Expected result: the command finishes without missing/corrupt asset errors and waits for TowerScout after restart.</p>
       </section>
       <section class="doc-section" id="gpu">
         <h2>GPU Boundary</h2>
@@ -76,8 +101,15 @@ Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256</code></pre>
       </section>
       <section class="doc-section" id="success">
         <h2>Confirm Success</h2>
-        <pre><code>.\scripts\status.cmd</code></pre>
-        <p>Readiness should become <code>ready</code> after provider setup and required assets are present.</p>
+        <pre><code>.\scripts\status.cmd -Engine docker</code></pre>
+        <p>Readiness should become <code>ready</code> after provider setup and required assets are present. For a smoke check, use the owner-provided public test area or another non-sensitive approved area, estimate tiles first, keep the run to about <code>1-6</code> tiles, then select <code>Find towers</code>.</p>
+        <p>Expected result: the detection workflow completes without crashing. Results may be zero or more detections, but the map and right-hand review panel should update consistently.</p>
+      </section>
+      <section class="doc-section" id="stop">
+        <h2>Stop Or Restart</h2>
+        <pre><code>.\scripts\stop.cmd -Engine docker
+.\start.bat -Engine docker -Gpu off</code></pre>
+        <p>Provider setup and imported assets are stored in named volumes and should survive container restarts. Always use the same <code>-Engine</code> value you used during setup. Docker Desktop and Podman use separate local storage, so switching engines can make setup or imported assets appear to be missing.</p>
       </section>
       <section class="doc-section" id="license">
         <h2>Source, Licenses, And Help</h2>
@@ -85,8 +117,9 @@ Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256</code></pre>
       </section>
       <section class="doc-section" id="help">
         <h2>If Something Fails</h2>
-        <pre><code>.\scripts\status.cmd
-.\scripts\logs.cmd -Tail 200</code></pre>
+        <pre><code>.\scripts\status.cmd -Engine docker
+.\scripts\logs.cmd -Engine docker -Tail 200</code></pre>
+        <p>If PowerShell says a command is not recognized, confirm the prompt is open in the extracted TowerScout package folder and that the command starts with <code>.\</code>. If Docker commands are not recognized, open Docker Desktop from the Start menu and wait until it reports that it is running.</p>
         <p>Do not share provider keys, <code>.env</code>, raw screenshots, browser traces, raw logs, datasets, or sensitive AOIs unless your site has approved handling.</p>
       </section>
     </main>

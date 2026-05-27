@@ -67,7 +67,7 @@ assets/
 The Windows import helper treats the `-Source` path as the source root and expects `model_params/` and `data/` directly below it:
 
 ```powershell
-.\scripts\import-assets.cmd -Source assets
+.\scripts\import-assets.cmd -Engine docker -Source assets
 ```
 
 The importer copies the staged source into the selected container engine's named volumes. The runtime destination layout inside the container is:
@@ -131,20 +131,20 @@ Example:
 Normal end-user import:
 
 ```powershell
-.\scripts\import-assets.cmd -Source assets
+.\scripts\import-assets.cmd -Engine docker -Source assets
 ```
 
 Release-candidate and support validation import:
 
 ```powershell
-.\scripts\import-assets.cmd -Source assets -VerifyHashes
+.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180
 ```
 
 Runtime/readiness hash verification is validation/support-only:
 
 ```powershell
 $env:TOWERSCOUT_VERIFY_ASSET_HASHES = "1"
-.\scripts\status.cmd
+.\scripts\status.cmd -Engine docker
 ```
 
 Routine first run and launcher polling should not enable runtime hash verification because the ZIP-code geometry file is large.

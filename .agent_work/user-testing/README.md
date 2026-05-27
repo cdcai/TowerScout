@@ -7,11 +7,11 @@ This folder keeps user-testing setup and runtime reports organized without mixin
 - `issue-tracker.md`: roll-up view of active and closed user-testing issues
 - `artifacts/`: raw screenshots, terminal logs, recordings, and environment notes
 - `issues/`: one markdown file per reported problem using the `UT-###` pattern
-- `instructions/`: tester-facing reporting instructions and handoff notes
+- `instructions/`: tester-facing RC1 pilot checklist, reporting instructions, and handoff notes
 
 ## Workflow
 
-1. Start the tester with one of the existing setup guides under `.agent_work/context/guides/`.
+1. Start the tester with `.agent_work/user-testing/instructions/RC1-PILOT-UAT-CHECKLIST.md` for package-path RC1 pilot runs.
 2. When a tester hits a problem, create or update one `UT-###` issue file under `issues/`.
 3. Save raw evidence in a dated folder under `artifacts/` and link it from the issue file.
 4. Add or update the matching row in `issue-tracker.md`.
@@ -49,6 +49,7 @@ This folder keeps user-testing setup and runtime reports organized without mixin
 
 - [Issue Tracker](./issue-tracker.md)
 - [Instructions](./instructions/README.md)
+- [RC1 Pilot / UAT Checklist](./instructions/RC1-PILOT-UAT-CHECKLIST.md)
 - [TowerScout User Testing Guide](../context/guides/TowerScout_User_Testing_Guide.txt)
 - [TowerScout User Testing Guide - Windows Miniconda](../context/guides/TowerScout_User_Testing_Guide_Windows_Miniconda.txt)
 - [TowerScout Development Setup Guide](../context/guides/TowerScout_Development_Setup_Guide.txt)

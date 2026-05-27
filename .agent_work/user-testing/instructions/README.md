@@ -1,9 +1,10 @@
 # User Testing Instructions
 
-Use this folder for tester-facing reporting instructions. Use the existing setup guides first, then use the reporting checklist if the tester gets blocked.
+Use this folder for tester-facing reporting instructions. For RC1 package-path pilot testing, start with the RC1 checklist and use the reporting checklist if the tester gets blocked.
 
 ## Setup Guides
 
+- [RC1 Pilot / UAT Checklist](./RC1-PILOT-UAT-CHECKLIST.md)
 - [TowerScout User Testing Guide](../../context/guides/TowerScout_User_Testing_Guide.txt)
 - [TowerScout User Testing Guide - Windows Miniconda](../../context/guides/TowerScout_User_Testing_Guide_Windows_Miniconda.txt)
 - [TowerScout Development Setup Guide](../../context/guides/TowerScout_Development_Setup_Guide.txt)

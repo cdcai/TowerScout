@@ -72,7 +72,7 @@ assets/data/
 Windows import helper:
 
 ```powershell
-.\scripts\import-assets.cmd -Source assets
+.\scripts\import-assets.cmd -Engine docker -Source assets
 ```
 
 Readiness checks:
@@ -83,9 +83,9 @@ Readiness checks:
 
 SHA-256 verification is available with `TOWERSCOUT_VERIFY_ASSET_HASHES=1` for release validation and support diagnostics.
 
-For release-candidate or support validation, run `scripts/import-assets.cmd -Source assets -VerifyHashes` during import.
+For release-candidate or support validation, run `scripts/import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180` during import unless support explicitly selected another engine.
 
-Hosted asset download/bootstrap is out of scope for the v1 control package. The supported v1 path is manifest-backed asset import from a local bundle using `scripts/import-assets.cmd`, with optional SHA-256 verification for release-candidate and support validation. A hosted downloader requires a separate design for asset hosting, checksum enforcement, retries, proxy/TLS behavior, partial-download recovery, and restricted-network fallback.
+Hosted asset download/bootstrap is out of scope for the v1 control package. The supported v1 path is manifest-backed asset import from a local bundle using `scripts/import-assets.cmd`, with optional SHA-256 verification for release-candidate and support validation. Docker Desktop is the primary RC1 pilot engine; Podman import support remains qualified by the selected engine's running machine and Compose provider. A hosted downloader requires a separate design for asset hosting, checksum enforcement, retries, proxy/TLS behavior, partial-download recovery, and restricted-network fallback.
 
 The asset ZIP root is `model_params/`, `data/`, and `asset_manifest.v1.json`. Users extract those entries into the package's `assets/` directory before import. The control package manifest remains authoritative; the asset ZIP manifest copy is used for release/support matching by manifest version and manifest file hash.
 

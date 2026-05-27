@@ -1,6 +1,6 @@
 # TASK-067: CI Release Gate Tightening
 
-**Status**: VALIDATED - ready for focused PR review
+**Status**: COMPLETED - PR #19 merged May 27, 2026
 **Priority**: HIGH
 **Type**: C (CI / Release Engineering / Test Reliability)
 **Estimated Effort**: 0.5-1 day (4-8 hours)
@@ -74,6 +74,15 @@ Tighten the release validation baseline where `TASK-066` exposed avoidable fragi
 **Validation**: Passed focused route/config/runtime tests and task-work validation; see validation results below.
 **Next**: Open PR, review CI, then start `TASK-073` after merge.
 
+### 2026-05-27 - PR #19 Merged
+**Objective**: Close the pre-pilot test-harness reliability gap after review.
+**Context**: PR #19 received a reviewer note that `pytest.ini` must use `[pytest]`, not `[tool:pytest]`, for pytest to read timeout settings from `pytest.ini`.
+**Decision**: Apply the reviewer fix before merge and verify that pytest reports the configured timeout.
+**Execution**: Updated `pytest.ini` to `[pytest]`, reran focused route/config/runtime tests, and merged PR #19 with squash commit `dcf2322`.
+**Output**: `TASK-067` is complete for the active Sprint 06 slice.
+**Validation**: `pytest --collect-only tests/unit/test_runtime_contract.py` reported `timeout: 120.0s` and `timeout method: thread`; the focused route/config/runtime suite passed with `52 passed`.
+**Next**: Start `TASK-073` clean-machine pilot/UAT planning.
+
 ---
 
 ## Validation Results
@@ -105,4 +114,4 @@ Tighten the release validation baseline where `TASK-066` exposed avoidable fragi
 
 ### Sign-off
 
-Implementation and focused validation are complete. PR review and CI remain the merge gate.
+Implementation, focused validation, PR review, and merge are complete. Broader asset-backed package smoke automation remains a later release-gate ratchet, not part of this completed active slice.

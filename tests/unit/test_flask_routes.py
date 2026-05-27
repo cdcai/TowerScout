@@ -109,7 +109,8 @@ def test_docs_routes_expose_package_local_docs(client):
     assert user_guide_response.mimetype == "text/html"
     assert b"User Guide" in user_guide_response.data
     assert b"Before Using This Guide" in user_guide_response.data
-    assert b"supported container engine is installed and running" in user_guide_response.data
+    assert b"Docker Desktop is installed, approved, and running" in user_guide_response.data
+    assert b"qualified Podman path" in user_guide_response.data
 
     assert css_response.status_code == 200
     assert "text/css" in css_response.content_type

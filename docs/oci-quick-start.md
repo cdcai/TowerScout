@@ -1,6 +1,13 @@
 # TowerScout OCI Quick Start
 
-This guide covers the v1 local container package shape for TowerScout. It is engine-aware: the same Compose files are intended to work with a validated Docker or Podman host. The current Windows Podman validation covers the Podman engine path, including while Docker Desktop's engine is unavailable, and a Docker-Desktop-free Compose-provider path using `podman-compose`.
+This guide covers the v1 local container package shape for TowerScout for
+release/support users who need engine-level detail. External RC1 pilot users
+should start with `docs/v1-rc1-quick-start.md` instead.
+
+The primary RC1 pilot path is Docker Desktop with the WSL 2 backend, launched
+with CPU-safe `-Gpu off`. Podman remains a qualified support-directed package
+runtime path only when the workstation has a running Podman machine and an
+approved Compose provider.
 
 ## Supported V1 Target
 
@@ -8,22 +15,24 @@ This guide covers the v1 local container package shape for TowerScout. It is eng
 - Single-user local use
 - CPU baseline
 - Normal outbound internet access for map providers and asset/bootstrap workflows
-- Docker-compatible or OCI-compatible container engine with Compose support
+- Docker Desktop with WSL 2 backend for the primary RC1 pilot path, or a
+  support-approved Podman machine and Compose provider for the qualified Podman
+  path
 
 Out of scope for v1: Mac, ARM64, air-gapped/offline installs, VDI, shared multi-user hosting, native installer behavior, and managed remote deployment.
 
 ## Prerequisite Software
 
-The normal package path expects Windows PowerShell, a modern browser, normal
-outbound internet access, and one approved container engine. The Podman path
-requires a created and running Podman machine plus an approved Compose provider
-such as `podman-compose`. The Docker path requires Docker Desktop to be
-licensed, approved, installed, and running.
+The normal RC1 pilot package path expects Windows PowerShell, a modern browser,
+normal outbound internet access, and Docker Desktop with the WSL 2 backend
+licensed, approved, installed, and running. The Podman path requires support
+direction, a created and running Podman machine, and an approved Compose
+provider such as `podman-compose`.
 
 Pilot users do not need Git, Python, Conda, Node.js, VS Code, or a source-code
-checkout for the package path. If both Docker and Podman are installed, use
-`-Engine podman` consistently when validating the Podman path because automatic
-engine selection can choose Docker first.
+checkout for the package path. If both Docker and Podman are installed, the
+launcher can choose Docker first. Use `-Engine podman` consistently only when
+validating a support-directed Podman path.
 
 ## Package Contents
 
@@ -117,7 +126,7 @@ For RC1, record the chosen flavor with the image digest in the release package. 
 1. Start TowerScout from the package directory:
 
 ```cmd
-start.bat
+start.bat -Engine docker -Gpu off
 ```
 
 2. Wait for the launcher to report readiness.
@@ -152,7 +161,7 @@ The GPU build path switches `PYTORCH_INDEX_URL` to the CUDA 12.1 PyTorch wheel i
 The default launcher mode is CPU-safe:
 
 ```powershell
-.\start.bat -Gpu off
+.\start.bat -Engine docker -Gpu off
 ```
 
 GPU launch is opt-in and currently Docker-first:
@@ -179,7 +188,7 @@ Scripts auto-detect the engine. To force one:
 .\scripts\status.cmd -Engine podman
 ```
 
-Docker Desktop use depends on license, procurement, endpoint policy, and local installation approval. Podman is the preferred open-source runtime target for V1 when Podman and a working Compose provider are installed and approved on the workstation.
+Docker Desktop use depends on license, procurement, endpoint policy, and local installation approval. It is the primary RC1 pilot runtime path. Podman is a qualified support path for V1 when Podman and a working Compose provider are installed, approved on the workstation, and explicitly selected by support.
 
 On Windows, `podman compose` is a wrapper around an external Compose provider such as `docker-compose` or `podman-compose`. The TowerScout scripts call `podman compose` for the Podman path, and release validation has confirmed the package can run with `podman-compose` selected explicitly through `PODMAN_COMPOSE_PROVIDER` while the Docker Desktop daemon is unavailable.
 
@@ -200,9 +209,9 @@ The launcher prints the selected Compose-provider information during startup. Fo
 ## Status And Logs
 
 ```powershell
-.\scripts\status.cmd
-.\scripts\logs.cmd
-.\scripts\logs.cmd -Follow
+.\scripts\status.cmd -Engine docker
+.\scripts\logs.cmd -Engine docker
+.\scripts\logs.cmd -Engine docker -Follow
 ```
 
 `status.ps1` calls Compose `ps` and then polls `/api/readiness`. A `fatal` readiness state returns a nonzero exit code.
@@ -213,8 +222,10 @@ The launcher accepts `-NoBrowser` for support checks, `-TimeoutSeconds <seconds>
 
 For first-line support, collect:
 
-- `scripts\status.cmd` output
-- `scripts\logs.cmd -Tail 200` output
+- `scripts\status.cmd -Engine docker` output, or the same command with the
+  explicitly selected engine
+- `scripts\logs.cmd -Engine docker -Tail 200` output, or the same command with
+  the explicitly selected engine
 - `IMAGE.txt`
 - `webapp\asset_manifest.v1.json`
 - `SHA256SUMS.txt`
@@ -263,7 +274,7 @@ After import, set both variables in `.env` and recreate the container:
 ```powershell
 REQUESTS_CA_BUNDLE=/app/webapp/config/certs/towerscout-ca-bundle.pem
 SSL_CERT_FILE=/app/webapp/config/certs/towerscout-ca-bundle.pem
-.\start.bat
+.\start.bat -Engine docker -Gpu off
 ```
 
 The helper verifies Google TLS with an invalid test key. A successful TLS fix returns a normal provider invalid-key response instead of a certificate verification error.
@@ -312,7 +323,7 @@ assets/
 Then import and verify it:
 
 ```powershell
-.\scripts\import-assets.cmd -Source assets
+.\scripts\import-assets.cmd -Engine docker -Source assets
 ```
 
 The asset ZIP itself should not contain a top-level `assets/` directory. Its root should contain `model_params/`, `data/`, and `asset_manifest.v1.json`; extract those entries into the package's existing `assets/` directory. See `docs/release-asset-bundle-contract.md` for the release-matching, checksum, manifest-copy, and redistribution rules.
@@ -320,7 +331,7 @@ The asset ZIP itself should not contain a top-level `assets/` directory. Its roo
 For release-candidate or support validation, enable SHA-256 verification during import:
 
 ```powershell
-.\scripts\import-assets.cmd -Source assets -VerifyHashes
+.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180
 ```
 
 For a source checkout that already has local assets under `webapp/`, use:
@@ -333,7 +344,7 @@ Release-candidate validation should enable SHA-256 checks:
 
 ```powershell
 $env:TOWERSCOUT_VERIFY_ASSET_HASHES = "1"
-.\scripts\status.cmd
+.\scripts\status.cmd -Engine docker
 ```
 
 Routine CI and first-run setup should not hash large assets on every readiness poll.
@@ -347,7 +358,7 @@ For restricted-network sites, the supported v1 fallback is a support-managed pre
 ## Stop
 
 ```powershell
-.\scripts\stop.cmd
+.\scripts\stop.cmd -Engine docker
 ```
 
 This stops the container but keeps named volumes intact.
@@ -357,8 +368,8 @@ This stops the container but keeps named volumes intact.
 If `start.bat` times out, run:
 
 ```powershell
-.\scripts\status.cmd
-.\scripts\logs.cmd -Tail 200
+.\scripts\status.cmd -Engine docker
+.\scripts\logs.cmd -Engine docker -Tail 200
 ```
 
 Common causes:

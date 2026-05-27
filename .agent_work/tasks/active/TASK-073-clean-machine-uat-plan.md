@@ -1,6 +1,6 @@
 # TASK-073: Clean-Machine Pilot / UAT Execution Plan
 
-**Status**: NOT_STARTED - wait for TASK-066 test-harness gap disposition before broad pilot prep
+**Status**: IN_PROGRESS - package-path UAT plan drafted for owner review
 **Priority**: HIGH  
 **Type**: B/C (User Testing / Release Validation)  
 **Estimated Effort**: 0.5-1 day (4-8 hours)  
@@ -28,25 +28,39 @@ This task should make external testing repeatable, bounded, and evidence-produci
 
 **R-073-007**: BEFORE broad external pilot/UAT prep begins, THE PROJECT SHALL confirm that the `TASK-066` Flask route-test timeout/isolation gap is fixed or explicitly accepted as an internal-only validation risk.
 
+**R-073-008**: WHEN pilot instructions are provided, THE PROJECT SHALL keep GPU acceleration, Docker-Desktop-free Podman, and Podman source-build support language bounded to the evidence recorded in `TASK-066` and `TASK-075`.
+
+**R-073-009**: WHEN pilot evidence is collected, THE PROJECT SHALL avoid storing API keys, full `.env` files, private AOIs, screenshots with secrets, or raw provider responses unless explicitly approved and redacted.
+
+**R-073-010**: WHEN pilot instructions are provided to non-command-line users, THE PROJECT SHALL explain prerequisite software, where to run commands, what each required command does, and the expected outcome after each command.
+
+**R-073-011**: WHEN install-UX review identifies first-launch friction that cannot be solved by documentation alone, THE PROJECT SHALL route that work to a dedicated runtime prerequisite preflight task before broad external UAT if the owner selects it.
+
 ## Acceptance Criteria
 
-- [ ] Pilot/UAT start criteria are documented.
-- [ ] Pilot/UAT stop criteria are documented.
-- [ ] Tester instructions are aligned with `TASK-071` docs and `TASK-066` findings.
-- [ ] Acceptance checklist covers package extraction, launch, asset import, provider setup, bounded detection, status/log collection, and issue reporting.
-- [ ] Environment capture checklist is ready.
-- [ ] Issue-reporting workflow links to `.agent_work/user-testing/`.
-- [ ] Support escalation path is documented.
-- [ ] Blocker triage rules distinguish V1 blockers, V1 patch candidates, and V2 backlog items.
-- [ ] V1 completion gate after pilot/UAT is documented.
-- [ ] `TASK-066` route-test timeout/isolation gap is fixed or explicitly accepted before pilot launch.
+- [x] Pilot/UAT start criteria are documented.
+- [x] Pilot/UAT stop criteria are documented.
+- [x] Tester instructions are aligned with `TASK-071` docs and `TASK-066` findings.
+- [x] Acceptance checklist covers package extraction, launch, asset import, provider setup, bounded detection, status/log collection, and issue reporting.
+- [x] Environment capture checklist is ready.
+- [x] Issue-reporting workflow links to `.agent_work/user-testing/`.
+- [x] Support escalation path is documented.
+- [x] Blocker triage rules distinguish V1 blockers, V1 patch candidates, and V2 backlog items.
+- [x] V1 completion gate after pilot/UAT is documented.
+- [x] `TASK-066` route-test timeout/isolation gap is fixed or explicitly accepted before pilot launch.
+- [x] User-facing docs and UAT instructions explain Docker Desktop/WSL 2 readiness, PowerShell command execution, command outcomes, and first-launch recovery tips.
+- [x] Low-risk documentation hardening from the install-UX review is applied without claiming unimplemented bootstrap behavior.
+- [x] Runtime prerequisite preflight/bootstrap work is routed to `TASK-074`.
+- [ ] Owner/reviewer accepts the pilot/UAT plan before external testers start.
 
 ## Dependencies
 
 - `TASK-066`: release candidate validation gate.
 - `TASK-071`: end-user release package documentation.
 - `TASK-072`: release asset bundle contract.
-- `TASK-067` / `TASK-068`: likely follow-up homes if the route-test timeout/isolation gap is fixed before pilot prep.
+- `TASK-067`: completed route-test timeout/isolation fix and CI timeout safeguards.
+- `TASK-068`: possible follow-up home for deeper Windows/script portability work if pilot prep exposes it.
+- `TASK-074`: selected follow-up for bootstrap/preflight work that should automate the remaining first-launch checks before broad external UAT.
 - `.agent_work/user-testing/README.md`: existing user-testing workspace rules.
 - `.agent_work/user-testing/issue-tracker.md`: issue tracking surface.
 - `.agent_work/user-testing/instructions/TESTER-ISSUE-REPORT-CHECKLIST.txt`: existing tester issue report checklist.
@@ -62,6 +76,161 @@ This task should make external testing repeatable, bounded, and evidence-produci
 7. Define issue triage rules for V1 blockers, V1 patch candidates, and V2 backlog items.
 8. Link the UAT plan to the Sprint 06 plan and user-testing workspace.
 9. Prepare handoff guidance for pilot testers and first-line support.
+10. Route implementation-level first-launch automation to `TASK-074` rather than promising bootstrap behavior in current docs.
+
+---
+
+## Pilot / UAT Execution Plan
+
+### Pilot Start Criteria
+
+Pilot/UAT may start only when all of the following are true:
+
+- The release package ZIP, pinned GHCR image digest, and matching asset bundle location/checksum instructions are available to testers.
+- `TASK-071` package docs are available from the package and from Settings Resource Links.
+- User-facing docs explain Docker Desktop/WSL 2 prerequisites, PowerShell command location, expected command outcomes, and support-safe recovery steps for first launch.
+- `TASK-066` CPU-default Docker Desktop package path has passed with assets imported and one bounded detection smoke.
+- `TASK-066` residual caveats are explicitly included in pilot support language:
+  - Docker Desktop is the primary pilot engine.
+  - Podman is qualified only as a package-runtime path when the machine has a working Podman machine and Compose provider.
+  - Docker-Desktop-free Podman and Podman source-build/base-image-pull support are not claimed.
+  - GPU acceleration is not claimed until NVIDIA Docker Desktop WSL2 validation, CPU/GPU parity, and timing evidence pass.
+- `TASK-067` route-test timeout/isolation fix is merged.
+- A provider key is available to the tester and has been restricted/managed according to the provider-key release policy chosen for the pilot.
+- The tester has a non-sensitive bounded AOI or owner-provided public fixture for the detection smoke.
+
+### Pilot Stop Criteria
+
+Pause or stop pilot/UAT if any of the following occur:
+
+- More than one tester cannot install, launch, or reach Setup Wizard using the documented package path.
+- Asset import fails with verified package/assets on a supported engine.
+- Provider setup cannot be completed with a valid key and supported network/TLS context.
+- A bounded detection cannot complete on the owner-provided fixture after one supported retry.
+- Logs or support diagnostics expose secrets or private data.
+- The same HIGH or BLOCKER issue is reported by multiple testers.
+- The release package, image digest, asset bundle, or docs are found to be mismatched.
+
+### Supported Pilot Path
+
+- **OS**: Windows 11 AMD64.
+- **Runtime**: Docker Desktop is the primary pilot engine.
+- **Launch mode**: CPU-default launch with `-Gpu off`.
+- **Provider**: Azure Maps or Google Maps, with the provider used recorded in the report.
+- **Assets**: Package-local `assets/` import using the documented asset bundle and hash verification.
+- **Detection smoke**: Owner-provided public fixture or non-sensitive bounded AOI, preferably 1-6 tiles.
+- **Out of scope unless explicitly approved**: GPU acceleration claims, Docker-Desktop-free Podman support, source-build validation, restricted-network/offline preload, large AOIs, and private/sensitive screenshot collection.
+
+### Tester Acceptance Checklist
+
+Each tester should complete the package path in this order:
+
+1. Confirm prerequisites: Windows 11 AMD64, Docker Desktop running with WSL 2 support, browser, outbound internet, disk space, PowerShell access, provider key.
+2. Download or receive the release package ZIP, asset bundle, and checksum/digest instructions.
+3. Extract the release package to a local folder without spaces or special characters if possible.
+4. Extract the asset bundle into the package-local `assets/` folder.
+5. Open Windows PowerShell in the extracted package folder.
+6. Launch CPU-default Docker Desktop path:
+   - `.\start.bat -Engine docker -Gpu off`
+   - Expected outcome: the launcher reports a readiness state and opens `http://localhost:5000` or the tester can open that address manually.
+7. Import assets with hash verification:
+   - `.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180`
+   - Expected outcome: the importer completes without missing/corrupt asset errors and waits for TowerScout after restart.
+8. Open TowerScout in the browser if the launcher does not open it automatically.
+9. Complete Setup Wizard with Azure or Google provider key.
+10. Open Settings Resource Links and confirm the package-local docs and source/license page load.
+11. Run a bounded detection smoke using the owner-provided fixture or a non-sensitive AOI.
+12. Confirm:
+    - Detection completes without a crash.
+    - Results appear in the map and right-hand review panel.
+    - Detected tower addresses/provider metadata appear when geocoding succeeds or show a clear fallback when unavailable.
+    - CSV or KML export can be generated if included in the pilot script.
+13. Collect status/log evidence requested below.
+14. Stop TowerScout using `.\scripts\stop.cmd -Engine docker` unless support explicitly selected another engine.
+
+### Environment Capture
+
+Capture these details for every pilot run:
+
+- Tester name or role.
+- Date/time and time zone.
+- Windows version and CPU architecture.
+- Runtime engine: Docker Desktop or Podman.
+- Engine version and whether Docker Desktop was running.
+- Compose provider/version if visible.
+- TowerScout package version and folder name.
+- Image tag and digest from the package manifest or launch output.
+- Asset bundle version/checksum status and asset import result.
+- Launch command and port.
+- GPU mode requested (`off`, `auto`, or `on`); expected pilot default is `off`.
+- Provider used: Azure Maps or Google Maps.
+- Whether the machine is behind a proxy, custom TLS inspection, VPN, or restricted network.
+- Detection fixture/AOI name, tile count estimate, and whether the AOI is public/non-sensitive.
+- Final outcome: PASS, PASS_WITH_NOTES, BLOCKED, or FAIL.
+
+### Evidence Collection
+
+Collect only the minimum useful evidence:
+
+- Launcher output showing image digest, engine, port, and readiness result.
+- Asset import output showing `VerifyHashes` success or exact failure.
+- `/api/health` and `/api/readiness` summary if available.
+- Screenshot of the failing step only when it does not expose secrets or sensitive AOIs.
+- Browser-visible error text.
+- Sanitized logs when requested by support.
+
+Do not collect API keys, full `.env` files, private AOI screenshots, raw provider responses, or unredacted logs with secrets.
+
+### Issue Reporting Workflow
+
+Use `.agent_work/user-testing/` for pilot reports:
+
+1. Save raw evidence under `.agent_work/user-testing/artifacts/YYYY-MM-DD-ut-###-short-slug/`.
+2. Create or update `.agent_work/user-testing/issues/UT-###-short-slug.md` using `ISSUE-TEMPLATE.md`.
+3. Update `.agent_work/user-testing/issue-tracker.md`.
+4. Link each issue to the owning task:
+   - Install/launch/runtime prerequisite issues -> `TASK-074` candidate.
+   - Package/docs/assets mismatch -> `TASK-066` or `TASK-071`.
+   - Provider key or exposure policy -> `TASK-076`.
+   - GPU-specific findings -> `TASK-075`.
+   - Detection correctness/performance -> `TASK-079`, `TASK-026`, or a new V1 patch task depending on severity.
+5. Move issues through the existing status lifecycle: `NEW`, `WAITING-FOR-ARTIFACTS`, `TRIAGED`, `IN-PROGRESS`, `READY-FOR-RETEST`, `CLOSED`.
+
+### Triage Rules
+
+- **V1 blocker**: prevents package extraction, launch, asset import, provider setup, bounded detection, or safe support evidence collection on the supported pilot path.
+- **V1 patch candidate**: core path works, but a defect requires a documented workaround, affects multiple testers, or undermines confidence in the first release.
+- **Documentation fix**: behavior is acceptable but tester instructions are unclear, missing, or easy to misread.
+- **V2 backlog**: enhancement, large-AOI performance improvement, non-default GPU path, Docker-Desktop-free Podman path, advanced workflow, or architecture improvement not needed for the first controlled pilot.
+- **Accepted risk**: residual caveat explicitly approved by owner/reviewer and documented in release notes or pilot support language.
+
+### Support Escalation
+
+First-line support should triage in this order:
+
+1. Confirm the tester is using the supported package path and current package/assets.
+2. Confirm Docker Desktop is running and the package launched with CPU-default `-Gpu off`.
+3. Confirm WSL 2 is available and Docker commands print version information.
+4. Confirm the tester opened PowerShell in the extracted package folder.
+5. Confirm assets imported with hash verification.
+6. Confirm provider key setup succeeded without asking the tester to send the key.
+7. Confirm `/api/health` and `/api/readiness` state.
+8. Collect sanitized launcher/import/readiness evidence.
+9. Create or update the matching `UT-###` issue and route by triage rules.
+
+Escalate to engineering when the issue is a V1 blocker, repeats across testers, affects security/privacy, or contradicts `TASK-066` validation evidence.
+
+### V1 Completion Gate After Pilot
+
+After pilot/UAT, V1 may be considered ready only if:
+
+- Supported package path succeeds for the selected pilot cohort.
+- No open BLOCKER issues remain.
+- HIGH issues are fixed, explicitly accepted, or converted into a bounded V1 patch plan.
+- User-facing docs match the tested package path.
+- Release notes list accepted caveats and unsupported paths.
+- Provider-key handling and support language are approved.
+- Remaining GPU, Podman, and restricted-network claims are bounded to validated evidence.
 
 ---
 
@@ -84,30 +253,62 @@ This task should make external testing repeatable, bounded, and evidence-produci
 **Validation**: Pending `.agent_work` validation.
 **Next**: Complete `TASK-066` review disposition, then either fix the route-test isolation/timeout issue or explicitly accept the risk before drafting the pilot/UAT workflow.
 
+### 2026-05-27 - Package-Path Pilot/UAT Plan Drafted
+**Objective**: Start `TASK-073` after the route-test timeout/isolation dependency was closed by `TASK-067` / PR #19.
+**Context**: `TASK-066` validated the CPU-default Docker Desktop and qualified Podman package-runtime paths with bounded caveats. `TASK-067` merged pytest timeout safeguards and route-test runtime isolation, removing the main pre-pilot test-harness blocker.
+**Decision**: Draft the pilot/UAT plan around the validated package path, with Docker Desktop as the primary pilot engine, CPU-default launch, package-local asset import, and explicit boundaries around GPU, Docker-Desktop-free Podman, source-build validation, restricted-network support, and private AOI evidence.
+**Execution**: Added start/stop criteria, supported pilot path, tester acceptance checklist, environment capture, evidence collection, issue reporting, triage rules, support escalation, and V1 completion gate.
+**Output**: `TASK-073` now contains a reviewable package-path UAT plan and points to the user-testing workspace for evidence handling.
+**Validation**: Pending owner/reviewer acceptance and `.agent_work` validation.
+**Next**: Validate `.agent_work`, review the draft with the owner/reviewer, and identify the final package/assets/checksum inputs before tester launch.
+
+### 2026-05-27 - Non-Command-Line User Documentation Pass
+**Objective**: Reduce first-launch confusion for external pilot users who may not have prior command-line or container-runtime experience.
+**Context**: The initial UAT plan was directionally correct but some user-facing docs still described the runtime path as generic Podman-or-Docker, and several commands did not explain where to run them or what success should look like.
+**Decision**: Keep Docker Desktop with WSL 2 as the primary RC1 pilot path, keep Podman as a qualified support-directed path, and require docs/checklists to show PowerShell location, Docker/WSL readiness checks, command purpose, and expected outcomes.
+**Execution**: Updated the Task-073 plan and UAT checklist; synchronized user-facing package docs and Settings-linked HTML docs so default pilot commands use `-Engine docker -Gpu off` and expected outcomes are explicit.
+**Output**: External pilot instructions now include Docker Desktop/WSL 2 readiness checks, PowerShell basics, launch/import/status/stop command outcomes, and clearer support escalation checks.
+**Validation**: `python .agent_work\scripts\validate_agent_work.py` passed; `python .agents\skills\towerscout-end-user-docs-check\scripts\check_doc_commands.py . docs README.md` passed with the known intentional `127.0.0.1` warning in `docs\oci-quick-start.md`; `git diff --check` passed.
+**Next**: Prepare the PR update summary and request owner/reviewer acceptance before external pilot testers start.
+
+### 2026-05-27 - Install-UX Review Follow-Through And TASK-074 Selection
+**Objective**: Apply low-risk install-documentation hardening and route implementation-level first-launch automation to a dedicated task.
+**Context**: The install-UX review recommended clearer release asset naming, checksum handling, first-run expectations, asset ZIP handling, and a future bootstrap/preflight script. The owner agreed with the path forward and specifically asked to preserve Podman support as a qualified path rather than diminishing it.
+**Decision**: Harden current docs only where they reflect existing behavior, and create `TASK-074` for bootstrap/preflight implementation. Docker Desktop remains the primary RC1 pilot path; Podman remains support-directed with explicit prerequisites and validation boundaries.
+**Execution**: Updated Quick Start, Package Guide, Project Overview, Settings-linked HTML, and the UAT checklist to clarify Application Package versus Model & Data Package, GitHub Release asset selection, checksum verification, disk-space expectations, nested asset layout mistakes, first image-pull delay, stop/contact-support conditions, and smoke-test expectations. Created `TASK-074` for the bootstrap/preflight implementation plan.
+**Output**: `TASK-073` now points remaining first-launch automation to `TASK-074` and avoids promising behavior that does not exist yet.
+**Validation**: `python .agent_work\scripts\validate_agent_work.py` passed; `python .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .` passed; `python .agents\skills\towerscout-end-user-docs-check\scripts\check_doc_commands.py . docs README.md` passed with the known intentional `127.0.0.1` warning in `docs\oci-quick-start.md`; `git diff --check` passed.
+**Next**: Commit the hardening updates, then start `TASK-074` implementation planning.
+
 ---
 
 ## Validation Results
 
 ### Test Summary
-**Test Date**: Pending  
-**Test Environment**: Pending  
-**Test Status**: NOT_STARTED
+**Test Date**: May 27, 2026
+**Test Environment**: Documentation/task-state validation only; no external pilot run yet
+**Test Status**: DRAFT_READY
 
 ### Acceptance Criteria Validation
-- [ ] Start/stop criteria documented - PENDING
-- [ ] Tester acceptance checklist ready - PENDING
-- [ ] Environment capture checklist ready - PENDING
-- [ ] Issue-report workflow linked - PENDING
-- [ ] V1 completion gate documented - PENDING
+- [x] Start/stop criteria documented - PASS - See Pilot Start Criteria and Pilot Stop Criteria.
+- [x] Tester acceptance checklist ready - PASS - See Tester Acceptance Checklist.
+- [x] Environment capture checklist ready - PASS - See Environment Capture.
+- [x] Issue-report workflow linked - PASS - See Issue Reporting Workflow and `.agent_work/user-testing/`.
+- [x] Tester-facing handoff artifacts updated - PASS - See `.agent_work/user-testing/instructions/RC1-PILOT-UAT-CHECKLIST.md` and `TESTER-ISSUE-REPORT-CHECKLIST.txt`.
+- [x] Non-command-line first-launch guidance added - PASS - User docs and UAT checklist now include PowerShell location, Docker Desktop/WSL 2 checks, default Docker commands, expected outcomes, and support-safe recovery instructions.
+- [x] Low-risk install-UX hardening added - PASS - Quick Start, Package Guide, Project Overview, Settings-linked HTML, and UAT checklist now clarify Application Package versus Model & Data Package naming, GitHub Release asset selection, checksums, disk-space targets, nested asset layout mistakes, first image-pull delay, support stop points, and smoke-test expectations.
+- [x] Runtime prerequisite preflight routed - PASS - `TASK-074` created and selected for bootstrap/preflight implementation without documenting unimplemented behavior as available.
+- [x] V1 completion gate documented - PASS - See V1 Completion Gate After Pilot.
+- [ ] Owner/reviewer acceptance - PENDING.
 
 ### Issues Identified
 
-None yet.
+- No pilot execution issues yet; this task has only drafted the plan.
 
 ### Remediation Actions
 
-None yet.
+- Keep GPU, Docker-Desktop-free Podman, source-build, restricted-network, and large-AOI scenarios out of external pilot instructions unless owner-approved evidence is added.
 
 ### Sign-off
 
-Pending implementation and validation.
+Draft plan is ready for owner/reviewer review. External pilot should not start until the plan is accepted and the final package/assets/checksum inputs are identified.

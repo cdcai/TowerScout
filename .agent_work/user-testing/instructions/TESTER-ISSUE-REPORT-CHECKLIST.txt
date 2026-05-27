@@ -1,86 +1,118 @@
-TOWERSCOUT TESTER ISSUE REPORT CHECKLIST
-========================================
+TOWERSCOUT RC1 TESTER ISSUE REPORT CHECKLIST
+============================================
 
-Last reviewed: 2026-04-09
-Use this when you get blocked during install, startup, setup, or your first test run.
+Last reviewed: 2026-05-27
+Use this when you get blocked during RC1 package install, startup, setup, asset import, detection, export, or shutdown.
 
 IMPORTANT
 =========
 
 - Do not send API keys.
 - Do not send your full `.env` file.
-- Send screenshots and exact error text whenever possible.
+- Do not send private AOI screenshots or exact private addresses unless explicitly approved.
+- Send screenshots and exact error text whenever possible after redacting sensitive information.
 
 WHAT TO SEND
 ============
 
 Please send all of the items below:
 
-1. Which guide you followed:
-   - `TowerScout_User_Testing_Guide.txt`
-   - `TowerScout_User_Testing_Guide_Windows_Miniconda.txt`
-   - `TowerScout_Development_Setup_Guide.txt`
+1. Which guide or checklist you followed:
+   - `docs/v1-rc1-quick-start.md`
+   - `docs/v1-rc1-package-guide.md`
+   - `docs/towerscout-user-guide.md`
+   - `RC1-PILOT-UAT-CHECKLIST.md`
+   - other:
 
 2. Which step failed:
-   - install packages
-   - start the app
-   - complete the Setup Wizard
-   - run the first detection
+   - extract package
+   - extract assets
+   - start TowerScout
+   - import assets
+   - complete Setup Wizard
+   - open Settings Resource Links
+   - run bounded detection
+   - review results
+   - export results
+   - stop TowerScout
+   - other:
 
 3. The exact command you ran when it failed.
 
 4. The exact error text.
 
-5. A screenshot of the failing window.
+5. A screenshot of the failing window, if it does not expose secrets or private locations.
 
 6. The output of:
 
 ```powershell
-py --version
-git branch --show-current
-git rev-parse --short HEAD
+ver
+docker --version
+docker compose version
 ```
 
-7. The output of:
+If using Podman instead of Docker Desktop, also send:
 
 ```powershell
-Test-Path webapp\model_params\yolov5\newest.pt
-Test-Path webapp\model_params\EN\b5_unweighted_best.pt
+podman --version
+podman machine list
+podman compose version
 ```
 
-8. Whether you were using:
-   - Azure Maps
-   - Google Maps
-   - neither yet
+7. Package and asset information:
 
-9. Whether the problem happened:
-   - before the Setup Wizard appeared
-   - inside the Setup Wizard
-   - after the app loaded
-   - during the first detection run
+- TowerScout package folder name:
+- Release manifest image tag/digest:
+- Asset bundle name/version:
+- Did `-VerifyHashes` pass?
 
-10. Anything you already tried that did not work.
+8. Launch/import details:
 
-HOW TO CAPTURE THE TERMINAL OUTPUT
-==================================
+- Engine used: Docker Desktop / Podman
+- Launch command:
+- Port:
+- GPU mode: off / auto / on
+- Asset import command:
 
-- If the error is already visible in PowerShell, copy the last part of the output and paste it into a text file.
-- If possible, keep the PowerShell window open until you have taken the screenshot.
+9. Provider and network context:
+
+- Provider used: Azure Maps / Google Maps / neither yet
+- Did Setup Wizard save successfully?
+- Are you behind a VPN, proxy, TLS inspection, or restricted network?
+
+10. Detection context:
+
+- Fixture/AOI name:
+- Estimated tile count:
+- Did detection start?
+- Did detection complete?
+- Did results appear in the right-hand panel?
+- Did address text/provider metadata appear?
+
+11. Anything you already tried that did not work.
+
+HOW TO CAPTURE TERMINAL OUTPUT
+==============================
+
+- If the error is visible in PowerShell, copy the relevant output and paste it into a text file.
+- Keep the PowerShell window open until you have taken any needed screenshot.
+- Do not include API keys or full `.env` file contents.
 
 WHAT A GOOD REPORT LOOKS LIKE
 =============================
 
 Example:
 
-- Guide used: `TowerScout_User_Testing_Guide.txt`
-- Failed step: start the app
-- Command: `python towerscout.py dev`
-- Error: `ModuleNotFoundError: No module named 'xyz'`
-- Python version: `Python 3.12.2`
-- Branch: `feature-sprint-05`
-- Commit: `abc1234`
-- Model files present: `True` and `True`
-- Provider: `Google Maps`
-- Screenshot attached: yes
+- Guide used: `RC1-PILOT-UAT-CHECKLIST.md`
+- Failed step: import assets
+- Command: `.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180`
+- Error: `asset_status=degraded; missing model_params/yolov5/newest.pt`
+- Windows: `Microsoft Windows [Version ...]`
+- Engine: Docker Desktop, Docker version copied from `docker --version`
+- Package folder: `towerscout-v0.1.0-rc1`
+- Image digest: copied from manifest or launch output
+- Asset hash verification: failed
+- Provider: Azure Maps
+- Screenshot attached: yes, redacted
 
 That is enough for the team to triage the issue quickly.

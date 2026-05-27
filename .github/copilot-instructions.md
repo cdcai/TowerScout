@@ -26,7 +26,8 @@ The project still carries public-health workflow expectations:
 - The current release direction is GitHub-first and engine-aware: GitHub Releases should be the normal user-facing release control plane, a release ZIP plus pinned GHCR image digest is the preferred package shape, and Docker Desktop is the primary controlled RC1 pilot runtime unless owner-approved support boundaries say otherwise.
 - `TASK-071`, `TASK-072`, and `TASK-079` are complete enough to feed the RC path. `TASK-075` has implemented the single GPU-capable package direction with CPU-safe default launch; broad GPU acceleration claims remain pending NVIDIA Docker Desktop WSL2 validation.
 - `TASK-066` has validated the digest-pinned Docker Desktop and Podman package runtime paths for CPU-default launch. Podman evidence is qualified: on the validation host, `podman compose` delegated to Docker Compose v5.1.3, and Podman source-build/base-image pulls from Docker Hub still fail TLS certificate verification inside the Podman VM.
-- `TASK-073` remains selected for Sprint 06, but broad external pilot/UAT prep should wait until the `TASK-066` Flask route-test timeout/isolation gap is fixed or explicitly accepted as an internal-only validation risk.
+- `TASK-067` has closed the Flask route-test timeout/isolation gap with pytest timeout safeguards and isolated test runtime paths.
+- `TASK-073` is the next active Sprint 06 path for clean-machine pilot/UAT planning before asking external users to test.
 
 ### Completed Sprint 04 Summary
 
@@ -82,10 +83,10 @@ Sprint 04 materially changed what an agent should assume about the project. The 
 The current path forward is centered on finishing Sprint 06 V1 RC1 / pilot-ready release readiness:
 
 1. Close out `TASK-066` with the digest-pinned Docker/Podman validation evidence and bounded caveats.
-2. Fix or explicitly accept the Flask route-test timeout/isolation gap before broad `TASK-073` pilot prep.
-3. Route the timeout/isolation fix to `TASK-067` and/or `TASK-068` if it is handled before pilot prep.
+2. Use the merged `TASK-067` route-test isolation and timeout safeguards as the automated-review baseline before broad pilot prep.
+3. Complete `TASK-073` clean-machine pilot/UAT planning before asking external users to test.
 4. Keep GPU acceleration support language bounded until NVIDIA Docker Desktop WSL2 validation, CPU/GPU parity, and timing evidence exist.
-5. Start `TASK-073` only after the release-candidate gate has either passed or recorded owner-accepted residual risks.
+5. Route deeper package-runtime preflight automation to `TASK-074` if pilot planning or tester feedback shows launch friction remains too high.
 
 `TASK-026` CPU optimization and `TASK-029` multi-provider fallback remain follow-on backlog work unless Sprint 06 evidence makes them release-critical.
 
@@ -514,7 +515,7 @@ Current CI includes:
 
 Node 18 is now end-of-life. Treat migration of the frontend CI/runtime baseline to a supported Node LTS line as CI maintenance work that should be validated against the current build and Puppeteer smoke paths before changing the workflow.
 
-Current CI does not yet have per-job or per-pytest timeout safeguards. If pytest stalls during collection, especially around `tests/unit/test_flask_routes.py`, split the command and capture diagnostics rather than repeatedly running broad suites. The route-test bootstrap should be isolated from real local `.env`, logs, uploads, sessions, and cache paths before it is treated as a fast release gate.
+Current CI has per-job timeout limits and pytest timeout safeguards. Route-test imports are isolated from real local `.env`, logs, uploads, sessions, and cache paths through the test bootstrap. Full asset-backed package validation remains manual/advisory unless a later `TASK-067`/`TASK-074` ratchet promotes a bounded package smoke gate.
 
 Do not describe container release validation as fully automated CI coverage yet. CI can attempt to build the image on `main`, and the manual GHCR publish workflow can publish a digest-pinned image, but full asset-backed release validation remains Sprint 06 release-candidate follow-through. `TASK-066` validated the digest-pinned Docker Desktop and Podman package-runtime paths, but Podman support language must distinguish package runtime, Docker-Desktop-free Compose-provider coverage, and source-build/base-image TLS behavior.
 
@@ -702,10 +703,10 @@ The original guidance benefited from explicitly naming recent completed work. Th
 
 ### Sprint 06 Priority Sequence
 
-1. Finish `TASK-066` release-candidate validation evidence with the Docker Desktop, qualified Podman, GPU, and test-harness boundaries clearly recorded.
-2. Fix or explicitly accept the `tests/unit/test_flask_routes.py` timeout/isolation gap before broad external pilot prep.
-3. Route pytest timeout safeguards, route-test isolation, and CI release-gate tightening to `TASK-067` and/or `TASK-068`.
-4. Complete `TASK-073` clean-machine pilot / UAT execution planning before asking external users to test.
+1. Finish `TASK-066` release-candidate validation evidence with the Docker Desktop, qualified Podman, GPU, and remaining release-boundary caveats clearly recorded.
+2. Treat the `TASK-067` pytest timeout and route-test isolation baseline as merged.
+3. Complete `TASK-073` clean-machine pilot / UAT execution planning before asking external users to test.
+4. Pull in `TASK-074` runtime prerequisite preflight if pilot planning shows testers still need too much manual engine/asset/TLS diagnosis.
 5. Keep `TASK-026`, `TASK-029`, architecture work, and V2 feature work behind release-candidate readiness unless new evidence makes one release-critical.
 
 ### Practical Agent Takeaway
@@ -716,7 +717,7 @@ An agent should leave with the following understanding:
 - the repo has a merged Docker-compatible / OCI container baseline and local launcher MVP
 - the release path now uses a digest-pinned GHCR image and package-local asset import flow
 - CPU-default Docker Desktop and qualified Podman package-runtime validation have passed, while GPU and Docker-Desktop-free Podman claims remain bounded
-- local/CI pytest timeout safeguards and Flask route-test isolation remain follow-up work before broad pilot prep
+- local/CI pytest timeout safeguards and Flask route-test isolation are merged through `TASK-067`
 - filesystem sessions and disk-backed config writes are real architectural constraints
 - Google and Azure workflows are both important
 - outbreak-investigation workflows are the highest-value legacy surface to preserve

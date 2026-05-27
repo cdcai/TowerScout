@@ -14,7 +14,9 @@ V1 RC1 supports:
 - Single-user local use.
 - CPU baseline.
 - Normal outbound internet access for GHCR image pulls and map providers.
-- A Docker-compatible or OCI-compatible container engine with Compose support.
+- Docker Desktop as the primary controlled RC1 pilot engine.
+- Podman as a qualified package-runtime option only when a running Podman
+  machine and approved Compose provider are already available.
 - One valid Google Maps or Azure Maps provider key.
 
 Out of scope for this release path:
@@ -28,10 +30,10 @@ Out of scope for this release path:
 - Native Windows installer behavior.
 - Bundled OCI image archive workflow.
 
-Podman is the preferred open-source Windows runtime target when the Podman
-machine is running and an approved Compose provider is installed. Docker
-compatibility remains useful where Docker Desktop is licensed, approved, and
-available.
+Docker Desktop is the default pilot support path because that is the path most
+external testers will be asked to exercise first. Podman remains a qualified
+support path for sites that explicitly choose it and can provide a working
+Podman machine plus Compose provider.
 
 ## Prerequisite Software Checklist
 
@@ -44,24 +46,45 @@ Before a pilot user starts the package, confirm the workstation has:
 - A modern browser such as Microsoft Edge or Google Chrome.
 - A ZIP extraction path that preserves the package folder structure.
 - Normal outbound internet access to GHCR and the selected map provider.
-- Several GB of free disk space for the control package, asset bundle,
-  container image, and engine volumes. CUDA-capable images require more disk
-  space than CPU-only images.
+- Several GB of free disk space for the Application Package, Model & Data
+  Package, container image, and engine volumes. CUDA-capable images require
+  more disk space than CPU-only images. Use `15 GB` free as a minimum and
+  `25 GB` free as the recommended first-setup target.
 - One approved container engine path:
-  - Podman CLI or Podman Desktop, a created and running Podman machine, and an
-    approved Compose provider such as `podman-compose`.
-  - Docker Desktop, where licensing, procurement, endpoint policy, and local
-    installation approval allow it.
+  - Docker Desktop with the WSL 2 backend is the primary V1 RC1 pilot path.
+    Docker's current Windows requirements include WSL `2.1.5` or later, 8 GB
+    RAM, and hardware virtualization enabled in BIOS/UEFI.
+  - Podman CLI or Podman Desktop is a qualified support path only when the
+    Podman machine is created and running and an approved Compose provider such
+    as `podman-compose` is installed.
 - One valid site/user-owned restricted Google Maps or Azure Maps provider key.
 
 The package path does not require Git, Python, Conda, Node.js, VS Code, or a
 source-code checkout on the pilot user's computer.
 
-Useful support checks before launch:
+For users who do not normally use the command line, open commands from Windows
+PowerShell in the extracted TowerScout package folder. In File Explorer, open
+the package folder, click the address bar, type `powershell`, and press Enter.
+Commands beginning with `.\` run scripts from that folder.
+
+Useful Docker Desktop checks before launch:
 
 ```powershell
+wsl --status
+wsl --list --verbose
 docker --version
 docker compose version
+```
+
+Expected result: WSL is installed, any listed Linux distribution uses version
+`2`, and Docker commands print version information while Docker Desktop is
+running. If WSL is not installed and local policy allows installation,
+Microsoft's current install path is `wsl --install` from an Administrator
+PowerShell window, followed by a restart when Windows asks.
+
+Useful Podman checks when support explicitly chooses Podman:
+
+```powershell
 podman --version
 podman machine list
 podman compose version
@@ -71,30 +94,58 @@ Only the selected engine needs to pass its checks. If both Docker and Podman
 are installed, automatic engine selection can choose Docker first. Use
 `-Engine podman` consistently when validating the Podman path.
 
+## Stop And Contact Support
+
+Stop validation and contact support if:
+
+- Docker Desktop is not installed, not approved, or cannot start on the primary
+  pilot path.
+- WSL is unavailable, or `wsl --list --verbose` shows version `1` and the user
+  does not have administrator approval to update it.
+- An Application Package or Model & Data Package checksum does not match.
+- The Application Package and Model & Data Package release versions do not
+  match.
+- Asset import reports missing, corrupt, or hash-failed files.
+- TowerScout readiness state is `fatal`.
+- Provider validation repeatedly fails after the key value and provider setup
+  have been checked.
+
+Do not ask users to send provider keys, full `.env` files, raw screenshots,
+browser traces, cached provider responses, named-volume contents, exported
+datasets, or unredacted raw logs unless the site has an approved handling
+procedure.
+
 ## Release Artifacts
 
-A normal V1 RC1 handoff has two artifact groups.
+A normal V1 RC1 handoff has two artifact groups. On GitHub Releases, download
+these files from the release `Assets` section, not from GitHub's automatic
+`Source code (zip)` or `Source code (tar.gz)` links.
 
-Control package:
+Application Package:
 
 - `towerscout-v0.1.0-rc1.zip`
 - `towerscout-v0.1.0-rc1.zip.sha256`
 
-Asset package:
+Model & Data Package:
 
 - `towerscout-v0.1.0-rc1-assets-<asset-version>.zip`
 - `towerscout-v0.1.0-rc1-assets-<asset-version>.zip.sha256`
 
-The exact asset filename can change by release. The control ZIP, asset ZIP,
-`IMAGE.txt`, `release-manifest.v1.json`, and `webapp/asset_manifest.v1.json`
-must agree about the release handoff.
+The exact asset filename can change by release. The Application Package ZIP,
+Model & Data Package ZIP, `IMAGE.txt`, `release-manifest.v1.json`, and
+`webapp/asset_manifest.v1.json` must agree about the release handoff.
 
-The control package contains launch scripts, Compose files, docs, compliance
-files, `IMAGE.txt`, `SHA256SUMS.txt`, `release-manifest.v1.json`, and the asset
-manifest. It does not contain the large model and ZIP-code data files.
+Download all four files into the same local folder before verification. The
+release version in the Application Package and Model & Data Package filenames
+must match, for example `v0.1.0-rc1`.
 
-The asset package contains the large runtime files required for detection and
-ZIP-code search.
+The Application Package contains launch scripts, Compose files, docs,
+compliance files, `IMAGE.txt`, `SHA256SUMS.txt`, `release-manifest.v1.json`,
+and the asset manifest. It does not contain the large model and ZIP-code data
+files.
+
+The Model & Data Package contains the large runtime files required for
+detection and ZIP-code search.
 
 ## Verify Downloads Before Extracting
 
@@ -112,9 +163,22 @@ The `Hash` value from `Get-FileHash` must match the SHA-256 value in the
 corresponding `.sha256` file. If the values do not match, stop validation and
 obtain a fresh copy of the affected release artifact.
 
-## Control Package Layout
+Example: these values match:
 
-After extracting the control ZIP, the package root should include:
+```text
+Get-FileHash output:
+HASH      0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF
+
+.sha256 file:
+0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef  towerscout-v0.1.0-rc1.zip
+```
+
+Uppercase and lowercase letters are not important. The letters and numbers
+must otherwise be identical.
+
+## Application Package Layout
+
+After extracting the Application Package ZIP, the package root should include:
 
 ```text
 start.bat
@@ -153,7 +217,7 @@ PyTorch flavor, either `cpu` or `cuda121`.
 Run the launcher once from the package root before importing assets:
 
 ```powershell
-.\start.bat
+.\start.bat -Engine docker -Gpu off
 ```
 
 The launcher creates `.env` from `.env.example` when `.env` is missing, starts
@@ -165,12 +229,17 @@ run copies that pinned value into `.env`.
 Readiness may report `setup_required` before provider keys are saved and
 `degraded` before assets are imported. Those states are normal during setup.
 
+Expected result: PowerShell prints that TowerScout is starting with Docker,
+then reports a readiness state. A browser window should open to
+`http://localhost:5000`. If the browser does not open, leave PowerShell open
+and manually open that URL.
+
 If validation or support chooses a specific engine, use the same `-Engine`
 value on every helper command because Docker and Podman use separate named
 volumes:
 
 ```powershell
-.\start.bat -Engine podman
+.\start.bat -Engine podman -Gpu off
 .\scripts\import-assets.cmd -Engine podman -Source assets
 .\scripts\status.cmd -Engine podman
 .\scripts\logs.cmd -Engine podman -Tail 200
@@ -179,7 +248,7 @@ volumes:
 
 ## Asset Staging And Import
 
-The asset ZIP root must contain these entries directly:
+The Model & Data Package ZIP root must contain these entries directly:
 
 ```text
 model_params\
@@ -187,10 +256,11 @@ data\
 asset_manifest.v1.json
 ```
 
-Do not add an extra nested `assets\` directory inside the asset ZIP.
+Do not add an extra nested `assets\` directory inside the Model & Data Package
+ZIP.
 
-Extract the asset ZIP contents into the release package `assets\` folder. The
-staged source should be:
+Extract the Model & Data Package ZIP contents into the release package
+`assets\` folder. The staged source should be:
 
 ```text
 assets\
@@ -211,23 +281,38 @@ assets\
   asset_manifest.v1.json
 ```
 
+If extraction creates this layout, it is wrong:
+
+```text
+assets\
+  assets\
+    model_params\
+    data\
+    asset_manifest.v1.json
+```
+
+Move the inner `model_params`, `data`, and `asset_manifest.v1.json` entries up
+one level so they sit directly inside the package `assets\` folder. If the
+outer `assets\` folder already contains other files and a nested `assets\`
+folder, treat the layout as ambiguous and ask support before continuing.
+
 Normal import:
 
 ```powershell
-.\scripts\import-assets.cmd -Source assets
+.\scripts\import-assets.cmd -Engine docker -Source assets
 ```
 
 Release-candidate or support validation import:
 
 ```powershell
-.\scripts\import-assets.cmd -Source assets -VerifyHashes
+.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180
 ```
 
 If the launcher was started with a non-default port, pass the same `-Port`
 value to the asset importer:
 
 ```powershell
-.\scripts\import-assets.cmd -Source assets -Port 5001 -VerifyHashes
+.\scripts\import-assets.cmd -Engine docker -Source assets -Port 5001 -VerifyHashes -RestartWaitSeconds 180
 ```
 
 The importer copies assets into the selected engine's named volumes. It does
@@ -237,12 +322,16 @@ after the copy so the running application discovers the imported model files.
 Run the launcher once first so `.env` exists and the selected release image is
 pinned.
 
+Expected result: the importer completes without missing/corrupt asset errors,
+restarts TowerScout, and waits for readiness after restart. If hash verification
+fails, stop validation and obtain the correct Model & Data Package.
+
 ## Starting Or Reopening TowerScout
 
 From the package root:
 
 ```powershell
-.\start.bat
+.\start.bat -Engine docker -Gpu off
 ```
 
 The launcher:
@@ -252,6 +341,10 @@ The launcher:
 - Polls `/api/readiness`.
 - Opens `http://localhost:5000` after the application shell is reachable.
 
+The first launch may need to pull the pinned TowerScout image from GHCR. This
+can take several minutes, especially on first setup or slower networks. Keep
+PowerShell open until the launcher reports readiness or a clear failure.
+
 Use `localhost` for browser access. The Azure Maps browser SDK passed release
 validation from the `localhost` origin and may reject some `127.0.0.1` browser
 requests.
@@ -259,20 +352,20 @@ requests.
 To force an engine:
 
 ```powershell
-.\start.bat -Engine podman
-.\start.bat -Engine docker
+.\start.bat -Engine podman -Gpu off
+.\start.bat -Engine docker -Gpu off
 ```
 
 For support checks without opening the browser:
 
 ```powershell
-.\start.bat -NoBrowser
+.\start.bat -Engine docker -Gpu off -NoBrowser
 ```
 
 For a non-default port:
 
 ```powershell
-.\start.bat -Port 5001
+.\start.bat -Engine docker -Gpu off -Port 5001
 ```
 
 ## Optional GPU Launch Boundary
@@ -319,7 +412,7 @@ fallback.
 Check status:
 
 ```powershell
-.\scripts\status.cmd
+.\scripts\status.cmd -Engine docker
 ```
 
 TowerScout readiness states:
@@ -397,8 +490,13 @@ After readiness is `ready`:
 8. Review results in the detection list and map.
 9. Export CSV/KML or dataset results only if allowed by the pilot workflow.
 
-Use small search areas for release-candidate smoke checks. Do not use sensitive
-AOIs in broad screenshots or public issue reports.
+Use the owner-provided public fixture when available. If a fixture has not been
+provided, use a non-sensitive approved area and keep the first run small,
+preferably `1-6` tiles. A successful smoke check means the detection workflow
+completes without crashing and the map/review panel update, even if the result
+count is zero for the selected area.
+
+Do not use sensitive AOIs in broad screenshots or public issue reports.
 
 ## Troubleshooting
 
@@ -407,8 +505,8 @@ AOIs in broad screenshots or public issue reports.
 Run:
 
 ```powershell
-.\scripts\status.cmd
-.\scripts\logs.cmd -Tail 200
+.\scripts\status.cmd -Engine docker
+.\scripts\logs.cmd -Engine docker -Tail 200
 ```
 
 Common causes:
@@ -433,19 +531,28 @@ For Podman, confirm:
 The launcher reports Compose-provider information before startup and validates
 a `PODMAN_COMPOSE_PROVIDER` override before Compose is invoked.
 
-### Docker
+### Docker Desktop
 
 Docker Desktop use depends on local license, procurement, endpoint policy, and
-installation approval. If Docker is blocked or unavailable, use the validated
-Podman CPU path when allowed by local policy.
+installation approval. For the primary pilot path, Docker Desktop should be
+open from the Start menu, the WSL 2 backend should be selected when the option
+is visible, and these commands should print version information:
+
+```powershell
+docker --version
+docker compose version
+```
+
+If Docker is blocked or unavailable, use the qualified Podman CPU path only
+when allowed by local policy and support has confirmed the Podman prerequisites.
 
 ### Assets Missing Or Corrupt
 
-Recheck the asset ZIP version and layout, then run:
+Recheck the Model & Data Package ZIP version and layout, then run:
 
 ```powershell
-.\scripts\import-assets.cmd -Source assets -VerifyHashes
-.\scripts\status.cmd
+.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180
+.\scripts\status.cmd -Engine docker
 ```
 
 Do not continue release-candidate validation if required asset hashes fail.
@@ -498,8 +605,10 @@ Useful evidence:
 - `SOURCE.txt`.
 - `SBOM.txt`.
 - `webapp\asset_manifest.v1.json`.
-- `scripts\status.cmd` output.
-- A reviewed and redacted summary of `scripts\logs.cmd -Tail 200`.
+- `scripts\status.cmd -Engine docker` output, or the same command with the
+  explicitly selected engine.
+- A reviewed and redacted summary of `scripts\logs.cmd -Engine docker -Tail
+  200`, or the same command with the explicitly selected engine.
 - Which engine was selected: Docker or Podman.
 - For Podman, the selected Compose provider.
 - Readiness state and recovery hints.
@@ -522,8 +631,9 @@ Do not share unless a site-specific support procedure explicitly approves:
 ## Source, License, And Terms
 
 The YOLO-enabled V1 RC1 package/image is distributed with AGPL-3.0 obligations
-and is not Apache-2.0-only. The release control ZIP is authoritative for
-release-specific source, image digest, checksum, SBOM, and manifest metadata.
+and is not Apache-2.0-only. The release Application Package ZIP is
+authoritative for release-specific source, image digest, checksum, SBOM, and
+manifest metadata.
 
 Package files:
 

@@ -3,7 +3,7 @@
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
 **Last Updated**: May 27, 2026
 **Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
-**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, and `TASK-071` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` digest-pinned Docker Desktop and Podman package runtime validation passed for CPU-default launch, with Podman Docker Hub source-build TLS and NVIDIA GPU evidence still bounded follow-ups; `TASK-067` is active to resolve the Flask route-test timeout/isolation gap and remove stale legacy agent guidance before `TASK-073`.
+**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, and `TASK-067` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` digest-pinned Docker Desktop and Podman package runtime validation passed for CPU-default launch, with Podman Docker Hub source-build TLS and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` is active for clean-machine pilot/UAT planning and low-risk install-doc hardening; `TASK-074` is selected next for runtime prerequisite preflight/bootstrap implementation.
 
 ---
 
@@ -177,13 +177,13 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 - `/docs/` serves the package-local Quick Start, `/license` serves a styled HTML source/license page, and `/license.txt` remains available for plain-text notices.
 - Release package and runtime image assembly now include package-local docs needed by Resource Links.
 - Older source/Conda tester guides are labeled as legacy source-install guidance.
-- The Quick Start and support docs now explicitly list prerequisite software: Windows 11 AMD64, PowerShell, browser, outbound internet, disk space, one supported container engine, and provider key; they also state Git/Python/Conda/Node/VS Code are not required for the package path.
+- The Quick Start and support docs now explicitly list prerequisite software: Windows 11 AMD64, PowerShell, browser, outbound internet, disk space, Docker Desktop/WSL 2 as the primary pilot path, qualified Podman boundaries, and provider key; they also state Git/Python/Conda/Node/VS Code are not required for the package path.
 - Focused Flask route, license, release package, docs-command, and agent-work validation passed with only the known `127.0.0.1` docs warning.
 
 **User Value**: Converts the engineered release package into a self-service pilot path instead of a support-only handoff.
 
 ### **TASK-066: Release Candidate Validation Gate**
-**Status**: IN_PROGRESS - digest-pinned Docker Desktop and Podman CPU-default package paths passed; route-test isolation routed to TASK-067; Podman source-build TLS and NVIDIA GPU evidence pending
+**Status**: IN_PROGRESS - digest-pinned Docker Desktop and Podman CPU-default package paths passed; route-test isolation closed by TASK-067 / PR #19; Podman source-build TLS and NVIDIA GPU evidence pending
 **Type**: C (Release Engineering / Validation)  
 **Priority**: CRITICAL  
 **Estimated Effort**: 1-2 days (8-16 hours)  
@@ -200,12 +200,12 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 - Docker Desktop and Podman package runtime paths are validated for CPU-default launch against the digest-pinned GHCR image. On this host, `podman compose` delegates to Docker Compose v5.1.3 as its external provider.
 - Podman source-build/base-image pulls from Docker Hub still fail TLS certificate verification inside the Podman VM before TowerScout code runs; this does not block the normal GHCR package path but remains a developer/build-path caveat.
 - GPU acceleration remains unclaimed until NVIDIA Docker Desktop WSL2 host validation, fixed-fixture parity, and timing evidence pass.
-- Repeated broad pytest review commands isolated a non-runtime test-harness gap: `tests/unit/test_flask_routes.py` can stall during collection because it imports the full production Flask module and local `.env` path before fixtures isolate config. This should be fixed or explicitly accepted before broad `TASK-073` pilot prep.
+- The non-runtime Flask route-test timeout/isolation gap identified during review was closed by `TASK-067` / PR #19. Focused route/config/runtime tests now run with `pytest-timeout` active and isolated test runtime paths.
 
 **User Value**: Prevents end-user testing from being dominated by known package/docs/asset gaps and produces evidence that the V1 RC1 path is actually usable.
 
 ### **TASK-067: CI Release Gate Tightening**
-**Status**: VALIDATED - focused PR ready
+**Status**: COMPLETED - PR #19 merged
 **Type**: C (CI / Release Engineering / Test Reliability)
 **Priority**: HIGH
 **Estimated Effort**: 0.5-1 day (4-8 hours)
@@ -217,25 +217,46 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **Dependencies**: `TASK-066`; current CI workflow; route-test coverage; `.github` guidance baseline.
 
 **Current State**:
-- Pytest timeout safeguards, CI timeout limits, route-test runtime path isolation, and legacy `AGENTS.md/` removal are implemented and locally validated in a focused follow-up branch.
-- Focused validation passed for Flask routes, runtime/config path helpers, Task-079 reliability coverage, CI workflow summary, `.agent_work` validation, and `git diff --check`.
+- PR #19 merged on May 27, 2026, adding pytest timeout safeguards, CI timeout limits, route-test runtime path isolation, and legacy `AGENTS.md/` removal.
+- Focused validation passed for Flask routes, runtime/config path helpers, Task-079 reliability coverage, CI workflow summary, `.agent_work` validation, `git diff --check`, and pytest timeout config recognition.
 - This task intentionally keeps broader asset-backed package smoke checks advisory unless a later release-gate ratchet promotes them.
 
 **User Value**: Restores confidence in internal validation before external pilot prep and reduces the chance that future agents follow stale instructions.
 
 ### **TASK-073: Clean-Machine Pilot / UAT Execution Plan**
-**Status**: NOT_STARTED - selected for Sprint 06; recommended after TASK-067 route-test gap closeout
+**Status**: IN_PROGRESS - pilot/UAT plan and non-command-line first-launch docs underway
 **Type**: B/C (User Testing / Release Validation)  
 **Priority**: HIGH  
 **Estimated Effort**: 0.5-1 day (4-8 hours)  
 **Target Sprint**: Sprint 06 V1 RC1  
 **Task File**: `.agent_work/tasks/active/TASK-073-clean-machine-uat-plan.md`
 
-**Objective**: Define the controlled pilot/UAT workflow, tester instructions, acceptance checklist, environment capture, issue-report workflow, success criteria, and support escalation path.
+**Objective**: Define the controlled pilot/UAT workflow, tester instructions, acceptance checklist, environment capture, issue-report workflow, success criteria, support escalation path, and first-launch guidance for users without prior command-line experience.
 
 **Dependencies**: `TASK-066`; `TASK-067`; draft user package docs.
 
 **User Value**: Ensures external testing starts from a repeatable, evidence-producing workflow instead of ad hoc feedback collection.
+
+### **TASK-074: Runtime Prerequisite Preflight**
+**Status**: NOT_STARTED - selected as next implementation candidate after `TASK-073` documentation hardening
+**Type**: B/C (Launcher / Supportability / Release UX)
+**Priority**: HIGH
+**Estimated Effort**: 1-2 days (8-16 hours) for RC1 MVP
+**Target Sprint**: Sprint 06 V1 RC1
+**Task File**: `.agent_work/tasks/active/TASK-074-runtime-prerequisite-preflight.md`
+
+**Objective**: Implement a Windows package bootstrap/preflight layer that reduces first-launch friction for V1 RC1 users while preserving the validated release package boundaries.
+
+**Current Direction**:
+- Keep Docker Desktop as the primary RC1 pilot path.
+- Keep Podman as a qualified support-directed path when a running Podman machine and approved Compose provider are available.
+- Add a top-level bootstrap/preflight entry point that checks engine readiness, Compose availability, WSL/virtualization hints, disk space, port availability, checksums, release/version matching, asset ZIP layout, readiness state, and support-safe next actions.
+- Reuse existing `start.bat`, `scripts/launch.ps1`, `scripts/import-assets.ps1`, and status/log helpers rather than replacing the validated package path.
+- Do not claim hosted asset download, native installer behavior, OCI image archives, Docker-Desktop-free Podman beyond validated boundaries, or GPU support beyond `TASK-075` evidence.
+
+**Dependencies**: `TASK-071`; `TASK-073`; `TASK-066`; `TASK-075`; current launch/import/status scripts.
+
+**User Value**: Converts the most error-prone first-launch checks into guided, plain-English support output before broad external UAT, reducing the chance that non-command-line users get stuck on engine setup, release-file mismatch, asset layout, or readiness interpretation.
 
 ---
 
@@ -246,7 +267,6 @@ These tasks are important for V1 RC1, but they are not yet active task files in 
 | Task | Recommended Handling | Reason |
 |---|---|---|
 | `TASK-076` Provider API Key Exposure And Restriction Policy | Candidate for parallel Sprint 06 work | Browser map SDK keys remain client-visible; v1 needs an approved restriction/support policy or an engineering blocker. AGPL does not change provider/API terms. |
-| `TASK-075` Single GPU-Capable Package Implementation | Candidate follow-up after `TASK-079` closeout | `TASK-079` produced the feasibility evidence and a source-backed plan. Start with shared `TOWERSCOUT_DEVICE` policy resolution, EfficientNet memory-bound CUDA chunking, readiness diagnostics, and fixed-fixture parity checks; keep the default launch CPU-safe and require CPU-only plus NVIDIA Docker Desktop WSL2 validation before changing RC support language. |
 
 ---
 
@@ -256,7 +276,6 @@ Do not forget these follow-through tasks. They are intentionally kept in `.agent
 
 | Task | Pull Into Sprint 06 If | Notes |
 |---|---|---|
-| `TASK-074` Runtime Prerequisite Preflight | Clean-machine validation shows users/support still have to manually reason through Podman/Docker/Compose/ports/assets/TLS. | Conditional but likely. This is the first candidate to pull in if launch friction remains high. |
 | `TASK-068` Windows Test Portability And Script Validation | Script validation remains environment-sensitive, Flask route tests load local runtime config, or PowerShell/Windows coverage is needed before external UAT. | Useful release-support follow-through, especially around Windows-first helper scripts and isolating tests from local `.env`, logs, uploads, sessions, and cache paths. |
 | `TASK-077` Public Release Manifest And Asset Import Hardening | `TASK-069` AGPL release compliance needs a package payload, or `TASK-066` shows copy-then-verify import is too risky. | Pull forward the narrow compliance-payload slice now: release manifest, source URL/ref, checksums, image digest, SBOM reference, model/data terms, and revocation notes. Keep staged allowlist-only asset activation as follow-up unless validation makes it release-critical. |
 

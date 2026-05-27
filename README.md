@@ -11,10 +11,12 @@ TowerScout release package, start here instead:
 - [Full Package Guide](docs/v1-rc1-package-guide.md)
 - [User Guide](docs/towerscout-user-guide.md)
 
-The normal package path assumes Windows 11 AMD64, one supported container
-engine such as Podman or Docker Desktop, normal outbound internet access, and
-one valid Google Maps or Azure Maps key. You do not need Git, Python, Conda,
-Node.js, VS Code, or a source checkout for the normal package workflow.
+The normal package path assumes Windows 11 AMD64, Docker Desktop with the WSL 2
+backend as the primary pilot engine, normal outbound internet access, and one
+valid Google Maps or Azure Maps key. Podman is a qualified support path only
+when a running Podman machine and approved Compose provider are already
+available. You do not need Git, Python, Conda, Node.js, VS Code, or a source
+checkout for the normal package workflow.
 
 ## About TowerScout 
 

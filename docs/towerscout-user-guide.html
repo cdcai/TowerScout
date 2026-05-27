@@ -28,7 +28,8 @@
     <main class="doc-main">
       <section class="doc-section" id="before">
         <h2>Before Using This Guide</h2>
-        <p>This guide assumes the package setup work is already complete: a supported container engine is installed and running, required assets are imported, TowerScout opens at <code>http://localhost:5000</code>, and at least one provider key is configured.</p>
+        <p>This guide assumes the package setup work is already complete: Docker Desktop is installed, approved, and running for the primary RC1 pilot path or support has explicitly directed you to a qualified Podman path; required assets are imported; TowerScout opens at <code>http://localhost:5000</code>; and at least one provider key is configured.</p>
+        <p>When this guide shows package commands, run them from Windows PowerShell opened in the extracted TowerScout package folder. Commands that begin with <code>.\</code> run scripts from that folder.</p>
         <p>If any of those are not true, start with the <a href="/docs/v1-rc1-quick-start.html">Quick Start</a>.</p>
       </section>
       <section class="doc-section" id="provider">
@@ -65,7 +66,7 @@
       </section>
       <section class="doc-section" id="help">
         <h2>Getting Help</h2>
-        <p>Report what you were trying to do, the release version, Docker or Podman engine choice, readiness state from <code>scripts\status.cmd</code>, and a reviewed redacted log summary if support asks for it.</p>
+        <p>Report what you were trying to do, the release version, Docker Desktop or support-directed Podman engine choice, readiness state from <code>scripts\status.cmd -Engine docker</code> or the same command with the explicitly selected engine, and a reviewed redacted log summary if support asks for it.</p>
         <p>Do not share provider keys, <code>.env</code>, raw logs, raw screenshots, browser network traces, cached provider responses, exported datasets, named-volume contents, or sensitive AOIs unless your site has approved handling.</p>
         <p>First-run setup is covered in the <a href="/docs/v1-rc1-quick-start.html">Quick Start</a>.</p>
       </section>

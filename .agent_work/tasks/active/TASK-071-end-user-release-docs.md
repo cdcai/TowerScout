@@ -167,6 +167,15 @@ This task should replace or clearly distinguish older source/Conda tester guidan
 **Validation**: Focused route/license/package tests passed with 42 passing tests and the existing `datetime.utcnow()` warning.
 **Next**: Merge PR16 after review, then execute `TASK-066` against the package docs and decide which remaining checks should become CI gates.
 
+### 2026-05-27 - Post-Review Install Documentation Hardening
+**Objective**: Keep completed Task-071 documentation surfaces aligned with the later `TASK-073` install-UX review.
+**Context**: The install-UX review found that the package docs were directionally correct but could further reduce first-launch confusion by separating Application Package and Model & Data Package naming, spelling out GitHub Release asset selection, checksum comparison, nested asset extraction mistakes, disk-space expectations, first image-pull delay, stop/contact-support points, and smoke-test expectations.
+**Decision**: Apply low-risk documentation updates now because they describe existing behavior. Do not document a bootstrap/preflight flow as available until `TASK-074` implements it. Keep Settings-linked HTML synchronized with Markdown.
+**Execution**: Updated the Quick Start, Package Guide, Project Overview, and Settings-linked HTML docs in the `TASK-073` hardening pass.
+**Output**: Task-071 remains completed, with the current docs carrying the latest user-facing install guidance while implementation-level startup automation is routed to `TASK-074`.
+**Validation**: `python .agent_work\scripts\validate_agent_work.py` passed; `python .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .` passed; `python .agents\skills\towerscout-end-user-docs-check\scripts\check_doc_commands.py . docs README.md` passed with the known intentional `127.0.0.1` warning in `docs\oci-quick-start.md`; `git diff --check` passed.
+**Next**: Use the hardened docs as the baseline for `TASK-074` implementation and later regenerate/update HTML if bootstrap behavior changes user instructions.
+
 ---
 
 ## Validation Results
