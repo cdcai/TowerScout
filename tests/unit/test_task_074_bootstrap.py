@@ -56,6 +56,16 @@ def test_bootstrap_entrypoint_is_packaged_and_reuses_validated_scripts():
     assert '"scripts\\lib\\TowerScoutBootstrap.ps1"' in package_script
 
 
+def test_bootstrap_verify_only_does_not_stage_asset_zip_before_exit():
+    bootstrap = BOOTSTRAP_SCRIPT.read_text(encoding="utf-8")
+    helper = BOOTSTRAP_LIB.read_text(encoding="utf-8")
+
+    assert "Test-TowerScoutAssetZipReleaseMatch" in helper
+    assert "Test-TowerScoutAssetZipReleaseMatch -RootPath $repoRoot -ZipPath $resolvedAssetZip" in bootstrap
+    assert bootstrap.index("Resolve-TowerScoutBootstrapEngine") < bootstrap.index("if ($VerifyOnly)")
+    assert bootstrap.index("if ($VerifyOnly)") < bootstrap.index("Expand-TowerScoutAssetZip")
+
+
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap helpers are Windows-only")
 def test_bootstrap_helpers_verify_checksum_and_readiness_guidance():
     temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task074-checksum-{uuid.uuid4().hex}"
@@ -181,12 +191,23 @@ def test_bootstrap_asset_zip_uses_temporary_staging_and_cleans_failed_extract():
         command = f"""
         $ErrorActionPreference = "Stop"
         . "{BOOTSTRAP_LIB}"
+        Test-TowerScoutAssetZipReleaseMatch -RootPath "{good_root}" -ZipPath "{good_zip}"
         Expand-TowerScoutAssetZip -RootPath "{good_root}" -ZipPath "{good_zip}" -AssetsPath "{good_assets}"
         if (-not (Test-Path -LiteralPath "{good_assets / "model_params" / "yolov5" / "newest.pt"}" -PathType Leaf)) {{
             throw "Expected model file was not moved into final assets."
         }}
         if ((Get-ChildItem -LiteralPath "{good_assets}" -Directory -Filter ".staging-*" | Measure-Object).Count -ne 0) {{
             throw "Temporary staging folder was not removed after successful extraction."
+        }}
+
+        try {{
+            Test-TowerScoutAssetZipReleaseMatch -RootPath "{bad_root}" -ZipPath "{bad_zip}"
+            throw "Mismatched asset ZIP manifest was accepted before extraction."
+        }}
+        catch {{
+            if ($_.Exception.Message -notmatch "does not match the control package manifest") {{
+                throw
+            }}
         }}
 
         try {{
@@ -302,6 +323,36 @@ def test_bootstrap_image_inspect_uses_small_formatted_output():
 
     assert '"image", "inspect", $image, "--format", "{{.Id}}"' in helper
     assert '"image", "inspect", $image)' not in helper
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap helpers are Windows-only")
+def test_bootstrap_readiness_probe_rejects_non_towerscout_payloads():
+    command = f"""
+    $ErrorActionPreference = "Stop"
+    . "{BOOTSTRAP_LIB}"
+    $readyPayload = '{{"state":"ready","components":{{}},"runtime":{{}},"recovery":[]}}'
+    if (-not (Test-TowerScoutReadinessPayload -Body $readyPayload)) {{
+        throw "Expected TowerScout readiness payload to be accepted."
+    }}
+    $fatalPayload = '{{"state":"fatal","components":{{}},"runtime":{{}},"recovery":["collect support evidence"]}}'
+    if (-not (Test-TowerScoutReadinessPayload -Body $fatalPayload)) {{
+        throw "Expected fatal TowerScout readiness payload to be accepted."
+    }}
+    foreach ($body in @(
+        '<html>not found</html>',
+        '{{"state":"ready"}}',
+        '{{"state":"ok","components":{{}},"runtime":{{}},"recovery":[]}}'
+    )) {{
+        if (Test-TowerScoutReadinessPayload -Body $body) {{
+            throw "Expected non-TowerScout payload to be rejected: $body"
+        }}
+    }}
+    "ok"
+    """
+    result = _run_powershell(command)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "ok" in result.stdout
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap helpers are Windows-only")

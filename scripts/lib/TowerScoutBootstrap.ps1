@@ -316,12 +316,57 @@ function Test-TowerScoutReadinessReachable {
             }
             $response = $_.Exception.Response
         }
-        $response.Close()
-        return $true
+        $statusCode = [int] $response.StatusCode
+        if ($statusCode -notin @(200, 503)) {
+            $response.Close()
+            return $false
+        }
+
+        $reader = New-Object System.IO.StreamReader($response.GetResponseStream())
+        try {
+            $body = $reader.ReadToEnd()
+        }
+        finally {
+            $reader.Close()
+            $response.Close()
+        }
+
+        return Test-TowerScoutReadinessPayload -Body $body
     }
     catch {
         return $false
     }
+}
+
+function Test-TowerScoutReadinessPayload {
+    param(
+        [string] $Body = ""
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Body)) {
+        return $false
+    }
+
+    try {
+        $payload = $Body | ConvertFrom-Json -ErrorAction Stop
+    }
+    catch {
+        return $false
+    }
+
+    $state = [string] $payload.state
+    if ($state -notin @("setup_required", "degraded", "ready", "fatal")) {
+        return $false
+    }
+
+    $propertyNames = @($payload.PSObject.Properties.Name)
+    foreach ($requiredProperty in @("components", "runtime", "recovery")) {
+        if ($requiredProperty -notin $propertyNames) {
+            return $false
+        }
+    }
+
+    return $true
 }
 
 function Get-TowerScoutPortMappingConflict {
@@ -792,6 +837,57 @@ function Test-TowerScoutAssetReleaseMatch {
             if ($actualName -ne $expectedName) {
                 throw "Asset ZIP filename '$actualName' does not match expected release artifact '$expectedName'."
             }
+        }
+    }
+}
+
+function Test-TowerScoutAssetZipReleaseMatch {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $RootPath,
+
+        [Parameter(Mandatory = $true)]
+        [string] $ZipPath
+    )
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+    $tempManifestPath = [System.IO.Path]::GetTempFileName()
+    $zip = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
+    try {
+        $manifestEntry = $null
+        foreach ($entry in $zip.Entries) {
+            $normalized = Test-TowerScoutZipEntryName -EntryName $entry.FullName
+            if ($normalized -eq "asset_manifest.v1.json") {
+                $manifestEntry = $entry
+                break
+            }
+        }
+
+        if ($null -eq $manifestEntry) {
+            throw "Asset ZIP is missing asset_manifest.v1.json at the ZIP root."
+        }
+
+        $sourceStream = $manifestEntry.Open()
+        try {
+            $targetStream = [System.IO.File]::Create($tempManifestPath)
+            try {
+                $sourceStream.CopyTo($targetStream)
+            }
+            finally {
+                $targetStream.Close()
+            }
+        }
+        finally {
+            $sourceStream.Close()
+        }
+
+        Test-TowerScoutAssetReleaseMatch -RootPath $RootPath -AssetManifestPath $tempManifestPath -AssetZipPath $ZipPath
+    }
+    finally {
+        $zip.Dispose()
+        if (Test-Path -LiteralPath $tempManifestPath) {
+            Remove-Item -LiteralPath $tempManifestPath -Force -ErrorAction SilentlyContinue
         }
     }
 }

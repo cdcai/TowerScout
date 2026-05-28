@@ -52,20 +52,25 @@ if (-not [string]::IsNullOrWhiteSpace($PackageZip)) {
     Test-TowerScoutChecksumSidecar -ArtifactPath $resolvedPackageZip | Out-Null
 }
 
+$resolvedAssetZip = ""
 if (-not [string]::IsNullOrWhiteSpace($AssetZip)) {
     $resolvedAssetZip = Resolve-TowerScoutBootstrapPath -RootPath $repoRoot -Path $AssetZip
     Test-TowerScoutChecksumSidecar -ArtifactPath $resolvedAssetZip | Out-Null
-    Expand-TowerScoutAssetZip -RootPath $repoRoot -ZipPath $resolvedAssetZip -AssetsPath $resolvedAssetsPath
+    Test-TowerScoutAssetZipLayout -ZipPath $resolvedAssetZip | Out-Null
+    Test-TowerScoutAssetZipReleaseMatch -RootPath $repoRoot -ZipPath $resolvedAssetZip
 }
 
-$hasStagedAssets = Test-TowerScoutStagedAssets -RootPath $repoRoot -AssetsPath $resolvedAssetsPath
+$hasExistingStagedAssets = Test-TowerScoutStagedAssets -RootPath $repoRoot -AssetsPath $resolvedAssetsPath
 $effectiveEngine = Resolve-TowerScoutBootstrapEngine -Engine $Engine -Port $Port -RootPath $repoRoot -MinimumFreeGB $MinimumFreeGB
 Write-TowerScoutImagePullReadiness -RootPath $repoRoot -Engine $effectiveEngine
 
 if ($VerifyOnly) {
     Write-Host ""
     Write-Host "Verify-only preflight passed. No assets were imported and TowerScout was not started."
-    if ($hasStagedAssets) {
+    if (-not [string]::IsNullOrWhiteSpace($resolvedAssetZip)) {
+        Write-Host "Asset ZIP was verified but not staged because -VerifyOnly was used."
+    }
+    elseif ($hasExistingStagedAssets) {
         Write-Host "Staged assets are present and ready for import."
     }
     else {
@@ -73,6 +78,12 @@ if ($VerifyOnly) {
     }
     exit 0
 }
+
+if (-not [string]::IsNullOrWhiteSpace($resolvedAssetZip)) {
+    Expand-TowerScoutAssetZip -RootPath $repoRoot -ZipPath $resolvedAssetZip -AssetsPath $resolvedAssetsPath
+}
+
+$hasStagedAssets = Test-TowerScoutStagedAssets -RootPath $repoRoot -AssetsPath $resolvedAssetsPath
 
 if ($hasStagedAssets -and -not $SkipAssetImport) {
     Write-Host ""

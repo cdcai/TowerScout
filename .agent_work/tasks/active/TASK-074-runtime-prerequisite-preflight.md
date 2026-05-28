@@ -132,6 +132,15 @@ The RC1 MVP should make the current package path easier to run without turning T
 **Validation**: Focused Task-074 bootstrap tests passed with `8 passed`; expanded focused validation passed with `14 passed` across Task-074 bootstrap, import-assets script, release-package script, and package-local docs route coverage. PowerShell parser validation passed for bootstrap, helper, launch, and package scripts. `.agent_work` validation passed. Docs command check passed with the known intentional `127.0.0.1` warning in `docs\oci-quick-start.md`. `git diff --check` passed.
 **Next**: Review final diff and prepare PR update.
 
+### 2026-05-28 - Post-Merge Package Validation Exposed Verify-Only Ordering Gap
+**Objective**: Start package-artifact validation from merged `main` after PR #21 was squash-merged.
+**Context**: Local `main` was fast-forwarded to the merged PR. A fresh package was generated under `dist\task074-merged-package\towerscout-v0.1.0-rc1` with the existing RC image digest. Package shape and release manifest checks passed with only the known non-blocking recommended-field warnings.
+**Finding**: Reviewing the package bootstrap flow during validation showed that `-AssetZip` expansion occurred before engine preflight and before the `-VerifyOnly` exit. That meant `bootstrap.cmd -VerifyOnly -AssetZip ...` could stage assets in the package, and an engine-preflight failure could still leave validated assets staged. This violated the intended non-mutating `-VerifyOnly` contract.
+**Decision**: Fix this as a narrow follow-up before continuing full package bootstrap validation.
+**Execution**: Reordered `scripts/bootstrap.ps1` so `-AssetZip` first performs checksum, ZIP-layout, and asset manifest/release matching without final asset staging. Engine preflight now runs before `Expand-TowerScoutAssetZip`, and `-VerifyOnly` exits before any final package asset mutation. Added `Test-TowerScoutAssetZipReleaseMatch` so the asset ZIP manifest can be checked directly from the ZIP via a temporary manifest file that is removed after validation. Also hardened the occupied-port readiness probe so it only treats an occupied port as an existing TowerScout instance when `/api/readiness` returns a TowerScout-shaped readiness payload; unrelated HTTP services now remain port conflicts.
+**Validation**: Focused Task-074 bootstrap tests passed with `10 passed`; expanded focused validation passed with `16 passed`; PowerShell parser validation passed; `.agent_work` validation passed; `git diff --check` passed.
+**Next**: Commit/push this follow-up fix, open a small PR, then rerun package-artifact bootstrap validation after merge.
+
 ---
 
 ## Validation Results
@@ -155,12 +164,16 @@ The RC1 MVP should make the current package path easier to run without turning T
 
 - Reviewer identified direct asset ZIP extraction into final `assets\` as a first-launch reliability risk because interrupted extraction or post-extraction validation failure could leave partial final assets behind.
 - Reviewer identified minor wording ambiguity around Podman Compose-provider validation and when checksum verification occurs.
+- Post-merge package validation found that `-VerifyOnly -AssetZip` was not truly non-mutating because asset ZIP expansion happened before the verify-only exit and before engine preflight.
+- Late reviewer feedback also identified that any HTTP response from `/api/readiness` on an occupied port could be mistaken for an existing TowerScout instance.
 
 ### Remediation Actions
 
 - Added temporary asset ZIP extraction staging and cleanup before final asset promotion.
 - Tightened Podman Compose-provider documentation without diminishing qualified Podman support.
 - Clarified that checksum verification runs only for ZIP paths explicitly passed to bootstrap.
+- Reordered bootstrap so asset ZIP final staging happens only after engine preflight and never during `-VerifyOnly`.
+- Hardened occupied-port readiness detection to require a TowerScout-shaped readiness payload.
 
 ### Sign-off
 

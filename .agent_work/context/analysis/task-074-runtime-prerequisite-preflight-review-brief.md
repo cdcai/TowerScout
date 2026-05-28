@@ -40,12 +40,15 @@ The bootstrap command supports:
 
 `-VerifyOnly` is intentionally non-mutating. It runs preflight, release checks, and asset-layout checks without importing assets or starting TowerScout.
 
+Post-merge package validation found and corrected an ordering gap in that contract: `-AssetZip` final staging originally happened before the `-VerifyOnly` exit. The follow-up patch now checks `-AssetZip` checksum, layout, and manifest/release matching without final staging, runs engine preflight, and exits before asset mutation when `-VerifyOnly` is used.
+
 ### 2. Added Runtime Preflight Checks
 
 The helper library now checks:
 
 - Disk space on the package drive.
 - Host port availability.
+- Existing TowerScout readiness on an occupied host port, validated by a TowerScout-shaped `/api/readiness` payload.
 - Existing selected-engine container port mappings that may reserve the requested port even when Windows reports it free.
 - Docker CLI availability.
 - Docker daemon reachability.
@@ -74,6 +77,7 @@ Bootstrap can verify:
 - Expected asset ZIP filename when `release-manifest.v1.json` has a concrete release version.
 - `IMAGE.txt`, `.env.example`, and `release-manifest.v1.json` consistency where package metadata is available.
 - Temporary extraction into `assets/.staging-<guid>` before final asset promotion.
+- Non-mutating asset ZIP manifest/release matching for `-VerifyOnly`.
 
 After these checks, bootstrap promotes only `model_params/`, `data/`, and
 `asset_manifest.v1.json` into the final package `assets/` folder, removes
@@ -154,6 +158,7 @@ Coverage includes:
 - Nested `assets/` rejection.
 - Control/asset manifest file-hash matching.
 - Temporary asset ZIP extraction staging and cleanup after failed manifest validation.
+- Verify-only ordering so asset ZIPs are checked without final package mutation.
 - Digest-pinned image reference composition.
 - Small formatted Docker/Podman image inspect command.
 - Stale stopped/created engine port mapping detection.
