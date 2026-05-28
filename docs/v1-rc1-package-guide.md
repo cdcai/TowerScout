@@ -181,6 +181,7 @@ must otherwise be identical.
 After extracting the Application Package ZIP, the package root should include:
 
 ```text
+bootstrap.cmd
 start.bat
 compose.yaml
 compose.gpu.yaml
@@ -212,7 +213,54 @@ ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121@sha256:<digest>
 `IMAGE.txt`, `.env.example`, and `release-manifest.v1.json` record the selected
 PyTorch flavor, either `cpu` or `cuda121`.
 
-## Initialize Package Configuration
+## Guided Bootstrap Path
+
+For first setup, prefer the top-level bootstrap entry point:
+
+```powershell
+.\bootstrap.cmd -Engine docker -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
+```
+
+Bootstrap performs the checks that users most often miss:
+
+- Docker or Podman CLI, daemon/machine, and Compose-provider readiness.
+- WSL 2 hint for Docker Desktop on Windows.
+- Local port availability.
+- Minimum free disk space.
+- Release manifest and control asset-manifest presence.
+- Optional Application Package and Model & Data Package checksum verification
+  when `-PackageZip` and `-AssetZip` paths are provided.
+- Asset ZIP safety, direct-root layout, and control/asset manifest matching.
+- Existing named-volume asset import through `scripts\import-assets.ps1` with
+  hash verification enabled.
+- Existing startup through `scripts\launch.ps1`.
+
+If the release ZIPs are outside the package folder, pass full paths:
+
+```powershell
+.\bootstrap.cmd -Engine docker -Gpu off -PackageZip C:\Users\<you>\Downloads\towerscout-v0.1.0-rc1.zip -AssetZip C:\Users\<you>\Downloads\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
+```
+
+Useful bootstrap options:
+
+- `-VerifyOnly`: run prerequisite, checksum, release, and asset-layout checks
+  without importing assets or starting TowerScout.
+- `-SkipAssetImport`: run preflight and launch while leaving already-staged
+  assets untouched.
+- `-Port <port>`: use the same non-default port that support selected.
+- `-Engine podman`: use the qualified Podman path when support selected
+  Podman and the Podman machine plus Compose provider are already ready.
+
+Expected result: bootstrap prints clear checks, rejects mismatched checksums or
+unsafe asset ZIPs before mutating package assets, imports valid staged assets,
+starts TowerScout, and explains readiness state. It is meant for first setup
+and support validation. `start.bat` remains the normal direct launch path after
+setup is complete.
+
+## Direct Launcher Path
+
+The direct launcher remains supported and is useful when assets are already
+imported or support wants to isolate launch behavior.
 
 Run the launcher once from the package root before importing assets:
 
@@ -246,9 +294,10 @@ volumes:
 .\scripts\stop.cmd -Engine podman
 ```
 
-## Asset Staging And Import
+## Manual Asset Staging And Import
 
-The Model & Data Package ZIP root must contain these entries directly:
+Use this manual fallback when bootstrap is not being used for asset ZIP
+staging. The Model & Data Package ZIP root must contain these entries directly:
 
 ```text
 model_params\
@@ -528,8 +577,24 @@ For Podman, confirm:
   `podman-compose`.
 - If needed, `PODMAN_COMPOSE_PROVIDER` points to the approved provider.
 
-The launcher reports Compose-provider information before startup and validates
-a `PODMAN_COMPOSE_PROVIDER` override before Compose is invoked.
+The selected Compose provider must be explicitly validated in the target
+environment. If Docker Desktop is uninstalled, ensure `podman-compose` or
+another approved provider is installed and set through `PODMAN_COMPOSE_PROVIDER`
+when support needs to force that provider. The launcher reports
+Compose-provider information before startup and validates a
+`PODMAN_COMPOSE_PROVIDER` override before Compose is invoked.
+
+If Podman reports `rootlessport listen ... bind: address already in use` even
+when Windows shows the port as free, retry with a non-default package port and
+use that same port on status/log/import commands:
+
+```powershell
+.\bootstrap.cmd -Engine podman -Gpu off -Port 5009 -AssetZip .\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
+.\scripts\status.cmd -Engine podman -Port 5009
+```
+
+If the error follows the same port after retry, ask support to inspect and
+clear local Podman container/port state before continuing.
 
 ### Docker Desktop
 

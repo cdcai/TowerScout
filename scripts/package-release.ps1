@@ -186,6 +186,7 @@ function Copy-ReleaseItem {
 }
 
 $releaseFiles = @(
+    "bootstrap.cmd",
     "start.bat",
     "compose.yaml",
     "compose.gpu.yaml",
@@ -208,7 +209,9 @@ $releaseFiles = @(
     "docs\oci-runtime-contract.md",
     "docs\release-asset-bundle-contract.md",
     "webapp\asset_manifest.v1.json",
+    "scripts\lib\TowerScoutBootstrap.ps1",
     "scripts\lib\TowerScoutCompose.ps1",
+    "scripts\bootstrap.ps1",
     "scripts\launch.ps1",
     "scripts\start.cmd",
     "scripts\start.ps1",
@@ -233,7 +236,16 @@ New-Item -ItemType Directory -Path $assetDir | Out-Null
 @"
 TowerScout assets are distributed separately from the release control package.
 
-Place the asset bundle here before running scripts\import-assets.cmd:
+Recommended first setup from the package root:
+
+bootstrap.cmd -AssetZip <path-to-asset-zip>
+
+The bootstrap checks prerequisites, verifies the asset ZIP checksum sidecar,
+rejects unsafe or nested ZIP layouts, imports assets with hash verification,
+and starts TowerScout.
+
+Manual fallback: place the extracted asset bundle here before running
+scripts\import-assets.cmd:
 
 assets\model_params\
 assets\data\

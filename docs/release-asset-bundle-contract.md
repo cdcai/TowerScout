@@ -13,7 +13,7 @@ The V1 RC1 asset bundle covers:
 
 The GitHub Release control package, GHCR image digest, and asset bundle are separate release artifacts. The control package contains the launcher, Compose files, helper scripts, docs, and `webapp/asset_manifest.v1.json`. The asset bundle contains the large runtime files named by that manifest.
 
-Hosted asset download, automated asset bootstrap, bundled OCI image archives, and air-gapped/offline release packages are out of scope for the V1 RC1 normal path. Restricted-network support remains a support-managed image preload plus local asset import unless a later task expands that contract.
+Hosted asset download, bundled OCI image archives, and air-gapped/offline release packages are out of scope for the V1 RC1 normal path. The package-local bootstrap can verify and stage a local Model & Data Package ZIP, but it does not download hosted assets. Restricted-network support remains a support-managed image preload plus local asset import unless a later task expands that contract.
 
 ## Release Artifacts
 
@@ -89,7 +89,7 @@ Release/support validation must compare:
 - Control manifest `manifest_version` and asset ZIP manifest `manifest_version`.
 - Control manifest file hash and asset ZIP manifest file hash.
 
-Current import automation verifies required asset presence and byte sizes, and verifies asset SHA-256 hashes when requested. Release-version mismatch, manifest-version mismatch, and control/asset manifest file-hash mismatch are release/support validation failures, but they are not currently enforced directly by `scripts/import-assets.cmd`.
+Current import automation verifies required asset presence and byte sizes, and verifies asset SHA-256 hashes when requested. `bootstrap.cmd -AssetZip <asset-zip>` additionally verifies the asset ZIP checksum sidecar, rejects unsafe or nested ZIP layouts, enforces the expected asset ZIP filename when package release metadata is available, and rejects control/asset manifest file-hash mismatches before calling `scripts/import-assets.cmd -VerifyHashes`. Direct `scripts/import-assets.cmd` use still expects an already-staged source directory and does not enforce release filename matching by itself.
 
 ## Required Assets
 
@@ -128,7 +128,13 @@ Example:
 <sha256>  towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip
 ```
 
-Normal end-user import:
+Recommended first setup from a local asset ZIP:
+
+```powershell
+.\bootstrap.cmd -Engine docker -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip
+```
+
+Normal manual import from an already-extracted asset bundle:
 
 ```powershell
 .\scripts\import-assets.cmd -Engine docker -Source assets
@@ -171,7 +177,7 @@ External publication of the asset ZIP is no longer blocked solely by the old YOL
 
 Typed importer exit codes are follow-up work unless `TASK-072` is explicitly expanded into importer behavior.
 
-The current importer accepts an already-extracted source directory. If future work accepts ZIP files directly, it must reject unsafe archive entries such as `..\`, absolute paths, and paths escaping the extraction root.
+The direct importer accepts an already-extracted source directory. The package bootstrap accepts a local ZIP path for first setup and rejects unsafe archive entries such as `..\`, absolute paths, paths escaping the extraction root, unexpected root entries, and nested `assets\assets\...` layouts.
 
 Public-release asset import still needs a stronger staged activation model than the V1 RC1 helper currently provides. Follow-up work must stage candidate assets, verify the manifest allowlist, byte sizes, and SHA-256 hashes before activation, and preserve the previous active asset set if validation fails unless `TASK-066` shows this is release-critical for RC1.
 

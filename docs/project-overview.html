@@ -38,8 +38,8 @@
       <section class="doc-section" id="workflow">
         <h2>Main Workflow</h2>
         <ol>
-          <li>Start TowerScout from <code>start.bat -Engine docker -Gpu off</code>.</li>
-          <li>Import required model and ZIP-code assets from the matching Model &amp; Data Package.</li>
+          <li>Run <code>bootstrap.cmd -Engine docker -Gpu off -AssetZip &lt;asset-zip&gt;</code> for first setup, prerequisite checks, checksum verification, asset import, and launch.</li>
+          <li>Use <code>start.bat -Engine docker -Gpu off</code> for later direct launches.</li>
           <li>Configure Google Maps or Azure Maps.</li>
           <li>Define a search area and estimate tiles.</li>
           <li>Run detection, review results, add manual corrections, and export approved outputs.</li>

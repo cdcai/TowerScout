@@ -96,6 +96,23 @@ function Write-TowerScoutReadinessSummary {
 
     $payload = $Readiness.Payload
     Write-Host "TowerScout readiness state: $($Readiness.State)"
+    switch ($Readiness.State) {
+        "setup_required" {
+            Write-Host "Next action: complete Setup Wizard or Settings with one valid Google Maps or Azure Maps provider key."
+        }
+        "degraded" {
+            Write-Host "Next action: follow the recovery hints below. During first setup, this usually means importing the Model & Data Package assets."
+        }
+        "ready" {
+            Write-Host "Next action: TowerScout is ready for normal use."
+        }
+        "fatal" {
+            Write-Host "Next action: stop validation and collect support evidence with scripts\status.cmd and scripts\logs.cmd."
+        }
+        default {
+            Write-Host "Next action: keep this PowerShell window open while TowerScout continues starting."
+        }
+    }
     if ($payload.components -and $payload.components.assets -and $payload.components.assets.status) {
         Write-Host "Asset status: $($payload.components.assets.status)"
     }

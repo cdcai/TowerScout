@@ -190,20 +190,41 @@ Extract the Application Package ZIP to a normal local folder such as:
 C:\Users\<you>\TowerScout-v0.1.0-rc1
 ```
 
-After extraction, the folder should contain `start.bat`, `compose.yaml`,
-`compose.gpu.yaml`, `scripts\`, `docs\`, compliance files, `IMAGE.txt`,
-`SHA256SUMS.txt`, and an empty `assets\` folder.
+After extraction, the folder should contain `bootstrap.cmd`, `start.bat`,
+`compose.yaml`, `compose.gpu.yaml`, `scripts\`, `docs\`, compliance files,
+`IMAGE.txt`, `SHA256SUMS.txt`, and an empty `assets\` folder.
 
-## 5. Initialize The Package
+## 5. Run The Guided Bootstrap
 
-From PowerShell in the package folder, run:
+The recommended first setup path is `bootstrap.cmd`. It checks prerequisites,
+verifies Application Package checksums only when `-PackageZip` is provided,
+verifies Model & Data Package checksums only when `-AssetZip` is provided,
+rejects unsafe or nested asset ZIP layouts, imports staged assets with hash
+verification, starts TowerScout, and explains readiness in plain language.
+
+If the Model & Data Package ZIP and its `.sha256` file are in the package
+folder, run this from PowerShell in the package folder. Replace
+`<asset-version>` with the exact filename value from the release:
 
 ```powershell
-.\start.bat -Engine docker -Gpu off
+.\bootstrap.cmd -Engine docker -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
 ```
 
-The first launcher run creates `.env` from `.env.example`, starts the selected
-container engine, polls TowerScout readiness, and opens:
+If the ZIP files are still in your Downloads folder or another folder, either
+copy the Model & Data Package ZIP and its `.sha256` file into the package
+folder, or pass the full path to `-AssetZip`.
+
+To have bootstrap recheck both release ZIP checksums, pass both ZIP paths:
+
+```powershell
+.\bootstrap.cmd -Engine docker -Gpu off -PackageZip C:\Users\<you>\Downloads\towerscout-v0.1.0-rc1.zip -AssetZip C:\Users\<you>\Downloads\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
+```
+
+Expected result: PowerShell prints `TowerScout bootstrap preflight`, reports
+disk, port, engine, Compose, and WSL/Podman checks, verifies Application
+Package and Model & Data Package checksums only for the ZIP paths passed with
+`-PackageZip` and/or `-AssetZip`, imports assets if present, starts TowerScout,
+and opens:
 
 ```text
 http://localhost:5000
@@ -213,27 +234,30 @@ The first launch may download the TowerScout container image from GHCR. This
 can take several minutes on first run. Keep the PowerShell window open while
 Docker downloads and starts the image.
 
-Readiness may be `setup_required` because provider setup is not complete,
-`degraded` because assets are not imported yet, or both through recovery hints.
-That is expected during first setup.
+Readiness may be `setup_required` because provider setup is not complete, or
+`degraded` because assets are not imported yet. That is expected during first
+setup.
 
-Expected result: PowerShell prints `Starting TowerScout with docker`, then a
-readiness state. A browser window should open to TowerScout. If it does not
-open, leave PowerShell open and manually open `http://localhost:5000`.
+If the browser does not open, leave PowerShell open and manually open
+`http://localhost:5000`.
 
 If support tells you to use a specific engine, keep using the same `-Engine`
 value for every helper command because Docker and Podman use separate named
 volumes:
 
 ```powershell
-.\start.bat -Engine podman
+.\bootstrap.cmd -Engine podman -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
 ```
 
-If the launcher cannot find or start a container engine, confirm the selected
+If bootstrap cannot find or start a container engine, confirm the selected
 engine is installed and running before continuing. For Podman, confirm the
-Podman machine is started. For Docker, confirm Docker Desktop is running.
+Podman machine is started and a Compose provider is available. For Docker,
+confirm Docker Desktop is running.
 
-## 6. Stage And Import Model & Data Assets
+## 6. Manual Asset Staging And Import Fallback
+
+Use this section only if support tells you not to use `bootstrap.cmd
+-AssetZip`, or if you already extracted the Model & Data Package manually.
 
 Open the Model & Data Package ZIP. Its root should contain:
 

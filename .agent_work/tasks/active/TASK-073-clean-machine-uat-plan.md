@@ -51,6 +51,7 @@ This task should make external testing repeatable, bounded, and evidence-produci
 - [x] User-facing docs and UAT instructions explain Docker Desktop/WSL 2 readiness, PowerShell command execution, command outcomes, and first-launch recovery tips.
 - [x] Low-risk documentation hardening from the install-UX review is applied without claiming unimplemented bootstrap behavior.
 - [x] Runtime prerequisite preflight/bootstrap work is routed to `TASK-074`.
+- [x] UAT checklist is updated to use the implemented `TASK-074` bootstrap path for first setup.
 - [ ] Owner/reviewer accepts the pilot/UAT plan before external testers start.
 
 ## Dependencies
@@ -280,6 +281,14 @@ After pilot/UAT, V1 may be considered ready only if:
 **Validation**: `python .agent_work\scripts\validate_agent_work.py` passed; `python .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .` passed; `python .agents\skills\towerscout-end-user-docs-check\scripts\check_doc_commands.py . docs README.md` passed with the known intentional `127.0.0.1` warning in `docs\oci-quick-start.md`; `git diff --check` passed.
 **Next**: Commit the hardening updates, then start `TASK-074` implementation planning.
 
+### 2026-05-27 - UAT Checklist Aligned To Bootstrap Implementation
+**Objective**: Keep pilot/UAT instructions aligned after `TASK-074` implemented a real bootstrap path.
+**Context**: Earlier Task-073 docs intentionally avoided promising bootstrap behavior before it existed. Task-074 now provides `bootstrap.cmd`, checksum/asset ZIP validation, engine preflight, verified asset import, and launch orchestration.
+**Decision**: Make the UAT checklist use `bootstrap.cmd -Engine docker -Gpu off -AssetZip ...` as the recommended first setup path while retaining manual `start.bat` plus `scripts\import-assets.cmd` steps as a support-directed fallback.
+**Execution**: Updated `.agent_work/user-testing/instructions/RC1-PILOT-UAT-CHECKLIST.md` with bootstrap commands, full-path examples, expected output, and manual fallback boundaries.
+**Validation**: Pending final Task-074 validation pass.
+**Next**: Owner/reviewer should evaluate the updated bootstrap-first UAT path before external testers start.
+
 ---
 
 ## Validation Results
@@ -298,6 +307,7 @@ After pilot/UAT, V1 may be considered ready only if:
 - [x] Non-command-line first-launch guidance added - PASS - User docs and UAT checklist now include PowerShell location, Docker Desktop/WSL 2 checks, default Docker commands, expected outcomes, and support-safe recovery instructions.
 - [x] Low-risk install-UX hardening added - PASS - Quick Start, Package Guide, Project Overview, Settings-linked HTML, and UAT checklist now clarify Application Package versus Model & Data Package naming, GitHub Release asset selection, checksums, disk-space targets, nested asset layout mistakes, first image-pull delay, support stop points, and smoke-test expectations.
 - [x] Runtime prerequisite preflight routed - PASS - `TASK-074` created and selected for bootstrap/preflight implementation without documenting unimplemented behavior as available.
+- [x] UAT checklist aligned to implemented bootstrap - PASS - The checklist now uses `bootstrap.cmd` for first setup and keeps manual import as fallback.
 - [x] V1 completion gate documented - PASS - See V1 Completion Gate After Pilot.
 - [ ] Owner/reviewer acceptance - PENDING.
 

@@ -142,6 +142,7 @@ def test_package_release_stages_digest_pinned_image():
             "scripts\\import-assets.cmd -Source assets -VerifyHashes" in asset_readme
         )
         assert "YOLO-derived/AGPL-governed" in asset_readme
+        assert "bootstrap.cmd -AssetZip <path-to-asset-zip>" in asset_readme
         assert (stage_path / "compose.gpu.yaml").is_file()
         for relative_path in [
             "LICENSE",

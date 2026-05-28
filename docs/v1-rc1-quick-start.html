@@ -21,8 +21,8 @@
       <a href="#download">Download</a>
       <a href="#verify">Verify</a>
       <a href="#extract">Extract</a>
-      <a href="#start">Initialize</a>
-      <a href="#assets">Assets</a>
+      <a href="#start">Bootstrap</a>
+      <a href="#assets">Manual Assets</a>
       <a href="#gpu">GPU Boundary</a>
       <a href="#setup">Setup</a>
       <a href="#success">Confirm Success</a>
@@ -73,17 +73,21 @@ Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256</code></pre>
       </section>
       <section class="doc-section" id="extract">
         <h2>Extract The Application Package</h2>
-        <p>Extract the Application Package ZIP to a normal local folder such as <code>C:\Users\&lt;you&gt;\TowerScout-v0.1.0-rc1</code>. The folder should contain <code>start.bat</code>, Compose files, <code>scripts\</code>, <code>docs\</code>, and an empty <code>assets\</code> folder.</p>
+        <p>Extract the Application Package ZIP to a normal local folder such as <code>C:\Users\&lt;you&gt;\TowerScout-v0.1.0-rc1</code>. The folder should contain <code>bootstrap.cmd</code>, <code>start.bat</code>, Compose files, <code>scripts\</code>, <code>docs\</code>, and an empty <code>assets\</code> folder.</p>
       </section>
       <section class="doc-section" id="start">
-        <h2>Initialize The Package</h2>
-        <pre><code>.\start.bat -Engine docker -Gpu off</code></pre>
-        <p>The first launcher run creates <code>.env</code>, starts Docker, polls readiness, and opens <code>http://localhost:5000</code>. Expected result: PowerShell prints that TowerScout is starting with Docker, then reports a readiness state. If the browser does not open, leave PowerShell open and manually open <code>http://localhost:5000</code>.</p>
+        <h2>Run The Guided Bootstrap</h2>
+        <p>For first setup, use <code>bootstrap.cmd</code>. It checks disk space, port availability, Docker or Podman readiness, Compose availability, release metadata, checksum sidecars, and asset ZIP layout before importing assets and launching TowerScout. It verifies the Application Package checksum only when <code>-PackageZip</code> is provided and verifies the Model &amp; Data Package checksum only when <code>-AssetZip</code> is provided.</p>
+        <pre><code>.\bootstrap.cmd -Engine docker -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-&lt;asset-version&gt;.zip</code></pre>
+        <p>If the ZIPs are still in Downloads, either copy the Model &amp; Data Package ZIP and its <code>.sha256</code> file into the package folder, or pass the full path to <code>-AssetZip</code>.</p>
+        <pre><code>.\bootstrap.cmd -Engine docker -Gpu off -PackageZip C:\Users\&lt;you&gt;\Downloads\towerscout-v0.1.0-rc1.zip -AssetZip C:\Users\&lt;you&gt;\Downloads\towerscout-v0.1.0-rc1-assets-&lt;asset-version&gt;.zip</code></pre>
+        <p>Expected result: PowerShell prints <code>TowerScout bootstrap preflight</code>, reports prerequisite checks, verifies Application Package and Model &amp; Data Package checksums only for the ZIP paths passed with <code>-PackageZip</code> and/or <code>-AssetZip</code>, imports valid assets with hash verification, starts TowerScout, and opens <code>http://localhost:5000</code>. If the browser does not open, leave PowerShell open and manually open that URL.</p>
         <p>The first launch may download the TowerScout container image from GHCR. This can take several minutes. Keep the PowerShell window open while Docker downloads and starts the image.</p>
-        <p>If support tells you to use Podman, run <code>.\start.bat -Engine podman -Gpu off</code> and reuse that engine value on helper commands.</p>
+        <p>If support tells you to use Podman, run <code>.\bootstrap.cmd -Engine podman -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-&lt;asset-version&gt;.zip</code> and reuse that engine value on helper commands.</p>
       </section>
       <section class="doc-section" id="assets">
-        <h2>Stage And Import Model &amp; Data</h2>
+        <h2>Manual Asset Import Fallback</h2>
+        <p>Use this section only if support tells you not to use <code>bootstrap.cmd -AssetZip</code>, or if you already extracted the Model &amp; Data Package manually.</p>
         <p>Extract the Model &amp; Data Package ZIP root entries into the package <code>assets\</code> folder so it contains <code>model_params\</code>, <code>data\</code>, and <code>asset_manifest.v1.json</code> directly inside <code>assets\</code>.</p>
         <p>If you see <code>assets\assets\model_params</code>, the files are nested one level too deep. Move the inner <code>model_params</code>, <code>data</code>, and <code>asset_manifest.v1.json</code> entries up one level before importing. If you are unsure, stop and ask support.</p>
         <pre><code>.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180</code></pre>

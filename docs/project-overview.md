@@ -18,7 +18,7 @@ The V1 RC1 package provides a Windows-first local pilot path:
   package-runtime support when a site explicitly chooses that path.
 - A CPU-safe default launcher.
 - Optional Docker GPU launch controls for validated NVIDIA hosts.
-- Windows launch, stop, status, log, asset import, and TLS CA helper scripts.
+- Windows bootstrap, launch, stop, status, log, asset import, and TLS CA helper scripts.
 - Package-local docs.
 - Source, license, provider, model, data, SBOM, image, and release-manifest
   notices.
@@ -47,10 +47,10 @@ source-code checkout.
 
 A typical TowerScout user:
 
-1. Starts TowerScout from `start.bat -Engine docker -Gpu off` to initialize the
-   package.
-2. Imports required model and ZIP-code assets from the matching Model & Data
-   Package.
+1. Runs `bootstrap.cmd -Engine docker -Gpu off -AssetZip <asset-zip>` for first
+   setup, so the package can check prerequisites, verify checksums, import
+   assets, and start TowerScout.
+2. Uses `start.bat -Engine docker -Gpu off` for later direct launches.
 3. Configures Google Maps or Azure Maps in Setup Wizard or Settings.
 4. Chooses a provider.
 5. Defines a search area.

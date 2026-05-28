@@ -65,7 +65,29 @@ Expected result: WSL is installed, any listed Linux distribution uses version
    Expected result: the SHA-256 hash printed by PowerShell matches the value in
    the matching checksum file. Uppercase/lowercase differences are okay.
 3. Extract the TowerScout Application Package ZIP to a local folder.
-4. Extract the Model & Data Package into the package `assets/` folder.
+4. Open PowerShell in the extracted package folder.
+5. Run the guided bootstrap with the Model & Data Package ZIP path. If the
+   asset ZIP and `.sha256` file are in the package folder, use the exact asset
+   filename:
+
+   ```powershell
+   .\bootstrap.cmd -Engine docker -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
+   ```
+
+   If the release ZIPs are still in Downloads, pass full paths:
+
+   ```powershell
+   .\bootstrap.cmd -Engine docker -Gpu off -PackageZip C:\Users\<you>\Downloads\towerscout-v0.1.0-rc1.zip -AssetZip C:\Users\<you>\Downloads\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
+   ```
+
+   Expected result: bootstrap reports disk, port, engine, Compose, checksum,
+   and asset-layout checks; imports assets with hash verification; starts
+   TowerScout; and opens `http://localhost:5000` or allows you to open that
+   address manually. On the first launch, Docker may download the pinned
+   TowerScout image from GHCR. This can take several minutes.
+
+6. If support tells you to use the manual fallback instead of bootstrap,
+   extract the Model & Data Package into the package `assets/` folder.
    Expected layout:
 
    ```text
@@ -79,8 +101,8 @@ Expected result: WSL is installed, any listed Linux distribution uses version
    deep. Move the inner `model_params`, `data`, and `asset_manifest.v1.json`
    entries up one level before importing. If you are unsure, stop and ask
    support.
-5. Open PowerShell in the package folder.
-6. Start TowerScout:
+
+7. Manual fallback only: start TowerScout:
 
    ```powershell
    .\start.bat -Engine docker -Gpu off
@@ -91,7 +113,7 @@ Expected result: WSL is installed, any listed Linux distribution uses version
    to open that address manually. On the first launch, Docker may download the
    pinned TowerScout image from GHCR. This can take several minutes.
 
-7. Import assets:
+8. Manual fallback only: import assets:
 
    ```powershell
    .\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180
@@ -100,18 +122,18 @@ Expected result: WSL is installed, any listed Linux distribution uses version
    Expected result: the import finishes without missing/corrupt asset errors
    and waits for TowerScout to respond after restart.
 
-8. Open TowerScout in the browser if it does not open automatically.
-9. Complete Setup Wizard with Azure Maps or Google Maps.
-10. Open Settings Resource Links and confirm the package-local docs and source/license page load.
-11. Run the owner-provided public bounded detection smoke. If one was not
+9. Open TowerScout in the browser if it does not open automatically.
+10. Complete Setup Wizard with Azure Maps or Google Maps.
+11. Open Settings Resource Links and confirm the package-local docs and source/license page load.
+12. Run the owner-provided public bounded detection smoke. If one was not
     provided, use a non-sensitive approved area and keep the run small,
     preferably `1-6` tiles.
-12. Confirm the detection workflow completes without a crash. Results may be
+13. Confirm the detection workflow completes without a crash. Results may be
     zero or more detections, but the map and right-hand review panel should
     update consistently.
-13. Confirm addresses/provider metadata appear when geocoding succeeds, or that a clear fallback appears when unavailable.
-14. If requested, export CSV or KML.
-15. Stop TowerScout through the package stop script or documented shutdown path.
+14. Confirm addresses/provider metadata appear when geocoding succeeds, or that a clear fallback appears when unavailable.
+15. If requested, export CSV or KML.
+16. Stop TowerScout through the package stop script or documented shutdown path.
 
    ```powershell
    .\scripts\stop.cmd -Engine docker

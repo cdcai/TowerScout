@@ -14,7 +14,7 @@ approved Compose provider.
 - Windows 11 on AMD64
 - Single-user local use
 - CPU baseline
-- Normal outbound internet access for map providers and asset/bootstrap workflows
+- Normal outbound internet access for GHCR image pulls and map providers
 - Docker Desktop with WSL 2 backend for the primary RC1 pilot path, or a
   support-approved Podman machine and Compose provider for the qualified Podman
   path
@@ -41,6 +41,9 @@ The release package is expected to include:
 - `compose.yaml`
 - `compose.gpu.yaml`
 - `.env.example`
+- `bootstrap.cmd`
+- `scripts/bootstrap.ps1`
+- `scripts/lib/TowerScoutBootstrap.ps1`
 - `start.bat`
 - `scripts/launch.ps1`
 - `scripts/start.cmd` / `scripts/start.ps1`
@@ -123,14 +126,26 @@ For RC1, record the chosen flavor with the image digest in the release package. 
 
 ## First Run
 
-1. Start TowerScout from the package directory:
+1. For a release package first setup, run bootstrap from the package directory
+   with the local Model & Data Package ZIP path:
+
+```cmd
+bootstrap.cmd -Engine docker -Gpu off -AssetZip <path-to-asset-zip>
+```
+
+Bootstrap checks disk space, port availability, engine readiness, Compose
+availability, release metadata, asset ZIP checksum/layout, imports assets with
+hash verification when assets are available, then starts TowerScout.
+
+2. For later direct launches after setup, start TowerScout from the package
+   directory:
 
 ```cmd
 start.bat -Engine docker -Gpu off
 ```
 
-2. Wait for the launcher to report readiness.
-3. Use the Setup Wizard to configure Google Maps or Azure Maps after the browser opens.
+3. Wait for the launcher to report readiness.
+4. Use the Setup Wizard to configure Google Maps or Azure Maps after the browser opens.
 
 The launcher creates `.env` from `.env.example` when `.env` is missing, starts the selected container engine, polls `/api/readiness`, and opens `http://localhost:5000` only after the application shell is reachable. Release packages should already pin `TOWERSCOUT_IMAGE` to an immutable digest in `.env.example`.
 

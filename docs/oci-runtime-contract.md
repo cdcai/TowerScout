@@ -83,9 +83,9 @@ Readiness checks:
 
 SHA-256 verification is available with `TOWERSCOUT_VERIFY_ASSET_HASHES=1` for release validation and support diagnostics.
 
-For release-candidate or support validation, run `scripts/import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180` during import unless support explicitly selected another engine.
+For release-candidate or support validation, prefer `bootstrap.cmd -Engine docker -Gpu off -AssetZip <asset-zip>` for first setup so the package can verify the asset ZIP sidecar, reject unsafe layouts, import assets with hash verification, and launch. Manual validation can still run `scripts/import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180` during import unless support explicitly selected another engine.
 
-Hosted asset download/bootstrap is out of scope for the v1 control package. The supported v1 path is manifest-backed asset import from a local bundle using `scripts/import-assets.cmd`, with optional SHA-256 verification for release-candidate and support validation. Docker Desktop is the primary RC1 pilot engine; Podman import support remains qualified by the selected engine's running machine and Compose provider. A hosted downloader requires a separate design for asset hosting, checksum enforcement, retries, proxy/TLS behavior, partial-download recovery, and restricted-network fallback.
+Hosted asset download is out of scope for the v1 control package. The supported v1 path is manifest-backed asset import from a local bundle using `bootstrap.cmd` or `scripts/import-assets.cmd`, with SHA-256 verification for release-candidate and support validation. Docker Desktop is the primary RC1 pilot engine; Podman import support remains qualified by the selected engine's running machine and Compose provider. A hosted downloader requires a separate design for asset hosting, checksum enforcement, retries, proxy/TLS behavior, partial-download recovery, and restricted-network fallback.
 
 The asset ZIP root is `model_params/`, `data/`, and `asset_manifest.v1.json`. Users extract those entries into the package's `assets/` directory before import. The control package manifest remains authoritative; the asset ZIP manifest copy is used for release/support matching by manifest version and manifest file hash.
 
@@ -96,7 +96,8 @@ The GitHub Release control package is assembled by `scripts/package-release.cmd`
 - Compose runtime configuration
 - optional Docker GPU Compose overlay
 - `.env.example` with the selected image reference
-- Windows `.cmd` wrappers and PowerShell helpers for start, stop, logs, status, asset import, and TLS CA import
+- Windows `.cmd` wrappers and PowerShell helpers for bootstrap, start, stop, logs, status, asset import, and TLS CA import
+- top-level `bootstrap.cmd` first-setup helper that checks prerequisites, verifies local release artifacts when provided, stages safe asset ZIPs, imports assets with hash verification, and then calls the launcher
 - top-level `start.bat` launcher that starts Compose, polls `/api/readiness`, and opens the browser at `http://localhost:<port>` after the app shell is reachable
 - V1 RC1 quick start, package guide, user guide, project overview, and this runtime contract
 - the release asset bundle contract
@@ -169,6 +170,12 @@ The current local validation covers the Podman WSL engine path, named volumes, a
 Release qualification for Podman should include the selected Compose provider explicitly. The supported Podman path requires a running Podman machine and an approved Compose provider such as `podman-compose` that can talk to the Podman socket; if multiple providers are installed, `PODMAN_COMPOSE_PROVIDER` can be used to force the intended provider.
 
 The launcher reports Compose-provider information before startup. For Podman, a `PODMAN_COMPOSE_PROVIDER` override is checked for existence before Compose is invoked so a mistyped provider path fails early with an actionable message.
+
+Podman/rootless port forwarding can report a port bind conflict from inside the
+Podman machine even when the Windows host port appears free. Support should
+retry with a non-default `-Port` and use that same port on status, logs, and
+asset-import commands, or clear stale local Podman container/port state before
+continuing.
 
 ## Browser Origin
 
