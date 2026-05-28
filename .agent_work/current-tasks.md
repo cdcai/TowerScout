@@ -3,7 +3,7 @@
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
 **Last Updated**: May 28, 2026
 **Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
-**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, and `TASK-067` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` digest-pinned Docker Desktop and Podman package runtime validation passed for CPU-default launch, with Podman Docker Hub source-build TLS and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` is active for clean-machine pilot/UAT planning; `TASK-074` bootstrap/preflight MVP is implemented and Docker Desktop plus qualified Podman smokes passed, with post-merge package-artifact validation uncovering and validating narrow bootstrap ordering/env-initialization follow-up fixes.
+**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, `TASK-067`, and `TASK-074` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` digest-pinned Docker Desktop and Podman package runtime validation passed for CPU-default launch, including the post-PR23 clean package bootstrap/preflight validation, with Podman Docker Hub source-build TLS and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` is active for clean-machine pilot/UAT planning.
 
 ---
 
@@ -183,7 +183,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **User Value**: Converts the engineered release package into a self-service pilot path instead of a support-only handoff.
 
 ### **TASK-066: Release Candidate Validation Gate**
-**Status**: IN_PROGRESS - digest-pinned Docker Desktop and Podman CPU-default package paths passed; route-test isolation closed by TASK-067 / PR #19; Podman source-build TLS and NVIDIA GPU evidence pending
+**Status**: IN_PROGRESS - digest-pinned Docker Desktop and Podman CPU-default package paths passed; route-test isolation closed by TASK-067 / PR #19; TASK-074 bootstrap/preflight validation passed; Podman source-build TLS and NVIDIA GPU evidence pending
 **Type**: C (Release Engineering / Validation)  
 **Priority**: CRITICAL  
 **Estimated Effort**: 1-2 days (8-16 hours)  
@@ -198,6 +198,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 - Final Docker Desktop validation generated the RC control package with GHCR digest `sha256:55aabd73a0cbdb76a1d48f427e9fe74dcab63ed87f2a15d32d9709de3ce1a232`, imported all 9 manifest assets with hash verification, reached readiness `ready`, persisted Azure provider setup, and passed a bounded Azure detection smoke on the public local fixture.
 - Validation found and fixed three release-path blockers: non-default port asset import, stale model discovery after asset copy, and hidden EfficientNet first-use download.
 - Docker Desktop and Podman package runtime paths are validated for CPU-default launch against the digest-pinned GHCR image. On this host, `podman compose` delegates to Docker Compose v5.1.3 as its external provider.
+- `TASK-074` bootstrap/preflight follow-through passed clean post-merge package validation: verify-only asset ZIP checks are non-mutating, asset ZIP staging/import succeeds, packaged Compose entrypoints initialize `.env` from `.env.example`, and readiness reaches `setup_required` with assets `ok`.
 - Podman source-build/base-image pulls from Docker Hub still fail TLS certificate verification inside the Podman VM before TowerScout code runs; this does not block the normal GHCR package path but remains a developer/build-path caveat.
 - GPU acceleration remains unclaimed until NVIDIA Docker Desktop WSL2 host validation, fixed-fixture parity, and timing evidence pass.
 - The non-runtime Flask route-test timeout/isolation gap identified during review was closed by `TASK-067` / PR #19. Focused route/config/runtime tests now run with `pytest-timeout` active and isolated test runtime paths.
@@ -238,7 +239,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **User Value**: Ensures external testing starts from a repeatable, evidence-producing workflow instead of ad hoc feedback collection.
 
 ### **TASK-074: Runtime Prerequisite Preflight**
-**Status**: IN_PROGRESS - package-artifact bootstrap validation passed after env initialization follow-up
+**Status**: COMPLETED - post-merge package-artifact bootstrap validation passed
 **Type**: B/C (Launcher / Supportability / Release UX)
 **Priority**: HIGH
 **Estimated Effort**: 1-2 days (8-16 hours) for RC1 MVP

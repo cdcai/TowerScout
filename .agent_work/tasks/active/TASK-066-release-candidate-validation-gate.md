@@ -1,6 +1,6 @@
 # TASK-066: Release Candidate Validation Gate
 
-**Status**: IN_PROGRESS - digest-pinned Docker and Podman CPU-default package paths passed; route-test isolation closed by TASK-067 / PR #19; TASK-074 selected for bootstrap/preflight follow-through; Podman source-build TLS and NVIDIA GPU evidence pending
+**Status**: IN_PROGRESS - digest-pinned Docker and Podman CPU-default package paths passed; route-test isolation closed by TASK-067 / PR #19; TASK-074 bootstrap/preflight follow-through completed; Podman source-build TLS and NVIDIA GPU evidence pending
 **Priority**: CRITICAL  
 **Type**: C (Release Engineering / Validation)  
 **Estimated Effort**: 1-2 days (8-16 hours)  
@@ -245,14 +245,29 @@ This task is the bridge between engineered release readiness and real user testi
 **Validation**: `python .agent_work\scripts\validate_agent_work.py` passed; `python .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .` passed; `python .agents\skills\towerscout-end-user-docs-check\scripts\check_doc_commands.py . docs README.md` passed with the known intentional `127.0.0.1` warning in `docs\oci-quick-start.md`; `git diff --check` passed.
 **Next**: Complete the docs/task hardening commit, then start `TASK-074` implementation planning.
 
+### 2026-05-28 - Task-074 Post-Merge Package Bootstrap Validation Passed
+**Objective**: Record completion of the selected bootstrap/preflight follow-through before returning to clean-machine UAT planning.
+**Context**: `TASK-074` added a package bootstrap entry point, prerequisite checks, checksum and release matching, safe asset ZIP staging, readiness guidance, and package `.env` initialization across Compose entrypoints. PR #23 was squash-merged before this validation.
+**Execution**: Generated a clean package from merged `main` without `-AllowDirtySource`, validated package shape and release manifest, ran `bootstrap.cmd -VerifyOnly -AssetZip ...`, confirmed verify-only left package assets untouched, ran full Docker bootstrap on isolated port `5010`, captured status/readiness evidence, and removed the isolated validation stack.
+**Validation Evidence**:
+- Clean package generated from commit `8e975e1` under `dist\task074-post-pr23-package\towerscout-v0.1.0-rc1`.
+- Package summary found 45 files including `.env.example`, `IMAGE.txt`, `release-manifest.v1.json`, compliance notices, `compose.yaml`, `compose.gpu.yaml`, `bootstrap.cmd`, scripts, docs, and `webapp/asset_manifest.v1.json`.
+- Manifest check passed with only the known recommended-field warnings for future enrichment (`checksums`, `releasePosture`, `releaseVersion`, `sourceRef`).
+- Verify-only bootstrap passed, verified the asset ZIP checksum, confirmed Docker CLI/daemon/Compose/WSL checks, confirmed port `5010` availability, and did not stage final assets.
+- Full bootstrap created `.env` from `.env.example`, imported assets with `verify_hashes=True`, reported no missing/corrupt assets, and reached readiness `setup_required` with assets `ok`.
+- Runtime readiness reported `device_policy=cpu`, `selected_device=cpu`, `pytorch_flavor=cuda121`, and image digest `sha256:55aabd73a0cbdb76a1d48f427e9fe74dcab63ed87f2a15d32d9709de3ce1a232`.
+- The isolated validation project `towerscout-task074-postpr23` was stopped and volumes removed; the user's original Docker container on port `5000` remained healthy.
+**Recommendation**: Treat `TASK-074` as complete for RC1 bootstrap/preflight scope. Proceed back to `TASK-073` clean-machine UAT preparation with Docker Desktop as the primary pilot path, qualified Podman language preserved, and GPU/Docker-Desktop-free Podman caveats unchanged.
+**Next**: Update active task tracking, run `.agent_work` validation, and continue `TASK-073`.
+
 ---
 
 ## Validation Results
 
 ### Test Summary
-**Test Date**: 2026-05-22 through 2026-05-27
+**Test Date**: 2026-05-22 through 2026-05-28
 **Test Environment**: Windows 11 AMD64 workstation, Docker Desktop engine, Podman `5.8.2` WSL machine using `podman compose` with Docker Compose `v5.1.3` as external provider, digest-pinned GHCR image `ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121@sha256:55aabd73a0cbdb76a1d48f427e9fe74dcab63ed87f2a15d32d9709de3ce1a232`, CPU launch via `-Gpu off`, Azure provider configured from local ignored development config for validation only.
-**Test Status**: PASS_WITH_BOUNDARIES - digest-pinned Docker Desktop and Podman package runtime CPU-default paths passed; route-test isolation is closed by `TASK-067` / PR #19, and `TASK-074` is selected for bootstrap/preflight follow-through. GPU, Docker-Desktop-free Podman, asset ZIP/checksum publication, and Podman source-build TLS evidence remain bounded follow-ups.
+**Test Status**: PASS_WITH_BOUNDARIES - digest-pinned Docker Desktop and Podman package runtime CPU-default paths passed; route-test isolation is closed by `TASK-067` / PR #19, and `TASK-074` bootstrap/preflight follow-through passed post-merge package validation. GPU, Docker-Desktop-free Podman, asset ZIP/checksum publication, and Podman source-build TLS evidence remain bounded follow-ups.
 
 ### Acceptance Criteria Validation
 - [x] Package generated or obtained - final RC control package generated with immutable GHCR image digest.
@@ -265,6 +280,7 @@ This task is the bridge between engineered release readiness and real user testi
 - [x] Status/log support commands produce useful evidence - `status.cmd`, `/api/readiness`, Docker logs, and `performance.log` exposed actionable evidence.
 - [x] CPU-safe default launch verified - validation launched with `-Gpu off`; runtime readiness selected CPU from the CUDA-capable image with `torch 2.2.1+cu121`.
 - [x] Immutable image digest release package verified - package pinned to GHCR digest `sha256:55aabd73a0cbdb76a1d48f427e9fe74dcab63ed87f2a15d32d9709de3ce1a232`.
+- [x] Bootstrap/preflight package path verified - post-PR23 clean package validation proved verify-only is non-mutating, asset ZIP staging/import succeeds, `.env` initializes from the pinned package template before Compose startup, and readiness reaches `setup_required` with assets `ok`.
 - [ ] NVIDIA Docker Desktop WSL2 GPU evidence - PENDING separate GPU host validation before any broad GPU support claim.
 - [ ] Docker-Desktop-free Podman evidence - PENDING clean-host validation with a provider that does not depend on Docker Desktop's external Compose binary.
 - [x] CI/static-analysis expansion recommendation recorded - see recommendations below.
@@ -281,6 +297,7 @@ This task is the bridge between engineered release readiness and real user testi
 6. **Open validation caveat - Docker-Desktop-free Podman**: this host's Podman Compose path delegates to Docker Desktop's Docker Compose binary, so it does not prove a Docker-Desktop-free Podman installation.
 7. **Open release artifact caveat - asset ZIP packaging**: this run validated the documented extracted asset layout and import hash verification, but did not produce a new asset ZIP/checksum sidecar.
 8. **Fixed - route-test isolation and timeout safeguards**: `TASK-067` / PR #19 added pytest timeout safeguards and pre-import route-test runtime isolation so `tests/unit/test_flask_routes.py` no longer touches the developer's real local `.env` path during focused validation.
+9. **Fixed - bootstrap/preflight package ordering and `.env` initialization**: `TASK-074` / PRs #22 and #23 ensured verify-only asset ZIP checks are non-mutating and packaged Compose entrypoints initialize `.env` from `.env.example` before starting the stack.
 
 ### Remediation Actions
 
@@ -291,6 +308,7 @@ This task is the bridge between engineered release readiness and real user testi
 - Validated the patched package path with a fresh package/project name and clean runtime cache.
 - Published and validated the digest-pinned GHCR RC image and final control package.
 - Validated the digest-pinned GHCR package runtime path under Podman on port `5008` and recorded the remaining Docker Hub TLS/source-build caveat.
+- Validated the post-PR23 bootstrap/preflight path from a clean package generated from merged `main`, including non-mutating verify-only behavior, asset ZIP checksum verification, package `.env` initialization, asset import hash verification, and readiness with assets `ok`.
 
 ### Automation Recommendations
 
@@ -303,4 +321,4 @@ This task is the bridge between engineered release readiness and real user testi
 
 ### Sign-off
 
-Docker Desktop and Podman CPU-default RC1 package runtime validation passed against the digest-pinned GHCR image and can proceed to controlled UAT preparation if Docker Desktop remains the primary pilot engine and Podman is documented as a qualified package-runtime path. The route-test isolation/timeout gap is closed by `TASK-067` / PR #19. `TASK-074` is selected to automate remaining first-launch prerequisite checks before broad external UAT. Do not claim GPU acceleration until NVIDIA Docker Desktop WSL2 evidence exists. Do not claim Docker-Desktop-free Podman or Podman source-build support until the external Compose-provider dependency and Docker Hub TLS/base-image pull blocker are resolved or tested on a clean Podman-only host.
+Docker Desktop and Podman CPU-default RC1 package runtime validation passed against the digest-pinned GHCR image and can proceed to controlled UAT preparation if Docker Desktop remains the primary pilot engine and Podman is documented as a qualified package-runtime path. The route-test isolation/timeout gap is closed by `TASK-067` / PR #19. `TASK-074` bootstrap/preflight follow-through is complete and passed clean post-merge package validation. Do not claim GPU acceleration until NVIDIA Docker Desktop WSL2 evidence exists. Do not claim Docker-Desktop-free Podman or Podman source-build support until the external Compose-provider dependency and Docker Hub TLS/base-image pull blocker are resolved or tested on a clean Podman-only host.

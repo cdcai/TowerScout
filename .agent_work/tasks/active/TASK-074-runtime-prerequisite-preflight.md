@@ -1,6 +1,6 @@
 # TASK-074: Runtime Prerequisite Preflight
 
-**Status**: IN_PROGRESS - package-artifact bootstrap validation passed after env initialization follow-up
+**Status**: COMPLETED - post-merge package-artifact bootstrap validation passed
 **Priority**: HIGH  
 **Type**: B/C (Launcher / Supportability / Release UX)  
 **Estimated Effort**: 1-2 days (8-16 hours) for RC1 MVP; additional polish can follow after pilot feedback  
@@ -149,14 +149,23 @@ The RC1 MVP should make the current package path easier to run without turning T
 **Validation**: `.venv\Scripts\python.exe -m pytest tests/unit/test_task_074_bootstrap.py tests/unit/test_import_assets_script.py` passed with `13 passed`. A validation-only package built with `-AllowDirtySource` passed full Docker bootstrap on port `5010` using an isolated Compose project name, imported all assets with hash verification, reached readiness `setup_required`, reported asset status `ok`, selected CPU policy with the CUDA-capable image, and preserved the pinned digest `sha256:55aabd73a0cbdb76a1d48f427e9fe74dcab63ed87f2a15d32d9709de3ce1a232`. The temporary validation project and volumes were removed afterward, and the user's existing source container on port `5000` remained running and healthy.
 **Next**: Run final lint/diff checks, commit/push this narrow follow-up branch, and open a small PR.
 
+### 2026-05-28 - Post-PR23 Clean Package Validation Passed
+**Objective**: Validate the final merged Task-074 bootstrap path from clean `main` after PR #23 was squash-merged.
+**Context**: PR #23 merged the shared `.env` initialization helper across packaged Compose entrypoints. Docker Desktop was running, and the user's existing TowerScout source container remained active on port `5000`, so package validation used an isolated Compose project and port `5010`.
+**Decision**: Generate a clean validation package without `-AllowDirtySource`, prove `-VerifyOnly` remains non-mutating, then run full bootstrap with the local validation asset ZIP and clean package scripts.
+**Execution**: Fast-forwarded `main` to `8e975e1`, generated `dist\task074-post-pr23-package\towerscout-v0.1.0-rc1` pinned to `ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121@sha256:55aabd73a0cbdb76a1d48f427e9fe74dcab63ed87f2a15d32d9709de3ce1a232`, ran package summary and manifest checks, ran `bootstrap.cmd -VerifyOnly -AssetZip ...`, then ran full `bootstrap.cmd -Engine docker -Gpu off -Port 5010 -AssetZip ...` with `COMPOSE_PROJECT_NAME=towerscout-task074-postpr23`.
+**Output**: The clean package contained 45 files, the expected docs/compliance/scripts/assets placeholder layout, and the pinned image metadata. Manifest validation passed with only the known non-blocking recommended-field warnings. Verify-only validated the asset ZIP without staging assets. Full bootstrap staged assets, created `.env` from `.env.example`, imported model/data assets with hash verification, restarted the container, and reached readiness `setup_required`.
+**Validation**: Final container status was healthy on `0.0.0.0:5010->5000/tcp` using the pinned digest image. `/api/readiness` reported `assets.status=ok`, `config.status=setup_required`, `runtime.device_policy=cpu`, `runtime.pytorch_flavor=cuda121`, `runtime.selected_device=cpu`, and image digest `sha256:55aabd73a0cbdb76a1d48f427e9fe74dcab63ed87f2a15d32d9709de3ce1a232`. The isolated validation stack and volumes were removed afterward, and the user's original `towerscout-towerscout-1` container on port `5000` remained running and healthy.
+**Next**: Treat Task-074 implementation as complete for RC1 and return to `TASK-073` clean-machine UAT preparation, keeping GPU and Docker-Desktop-free Podman support claims bounded by their existing validation caveats.
+
 ---
 
 ## Validation Results
 
 ### Test Summary
-**Test Date**: May 27, 2026
-**Test Environment**: Windows local repo; PowerShell helper/unit validation
-**Test Status**: IN_PROGRESS
+**Test Date**: May 27-28, 2026
+**Test Environment**: Windows local repo; PowerShell helper/unit validation; Docker Desktop package bootstrap validation on isolated port `5010`; qualified Podman package-runtime validation on non-default port.
+**Test Status**: PASS_WITH_BOUNDARIES
 
 ### Acceptance Criteria Validation
 - [x] Bootstrap entry point implemented - PASS - `bootstrap.cmd` delegates to `scripts/bootstrap.ps1`.
@@ -167,6 +176,7 @@ The RC1 MVP should make the current package path easier to run without turning T
 - [x] Focused automated tests added - PASS - `tests/unit/test_task_074_bootstrap.py`.
 - [x] Docker Desktop validation recorded - PASS - `.\bootstrap.cmd -Engine docker -Gpu off -NoBrowser -TimeoutSeconds 180 -MinimumFreeGB 1` reached readiness `ready`.
 - [x] Podman validation boundary recorded - PASS_WITH_NOTES - Docker-stopped Podman preflight passed; Podman launch reached readiness `ready` on `-Port 5009`; default `5000` hit a host-specific Podman/rootless bind caveat.
+- [x] Clean merged-package bootstrap validation recorded - PASS - post-PR23 clean package `bootstrap.cmd -VerifyOnly -AssetZip ...` was non-mutating, and full Docker bootstrap imported assets with hash verification and reached `setup_required` with assets `ok`.
 
 ### Issues Identified
 
@@ -187,4 +197,4 @@ The RC1 MVP should make the current package path easier to run without turning T
 
 ### Sign-off
 
-Not started. Task is selected as the next high-leverage RC1 install-support improvement after documentation hardening.
+Task-074 is complete for RC1. The bootstrap/preflight layer is implemented, documented, unit-tested, and validated against Docker Desktop, a qualified Podman boundary, and a clean post-merge package artifact. Remaining caveats belong to existing bounded follow-ups: NVIDIA GPU host validation, Docker-Desktop-free Podman validation, and future automation of asset-backed package smoke gates.
