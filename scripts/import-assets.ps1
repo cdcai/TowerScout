@@ -20,6 +20,7 @@ $ErrorActionPreference = "Stop"
 . "$PSScriptRoot\lib\TowerScoutCompose.ps1"
 
 $repoRoot = Get-TowerScoutRepoRoot
+Initialize-TowerScoutEnvFile -RootPath $repoRoot
 $env:TOWERSCOUT_PORT = "$Port"
 $sourcePath = Resolve-Path -LiteralPath (Join-Path $repoRoot $Source) -ErrorAction SilentlyContinue
 if ($null -eq $sourcePath) {

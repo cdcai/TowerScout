@@ -1,6 +1,6 @@
 # TASK-074: Runtime Prerequisite Preflight
 
-**Status**: IN_PROGRESS - reviewer hardening underway after Docker Desktop and qualified Podman bootstrap smokes passed
+**Status**: IN_PROGRESS - package-artifact bootstrap validation passed after env initialization follow-up
 **Priority**: HIGH  
 **Type**: B/C (Launcher / Supportability / Release UX)  
 **Estimated Effort**: 1-2 days (8-16 hours) for RC1 MVP; additional polish can follow after pilot feedback  
@@ -141,6 +141,14 @@ The RC1 MVP should make the current package path easier to run without turning T
 **Validation**: Focused Task-074 bootstrap tests passed with `10 passed`; expanded focused validation passed with `16 passed`; PowerShell parser validation passed; `.agent_work` validation passed; `git diff --check` passed.
 **Next**: Commit/push this follow-up fix, open a small PR, then rerun package-artifact bootstrap validation after merge.
 
+### 2026-05-28 - Package Bootstrap Env Initialization Follow-Up
+**Objective**: Continue package-artifact validation after PR #22 merged and Docker Desktop was restarted.
+**Context**: A fresh package generated from merged `main` passed package-shape and release-manifest checks. `bootstrap.cmd -VerifyOnly -AssetZip ...` also proved the verify-only fix by validating the asset ZIP without staging final assets. Full bootstrap then exposed a fresh-package ordering issue: `bootstrap.ps1` invokes `import-assets.ps1` before `launch.ps1`, but only `launch.ps1` initialized `.env` from `.env.example`. As a result, a fresh package asset import fell back to the `compose.yaml` default `ghcr.io/j-schulein/towerscout:latest`, which does not exist.
+**Decision**: Move `.env` initialization into the shared Compose helper and call it from `import-assets.ps1` before any Compose command. Keep `launch.ps1` using the same helper so existing launch behavior remains unchanged and existing user `.env` files are not overwritten.
+**Execution**: Added `Initialize-TowerScoutEnvFile` to `scripts/lib/TowerScoutCompose.ps1`, removed the duplicated local launch helper, and called the shared helper from `scripts/import-assets.ps1`. Follow-up reviewer review identified the same risk in `scripts/start.ps1` and `scripts/import-tls-ca.ps1`, so those packaged Compose-entry paths now initialize `.env` before their first Compose operation as well. Added focused tests proving the helper creates `.env` from `.env.example` without overwriting user changes and proving packaged Compose-entry paths initialize `.env` before starting the stack.
+**Validation**: `.venv\Scripts\python.exe -m pytest tests/unit/test_task_074_bootstrap.py tests/unit/test_import_assets_script.py` passed with `13 passed`. A validation-only package built with `-AllowDirtySource` passed full Docker bootstrap on port `5010` using an isolated Compose project name, imported all assets with hash verification, reached readiness `setup_required`, reported asset status `ok`, selected CPU policy with the CUDA-capable image, and preserved the pinned digest `sha256:55aabd73a0cbdb76a1d48f427e9fe74dcab63ed87f2a15d32d9709de3ce1a232`. The temporary validation project and volumes were removed afterward, and the user's existing source container on port `5000` remained running and healthy.
+**Next**: Run final lint/diff checks, commit/push this narrow follow-up branch, and open a small PR.
+
 ---
 
 ## Validation Results
@@ -165,6 +173,7 @@ The RC1 MVP should make the current package path easier to run without turning T
 - Reviewer identified direct asset ZIP extraction into final `assets\` as a first-launch reliability risk because interrupted extraction or post-extraction validation failure could leave partial final assets behind.
 - Reviewer identified minor wording ambiguity around Podman Compose-provider validation and when checksum verification occurs.
 - Post-merge package validation found that `-VerifyOnly -AssetZip` was not truly non-mutating because asset ZIP expansion happened before the verify-only exit and before engine preflight.
+- Follow-up package validation found that fresh-package asset import did not initialize `.env` before the first Compose command, causing Compose to use the default `ghcr.io/j-schulein/towerscout:latest` image instead of the pinned package image.
 - Late reviewer feedback also identified that any HTTP response from `/api/readiness` on an occupied port could be mistaken for an existing TowerScout instance.
 
 ### Remediation Actions
@@ -174,6 +183,7 @@ The RC1 MVP should make the current package path easier to run without turning T
 - Clarified that checksum verification runs only for ZIP paths explicitly passed to bootstrap.
 - Reordered bootstrap so asset ZIP final staging happens only after engine preflight and never during `-VerifyOnly`.
 - Hardened occupied-port readiness detection to require a TowerScout-shaped readiness payload.
+- Moved package `.env` initialization into the shared Compose helper and called it from asset import, low-level start, and TLS CA import before Compose starts.
 
 ### Sign-off
 

@@ -22,6 +22,9 @@ param(
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot\lib\TowerScoutCompose.ps1"
 
+$repoRoot = Get-TowerScoutRepoRoot
+Initialize-TowerScoutEnvFile -RootPath $repoRoot
+
 if ([string]::IsNullOrWhiteSpace($Thumbprint) -and [string]::IsNullOrWhiteSpace($CertificatePath)) {
     throw "Specify either -Thumbprint for a Windows certificate store entry or -CertificatePath for a PEM/CER/CRT file."
 }

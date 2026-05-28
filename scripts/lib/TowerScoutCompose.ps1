@@ -100,6 +100,22 @@ function Get-TowerScoutEnvFileValue {
     return $null
 }
 
+function Initialize-TowerScoutEnvFile {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $RootPath
+    )
+
+    $envPath = Join-Path $RootPath ".env"
+    $templatePath = Join-Path $RootPath ".env.example"
+    if ((Test-Path -LiteralPath $envPath -PathType Leaf) -or -not (Test-Path -LiteralPath $templatePath -PathType Leaf)) {
+        return
+    }
+
+    Copy-Item -LiteralPath $templatePath -Destination $envPath
+    Write-Host "Created .env from .env.example."
+}
+
 function Write-TowerScoutComposeProviderSummary {
     param(
         [ValidateSet("auto", "docker", "podman")]

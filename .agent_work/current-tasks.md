@@ -1,9 +1,9 @@
 # Current Tasks - Active Sprint
 
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
-**Last Updated**: May 27, 2026
+**Last Updated**: May 28, 2026
 **Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
-**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, and `TASK-067` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` digest-pinned Docker Desktop and Podman package runtime validation passed for CPU-default launch, with Podman Docker Hub source-build TLS and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` is active for clean-machine pilot/UAT planning; `TASK-074` bootstrap/preflight MVP is implemented and Docker Desktop plus qualified Podman smokes passed, with a post-merge verify-only asset-staging ordering fix underway before final package-artifact bootstrap validation resumes.
+**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, and `TASK-067` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` digest-pinned Docker Desktop and Podman package runtime validation passed for CPU-default launch, with Podman Docker Hub source-build TLS and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` is active for clean-machine pilot/UAT planning; `TASK-074` bootstrap/preflight MVP is implemented and Docker Desktop plus qualified Podman smokes passed, with post-merge package-artifact validation uncovering and validating narrow bootstrap ordering/env-initialization follow-up fixes.
 
 ---
 
@@ -238,7 +238,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **User Value**: Ensures external testing starts from a repeatable, evidence-producing workflow instead of ad hoc feedback collection.
 
 ### **TASK-074: Runtime Prerequisite Preflight**
-**Status**: IN_PROGRESS - post-merge verify-only asset-staging ordering fix underway
+**Status**: IN_PROGRESS - package-artifact bootstrap validation passed after env initialization follow-up
 **Type**: B/C (Launcher / Supportability / Release UX)
 **Priority**: HIGH
 **Estimated Effort**: 1-2 days (8-16 hours) for RC1 MVP
@@ -254,6 +254,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 - Bootstrap checks engine readiness, Compose availability, WSL/virtualization hints, disk space, port availability, checksums, release/version matching, asset ZIP layout, readiness state, and support-safe next actions.
 - Asset ZIP handling now extracts to temporary staging before final promotion so failed manifest/release validation does not leave final asset entries behind.
 - A follow-up patch ensures `-VerifyOnly -AssetZip` checks the ZIP without final asset staging and exits before mutation.
+- A follow-up patch also initializes package `.env` from `.env.example` before packaged Compose-entry paths start the stack, preventing fresh packages from falling back to the default `latest` image instead of the pinned package digest.
 - Bootstrap reuses existing `scripts/import-assets.ps1 -VerifyHashes` and `scripts/launch.ps1`; `start.bat` remains the direct launch path after setup.
 - Do not claim hosted asset download, native installer behavior, OCI image archives, Docker-Desktop-free Podman beyond validated boundaries, or GPU support beyond `TASK-075` evidence.
 

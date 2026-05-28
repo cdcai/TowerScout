@@ -11,6 +11,9 @@ param(
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot\lib\TowerScoutCompose.ps1"
 
+$repoRoot = Get-TowerScoutRepoRoot
+Initialize-TowerScoutEnvFile -RootPath $repoRoot
+
 $composeArgs = @("up", "-d")
 if ($Build) {
     $composeArgs += "--build"

@@ -15,6 +15,7 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BOOTSTRAP_SCRIPT = REPO_ROOT / "scripts" / "bootstrap.ps1"
 BOOTSTRAP_LIB = REPO_ROOT / "scripts" / "lib" / "TowerScoutBootstrap.ps1"
+COMPOSE_LIB = REPO_ROOT / "scripts" / "lib" / "TowerScoutCompose.ps1"
 PACKAGE_SCRIPT = REPO_ROOT / "scripts" / "package-release.ps1"
 
 
@@ -64,6 +65,41 @@ def test_bootstrap_verify_only_does_not_stage_asset_zip_before_exit():
     assert "Test-TowerScoutAssetZipReleaseMatch -RootPath $repoRoot -ZipPath $resolvedAssetZip" in bootstrap
     assert bootstrap.index("Resolve-TowerScoutBootstrapEngine") < bootstrap.index("if ($VerifyOnly)")
     assert bootstrap.index("if ($VerifyOnly)") < bootstrap.index("Expand-TowerScoutAssetZip")
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap helpers are Windows-only")
+def test_compose_helper_initializes_env_from_package_template_without_overwrite():
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task074-env-{uuid.uuid4().hex}"
+    temp_root.mkdir(parents=True)
+    env_example = temp_root / ".env.example"
+    env_path = temp_root / ".env"
+    env_example.write_text(
+        "TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121\n",
+        encoding="utf-8",
+    )
+
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        . "{COMPOSE_LIB}"
+        Initialize-TowerScoutEnvFile -RootPath "{temp_root}"
+        if (-not (Test-Path -LiteralPath "{env_path}" -PathType Leaf)) {{
+            throw "Expected .env to be created from .env.example."
+        }}
+        Set-Content -LiteralPath "{env_path}" -Value "TOWERSCOUT_IMAGE=custom" -Encoding ASCII
+        Initialize-TowerScoutEnvFile -RootPath "{temp_root}"
+        $envText = Get-Content -LiteralPath "{env_path}" -Raw
+        if ($envText -notmatch "TOWERSCOUT_IMAGE=custom") {{
+            throw "Existing .env was overwritten."
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap helpers are Windows-only")

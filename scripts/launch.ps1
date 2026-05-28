@@ -21,22 +21,6 @@ $repoRoot = Get-TowerScoutRepoRoot
 $appUrl = "http://localhost:$Port"
 $readinessUrl = "$appUrl/api/readiness"
 
-function Initialize-TowerScoutEnvFile {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string] $RootPath
-    )
-
-    $envPath = Join-Path $RootPath ".env"
-    $templatePath = Join-Path $RootPath ".env.example"
-    if ((Test-Path -LiteralPath $envPath -PathType Leaf) -or -not (Test-Path -LiteralPath $templatePath -PathType Leaf)) {
-        return
-    }
-
-    Copy-Item -LiteralPath $templatePath -Destination $envPath
-    Write-Host "Created .env from .env.example."
-}
-
 function Get-TowerScoutReadiness {
     param(
         [Parameter(Mandatory = $true)]
