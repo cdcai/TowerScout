@@ -1,6 +1,6 @@
 # TASK-066: Release Candidate Validation Gate
 
-**Status**: IN_PROGRESS - digest-pinned Docker and Podman CPU-default package paths passed; route-test isolation closed by TASK-067 / PR #19; TASK-074 bootstrap/preflight follow-through completed; Podman source-build TLS and NVIDIA GPU evidence pending
+**Status**: IN_PROGRESS - final prerelease Docker Desktop package path and bounded provider smoke passed; Podman source-build TLS, Docker-Desktop-free Podman, and NVIDIA GPU evidence pending
 **Priority**: CRITICAL  
 **Type**: C (Release Engineering / Validation)  
 **Estimated Effort**: 1-2 days (8-16 hours)  
@@ -38,22 +38,22 @@ This task is the bridge between engineered release readiness and real user testi
 
 ## Acceptance Criteria
 
-- [ ] Release candidate package generated or obtained with immutable image digest.
-- [ ] Asset bundle available in the `TASK-072` layout.
-- [ ] `TASK-071` docs used as the validation instructions.
-- [ ] Package extraction and `.env` initialization verified.
-- [ ] Docker or Podman engine/Compose startup verified for the selected validation path.
-- [ ] Readiness states verified before and after asset import and provider setup.
-- [ ] Asset import and optional release-candidate hash verification verified.
-- [ ] Provider setup and restart persistence verified.
-- [ ] At least one bounded detection smoke passes or a blocker is recorded.
-- [ ] Status/log support commands produce useful evidence.
-- [ ] CPU-safe default launch is verified with `-Gpu off` or equivalent default launcher behavior.
+- [x] Release candidate package generated or obtained with immutable image digest.
+- [x] Asset bundle available in the `TASK-072` layout.
+- [x] `TASK-071` docs used as the validation instructions.
+- [x] Package extraction and `.env` initialization verified.
+- [x] Docker or Podman engine/Compose startup verified for the selected validation path.
+- [x] Readiness states verified before and after asset import and provider setup.
+- [x] Asset import and optional release-candidate hash verification verified.
+- [x] Provider setup and restart persistence verified.
+- [x] At least one bounded detection smoke passes or a blocker is recorded.
+- [x] Status/log support commands produce useful evidence.
+- [x] CPU-safe default launch is verified with `-Gpu off` or equivalent default launcher behavior.
 - [ ] If GPU support is claimed for the RC, `-Gpu auto` and `-Gpu on` are validated on an NVIDIA Docker Desktop WSL2 host with readiness diagnostics, fixed-fixture CPU/GPU output parity, and timing evidence.
-- [ ] CI/static-analysis expansion recommendation recorded, including visible route/package-staging checks, Windows package-script coverage, warning debt, and advisory-to-blocking gate candidates.
-- [ ] Markdown-to-HTML generation or parity-check recommendation recorded, including source-of-truth policy, package staging impact, and test coverage impact.
-- [ ] Time-to-first-run, manual interventions, confusing steps, and defects are recorded.
-- [ ] V1 RC1 pass/fail recommendation produced.
+- [x] CI/static-analysis expansion recommendation recorded, including visible route/package-staging checks, Windows package-script coverage, warning debt, and advisory-to-blocking gate candidates.
+- [x] Markdown-to-HTML generation or parity-check recommendation recorded, including source-of-truth policy, package staging impact, and test coverage impact.
+- [x] Time-to-first-run, manual interventions, confusing steps, and defects are recorded.
+- [x] V1 RC1 pass/fail recommendation produced.
 
 ## Dependencies
 
@@ -260,14 +260,58 @@ This task is the bridge between engineered release readiness and real user testi
 **Recommendation**: Treat `TASK-074` as complete for RC1 bootstrap/preflight scope. Proceed back to `TASK-073` clean-machine UAT preparation with Docker Desktop as the primary pilot path, qualified Podman language preserved, and GPU/Docker-Desktop-free Podman caveats unchanged.
 **Next**: Update active task tracking, run `.agent_work` validation, and continue `TASK-073`.
 
+### 2026-05-29 - Final Draft-Release Artifact Path Validated
+**Objective**: Re-run the release package gate against the actual draft-release assets after PR27 merged.
+**Context**: Earlier digest-pinned validation used image digest `sha256:55aabd73a0cbdb76a1d48f427e9fe74dcab63ed87f2a15d32d9709de3ce1a232`, which predated the final Task-073 handoff documentation updates. The final image needed to be rebuilt from the accepted source ref because the runtime image serves Settings-linked docs from `/app/docs`.
+**Execution**:
+- Synced `main` to accepted source ref `baa5ccc053184d4a24389a436f6d7c2168238c1e`.
+- Quarantined old local `dist` artifacts under `dist/archive-pre-final-20260529`.
+- Published `ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121` from that source ref with GitHub Actions run `26631165695`.
+- Generated `dist/towerscout-v0.1.0-rc1.zip` with the published digest and `pytorch_flavor=cuda121`.
+- Created draft prerelease `v0.1.0-rc1` and uploaded the Application Package, Model & Data Package, and both checksum sidecars.
+- Downloaded the draft-release assets into `dist/release-download-validation`, verified checksums, extracted the Application Package, and ran `bootstrap.cmd -Engine docker -Gpu off -PackageZip ..\towerscout-v0.1.0-rc1.zip -AssetZip ..\towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip -NoBrowser`.
+**Validation Evidence**:
+- Published image digest: `sha256:36f452a5da0d9f3fa17f5b0f90802873cb40b1a433596048e4e9437e6f51d746`.
+- GitHub asset digest for `towerscout-v0.1.0-rc1.zip`: `sha256:ff7a2c997fe0678c1133847a56e1d2f21c7935732b1103841313a2b404cd3344`.
+- GitHub asset digest for `towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip`: `sha256:00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+- Bootstrap verified both checksum sidecars, validated the asset ZIP layout, pulled the pinned image, initialized `.env`, imported assets with hash verification, and reached `setup_required` with `asset_status=ok`.
+- `/api/health`, `/api/readiness`, `/docs/project-overview.html`, `/docs/towerscout-user-guide.html`, and `/license` returned HTTP `200`.
+- `status.cmd` reported the running image `ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121@sha256:36f452a5da0d9f3fa17f5b0f90802873cb40b1a433596048e4e9437e6f51d746`, Docker Compose `v5.1.3`, container health `healthy`, readiness `setup_required`, and all manifest assets `ok`.
+- Runtime readiness confirmed CPU-safe launch from the CUDA-capable image: `configured_policy=cpu`, `selected_device=cpu`, `torch_version=2.2.1+cu121`, `torch_cuda_build=12.1`, and `torch_cuda_available=false`.
+- The final validation stack was stopped after evidence capture.
+**Findings**:
+- No package/image/docs/assets mismatch remains for the draft-release artifact path.
+- At this checkpoint, provider setup persistence and bounded detection smoke had not yet been rerun because no provider key or final public smoke fixture was selected for this handoff packet. That gap is superseded by the later final-digest provider smoke entry below.
+**Recommendation**: Treat the final Docker Desktop bootstrap/readiness package path as passed for the draft-release assets. Do not mark external UAT approved until provider-key expectations, smoke fixture, support contact, and owner/reviewer acceptance are recorded in `TASK-073`.
+**Next**: Fill the UAT handoff packet, decide whether to run provider setup plus bounded detection against the selected fixture, and then publish or owner-approve the draft prerelease for controlled testers.
+
+### 2026-05-29 - Final-Digest Provider Smoke And Published Prerelease
+**Objective**: Complete the owner-selected provider setup and bounded detection smoke on the final published digest before external UAT.
+**Context**: The release owner selected Azure Maps, `200 west st, New York, NY 10282`, and a `150 meter` circle as the public RC1 smoke fixture. The owner also approved publishing the prerelease after internal validation.
+**Execution**:
+- Copied local ignored provider config into the downloaded validation container for this internal smoke only.
+- Verified container readiness from inside the RC container with asset status `ok`, config status `ok`, default provider `azure`, CPU device selection, and image digest `sha256:36f452a5da0d9f3fa17f5b0f90802873cb40b1a433596048e4e9437e6f51d746`.
+- Resolved the public fixture coordinates without recording the provider key.
+- Ran the bounded detection smoke inside the RC container because this workstation had a conflicting host process on `localhost:5000`.
+- Published the `v0.1.0-rc1` prerelease.
+**Validation Evidence**:
+- Published prerelease URL: `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc1`.
+- Smoke fixture: Azure Maps, `200 west st, New York, NY 10282`, `150 meter` circle, estimated `8` tiles and `48.23` seconds.
+- Detection result: HTTP `200`, elapsed time about `43` seconds, `55` total records, `8` tile records, `47` cooling-tower records, and `47` records with address data.
+- Release assets remained the same final files and checksums recorded above.
+**Finding**: `/api/geocode/forward` returned HTTP `500` during fixture lookup because a successful Azure geocode result included a `GeocodingProvider` enum in the route-level `provider_used` field that Flask could not JSON serialize. The detection workflow itself completed with address data after the coordinates were resolved separately.
+**Follow-Up Resolution**: PR #28 follow-up investigation confirmed the tester-visible Azure search path uses `/api/maps/azure/search`, not `/api/geocode/forward`. The backend route was still fixed by serializing `provider_used` from `GeocodingResult.to_dict()` output, and regression coverage now proves the route returns string provider fields for Azure forward-geocode results.
+**Recommendation**: Docker Desktop CPU-default package validation can proceed to controlled external UAT after `TASK-073` tester/cohort selection and owner/reviewer packet approval. Keep GPU, Docker-Desktop-free Podman, and Podman source-build caveats bounded.
+**Next**: Update `TASK-073` handoff state and request owner/reviewer approval for tester send.
+
 ---
 
 ## Validation Results
 
 ### Test Summary
-**Test Date**: 2026-05-22 through 2026-05-28
-**Test Environment**: Windows 11 AMD64 workstation, Docker Desktop engine, Podman `5.8.2` WSL machine using `podman compose` with Docker Compose `v5.1.3` as external provider, digest-pinned GHCR image `ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121@sha256:55aabd73a0cbdb76a1d48f427e9fe74dcab63ed87f2a15d32d9709de3ce1a232`, CPU launch via `-Gpu off`, Azure provider configured from local ignored development config for validation only.
-**Test Status**: PASS_WITH_BOUNDARIES - digest-pinned Docker Desktop and Podman package runtime CPU-default paths passed; route-test isolation is closed by `TASK-067` / PR #19, and `TASK-074` bootstrap/preflight follow-through passed post-merge package validation. GPU, Docker-Desktop-free Podman, asset ZIP/checksum publication, and Podman source-build TLS evidence remain bounded follow-ups.
+**Test Date**: 2026-05-22 through 2026-05-29
+**Test Environment**: Windows 11 AMD64 workstation, Docker Desktop engine, Podman `5.8.2` WSL machine using `podman compose` with Docker Compose `v5.1.3` as external provider, final prerelease GHCR image `ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121@sha256:36f452a5da0d9f3fa17f5b0f90802873cb40b1a433596048e4e9437e6f51d746`, CPU launch via `-Gpu off`, Azure provider configured from local ignored development config for validation only.
+**Test Status**: PASS_WITH_BOUNDARIES - final prerelease Docker Desktop package path passed through bootstrap, asset import, readiness, Settings-linked docs, `/license`, provider setup, and bounded Azure detection smoke on the final digest. GPU, Docker-Desktop-free Podman, and Podman source-build TLS evidence remain bounded follow-ups.
 
 ### Acceptance Criteria Validation
 - [x] Package generated or obtained - final RC control package generated with immutable GHCR image digest.
@@ -276,10 +320,10 @@ This task is the bridge between engineered release readiness and real user testi
 - [x] Launch path verified - Docker launch on alternate ports reached expected first-run states and final `ready`.
 - [x] Podman package runtime launch verified - Podman launch on port `5008` reached expected first-run states, asset import, restart persistence, and final `ready`.
 - [x] Provider setup verified - Azure provider setup saved through API and persisted across restart in the package config volume.
-- [x] Detection smoke verified - bounded Azure fixture returned HTTP `200`, 14 detection records, selected detections, and address fields.
+- [x] Detection smoke verified - final-digest bounded Azure fixture returned HTTP `200`, `47` cooling-tower records, selected detections, and address fields.
 - [x] Status/log support commands produce useful evidence - `status.cmd`, `/api/readiness`, Docker logs, and `performance.log` exposed actionable evidence.
 - [x] CPU-safe default launch verified - validation launched with `-Gpu off`; runtime readiness selected CPU from the CUDA-capable image with `torch 2.2.1+cu121`.
-- [x] Immutable image digest release package verified - package pinned to GHCR digest `sha256:55aabd73a0cbdb76a1d48f427e9fe74dcab63ed87f2a15d32d9709de3ce1a232`.
+- [x] Immutable image digest release package verified - final prerelease package pinned to GHCR digest `sha256:36f452a5da0d9f3fa17f5b0f90802873cb40b1a433596048e4e9437e6f51d746`.
 - [x] Bootstrap/preflight package path verified - post-PR23 clean package validation proved verify-only is non-mutating, asset ZIP staging/import succeeds, `.env` initializes from the pinned package template before Compose startup, and readiness reaches `setup_required` with assets `ok`.
 - [ ] NVIDIA Docker Desktop WSL2 GPU evidence - PENDING separate GPU host validation before any broad GPU support claim.
 - [ ] Docker-Desktop-free Podman evidence - PENDING clean-host validation with a provider that does not depend on Docker Desktop's external Compose binary.
@@ -295,9 +339,10 @@ This task is the bridge between engineered release readiness and real user testi
 4. **Open source-build caveat - Podman Docker Hub TLS**: Podman package runtime successfully pulled the RC image from GHCR, but Podman source-build/base-image pulls from Docker Hub still fail TLS certificate verification inside the Podman VM before TowerScout code runs.
 5. **Open validation caveat - NVIDIA GPU host**: optional GPU acceleration needs NVIDIA Docker Desktop WSL2 validation before support claims.
 6. **Open validation caveat - Docker-Desktop-free Podman**: this host's Podman Compose path delegates to Docker Desktop's Docker Compose binary, so it does not prove a Docker-Desktop-free Podman installation.
-7. **Open release artifact caveat - asset ZIP packaging**: this run validated the documented extracted asset layout and import hash verification, but did not produce a new asset ZIP/checksum sidecar.
+7. **Fixed - final release artifact publication**: final Application Package, Model & Data Package, and checksum sidecars were published under the `v0.1.0-rc1` prerelease and validated from downloaded GitHub assets.
 8. **Fixed - route-test isolation and timeout safeguards**: `TASK-067` / PR #19 added pytest timeout safeguards and pre-import route-test runtime isolation so `tests/unit/test_flask_routes.py` no longer touches the developer's real local `.env` path during focused validation.
 9. **Fixed - bootstrap/preflight package ordering and `.env` initialization**: `TASK-074` / PRs #22 and #23 ensured verify-only asset ZIP checks are non-mutating and packaged Compose entrypoints initialize `.env` from `.env.example` before starting the stack.
+10. **Fixed - `/api/geocode/forward` serialization**: final smoke setup found this route returned HTTP `500` after Azure forward geocoding succeeded because the route-level `provider_used` field exposed a `GeocodingProvider` enum. PR #28 follow-up fixed the response serialization and added regression coverage. Tester-visible Azure search uses `/api/maps/azure/search`, so this defect did not block the selected external UAT fixture.
 
 ### Remediation Actions
 

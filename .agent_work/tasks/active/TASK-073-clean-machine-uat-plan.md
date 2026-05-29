@@ -1,6 +1,6 @@
 # TASK-073: Clean-Machine Pilot / UAT Execution Plan
 
-**Status**: IN_PROGRESS - final release artifacts/image digest and owner acceptance pending
+**Status**: IN_PROGRESS - prerelease published and final-digest smoke passed; tester cohort and owner/reviewer acceptance pending
 **Priority**: HIGH  
 **Type**: B/C (User Testing / Release Validation)  
 **Estimated Effort**: 0.5-1 day (4-8 hours)  
@@ -54,8 +54,8 @@ This task should make external testing repeatable, bounded, and evidence-produci
 - [x] UAT checklist is updated to use the implemented `TASK-074` bootstrap path for first setup.
 - [x] Reviewer documentation feedback is incorporated into the pilot handoff instructions.
 - [x] UAT handoff packet template captures exact release URL/tag, artifact filenames, smoke fixture, and support contact before tester launch.
-- [ ] Final GitHub Release assets are published and match the accepted release source ref.
-- [ ] Final package/image pair is regenerated or owner-accepted after Task-073 documentation updates.
+- [x] Final GitHub Release assets are published and match the accepted release source ref.
+- [x] Final package/image pair is regenerated or owner-accepted after Task-073 documentation updates.
 - [ ] Owner/reviewer accepts the pilot/UAT plan before external testers start.
 
 ## Dependencies
@@ -125,7 +125,7 @@ Pause or stop pilot/UAT if any of the following occur:
 - **Launch mode**: CPU-default launch with `-Gpu off`.
 - **Provider**: Azure Maps or Google Maps, with the provider used recorded in the report.
 - **Assets**: Package-local `assets/` import using the documented asset bundle and hash verification.
-- **Detection smoke**: Owner-provided public fixture with provider, public/non-sensitive location, expected tile range, and zero-detection acceptability rule, preferably 1-6 tiles.
+- **Detection smoke**: Owner-provided public fixture with provider, public/non-sensitive location, expected tile range, and zero-detection acceptability rule. The default RC1 fixture is about 8 tiles.
 - **Out of scope unless explicitly approved**: GPU acceleration claims, Docker-Desktop-free Podman support, source-build validation, restricted-network/offline preload, large AOIs, and private/sensitive screenshot collection.
 
 ### Tester Acceptance Checklist
@@ -345,6 +345,44 @@ After pilot/UAT, V1 may be considered ready only if:
 - Keep the handoff packet's explicit accepted source ref aligned with `SOURCE.txt`, `release-manifest.v1.json`, image digest, and release tag.
 **Next**: Merge PR27 if checks pass, then run the final release build/publish/validation sequence before external tester handoff.
 
+### 2026-05-29 - Draft Release Package Validation Passed
+**Objective**: Validate the actual draft-release artifact path before external UAT handoff.
+**Context**: PR27 was merged, `main` was synced, and the post-merge source ref was selected as the release source ref.
+**Execution**: Published the CUDA-capable GHCR image from source ref `baa5ccc053184d4a24389a436f6d7c2168238c1e`, generated the final Application Package with that digest, uploaded all four assets to a draft prerelease, downloaded those release assets into a separate validation folder, verified both ZIP checksums, and ran `bootstrap.cmd` from the downloaded package with Docker Desktop and `-Gpu off`.
+**Validation Evidence**:
+- Draft release tag: `v0.1.0-rc1`.
+- Accepted source ref: `baa5ccc053184d4a24389a436f6d7c2168238c1e`.
+- Published image: `ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121@sha256:36f452a5da0d9f3fa17f5b0f90802873cb40b1a433596048e4e9437e6f51d746`.
+- Application Package: `towerscout-v0.1.0-rc1.zip`, SHA-256 `ff7a2c997fe0678c1133847a56e1d2f21c7935732b1103841313a2b404cd3344`.
+- Model & Data Package: `towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip`, SHA-256 `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+- Bootstrap verified the package and asset ZIP checksum sidecars, rejected no asset-layout issues, pulled the pinned GHCR image, created `.env` from `.env.example`, imported assets with hash verification, and reached readiness `setup_required` with `asset_status=ok`.
+- Runtime readiness reported `pytorch_flavor=cuda121`, `torch_version=2.2.1+cu121`, `torch_cuda_build=12.1`, `device_policy=cpu`, `selected_device=cpu`, and image digest `sha256:36f452a5da0d9f3fa17f5b0f90802873cb40b1a433596048e4e9437e6f51d746` under `-Gpu off`.
+- `status.cmd`, `/api/health`, `/api/readiness`, `/docs/project-overview.html`, `/docs/towerscout-user-guide.html`, and `/license` passed.
+**Decision**: The package/image/docs/assets drift risk identified in PR27 is resolved for the draft-release artifact path. Keep the UAT packet approval at `NO` until the release owner fills the smoke fixture and support contact, confirms provider-key expectations, and accepts or completes the provider setup plus bounded detection smoke gate.
+**Next**: Fill owner-controlled handoff values, optionally run provider setup plus bounded detection smoke on the selected public fixture, then decide whether to publish the draft prerelease and approve the UAT packet.
+
+### 2026-05-29 - UAT Handoff Values Filled And Prerelease Published
+**Objective**: Close the owner-controlled handoff values that remained after draft-release package validation.
+**Context**: The release owner provided a public Azure Maps smoke fixture, support contacts, provider-key handling expectations, and approval to internally rerun provider setup plus bounded detection smoke before publishing the prerelease.
+**Decision**: Use Azure Maps at `200 west st, New York, NY 10282` with a `150 meter` circle as the default public RC1 smoke fixture. Ask testers for support-safe environment, package, command, checksum, readiness, provider, and detection outcome details. Do not ask testers to send API keys, `.env` files, raw detection JSON, tile/map URLs, raw logs, browser network traces, provider portal screenshots, private AOI screenshots, or named-volume contents unless an approved redaction/handling procedure exists.
+**Execution**:
+- Filled the UAT handoff packet with the public release URL, support contacts, smoke fixture, provider-key guidance, and support-safe evidence instructions.
+- Copied local ignored provider config into the downloaded validation container for internal smoke only, without committing or recording the key.
+- Queried Azure Maps directly inside the container to resolve the fixture location to `40.7148641, -74.0141981` without printing provider credentials.
+- Ran the final-digest Docker Desktop `-Gpu off` detection smoke inside the RC container because this workstation had a conflicting host process on `localhost:5000`.
+- Published the `v0.1.0-rc1` prerelease for the selected controlled tester path.
+**Validation Evidence**:
+- Published prerelease URL: `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc1`.
+- Accepted source ref: `baa5ccc053184d4a24389a436f6d7c2168238c1e`.
+- Published image digest: `sha256:36f452a5da0d9f3fa17f5b0f90802873cb40b1a433596048e4e9437e6f51d746`.
+- Application Package: `towerscout-v0.1.0-rc1.zip`, SHA-256 `ff7a2c997fe0678c1133847a56e1d2f21c7935732b1103841313a2b404cd3344`.
+- Model & Data Package: `towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip`, SHA-256 `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+- Smoke estimate: `8` tiles and `48.23` seconds.
+- Smoke result: HTTP `200`, `55` total records, `8` tile records, `47` cooling-tower records, `47` records with address data, and elapsed time about `43` seconds.
+**Finding**: Backend `/api/geocode/forward` returned HTTP `500` after Azure forward geocoding succeeded because the route-level `provider_used` field exposed a `GeocodingProvider` enum. This did not block the selected fixture smoke, because the fixture coordinates were resolved separately and detection completed with address data.
+**Follow-Up Resolution**: PR #28 follow-up investigation confirmed the tester-visible Azure search path uses `/api/maps/azure/search`, not `/api/geocode/forward`. The backend forward-geocode route was still fixed to serialize `provider_used` from `GeocodingResult.to_dict()` output, and regression coverage now proves Azure forward-geocode route responses are JSON-safe.
+**Next**: Select tester/cohort, get owner/reviewer packet approval, and start controlled external UAT with the published prerelease.
+
 ---
 
 ## Validation Results
@@ -352,7 +390,7 @@ After pilot/UAT, V1 may be considered ready only if:
 ### Test Summary
 **Test Date**: May 27-29, 2026
 **Test Environment**: Documentation/task-state validation only; no external pilot run yet
-**Test Status**: DRAFT_READY - reviewer handoff fixes applied and focused documentation/task validation passed
+**Test Status**: READY_FOR_OWNER_APPROVAL - prerelease package path and default smoke fixture passed internal validation; tester cohort and owner/reviewer approval remain pending
 
 ### Acceptance Criteria Validation
 - [x] Start/stop criteria documented - PASS - See Pilot Start Criteria and Pilot Stop Criteria.
@@ -364,19 +402,24 @@ After pilot/UAT, V1 may be considered ready only if:
 - [x] Low-risk install-UX hardening added - PASS - Quick Start, Package Guide, Project Overview, Settings-linked HTML, and UAT checklist now clarify Application Package versus Model & Data Package naming, GitHub Release asset selection, checksums, disk-space targets, nested asset layout mistakes, first image-pull delay, support stop points, and smoke-test expectations.
 - [x] Runtime prerequisite preflight completed - PASS - `TASK-074` created, implemented, validated, and incorporated into the bootstrap-first UAT path.
 - [x] UAT checklist aligned to implemented bootstrap - PASS - The checklist now uses `bootstrap.cmd` for first setup and keeps manual import as fallback.
-- [x] UAT handoff packet template ready - PASS - See `.agent_work/user-testing/instructions/RC1-PILOT-HANDOFF-PACKET.md`; final release/fixture/support values are still pending.
+- [x] UAT handoff packet template ready - PASS - See `.agent_work/user-testing/instructions/RC1-PILOT-HANDOFF-PACKET.md`; final release, fixture, support contact, and provider-key guidance are filled.
 - [x] V1 completion gate documented - PASS - See V1 Completion Gate After Pilot.
+- [x] Final package/image pair regenerated and validated from accepted source ref - PASS - See 2026-05-29 draft release package validation evidence.
+- [x] Prerelease published - PASS - `v0.1.0-rc1` is published at `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc1`.
+- [x] Default public smoke fixture internally validated - PASS - Azure Maps, `200 west st, New York, NY 10282`, `150 meter` circle, about `8` tiles, HTTP `200`, `47` cooling-tower records with address data.
 - [ ] Owner/reviewer acceptance - PENDING.
 
 ### Issues Identified
 
 - No pilot execution issues yet; this task has only drafted the plan.
-- Final tester handoff values are not ready: no GitHub Release is published, the existing local application ZIP is stale relative to the latest docs, and the known image digest predates the current release source ref.
+- Tester/cohort selection and owner/reviewer approval are still pending.
+- Backend `/api/geocode/forward` serialization was fixed after the final-digest smoke uncovered a JSON-unsafe `provider_used` enum field. Tester-visible Azure search was confirmed to use `/api/maps/azure/search`.
 
 ### Remediation Actions
 
 - Keep GPU, Docker-Desktop-free Podman, source-build, restricted-network, and large-AOI scenarios out of external pilot instructions unless owner-approved evidence is added.
+- Keep the forward-geocode regression test in the RC validation set so future route refactors do not reintroduce enum serialization failures.
 
 ### Sign-off
 
-Draft plan is ready for owner/reviewer review. External pilot should not start until the plan is accepted and the final package/assets/checksum inputs are identified.
+The published prerelease, default public smoke fixture, support contacts, and support-safe evidence boundaries are ready for owner/reviewer review. External pilot should not start until the tester cohort is selected and the packet is explicitly approved for tester send.

@@ -68,6 +68,38 @@ def test_reverse_geocode_route_returns_rate_limited_fallback():
     assert payload["error_type"] == "RateLimitError"
 
 
+def test_forward_geocode_route_serializes_provider_used():
+    app.config["TESTING"] = True
+    client = app.test_client()
+    forward_result = GeocodingResult(
+        address="200 West Street, New York, NY 10282",
+        provider=GeocodingProvider.AZURE_MAPS,
+        confidence=0.98,
+        coordinates=(40.7148641, -74.0141981),
+        success=True,
+    )
+
+    with patch.object(towerscout, "azure_api_key", "test-azure-key"), \
+         patch.object(towerscout, "google_api_key", ""), \
+         patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), \
+         patch("ts_geocoding.GeocodingService.forward_geocode_unified", return_value=[forward_result]):
+        response = client.post(
+            "/api/geocode/forward",
+            json={"query": "200 west st, New York, NY 10282", "provider": "azure"},
+            environ_base={"REMOTE_ADDR": "127.0.0.73"},
+        )
+
+    payload = response.get_json()
+    assert response.status_code == 200
+    assert payload["success"] is True
+    assert payload["provider_used"] == "azure_maps"
+    assert payload["results"][0]["provider"] == "azure_maps"
+    assert payload["results"][0]["coordinates"] == {
+        "lat": 40.7148641,
+        "lng": -74.0141981,
+    }
+
+
 def test_performance_metrics_accumulates_model_phase_timing_and_metadata():
     metrics = PerformanceMetrics("task-079-test")
 

@@ -1989,11 +1989,13 @@ def forward_geocode():
         if not results:
             return jsonify({'error': 'No results found for query'}), 404
             
-        # Return standardized geocoding results
+        # Return standardized geocoding results. Keep all provider identifiers
+        # as strings so Flask does not try to serialize enum objects.
+        result_payloads = [result.to_dict() for result in results]
         return jsonify({
             'success': True,
-            'results': [result.to_dict() for result in results],
-            'provider_used': results[0].provider if results else None
+            'results': result_payloads,
+            'provider_used': result_payloads[0].get('provider') if result_payloads else None
         })
         
     except ValidationError as e:

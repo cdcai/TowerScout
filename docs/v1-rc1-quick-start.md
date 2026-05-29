@@ -478,7 +478,8 @@ owner-provided public test area or another non-sensitive approved area. Support
 should provide the smoke-test fixture before UAT starts: provider,
 public/non-sensitive location name, expected tile range, and whether zero
 detections is an acceptable result. Do not choose a private investigation AOI
-for the first smoke test. Keep the first run small, preferably `1-6` tiles.
+for the first smoke test. Keep the first run small. The default RC1 Azure
+smoke fixture is about `8` tiles.
 
 Suggested smoke flow:
 
@@ -490,9 +491,11 @@ Suggested smoke flow:
 6. Confirm the run completes and the review panel updates.
 
 Expected result: status is `ready` before the detection smoke, and the detection
-workflow completes without crashing. Results may be zero or more detections
-depending on the approved area and provider imagery, but the map and right-hand
-review panel should update consistently.
+workflow completes without crashing. For the default RC1 Azure fixture, expect a
+non-zero tower result. Exact counts may vary, but zero towers, no review-panel
+update, or a crash should be reported as `BLOCKED` or `FAIL`. For any future
+support-approved fixture, follow the zero-detection rule support provided for
+that fixture.
 
 ## 11. Stop Or Restart
 
@@ -558,6 +561,9 @@ Run:
 
 Use the same `-Engine` value on status/log commands if support asked you to
 start with a specific engine.
+
+Send only support-requested, reviewed/redacted excerpts from log output. Do not
+send raw logs unless your site has an approved handling procedure.
 
 For package/image metadata, support may ask you to copy the package folder name
 and the contents of `IMAGE.txt`:

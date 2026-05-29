@@ -9,7 +9,8 @@ Use this checklist for controlled V1 RC1 package-path pilot testing.
 - CPU-default launch with `-Gpu off`.
 - Azure Maps or Google Maps provider key.
 - Package-local assets imported with hash verification.
-- Bounded public/non-sensitive detection area, preferably 1-6 tiles.
+- Bounded public/non-sensitive detection area, preferably small and
+  support-provided; the default RC1 smoke fixture is about 8 tiles.
 
 Do not use this checklist to claim GPU acceleration, Docker-Desktop-free Podman support, source-build support, restricted-network/offline support, or large-AOI performance.
 
@@ -39,7 +40,9 @@ or the direct release URL support provides. Do not use GitHub's automatic
 Those are source snapshots, not the RC1 Application Package. Do not use the
 green GitHub `Code` button for the normal pilot install.
 
-Do not send API keys, full `.env` files, private AOI screenshots, or unredacted logs.
+Do not send API keys, full `.env` files, private AOI screenshots, unredacted
+logs, raw detection API responses, tile/map URLs, browser network traces, or
+raw provider responses.
 
 If you do not normally use PowerShell:
 
@@ -149,11 +152,16 @@ Expected result: WSL is installed, any listed Linux distribution uses version
 11. Open Settings Resource Links and confirm the package-local docs and source/license page load.
 12. Run the owner-provided public bounded detection smoke. Use the provider,
     public/non-sensitive location, expected tile range, and zero-detection
-    acceptability rule support provided before UAT starts. If no fixture was
-    provided, stop and ask support before choosing your own area.
-13. Confirm the detection workflow completes without a crash. Results may be
-    zero or more detections, but the map and right-hand review panel should
-    update consistently.
+    acceptability rule support provided before UAT starts. For the default RC1
+    smoke fixture, use Azure Maps, search for `200 west st, New York, NY
+    10282`, draw a `150 meter` circle, and expect about `8` tiles. Towers
+    should be detected for this fixture. If no fixture was provided, stop and
+    ask support before choosing your own area.
+13. Confirm the detection workflow completes without a crash. For the default
+    RC1 Azure fixture, expect a non-zero tower result. Exact counts may vary,
+    but zero towers, no review-panel update, or a crash should be reported as
+    `BLOCKED` or `FAIL`. For any future support-approved fixture, follow the
+    zero-detection rule support provided for that fixture.
 14. Confirm addresses/provider metadata appear when geocoding succeeds, or that a clear fallback appears when unavailable.
 15. If requested, export CSV or KML.
 16. Stop TowerScout through the package stop script or documented shutdown path.
@@ -188,4 +196,5 @@ missing/corrupt/hash-failed files, readiness reports `fatal`, or provider
 validation repeatedly fails after the key value has been checked.
 
 Capture exact error text and the step where it failed. Screenshots are useful
-only when they do not reveal API keys, private locations, or sensitive data.
+only when they do not reveal API keys, private locations, tile/map URLs, raw
+provider responses, or sensitive data.

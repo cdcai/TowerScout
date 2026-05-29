@@ -3,7 +3,7 @@
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
 **Last Updated**: May 29, 2026
 **Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
-**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, `TASK-067`, and `TASK-074` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` digest-pinned Docker Desktop and Podman package runtime validation passed for CPU-default launch, including the post-PR23 clean package bootstrap/preflight validation, with Podman Docker Hub source-build TLS and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` is active for clean-machine pilot/UAT planning and now has a handoff packet template plus PR27 reviewer follow-up notes, but final GitHub Release assets, a current source-ref image digest, exact fixture values, and owner/reviewer acceptance remain pending before external tester launch.
+**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, `TASK-067`, and `TASK-074` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` final prerelease Docker Desktop package path passed through bootstrap/readiness from the downloaded GitHub assets and bounded Azure detection smoke on the final digest, with Podman Docker Hub source-build TLS, Docker-Desktop-free Podman, and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` is active for clean-machine pilot/UAT planning and now has exact release artifact values, default smoke fixture, support contacts, provider-key evidence boundaries, and a published prerelease, with tester cohort selection and owner/reviewer acceptance pending before external tester launch.
 
 ---
 
@@ -183,7 +183,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **User Value**: Converts the engineered release package into a self-service pilot path instead of a support-only handoff.
 
 ### **TASK-066: Release Candidate Validation Gate**
-**Status**: IN_PROGRESS - digest-pinned Docker Desktop and Podman CPU-default package paths passed; route-test isolation closed by TASK-067 / PR #19; TASK-074 bootstrap/preflight validation passed; Podman source-build TLS and NVIDIA GPU evidence pending
+**Status**: IN_PROGRESS - final prerelease Docker Desktop package path and bounded Azure provider smoke passed; Podman source-build TLS, Docker-Desktop-free Podman, and NVIDIA GPU evidence pending
 **Type**: C (Release Engineering / Validation)  
 **Priority**: CRITICAL  
 **Estimated Effort**: 1-2 days (8-16 hours)  
@@ -195,7 +195,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **Dependencies**: `TASK-065`; `TASK-069`; `TASK-071`; `TASK-072`; agreed release package shape.
 
 **Current State**:
-- Final Docker Desktop validation generated the RC control package with GHCR digest `sha256:55aabd73a0cbdb76a1d48f427e9fe74dcab63ed87f2a15d32d9709de3ce1a232`, imported all 9 manifest assets with hash verification, reached readiness `ready`, persisted Azure provider setup, and passed a bounded Azure detection smoke on the public local fixture.
+- Final Docker Desktop validation generated and published the RC control package with GHCR digest `sha256:36f452a5da0d9f3fa17f5b0f90802873cb40b1a433596048e4e9437e6f51d746`, imported all 9 manifest assets with hash verification, reached readiness, and passed the owner-selected bounded Azure detection smoke on the public `200 west st, New York, NY 10282` fixture.
 - Validation found and fixed three release-path blockers: non-default port asset import, stale model discovery after asset copy, and hidden EfficientNet first-use download.
 - Docker Desktop and Podman package runtime paths are validated for CPU-default launch against the digest-pinned GHCR image. On this host, `podman compose` delegates to Docker Compose v5.1.3 as its external provider.
 - `TASK-074` bootstrap/preflight follow-through passed clean post-merge package validation: verify-only asset ZIP checks are non-mutating, asset ZIP staging/import succeeds, packaged Compose entrypoints initialize `.env` from `.env.example`, and readiness reaches `setup_required` with assets `ok`.
@@ -225,7 +225,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **User Value**: Restores confidence in internal validation before external pilot prep and reduces the chance that future agents follow stale instructions.
 
 ### **TASK-073: Clean-Machine Pilot / UAT Execution Plan**
-**Status**: IN_PROGRESS - handoff packet template added; final release artifacts/image digest and owner/reviewer acceptance pending
+**Status**: IN_PROGRESS - prerelease published and final-digest smoke passed; tester cohort and owner/reviewer acceptance pending
 **Type**: B/C (User Testing / Release Validation)  
 **Priority**: HIGH  
 **Estimated Effort**: 0.5-1 day (4-8 hours)  

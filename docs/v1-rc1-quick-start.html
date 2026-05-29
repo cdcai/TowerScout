@@ -117,8 +117,8 @@ readiness: setup_required</code></pre>
       <section class="doc-section" id="success">
         <h2>Confirm Success</h2>
         <pre><code>.\scripts\status.cmd -Engine docker</code></pre>
-        <p>Readiness should become <code>ready</code> after provider setup and required assets are present. For a smoke check, support should provide the fixture before UAT starts: provider, public/non-sensitive location name, expected tile range, and whether zero detections is acceptable. Do not choose a private investigation AOI for the first smoke test. Estimate tiles first, keep the run to about <code>1-6</code> tiles, then select <code>Find towers</code>.</p>
-        <p>Expected result: the detection workflow completes without crashing. Results may be zero or more detections, but the map and right-hand review panel should update consistently.</p>
+        <p>Readiness should become <code>ready</code> after provider setup and required assets are present. For a smoke check, support should provide the fixture before UAT starts: provider, public/non-sensitive location name, expected tile range, and whether zero detections is acceptable. Do not choose a private investigation AOI for the first smoke test. Estimate tiles first, keep the run small, then select <code>Find towers</code>. The default RC1 Azure smoke fixture is about <code>8</code> tiles.</p>
+        <p>Expected result: the detection workflow completes without crashing. For the default RC1 Azure fixture, expect a non-zero tower result. Exact counts may vary, but zero towers, no review-panel update, or a crash should be reported as <code>BLOCKED</code> or <code>FAIL</code>. For any future support-approved fixture, follow the zero-detection rule support provided for that fixture.</p>
       </section>
       <section class="doc-section" id="stop">
         <h2>Stop Or Restart</h2>
@@ -134,6 +134,7 @@ readiness: setup_required</code></pre>
         <h2>If Something Fails</h2>
         <pre><code>.\scripts\status.cmd -Engine docker
 .\scripts\logs.cmd -Engine docker -Tail 200</code></pre>
+        <p>Send only support-requested, reviewed/redacted excerpts from log output. Do not send raw logs unless your site has an approved handling procedure.</p>
         <p>For fuller troubleshooting and support details, open the package guide at <a href="/docs/v1-rc1-package-guide.md">/docs/v1-rc1-package-guide.md</a>.</p>
         <p>For package/image metadata, support may ask you to copy the package folder name and the contents of <code>IMAGE.txt</code>.</p>
         <pre><code>Get-Content .\IMAGE.txt</code></pre>

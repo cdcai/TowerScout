@@ -10,6 +10,9 @@ IMPORTANT
 - Do not send API keys.
 - Do not send your full `.env` file.
 - Do not send private AOI screenshots or exact private addresses unless explicitly approved.
+- Do not send raw detection API responses, tile/map URLs, browser network traces,
+  raw logs, or provider portal screenshots unless support explicitly approves a
+  reviewed/redacted copy.
 - Send screenshots and exact error text whenever possible after redacting sensitive information.
 
 WHAT TO SEND
@@ -67,6 +70,8 @@ podman compose version
 - Image tag/digest from `IMAGE.txt` or bootstrap output:
 - Asset bundle name/version:
 - Did `-VerifyHashes` pass?
+- Did the package ZIP checksum match its `.sha256` file?
+- Did the Model & Data Package ZIP checksum match its `.sha256` file?
 
 8. Bootstrap/launch/import details:
 
@@ -88,6 +93,8 @@ podman compose version
 
 - Support-provided fixture/AOI name:
 - Provider requested for the fixture:
+- Search text/location used:
+- Shape type and radius or boundary:
 - Estimated tile count:
 - Was zero detections listed as acceptable for this fixture?
 - Did detection start?
@@ -103,6 +110,8 @@ HOW TO CAPTURE TERMINAL OUTPUT
 - If the error is visible in PowerShell, copy the relevant output and paste it into a text file.
 - Keep the PowerShell window open until you have taken any needed screenshot.
 - Do not include API keys or full `.env` file contents.
+- Do not include tile/map URLs, raw detection JSON, browser network traces, or
+  raw provider responses.
 - To capture package/image metadata, run `Get-Content .\IMAGE.txt` from the package folder and copy the output.
 
 WHAT A GOOD REPORT LOOKS LIKE
