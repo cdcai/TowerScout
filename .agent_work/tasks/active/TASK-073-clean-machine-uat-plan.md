@@ -1,6 +1,6 @@
 # TASK-073: Clean-Machine Pilot / UAT Execution Plan
 
-**Status**: IN_PROGRESS - reviewer handoff fixes incorporated for owner acceptance
+**Status**: IN_PROGRESS - UAT handoff packet template added for final owner acceptance
 **Priority**: HIGH  
 **Type**: B/C (User Testing / Release Validation)  
 **Estimated Effort**: 0.5-1 day (4-8 hours)  
@@ -53,6 +53,7 @@ This task should make external testing repeatable, bounded, and evidence-produci
 - [x] Runtime prerequisite preflight/bootstrap work is routed to `TASK-074`.
 - [x] UAT checklist is updated to use the implemented `TASK-074` bootstrap path for first setup.
 - [x] Reviewer documentation feedback is incorporated into the pilot handoff instructions.
+- [x] UAT handoff packet template captures exact release URL/tag, artifact filenames, smoke fixture, and support contact before tester launch.
 - [ ] Owner/reviewer accepts the pilot/UAT plan before external testers start.
 
 ## Dependencies
@@ -64,6 +65,7 @@ This task should make external testing repeatable, bounded, and evidence-produci
 - `TASK-068`: possible follow-up home for deeper Windows/script portability work if pilot prep exposes it.
 - `TASK-074`: completed bootstrap/preflight work that automates the most error-prone first-launch checks before broad external UAT.
 - `.agent_work/user-testing/README.md`: existing user-testing workspace rules.
+- `.agent_work/user-testing/instructions/RC1-PILOT-HANDOFF-PACKET.md`: pre-send packet for exact release, artifact, fixture, and support values.
 - `.agent_work/user-testing/issue-tracker.md`: issue tracking surface.
 - `.agent_work/user-testing/instructions/TESTER-ISSUE-REPORT-CHECKLIST.txt`: existing tester issue report checklist.
 
@@ -310,6 +312,14 @@ After pilot/UAT, V1 may be considered ready only if:
 **Validation**: `.\.venv\Scripts\python.exe .agent_work\scripts\validate_agent_work.py` passed; `.\.venv\Scripts\python.exe .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .` passed; `.\.venv\Scripts\python.exe .agents\skills\towerscout-end-user-docs-check\scripts\check_doc_commands.py . docs README.md` passed with the known intentional `127.0.0.1` warning in `docs\oci-quick-start.md`; `git diff --check` passed.
 **Next**: Push the PR update, then request owner/reviewer acceptance.
 
+### 2026-05-29 - UAT Handoff Packet Template
+**Objective**: Convert the remaining pre-pilot handoff values into a single fillable packet before external tester instructions are sent.
+**Context**: PR #25 merged the bootstrap-first UAT documentation and reviewer clarity fixes. The remaining pre-pilot gate is not another broad docs pass; it is filling in exact release URL/tag, artifact filenames, smoke-test fixture, and support contact values.
+**Decision**: Add a dedicated handoff packet template under `.agent_work/user-testing/instructions/` and link it from the user-testing workspace instructions.
+**Execution**: Added `RC1-PILOT-HANDOFF-PACKET.md`, updated user-testing README files, and updated sprint/task state to reflect that final values and owner/reviewer acceptance are still pending.
+**Validation**: `.\.venv\Scripts\python.exe .agent_work\scripts\validate_agent_work.py` passed; `.\.venv\Scripts\python.exe .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .` passed; `.\.venv\Scripts\python.exe .agents\skills\towerscout-end-user-docs-check\scripts\check_doc_commands.py . docs README.md` passed with the known intentional `127.0.0.1` warning in `docs\oci-quick-start.md`; `git diff --check` passed.
+**Next**: Fill the packet with final RC artifact values and run one final package-path validation before sending to testers.
+
 ---
 
 ## Validation Results
@@ -329,6 +339,7 @@ After pilot/UAT, V1 may be considered ready only if:
 - [x] Low-risk install-UX hardening added - PASS - Quick Start, Package Guide, Project Overview, Settings-linked HTML, and UAT checklist now clarify Application Package versus Model & Data Package naming, GitHub Release asset selection, checksums, disk-space targets, nested asset layout mistakes, first image-pull delay, support stop points, and smoke-test expectations.
 - [x] Runtime prerequisite preflight completed - PASS - `TASK-074` created, implemented, validated, and incorporated into the bootstrap-first UAT path.
 - [x] UAT checklist aligned to implemented bootstrap - PASS - The checklist now uses `bootstrap.cmd` for first setup and keeps manual import as fallback.
+- [x] UAT handoff packet template ready - PASS - See `.agent_work/user-testing/instructions/RC1-PILOT-HANDOFF-PACKET.md`; final release/fixture/support values are still pending.
 - [x] V1 completion gate documented - PASS - See V1 Completion Gate After Pilot.
 - [ ] Owner/reviewer acceptance - PENDING.
 

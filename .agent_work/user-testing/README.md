@@ -11,12 +11,13 @@ This folder keeps user-testing setup and runtime reports organized without mixin
 
 ## Workflow
 
-1. Start the tester with `.agent_work/user-testing/instructions/RC1-PILOT-UAT-CHECKLIST.md` for package-path RC1 pilot runs.
-2. When a tester hits a problem, create or update one `UT-###` issue file under `issues/`.
-3. Save raw evidence in a dated folder under `artifacts/` and link it from the issue file.
-4. Add or update the matching row in `issue-tracker.md`.
-5. When engineering work begins, link the issue to the relevant `TASK-###`, branch, PR, or commit.
-6. Move the issue through the status lifecycle until the tester confirms the rerun.
+1. Fill out `.agent_work/user-testing/instructions/RC1-PILOT-HANDOFF-PACKET.md` with the exact release URL, artifact filenames, smoke fixture, and support contact.
+2. Start the tester with `.agent_work/user-testing/instructions/RC1-PILOT-UAT-CHECKLIST.md` for package-path RC1 pilot runs.
+3. When a tester hits a problem, create or update one `UT-###` issue file under `issues/`.
+4. Save raw evidence in a dated folder under `artifacts/` and link it from the issue file.
+5. Add or update the matching row in `issue-tracker.md`.
+6. When engineering work begins, link the issue to the relevant `TASK-###`, branch, PR, or commit.
+7. Move the issue through the status lifecycle until the tester confirms the rerun.
 
 ## Status Lifecycle
 
@@ -49,6 +50,7 @@ This folder keeps user-testing setup and runtime reports organized without mixin
 
 - [Issue Tracker](./issue-tracker.md)
 - [Instructions](./instructions/README.md)
+- [RC1 Pilot / UAT Handoff Packet](./instructions/RC1-PILOT-HANDOFF-PACKET.md)
 - [RC1 Pilot / UAT Checklist](./instructions/RC1-PILOT-UAT-CHECKLIST.md)
 - [TowerScout User Testing Guide](../context/guides/TowerScout_User_Testing_Guide.txt)
 - [TowerScout User Testing Guide - Windows Miniconda](../context/guides/TowerScout_User_Testing_Guide_Windows_Miniconda.txt)

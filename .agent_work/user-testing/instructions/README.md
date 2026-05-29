@@ -4,6 +4,7 @@ Use this folder for tester-facing reporting instructions. For RC1 package-path p
 
 ## Setup Guides
 
+- [RC1 Pilot / UAT Handoff Packet](./RC1-PILOT-HANDOFF-PACKET.md)
 - [RC1 Pilot / UAT Checklist](./RC1-PILOT-UAT-CHECKLIST.md)
 - [TowerScout User Testing Guide](../../context/guides/TowerScout_User_Testing_Guide.txt)
 - [TowerScout User Testing Guide - Windows Miniconda](../../context/guides/TowerScout_User_Testing_Guide_Windows_Miniconda.txt)
@@ -14,6 +15,10 @@ Use this folder for tester-facing reporting instructions. For RC1 package-path p
 - [TESTER-ISSUE-REPORT-CHECKLIST.txt](./TESTER-ISSUE-REPORT-CHECKLIST.txt)
 
 ## Internal Handoff Rule
+
+Before sending instructions to a tester, fill out the RC1 Pilot / UAT Handoff
+Packet with the exact release URL, artifact filenames, smoke fixture, and
+support contact.
 
 Once the tester sends the checklist answers and artifacts:
 
