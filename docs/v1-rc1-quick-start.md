@@ -7,6 +7,13 @@ Google Maps or Azure Maps provider key.
 
 For detailed support guidance, see `docs/v1-rc1-package-guide.md`.
 
+Terms used in this guide:
+
+- **Application Package**: the smaller TowerScout app/control ZIP that contains
+  scripts, docs, Compose files, and release metadata.
+- **Model & Data Package**: the larger asset ZIP, also called the asset bundle,
+  that contains model weights and ZIP-code data.
+
 ## Before You Start
 
 Install or confirm these prerequisites before opening the TowerScout package.
@@ -38,9 +45,10 @@ installing WSL, Docker Desktop, Podman, or provider credentials.
 You do not need Git, Python, Conda, Node.js, VS Code, or a source-code checkout
 for the normal V1 RC1 package path.
 
-If Docker Desktop is not already installed and approved on your workstation, or
-if you do not already have a valid restricted provider key, stop here and
-contact your site administrator or support lead before continuing.
+Unless support has explicitly assigned you the Podman path, stop here and
+contact your site administrator or support lead if Docker Desktop is not
+already installed and approved on your workstation. Also stop if you do not
+already have a valid restricted provider key.
 
 If both Docker and Podman are installed, the launcher's automatic engine
 selection can choose Docker first. If support or local policy tells you to use
@@ -101,7 +109,8 @@ the current folder.
 
 Stop before continuing and contact your support lead if any of these happen:
 
-- Docker Desktop is not installed, not approved, or cannot start.
+- Unless support explicitly assigned you the Podman path, Docker Desktop is not
+  installed, not approved, or cannot start.
 - WSL is not installed, or `wsl --list --verbose` shows version `1` and you do
   not have administrator approval to update it.
 - A downloaded file checksum does not match its `.sha256` file.
@@ -115,12 +124,21 @@ or exported datasets unless your site has an approved handling procedure.
 
 ## 1. Get The Release Files From GitHub Releases
 
-In your browser, open the TowerScout GitHub repository and select the
-`Releases` page. Open the release that support told you to use, such as
-`v0.1.0-rc1`.
+In your browser, open the TowerScout GitHub repository release page:
+
+```text
+https://github.com/J-Schulein/TowerScout/releases
+```
+
+Open the exact release that support told you to use, such as `v0.1.0-rc1`. If
+support provides a direct release URL, use that link.
 
 In the release `Assets` section, download all four TowerScout release files
-into the same local folder, such as your `Downloads` folder.
+into a new empty local folder, such as:
+
+```text
+C:\Users\<you>\Downloads\TowerScout-v0.1.0-rc1
+```
 
 Download these files from the same release:
 
@@ -132,7 +150,8 @@ Download these files from the same release:
 
 Do not use GitHub's automatic `Source code (zip)` or `Source code (tar.gz)`
 downloads for normal pilot setup. Those files are source snapshots, not the
-TowerScout release package.
+TowerScout release package. Do not use the green GitHub `Code` button for the
+normal pilot install.
 
 ## 2. Confirm The Release Files Match
 
@@ -148,6 +167,14 @@ The exact Model & Data Package filename can change by release. The Application
 Package, Model & Data Package, `IMAGE.txt`, `release-manifest.v1.json`, and
 `webapp/asset_manifest.v1.json` must describe the same release handoff.
 
+Do not type the angle brackets from `<asset-version>` into PowerShell. Replace
+the placeholder with the exact filename text from the Model & Data Package ZIP
+you downloaded. Example only:
+
+```text
+towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip
+```
+
 The release version must match between the Application Package and the Model &
 Data Package. For example, both should include `v0.1.0-rc1` in the filename. If
 the versions differ, stop and download the matching files from the same GitHub
@@ -156,7 +183,8 @@ release.
 ## 3. Verify The Downloads Before Extracting
 
 In PowerShell, compare each downloaded ZIP to its matching `.sha256` file before
-extracting either package:
+extracting either package. Run these commands from the new folder that contains
+only the four downloaded release files:
 
 ```powershell
 Get-FileHash .\towerscout-v0.1.0-rc1.zip -Algorithm SHA256
@@ -168,6 +196,11 @@ Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256
 The `Hash` value from `Get-FileHash` must match the SHA-256 value in the
 corresponding `.sha256` file. If either value does not match, stop and obtain a
 fresh copy of the release artifact before continuing.
+
+The `*` wildcard should match exactly one Model & Data Package ZIP and exactly
+one matching `.sha256` file. If PowerShell prints more than one asset ZIP or
+checksum file, move old TowerScout downloads out of the folder and run the
+commands again.
 
 Example: these two values match, so the ZIP is valid:
 
@@ -204,7 +237,8 @@ verification, starts TowerScout, and explains readiness in plain language.
 
 If the Model & Data Package ZIP and its `.sha256` file are in the package
 folder, run this from PowerShell in the package folder. Replace
-`<asset-version>` with the exact filename value from the release:
+`<asset-version>` with the exact filename value from the release. Do not type
+the angle brackets:
 
 ```powershell
 .\bootstrap.cmd -Engine docker -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
@@ -229,6 +263,21 @@ and opens:
 ```text
 http://localhost:5000
 ```
+
+A successful first-run output will look similar to this abbreviated example:
+
+```text
+TowerScout bootstrap preflight
+[OK] Engine docker is available
+[OK] Compose is available
+[OK] Model & Data Package checksum matched
+[OK] Asset import completed with hash verification
+[OK] TowerScout responded at http://localhost:5000
+readiness: setup_required
+```
+
+`setup_required` is normal before provider setup is complete. After provider
+setup and asset import are complete, readiness should become `ready`.
 
 The first launch may download the TowerScout container image from GHCR. This
 can take several minutes on first run. Keep the PowerShell window open while
@@ -325,18 +374,22 @@ Or, with an explicit engine:
 .\scripts\import-assets.cmd -Engine podman -Source assets -VerifyHashes
 ```
 
-The import helper uses the selected engine's named volumes. It should run after
-`.env` has been created by the launcher. After copying assets, the helper
-restarts TowerScout so the running application discovers the imported model
-files before the first detection run.
+The import helper uses the selected engine's named volumes. If `.env` is
+missing, the helper initializes it from the package `.env.example` before
+starting the selected container stack. After copying assets, the helper restarts
+TowerScout so the running application discovers the imported model files before
+the first detection run.
 
 Expected result: the command finishes without missing or corrupt asset errors,
 then waits for TowerScout to respond after restart. If hash verification fails,
 stop and ask support for the correct Model & Data Package.
 
-## 7. Start Or Reopen TowerScout
+## 7. Start TowerScout Later
 
-From the package folder, run:
+Skip this section during first setup if bootstrap already opened TowerScout.
+Use this command when reopening TowerScout after setup is complete, or when
+support asks you to isolate direct launch behavior. From the package folder,
+run:
 
 ```powershell
 .\start.bat -Engine docker -Gpu off
@@ -421,8 +474,11 @@ Expected readiness states:
 - `fatal`: TowerScout cannot safely serve the app; collect support evidence.
 
 For a small smoke check, open TowerScout, choose a provider, and use the
-owner-provided public test area or another non-sensitive approved area. Keep
-the first run small, preferably `1-6` tiles.
+owner-provided public test area or another non-sensitive approved area. Support
+should provide the smoke-test fixture before UAT starts: provider,
+public/non-sensitive location name, expected tile range, and whether zero
+detections is an acceptable result. Do not choose a private investigation AOI
+for the first smoke test. Keep the first run small, preferably `1-6` tiles.
 
 Suggested smoke flow:
 
@@ -502,6 +558,13 @@ Run:
 
 Use the same `-Engine` value on status/log commands if support asked you to
 start with a specific engine.
+
+For package/image metadata, support may ask you to copy the package folder name
+and the contents of `IMAGE.txt`:
+
+```powershell
+Get-Content .\IMAGE.txt
+```
 
 If PowerShell says a command is not recognized, confirm the PowerShell prompt is
 open in the extracted TowerScout package folder and that the command starts

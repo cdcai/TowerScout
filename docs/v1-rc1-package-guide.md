@@ -99,7 +99,7 @@ are installed, automatic engine selection can choose Docker first. Use
 Stop validation and contact support if:
 
 - Docker Desktop is not installed, not approved, or cannot start on the primary
-  pilot path.
+  pilot path, unless support explicitly assigned the Podman path.
 - WSL is unavailable, or `wsl --list --verbose` shows version `1` and the user
   does not have administrator approval to update it.
 - An Application Package or Model & Data Package checksum does not match.
@@ -117,9 +117,17 @@ procedure.
 
 ## Release Artifacts
 
-A normal V1 RC1 handoff has two artifact groups. On GitHub Releases, download
-these files from the release `Assets` section, not from GitHub's automatic
-`Source code (zip)` or `Source code (tar.gz)` links.
+A normal V1 RC1 handoff has two artifact groups. Open the TowerScout releases
+page and use the exact release that support selected:
+
+```text
+https://github.com/J-Schulein/TowerScout/releases
+```
+
+If support provides a direct release URL, use that link. On GitHub Releases,
+download these files from the release `Assets` section, not from the green
+GitHub `Code` button and not from GitHub's automatic `Source code (zip)` or
+`Source code (tar.gz)` links.
 
 Application Package:
 
@@ -135,7 +143,15 @@ The exact asset filename can change by release. The Application Package ZIP,
 Model & Data Package ZIP, `IMAGE.txt`, `release-manifest.v1.json`, and
 `webapp/asset_manifest.v1.json` must agree about the release handoff.
 
-Download all four files into the same local folder before verification. The
+Do not ask users to type the angle brackets from `<asset-version>`. They should
+copy the exact Model & Data Package filename from the release or Downloads
+folder. Example only:
+
+```text
+towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip
+```
+
+Download all four files into a new empty local folder before verification. The
 release version in the Application Package and Model & Data Package filenames
 must match, for example `v0.1.0-rc1`.
 
@@ -150,7 +166,8 @@ detection and ZIP-code search.
 ## Verify Downloads Before Extracting
 
 Before extracting either ZIP, compare each artifact to its matching `.sha256`
-file in PowerShell:
+file in PowerShell. Run these commands from the new folder that contains only
+the four downloaded release files:
 
 ```powershell
 Get-FileHash .\towerscout-v0.1.0-rc1.zip -Algorithm SHA256
@@ -162,6 +179,11 @@ Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256
 The `Hash` value from `Get-FileHash` must match the SHA-256 value in the
 corresponding `.sha256` file. If the values do not match, stop validation and
 obtain a fresh copy of the affected release artifact.
+
+The `*` wildcard should match exactly one Model & Data Package ZIP and exactly
+one matching `.sha256` file. If PowerShell prints more than one asset ZIP or
+checksum file, move old TowerScout downloads out of the folder and run the
+commands again.
 
 Example: these values match:
 
@@ -221,6 +243,9 @@ For first setup, prefer the top-level bootstrap entry point:
 .\bootstrap.cmd -Engine docker -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
 ```
 
+Replace `<asset-version>` with the exact filename value from the Model & Data
+Package ZIP. Do not type the angle brackets.
+
 Bootstrap performs the checks that users most often miss:
 
 - Docker or Podman CLI, daemon/machine, and Compose-provider readiness.
@@ -257,12 +282,26 @@ starts TowerScout, and explains readiness state. It is meant for first setup
 and support validation. `start.bat` remains the normal direct launch path after
 setup is complete.
 
+Abbreviated successful first-run output should look similar to:
+
+```text
+TowerScout bootstrap preflight
+[OK] Engine docker is available
+[OK] Compose is available
+[OK] Model & Data Package checksum matched
+[OK] Asset import completed with hash verification
+[OK] TowerScout responded at http://localhost:5000
+readiness: setup_required
+```
+
 ## Direct Launcher Path
 
 The direct launcher remains supported and is useful when assets are already
-imported or support wants to isolate launch behavior.
+imported, when reopening TowerScout after setup is complete, or when support
+wants to isolate launch behavior. Do not run this as an extra first-setup step
+after bootstrap has already opened TowerScout.
 
-Run the launcher once from the package root before importing assets:
+Run the launcher from the package root:
 
 ```powershell
 .\start.bat -Engine docker -Gpu off
@@ -368,8 +407,9 @@ The importer copies assets into the selected engine's named volumes. It does
 not copy assets into another local package folder. The importer starts the
 container if needed so the named volumes are available, then restarts TowerScout
 after the copy so the running application discovers the imported model files.
-Run the launcher once first so `.env` exists and the selected release image is
-pinned.
+If `.env` is missing, the importer initializes it from the package
+`.env.example` before starting the selected container stack so fresh packages
+still use the pinned release image.
 
 Expected result: the importer completes without missing/corrupt asset errors,
 restarts TowerScout, and waits for readiness after restart. If hash verification
@@ -679,6 +719,16 @@ Useful evidence:
 - Readiness state and recovery hints.
 - For GPU validation, the requested `-Gpu` mode and non-secret `ml_runtime`
   readiness diagnostics.
+
+Simple metadata commands for first-line support:
+
+```powershell
+Get-Content .\IMAGE.txt
+Get-Content .\SHA256SUMS.txt
+```
+
+Ask users to send the package folder name and copied command output, not the
+full `.env` file or raw named-volume contents.
 
 Do not share unless a site-specific support procedure explicitly approves:
 

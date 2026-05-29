@@ -34,6 +34,7 @@
       <section class="doc-section" id="prerequisites">
         <h2>Before You Start</h2>
         <p>Confirm Windows 11 AMD64, Windows PowerShell, a modern browser, normal outbound internet access, at least <code>15 GB</code> free disk space, and one valid site/user-owned provider key. <code>25 GB</code> free is a better target for first setup.</p>
+        <p><strong>Application Package</strong> means the smaller app/control ZIP with scripts, docs, Compose files, and release metadata. <strong>Model &amp; Data Package</strong> means the larger asset ZIP, also called the asset bundle, with model weights and ZIP-code data.</p>
         <p>Docker Desktop with the WSL 2 backend is the primary V1 RC1 pilot engine. During Docker Desktop installation, keep the WSL 2 backend selected when prompted, start Docker Desktop from the Windows Start menu, and wait until Docker Desktop reports that it is running.</p>
         <p>Docker's current Windows requirements include WSL <code>2.1.5</code> or later, 8 GB RAM, and hardware virtualization enabled in BIOS/UEFI. If your workstation is managed by IT, ask your site administrator before installing WSL, Docker Desktop, Podman, or provider credentials.</p>
         <pre><code>wsl --status
@@ -43,12 +44,12 @@ docker compose version</code></pre>
         <p>Expected result: WSL is installed, any listed Linux distribution uses version <code>2</code>, and Docker commands print version information while Docker Desktop is running.</p>
         <p>Podman is a qualified package-runtime option only when support tells you to use it and the workstation already has a running Podman machine plus a working Compose provider such as <code>podman-compose</code>.</p>
         <p>You do not need Git, Python, Conda, Node.js, VS Code, or a source-code checkout for the normal package path.</p>
-        <p>If Docker Desktop is not already installed and approved on your workstation, or if you do not already have a valid restricted provider key, stop here and contact your site administrator or support lead before continuing.</p>
+        <p>Unless support has explicitly assigned you the Podman path, stop here and contact your site administrator or support lead if Docker Desktop is not already installed and approved on your workstation. Also stop if you do not already have a valid restricted provider key.</p>
         <p>If both Docker and Podman are installed, the launcher can choose Docker first. If support tells you to use Podman, use <code>-Engine podman</code> consistently on every helper command.</p>
       </section>
       <section class="doc-section" id="stop-support">
         <h2>Stop And Contact Support</h2>
-        <p>Stop before continuing if Docker Desktop is not installed, not approved, or cannot start; WSL is unavailable or shows version <code>1</code> without administrator approval to update it; a checksum does not match; asset import reports missing, corrupt, or hash-failed files; TowerScout reports <code>fatal</code>; or provider validation repeatedly fails after you confirm the key is correct.</p>
+        <p>Stop before continuing if Docker Desktop is not installed, not approved, or cannot start unless support explicitly assigned you the Podman path; WSL is unavailable or shows version <code>1</code> without administrator approval to update it; a checksum does not match; asset import reports missing, corrupt, or hash-failed files; TowerScout reports <code>fatal</code>; or provider validation repeatedly fails after you confirm the key is correct.</p>
         <p>Do not share provider keys, <code>.env</code>, raw logs, raw screenshots, private AOIs, browser network traces, cached provider responses, or exported datasets unless your site has an approved handling procedure.</p>
       </section>
       <section class="doc-section" id="commands">
@@ -58,18 +59,19 @@ docker compose version</code></pre>
       </section>
       <section class="doc-section" id="download">
         <h2>Get The Release Files</h2>
-        <p>Open the TowerScout GitHub repository in your browser, go to the <code>Releases</code> page, and open the release that support told you to use. In the release <code>Assets</code> section, download all four TowerScout release files into the same local folder.</p>
-        <p>Download the Application Package ZIP, Application Package checksum, Model &amp; Data Package ZIP, and Model &amp; Data Package checksum from the same release. Do not use GitHub's automatic <code>Source code (zip)</code> or <code>Source code (tar.gz)</code> downloads for normal pilot setup.</p>
+        <p>Open <a href="https://github.com/J-Schulein/TowerScout/releases">https://github.com/J-Schulein/TowerScout/releases</a> in your browser, then open the exact release that support told you to use. If support provides a direct release URL, use that link.</p>
+        <p>In the release <code>Assets</code> section, download all four TowerScout release files into a new empty local folder, such as <code>C:\Users\&lt;you&gt;\Downloads\TowerScout-v0.1.0-rc1</code>.</p>
+        <p>Download the Application Package ZIP, Application Package checksum, Model &amp; Data Package ZIP, and Model &amp; Data Package checksum from the same release. Do not use the green GitHub <code>Code</code> button or GitHub's automatic <code>Source code (zip)</code> or <code>Source code (tar.gz)</code> downloads for normal pilot setup.</p>
         <p>The release version must match between the Application Package and the Model &amp; Data Package. If the versions differ, stop and download the matching files from the same GitHub release.</p>
       </section>
       <section class="doc-section" id="verify">
         <h2>Verify Downloads Before Extracting</h2>
-        <p>Compare each ZIP to its matching <code>.sha256</code> file before extracting either package. If either SHA-256 value does not match, stop and obtain a fresh copy of the release artifact.</p>
+        <p>Compare each ZIP to its matching <code>.sha256</code> file before extracting either package. Run these commands from the new folder that contains only the four downloaded release files. If either SHA-256 value does not match, stop and obtain a fresh copy of the release artifact.</p>
         <pre><code>Get-FileHash .\towerscout-v0.1.0-rc1.zip -Algorithm SHA256
 Get-Content .\towerscout-v0.1.0-rc1.zip.sha256
 Get-FileHash .\towerscout-v0.1.0-rc1-assets-*.zip -Algorithm SHA256
 Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256</code></pre>
-        <p>The hash from <code>Get-FileHash</code> must match the value in the matching <code>.sha256</code> file. Uppercase and lowercase are not important, but the letters and numbers must otherwise be the same.</p>
+        <p>The hash from <code>Get-FileHash</code> must match the value in the matching <code>.sha256</code> file. Uppercase and lowercase are not important, but the letters and numbers must otherwise be the same. The wildcard should match exactly one Model &amp; Data Package ZIP and one matching checksum file; if it prints more than one, move old TowerScout downloads out of the folder and run the commands again.</p>
       </section>
       <section class="doc-section" id="extract">
         <h2>Extract The Application Package</h2>
@@ -78,10 +80,19 @@ Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256</code></pre>
       <section class="doc-section" id="start">
         <h2>Run The Guided Bootstrap</h2>
         <p>For first setup, use <code>bootstrap.cmd</code>. It checks disk space, port availability, Docker or Podman readiness, Compose availability, release metadata, checksum sidecars, and asset ZIP layout before importing assets and launching TowerScout. It verifies the Application Package checksum only when <code>-PackageZip</code> is provided and verifies the Model &amp; Data Package checksum only when <code>-AssetZip</code> is provided.</p>
+        <p>Replace <code>&lt;asset-version&gt;</code> with the exact filename text from the Model &amp; Data Package ZIP you downloaded. Do not type the angle brackets.</p>
         <pre><code>.\bootstrap.cmd -Engine docker -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-&lt;asset-version&gt;.zip</code></pre>
         <p>If the ZIPs are still in Downloads, either copy the Model &amp; Data Package ZIP and its <code>.sha256</code> file into the package folder, or pass the full path to <code>-AssetZip</code>.</p>
         <pre><code>.\bootstrap.cmd -Engine docker -Gpu off -PackageZip C:\Users\&lt;you&gt;\Downloads\towerscout-v0.1.0-rc1.zip -AssetZip C:\Users\&lt;you&gt;\Downloads\towerscout-v0.1.0-rc1-assets-&lt;asset-version&gt;.zip</code></pre>
         <p>Expected result: PowerShell prints <code>TowerScout bootstrap preflight</code>, reports prerequisite checks, verifies Application Package and Model &amp; Data Package checksums only for the ZIP paths passed with <code>-PackageZip</code> and/or <code>-AssetZip</code>, imports valid assets with hash verification, starts TowerScout, and opens <code>http://localhost:5000</code>. If the browser does not open, leave PowerShell open and manually open that URL.</p>
+        <pre><code>TowerScout bootstrap preflight
+[OK] Engine docker is available
+[OK] Compose is available
+[OK] Model &amp; Data Package checksum matched
+[OK] Asset import completed with hash verification
+[OK] TowerScout responded at http://localhost:5000
+readiness: setup_required</code></pre>
+        <p><code>setup_required</code> is normal before provider setup is complete. After provider setup and asset import are complete, readiness should become <code>ready</code>.</p>
         <p>The first launch may download the TowerScout container image from GHCR. This can take several minutes. Keep the PowerShell window open while Docker downloads and starts the image.</p>
         <p>If support tells you to use Podman, run <code>.\bootstrap.cmd -Engine podman -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-&lt;asset-version&gt;.zip</code> and reuse that engine value on helper commands.</p>
       </section>
@@ -93,7 +104,7 @@ Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256</code></pre>
         <pre><code>.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180</code></pre>
         <p>If TowerScout was started on a non-default port, pass the same port to the asset importer.</p>
         <pre><code>.\scripts\import-assets.cmd -Engine docker -Source assets -Port 5001 -VerifyHashes -RestartWaitSeconds 180</code></pre>
-        <p>The importer uses the selected engine's named volumes and restarts TowerScout after copying assets so imported model files are available before the first detection run. Expected result: the command finishes without missing/corrupt asset errors and waits for TowerScout after restart.</p>
+        <p>The importer uses the selected engine's named volumes. If <code>.env</code> is missing, it initializes that file from the package <code>.env.example</code> before starting the selected container stack. It restarts TowerScout after copying assets so imported model files are available before the first detection run. Expected result: the command finishes without missing/corrupt asset errors and waits for TowerScout after restart.</p>
       </section>
       <section class="doc-section" id="gpu">
         <h2>GPU Boundary</h2>
@@ -106,7 +117,7 @@ Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256</code></pre>
       <section class="doc-section" id="success">
         <h2>Confirm Success</h2>
         <pre><code>.\scripts\status.cmd -Engine docker</code></pre>
-        <p>Readiness should become <code>ready</code> after provider setup and required assets are present. For a smoke check, use the owner-provided public test area or another non-sensitive approved area, estimate tiles first, keep the run to about <code>1-6</code> tiles, then select <code>Find towers</code>.</p>
+        <p>Readiness should become <code>ready</code> after provider setup and required assets are present. For a smoke check, support should provide the fixture before UAT starts: provider, public/non-sensitive location name, expected tile range, and whether zero detections is acceptable. Do not choose a private investigation AOI for the first smoke test. Estimate tiles first, keep the run to about <code>1-6</code> tiles, then select <code>Find towers</code>.</p>
         <p>Expected result: the detection workflow completes without crashing. Results may be zero or more detections, but the map and right-hand review panel should update consistently.</p>
       </section>
       <section class="doc-section" id="stop">
@@ -123,6 +134,9 @@ Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256</code></pre>
         <h2>If Something Fails</h2>
         <pre><code>.\scripts\status.cmd -Engine docker
 .\scripts\logs.cmd -Engine docker -Tail 200</code></pre>
+        <p>For fuller troubleshooting and support details, open the package guide at <a href="/docs/v1-rc1-package-guide.md">/docs/v1-rc1-package-guide.md</a>.</p>
+        <p>For package/image metadata, support may ask you to copy the package folder name and the contents of <code>IMAGE.txt</code>.</p>
+        <pre><code>Get-Content .\IMAGE.txt</code></pre>
         <p>If PowerShell says a command is not recognized, confirm the prompt is open in the extracted TowerScout package folder and that the command starts with <code>.\</code>. If Docker commands are not recognized, open Docker Desktop from the Start menu and wait until it reports that it is running.</p>
         <p>Do not share provider keys, <code>.env</code>, raw screenshots, browser traces, raw logs, datasets, or sensitive AOIs unless your site has approved handling.</p>
       </section>

@@ -1,8 +1,8 @@
 TOWERSCOUT RC1 TESTER ISSUE REPORT CHECKLIST
 ============================================
 
-Last reviewed: 2026-05-27
-Use this when you get blocked during RC1 package install, startup, setup, asset import, detection, export, or shutdown.
+Last reviewed: 2026-05-29
+Use this when you get blocked during RC1 package install, guided bootstrap, startup, setup, asset import, detection, export, or shutdown.
 
 IMPORTANT
 =========
@@ -26,7 +26,8 @@ Please send all of the items below:
 
 2. Which step failed:
    - extract package
-   - extract assets
+   - run guided bootstrap/preflight
+   - extract assets manually
    - start TowerScout
    - import assets
    - complete Setup Wizard
@@ -61,14 +62,17 @@ podman compose version
 
 7. Package and asset information:
 
+- Release URL or release tag support gave you:
 - TowerScout package folder name:
-- Release manifest image tag/digest:
+- Image tag/digest from `IMAGE.txt` or bootstrap output:
 - Asset bundle name/version:
 - Did `-VerifyHashes` pass?
 
-8. Launch/import details:
+8. Bootstrap/launch/import details:
 
 - Engine used: Docker Desktop / Podman
+- Bootstrap command:
+- Did bootstrap preflight pass?
 - Launch command:
 - Port:
 - GPU mode: off / auto / on
@@ -82,8 +86,10 @@ podman compose version
 
 10. Detection context:
 
-- Fixture/AOI name:
+- Support-provided fixture/AOI name:
+- Provider requested for the fixture:
 - Estimated tile count:
+- Was zero detections listed as acceptable for this fixture?
 - Did detection start?
 - Did detection complete?
 - Did results appear in the right-hand panel?
@@ -97,6 +103,7 @@ HOW TO CAPTURE TERMINAL OUTPUT
 - If the error is visible in PowerShell, copy the relevant output and paste it into a text file.
 - Keep the PowerShell window open until you have taken any needed screenshot.
 - Do not include API keys or full `.env` file contents.
+- To capture package/image metadata, run `Get-Content .\IMAGE.txt` from the package folder and copy the output.
 
 WHAT A GOOD REPORT LOOKS LIKE
 =============================
@@ -104,14 +111,15 @@ WHAT A GOOD REPORT LOOKS LIKE
 Example:
 
 - Guide used: `RC1-PILOT-UAT-CHECKLIST.md`
-- Failed step: import assets
-- Command: `.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180`
+- Failed step: guided bootstrap/preflight
+- Command: `.\bootstrap.cmd -Engine docker -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip`
 - Error: `asset_status=degraded; missing model_params/yolov5/newest.pt`
 - Windows: `Microsoft Windows [Version ...]`
 - Engine: Docker Desktop, Docker version copied from `docker --version`
 - Package folder: `towerscout-v0.1.0-rc1`
-- Image digest: copied from manifest or launch output
-- Asset hash verification: failed
+- Image digest: copied from `IMAGE.txt` or launch output
+- Bootstrap preflight: failed during asset validation
+- Asset hash verification: failed or not reached
 - Provider: Azure Maps
 - Screenshot attached: yes, redacted
 

@@ -11,6 +11,12 @@ TowerScout release package, start here instead:
 - [Full Package Guide](docs/v1-rc1-package-guide.md)
 - [User Guide](docs/towerscout-user-guide.md)
 
+Release packages are published from the repository
+[Releases](https://github.com/J-Schulein/TowerScout/releases) page. Use the
+exact release URL or tag support gives you, download the files from the release
+`Assets` section, and do not use the green GitHub `Code` button or automatic
+source-code ZIP/TAR.GZ downloads for the normal package workflow.
+
 The normal package path assumes Windows 11 AMD64, Docker Desktop with the WSL 2
 backend as the primary pilot engine, normal outbound internet access, and one
 valid Google Maps or Azure Maps key. Podman is a qualified support path only

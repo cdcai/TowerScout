@@ -47,17 +47,20 @@ source-code checkout.
 
 A typical TowerScout user:
 
-1. Runs `bootstrap.cmd -Engine docker -Gpu off -AssetZip <asset-zip>` for first
+1. Opens the TowerScout GitHub Releases page, selects the exact release support
+   provided, and downloads the Application Package, Model & Data Package, and
+   matching checksum files from the release `Assets` section.
+2. Runs `bootstrap.cmd -Engine docker -Gpu off -AssetZip <asset-zip>` for first
    setup, so the package can check prerequisites, verify checksums, import
    assets, and start TowerScout.
-2. Uses `start.bat -Engine docker -Gpu off` for later direct launches.
-3. Configures Google Maps or Azure Maps in Setup Wizard or Settings.
-4. Chooses a provider.
-5. Defines a search area.
-6. Estimates tile count.
-7. Runs detection.
-8. Reviews detections and adds manual corrections.
-9. Exports CSV, KML, or dataset results.
+3. Uses `start.bat -Engine docker -Gpu off` for later direct launches.
+4. Configures Google Maps or Azure Maps in Setup Wizard or Settings.
+5. Chooses a provider.
+6. Defines a search area.
+7. Estimates tile count.
+8. Runs detection.
+9. Reviews detections and adds manual corrections.
+10. Exports CSV, KML, or dataset results.
 
 The User Guide is available in the running app Resource Links section and at:
 

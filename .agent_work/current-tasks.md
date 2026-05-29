@@ -225,16 +225,16 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **User Value**: Restores confidence in internal validation before external pilot prep and reduces the chance that future agents follow stale instructions.
 
 ### **TASK-073: Clean-Machine Pilot / UAT Execution Plan**
-**Status**: IN_PROGRESS - pilot/UAT plan and non-command-line first-launch docs underway
+**Status**: IN_PROGRESS - reviewer handoff clarity fixes incorporated; owner/reviewer acceptance pending
 **Type**: B/C (User Testing / Release Validation)  
 **Priority**: HIGH  
 **Estimated Effort**: 0.5-1 day (4-8 hours)  
 **Target Sprint**: Sprint 06 V1 RC1  
 **Task File**: `.agent_work/tasks/active/TASK-073-clean-machine-uat-plan.md`
 
-**Objective**: Define the controlled pilot/UAT workflow, tester instructions, acceptance checklist, environment capture, issue-report workflow, success criteria, support escalation path, and first-launch guidance for users without prior command-line experience.
+**Objective**: Define the controlled pilot/UAT workflow, tester instructions, bootstrap-first acceptance checklist, environment capture, issue-report workflow, success criteria, support escalation path, and first-launch guidance for users without prior command-line experience.
 
-**Dependencies**: `TASK-066`; `TASK-067`; draft user package docs.
+**Dependencies**: `TASK-066`; `TASK-067`; `TASK-071`; `TASK-074`; RC1 user package docs.
 
 **User Value**: Ensures external testing starts from a repeatable, evidence-producing workflow instead of ad hoc feedback collection.
 

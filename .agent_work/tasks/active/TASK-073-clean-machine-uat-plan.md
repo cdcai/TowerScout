@@ -1,6 +1,6 @@
 # TASK-073: Clean-Machine Pilot / UAT Execution Plan
 
-**Status**: IN_PROGRESS - package-path UAT plan drafted for owner review
+**Status**: IN_PROGRESS - reviewer handoff fixes incorporated for owner acceptance
 **Priority**: HIGH  
 **Type**: B/C (User Testing / Release Validation)  
 **Estimated Effort**: 0.5-1 day (4-8 hours)  
@@ -41,7 +41,7 @@ This task should make external testing repeatable, bounded, and evidence-produci
 - [x] Pilot/UAT start criteria are documented.
 - [x] Pilot/UAT stop criteria are documented.
 - [x] Tester instructions are aligned with `TASK-071` docs and `TASK-066` findings.
-- [x] Acceptance checklist covers package extraction, launch, asset import, provider setup, bounded detection, status/log collection, and issue reporting.
+- [x] Acceptance checklist covers package extraction, guided bootstrap, asset import, provider setup, bounded detection, status/log collection, and issue reporting.
 - [x] Environment capture checklist is ready.
 - [x] Issue-reporting workflow links to `.agent_work/user-testing/`.
 - [x] Support escalation path is documented.
@@ -52,6 +52,7 @@ This task should make external testing repeatable, bounded, and evidence-produci
 - [x] Low-risk documentation hardening from the install-UX review is applied without claiming unimplemented bootstrap behavior.
 - [x] Runtime prerequisite preflight/bootstrap work is routed to `TASK-074`.
 - [x] UAT checklist is updated to use the implemented `TASK-074` bootstrap path for first setup.
+- [x] Reviewer documentation feedback is incorporated into the pilot handoff instructions.
 - [ ] Owner/reviewer accepts the pilot/UAT plan before external testers start.
 
 ## Dependencies
@@ -61,7 +62,7 @@ This task should make external testing repeatable, bounded, and evidence-produci
 - `TASK-072`: release asset bundle contract.
 - `TASK-067`: completed route-test timeout/isolation fix and CI timeout safeguards.
 - `TASK-068`: possible follow-up home for deeper Windows/script portability work if pilot prep exposes it.
-- `TASK-074`: selected follow-up for bootstrap/preflight work that should automate the remaining first-launch checks before broad external UAT.
+- `TASK-074`: completed bootstrap/preflight work that automates the most error-prone first-launch checks before broad external UAT.
 - `.agent_work/user-testing/README.md`: existing user-testing workspace rules.
 - `.agent_work/user-testing/issue-tracker.md`: issue tracking surface.
 - `.agent_work/user-testing/instructions/TESTER-ISSUE-REPORT-CHECKLIST.txt`: existing tester issue report checklist.
@@ -77,7 +78,7 @@ This task should make external testing repeatable, bounded, and evidence-produci
 7. Define issue triage rules for V1 blockers, V1 patch candidates, and V2 backlog items.
 8. Link the UAT plan to the Sprint 06 plan and user-testing workspace.
 9. Prepare handoff guidance for pilot testers and first-line support.
-10. Route implementation-level first-launch automation to `TASK-074` rather than promising bootstrap behavior in current docs.
+10. Incorporate the implemented `TASK-074` bootstrap flow into pilot/UAT instructions while keeping manual launch/import as a support-directed fallback.
 
 ---
 
@@ -87,7 +88,7 @@ This task should make external testing repeatable, bounded, and evidence-produci
 
 Pilot/UAT may start only when all of the following are true:
 
-- The release package ZIP, pinned GHCR image digest, and matching asset bundle location/checksum instructions are available to testers.
+- The exact GitHub release URL or release tag, release package ZIP, pinned GHCR image digest, exact Model & Data Package filename, and matching checksum instructions are available to testers.
 - `TASK-071` package docs are available from the package and from Settings Resource Links.
 - User-facing docs explain Docker Desktop/WSL 2 prerequisites, PowerShell command location, expected command outcomes, and support-safe recovery steps for first launch.
 - `TASK-066` CPU-default Docker Desktop package path has passed with assets imported and one bounded detection smoke.
@@ -98,7 +99,7 @@ Pilot/UAT may start only when all of the following are true:
   - GPU acceleration is not claimed until NVIDIA Docker Desktop WSL2 validation, CPU/GPU parity, and timing evidence pass.
 - `TASK-067` route-test timeout/isolation fix is merged.
 - A provider key is available to the tester and has been restricted/managed according to the provider-key release policy chosen for the pilot.
-- The tester has a non-sensitive bounded AOI or owner-provided public fixture for the detection smoke.
+- The tester has an owner-provided public smoke-test fixture with provider, public/non-sensitive location, expected tile range, and whether zero detections is acceptable.
 
 ### Pilot Stop Criteria
 
@@ -119,7 +120,7 @@ Pause or stop pilot/UAT if any of the following occur:
 - **Launch mode**: CPU-default launch with `-Gpu off`.
 - **Provider**: Azure Maps or Google Maps, with the provider used recorded in the report.
 - **Assets**: Package-local `assets/` import using the documented asset bundle and hash verification.
-- **Detection smoke**: Owner-provided public fixture or non-sensitive bounded AOI, preferably 1-6 tiles.
+- **Detection smoke**: Owner-provided public fixture with provider, public/non-sensitive location, expected tile range, and zero-detection acceptability rule, preferably 1-6 tiles.
 - **Out of scope unless explicitly approved**: GPU acceleration claims, Docker-Desktop-free Podman support, source-build validation, restricted-network/offline preload, large AOIs, and private/sensitive screenshot collection.
 
 ### Tester Acceptance Checklist
@@ -127,27 +128,29 @@ Pause or stop pilot/UAT if any of the following occur:
 Each tester should complete the package path in this order:
 
 1. Confirm prerequisites: Windows 11 AMD64, Docker Desktop running with WSL 2 support, browser, outbound internet, disk space, PowerShell access, provider key.
-2. Download or receive the release package ZIP, asset bundle, and checksum/digest instructions.
-3. Extract the release package to a local folder without spaces or special characters if possible.
-4. Extract the asset bundle into the package-local `assets/` folder.
+2. Download or receive the exact GitHub release URL/tag, release package ZIP, Model & Data Package filename, checksum/digest instructions, and smoke-test fixture.
+3. Place the four release files in a new empty folder and compare each ZIP to its matching `.sha256` file before extraction.
+4. Extract the Application Package ZIP to a local folder without spaces or special characters if possible.
 5. Open Windows PowerShell in the extracted package folder.
-6. Launch CPU-default Docker Desktop path:
-   - `.\start.bat -Engine docker -Gpu off`
-   - Expected outcome: the launcher reports a readiness state and opens `http://localhost:5000` or the tester can open that address manually.
-7. Import assets with hash verification:
-   - `.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180`
-   - Expected outcome: the importer completes without missing/corrupt asset errors and waits for TowerScout after restart.
-8. Open TowerScout in the browser if the launcher does not open it automatically.
-9. Complete Setup Wizard with Azure or Google provider key.
-10. Open Settings Resource Links and confirm the package-local docs and source/license page load.
-11. Run a bounded detection smoke using the owner-provided fixture or a non-sensitive AOI.
-12. Confirm:
+6. Run the CPU-default Docker Desktop bootstrap path with the Model & Data Package ZIP:
+   - `.\bootstrap.cmd -Engine docker -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-<asset-version>.zip`
+   - If the ZIPs remain in Downloads, use full paths with `-PackageZip` and `-AssetZip`.
+   - Expected outcome: bootstrap reports disk, port, engine, Compose, checksum, and asset-layout checks; imports assets with hash verification; starts TowerScout; and opens `http://localhost:5000` or allows the tester to open that address manually.
+7. Use the manual fallback only when support directs it:
+   - Extract the Model & Data Package entries into the package-local `assets\` folder.
+   - Launch with `.\start.bat -Engine docker -Gpu off`.
+   - Import with `.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180`.
+   - Expected outcome: the importer initializes `.env` if needed, completes without missing/corrupt asset errors, and waits for TowerScout after restart.
+8. Complete Setup Wizard with Azure or Google provider key.
+9. Open Settings Resource Links and confirm the package-local docs and source/license page load.
+10. Run the owner-provided bounded public detection smoke. If support did not provide a fixture, stop and ask for one before choosing an AOI.
+11. Confirm:
     - Detection completes without a crash.
     - Results appear in the map and right-hand review panel.
     - Detected tower addresses/provider metadata appear when geocoding succeeds or show a clear fallback when unavailable.
     - CSV or KML export can be generated if included in the pilot script.
-13. Collect status/log evidence requested below.
-14. Stop TowerScout using `.\scripts\stop.cmd -Engine docker` unless support explicitly selected another engine.
+12. Collect status/log evidence requested below.
+13. Stop TowerScout using `.\scripts\stop.cmd -Engine docker` unless support explicitly selected another engine.
 
 ### Environment Capture
 
@@ -160,20 +163,22 @@ Capture these details for every pilot run:
 - Engine version and whether Docker Desktop was running.
 - Compose provider/version if visible.
 - TowerScout package version and folder name.
+- Release URL or release tag used.
 - Image tag and digest from the package manifest or launch output.
 - Asset bundle version/checksum status and asset import result.
-- Launch command and port.
+- Bootstrap or launch command and port.
 - GPU mode requested (`off`, `auto`, or `on`); expected pilot default is `off`.
 - Provider used: Azure Maps or Google Maps.
 - Whether the machine is behind a proxy, custom TLS inspection, VPN, or restricted network.
-- Detection fixture/AOI name, tile count estimate, and whether the AOI is public/non-sensitive.
+- Detection fixture/AOI name, requested provider, tile count estimate, whether zero detections is acceptable, and whether the AOI is public/non-sensitive.
 - Final outcome: PASS, PASS_WITH_NOTES, BLOCKED, or FAIL.
 
 ### Evidence Collection
 
 Collect only the minimum useful evidence:
 
-- Launcher output showing image digest, engine, port, and readiness result.
+- Bootstrap or launcher output showing image digest, engine, port, and readiness result.
+- `IMAGE.txt` contents or equivalent image line copied from bootstrap output.
 - Asset import output showing `VerifyHashes` success or exact failure.
 - `/api/health` and `/api/readiness` summary if available.
 - Screenshot of the failing step only when it does not expose secrets or sensitive AOIs.
@@ -210,13 +215,13 @@ Use `.agent_work/user-testing/` for pilot reports:
 First-line support should triage in this order:
 
 1. Confirm the tester is using the supported package path and current package/assets.
-2. Confirm Docker Desktop is running and the package launched with CPU-default `-Gpu off`.
+2. Confirm Docker Desktop is running and the package used CPU-default `-Gpu off`.
 3. Confirm WSL 2 is available and Docker commands print version information.
 4. Confirm the tester opened PowerShell in the extracted package folder.
-5. Confirm assets imported with hash verification.
+5. Confirm bootstrap passed preflight checks or, for support-directed fallback, assets imported with hash verification.
 6. Confirm provider key setup succeeded without asking the tester to send the key.
 7. Confirm `/api/health` and `/api/readiness` state.
-8. Collect sanitized launcher/import/readiness evidence.
+8. Collect sanitized bootstrap/launcher/import/readiness evidence.
 9. Create or update the matching `UT-###` issue and route by triage rules.
 
 Escalate to engineering when the issue is a V1 blocker, repeats across testers, affects security/privacy, or contradicts `TASK-066` validation evidence.
@@ -286,27 +291,43 @@ After pilot/UAT, V1 may be considered ready only if:
 **Context**: Earlier Task-073 docs intentionally avoided promising bootstrap behavior before it existed. Task-074 now provides `bootstrap.cmd`, checksum/asset ZIP validation, engine preflight, verified asset import, and launch orchestration.
 **Decision**: Make the UAT checklist use `bootstrap.cmd -Engine docker -Gpu off -AssetZip ...` as the recommended first setup path while retaining manual `start.bat` plus `scripts\import-assets.cmd` steps as a support-directed fallback.
 **Execution**: Updated `.agent_work/user-testing/instructions/RC1-PILOT-UAT-CHECKLIST.md` with bootstrap commands, full-path examples, expected output, and manual fallback boundaries.
-**Validation**: Pending final Task-074 validation pass.
+**Validation**: Superseded by final Task-074 validation and the May 28 Task-073 alignment pass.
 **Next**: Owner/reviewer should evaluate the updated bootstrap-first UAT path before external testers start.
+
+### 2026-05-28 - Post-TASK-074 UAT Plan Alignment
+**Objective**: Remove remaining task/doc drift after `TASK-074` follow-up patches made bootstrap and importer behavior final for RC1 pilot prep.
+**Context**: The standalone UAT checklist already used bootstrap as the first setup path, but this task file still described the older direct-launch/import sequence. The Quick Start and Package Guide also retained a stale statement that the launcher had to create `.env` before manual asset import.
+**Decision**: Keep bootstrap as the recommended first setup path, keep manual `start.bat` plus `scripts\import-assets.cmd` as a support-directed fallback, and document that the importer initializes `.env` from `.env.example` when needed.
+**Execution**: Updated the Task-073 tester checklist, support escalation path, evidence labels, Quick Start Markdown/HTML, Package Guide manual import wording, and tester issue-report checklist.
+**Validation**: `.\.venv\Scripts\python.exe .agent_work\scripts\validate_agent_work.py` passed; `.\.venv\Scripts\python.exe .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .` passed; `.\.venv\Scripts\python.exe .agents\skills\towerscout-end-user-docs-check\scripts\check_doc_commands.py . docs README.md` passed with the known intentional `127.0.0.1` warning in `docs\oci-quick-start.md`; `git diff --check` passed.
+**Next**: Commit the Task-073 bootstrap-alignment update and request owner/reviewer acceptance before external testers start.
+
+### 2026-05-29 - Reviewer Handoff Clarity Fixes
+**Objective**: Address reviewer-identified confusion points before external testers receive the UAT package.
+**Context**: Reviewer feedback rated the docs close to controlled UAT readiness but requested clearer GitHub Release navigation, exact release/asset handoff values, fixture requirements, placeholder guidance, checksum folder hygiene, Podman-scoped Docker stop wording, direct-launch boundaries, and support metadata instructions.
+**Decision**: Treat the feedback as documentation/handoff hardening, not a product-path change. Keep Docker Desktop plus bootstrap as the primary path, keep Podman support-directed, and require support to provide final release URL/tag, exact asset filename, and a public smoke fixture before pilot launch.
+**Execution**: Updated Quick Start Markdown/HTML, Package Guide, UAT checklist, issue-report checklist, and this task file with the final handoff details and support-safe evidence instructions.
+**Validation**: `.\.venv\Scripts\python.exe .agent_work\scripts\validate_agent_work.py` passed; `.\.venv\Scripts\python.exe .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .` passed; `.\.venv\Scripts\python.exe .agents\skills\towerscout-end-user-docs-check\scripts\check_doc_commands.py . docs README.md` passed with the known intentional `127.0.0.1` warning in `docs\oci-quick-start.md`; `git diff --check` passed.
+**Next**: Push the PR update, then request owner/reviewer acceptance.
 
 ---
 
 ## Validation Results
 
 ### Test Summary
-**Test Date**: May 27, 2026
+**Test Date**: May 27-29, 2026
 **Test Environment**: Documentation/task-state validation only; no external pilot run yet
-**Test Status**: DRAFT_READY
+**Test Status**: DRAFT_READY - reviewer handoff fixes applied and focused documentation/task validation passed
 
 ### Acceptance Criteria Validation
 - [x] Start/stop criteria documented - PASS - See Pilot Start Criteria and Pilot Stop Criteria.
-- [x] Tester acceptance checklist ready - PASS - See Tester Acceptance Checklist.
+- [x] Tester acceptance checklist ready - PASS - See Tester Acceptance Checklist; it now uses bootstrap as the first setup path and manual import only as a support-directed fallback.
 - [x] Environment capture checklist ready - PASS - See Environment Capture.
 - [x] Issue-report workflow linked - PASS - See Issue Reporting Workflow and `.agent_work/user-testing/`.
 - [x] Tester-facing handoff artifacts updated - PASS - See `.agent_work/user-testing/instructions/RC1-PILOT-UAT-CHECKLIST.md` and `TESTER-ISSUE-REPORT-CHECKLIST.txt`.
 - [x] Non-command-line first-launch guidance added - PASS - User docs and UAT checklist now include PowerShell location, Docker Desktop/WSL 2 checks, default Docker commands, expected outcomes, and support-safe recovery instructions.
 - [x] Low-risk install-UX hardening added - PASS - Quick Start, Package Guide, Project Overview, Settings-linked HTML, and UAT checklist now clarify Application Package versus Model & Data Package naming, GitHub Release asset selection, checksums, disk-space targets, nested asset layout mistakes, first image-pull delay, support stop points, and smoke-test expectations.
-- [x] Runtime prerequisite preflight routed - PASS - `TASK-074` created and selected for bootstrap/preflight implementation without documenting unimplemented behavior as available.
+- [x] Runtime prerequisite preflight completed - PASS - `TASK-074` created, implemented, validated, and incorporated into the bootstrap-first UAT path.
 - [x] UAT checklist aligned to implemented bootstrap - PASS - The checklist now uses `bootstrap.cmd` for first setup and keeps manual import as fallback.
 - [x] V1 completion gate documented - PASS - See V1 Completion Gate After Pilot.
 - [ ] Owner/reviewer acceptance - PENDING.
