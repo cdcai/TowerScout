@@ -1,6 +1,6 @@
 # TASK-073: Clean-Machine Pilot / UAT Execution Plan
 
-**Status**: IN_PROGRESS - UAT handoff packet template added for final owner acceptance
+**Status**: IN_PROGRESS - final release artifacts/image digest and owner acceptance pending
 **Priority**: HIGH  
 **Type**: B/C (User Testing / Release Validation)  
 **Estimated Effort**: 0.5-1 day (4-8 hours)  
@@ -54,6 +54,8 @@ This task should make external testing repeatable, bounded, and evidence-produci
 - [x] UAT checklist is updated to use the implemented `TASK-074` bootstrap path for first setup.
 - [x] Reviewer documentation feedback is incorporated into the pilot handoff instructions.
 - [x] UAT handoff packet template captures exact release URL/tag, artifact filenames, smoke fixture, and support contact before tester launch.
+- [ ] Final GitHub Release assets are published and match the accepted release source ref.
+- [ ] Final package/image pair is regenerated or owner-accepted after Task-073 documentation updates.
 - [ ] Owner/reviewer accepts the pilot/UAT plan before external testers start.
 
 ## Dependencies
@@ -91,6 +93,7 @@ This task should make external testing repeatable, bounded, and evidence-produci
 Pilot/UAT may start only when all of the following are true:
 
 - The exact GitHub release URL or release tag, release package ZIP, pinned GHCR image digest, exact Model & Data Package filename, and matching checksum instructions are available to testers.
+- The final Application Package, GHCR image digest, and Settings-linked docs are generated from the accepted release source ref, or any image/package docs drift is explicitly owner/reviewer accepted.
 - `TASK-071` package docs are available from the package and from Settings Resource Links.
 - User-facing docs explain Docker Desktop/WSL 2 prerequisites, PowerShell command location, expected command outcomes, and support-safe recovery steps for first launch.
 - `TASK-066` CPU-default Docker Desktop package path has passed with assets imported and one bounded detection smoke.
@@ -320,6 +323,28 @@ After pilot/UAT, V1 may be considered ready only if:
 **Validation**: `.\.venv\Scripts\python.exe .agent_work\scripts\validate_agent_work.py` passed; `.\.venv\Scripts\python.exe .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .` passed; `.\.venv\Scripts\python.exe .agents\skills\towerscout-end-user-docs-check\scripts\check_doc_commands.py . docs README.md` passed with the known intentional `127.0.0.1` warning in `docs\oci-quick-start.md`; `git diff --check` passed.
 **Next**: Fill the packet with final RC artifact values and run one final package-path validation before sending to testers.
 
+### 2026-05-29 - Final Handoff Readiness Check
+**Objective**: Determine whether the handoff packet can be filled with final release artifact values.
+**Context**: After PR #26 merged, local `main` was synced and the repository release/package state was inspected.
+**Findings**: `gh release list --repo J-Schulein/TowerScout --limit 10` returned no published releases. The local `dist\towerscout-v0.1.0-rc1.zip` was generated before the latest Task-073 documentation updates. The most recent validated image digest still points to the earlier package-validation source ref, while current `main` is `815e8cda77fb5a0679372a0cacd5f6cf8e3c5a32`. Because the image serves Settings Resource Links docs from `/app/docs`, a final tester package should use a newly built/published image digest from the accepted release source ref, or the owner/reviewer should explicitly accept image-docs drift.
+**Decision**: Do not fill or send the handoff packet yet. Treat final GitHub Release publication, current source-ref image digest, exact artifact filenames, smoke fixture, support contact, and final package-path validation as the remaining Task-073 gate.
+**Execution**: Updated the handoff packet readiness notes, Task-073 status, acceptance criteria, and sprint current-state summary.
+**Validation**: `.\.venv\Scripts\python.exe .agent_work\scripts\validate_agent_work.py` passed; `.\.venv\Scripts\python.exe .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .` passed; `git diff --check` passed.
+**Next**: Generate/publish final RC artifacts from the accepted source ref, fill the handoff packet, and run one final package-path validation.
+
+### 2026-05-29 - PR27 Reviewer Follow-Up Notes
+**Objective**: Preserve the reviewer-confirmed post-merge release handoff checks before final UAT materials are sent.
+**Context**: The PR27 reviewer agreed the readiness note should merge, but emphasized that it is not approval to launch external UAT.
+**Decision**: After PR27 merges, the next release handoff step must record the post-merge accepted source ref, rebuild/publish the final GHCR image from that ref, regenerate the Application Package with that digest, publish both package ZIPs plus checksums under the same GitHub Release, and verify the published artifact path before changing the handoff packet approval state.
+**Follow-Up Checks**:
+- Verify Settings-linked docs from the running final image, because the image serves `/app/docs`.
+- Keep GPU acceleration out of tester-facing claims unless NVIDIA Docker Desktop WSL2 validation, CPU/GPU fixture parity, and timing evidence are complete.
+- Keep Podman language qualified to the validated package-runtime path.
+- Treat green CI as necessary but not sufficient; final published artifact validation remains the release authority.
+- Remove or quarantine stale local `dist` artifacts before uploading final release assets.
+- Keep the handoff packet's explicit accepted source ref aligned with `SOURCE.txt`, `release-manifest.v1.json`, image digest, and release tag.
+**Next**: Merge PR27 if checks pass, then run the final release build/publish/validation sequence before external tester handoff.
+
 ---
 
 ## Validation Results
@@ -346,6 +371,7 @@ After pilot/UAT, V1 may be considered ready only if:
 ### Issues Identified
 
 - No pilot execution issues yet; this task has only drafted the plan.
+- Final tester handoff values are not ready: no GitHub Release is published, the existing local application ZIP is stale relative to the latest docs, and the known image digest predates the current release source ref.
 
 ### Remediation Actions
 

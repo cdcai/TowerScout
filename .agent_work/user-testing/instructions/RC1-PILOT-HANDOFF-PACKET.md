@@ -13,10 +13,35 @@ the pilot run. Do not send this packet until all required values are complete.
 - Tester/cohort:
 - Support contact:
 
+## Current Readiness Notes
+
+As of the final handoff check on 2026-05-29, leave `Approved for tester use`
+set to `NO` until the final release artifacts are published and verified.
+
+Known pending items:
+
+- GitHub Releases does not yet list a published V1 RC1 release.
+- The existing local `dist\towerscout-v0.1.0-rc1.zip` was generated before the
+  latest Task-073 documentation/handoff updates and should not be used as the
+  final tester package.
+- The previously validated image digest
+  `sha256:55aabd73a0cbdb76a1d48f427e9fe74dcab63ed87f2a15d32d9709de3ce1a232`
+  came from an earlier source ref. Because the container image serves the
+  Settings Resource Links docs from `/app/docs`, the final package should use a
+  newly built/published image digest from the accepted release source ref, or
+  owner/reviewer acceptance should explicitly record any image-docs drift.
+- A local validation Model & Data Package candidate exists at
+  `dist\task074-merged-package\towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip`,
+  but it is not a published GitHub Release asset.
+
+Do not send this packet externally until these notes are resolved or explicitly
+accepted by the release owner.
+
 ## Required Release Values
 
 - GitHub release URL:
 - Release tag:
+- Accepted source ref:
 - Application Package ZIP:
 - Application Package checksum file:
 - Model & Data Package ZIP:
@@ -94,6 +119,8 @@ procedure.
 ## Final Pre-Send Check
 
 - [ ] Exact release URL/tag is filled in.
+- [ ] Accepted source ref is filled in and matches `SOURCE.txt` plus
+      `release-manifest.v1.json`.
 - [ ] Exact Application Package filename is filled in.
 - [ ] Exact Model & Data Package filename is filled in.
 - [ ] Checksum filenames are filled in.

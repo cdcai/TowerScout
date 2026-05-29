@@ -3,7 +3,7 @@
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
 **Last Updated**: May 29, 2026
 **Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
-**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, `TASK-067`, and `TASK-074` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` digest-pinned Docker Desktop and Podman package runtime validation passed for CPU-default launch, including the post-PR23 clean package bootstrap/preflight validation, with Podman Docker Hub source-build TLS and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` is active for clean-machine pilot/UAT planning and now has a handoff packet template for final release URL, artifact filenames, fixture, and support-contact values.
+**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, `TASK-067`, and `TASK-074` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` digest-pinned Docker Desktop and Podman package runtime validation passed for CPU-default launch, including the post-PR23 clean package bootstrap/preflight validation, with Podman Docker Hub source-build TLS and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` is active for clean-machine pilot/UAT planning and now has a handoff packet template plus PR27 reviewer follow-up notes, but final GitHub Release assets, a current source-ref image digest, exact fixture values, and owner/reviewer acceptance remain pending before external tester launch.
 
 ---
 
@@ -225,7 +225,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **User Value**: Restores confidence in internal validation before external pilot prep and reduces the chance that future agents follow stale instructions.
 
 ### **TASK-073: Clean-Machine Pilot / UAT Execution Plan**
-**Status**: IN_PROGRESS - UAT handoff packet template added; final values and owner/reviewer acceptance pending
+**Status**: IN_PROGRESS - handoff packet template added; final release artifacts/image digest and owner/reviewer acceptance pending
 **Type**: B/C (User Testing / Release Validation)  
 **Priority**: HIGH  
 **Estimated Effort**: 0.5-1 day (4-8 hours)  
