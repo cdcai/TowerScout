@@ -16,7 +16,7 @@ the pilot run. Do not send this packet until all required values are complete.
 
 ## Current Readiness Notes
 
-As of the final package validation check on 2026-05-29, leave
+As of the post-PR28 final package validation check on 2026-05-29, leave
 `Approved for tester use` set to `NO` until the release owner selects the
 tester cohort and explicitly approves this packet for send.
 
@@ -24,8 +24,8 @@ Resolved since the PR27 readiness check:
 
 - The `v0.1.0-rc1` prerelease exists with all four package assets uploaded and
   is now published.
-- The final Application Package was regenerated from accepted source ref
-  `baa5ccc053184d4a24389a436f6d7c2168238c1e`.
+- The final Application Package was regenerated from post-PR28 accepted source
+  ref `e6495d14bd642eda81f7a70d6fe2e93d4b15097a`.
 - The final GHCR image was published from that same source ref and pinned in the
   package by immutable digest.
 - The downloaded release assets passed checksum verification.
@@ -37,6 +37,10 @@ Resolved since the PR27 readiness check:
 - Support contacts and provider-key handling expectations were filled.
 - Internal provider setup plus bounded detection smoke passed against the final
   published digest from inside the RC container.
+- After PR #28 merged, the Application Package and GHCR image were refreshed
+  from the merged source ref, the prerelease Application Package assets were
+  replaced, and the Docker Desktop package path plus bounded Azure smoke were
+  revalidated.
 
 Remaining before tester handoff:
 
@@ -50,7 +54,7 @@ Remaining before tester handoff:
 - GitHub release URL:
   `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc1`
 - Release tag: `v0.1.0-rc1`
-- Accepted source ref: `baa5ccc053184d4a24389a436f6d7c2168238c1e`
+- Accepted source ref: `e6495d14bd642eda81f7a70d6fe2e93d4b15097a`
 - Application Package ZIP: `towerscout-v0.1.0-rc1.zip`
 - Application Package checksum file: `towerscout-v0.1.0-rc1.zip.sha256`
 - Model & Data Package ZIP:
@@ -58,7 +62,7 @@ Remaining before tester handoff:
 - Model & Data Package checksum file:
   `towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip.sha256`
 - Expected image reference from `IMAGE.txt`:
-  `ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121@sha256:36f452a5da0d9f3fa17f5b0f90802873cb40b1a433596048e4e9437e6f51d746`
+  `ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121@sha256:e90524870a279c04f941147fc30328636ac97f75be200fd06c929df83c49d158`
 - Expected package folder name after extraction: `towerscout-v0.1.0-rc1`
 
 All four release files must come from the same GitHub release `Assets` section.
@@ -101,18 +105,30 @@ confirmed the Podman machine plus Compose provider are running.
   update, and tower records display address/provider metadata when geocoding
   succeeds.
 
-Internal final-digest smoke evidence captured on 2026-05-29:
+Internal post-PR28 final-digest smoke evidence captured on 2026-05-29:
 
 - Runtime path: published prerelease package, Docker Desktop, `-Gpu off`,
   image digest
-  `sha256:36f452a5da0d9f3fa17f5b0f90802873cb40b1a433596048e4e9437e6f51d746`.
-- Estimate: `8` tiles, `48.23` seconds.
-- Detection result: HTTP `200`, `55` total records, `8` tile records, `47`
-  cooling-tower records, `47` records with address data, and elapsed time about
-  `43` seconds.
-- Host note: this smoke used internal container requests because this
-  workstation had a conflicting local host process on `localhost:5000`. Do not
-  treat host-browser validation on this workstation as passed from that URL.
+  `sha256:e90524870a279c04f941147fc30328636ac97f75be200fd06c929df83c49d158`.
+- Application Package checksum:
+  `e071f1ac773f993b3a8636cab4be0e476ee95086dfec6ff24beda8b8a6fb3142`.
+- Package validation: refreshed app ZIP checksum matched the release sidecar;
+  Model & Data Package checksum remained
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`;
+  bootstrap preflight passed; the first run required an explicit image pull
+  because the CUDA-capable image was not yet local; readiness reached
+  `setup_required` with assets `ok`; in-container hash verification returned
+  `asset_status=ok`.
+- Docs/source validation: `/docs/project-overview.html`,
+  `/docs/towerscout-user-guide.html`, `/docs/v1-rc1-quick-start.html`, and
+  `/license` returned HTTP `200`.
+- Estimate: `8` tiles, `44.0` seconds.
+- Detection result: Azure search HTTP `200` with one result; detection HTTP
+  `200`, `55` result records, `47` records with address data, and elapsed time
+  about `59` seconds.
+- Host note: validation used port `5006` to avoid possible `localhost:5000`
+  conflicts on this workstation. Do not treat host-browser validation on
+  `localhost:5000` as passed from this smoke.
 
 Use a public/non-sensitive fixture. Do not ask testers to use a private
 investigation AOI for the first smoke test.

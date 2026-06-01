@@ -1,6 +1,6 @@
 # TASK-066: Release Candidate Validation Gate
 
-**Status**: IN_PROGRESS - final prerelease Docker Desktop package path and bounded provider smoke passed; Podman source-build TLS, Docker-Desktop-free Podman, and NVIDIA GPU evidence pending
+**Status**: IN_PROGRESS - post-PR28 final prerelease Docker Desktop package path and bounded provider smoke passed; Podman source-build TLS, Docker-Desktop-free Podman, and NVIDIA GPU evidence pending
 **Priority**: CRITICAL  
 **Type**: C (Release Engineering / Validation)  
 **Estimated Effort**: 1-2 days (8-16 hours)  
@@ -304,13 +304,38 @@ This task is the bridge between engineered release readiness and real user testi
 **Recommendation**: Docker Desktop CPU-default package validation can proceed to controlled external UAT after `TASK-073` tester/cohort selection and owner/reviewer packet approval. Keep GPU, Docker-Desktop-free Podman, and Podman source-build caveats bounded.
 **Next**: Update `TASK-073` handoff state and request owner/reviewer approval for tester send.
 
+### 2026-05-29 - Post-PR28 Final Artifact Refresh Validation
+**Objective**: Re-run the release-candidate artifact gate after PR #28 merged runtime and package-doc changes.
+**Context**: PR #28 fixed `/api/geocode/forward` serialization and updated package-included docs after the first published prerelease assets were generated. Because the image serves package-local docs and the release package pins a source ref plus image digest, the Application Package and GHCR image needed a final refresh from the merged source ref.
+**Execution**:
+- Published the `v0.1.0-rc1-cuda121` image from `main` source ref `e6495d14bd642eda81f7a70d6fe2e93d4b15097a` using GitHub Actions run `26641607377`.
+- Downloaded the workflow image metadata artifact and extracted digest `sha256:e90524870a279c04f941147fc30328636ac97f75be200fd06c929df83c49d158`.
+- Regenerated `towerscout-v0.1.0-rc1.zip` with the refreshed digest and replaced the Application Package ZIP plus checksum on the published prerelease.
+- Downloaded the refreshed app ZIP/checksum from the release into `dist\release-download-validation-final-e6495d1`, verified the app checksum, copied the unchanged Model & Data Package/checksum, verified the asset checksum, and extracted the downloaded app ZIP.
+- Ran package bootstrap verify-only on port `5006`, explicitly pulled the pinned image after the first full bootstrap attempt exceeded the outer validation timeout during first image download, then validated the running package stack on port `5006`.
+- Copied local ignored provider config into the validation container for internal smoke only and ran the public Azure fixture through search, estimate, and detection.
+- Stopped the validation stack after evidence capture.
+**Validation Evidence**:
+- Published prerelease URL: `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc1`.
+- Accepted source ref: `e6495d14bd642eda81f7a70d6fe2e93d4b15097a`.
+- Published image digest: `sha256:e90524870a279c04f941147fc30328636ac97f75be200fd06c929df83c49d158`.
+- Application Package SHA-256: `e071f1ac773f993b3a8636cab4be0e476ee95086dfec6ff24beda8b8a6fb3142`.
+- Model & Data Package SHA-256: `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+- Package readiness reported `setup_required`, assets `ok`, CPU device selection, `pytorch_flavor=cuda121`, `torch_version=2.2.1+cu121`, and image digest `sha256:e90524870a279c04f941147fc30328636ac97f75be200fd06c929df83c49d158` under `-Gpu off`.
+- In-container hash verification returned `asset_status=ok`, `verify_hashes=True`, no missing assets, no corrupt assets, and no optional missing assets.
+- `/api/health`, `/api/readiness`, `/docs/project-overview.html`, `/docs/towerscout-user-guide.html`, `/docs/v1-rc1-quick-start.html`, and `/license` returned success.
+- Azure search returned HTTP `200` with one result. Tile estimate returned HTTP `200`, `8` tiles, and `44.0` seconds. Detection returned HTTP `200`, `55` result records, `47` records with address data, and elapsed time about `59` seconds.
+**Finding**: The first full bootstrap attempt exceeded the outer validation timeout while the new CUDA-capable image was not yet local. `bootstrap.cmd -VerifyOnly` had already passed and the explicit `docker pull` completed successfully. This is not a release blocker, but it reinforces the existing user-facing guidance that the first GHCR image pull can take several minutes and PowerShell should remain open.
+**Recommendation**: Treat the post-PR28 Docker Desktop CPU-default package path as passed for controlled UAT, with the same bounded caveats around GPU, Docker-Desktop-free Podman, and Podman source-build validation.
+**Next**: Update the UAT handoff packet and Task-073 evidence with the refreshed source ref, image digest, and checksum before owner/reviewer approval.
+
 ---
 
 ## Validation Results
 
 ### Test Summary
 **Test Date**: 2026-05-22 through 2026-05-29
-**Test Environment**: Windows 11 AMD64 workstation, Docker Desktop engine, Podman `5.8.2` WSL machine using `podman compose` with Docker Compose `v5.1.3` as external provider, final prerelease GHCR image `ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121@sha256:36f452a5da0d9f3fa17f5b0f90802873cb40b1a433596048e4e9437e6f51d746`, CPU launch via `-Gpu off`, Azure provider configured from local ignored development config for validation only.
+**Test Environment**: Windows 11 AMD64 workstation, Docker Desktop engine, Podman `5.8.2` WSL machine using `podman compose` with Docker Compose `v5.1.3` as external provider, final prerelease GHCR image `ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121@sha256:e90524870a279c04f941147fc30328636ac97f75be200fd06c929df83c49d158`, CPU launch via `-Gpu off`, Azure provider configured from local ignored development config for validation only.
 **Test Status**: PASS_WITH_BOUNDARIES - final prerelease Docker Desktop package path passed through bootstrap, asset import, readiness, Settings-linked docs, `/license`, provider setup, and bounded Azure detection smoke on the final digest. GPU, Docker-Desktop-free Podman, and Podman source-build TLS evidence remain bounded follow-ups.
 
 ### Acceptance Criteria Validation
@@ -323,7 +348,7 @@ This task is the bridge between engineered release readiness and real user testi
 - [x] Detection smoke verified - final-digest bounded Azure fixture returned HTTP `200`, `47` cooling-tower records, selected detections, and address fields.
 - [x] Status/log support commands produce useful evidence - `status.cmd`, `/api/readiness`, Docker logs, and `performance.log` exposed actionable evidence.
 - [x] CPU-safe default launch verified - validation launched with `-Gpu off`; runtime readiness selected CPU from the CUDA-capable image with `torch 2.2.1+cu121`.
-- [x] Immutable image digest release package verified - final prerelease package pinned to GHCR digest `sha256:36f452a5da0d9f3fa17f5b0f90802873cb40b1a433596048e4e9437e6f51d746`.
+- [x] Immutable image digest release package verified - post-PR28 final prerelease package pinned to GHCR digest `sha256:e90524870a279c04f941147fc30328636ac97f75be200fd06c929df83c49d158`.
 - [x] Bootstrap/preflight package path verified - post-PR23 clean package validation proved verify-only is non-mutating, asset ZIP staging/import succeeds, `.env` initializes from the pinned package template before Compose startup, and readiness reaches `setup_required` with assets `ok`.
 - [ ] NVIDIA Docker Desktop WSL2 GPU evidence - PENDING separate GPU host validation before any broad GPU support claim.
 - [ ] Docker-Desktop-free Podman evidence - PENDING clean-host validation with a provider that does not depend on Docker Desktop's external Compose binary.

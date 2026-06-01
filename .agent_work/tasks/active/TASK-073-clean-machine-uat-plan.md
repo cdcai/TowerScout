@@ -1,6 +1,6 @@
 # TASK-073: Clean-Machine Pilot / UAT Execution Plan
 
-**Status**: IN_PROGRESS - prerelease published and final-digest smoke passed; tester cohort and owner/reviewer acceptance pending
+**Status**: IN_PROGRESS - post-PR28 prerelease package refresh and final-digest smoke passed; tester cohort and owner/reviewer acceptance pending
 **Priority**: HIGH  
 **Type**: B/C (User Testing / Release Validation)  
 **Estimated Effort**: 0.5-1 day (4-8 hours)  
@@ -383,6 +383,32 @@ After pilot/UAT, V1 may be considered ready only if:
 **Follow-Up Resolution**: PR #28 follow-up investigation confirmed the tester-visible Azure search path uses `/api/maps/azure/search`, not `/api/geocode/forward`. The backend forward-geocode route was still fixed to serialize `provider_used` from `GeocodingResult.to_dict()` output, and regression coverage now proves Azure forward-geocode route responses are JSON-safe.
 **Next**: Select tester/cohort, get owner/reviewer packet approval, and start controlled external UAT with the published prerelease.
 
+### 2026-05-29 - Post-PR28 Final Artifact Refresh And Smoke
+**Objective**: Refresh the published RC1 Application Package and image after PR #28 merged runtime and package-doc changes.
+**Context**: PR #28 changed `webapp/towerscout.py` and package-included documentation after the first `v0.1.0-rc1` prerelease publication. The release package, image digest, `SOURCE.txt`, `release-manifest.v1.json`, and handoff packet therefore needed to be realigned to the merged source ref before external UAT.
+**Execution**:
+- Synced `main` to `e6495d14bd642eda81f7a70d6fe2e93d4b15097a`.
+- Published the CUDA-capable GHCR image from `main` through the `TowerScout Container Publish` workflow.
+- Regenerated `dist\towerscout-v0.1.0-rc1.zip` with the refreshed image digest and `PytorchFlavor=cuda121`.
+- Replaced the Application Package ZIP and checksum on the published `v0.1.0-rc1` prerelease.
+- Downloaded the refreshed app ZIP and checksum into a fresh validation folder, copied the unchanged Model & Data Package into that folder, verified both ZIP checksums, extracted the downloaded Application Package, and ran Docker Desktop validation on port `5006`.
+- Copied local ignored provider config into the validation container for internal smoke only, without printing or committing provider secrets.
+- Ran the owner-selected Azure fixture through Azure search, tile estimate, and detection.
+**Validation Evidence**:
+- Published prerelease URL: `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc1`.
+- Accepted source ref: `e6495d14bd642eda81f7a70d6fe2e93d4b15097a`.
+- Published image: `ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121@sha256:e90524870a279c04f941147fc30328636ac97f75be200fd06c929df83c49d158`.
+- Application Package: `towerscout-v0.1.0-rc1.zip`, SHA-256 `e071f1ac773f993b3a8636cab4be0e476ee95086dfec6ff24beda8b8a6fb3142`.
+- Model & Data Package: `towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip`, SHA-256 `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+- Bootstrap verify-only passed; the first full bootstrap attempt reached the image pull path and exceeded the outer validation timeout because the refreshed CUDA-capable image was not yet local. Explicit `docker pull` of the pinned digest then completed successfully, and the package stack reached health/readiness on port `5006`.
+- Runtime readiness reported `pytorch_flavor=cuda121`, `torch_version=2.2.1+cu121`, `torch_cuda_build=12.1`, `device_policy=cpu`, `selected_device=cpu`, image digest `sha256:e90524870a279c04f941147fc30328636ac97f75be200fd06c929df83c49d158`, and assets `ok` under `-Gpu off`.
+- In-container asset hash verification returned `asset_status=ok`, `verify_hashes=True`, no missing assets, no corrupt assets, and no optional missing assets.
+- `/api/health`, `/api/readiness`, `/docs/project-overview.html`, `/docs/towerscout-user-guide.html`, `/docs/v1-rc1-quick-start.html`, and `/license` passed.
+- Smoke fixture: Azure Maps, `200 west st, New York, NY 10282`, `150 meter` circle, estimated `8` tiles and `44.0` seconds.
+- Detection result: Azure search HTTP `200` with one result; detection HTTP `200`, elapsed time about `59` seconds, `55` result records, and `47` records with address data.
+**Decision**: The post-PR28 package/image/docs drift is resolved for the published prerelease. Keep the UAT packet approval at `NO` until tester/cohort selection and owner/reviewer approval are filled.
+**Next**: Commit the refreshed evidence update, open a review PR if desired, then request owner/reviewer approval for tester send.
+
 ---
 
 ## Validation Results
@@ -390,7 +416,7 @@ After pilot/UAT, V1 may be considered ready only if:
 ### Test Summary
 **Test Date**: May 27-29, 2026
 **Test Environment**: Documentation/task-state validation only; no external pilot run yet
-**Test Status**: READY_FOR_OWNER_APPROVAL - prerelease package path and default smoke fixture passed internal validation; tester cohort and owner/reviewer approval remain pending
+**Test Status**: READY_FOR_OWNER_APPROVAL - post-PR28 prerelease package path and default smoke fixture passed internal validation; tester cohort and owner/reviewer approval remain pending
 
 ### Acceptance Criteria Validation
 - [x] Start/stop criteria documented - PASS - See Pilot Start Criteria and Pilot Stop Criteria.
@@ -404,7 +430,7 @@ After pilot/UAT, V1 may be considered ready only if:
 - [x] UAT checklist aligned to implemented bootstrap - PASS - The checklist now uses `bootstrap.cmd` for first setup and keeps manual import as fallback.
 - [x] UAT handoff packet template ready - PASS - See `.agent_work/user-testing/instructions/RC1-PILOT-HANDOFF-PACKET.md`; final release, fixture, support contact, and provider-key guidance are filled.
 - [x] V1 completion gate documented - PASS - See V1 Completion Gate After Pilot.
-- [x] Final package/image pair regenerated and validated from accepted source ref - PASS - See 2026-05-29 draft release package validation evidence.
+- [x] Final package/image pair regenerated and validated from accepted source ref - PASS - See 2026-05-29 post-PR28 final artifact refresh evidence.
 - [x] Prerelease published - PASS - `v0.1.0-rc1` is published at `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc1`.
 - [x] Default public smoke fixture internally validated - PASS - Azure Maps, `200 west st, New York, NY 10282`, `150 meter` circle, about `8` tiles, HTTP `200`, `47` cooling-tower records with address data.
 - [ ] Owner/reviewer acceptance - PENDING.
@@ -422,4 +448,4 @@ After pilot/UAT, V1 may be considered ready only if:
 
 ### Sign-off
 
-The published prerelease, default public smoke fixture, support contacts, and support-safe evidence boundaries are ready for owner/reviewer review. External pilot should not start until the tester cohort is selected and the packet is explicitly approved for tester send.
+The published prerelease, refreshed final digest, default public smoke fixture, support contacts, and support-safe evidence boundaries are ready for owner/reviewer review. External pilot should not start until the tester cohort is selected and the packet is explicitly approved for tester send.
