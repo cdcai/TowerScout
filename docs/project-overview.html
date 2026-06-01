@@ -25,7 +25,7 @@
     <main class="doc-main">
       <section class="doc-section" id="package">
         <h2>What The Package Provides</h2>
-        <p>The V1 RC1 package provides a Windows-first local pilot path with a GitHub Release Application Package ZIP, a matching Model &amp; Data Package ZIP, a pinned GHCR image digest, Docker Desktop primary pilot runtime configuration, CPU-safe default launch, optional Docker GPU controls, helper scripts, package-local docs, and release notices.</p>
+        <p>The V1 RC1 package provides a Windows-first local pilot path with a GitHub Release Application Package ZIP, a matching Model &amp; Data Package ZIP, a pinned GHCR image digest, Docker Desktop primary pilot runtime configuration, CPU-safe default launch, optional Docker GPU controls, setup and support helper scripts, package-local docs, and release notices.</p>
         <p>The normal pilot path is package-based. Source checkout, Python virtual environment, and Conda setup guides are legacy support material.</p>
       </section>
       <section class="doc-section" id="prerequisites">
@@ -39,7 +39,7 @@
         <h2>Main Workflow</h2>
         <ol>
           <li>Open the TowerScout GitHub Releases page, select the exact release support provided, and download the Application Package, Model &amp; Data Package, and matching checksum files from the release <code>Assets</code> section.</li>
-          <li>Run <code>bootstrap.cmd -Engine docker -Gpu off -AssetZip &lt;asset-zip&gt;</code> for first setup, prerequisite checks, checksum verification, asset import, and launch.</li>
+          <li>Extract only the Application Package ZIP, leave the Model &amp; Data Package ZIP beside the extracted folder, and run <code>setup-towerscout.cmd</code> for first setup, prerequisite checks, checksum verification, asset import, and launch.</li>
           <li>Use <code>start.bat -Engine docker -Gpu off</code> for later direct launches.</li>
           <li>Configure Google Maps or Azure Maps.</li>
           <li>Define a search area and estimate tiles.</li>

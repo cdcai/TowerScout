@@ -19,9 +19,9 @@
       <a href="#stop-support">Stop Points</a>
       <a href="#commands">Run Commands</a>
       <a href="#download">Download</a>
-      <a href="#verify">Verify</a>
+      <a href="#verify">Match Files</a>
       <a href="#extract">Extract</a>
-      <a href="#start">Bootstrap</a>
+      <a href="#start">Setup</a>
       <a href="#assets">Manual Assets</a>
       <a href="#gpu">GPU Boundary</a>
       <a href="#setup">Setup</a>
@@ -49,7 +49,7 @@ docker compose version</code></pre>
       </section>
       <section class="doc-section" id="stop-support">
         <h2>Stop And Contact Support</h2>
-        <p>Stop before continuing if Docker Desktop is not installed, not approved, or cannot start unless support explicitly assigned you the Podman path; WSL is unavailable or shows version <code>1</code> without administrator approval to update it; a checksum does not match; asset import reports missing, corrupt, or hash-failed files; TowerScout reports <code>fatal</code>; or provider validation repeatedly fails after you confirm the key is correct.</p>
+        <p>Stop before continuing if Docker Desktop is not installed, not approved, or cannot start unless support explicitly assigned you the Podman path; WSL is unavailable or shows version <code>1</code> without administrator approval to update it; setup reports that a ZIP checksum does not match; asset import reports missing, corrupt, or hash-failed files; TowerScout reports <code>fatal</code>; or provider validation repeatedly fails after you confirm the key is correct.</p>
         <p>Do not share provider keys, <code>.env</code>, raw logs, raw screenshots, private AOIs, browser network traces, cached provider responses, or exported datasets unless your site has an approved handling procedure.</p>
       </section>
       <section class="doc-section" id="commands">
@@ -60,32 +60,30 @@ docker compose version</code></pre>
       <section class="doc-section" id="download">
         <h2>Get The Release Files</h2>
         <p>Open <a href="https://github.com/J-Schulein/TowerScout/releases">https://github.com/J-Schulein/TowerScout/releases</a> in your browser, then open the exact release that support told you to use. If support provides a direct release URL, use that link.</p>
-        <p>In the release <code>Assets</code> section, download all four TowerScout release files into a new empty local folder, such as <code>C:\Users\&lt;you&gt;\Downloads\TowerScout-v0.1.0-rc1</code>.</p>
-        <p>Download the Application Package ZIP, Application Package checksum, Model &amp; Data Package ZIP, and Model &amp; Data Package checksum from the same release. Do not use the green GitHub <code>Code</code> button or GitHub's automatic <code>Source code (zip)</code> or <code>Source code (tar.gz)</code> downloads for normal pilot setup.</p>
+        <p>In the release <code>Assets</code> section, download all four TowerScout release files. Most browsers save downloaded files to your Windows <code>Downloads</code> folder. After the downloads finish, create a new empty working folder such as <code>C:\Users\&lt;you&gt;\Documents\TowerScoutUAT</code>, then copy the four downloaded TowerScout files from <code>Downloads</code> into that working folder.</p>
+        <p>Download the Application Package ZIP, Application Package checksum, Model &amp; Data Package ZIP, and Model &amp; Data Package checksum from the same release. Keep the four files together in <code>TowerScoutUAT</code>. For the normal setup path, extract only the Application Package ZIP and leave the Model &amp; Data Package ZIP plus both <code>.sha256</code> files as files.</p>
+        <p>Do not use the green GitHub <code>Code</code> button or GitHub's automatic <code>Source code (zip)</code> or <code>Source code (tar.gz)</code> downloads for normal pilot setup.</p>
         <p>The release version must match between the Application Package and the Model &amp; Data Package. If the versions differ, stop and download the matching files from the same GitHub release.</p>
       </section>
       <section class="doc-section" id="verify">
-        <h2>Verify Downloads Before Extracting</h2>
-        <p>Compare each ZIP to its matching <code>.sha256</code> file before extracting either package. Run these commands from the new folder that contains only the four downloaded release files. If either SHA-256 value does not match, stop and obtain a fresh copy of the release artifact.</p>
-        <pre><code>Get-FileHash .\towerscout-v0.1.0-rc1.zip -Algorithm SHA256
-Get-Content .\towerscout-v0.1.0-rc1.zip.sha256
-Get-FileHash .\towerscout-v0.1.0-rc1-assets-*.zip -Algorithm SHA256
-Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256</code></pre>
-        <p>The hash from <code>Get-FileHash</code> must match the value in the matching <code>.sha256</code> file. Uppercase and lowercase are not important, but the letters and numbers must otherwise be the same. The wildcard should match exactly one Model &amp; Data Package ZIP and one matching checksum file; if it prints more than one, move old TowerScout downloads out of the folder and run the commands again.</p>
+        <h2>Confirm The Release Files Match</h2>
+        <p>Before extracting anything, confirm the folder contains the Application Package ZIP, Application Package checksum, Model &amp; Data Package ZIP, and Model &amp; Data Package checksum from the same release. The release version should match in both ZIP filenames, such as <code>v0.1.0-rc1</code>.</p>
+        <p>Setup verifies the checksum sidecars during first run. If support asks for manual checksum evidence, use the package guide for the detailed <code>Get-FileHash</code> or <code>certutil</code> commands.</p>
       </section>
       <section class="doc-section" id="extract">
         <h2>Extract The Application Package</h2>
-        <p>Extract the Application Package ZIP to a normal local folder such as <code>C:\Users\&lt;you&gt;\TowerScout-v0.1.0-rc1</code>. The folder should contain <code>bootstrap.cmd</code>, <code>start.bat</code>, Compose files, <code>scripts\</code>, <code>docs\</code>, and an empty <code>assets\</code> folder.</p>
+        <p>In the <code>TowerScoutUAT</code> folder, extract only the Application Package ZIP. Most Windows ZIP tools will create <code>C:\Users\&lt;you&gt;\Documents\TowerScoutUAT\towerscout-v0.1.0-rc1</code>. After extraction, <code>TowerScoutUAT</code> should contain the four downloaded files plus one extracted <code>towerscout-v0.1.0-rc1</code> folder.</p>
+        <p>Do not extract the Model &amp; Data Package ZIP for the normal setup path. The extracted Application Package folder should contain <code>setup-towerscout.cmd</code>, <code>bootstrap.cmd</code>, <code>start.bat</code>, Compose files, <code>scripts\</code>, <code>docs\</code>, and an empty <code>assets\</code> folder. Do not put the Model &amp; Data Package ZIP inside <code>assets\</code>.</p>
       </section>
       <section class="doc-section" id="start">
-        <h2>Run The Guided Bootstrap</h2>
-        <p>For first setup, use <code>bootstrap.cmd</code>. It checks disk space, port availability, Docker or Podman readiness, Compose availability, release metadata, checksum sidecars, and asset ZIP layout before importing assets and launching TowerScout. It verifies the Application Package checksum only when <code>-PackageZip</code> is provided and verifies the Model &amp; Data Package checksum only when <code>-AssetZip</code> is provided.</p>
-        <p>Replace <code>&lt;asset-version&gt;</code> with the exact filename text from the Model &amp; Data Package ZIP you downloaded. Do not type the angle brackets.</p>
-        <pre><code>.\bootstrap.cmd -Engine docker -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-&lt;asset-version&gt;.zip</code></pre>
-        <p>If the ZIPs are still in Downloads, either copy the Model &amp; Data Package ZIP and its <code>.sha256</code> file into the package folder, or pass the full path to <code>-AssetZip</code>.</p>
-        <pre><code>.\bootstrap.cmd -Engine docker -Gpu off -PackageZip C:\Users\&lt;you&gt;\Downloads\towerscout-v0.1.0-rc1.zip -AssetZip C:\Users\&lt;you&gt;\Downloads\towerscout-v0.1.0-rc1-assets-&lt;asset-version&gt;.zip</code></pre>
-        <p>Expected result: PowerShell prints <code>TowerScout bootstrap preflight</code>, reports prerequisite checks, verifies Application Package and Model &amp; Data Package checksums only for the ZIP paths passed with <code>-PackageZip</code> and/or <code>-AssetZip</code>, imports valid assets with hash verification, starts TowerScout, and opens <code>http://localhost:5000</code>. If the browser does not open, leave PowerShell open and manually open that URL.</p>
-        <pre><code>TowerScout bootstrap preflight
+        <h2>Run TowerScout Setup</h2>
+        <p>Open PowerShell in the extracted application folder that contains <code>setup-towerscout.cmd</code>, then run:</p>
+        <pre><code>.\setup-towerscout.cmd</code></pre>
+        <p>Setup checks disk space, port availability, Docker or Podman readiness, Compose availability, release metadata, checksum sidecars, and asset ZIP layout before importing assets and launching TowerScout. It finds the Model &amp; Data Package ZIP in the extracted application folder or parent <code>TowerScoutUAT</code> folder.</p>
+        <p>If setup reports that more than one Model &amp; Data Package ZIP was found, move old TowerScout ZIPs out of the folder and run setup again. If support asks for an explicit ZIP path, use the exact Model &amp; Data Package filename:</p>
+        <pre><code>.\setup-towerscout.cmd -AssetZip C:\Users\&lt;you&gt;\Documents\TowerScoutUAT\towerscout-v0.1.0-rc1-assets-&lt;asset-version&gt;.zip</code></pre>
+        <p>Expected result: PowerShell prints <code>TowerScout setup</code>, reports prerequisite checks, verifies checksums, imports valid assets with hash verification, starts TowerScout, and opens <code>http://localhost:5000</code>. If the browser does not open, leave PowerShell open and manually open that URL.</p>
+        <pre><code>TowerScout setup
 [OK] Engine docker is available
 [OK] Compose is available
 [OK] Model &amp; Data Package checksum matched
@@ -94,11 +92,11 @@ Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256</code></pre>
 readiness: setup_required</code></pre>
         <p><code>setup_required</code> is normal before provider setup is complete. After provider setup and asset import are complete, readiness should become <code>ready</code>.</p>
         <p>The first launch may download the TowerScout container image from GHCR. This can take several minutes. Keep the PowerShell window open while Docker downloads and starts the image.</p>
-        <p>If support tells you to use Podman, run <code>.\bootstrap.cmd -Engine podman -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-&lt;asset-version&gt;.zip</code> and reuse that engine value on helper commands.</p>
+        <p>If support tells you to validate Podman, run <code>.\setup-towerscout.cmd -Engine podman</code> and reuse that engine value on helper commands. If support tells you to validate Docker GPU behavior, run <code>.\setup-towerscout.cmd -Engine docker -Gpu auto</code> or <code>.\setup-towerscout.cmd -Engine docker -Gpu on</code>.</p>
       </section>
       <section class="doc-section" id="assets">
         <h2>Manual Asset Import Fallback</h2>
-        <p>Use this section only if support tells you not to use <code>bootstrap.cmd -AssetZip</code>, or if you already extracted the Model &amp; Data Package manually.</p>
+        <p>Use this section only if support tells you not to use <code>setup-towerscout.cmd</code>, or if you already extracted the Model &amp; Data Package manually.</p>
         <p>Extract the Model &amp; Data Package ZIP root entries into the package <code>assets\</code> folder so it contains <code>model_params\</code>, <code>data\</code>, and <code>asset_manifest.v1.json</code> directly inside <code>assets\</code>.</p>
         <p>If you see <code>assets\assets\model_params</code>, the files are nested one level too deep. Move the inner <code>model_params</code>, <code>data</code>, and <code>asset_manifest.v1.json</code> entries up one level before importing. If you are unsure, stop and ask support.</p>
         <pre><code>.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180</code></pre>

@@ -186,6 +186,7 @@ function Copy-ReleaseItem {
 }
 
 $releaseFiles = @(
+    "setup-towerscout.cmd",
     "bootstrap.cmd",
     "start.bat",
     "compose.yaml",
@@ -211,6 +212,7 @@ $releaseFiles = @(
     "webapp\asset_manifest.v1.json",
     "scripts\lib\TowerScoutBootstrap.ps1",
     "scripts\lib\TowerScoutCompose.ps1",
+    "scripts\setup-towerscout.ps1",
     "scripts\bootstrap.ps1",
     "scripts\launch.ps1",
     "scripts\start.cmd",
@@ -238,11 +240,21 @@ TowerScout assets are distributed separately from the release control package.
 
 Recommended first setup from the package root:
 
-bootstrap.cmd -AssetZip <path-to-asset-zip>
+setup-towerscout.cmd
 
-The bootstrap checks prerequisites, verifies the asset ZIP checksum sidecar,
-rejects unsafe or nested ZIP layouts, imports assets with hash verification,
-and starts TowerScout.
+The setup command checks prerequisites, finds the Model & Data Package ZIP if
+it is beside the extracted application package or in the parent TowerScout UAT
+folder, verifies checksum sidecars, rejects unsafe or nested ZIP layouts,
+imports assets with hash verification, and starts TowerScout.
+
+Optional validation tracks:
+
+setup-towerscout.cmd -Engine podman
+setup-towerscout.cmd -Gpu auto
+
+Advanced support fallback when an explicit path is needed:
+
+bootstrap.cmd -AssetZip <path-to-asset-zip>
 
 Manual fallback: place the extracted asset bundle here before running
 scripts\import-assets.cmd:

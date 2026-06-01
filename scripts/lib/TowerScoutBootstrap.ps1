@@ -6,8 +6,14 @@ function Resolve-TowerScoutBootstrapPath {
         [string] $RootPath,
 
         [Parameter(Mandatory = $true)]
-        [string] $Path
+        [string] $Path,
+
+        [string] $Label = "Path"
     )
+
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        throw "$Label was not provided."
+    }
 
     if ([System.IO.Path]::IsPathRooted($Path)) {
         return [System.IO.Path]::GetFullPath($Path)
@@ -610,6 +616,32 @@ function Get-TowerScoutSha256FromSidecar {
     return $Matches[1].ToLowerInvariant()
 }
 
+function Get-TowerScoutSha256FileHash {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Path
+    )
+
+    if (Test-TowerScoutBootstrapCommand -Name "Get-FileHash") {
+        return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
+
+    $stream = [System.IO.File]::OpenRead($Path)
+    try {
+        $sha256 = [System.Security.Cryptography.SHA256]::Create()
+        try {
+            $hashBytes = $sha256.ComputeHash($stream)
+            return [System.BitConverter]::ToString($hashBytes).Replace("-", "").ToLowerInvariant()
+        }
+        finally {
+            $sha256.Dispose()
+        }
+    }
+    finally {
+        $stream.Close()
+    }
+}
+
 function Test-TowerScoutChecksumSidecar {
     param(
         [Parameter(Mandatory = $true)]
@@ -626,7 +658,7 @@ function Test-TowerScoutChecksumSidecar {
     }
 
     $expected = Get-TowerScoutSha256FromSidecar -SidecarPath $sidecarPath
-    $actual = (Get-FileHash -LiteralPath $ArtifactPath -Algorithm SHA256).Hash.ToLowerInvariant()
+    $actual = Get-TowerScoutSha256FileHash -Path $ArtifactPath
     if ($actual -ne $expected) {
         throw "Checksum mismatch for $ArtifactPath. Expected $expected but found $actual."
     }
@@ -749,6 +781,119 @@ function Get-TowerScoutReleaseVersion {
     return $version
 }
 
+function Get-TowerScoutSetupSearchRoots {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $RootPath
+    )
+
+    $roots = New-Object System.Collections.Generic.List[string]
+    foreach ($candidate in @($RootPath, (Split-Path -Parent $RootPath))) {
+        if ([string]::IsNullOrWhiteSpace($candidate)) {
+            continue
+        }
+
+        try {
+            $resolved = (Resolve-Path -LiteralPath $candidate -ErrorAction Stop).Path
+        }
+        catch {
+            continue
+        }
+
+        if ($roots -notcontains $resolved) {
+            [void] $roots.Add($resolved)
+        }
+    }
+
+    return @($roots.ToArray())
+}
+
+function Find-TowerScoutSetupZipCandidate {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $RootPath,
+
+        [Parameter(Mandatory = $true)]
+        [string[]] $Patterns,
+
+        [Parameter(Mandatory = $true)]
+        [string] $PackageLabel,
+
+        [switch] $Optional
+    )
+
+    $candidates = New-Object System.Collections.Generic.List[object]
+    foreach ($root in (Get-TowerScoutSetupSearchRoots -RootPath $RootPath)) {
+        foreach ($pattern in $Patterns) {
+            foreach ($candidate in @(Get-ChildItem -LiteralPath $root -Filter $pattern -File -ErrorAction SilentlyContinue)) {
+                [void] $candidates.Add($candidate)
+            }
+        }
+    }
+
+    $unique = @($candidates | Sort-Object FullName -Unique)
+    if ($unique.Count -eq 0) {
+        if ($Optional) {
+            return ""
+        }
+
+        throw "No $PackageLabel ZIP was found. Put the ZIP next to setup-towerscout.cmd or in the parent TowerScout UAT folder, or pass its path with the setup command."
+    }
+
+    if ($unique.Count -gt 1) {
+        $paths = ($unique | ForEach-Object { " - $($_.FullName)" }) -join [Environment]::NewLine
+        throw "More than one $PackageLabel ZIP was found:$([Environment]::NewLine)$paths$([Environment]::NewLine)Move older ZIPs out of this folder, or pass the intended ZIP path with the setup command."
+    }
+
+    $sidecarPath = "$($unique[0].FullName).sha256"
+    if (-not (Test-Path -LiteralPath $sidecarPath -PathType Leaf)) {
+        throw "$PackageLabel checksum sidecar was not found: $sidecarPath. Keep the .sha256 file beside the ZIP."
+    }
+
+    return $unique[0].FullName
+}
+
+function Find-TowerScoutSetupAssetZip {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $RootPath,
+
+        [string] $AssetZip = ""
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($AssetZip)) {
+        return (Resolve-TowerScoutBootstrapPath -RootPath $RootPath -Path $AssetZip -Label "Model & Data Package ZIP")
+    }
+
+    $releaseVersion = Get-TowerScoutReleaseVersion -RootPath $RootPath
+    $patterns = @("towerscout-*-assets-*.zip")
+    if (-not [string]::IsNullOrWhiteSpace($releaseVersion) -and ($releaseVersion -notlike "*@*")) {
+        $patterns = @("towerscout-$releaseVersion-assets-*.zip")
+    }
+
+    return (Find-TowerScoutSetupZipCandidate -RootPath $RootPath -Patterns $patterns -PackageLabel "Model & Data Package")
+}
+
+function Find-TowerScoutSetupPackageZip {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $RootPath,
+
+        [string] $PackageZip = ""
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($PackageZip)) {
+        return (Resolve-TowerScoutBootstrapPath -RootPath $RootPath -Path $PackageZip -Label "Application Package ZIP")
+    }
+
+    $releaseVersion = Get-TowerScoutReleaseVersion -RootPath $RootPath
+    if ([string]::IsNullOrWhiteSpace($releaseVersion) -or ($releaseVersion -like "*@*")) {
+        return ""
+    }
+
+    return (Find-TowerScoutSetupZipCandidate -RootPath $RootPath -Patterns @("towerscout-$releaseVersion.zip") -PackageLabel "Application Package" -Optional)
+}
+
 function Test-TowerScoutReleaseHandoff {
     param(
         [Parameter(Mandatory = $true)]
@@ -821,8 +966,8 @@ function Test-TowerScoutAssetReleaseMatch {
         throw "Control package asset manifest was not found: $controlManifestPath"
     }
 
-    $controlHash = (Get-FileHash -LiteralPath $controlManifestPath -Algorithm SHA256).Hash.ToLowerInvariant()
-    $assetHash = (Get-FileHash -LiteralPath $AssetManifestPath -Algorithm SHA256).Hash.ToLowerInvariant()
+    $controlHash = Get-TowerScoutSha256FileHash -Path $controlManifestPath
+    $assetHash = Get-TowerScoutSha256FileHash -Path $AssetManifestPath
     if ($controlHash -ne $assetHash) {
         throw "Asset package manifest does not match the control package manifest. Use the Model & Data Package from the same release."
     }

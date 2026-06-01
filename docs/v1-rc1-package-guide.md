@@ -151,9 +151,16 @@ folder. Example only:
 towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip
 ```
 
-Download all four files into a new empty local folder before verification. The
-release version in the Application Package and Model & Data Package filenames
-must match, for example `v0.1.0-rc1`.
+After browser download, copy all four files from the user's `Downloads` folder
+into a new empty working folder before setup or manual verification. The
+recommended first-cohort working folder is:
+
+```text
+C:\Users\<you>\Documents\TowerScoutUAT
+```
+
+The release version in the Application Package and Model & Data Package
+filenames must match, for example `v0.1.0-rc1`.
 
 The Application Package contains launch scripts, Compose files, docs,
 compliance files, `IMAGE.txt`, `SHA256SUMS.txt`, `release-manifest.v1.json`,
@@ -163,11 +170,20 @@ files.
 The Model & Data Package contains the large runtime files required for
 detection and ZIP-code search.
 
-## Verify Downloads Before Extracting
+Keep all four downloaded files together. For the normal setup path, extract
+only the Application Package ZIP. Leave the Model & Data Package ZIP
+unextracted beside the extracted application folder or inside the extracted
+application folder. `setup-towerscout.cmd` discovers it and verifies the
+matching `.sha256` sidecar.
 
-Before extracting either ZIP, compare each artifact to its matching `.sha256`
-file in PowerShell. Run these commands from the new folder that contains only
-the four downloaded release files:
+## Optional Manual Download Verification
+
+The normal `setup-towerscout.cmd` path verifies checksum sidecars during first
+setup. Use this manual verification section only when support wants checksum
+evidence before setup, when a tester is blocked before setup can run, or when
+validating release artifacts internally. Run these commands from the
+`TowerScoutUAT` working folder that contains only the four copied release
+files:
 
 ```powershell
 Get-FileHash .\towerscout-v0.1.0-rc1.zip -Algorithm SHA256
@@ -179,6 +195,16 @@ Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256
 The `Hash` value from `Get-FileHash` must match the SHA-256 value in the
 corresponding `.sha256` file. If the values do not match, stop validation and
 obtain a fresh copy of the affected release artifact.
+
+If PowerShell says `Get-FileHash` is not recognized, use Windows `certutil`
+instead and compare the printed SHA-256 value to the matching `.sha256` file:
+
+```powershell
+certutil -hashfile .\towerscout-v0.1.0-rc1.zip SHA256
+Get-Content .\towerscout-v0.1.0-rc1.zip.sha256
+certutil -hashfile .\towerscout-v0.1.0-rc1-assets-<asset-version>.zip SHA256
+Get-Content .\towerscout-v0.1.0-rc1-assets-<asset-version>.zip.sha256
+```
 
 The `*` wildcard should match exactly one Model & Data Package ZIP and exactly
 one matching `.sha256` file. If PowerShell prints more than one asset ZIP or
@@ -200,9 +226,10 @@ must otherwise be identical.
 
 ## Application Package Layout
 
-After extracting the Application Package ZIP, the package root should include:
+After extracting only the Application Package ZIP, the package root should include:
 
 ```text
+setup-towerscout.cmd
 bootstrap.cmd
 start.bat
 compose.yaml
@@ -235,38 +262,54 @@ ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121@sha256:<digest>
 `IMAGE.txt`, `.env.example`, and `release-manifest.v1.json` record the selected
 PyTorch flavor, either `cpu` or `cuda121`.
 
-## Guided Bootstrap Path
+## Guided Setup Path
 
-For first setup, prefer the top-level bootstrap entry point:
+For first setup, prefer the top-level setup entry point:
 
 ```powershell
-.\bootstrap.cmd -Engine docker -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
+.\setup-towerscout.cmd
 ```
 
-Replace `<asset-version>` with the exact filename value from the Model & Data
-Package ZIP. Do not type the angle brackets.
+The expected first-cohort folder layout is:
 
-Bootstrap performs the checks that users most often miss:
+```text
+C:\Users\<you>\Documents\TowerScoutUAT\
+  towerscout-v0.1.0-rc1.zip
+  towerscout-v0.1.0-rc1.zip.sha256
+  towerscout-v0.1.0-rc1-assets-<asset-version>.zip
+  towerscout-v0.1.0-rc1-assets-<asset-version>.zip.sha256
+  towerscout-v0.1.0-rc1\
+    setup-towerscout.cmd
+```
+
+The setup wrapper defaults to Docker Desktop and `-Gpu off`. It searches the
+extracted application folder and its parent folder for one matching Model &
+Data Package ZIP, requires the matching `.sha256` sidecar, then delegates to
+the validated bootstrap path.
+
+Setup performs the checks that users most often miss:
 
 - Docker or Podman CLI, daemon/machine, and Compose-provider readiness.
 - WSL 2 hint for Docker Desktop on Windows.
 - Local port availability.
 - Minimum free disk space.
 - Release manifest and control asset-manifest presence.
-- Optional Application Package and Model & Data Package checksum verification
-  when `-PackageZip` and `-AssetZip` paths are provided.
+- Application Package checksum verification when the original Application
+  Package ZIP is still beside the extracted folder.
+- Model & Data Package checksum verification.
 - Asset ZIP safety, direct-root layout, and control/asset manifest matching.
-- Existing named-volume asset import through `scripts\import-assets.ps1` with
-  hash verification enabled.
-- Existing startup through `scripts\launch.ps1`.
+- Named-volume asset import through `scripts\import-assets.ps1` with hash
+  verification enabled.
+- Startup through `scripts\launch.ps1`.
 
-If the release ZIPs are outside the package folder, pass full paths:
+If automatic ZIP discovery is ambiguous, move old ZIPs out of the UAT folder or
+pass explicit paths:
 
 ```powershell
-.\bootstrap.cmd -Engine docker -Gpu off -PackageZip C:\Users\<you>\Downloads\towerscout-v0.1.0-rc1.zip -AssetZip C:\Users\<you>\Downloads\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
+.\setup-towerscout.cmd -PackageZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc1.zip -AssetZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
 ```
 
-Useful bootstrap options:
+Useful setup options:
 
 - `-VerifyOnly`: run prerequisite, checksum, release, and asset-layout checks
   without importing assets or starting TowerScout.
@@ -275,8 +318,10 @@ Useful bootstrap options:
 - `-Port <port>`: use the same non-default port that support selected.
 - `-Engine podman`: use the qualified Podman path when support selected
   Podman and the Podman machine plus Compose provider are already ready.
+- `-Gpu auto` or `-Gpu on`: use Docker GPU behavior only when support is
+  validating an NVIDIA Docker GPU workstation.
 
-Expected result: bootstrap prints clear checks, rejects mismatched checksums or
+Expected result: setup prints clear checks, rejects mismatched checksums or
 unsafe asset ZIPs before mutating package assets, imports valid staged assets,
 starts TowerScout, and explains readiness state. It is meant for first setup
 and support validation. `start.bat` remains the normal direct launch path after
@@ -285,7 +330,7 @@ setup is complete.
 Abbreviated successful first-run output should look similar to:
 
 ```text
-TowerScout bootstrap preflight
+TowerScout setup
 [OK] Engine docker is available
 [OK] Compose is available
 [OK] Model & Data Package checksum matched
@@ -299,7 +344,7 @@ readiness: setup_required
 The direct launcher remains supported and is useful when assets are already
 imported, when reopening TowerScout after setup is complete, or when support
 wants to isolate launch behavior. Do not run this as an extra first-setup step
-after bootstrap has already opened TowerScout.
+after setup has already opened TowerScout.
 
 Run the launcher from the package root:
 
@@ -335,8 +380,8 @@ volumes:
 
 ## Manual Asset Staging And Import
 
-Use this manual fallback when bootstrap is not being used for asset ZIP
-staging. The Model & Data Package ZIP root must contain these entries directly:
+Use this manual fallback when setup is not being used for asset ZIP staging.
+The Model & Data Package ZIP root must contain these entries directly:
 
 ```text
 model_params\
@@ -629,7 +674,7 @@ when Windows shows the port as free, retry with a non-default package port and
 use that same port on status/log/import commands:
 
 ```powershell
-.\bootstrap.cmd -Engine podman -Gpu off -Port 5009 -AssetZip .\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
+.\setup-towerscout.cmd -Engine podman -Gpu off -Port 5009
 .\scripts\status.cmd -Engine podman -Port 5009
 ```
 

@@ -14,6 +14,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BOOTSTRAP_SCRIPT = REPO_ROOT / "scripts" / "bootstrap.ps1"
+SETUP_SCRIPT = REPO_ROOT / "scripts" / "setup-towerscout.ps1"
 BOOTSTRAP_LIB = REPO_ROOT / "scripts" / "lib" / "TowerScoutBootstrap.ps1"
 COMPOSE_LIB = REPO_ROOT / "scripts" / "lib" / "TowerScoutCompose.ps1"
 PACKAGE_SCRIPT = REPO_ROOT / "scripts" / "package-release.ps1"
@@ -39,10 +40,19 @@ def _run_powershell(command: str):
 
 def test_bootstrap_entrypoint_is_packaged_and_reuses_validated_scripts():
     bootstrap_cmd = (REPO_ROOT / "bootstrap.cmd").read_text(encoding="utf-8")
+    setup_cmd = (REPO_ROOT / "setup-towerscout.cmd").read_text(encoding="utf-8")
+    setup = SETUP_SCRIPT.read_text(encoding="utf-8")
     bootstrap = BOOTSTRAP_SCRIPT.read_text(encoding="utf-8")
     package_script = PACKAGE_SCRIPT.read_text(encoding="utf-8")
 
     assert "scripts\\bootstrap.ps1" in bootstrap_cmd
+    assert "scripts\\setup-towerscout.ps1" in setup_cmd
+    assert 'ValidateSet("docker", "podman")' in setup
+    assert '[string] $Engine = "docker"' in setup
+    assert '[string] $Gpu = "off"' in setup
+    assert "Find-TowerScoutSetupAssetZip" in setup
+    assert "Find-TowerScoutSetupPackageZip" in setup
+    assert "bootstrap.ps1" in setup
     assert 'ValidateSet("auto", "docker", "podman")' in bootstrap
     assert 'ValidateSet("off", "auto", "on")' in bootstrap
     assert "[switch] $VerifyOnly" in bootstrap
@@ -52,9 +62,69 @@ def test_bootstrap_entrypoint_is_packaged_and_reuses_validated_scripts():
     assert "launch.ps1" in bootstrap
     assert "-NoBrowser:$NoBrowser" in bootstrap
     assert "@launchArgs" not in bootstrap
+    assert '"setup-towerscout.cmd"' in package_script
     assert '"bootstrap.cmd"' in package_script
+    assert '"scripts\\setup-towerscout.ps1"' in package_script
     assert '"scripts\\bootstrap.ps1"' in package_script
     assert '"scripts\\lib\\TowerScoutBootstrap.ps1"' in package_script
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap helpers are Windows-only")
+def test_setup_zip_discovery_finds_uat_downloads_and_requires_sidecars():
+    uat_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task080-setup-{uuid.uuid4().hex}"
+    app_root = uat_root / "towerscout-v0.1.0-rc1"
+    app_root.mkdir(parents=True)
+    (app_root / "release-manifest.v1.json").write_text(
+        json.dumps({"release_version": "v0.1.0-rc1"}),
+        encoding="utf-8",
+    )
+    asset_zip = uat_root / "towerscout-v0.1.0-rc1-assets-windows.zip"
+    package_zip = uat_root / "towerscout-v0.1.0-rc1.zip"
+    asset_sidecar = asset_zip.with_suffix(".zip.sha256")
+    package_sidecar = package_zip.with_suffix(".zip.sha256")
+    asset_zip.write_bytes(b"asset package")
+    package_zip.write_bytes(b"application package")
+    asset_sidecar.write_text("hash  towerscout-v0.1.0-rc1-assets-windows.zip\n", encoding="utf-8")
+    package_sidecar.write_text("hash  towerscout-v0.1.0-rc1.zip\n", encoding="utf-8")
+
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        . "{BOOTSTRAP_LIB}"
+        $asset = Find-TowerScoutSetupAssetZip -RootPath "{app_root}"
+        if ($asset -ne "{asset_zip}") {{
+            throw "Wrong asset ZIP discovered: $asset"
+        }}
+        $package = Find-TowerScoutSetupPackageZip -RootPath "{app_root}"
+        if ($package -ne "{package_zip}") {{
+            throw "Wrong package ZIP discovered: $package"
+        }}
+        $explicitAsset = Find-TowerScoutSetupAssetZip -RootPath "{app_root}" -AssetZip "{asset_zip}"
+        if ($explicitAsset -ne "{asset_zip}") {{
+            throw "Wrong explicit asset ZIP resolved: $explicitAsset"
+        }}
+        $explicitPackage = Find-TowerScoutSetupPackageZip -RootPath "{app_root}" -PackageZip "{package_zip}"
+        if ($explicitPackage -ne "{package_zip}") {{
+            throw "Wrong explicit package ZIP resolved: $explicitPackage"
+        }}
+        Remove-Item -LiteralPath "{asset_sidecar}"
+        try {{
+            Find-TowerScoutSetupAssetZip -RootPath "{app_root}" | Out-Null
+            throw "Missing asset sidecar was accepted."
+        }}
+        catch {{
+            if ($_.Exception.Message -notmatch "checksum sidecar") {{
+                throw
+            }}
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(uat_root, ignore_errors=True)
 
 
 def test_bootstrap_verify_only_does_not_stage_asset_zip_before_exit():
@@ -121,6 +191,14 @@ def test_bootstrap_helpers_verify_checksum_and_readiness_guidance():
         $hash = Test-TowerScoutChecksumSidecar -ArtifactPath "{artifact}"
         if ($hash -ne "{digest}") {{
             throw "Checksum helper returned wrong hash."
+        }}
+        function Test-TowerScoutBootstrapCommand {{
+            param([string] $Name)
+            return $false
+        }}
+        $fallbackHash = Get-TowerScoutSha256FileHash -Path "{artifact}"
+        if ($fallbackHash -ne "{digest}") {{
+            throw "Fallback checksum helper returned wrong hash."
         }}
         $fatal = Get-TowerScoutReadinessGuidance -State fatal
         if ($fatal -notmatch "support evidence") {{

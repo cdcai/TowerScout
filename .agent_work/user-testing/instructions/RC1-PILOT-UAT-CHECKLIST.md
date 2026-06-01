@@ -8,11 +8,16 @@ Use this checklist for controlled V1 RC1 package-path pilot testing.
 - Docker Desktop as the primary runtime engine.
 - CPU-default launch with `-Gpu off`.
 - Azure Maps or Google Maps provider key.
-- Package-local assets imported with hash verification.
+- `setup-towerscout.cmd` first-run setup with package-local assets imported
+  with hash verification.
 - Bounded public/non-sensitive detection area, preferably small and
   support-provided; the default RC1 smoke fixture is about 8 tiles.
 
-Do not use this checklist to claim GPU acceleration, Docker-Desktop-free Podman support, source-build support, restricted-network/offline support, or large-AOI performance.
+Do not use the default checklist result to claim GPU acceleration,
+Docker-Desktop-free Podman support, source-build support,
+restricted-network/offline support, or large-AOI performance. If support
+assigns an optional Podman or GPU validation track, record that track
+separately.
 
 ## Before You Start
 
@@ -69,49 +74,63 @@ Expected result: WSL is installed, any listed Linux distribution uses version
 ## Test Steps
 
 1. Confirm the Application Package and Model & Data Package filenames are from
-   the same release version. Put the four downloaded release files in a new
-   empty folder before running checksum commands.
-2. Compare each ZIP to its matching `.sha256` file before extracting it.
-   Run these commands from the folder that contains the downloaded ZIPs:
+   the same release version. Create a new empty working folder, such as
+   `C:\Users\<you>\Documents\TowerScoutUAT`, then copy the four downloaded
+   release files from your `Downloads` folder into it.
+2. Extract only the TowerScout Application Package ZIP. Do not manually extract
+   the Model & Data Package ZIP for the normal setup path. Extract the
+   Application Package ZIP inside the `TowerScoutUAT` working folder.
+3. Confirm the folder layout looks like this:
 
-   ```powershell
-   Get-FileHash .\towerscout-v0.1.0-rc1.zip -Algorithm SHA256
-   Get-Content .\towerscout-v0.1.0-rc1.zip.sha256
-   Get-FileHash .\towerscout-v0.1.0-rc1-assets-*.zip -Algorithm SHA256
-   Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256
+   ```text
+   C:\Users\<you>\Documents\TowerScoutUAT\
+     towerscout-v0.1.0-rc1.zip
+     towerscout-v0.1.0-rc1.zip.sha256
+     towerscout-v0.1.0-rc1-assets-<asset-version>.zip
+     towerscout-v0.1.0-rc1-assets-<asset-version>.zip.sha256
+     towerscout-v0.1.0-rc1\
+       setup-towerscout.cmd
    ```
 
-   Expected result: the SHA-256 hash printed by PowerShell matches the value in
-   the matching checksum file. Uppercase/lowercase differences are okay.
-   The `*` wildcard should match the one Model & Data Package ZIP and checksum
-   file you downloaded for this release. If PowerShell prints more than one
-   asset ZIP or checksum file, move old TowerScout downloads out of the folder
-   and run the commands again.
-3. Extract the TowerScout Application Package ZIP to a local folder.
-4. Open PowerShell in the extracted package folder.
-5. Run the guided bootstrap with the Model & Data Package ZIP path. If the
-   asset ZIP and `.sha256` file are in the package folder, use the exact asset
-   filename:
+   Expected result: the Model & Data Package ZIP and both `.sha256` files stay
+   beside the extracted application folder or inside it. Do not put the Model &
+   Data Package ZIP inside `assets\`.
+4. Open PowerShell in the extracted package folder that contains
+   `setup-towerscout.cmd`.
+5. Run the guided setup:
 
    ```powershell
-   .\bootstrap.cmd -Engine docker -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
+   .\setup-towerscout.cmd
    ```
 
-   If the release ZIPs are still in Downloads, pass full paths. Replace
-   `<you>` with your Windows user folder name and `<asset-version>` with the
-   exact Model & Data Package filename text. Do not type the angle brackets:
-
-   ```powershell
-   .\bootstrap.cmd -Engine docker -Gpu off -PackageZip C:\Users\<you>\Downloads\towerscout-v0.1.0-rc1.zip -AssetZip C:\Users\<you>\Downloads\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
-   ```
-
-   Expected result: bootstrap reports disk, port, engine, Compose, checksum,
-   and asset-layout checks; imports assets with hash verification; starts
+   Expected result: setup reports disk, port, engine, Compose, checksum, and
+   asset-layout checks; imports assets with hash verification; starts
    TowerScout; and opens `http://localhost:5000` or allows you to open that
    address manually. On the first launch, Docker may download the pinned
    TowerScout image from GHCR. This can take several minutes.
 
-6. If support tells you to use the manual fallback instead of bootstrap,
+   If setup reports that more than one Model & Data Package ZIP was found,
+   move old TowerScout ZIPs out of the folder and run setup again. If support
+   asks for an explicit ZIP path, use the exact Model & Data Package filename:
+
+   ```powershell
+   .\setup-towerscout.cmd -AssetZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
+   ```
+
+   Do not type the angle brackets from `<asset-version>`.
+
+   Optional validation tracks only when assigned by support:
+
+   ```powershell
+   .\setup-towerscout.cmd -Engine podman
+   .\setup-towerscout.cmd -Engine docker -Gpu auto
+   .\setup-towerscout.cmd -Engine docker -Gpu on
+   ```
+
+   If you use `-Engine podman`, keep using `-Engine podman` on later status,
+   logs, stop, start, and import commands.
+
+6. If support tells you to use the manual fallback instead of setup,
    extract the Model & Data Package into the package `assets/` folder.
    Expected layout:
 

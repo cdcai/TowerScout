@@ -1,8 +1,8 @@
 TOWERSCOUT RC1 TESTER ISSUE REPORT CHECKLIST
 ============================================
 
-Last reviewed: 2026-05-29
-Use this when you get blocked during RC1 package install, guided bootstrap, startup, setup, asset import, detection, export, or shutdown.
+Last reviewed: 2026-06-01
+Use this when you get blocked during RC1 package install, guided setup, startup, asset import, detection, export, or shutdown.
 
 IMPORTANT
 =========
@@ -29,7 +29,7 @@ Please send all of the items below:
 
 2. Which step failed:
    - extract package
-   - run guided bootstrap/preflight
+   - run guided setup/preflight
    - extract assets manually
    - start TowerScout
    - import assets
@@ -73,11 +73,11 @@ podman compose version
 - Did the package ZIP checksum match its `.sha256` file?
 - Did the Model & Data Package ZIP checksum match its `.sha256` file?
 
-8. Bootstrap/launch/import details:
+8. Setup/launch/import details:
 
 - Engine used: Docker Desktop / Podman
-- Bootstrap command:
-- Did bootstrap preflight pass?
+- Setup or bootstrap command:
+- Did setup/preflight pass?
 - Launch command:
 - Port:
 - GPU mode: off / auto / on
@@ -120,14 +120,14 @@ WHAT A GOOD REPORT LOOKS LIKE
 Example:
 
 - Guide used: `RC1-PILOT-UAT-CHECKLIST.md`
-- Failed step: guided bootstrap/preflight
-- Command: `.\bootstrap.cmd -Engine docker -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip`
+- Failed step: guided setup/preflight
+- Command: `.\setup-towerscout.cmd`
 - Error: `asset_status=degraded; missing model_params/yolov5/newest.pt`
 - Windows: `Microsoft Windows [Version ...]`
 - Engine: Docker Desktop, Docker version copied from `docker --version`
 - Package folder: `towerscout-v0.1.0-rc1`
 - Image digest: copied from `IMAGE.txt` or launch output
-- Bootstrap preflight: failed during asset validation
+- Setup preflight: failed during asset validation
 - Asset hash verification: failed or not reached
 - Provider: Azure Maps
 - Screenshot attached: yes, redacted

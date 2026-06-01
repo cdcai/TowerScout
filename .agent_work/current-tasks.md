@@ -1,9 +1,9 @@
 # Current Tasks - Active Sprint
 
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
-**Last Updated**: May 29, 2026
+**Last Updated**: June 1, 2026
 **Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
-**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, `TASK-067`, and `TASK-074` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` post-PR28 final prerelease Docker Desktop package path passed through checksum verification, bootstrap/readiness from the GitHub Release Application Package, Settings-linked docs, `/license`, in-container asset hash verification, and bounded Azure detection smoke on the refreshed final digest, with Podman Docker Hub source-build TLS, Docker-Desktop-free Podman, and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` is active for clean-machine pilot/UAT planning and now has exact refreshed release artifact values, default smoke fixture, support contacts, provider-key evidence boundaries, and a published prerelease, with tester cohort selection and owner/reviewer acceptance pending before external tester launch.
+**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, `TASK-067`, and `TASK-074` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` post-PR28 final prerelease Docker Desktop package path passed through checksum verification, bootstrap/readiness from the GitHub Release Application Package, Settings-linked docs, `/license`, in-container asset hash verification, and bounded Azure detection smoke on the refreshed final digest, with Podman Docker Hub source-build TLS, Docker-Desktop-free Podman, and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` is active for clean-machine pilot/UAT planning and now has exact refreshed release artifact values, default smoke fixture, support contacts, provider-key evidence boundaries, and a published prerelease, with tester cohort selection and owner/reviewer acceptance pending before external tester launch; `TASK-080` is opened to simplify the first-cohort UAT setup process and produce a consolidated Word-based RC1 UAT User Guide before external tester send.
 
 ---
 
@@ -237,6 +237,36 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **Dependencies**: `TASK-066`; `TASK-067`; `TASK-071`; `TASK-074`; RC1 user package docs.
 
 **User Value**: Ensures external testing starts from a repeatable, evidence-producing workflow instead of ad hoc feedback collection.
+
+### **TASK-080: RC1 UAT User Guide And Setup Process Simplification**
+**Status**: IN_PROGRESS - setup wrapper, tester-facing docs alignment, and consolidated Word guide structural QA complete; visual render QA blocked by missing local renderer dependencies
+**Type**: B/C (User Testing / Documentation / Release UX)
+**Priority**: HIGH
+**Estimated Effort**: 1-2 days (8-16 hours), plus optional launcher follow-through
+**Target Sprint**: Sprint 06 V1 RC1 external UAT readiness
+**Task File**: `.agent_work/tasks/active/TASK-080-uat-user-guide-process-simplification.md`
+
+**Objective**: Revise the first-cohort RC1 UAT process so non-technical testers receive one clear, start-to-finish user guide instead of several overlapping technical documents. Produce a Microsoft Word RC1 UAT User Guide, simplify the working-folder/download/extraction flow, move manual checksum work toward support fallback or automated setup verification, and expose Podman/GPU validation only as support-assigned optional tracks after the Docker Desktop CPU baseline.
+
+**Current Direction**:
+- Introduce `setup-towerscout.cmd` as the normal first-cohort setup command.
+- Default to Docker Desktop and `-Gpu off`.
+- Auto-discover the Model & Data Package ZIP from the extracted package folder
+  or parent `TowerScoutUAT` folder when exactly one matching ZIP is present.
+- Keep `-Engine podman`, `-Gpu auto`, and `-Gpu on` for support-assigned
+  validation tracks.
+- Keep `bootstrap.cmd` as the advanced explicit-path support helper.
+- Consolidated Word guide added at
+  `.agent_work/user-testing/instructions/TowerScout_V1_RC1_UAT_User_Guide.docx`.
+  Owner review in Microsoft Word is still needed because local render QA could
+  not run without `pdf2image`/LibreOffice/Word automation.
+- Word guide remains outside the release package for now; package-facing
+  Markdown/HTML and UAT handoff docs now use the same
+  `Documents\TowerScoutUAT` working-folder model.
+
+**Dependencies**: `TASK-066`; `TASK-071`; `TASK-073`; `TASK-074`; `TASK-075`; possible `TASK-076` provider-key policy language.
+
+**User Value**: Reduces first-cohort UAT friction by turning the validated release package path into a plain-language walkthrough that explains what users are doing, why each step matters, what success looks like, and how to report safe evidence if blocked.
 
 ### **TASK-074: Runtime Prerequisite Preflight**
 **Status**: COMPLETED - post-merge package-artifact bootstrap validation passed

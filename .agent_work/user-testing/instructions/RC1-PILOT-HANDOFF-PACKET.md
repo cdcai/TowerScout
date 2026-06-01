@@ -73,17 +73,24 @@ source-code ZIP/TAR.GZ downloads.
 
 - Primary engine: `docker`
 - Required launch mode: `-Gpu off`
-- Supported command:
+- Supported default setup command:
 
 ```powershell
-.\bootstrap.cmd -Engine docker -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip
+.\setup-towerscout.cmd
 ```
 
-If the release ZIPs remain in Downloads, provide a fully expanded command with
+Tell testers to create one `C:\Users\<tester>\Documents\TowerScoutUAT`
+working folder, copy the four downloaded release files from `Downloads` into
+that folder, extract only the Application Package ZIP there, open PowerShell in
+the extracted application folder, and run the command above. Setup finds the
+Model & Data Package ZIP in the extracted folder or parent `TowerScoutUAT`
+folder and verifies the `.sha256` sidecars.
+
+If automatic ZIP discovery is ambiguous, provide a fully expanded command with
 the tester's actual Windows user folder:
 
 ```powershell
-.\bootstrap.cmd -Engine docker -Gpu off -PackageZip C:\Users\<tester>\Downloads\TowerScout-v0.1.0-rc1\<application-package-zip> -AssetZip C:\Users\<tester>\Downloads\TowerScout-v0.1.0-rc1\<model-data-package-zip>
+.\setup-towerscout.cmd -PackageZip C:\Users\<tester>\Documents\TowerScoutUAT\<application-package-zip> -AssetZip C:\Users\<tester>\Documents\TowerScoutUAT\<model-data-package-zip>
 ```
 
 Only provide a Podman command if support explicitly assigned the Podman path and
@@ -141,7 +148,7 @@ Send these files or links to the tester:
 - `.agent_work/user-testing/instructions/RC1-PILOT-UAT-CHECKLIST.md`
 - `.agent_work/user-testing/instructions/TESTER-ISSUE-REPORT-CHECKLIST.txt`
 
-Include the filled release URL, filenames, bootstrap command, fixture, and
+Include the filled release URL, filenames, setup command, fixture, and
 support contact from this packet in the tester message.
 
 Provider-key expectations:
@@ -168,7 +175,7 @@ Ask only for support-safe evidence:
 - Release URL or release tag used.
 - Package filenames used and checksum pass/fail result.
 - `Get-Content .\IMAGE.txt` output.
-- Bootstrap or launcher output showing engine, port, and readiness state.
+- Setup or launcher output showing engine, port, and readiness state.
 - `.\scripts\status.cmd -Engine docker` output, or the selected engine.
 - Provider used, fixture name, tile estimate/count, and whether detection
   reached the right-hand review panel.

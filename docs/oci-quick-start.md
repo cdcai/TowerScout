@@ -41,6 +41,8 @@ The release package is expected to include:
 - `compose.yaml`
 - `compose.gpu.yaml`
 - `.env.example`
+- `setup-towerscout.cmd`
+- `scripts/setup-towerscout.ps1`
 - `bootstrap.cmd`
 - `scripts/bootstrap.ps1`
 - `scripts/lib/TowerScoutBootstrap.ps1`
@@ -126,16 +128,20 @@ For RC1, record the chosen flavor with the image digest in the release package. 
 
 ## First Run
 
-1. For a release package first setup, run bootstrap from the package directory
-   with the local Model & Data Package ZIP path:
+1. For a release package first setup, run setup from the extracted package
+   directory. Keep the Model & Data Package ZIP and matching `.sha256` file in
+   the extracted package directory or its parent UAT folder:
 
 ```cmd
-bootstrap.cmd -Engine docker -Gpu off -AssetZip <path-to-asset-zip>
+setup-towerscout.cmd
 ```
 
-Bootstrap checks disk space, port availability, engine readiness, Compose
+Setup checks disk space, port availability, engine readiness, Compose
 availability, release metadata, asset ZIP checksum/layout, imports assets with
-hash verification when assets are available, then starts TowerScout.
+hash verification when assets are available, then starts TowerScout. Use
+`setup-towerscout.cmd -Engine podman` only for the support-directed Podman
+path, and use `setup-towerscout.cmd -Engine docker -Gpu auto|on` only for
+support-directed Docker GPU validation.
 
 2. For later direct launches after setup, start TowerScout from the package
    directory:
@@ -319,11 +325,14 @@ These volumes can contain provider keys, addresses, coordinates, uploaded files,
 
 ## Assets
 
-TowerScout readiness reports missing or corrupt required assets as `degraded`. Import or bootstrap assets into the named volumes according to the release asset instructions, then restart TowerScout.
+TowerScout readiness reports missing or corrupt required assets as `degraded`. Import or set up assets into the named volumes according to the release asset instructions, then restart TowerScout.
 
-The v1 release package does not implement hosted asset download/bootstrap. Assets are expected to be supplied as a release asset bundle, site-provided bundle, or support-provided bundle and imported with `scripts\import-assets.cmd`. For the YOLO-enabled `agpl-yolo` release track, YOLO detector weights must stay labeled as YOLO-derived/AGPL-governed unless separate written model terms say otherwise. A hosted downloader can be added later after the asset host, checksum policy, retry behavior, proxy/TLS handling, and restricted-network fallback are designed and validated.
+The v1 release package does not implement hosted asset download. Assets are expected to be supplied as a release asset bundle, site-provided bundle, or support-provided bundle and imported with `setup-towerscout.cmd` or `scripts\import-assets.cmd`. For the YOLO-enabled `agpl-yolo` release track, YOLO detector weights must stay labeled as YOLO-derived/AGPL-governed unless separate written model terms say otherwise. A hosted downloader can be added later after the asset host, checksum policy, retry behavior, proxy/TLS handling, and restricted-network fallback are designed and validated.
 
-For a GitHub Release package, place the asset bundle next to the scripts with this layout:
+For a GitHub Release package, keep the Model & Data Package ZIP and matching
+`.sha256` file beside the extracted package folder and run
+`setup-towerscout.cmd`. Manual fallback only: extract the asset ZIP root entries
+into the package's existing `assets\` folder with this layout:
 
 ```text
 assets/

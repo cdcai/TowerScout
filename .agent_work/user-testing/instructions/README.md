@@ -4,6 +4,7 @@ Use this folder for tester-facing reporting instructions. For RC1 package-path p
 
 ## Setup Guides
 
+- [TowerScout V1 RC1 UAT User Guide](./TowerScout_V1_RC1_UAT_User_Guide.docx)
 - [RC1 Pilot / UAT Handoff Packet](./RC1-PILOT-HANDOFF-PACKET.md)
 - [RC1 Pilot / UAT Checklist](./RC1-PILOT-UAT-CHECKLIST.md)
 - [TowerScout User Testing Guide](../../context/guides/TowerScout_User_Testing_Guide.txt)
