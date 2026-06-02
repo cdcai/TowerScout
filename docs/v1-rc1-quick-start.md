@@ -131,7 +131,7 @@ In your browser, open the TowerScout GitHub repository release page:
 https://github.com/J-Schulein/TowerScout/releases
 ```
 
-Open the exact release that support told you to use, such as `v0.1.0-rc1`. If
+Open the exact release that support told you to use, such as `v0.1.0-rc2`. If
 support provides a direct release URL, use that link.
 
 In the release `Assets` section, download all four TowerScout release files.
@@ -148,11 +148,11 @@ paste them into this `TowerScoutUAT` working folder.
 
 Download these files from the same release:
 
-- Application Package ZIP: `towerscout-v0.1.0-rc1.zip`
-- Application Package checksum: `towerscout-v0.1.0-rc1.zip.sha256`
-- Model & Data Package ZIP: `towerscout-v0.1.0-rc1-assets-<asset-version>.zip`
+- Application Package ZIP: `towerscout-v0.1.0-rc2.zip`
+- Application Package checksum: `towerscout-v0.1.0-rc2.zip.sha256`
+- Model & Data Package ZIP: `towerscout-v0.1.0-rc2-assets-<asset-version>.zip`
 - Model & Data Package checksum:
-  `towerscout-v0.1.0-rc1-assets-<asset-version>.zip.sha256`
+  `towerscout-v0.1.0-rc2-assets-<asset-version>.zip.sha256`
 
 Keep these four files together in the `TowerScoutUAT` working folder. Only the
 Application Package ZIP is extracted in the normal setup path. Leave the Model
@@ -169,14 +169,14 @@ normal pilot install.
 Before extracting anything, confirm the folder contains these four files from
 the same release:
 
-- `towerscout-v0.1.0-rc1.zip`
-- `towerscout-v0.1.0-rc1.zip.sha256`
-- `towerscout-v0.1.0-rc1-assets-<asset-version>.zip`
-- `towerscout-v0.1.0-rc1-assets-<asset-version>.zip.sha256`
+- `towerscout-v0.1.0-rc2.zip`
+- `towerscout-v0.1.0-rc2.zip.sha256`
+- `towerscout-v0.1.0-rc2-assets-<asset-version>.zip`
+- `towerscout-v0.1.0-rc2-assets-<asset-version>.zip.sha256`
 
 The exact Model & Data Package filename can change by release. The release
 version must match between the Application Package and the Model & Data
-Package. For example, both should include `v0.1.0-rc1` in the filename. If the
+Package. For example, both should include `v0.1.0-rc2` in the filename. If the
 versions differ, stop and download the matching files from the same GitHub
 release.
 
@@ -185,7 +185,7 @@ the placeholder with the exact filename text from the Model & Data Package ZIP
 you downloaded. Example only:
 
 ```text
-towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip
+towerscout-v0.1.0-rc2-assets-towerscout-v1-assets-2026-05-05.zip
 ```
 
 ## 3. Extract Only The Application Package
@@ -193,14 +193,14 @@ towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip
 In the `TowerScoutUAT` folder, extract only the Application Package ZIP:
 
 ```text
-towerscout-v0.1.0-rc1.zip
+towerscout-v0.1.0-rc2.zip
 ```
 
 Extract it inside the `TowerScoutUAT` folder. Most Windows ZIP tools will
 create an extracted folder named:
 
 ```text
-C:\Users\<you>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc1
+C:\Users\<you>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc2
 ```
 
 Do not extract the Model & Data Package ZIP for the normal setup path. After
@@ -209,11 +209,11 @@ like this:
 
 ```text
 TowerScoutUAT\
-  towerscout-v0.1.0-rc1.zip
-  towerscout-v0.1.0-rc1.zip.sha256
-  towerscout-v0.1.0-rc1-assets-<asset-version>.zip
-  towerscout-v0.1.0-rc1-assets-<asset-version>.zip.sha256
-  towerscout-v0.1.0-rc1\
+  towerscout-v0.1.0-rc2.zip
+  towerscout-v0.1.0-rc2.zip.sha256
+  towerscout-v0.1.0-rc2-assets-<asset-version>.zip
+  towerscout-v0.1.0-rc2-assets-<asset-version>.zip.sha256
+  towerscout-v0.1.0-rc2\
     setup-towerscout.cmd
     bootstrap.cmd
     start.bat
@@ -279,7 +279,7 @@ old TowerScout ZIPs out of the folder and run setup again. If support asks you
 to pass an explicit ZIP path, use:
 
 ```powershell
-.\setup-towerscout.cmd -AssetZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
+.\setup-towerscout.cmd -AssetZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc2-assets-<asset-version>.zip
 ```
 
 Do not type the angle brackets in `<asset-version>`. Use the exact Model &

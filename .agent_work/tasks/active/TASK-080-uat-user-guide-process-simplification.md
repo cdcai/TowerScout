@@ -179,7 +179,7 @@ before replacing the external tester instructions.
    key expectations, and assigned validation track.
 2. Tester creates one `TowerScoutUAT` folder.
 3. Tester downloads all four release files into that folder.
-4. Tester extracts only `towerscout-v0.1.0-rc1.zip`.
+4. Tester extracts only `towerscout-v0.1.0-rc2.zip`.
 5. Tester opens the extracted folder and runs the simplified setup command.
 6. Setup verifies files, imports assets, starts TowerScout, and opens
    `http://localhost:5000`.

@@ -131,13 +131,13 @@ GitHub `Code` button and not from GitHub's automatic `Source code (zip)` or
 
 Application Package:
 
-- `towerscout-v0.1.0-rc1.zip`
-- `towerscout-v0.1.0-rc1.zip.sha256`
+- `towerscout-v0.1.0-rc2.zip`
+- `towerscout-v0.1.0-rc2.zip.sha256`
 
 Model & Data Package:
 
-- `towerscout-v0.1.0-rc1-assets-<asset-version>.zip`
-- `towerscout-v0.1.0-rc1-assets-<asset-version>.zip.sha256`
+- `towerscout-v0.1.0-rc2-assets-<asset-version>.zip`
+- `towerscout-v0.1.0-rc2-assets-<asset-version>.zip.sha256`
 
 The exact asset filename can change by release. The Application Package ZIP,
 Model & Data Package ZIP, `IMAGE.txt`, `release-manifest.v1.json`, and
@@ -148,7 +148,7 @@ copy the exact Model & Data Package filename from the release or Downloads
 folder. Example only:
 
 ```text
-towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip
+towerscout-v0.1.0-rc2-assets-towerscout-v1-assets-2026-05-05.zip
 ```
 
 After browser download, copy all four files from the user's `Downloads` folder
@@ -160,7 +160,7 @@ C:\Users\<you>\Documents\TowerScoutUAT
 ```
 
 The release version in the Application Package and Model & Data Package
-filenames must match, for example `v0.1.0-rc1`.
+filenames must match, for example `v0.1.0-rc2`.
 
 The Application Package contains launch scripts, Compose files, docs,
 compliance files, `IMAGE.txt`, `SHA256SUMS.txt`, `release-manifest.v1.json`,
@@ -186,10 +186,10 @@ validating release artifacts internally. Run these commands from the
 files:
 
 ```powershell
-Get-FileHash .\towerscout-v0.1.0-rc1.zip -Algorithm SHA256
-Get-Content .\towerscout-v0.1.0-rc1.zip.sha256
-Get-FileHash .\towerscout-v0.1.0-rc1-assets-*.zip -Algorithm SHA256
-Get-Content .\towerscout-v0.1.0-rc1-assets-*.zip.sha256
+Get-FileHash .\towerscout-v0.1.0-rc2.zip -Algorithm SHA256
+Get-Content .\towerscout-v0.1.0-rc2.zip.sha256
+Get-FileHash .\towerscout-v0.1.0-rc2-assets-*.zip -Algorithm SHA256
+Get-Content .\towerscout-v0.1.0-rc2-assets-*.zip.sha256
 ```
 
 The `Hash` value from `Get-FileHash` must match the SHA-256 value in the
@@ -200,10 +200,10 @@ If PowerShell says `Get-FileHash` is not recognized, use Windows `certutil`
 instead and compare the printed SHA-256 value to the matching `.sha256` file:
 
 ```powershell
-certutil -hashfile .\towerscout-v0.1.0-rc1.zip SHA256
-Get-Content .\towerscout-v0.1.0-rc1.zip.sha256
-certutil -hashfile .\towerscout-v0.1.0-rc1-assets-<asset-version>.zip SHA256
-Get-Content .\towerscout-v0.1.0-rc1-assets-<asset-version>.zip.sha256
+certutil -hashfile .\towerscout-v0.1.0-rc2.zip SHA256
+Get-Content .\towerscout-v0.1.0-rc2.zip.sha256
+certutil -hashfile .\towerscout-v0.1.0-rc2-assets-<asset-version>.zip SHA256
+Get-Content .\towerscout-v0.1.0-rc2-assets-<asset-version>.zip.sha256
 ```
 
 The `*` wildcard should match exactly one Model & Data Package ZIP and exactly
@@ -218,7 +218,7 @@ Get-FileHash output:
 HASH      0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF
 
 .sha256 file:
-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef  towerscout-v0.1.0-rc1.zip
+0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef  towerscout-v0.1.0-rc2.zip
 ```
 
 Uppercase and lowercase letters are not important. The letters and numbers
@@ -256,7 +256,7 @@ The package `.env.example` should pin `TOWERSCOUT_IMAGE` to an immutable GHCR
 digest reference such as:
 
 ```text
-ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121@sha256:<digest>
+ghcr.io/j-schulein/towerscout:v0.1.0-rc2-cuda121@sha256:<digest>
 ```
 
 `IMAGE.txt`, `.env.example`, and `release-manifest.v1.json` record the selected
@@ -274,11 +274,11 @@ The expected first-cohort folder layout is:
 
 ```text
 C:\Users\<you>\Documents\TowerScoutUAT\
-  towerscout-v0.1.0-rc1.zip
-  towerscout-v0.1.0-rc1.zip.sha256
-  towerscout-v0.1.0-rc1-assets-<asset-version>.zip
-  towerscout-v0.1.0-rc1-assets-<asset-version>.zip.sha256
-  towerscout-v0.1.0-rc1\
+  towerscout-v0.1.0-rc2.zip
+  towerscout-v0.1.0-rc2.zip.sha256
+  towerscout-v0.1.0-rc2-assets-<asset-version>.zip
+  towerscout-v0.1.0-rc2-assets-<asset-version>.zip.sha256
+  towerscout-v0.1.0-rc2\
     setup-towerscout.cmd
 ```
 
@@ -306,7 +306,7 @@ If automatic ZIP discovery is ambiguous, move old ZIPs out of the UAT folder or
 pass explicit paths:
 
 ```powershell
-.\setup-towerscout.cmd -PackageZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc1.zip -AssetZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
+.\setup-towerscout.cmd -PackageZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc2.zip -AssetZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc2-assets-<asset-version>.zip
 ```
 
 Useful setup options:

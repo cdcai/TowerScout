@@ -22,25 +22,21 @@ tester cohort and explicitly approves this packet for send.
 
 Resolved since the PR27 readiness check:
 
-- The `v0.1.0-rc1` prerelease exists with all four package assets uploaded and
-  is now published.
-- The final Application Package was regenerated from post-PR28 accepted source
-  ref `e6495d14bd642eda81f7a70d6fe2e93d4b15097a`.
-- The final GHCR image was published from that same source ref and pinned in the
-  package by immutable digest.
-- The downloaded release assets passed checksum verification.
-- Docker Desktop package-path validation from the downloaded release
-  assets passed through bootstrap, asset import, readiness, Settings-linked
-  docs, and `/license`.
-- The prerelease was published for `v0.1.0-rc1`.
+- The setup wrapper and UAT documentation were simplified for the first UAT
+  cohort.
+- The RC package version is moving to `v0.1.0-rc2` because `v0.1.0-rc1`
+  already points to an older source ref.
 - The owner-selected public Azure Maps smoke fixture was filled.
 - Support contacts and provider-key handling expectations were filled.
-- Internal provider setup plus bounded detection smoke passed against the final
-  published digest from inside the RC container.
-- After PR #28 merged, the Application Package and GHCR image were refreshed
-  from the merged source ref, the prerelease Application Package assets were
-  replaced, and the Docker Desktop package path plus bounded Azure smoke were
-  revalidated.
+
+Pending for the final `v0.1.0-rc2` handoff:
+
+- Publish the corrected `v0.1.0-rc2-cuda121` image from the final source ref.
+- Regenerate the `v0.1.0-rc2` Application Package ZIP and checksum.
+- Rename or republish the unchanged Model & Data Package ZIP with the matching
+  `v0.1.0-rc2` release filename.
+- Validate the downloaded release assets through setup, asset import,
+  readiness, Settings-linked docs, `/license`, and bounded Azure smoke.
 
 Remaining before tester handoff:
 
@@ -52,18 +48,18 @@ Remaining before tester handoff:
 ## Required Release Values
 
 - GitHub release URL:
-  `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc1`
-- Release tag: `v0.1.0-rc1`
-- Accepted source ref: `e6495d14bd642eda81f7a70d6fe2e93d4b15097a`
-- Application Package ZIP: `towerscout-v0.1.0-rc1.zip`
-- Application Package checksum file: `towerscout-v0.1.0-rc1.zip.sha256`
+  `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc2`
+- Release tag: `v0.1.0-rc2`
+- Accepted source ref: `PENDING final package validation`
+- Application Package ZIP: `towerscout-v0.1.0-rc2.zip`
+- Application Package checksum file: `towerscout-v0.1.0-rc2.zip.sha256`
 - Model & Data Package ZIP:
-  `towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip`
+  `towerscout-v0.1.0-rc2-assets-towerscout-v1-assets-2026-05-05.zip`
 - Model & Data Package checksum file:
-  `towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip.sha256`
+  `towerscout-v0.1.0-rc2-assets-towerscout-v1-assets-2026-05-05.zip.sha256`
 - Expected image reference from `IMAGE.txt`:
-  `ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121@sha256:e90524870a279c04f941147fc30328636ac97f75be200fd06c929df83c49d158`
-- Expected package folder name after extraction: `towerscout-v0.1.0-rc1`
+  `PENDING final package validation`
+- Expected package folder name after extraction: `towerscout-v0.1.0-rc2`
 
 All four release files must come from the same GitHub release `Assets` section.
 Do not ask testers to use the green GitHub `Code` button or GitHub's automatic

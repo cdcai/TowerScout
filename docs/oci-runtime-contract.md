@@ -121,7 +121,7 @@ The YOLO-enabled release track is `agpl-yolo`. TowerScout-authored code may be A
 
 Image publication is handled by the manual GitHub Actions workflow `.github/workflows/container-publish.yml`. The workflow requires `packages: write`, pushes a Linux/AMD64 image, uploads `image-metadata.json`, and reports the digest reference in the workflow summary.
 
-The publish workflow requires an explicit PyTorch wheel flavor selection. `cpu` uses the CPU PyTorch wheel index. `cuda121` uses the CUDA 12.1 PyTorch wheel index and labels the image with `org.towerscout.pytorch.flavor`. The workflow publishes flavor-specific tags such as `v0.1.0-rc1-cuda121` and `latest-cuda121` to avoid CPU/CUDA tag collisions. Release evidence and the control package must record which flavor produced the pinned digest.
+The publish workflow requires an explicit PyTorch wheel flavor selection. `cpu` uses the CPU PyTorch wheel index. `cuda121` uses the CUDA 12.1 PyTorch wheel index and labels the image with `org.towerscout.pytorch.flavor`. The workflow publishes flavor-specific tags such as `v0.1.0-rc2-cuda121` and `latest-cuda121` to avoid CPU/CUDA tag collisions. Release evidence and the control package must record which flavor produced the pinned digest.
 
 Bundled OCI image archives are not part of the supported v1 release package. Restricted-network support for v1 should preload the pinned image into the selected engine image store through a site/support procedure, then use the normal control package. A packaged OCI archive fallback remains follow-on release engineering work until archive creation, checksum/signature handling, import UX, and Docker/Podman validation are implemented.
 

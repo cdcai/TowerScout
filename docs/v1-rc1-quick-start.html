@@ -67,12 +67,12 @@ docker compose version</code></pre>
       </section>
       <section class="doc-section" id="verify">
         <h2>Confirm The Release Files Match</h2>
-        <p>Before extracting anything, confirm the folder contains the Application Package ZIP, Application Package checksum, Model &amp; Data Package ZIP, and Model &amp; Data Package checksum from the same release. The release version should match in both ZIP filenames, such as <code>v0.1.0-rc1</code>.</p>
+        <p>Before extracting anything, confirm the folder contains the Application Package ZIP, Application Package checksum, Model &amp; Data Package ZIP, and Model &amp; Data Package checksum from the same release. The release version should match in both ZIP filenames, such as <code>v0.1.0-rc2</code>.</p>
         <p>Setup verifies the checksum sidecars during first run. If support asks for manual checksum evidence, use the package guide for the detailed <code>Get-FileHash</code> or <code>certutil</code> commands.</p>
       </section>
       <section class="doc-section" id="extract">
         <h2>Extract The Application Package</h2>
-        <p>In the <code>TowerScoutUAT</code> folder, extract only the Application Package ZIP. Most Windows ZIP tools will create <code>C:\Users\&lt;you&gt;\Documents\TowerScoutUAT\towerscout-v0.1.0-rc1</code>. After extraction, <code>TowerScoutUAT</code> should contain the four downloaded files plus one extracted <code>towerscout-v0.1.0-rc1</code> folder.</p>
+        <p>In the <code>TowerScoutUAT</code> folder, extract only the Application Package ZIP. Most Windows ZIP tools will create <code>C:\Users\&lt;you&gt;\Documents\TowerScoutUAT\towerscout-v0.1.0-rc2</code>. After extraction, <code>TowerScoutUAT</code> should contain the four downloaded files plus one extracted <code>towerscout-v0.1.0-rc2</code> folder.</p>
         <p>Do not extract the Model &amp; Data Package ZIP for the normal setup path. The extracted Application Package folder should contain <code>setup-towerscout.cmd</code>, <code>bootstrap.cmd</code>, <code>start.bat</code>, Compose files, <code>scripts\</code>, <code>docs\</code>, and an empty <code>assets\</code> folder. Do not put the Model &amp; Data Package ZIP inside <code>assets\</code>.</p>
       </section>
       <section class="doc-section" id="start">
@@ -81,7 +81,7 @@ docker compose version</code></pre>
         <pre><code>.\setup-towerscout.cmd</code></pre>
         <p>Setup checks disk space, port availability, Docker or Podman readiness, Compose availability, release metadata, checksum sidecars, and asset ZIP layout before importing assets and launching TowerScout. It finds the Model &amp; Data Package ZIP in the extracted application folder or parent <code>TowerScoutUAT</code> folder.</p>
         <p>If setup reports that more than one Model &amp; Data Package ZIP was found, move old TowerScout ZIPs out of the folder and run setup again. If support asks for an explicit ZIP path, use the exact Model &amp; Data Package filename:</p>
-        <pre><code>.\setup-towerscout.cmd -AssetZip C:\Users\&lt;you&gt;\Documents\TowerScoutUAT\towerscout-v0.1.0-rc1-assets-&lt;asset-version&gt;.zip</code></pre>
+        <pre><code>.\setup-towerscout.cmd -AssetZip C:\Users\&lt;you&gt;\Documents\TowerScoutUAT\towerscout-v0.1.0-rc2-assets-&lt;asset-version&gt;.zip</code></pre>
         <p>Expected result: PowerShell prints <code>TowerScout setup</code>, reports prerequisite checks, verifies checksums, imports valid assets with hash verification, starts TowerScout, and opens <code>http://localhost:5000</code>. If the browser does not open, leave PowerShell open and manually open that URL.</p>
         <pre><code>TowerScout setup
 [OK] Engine docker is available

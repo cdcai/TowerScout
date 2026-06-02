@@ -125,7 +125,7 @@ Example:
 - Error: `asset_status=degraded; missing model_params/yolov5/newest.pt`
 - Windows: `Microsoft Windows [Version ...]`
 - Engine: Docker Desktop, Docker version copied from `docker --version`
-- Package folder: `towerscout-v0.1.0-rc1`
+- Package folder: `towerscout-v0.1.0-rc2`
 - Image digest: copied from `IMAGE.txt` or launch output
 - Setup preflight: failed during asset validation
 - Asset hash verification: failed or not reached

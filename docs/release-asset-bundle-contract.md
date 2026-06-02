@@ -17,15 +17,15 @@ Hosted asset download, bundled OCI image archives, and air-gapped/offline releas
 
 ## Release Artifacts
 
-For a release version such as `v0.1.0-rc1`, the expected artifacts are:
+For a release version such as `v0.1.0-rc2`, the expected artifacts are:
 
 | Artifact | Example | Purpose |
 | --- | --- | --- |
-| Control ZIP | `towerscout-v0.1.0-rc1.zip` | User-facing package with launcher, Compose, scripts, docs, manifest, and pinned image metadata. |
-| Control ZIP checksum | `towerscout-v0.1.0-rc1.zip.sha256` | SHA-256 checksum for the full control ZIP. |
+| Control ZIP | `towerscout-v0.1.0-rc2.zip` | User-facing package with launcher, Compose, scripts, docs, manifest, and pinned image metadata. |
+| Control ZIP checksum | `towerscout-v0.1.0-rc2.zip.sha256` | SHA-256 checksum for the full control ZIP. |
 | GHCR image digest | `ghcr.io/j-schulein/towerscout@sha256:<digest>` | Immutable Linux/AMD64 runtime image referenced by the control ZIP. |
-| Asset ZIP | `towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip` | Restricted-pilot or support-supplied local bundle containing model weights, ZIP-code data, and the asset manifest copy. |
-| Asset ZIP checksum | `towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip.sha256` | SHA-256 checksum for the full asset ZIP. |
+| Asset ZIP | `towerscout-v0.1.0-rc2-assets-towerscout-v1-assets-2026-05-05.zip` | Restricted-pilot or support-supplied local bundle containing model weights, ZIP-code data, and the asset manifest copy. |
+| Asset ZIP checksum | `towerscout-v0.1.0-rc2-assets-towerscout-v1-assets-2026-05-05.zip.sha256` | SHA-256 checksum for the full asset ZIP. |
 
 The release version in the control ZIP and asset ZIP names must match. The manifest version in the asset ZIP name must match the `manifest_version` in `webapp/asset_manifest.v1.json`.
 
@@ -125,7 +125,7 @@ The asset ZIP checksum sidecar must use this line format:
 Example:
 
 ```text
-<sha256>  towerscout-v0.1.0-rc1-assets-towerscout-v1-assets-2026-05-05.zip
+<sha256>  towerscout-v0.1.0-rc2-assets-towerscout-v1-assets-2026-05-05.zip
 ```
 
 Recommended first setup from a local asset ZIP kept beside the extracted

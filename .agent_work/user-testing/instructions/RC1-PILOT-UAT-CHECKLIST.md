@@ -84,11 +84,11 @@ Expected result: WSL is installed, any listed Linux distribution uses version
 
    ```text
    C:\Users\<you>\Documents\TowerScoutUAT\
-     towerscout-v0.1.0-rc1.zip
-     towerscout-v0.1.0-rc1.zip.sha256
-     towerscout-v0.1.0-rc1-assets-<asset-version>.zip
-     towerscout-v0.1.0-rc1-assets-<asset-version>.zip.sha256
-     towerscout-v0.1.0-rc1\
+     towerscout-v0.1.0-rc2.zip
+     towerscout-v0.1.0-rc2.zip.sha256
+     towerscout-v0.1.0-rc2-assets-<asset-version>.zip
+     towerscout-v0.1.0-rc2-assets-<asset-version>.zip.sha256
+     towerscout-v0.1.0-rc2\
        setup-towerscout.cmd
    ```
 
@@ -114,7 +114,7 @@ Expected result: WSL is installed, any listed Linux distribution uses version
    asks for an explicit ZIP path, use the exact Model & Data Package filename:
 
    ```powershell
-   .\setup-towerscout.cmd -AssetZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc1-assets-<asset-version>.zip
+   .\setup-towerscout.cmd -AssetZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc2-assets-<asset-version>.zip
    ```
 
    Do not type the angle brackets from `<asset-version>`.

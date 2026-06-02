@@ -109,7 +109,7 @@ The manual GitHub Actions workflow `.github/workflows/container-publish.yml` pub
 ghcr.io/j-schulein/towerscout
 ```
 
-Run the workflow manually with a release tag such as `v0.1.0-rc1`. The workflow summary reports the immutable digest reference:
+Run the workflow manually with a release tag such as `v0.1.0-rc2`. The workflow summary reports the immutable digest reference:
 
 ```text
 ghcr.io/j-schulein/towerscout@sha256:<digest>
@@ -122,7 +122,7 @@ The publish workflow has an explicit PyTorch wheel flavor input:
 - `cpu`: publishes the smaller CPU-wheel image.
 - `cuda121`: publishes the CUDA 12.1 PyTorch image for the single GPU-capable package path.
 
-The workflow publishes flavor-specific tags. For example, a workflow tag input of `v0.1.0-rc1` with `cuda121` publishes `v0.1.0-rc1-cuda121`; `push_latest` publishes `latest-cpu` or `latest-cuda121`, not an ambiguous `latest`.
+The workflow publishes flavor-specific tags. For example, a workflow tag input of `v0.1.0-rc2` with `cuda121` publishes `v0.1.0-rc2-cuda121`; `push_latest` publishes `latest-cpu` or `latest-cuda121`, not an ambiguous `latest`.
 
 For RC1, record the chosen flavor with the image digest in the release package. A CUDA-capable image remains CPU-safe when launched with `-Gpu off`, but GPU execution is not a supported claim until NVIDIA Docker host validation, fixed-fixture CPU/GPU parity, and timing evidence are captured.
 
