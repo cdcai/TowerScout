@@ -54,31 +54,31 @@ if (-not [string]::IsNullOrWhiteSpace($resolvedPackageZip)) {
 }
 
 $bootstrapScript = Join-Path $PSScriptRoot "bootstrap.ps1"
-$bootstrapArgs = @(
-    "-Engine", $Engine,
-    "-Port", $Port,
-    "-Gpu", $Gpu,
-    "-TimeoutSeconds", $TimeoutSeconds,
-    "-RestartWaitSeconds", $RestartWaitSeconds,
-    "-AssetsPath", $AssetsPath,
-    "-MinimumFreeGB", $MinimumFreeGB
-)
+$bootstrapParams = @{
+    Engine = $Engine
+    Port = $Port
+    Gpu = $Gpu
+    TimeoutSeconds = $TimeoutSeconds
+    RestartWaitSeconds = $RestartWaitSeconds
+    AssetsPath = $AssetsPath
+    MinimumFreeGB = $MinimumFreeGB
+}
 
 if (-not [string]::IsNullOrWhiteSpace($resolvedAssetZip)) {
-    $bootstrapArgs += @("-AssetZip", $resolvedAssetZip)
+    $bootstrapParams["AssetZip"] = $resolvedAssetZip
 }
 if (-not [string]::IsNullOrWhiteSpace($resolvedPackageZip)) {
-    $bootstrapArgs += @("-PackageZip", $resolvedPackageZip)
+    $bootstrapParams["PackageZip"] = $resolvedPackageZip
 }
 if ($VerifyOnly) {
-    $bootstrapArgs += "-VerifyOnly"
+    $bootstrapParams["VerifyOnly"] = $true
 }
 if ($NoBrowser) {
-    $bootstrapArgs += "-NoBrowser"
+    $bootstrapParams["NoBrowser"] = $true
 }
 if ($SkipAssetImport) {
-    $bootstrapArgs += "-SkipAssetImport"
+    $bootstrapParams["SkipAssetImport"] = $true
 }
 
-& $bootstrapScript @bootstrapArgs
+& $bootstrapScript @bootstrapParams
 exit $LASTEXITCODE

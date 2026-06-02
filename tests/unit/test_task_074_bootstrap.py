@@ -53,6 +53,9 @@ def test_bootstrap_entrypoint_is_packaged_and_reuses_validated_scripts():
     assert "Find-TowerScoutSetupAssetZip" in setup
     assert "Find-TowerScoutSetupPackageZip" in setup
     assert "bootstrap.ps1" in setup
+    assert "$bootstrapParams" in setup
+    assert "@bootstrapParams" in setup
+    assert "@bootstrapArgs" not in setup
     assert 'ValidateSet("auto", "docker", "podman")' in bootstrap
     assert 'ValidateSet("off", "auto", "on")' in bootstrap
     assert "[switch] $VerifyOnly" in bootstrap
