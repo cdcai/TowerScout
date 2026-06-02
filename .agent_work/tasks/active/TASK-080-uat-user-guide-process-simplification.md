@@ -360,6 +360,97 @@ also passed. Docs command scan retained the existing
 **Next**: Push the PR fix, then complete owner/reviewer signoff and Word visual
 inspection before marking PR #30 ready for merge.
 
+### 2026-06-02 - RC2 Package Generated And Local Docker Path Checked
+**Objective**: Move the corrected UAT package to `v0.1.0-rc2` after
+`v0.1.0-rc1` had already been published from an older source ref.
+**Execution**: Updated package-facing UAT references to `v0.1.0-rc2`, pushed
+source ref `4e8054d27faa1f956998f85b665a4ea28fc01ed9`, published the
+`v0.1.0-rc2-cuda121` GHCR image, generated the rc2 Application Package ZIP,
+and copied the unchanged asset bundle under an rc2-matching filename with a new
+checksum sidecar.
+**Output**:
+- Application Package ZIP: `dist\towerscout-v0.1.0-rc2.zip`
+- Application Package SHA-256:
+  `f3ec4eef0b47c4276d671bac1cf75fa85e515ce386cfa38976daba070cc3f51c`
+- Model & Data Package ZIP:
+  `dist\towerscout-v0.1.0-rc2-assets-towerscout-v1-assets-2026-05-05.zip`
+- Model & Data Package SHA-256:
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`
+- Image:
+  `ghcr.io/j-schulein/towerscout:v0.1.0-rc2-cuda121@sha256:f3caa7915f7a8d70326b2fa84d62ec86e142c38c7d22615106e192d7f7821946`
+**Validation**: Package summary found 47 expected files. Release-manifest
+check passed with the known non-blocking recommended-field warnings. Both ZIP
+checksum sidecars matched. A clean `TowerScoutUAT` folder setup run found both
+rc2 ZIPs, verified both checksum sidecars, confirmed the rc2 release manifest,
+pulled the pinned image, staged and imported assets with hash verification,
+started TowerScout on isolated port `5011`, reached `setup_required` with
+assets `ok`, served package-local docs and `/license`, and was stopped after
+evidence capture.
+**Gap**: Detection smoke was not run in the isolated stack because no provider
+key was configured; readiness correctly reported setup-required mode.
+**Next**: Superseded by the uploaded/downloaded release-validation entry below;
+complete bounded Azure smoke after support-approved provider setup.
+
+### 2026-06-02 - RC2 GitHub Release Uploaded And Download-Validated
+**Objective**: Validate the actual GitHub release assets, not only the local
+`dist` package files.
+**Execution**: Created the GitHub prerelease
+`https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc2` at source
+ref `4e8054d27faa1f956998f85b665a4ea28fc01ed9`, uploaded the four expected rc2
+assets, downloaded those release assets into
+`dist\release-download-validation-rc2-20260602`, verified both downloaded
+checksum sidecars, extracted only the downloaded Application Package ZIP, and
+ran the simplified setup command from the downloaded files.
+**Output**:
+- GitHub release: `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc2`
+- Downloaded Application Package SHA-256:
+  `f3ec4eef0b47c4276d671bac1cf75fa85e515ce386cfa38976daba070cc3f51c`
+- Downloaded Model & Data Package SHA-256:
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`
+**Validation**: Downloaded-release setup used isolated
+`COMPOSE_PROJECT_NAME=towerscout-task080-rc2-download` on port `5012`, found
+both downloaded rc2 ZIPs, verified both sidecars, confirmed the rc2 release
+manifest, reused the pinned image, imported assets with hash verification,
+reached readiness `setup_required` with assets `ok`, served package-local docs
+and `/license`, and was stopped after evidence capture.
+**Gap**: Superseded by the provider-smoke entry below. Owner/reviewer signoff
+and tester/cohort selection remain pending before external handoff.
+**Next**: Record provider setup and bounded Azure smoke evidence, then record
+owner/reviewer approval before sending the UAT materials.
+
+### 2026-06-02 - RC2 Provider Setup And Bounded Azure Smoke Passed
+**Objective**: Complete the remaining rc2 release-path validation gate by
+proving provider setup and a bounded Azure detection smoke on the downloaded
+GitHub release assets.
+**Execution**: Started the downloaded rc2 package with isolated
+`COMPOSE_PROJECT_NAME=towerscout-task080-rc2-provider` on port `5013`, imported
+assets with hash verification, had the release owner enter the Azure Maps key
+through the browser Setup Wizard, verified readiness without recording key
+material, and ran the owner-selected public Azure smoke fixture.
+**Output**:
+- Fixture: `RC1 Azure 200 West Street 150 m smoke`
+- Provider: Azure Maps
+- Search/location: `200 west st, New York, NY 10282`
+- Shape/radius: circle, `150 meters`
+- Tile estimate: `8` tiles, expected time `44` seconds
+- Detection result: completed successfully with `48` detection records and
+  `8` tile records
+- Address result: address/provider metadata appeared in the right-hand panel
+- Elapsed time: about `56.38` seconds
+**Validation**: `/api/readiness` returned `state=ready`, `assets.status=ok`,
+`config.status=ok`, Azure configured, default provider `azure`,
+`runtime.device_policy=cpu`, `runtime.pytorch_flavor=cuda121`,
+`runtime.selected_device=cpu`, and image digest
+`sha256:f3caa7915f7a8d70326b2fa84d62ec86e142c38c7d22615106e192d7f7821946`.
+The isolated provider-smoke stack was stopped after evidence capture.
+**Secret handling**: The Azure Maps key was entered only in the browser Setup
+Wizard. No key value, `.env`, raw logs, screenshots, tile/map URLs, browser
+traces, or raw provider responses were recorded.
+**Gap**: Owner/reviewer signoff and tester/cohort selection remain pending
+before external handoff.
+**Next**: Record owner/reviewer approval and tester/cohort, then update
+`Approved for tester use` when the release owner approves the handoff packet.
+
 ---
 
 ## Validation Results
@@ -390,6 +481,93 @@ Commands run:
     warning.
 - `git diff --check`
   - passed.
+- `.\scripts\package-release.cmd -Version v0.1.0-rc2 -OutputDir dist -Image ghcr.io/j-schulein/towerscout:v0.1.0-rc2-cuda121 -ImageDigest sha256:f3caa7915f7a8d70326b2fa84d62ec86e142c38c7d22615106e192d7f7821946 -PytorchFlavor cuda121 -Force`
+  - generated the rc2 Application Package ZIP and checksum.
+- `.\.venv\Scripts\python.exe .agents\skills\towerscout-release-candidate-gate\scripts\summarize_release_package.py dist\towerscout-v0.1.0-rc2.zip`
+  - passed; 47 files found.
+- `.\.venv\Scripts\python.exe .agents\skills\towerscout-release-candidate-gate\scripts\check_release_manifest.py dist\towerscout-v0.1.0-rc2\release-manifest.v1.json dist\towerscout-v0.1.0-rc2`
+  - passed with known recommended-field warnings.
+- `.\setup-towerscout.cmd -Engine docker -Gpu off -Port 5011 -NoBrowser -TimeoutSeconds 240 -RestartWaitSeconds 180`
+  - passed from the clean rc2 UAT folder with isolated
+    `COMPOSE_PROJECT_NAME=towerscout-task080-rc2`; found both rc2 ZIPs,
+    verified sidecars, imported assets with hash verification, pulled the
+    pinned image, and reached readiness `setup_required` with assets `ok`.
+- `Invoke-RestMethod http://localhost:5011/api/health`
+  - returned `status=ok`.
+- `Invoke-RestMethod http://localhost:5011/api/readiness`
+  - returned `state=setup_required`, `assets.status=ok`,
+    `runtime.device_policy=cpu`, `runtime.pytorch_flavor=cuda121`,
+    `runtime.selected_device=cpu`, and image digest
+    `sha256:f3caa7915f7a8d70326b2fa84d62ec86e142c38c7d22615106e192d7f7821946`.
+- `Invoke-WebRequest` for `/docs/project-overview.html`,
+  `/docs/towerscout-user-guide.html`, `/docs/v1-rc1-quick-start.html`, and
+  `/license`
+  - all returned HTTP `200`.
+- `.\scripts\status.cmd -Engine docker -Port 5011`
+  - reported the isolated container healthy on
+    `0.0.0.0:5011->5000/tcp` and readiness `setup_required`.
+- `.\scripts\stop.cmd -Engine docker -Port 5011`
+  - stopped the isolated validation stack.
+- `gh release create v0.1.0-rc2 ... --repo J-Schulein/TowerScout --target 4e8054d27faa1f956998f85b665a4ea28fc01ed9 --prerelease --latest=false`
+  - created the GitHub prerelease at
+    `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc2` with
+    the four expected rc2 assets.
+- `gh release view v0.1.0-rc2 --repo J-Schulein/TowerScout`
+  - confirmed the release is a prerelease and lists the Application Package
+    ZIP/checksum plus Model & Data Package ZIP/checksum.
+- `gh release download v0.1.0-rc2 --repo J-Schulein/TowerScout --dir dist\release-download-validation-rc2-20260602 --pattern 'towerscout-v0.1.0-rc2*'`
+  - downloaded the four uploaded assets for final release-asset validation.
+- Downloaded checksum sidecar verification
+  - confirmed the Application Package checksum
+    `f3ec4eef0b47c4276d671bac1cf75fa85e515ce386cfa38976daba070cc3f51c` and
+    Model & Data Package checksum
+    `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+- `.\setup-towerscout.cmd -Engine docker -Gpu off -Port 5012 -NoBrowser -TimeoutSeconds 240 -RestartWaitSeconds 180`
+  - passed from the downloaded release files with isolated
+    `COMPOSE_PROJECT_NAME=towerscout-task080-rc2-download`; found both
+    downloaded rc2 ZIPs, verified sidecars, imported assets with hash
+    verification, reused the pinned image, and reached readiness
+    `setup_required` with assets `ok`.
+- `Invoke-RestMethod http://localhost:5012/api/health`
+  - returned `status=ok`.
+- `Invoke-RestMethod http://localhost:5012/api/readiness`
+  - returned `state=setup_required`, `assets.status=ok`,
+    `runtime.device_policy=cpu`, `runtime.pytorch_flavor=cuda121`,
+    `runtime.selected_device=cpu`, and image digest
+    `sha256:f3caa7915f7a8d70326b2fa84d62ec86e142c38c7d22615106e192d7f7821946`.
+- `Invoke-WebRequest` for the package docs and `/license` on port `5012`
+  - all returned HTTP `200`.
+- `.\scripts\status.cmd -Engine docker -Port 5012`
+  - reported the downloaded-release validation container healthy on
+    `0.0.0.0:5012->5000/tcp` and readiness `setup_required`.
+- `.\scripts\stop.cmd -Engine docker -Port 5012`
+  - stopped the downloaded-release validation stack.
+- `.\start.bat -Engine docker -Gpu off -Port 5013 -NoBrowser -TimeoutSeconds 240`
+  - started the isolated provider-smoke stack with
+    `COMPOSE_PROJECT_NAME=towerscout-task080-rc2-provider`; first readiness was
+    `setup_required` with empty engine-specific asset volumes, as expected for
+    a fresh Compose project.
+- `.\scripts\import-assets.cmd -Engine docker -Source assets -Port 5013 -VerifyHashes -RestartWaitSeconds 180`
+  - imported the package-local assets into the isolated provider-smoke stack,
+    restarted TowerScout, and verified `asset_status=ok`, `verify_hashes=True`,
+    no missing assets, and no corrupt assets.
+- Browser Setup Wizard on `http://localhost:5013`
+  - release owner entered the approved Azure Maps key directly in the browser,
+    selected Azure as the default provider, validated the key, and saved the
+    configuration. The key value was not recorded.
+- `Invoke-RestMethod http://localhost:5013/api/readiness`
+  - returned `state=ready`, `assets.status=ok`, `config.status=ok`, Azure
+    configured, default provider `azure`, `runtime.device_policy=cpu`,
+    `runtime.pytorch_flavor=cuda121`, `runtime.selected_device=cpu`, and image
+    digest
+    `sha256:f3caa7915f7a8d70326b2fa84d62ec86e142c38c7d22615106e192d7f7821946`.
+- User-recorded bounded Azure smoke result for `200 west st, New York, NY
+  10282`, 150 m circle
+  - estimate `8` tiles / `44` seconds; detection completed; processed `48`
+    detection records and `8` tile records; address/provider metadata appeared
+    in the right-hand panel; elapsed time about `56.38` seconds.
+- `.\scripts\stop.cmd -Engine docker -Port 5013`
+  - stopped the isolated provider-smoke stack.
 - `python C:\Users\bg90\.codex\plugins\cache\openai-primary-runtime\documents\26.518.11428\skills\documents\render_docx.py .agent_work\user-testing\instructions\TowerScout_V1_RC1_UAT_User_Guide.docx --output_dir .agent_work\user-testing\instructions\rendered\TowerScout_V1_RC1_UAT_User_Guide --emit_pdf`
   - failed because `pdf2image` is not installed.
 - Custom DOCX XML/OOXML structural audit
@@ -404,12 +582,15 @@ Commands run:
   checklist was shortened/aligned.
 - The published RC package may require a refreshed package if launcher changes
   are selected.
+- Owner/reviewer signoff and tester/cohort selection remain pending before
+  external handoff.
 
 ### Remediation Actions
 
-Pending process decision and implementation.
+Record owner/reviewer signoff and tester/cohort selection before external
+handoff.
 
 ### Sign-off
 
-Not signed off. Owner/reviewer acceptance is required before replacing the
-current external tester handoff materials.
+Not signed off. Owner/reviewer acceptance and tester/cohort selection are
+required before replacing the current external tester handoff materials.

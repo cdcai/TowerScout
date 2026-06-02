@@ -1,6 +1,6 @@
 # TASK-073: Clean-Machine Pilot / UAT Execution Plan
 
-**Status**: IN_PROGRESS - post-PR28 prerelease package refresh and final-digest smoke passed; tester cohort and owner/reviewer acceptance pending
+**Status**: IN_PROGRESS - rc2 prerelease package, downloaded-release validation, provider setup, and bounded Azure smoke passed; tester cohort and owner/reviewer acceptance pending
 **Priority**: HIGH  
 **Type**: B/C (User Testing / Release Validation)  
 **Estimated Effort**: 0.5-1 day (4-8 hours)  
@@ -409,14 +409,50 @@ After pilot/UAT, V1 may be considered ready only if:
 **Decision**: The post-PR28 package/image/docs drift is resolved for the published prerelease. Keep the UAT packet approval at `NO` until tester/cohort selection and owner/reviewer approval are filled.
 **Next**: Commit the refreshed evidence update, open a review PR if desired, then request owner/reviewer approval for tester send.
 
+### 2026-06-02 - RC2 Release Path And Smoke Evidence Updated
+**Objective**: Replace the superseded rc1 prerelease handoff basis with the
+corrected rc2 release path after UAT setup simplification and package refresh.
+**Execution**:
+- Published the corrected rc2 GHCR image and created the GitHub prerelease at
+  `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc2`.
+- Uploaded and downloaded the four rc2 release assets, verified both checksum
+  sidecars, extracted only the Application Package ZIP, and validated setup
+  from the downloaded release files.
+- Ran provider setup through the browser Setup Wizard without recording the
+  Azure Maps key value.
+- Ran the owner-selected public Azure fixture through tile estimate and
+  detection.
+**Validation Evidence**:
+- Release tag: `v0.1.0-rc2`.
+- Accepted source ref: `4e8054d27faa1f956998f85b665a4ea28fc01ed9`.
+- Image:
+  `ghcr.io/j-schulein/towerscout:v0.1.0-rc2-cuda121@sha256:f3caa7915f7a8d70326b2fa84d62ec86e142c38c7d22615106e192d7f7821946`.
+- Downloaded-release validation reached `setup_required` with assets `ok` on
+  port `5012` after checksum verification and asset import.
+- Provider-smoke validation reached `ready` with assets `ok`, config `ok`,
+  Azure configured, default provider `azure`, CPU mode, and the expected image
+  digest on port `5013`.
+- Smoke fixture: Azure Maps, `200 west st, New York, NY 10282`, `150 meter`
+  circle, estimated `8` tiles and `44` seconds.
+- Detection result: completed successfully, processed `48` detection records
+  and `8` tile records, address/provider metadata appeared in the right-hand
+  panel, and elapsed time was about `56.38` seconds.
+**Decision**: The rc2 release path is validated through download, setup,
+provider setup, and bounded Azure smoke. Keep the UAT packet approval at `NO`
+until tester/cohort selection and owner/reviewer approval are filled.
+**Next**: Select tester/cohort and record owner/reviewer approval before
+external tester launch.
+
 ---
 
 ## Validation Results
 
 ### Test Summary
-**Test Date**: May 27-29, 2026
+**Test Date**: May 27-June 2, 2026
 **Test Environment**: Documentation/task-state validation only; no external pilot run yet
-**Test Status**: READY_FOR_OWNER_APPROVAL - post-PR28 prerelease package path and default smoke fixture passed internal validation; tester cohort and owner/reviewer approval remain pending
+**Test Status**: READY_FOR_OWNER_APPROVAL - rc2 prerelease package path,
+downloaded-release validation, provider setup, and default smoke fixture passed
+internal validation; tester cohort and owner/reviewer approval remain pending
 
 ### Acceptance Criteria Validation
 - [x] Start/stop criteria documented - PASS - See Pilot Start Criteria and Pilot Stop Criteria.
@@ -430,9 +466,9 @@ After pilot/UAT, V1 may be considered ready only if:
 - [x] UAT checklist aligned to implemented bootstrap - PASS - The checklist now uses `bootstrap.cmd` for first setup and keeps manual import as fallback.
 - [x] UAT handoff packet template ready - PASS - See `.agent_work/user-testing/instructions/RC1-PILOT-HANDOFF-PACKET.md`; final release, fixture, support contact, and provider-key guidance are filled.
 - [x] V1 completion gate documented - PASS - See V1 Completion Gate After Pilot.
-- [x] Final package/image pair regenerated and validated from accepted source ref - PASS - See 2026-05-29 post-PR28 final artifact refresh evidence.
-- [x] Prerelease published - PASS - `v0.1.0-rc1` is published at `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc1`.
-- [x] Default public smoke fixture internally validated - PASS - Azure Maps, `200 west st, New York, NY 10282`, `150 meter` circle, about `8` tiles, HTTP `200`, `47` cooling-tower records with address data.
+- [x] Final package/image pair regenerated and validated from accepted source ref - PASS - See 2026-06-02 rc2 release path evidence.
+- [x] Prerelease published - PASS - `v0.1.0-rc2` is published at `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc2`.
+- [x] Default public smoke fixture internally validated - PASS - Azure Maps, `200 west st, New York, NY 10282`, `150 meter` circle, about `8` tiles, `48` detection records, `8` tile records, and address/provider metadata in the right-hand panel.
 - [ ] Owner/reviewer acceptance - PENDING.
 
 ### Issues Identified
@@ -448,4 +484,7 @@ After pilot/UAT, V1 may be considered ready only if:
 
 ### Sign-off
 
-The published prerelease, refreshed final digest, default public smoke fixture, support contacts, and support-safe evidence boundaries are ready for owner/reviewer review. External pilot should not start until the tester cohort is selected and the packet is explicitly approved for tester send.
+The rc2 published prerelease, refreshed final digest, default public smoke
+fixture, support contacts, and support-safe evidence boundaries are ready for
+owner/reviewer review. External pilot should not start until the tester cohort
+is selected and the packet is explicitly approved for tester send.
