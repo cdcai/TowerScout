@@ -11,6 +11,8 @@ param(
 
     [int] $RestartWaitSeconds = 180,
 
+    [int] $SessionMaxHours = 12,
+
     [string] $AssetsPath = "assets",
 
     [string] $AssetZip = "",
@@ -35,6 +37,9 @@ if ($TimeoutSeconds -lt 5) {
 }
 if ($RestartWaitSeconds -lt 5) {
     throw "RestartWaitSeconds must be at least 5."
+}
+if ($SessionMaxHours -lt 0) {
+    throw "SessionMaxHours must be 0 or greater."
 }
 
 $repoRoot = Get-TowerScoutRepoRoot
@@ -94,6 +99,7 @@ if ($hasStagedAssets -and -not $SkipAssetImport) {
         -Port $Port `
         -Gpu $Gpu `
         -RestartWaitSeconds $RestartWaitSeconds `
+        -SessionMaxHours $SessionMaxHours `
         -VerifyHashes
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
@@ -115,5 +121,6 @@ Write-Host "Starting TowerScout after preflight..."
     -Port $Port `
     -Gpu $Gpu `
     -TimeoutSeconds $TimeoutSeconds `
+    -SessionMaxHours $SessionMaxHours `
     -NoBrowser:$NoBrowser
 exit $LASTEXITCODE

@@ -126,6 +126,87 @@ before replacing the external tester instructions.
       QA limitations are documented.
 - [x] `.agent_work` validation passes after task/documentation updates.
 
+## Pre-UAT Approval Follow-Up Requests
+
+Owner review on 2026-06-09 identified the following changes to address before
+approving the first external UAT cohort. These stay under `TASK-080` unless the
+runtime work grows large enough to split into a separate stale-container task.
+
+- [x] **Setup-step engine reminder**: Add a clear note in the Word UAT User
+      Guide's Default Setup Steps between steps 4 and 5 telling testers to
+      confirm Docker Desktop or Podman is open and running before setup. Include
+      the nearby note: see the "Docker GPU Track" section below for the Docker
+      GPU setup command.
+- [x] **Command appendix**: Add a command-reference appendix to the Word UAT
+      User Guide and mirror it in `docs/v1-rc1-quick-start.md`. Include setup,
+      start/reopen, stop, restart, status, and logs commands for Docker CPU,
+      Docker GPU, and Podman CPU. Keep Podman and GPU language
+      support-assigned, with GPU defaulting to Docker-only unless new evidence
+      expands support.
+- [x] **UAT session lifetime and stale-container handling**: Implement a
+      launch-time stale-container guard for first-cohort UAT. Reuse/open a
+      healthy TowerScout container younger than 12 hours; stop/remove and start
+      fresh when the existing container is stopped, unhealthy, or older than 12
+      hours. Preserve named volumes by default so saved setup, imported assets,
+      and support logs are not deleted. Provide a support/admin override for
+      longer validation sessions.
+- [x] **Settings research article link**: Replace the Settings Resource Links
+      "TowerScout Research Article" URL with
+      `https://pubmed.ncbi.nlm.nih.gov/38906615/`.
+- [x] **Google first-launch verification**: Re-test the Setup Wizard first-load
+      Google Maps key path with a support-approved key after the validation UX
+      patch, without recording key material, raw provider responses, browser
+      network traces, or screenshots that expose sensitive data.
+- [x] **In-app status/output panel review**: Review the messages visible in the
+      TowerScout in-app status/output panel with debug mode disabled. Ensure the
+      messages are concise, useful to non-technical testers, and do not create
+      confusion between map imagery, geocoding, and local detection. When both
+      providers are configured, messages should identify the provider used for
+      the relevant action.
+- [x] **Tester feedback form**: Replace or supplement the long issue checklist
+      with a short email/Teams-friendly tester form. Collect pass/fail/blocker
+      status, guide step, command or button used, exact error text, safe
+      screenshot availability, engine, port, provider, setup-save status, and
+      optional fixture details without asking for secrets, raw logs, private
+      AOIs, raw provider responses, or browser network traces.
+
+Supplemental GIF/video guidance is intentionally not tracked here. The owner may
+provide a short demo video separately if the client wants one.
+
+## Pre-UAT Coverage Additions
+
+The 2026-06-09 follow-up work should add focused coverage for the higher-risk
+changes instead of broad new end-to-end test scope.
+
+- [x] **Stale-container decision tests**: Cover no existing container,
+      healthy container younger than 12 hours, healthy container older than 12
+      hours, stopped/created container, unhealthy container, non-TowerScout port
+      conflict, and support/admin override behavior without requiring a live
+      Docker or Podman engine.
+- [x] **Runtime command safety tests**: Confirm the stale-container path does
+      not remove named volumes by default and does not invoke destructive volume
+      cleanup such as `down -v` or `volume rm`.
+- [x] **DOCX structural tests**: Extend or add a Word-guide audit that confirms
+      the Docker/Podman-running note, Docker GPU cross-reference, command
+      appendix, PubMed URL, tester feedback fields, and support-safe evidence
+      restrictions are present.
+- [x] **Quick-start command scan**: Run the docs command checker after mirroring
+      the command appendix in `docs/v1-rc1-quick-start.md`.
+- [x] **In-app status/output panel contract test**: Add focused frontend
+      coverage that verifies normal debug-off user messages remain concise and
+      provider-aware where the message is shown in the in-app output panel.
+- [x] **Settings link test**: Add a route/template assertion that the Research
+      Article resource link points to
+      `https://pubmed.ncbi.nlm.nih.gov/38906615/`.
+- [x] **Package-path smoke**: After launcher/runtime changes, run a focused
+      Docker CPU setup/start/status/stop validation if the local runtime
+      environment allows it. This complements unit tests by checking script
+      wiring.
+- [x] **TLS CA helper persistence test**: Confirm the TLS CA import helper
+      persists the safe `REQUESTS_CA_BUNDLE` and `SSL_CERT_FILE` paths in the
+      local `.env` after successful import so support users do not need to
+      remember session-only environment variables.
+
 ## Dependencies
 
 - `TASK-066`: final RC package/image/assets validation and residual support
@@ -451,22 +532,211 @@ before external handoff.
 **Next**: Record owner/reviewer approval and tester/cohort, then update
 `Approved for tester use` when the release owner approves the handoff packet.
 
+### 2026-06-03 - First-Cohort Google Setup Validation Feedback Hardened
+**Objective**: Triage first-cohort UAT feedback where a tester following the UAT
+guide entered a Google Maps key on first launch and the Setup Wizard reported a
+generic provider-validation 502.
+**Context**: The browser showed repeated `/api/config/validate-key` `502`
+responses and the user-facing message `Could not reach the provider validation
+service.` No backend logs, provider responses, screenshots, raw network traces,
+or key material were added to the task evidence.
+**Decision**: Keep live provider validation required for normal setup, but make
+local runtime network/TLS failures actionable and support-safe. Also avoid
+letting one failed provider check block validation of another entered provider.
+**Execution**: Added provider-specific network, timeout, and TLS validation
+messages in `webapp/ts_config.py`; updated the Setup Wizard to validate Google
+and Azure independently and save only keys that validated in that wizard run;
+removed provider-key previews from key-serving route logs and Azure browser
+format warnings; rebuilt `webapp/js/towerscout.js`; added route/config/frontend
+contract coverage.
+**Validation**: Passed `.venv\Scripts\python.exe -m pytest
+tests/unit/test_config.py tests/unit/test_flask_routes.py
+tests/unit/test_error_sanitization.py tests/unit/test_logging_sanitization.py
+-q -p no:cacheprovider`; `node
+tests/frontend/test_setup_wizard_validation_contract.js`; `node
+tests/frontend/test_global_contract.js`; `node
+tests/frontend/test_debug_logging_contract.js`; `node
+tests/frontend/test_task_079_frontend_contract.js`; frontend bundle consistency
+check; and `git diff --check`.
+**Secret handling**: The fix and tests use synthetic keys only. The task did not
+store raw screenshots, provider responses, `.env` contents, raw browser network
+traces, or real provider key values.
+**Next**: Superseded by the 2026-06-09 Google TLS support-path verification
+entry below.
+
+### 2026-06-09 - Pre-UAT Approval Follow-Up Plan Recorded
+**Objective**: Capture owner follow-up requests that must be addressed before
+approving the first external UAT cohort.
+**Decision**: Keep the work under `TASK-080` because the requests are primarily
+UAT guide, quick-start, status-message, setup-verification, and tester-feedback
+readiness items. Split stale-container handling into a new task only if the
+launcher change grows beyond a focused UAT session-lifetime guard.
+**Plan**: Add the setup-step engine reminder, command appendix in both the Word
+guide and markdown quick start, a 12-hour UAT stale-container guard that
+preserves named volumes, the corrected PubMed research link, live Google
+first-launch verification, in-app status/output panel review, and a concise
+email/Teams-friendly tester feedback form.
+**Out of scope**: A GIF or demo video is not tracked in this task. The owner may
+provide supplemental video guidance separately if the client requests it.
+**Validation**: Pending implementation.
+**Next**: Implement the pre-UAT follow-up checklist, refresh any affected
+package-facing docs, validate launcher/docs behavior, and record evidence before
+owner/reviewer signoff.
+
+### 2026-06-09 - Pre-UAT Follow-Up Implementation Slice Completed
+**Objective**: Implement the owner-approved follow-up requests that reduce
+first-run confusion before external UAT approval.
+**Execution**: Updated the Word UAT guide, Markdown/HTML quick start, UAT
+checklist, handoff packet, and tester issue form. Added the Docker/Podman
+running reminder, Docker GPU cross-reference, command appendix, 12-hour UAT
+session guidance, corrected PubMed research link, concise email/Teams issue
+form, and provider-aware in-app status/output messages. Implemented a
+launch-time stale-container guard for `launch.ps1`, `bootstrap.ps1`,
+`setup-towerscout.ps1`, and `import-assets.ps1`; it reuses healthy containers
+younger than 12 hours, restarts stopped/unhealthy/stale containers, and avoids
+named-volume removal by default.
+**Coverage Added**: Added unit coverage for stale-container decisions and
+runtime safety, DOCX/quick-start structural coverage for the guide changes, a
+route/template assertion for the PubMed link, and a frontend status/output
+contract test for provider-aware normal-mode messages.
+**Validation**: Rebuilt `webapp/js/towerscout.js`. Focused unit/frontend/docs
+checks passed, `.agent_work` validation passed, `git diff --check` passed, and
+an isolated Docker CPU package-path start/status/stop smoke on port `5014`
+reached the expected `setup_required` state with the validation container
+stopped afterward.
+**Secret Handling**: The implementation and tests use synthetic placeholder
+values only. No real provider key values, `.env` contents, raw provider
+responses, browser network traces, tile URLs, or sensitive screenshots were
+recorded.
+**Gap**: Superseded by the Google TLS support-path entry below. The current RC
+package still needs to be regenerated before external tester handoff because
+launcher/docs/frontend files changed after the published rc2 package was built.
+**Next**: Complete the Google first-launch verification record, then
+rebuild/package the approved RC artifact set before external UAT send.
+
+### 2026-06-09 - Google First-Launch TLS Support Path Verified
+**Objective**: Determine whether the repeated first-launch Google Setup Wizard
+failure was a Google key issue, an application issue, or a managed-network TLS
+trust issue.
+**Evidence**: An isolated Docker validation stack on port `5015` initially
+failed Google provider validation with `CERTIFICATE_VERIFY_FAILED` against
+Google APIs. The exported website certificate was an end-entity certificate,
+not a CA. The matching Windows CA was `CDC-G2-ZSH`. After importing that CA
+with `scripts\import-tls-ca.cmd`, the helper verified Google TLS with an
+invalid test key and returned the expected invalid-key provider response rather
+than a certificate failure.
+**Execution**: The release owner then entered the support-approved Google Maps
+key through Setup Wizard. Google setup saved successfully; readiness showed
+Google configured and the default provider set to Google. No key material, raw
+provider response, browser network trace, `.env` contents, or sensitive
+screenshot was recorded.
+**Follow-Up Fix**: Updated `scripts\import-tls-ca.ps1` so a successful CA
+import also writes the safe, non-secret `REQUESTS_CA_BUNDLE` and
+`SSL_CERT_FILE` paths into the local `.env`. Updated the Word UAT guide, UAT
+quick start, package guide, and OCI docs to explain the managed-network TLS
+case and the support CA-import path.
+**Validation**: Added static coverage for TLS CA helper `.env` persistence,
+quick-start TLS support guidance, and Word guide TLS support content. Passed
+focused TLS/docs tests, provider/log safety tests, docs command scan,
+`.agent_work` validation, and `git diff --check`.
+**Assessment**: The Google first-launch path is functionally verified. UAT
+testers on managed networks with TLS inspection may still encounter provider
+validation failures until support imports the site CA. This is now a known,
+documented support path rather than an unresolved Google key defect.
+**Gap**: The RC package still needs to be regenerated so testers receive the
+key-log hardening, stale-container guard, provider-aware messages, TLS helper
+persistence, and updated docs.
+**Next**: Rebuild/package the approved RC artifact set before external UAT
+send, then complete owner/reviewer signoff and tester/cohort selection.
+
+### 2026-06-10 - Owner-Edited Word Guide Integrated
+**Objective**: Incorporate the owner-edited Word UAT guide with formatting and
+readability improvements while preserving command, TLS, and support-safe
+evidence content.
+**Input**: Owner-provided
+`TowerScout_V1_RC1_UAT_User_Guide_Edited.docx` and
+`Word UAT User guide changes made_2026.06.10.md`.
+**Execution**: Replaced the repository Word guide with the owner-edited copy.
+An attempted low-level heading correction caused Microsoft Word to report
+unreadable content, so the repository copy was restored byte-for-byte from the
+Word-authored edited file. The first section heading is retained exactly as
+saved by Word: `Purpose of User Acceptance Testing`. Preserved the command
+appendix, managed-network TLS note, provider-key safety language,
+issue-report form, and support-safe evidence restrictions.
+**Validation**: Updated the structural DOCX contract to read paragraph text
+rather than XML run fragments, then confirmed the edited guide contains the
+required setup, Docker GPU, Podman, TLS CA import, command appendix, PubMed,
+issue-form, and support-safe evidence content. The restored repository DOCX
+SHA-256 matches the owner-edited source DOCX:
+`D3493B46D021CEF3021E3756544161A711CE526F08C5A893F6877965A2583D61`.
+The focused DOCX/quick-start structural test passed.
+**Render QA**: Automated DOCX render was attempted with the Documents renderer
+but failed because `pdf2image` is not installed in this environment. Owner
+completed human visual review in Microsoft Word on 2026-06-11 and confirmed the
+guide looks good for lock/final validation.
+**Next**: Run final validation, then rebuild/package the approved RC artifact
+set before external UAT send.
+
+### 2026-06-11 - Pre-Package Final Validation Passed
+**Objective**: Lock the owner-reviewed Word UAT guide and run final focused
+validation before refreshing release package artifacts.
+**Execution**: Owner confirmed the Word guide looks good in Microsoft Word and
+approved locking it for final validation. Ran focused runtime, docs, provider
+validation, release packaging, frontend contract, bundle consistency,
+agent-work, whitespace, and secret-safety checks.
+**Validation**:
+- `tests\unit\test_task_074_bootstrap.py`,
+  `tests\unit\test_import_assets_script.py`,
+  `tests\unit\test_task_080_uat_followups.py`,
+  `tests\unit\test_flask_routes.py`, `tests\unit\test_config.py`,
+  `tests\unit\test_error_sanitization.py`, and
+  `tests\unit\test_logging_sanitization.py`: 81 passed.
+- `tests\unit\test_release_package_script.py`,
+  `tests\unit\test_release_manifest_schema.py`,
+  `tests\unit\test_license_notices.py`, and
+  `tests\unit\test_container_publish_workflow.py`: 12 passed.
+- Frontend contracts passed:
+  `test_status_output_contract.js`,
+  `test_setup_wizard_validation_contract.js`,
+  `test_debug_logging_contract.js`, `test_global_contract.js`, and
+  `test_task_079_frontend_contract.js`.
+- Frontend bundle consistency check passed; both source and generated bundle are
+  changed and consistent.
+- Docs command scan passed with the existing non-blocking
+  `docs\oci-quick-start.md:158` `127.0.0.1` warning.
+- `.agent_work` validation passed.
+- `git diff --check` passed.
+- Targeted changed-file secret scan found only synthetic test placeholders used
+  by redaction tests; a stricter non-test source/docs scan found no key-like
+  matches. The Word guide text scan found zero Google key, Azure key, or
+  `FLASK_SECRET_KEY` matches.
+**Result**: PASS for final pre-package validation.
+**Remaining Gate**: Regenerate and validate refreshed RC package artifacts so
+external testers receive the locked Word guide, stale-container guard,
+provider-key/TLS hardening, provider-aware status messages, corrected PubMed
+link, and updated UAT support materials.
+
 ---
 
 ## Validation Results
 
 ### Test Summary
-**Test Date**: 2026-06-01  
+**Test Date**: 2026-06-01 baseline; 2026-06-09 follow-up validation added;
+2026-06-11 final pre-package validation passed
 **Test Environment**: Windows workspace, Python 3.12.5 virtual environment,
 PowerShell helpers  
-**Test Status**: PASS for setup-wrapper/docs-alignment slice and structural
-DOCX QA; visual render QA blocked by missing local renderer dependencies
+**Test Status**: PASS for setup-wrapper/docs-alignment slice, structural DOCX
+QA, 2026-06-09 follow-up changes, owner Word visual QA, and 2026-06-11 final
+pre-package validation; automated visual render remains blocked by missing
+local renderer dependencies
 
 ### Acceptance Criteria Validation
 
-Partial. Setup wrapper, Markdown/HTML/package-local alignment, and consolidated
-Word guide structural QA passed. A separate Word issue form remains optional
-pending owner decision.
+Partial. Setup wrapper, Markdown/HTML/package-local alignment, consolidated
+Word guide structural QA, command appendix, stale-container guard, corrected
+research link, concise issue form, and in-app status/output panel follow-up
+passed focused validation. Live Google first-launch verification passed after
+the managed-network TLS CA support path was applied.
 
 Commands run:
 
@@ -572,23 +842,59 @@ Commands run:
   - failed because `pdf2image` is not installed.
 - Custom DOCX XML/OOXML structural audit
   - passed.
+- `node webapp\build.js`
+  - rebuilt `webapp/js/towerscout.js` with provider-aware status/output
+    messages.
+- `.\.venv\Scripts\python.exe -m pytest tests\unit\test_task_074_bootstrap.py tests\unit\test_task_080_uat_followups.py tests\unit\test_flask_routes.py -q -p no:cacheprovider`
+  - 52 passed.
+- `node tests\frontend\test_status_output_contract.js`
+  - passed.
+- `node tests\frontend\test_setup_wizard_validation_contract.js`
+  - passed.
+- `node tests\frontend\test_debug_logging_contract.js`
+  - passed.
+- `node tests\frontend\test_global_contract.js`
+  - passed.
+- `node tests\frontend\test_task_079_frontend_contract.js`
+  - passed.
+- `.\.venv\Scripts\python.exe -m pytest tests\unit\test_config.py tests\unit\test_error_sanitization.py tests\unit\test_logging_sanitization.py -q -p no:cacheprovider`
+  - 26 passed.
+- `.\.venv\Scripts\python.exe .agents\skills\towerscout-end-user-docs-check\scripts\check_doc_commands.py . docs README.md`
+  - passed with the existing `docs\oci-quick-start.md:158` `127.0.0.1`
+    warning.
+- Targeted changed-file secret-pattern scan
+  - found no literal provider keys in the changed docs, scripts, tests, or
+    source files. A broad workspace scan was not useful because it hit known
+    historical/config artifacts outside this slice.
+- Isolated Docker CPU package-path start/status/stop smoke on port `5014`
+  - passed script wiring checks and reached expected `setup_required`
+    readiness with no provider/assets configured in the isolated stack; the
+    validation container was stopped afterward.
+- `.\.venv\Scripts\python.exe .agent_work\scripts\validate_agent_work.py`
+  - passed.
+- `git diff --check`
+  - passed.
 
 ### Issues Identified
 
 - Visual render QA for the Word guide could not be completed in this
   environment because the renderer dependencies are unavailable.
-- A separate Word issue-report form has not been created yet; the guide now
-  includes a concise blocked-run evidence appendix, and the existing text issue
-  checklist was shortened/aligned.
-- The published RC package may require a refreshed package if launcher changes
-  are selected.
+- The separate Word issue-report form remains optional; the current follow-up
+  replaced the long text checklist with an email/Teams-friendly issue form and
+  mirrored the short form in the Word guide.
+- Live Google first-launch setup passed after the managed-network TLS CA was
+  imported. UAT testers on similar managed networks may still need the
+  documented CA-import support step.
+- The published RC package needs a refreshed package build before external
+  tester handoff because launcher/docs/frontend files changed after rc2 was
+  built.
 - Owner/reviewer signoff and tester/cohort selection remain pending before
   external handoff.
 
 ### Remediation Actions
 
-Record owner/reviewer signoff and tester/cohort selection before external
-handoff.
+Refresh the RC package after owner approval of this slice, then record
+owner/reviewer signoff and tester/cohort selection before external handoff.
 
 ### Sign-off
 

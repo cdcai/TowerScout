@@ -14,6 +14,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from ts_errors import NetworkError
 import towerscout
 from towerscout import SESSION_ID_KEY, app
 
@@ -53,6 +54,8 @@ def test_index_route_renders_towerscout_shell(client):
     assert b"/license" in response.data
     assert b"/docs/project-overview.html" in response.data
     assert b"/docs/towerscout-user-guide.html" in response.data
+    assert b"https://pubmed.ncbi.nlm.nih.gov/38906615/" in response.data
+    assert b"sciencedirect.com/science/article/pii/S2589750024000943" not in response.data
     assert b"Documentation Placeholder" not in response.data
     assert b"Video Guide Placeholder" not in response.data
 
@@ -293,6 +296,58 @@ def test_config_status_and_session_reset_routes_match_current_contract(client):
     with client.session_transaction() as sess:
         assert sess["needs_setup"] is False
         assert "custom_key" not in sess
+
+
+def test_validate_key_route_reports_actionable_network_failure(client):
+    validation_error = NetworkError(
+        "google validation request failed",
+        user_message=(
+            "TowerScout could not reach Google Maps from the local server. "
+            "Check internet or proxy access, then try again. If this is a managed network, "
+            "contact support without sending API keys or raw network traces."
+        ),
+        details={
+            "provider": "google",
+            "category": "provider_validation_network",
+            "support_action": "Confirm local/container network access to the provider validation endpoints.",
+        },
+    )
+
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch.object(
+        towerscout.ts_config,
+        "validate_api_key",
+        side_effect=validation_error,
+    ):
+        response = client.post(
+            "/api/config/validate-key",
+            json={"provider": "google", "key": "AIzaSyEXAMPLE1234567890abcdefghijklmno"},
+        )
+
+    assert response.status_code == 502
+    payload = response.get_json()
+    assert "TowerScout could not reach Google Maps" in payload["message"]
+    assert "without sending API keys or raw network traces" in payload["message"]
+    assert payload["details"]["provider"] == "google"
+    assert payload["details"]["category"] == "provider_validation_network"
+    assert "AIzaSyEXAMPLE1234567890abcdefghijklmno" not in json.dumps(payload)
+
+
+def test_key_routes_do_not_log_key_previews(client, monkeypatch):
+    google_key = "AIzaSyEXAMPLE1234567890abcdefghijklmno"
+    azure_key = "azure-key-example-value-that-should-not-be-logged"
+    monkeypatch.setattr(towerscout, "google_api_key", google_key)
+    monkeypatch.setattr(towerscout, "azure_api_key", azure_key)
+
+    with patch.object(towerscout.api_logger, "info") as mock_info:
+        google_response = client.get("/getgooglekey")
+        azure_response = client.get("/getazurekey")
+
+    assert google_response.status_code == 200
+    assert azure_response.status_code == 200
+    logged_args = " ".join(str(call.args) for call in mock_info.call_args_list)
+    assert google_key not in logged_args
+    assert azure_key not in logged_args
+    assert "starts with" not in logged_args
 
 
 def test_detection_progress_defaults_to_idle(client):

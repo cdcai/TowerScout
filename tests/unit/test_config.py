@@ -72,7 +72,10 @@ def test_validate_api_key_network_error_returns_network_error(mock_get):
     with pytest.raises(NetworkError) as exc_info:
         ts_config.validate_api_key("google", "google-test-key")
 
-    assert exc_info.value.user_message == "Could not reach the provider validation service."
+    assert "TowerScout could not reach Google Maps" in exc_info.value.user_message
+    assert "without sending API keys or raw network traces" in exc_info.value.user_message
+    assert exc_info.value.details["provider"] == "google"
+    assert exc_info.value.details["category"] == "provider_validation_network"
 
 
 @patch("ts_config.requests.get")
@@ -83,7 +86,10 @@ def test_validate_api_key_fails_closed_on_ssl_error_by_default(mock_get, monkeyp
     with pytest.raises(NetworkError) as exc_info:
         ts_config.validate_api_key("google", "google-test-key")
 
-    assert exc_info.value.user_message == "Could not reach the provider validation service."
+    assert "could not verify the Google Maps TLS certificate" in exc_info.value.user_message
+    assert "scripts/import-tls-ca.cmd" in exc_info.value.user_message
+    assert exc_info.value.details["provider"] == "google"
+    assert exc_info.value.details["category"] == "provider_validation_tls"
     assert mock_get.call_count == 1
 
 

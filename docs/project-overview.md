@@ -132,7 +132,7 @@ http://localhost:5000/license.txt  plain-text combined notices
 Research article:
 
 ```text
-https://www.sciencedirect.com/science/article/pii/S2589750024000943?via%3Dihub
+https://pubmed.ncbi.nlm.nih.gov/38906615/
 ```
 
 Video guides:

@@ -36,6 +36,10 @@ AZURE_ENV_VAR = "AZURE_MAPS_SUBSCRIPTION_KEY"
 DEFAULT_PROVIDER_ENV_VAR = "DEFAULT_MAP_PROVIDER"
 FLASK_SECRET_KEY_ENV_VAR = "FLASK_SECRET_KEY"
 SUPPORTED_PROVIDERS = {"google", "azure"}
+PROVIDER_DISPLAY_NAMES = {
+    "google": "Google Maps",
+    "azure": "Azure Maps",
+}
 VALIDATION_TIMEOUT_SECONDS = 5
 PERFORMANCE_LOG_HEADERS = (
     "timestamp",
@@ -188,6 +192,10 @@ def sanitize_api_key(key: str, field_name: str) -> str:
 
 def _allow_insecure_tls() -> bool:
     return allow_insecure_tls()
+
+
+def _provider_display_name(provider: str) -> str:
+    return PROVIDER_DISPLAY_NAMES.get(provider, provider.title())
 
 
 def _configured_tls_bundle_error() -> NetworkError | None:
@@ -351,17 +359,52 @@ def validate_api_key(provider: str, key: str) -> Dict[str, Any]:
             else _validate_azure_key(sanitized_key)
         )
     except requests.Timeout as exc:
+        provider_label = _provider_display_name(validated_provider)
         raise NetworkError(
             f"{validated_provider} validation request timed out",
             timeout=VALIDATION_TIMEOUT_SECONDS,
             cause=exc,
-            user_message="Validation timed out. Please try again."
+            user_message=(
+                f"TowerScout timed out while validating the {provider_label} key. "
+                "Check internet or proxy access from the local TowerScout runtime, then try again."
+            ),
+            details={
+                "provider": validated_provider,
+                "category": "provider_validation_timeout",
+                "support_action": "Confirm local/container network access to the provider validation endpoints.",
+            },
+        ) from exc
+    except requests.exceptions.SSLError as exc:
+        provider_label = _provider_display_name(validated_provider)
+        raise NetworkError(
+            f"{validated_provider} validation request failed TLS verification",
+            cause=exc,
+            user_message=(
+                f"TowerScout could not verify the {provider_label} TLS certificate. "
+                "If your network uses TLS inspection, ask support to run scripts/import-tls-ca.cmd "
+                "for the selected Docker or Podman engine."
+            ),
+            details={
+                "provider": validated_provider,
+                "category": "provider_validation_tls",
+                "support_action": "Run scripts/import-tls-ca.cmd for the selected container engine.",
+            },
         ) from exc
     except requests.RequestException as exc:
+        provider_label = _provider_display_name(validated_provider)
         raise NetworkError(
             f"{validated_provider} validation request failed",
             cause=exc,
-            user_message="Could not reach the provider validation service."
+            user_message=(
+                f"TowerScout could not reach {provider_label} from the local server. "
+                "Check internet or proxy access, then try again. If this is a managed network, "
+                "contact support without sending API keys or raw network traces."
+            ),
+            details={
+                "provider": validated_provider,
+                "category": "provider_validation_network",
+                "support_action": "Confirm local/container network access to the provider validation endpoints.",
+            },
         ) from exc
     except OSError as exc:
         raise NetworkError(
@@ -372,6 +415,11 @@ def validate_api_key(provider: str, key: str) -> Dict[str, Any]:
                 "Run scripts/import-tls-ca.cmd for the selected Docker or Podman engine, "
                 "or update REQUESTS_CA_BUNDLE and SSL_CERT_FILE to a valid certificate bundle."
             ),
+            details={
+                "provider": validated_provider,
+                "category": "provider_validation_tls",
+                "support_action": "Run scripts/import-tls-ca.cmd for the selected container engine.",
+            },
         ) from exc
 
     result["provider"] = validated_provider

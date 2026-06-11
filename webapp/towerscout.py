@@ -1761,7 +1761,7 @@ def debug_azure_maps():
 @app.route('/getazurekey')
 def get_azure_key():
     """Provide Azure Maps subscription key for frontend authentication"""
-    api_logger.info(f"Azure Maps key API endpoint requested - Key available: {bool(azure_api_key)}")
+    api_logger.info("Azure Maps key API endpoint requested - Key available: %s", bool(azure_api_key))
     
     if not azure_api_key:
         api_logger.error("Azure Maps API key not available for frontend")
@@ -1772,9 +1772,7 @@ def get_azure_key():
         response.status_code = 400
         return response
     
-    # Log key info for debugging (first 15 chars only)
-    key_preview = azure_api_key[:15] + "..." if len(azure_api_key) > 15 else azure_api_key
-    api_logger.info(f"Returning Azure subscription key to frontend (starts with: {key_preview})")
+    api_logger.info("Returning configured Azure subscription key to frontend")
     
     return jsonify({
         "subscriptionKey": azure_api_key
@@ -1783,7 +1781,7 @@ def get_azure_key():
 @app.route('/getgooglekey')
 def get_google_key():
     """Provide Google Maps API key for frontend authentication"""
-    api_logger.info(f"Google Maps key API endpoint requested - Key available: {bool(google_api_key)}")
+    api_logger.info("Google Maps key API endpoint requested - Key available: %s", bool(google_api_key))
     
     if not google_api_key:
         api_logger.error("Google Maps API key not available for frontend")
@@ -1794,9 +1792,7 @@ def get_google_key():
         response.status_code = 400
         return response
     
-    # Log key info for debugging (first 15 chars only)
-    key_preview = google_api_key[:15] + "..." if len(google_api_key) > 15 else google_api_key
-    api_logger.info(f"Returning Google API key to frontend (starts with: {key_preview})")
+    api_logger.info("Returning configured Google API key to frontend")
     
     return jsonify({
         "apiKey": google_api_key

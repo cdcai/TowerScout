@@ -40,3 +40,19 @@ def test_packaged_compose_entrypoints_initialize_env_before_starting_stack():
 
     assert start_env_init < start_compose
     assert tls_env_init < tls_compose_start
+
+
+def test_tls_ca_import_persists_bundle_paths_in_env_file():
+    script = IMPORT_TLS_CA_SCRIPT.read_text(encoding="utf-8")
+
+    verify = script.index("Verifying $resolvedVerifyProvider TLS through the combined CA bundle")
+    persist = script.index("Set-TowerScoutEnvFileValues -RootPath $repoRoot")
+    imported = script.index('Write-Host "Imported CA bundle:"')
+
+    assert "function Set-TowerScoutEnvFileValues" in script
+    assert "REQUESTS_CA_BUNDLE = $containerBundlePath" in script
+    assert "SSL_CERT_FILE = $containerBundlePath" in script
+    assert "Updated .env so future TowerScout starts use the combined CA bundle." in script
+    assert "Restart TowerScout for the updated TLS settings to take effect." in script
+    assert "TrimStart().StartsWith(\"#\")" in script
+    assert verify < persist < imported

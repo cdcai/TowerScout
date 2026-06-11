@@ -27,6 +27,7 @@
       <a href="#setup">Setup</a>
       <a href="#success">Confirm Success</a>
       <a href="#stop">Stop/Restart</a>
+      <a href="#command-reference">Command Reference</a>
       <a href="#license">Source/licenses</a>
       <a href="#help">Help</a>
     </nav>
@@ -49,7 +50,7 @@ docker compose version</code></pre>
       </section>
       <section class="doc-section" id="stop-support">
         <h2>Stop And Contact Support</h2>
-        <p>Stop before continuing if Docker Desktop is not installed, not approved, or cannot start unless support explicitly assigned you the Podman path; WSL is unavailable or shows version <code>1</code> without administrator approval to update it; setup reports that a ZIP checksum does not match; asset import reports missing, corrupt, or hash-failed files; TowerScout reports <code>fatal</code>; or provider validation repeatedly fails after you confirm the key is correct.</p>
+        <p>Stop before continuing if Docker Desktop is not installed, not approved, or cannot start unless support explicitly assigned you the Podman path; WSL is unavailable or shows version <code>1</code> without administrator approval to update it; setup reports that a ZIP checksum does not match; asset import reports missing, corrupt, or hash-failed files; TowerScout reports <code>fatal</code>; or provider validation repeatedly fails after you confirm the key is correct. On managed networks, provider validation can fail because the container does not trust the local TLS inspection certificate; support can import the site CA without needing your provider key.</p>
         <p>Do not share provider keys, <code>.env</code>, raw logs, raw screenshots, private AOIs, browser network traces, cached provider responses, or exported datasets unless your site has an approved handling procedure.</p>
       </section>
       <section class="doc-section" id="commands">
@@ -78,6 +79,7 @@ docker compose version</code></pre>
       <section class="doc-section" id="start">
         <h2>Run TowerScout Setup</h2>
         <p>Open PowerShell in the extracted application folder that contains <code>setup-towerscout.cmd</code>, then run:</p>
+        <p>Before running setup, confirm Docker Desktop is open and running. If support assigned the Podman path, confirm the Podman machine is running and the Compose provider is available. For Docker GPU setup, see the optional Docker GPU track below for the GPU setup command.</p>
         <pre><code>.\setup-towerscout.cmd</code></pre>
         <p>Setup checks disk space, port availability, Docker or Podman readiness, Compose availability, release metadata, checksum sidecars, and asset ZIP layout before importing assets and launching TowerScout. It finds the Model &amp; Data Package ZIP in the extracted application folder or parent <code>TowerScoutUAT</code> folder.</p>
         <p>If setup reports that more than one Model &amp; Data Package ZIP was found, move old TowerScout ZIPs out of the folder and run setup again. If support asks for an explicit ZIP path, use the exact Model &amp; Data Package filename:</p>
@@ -92,6 +94,7 @@ docker compose version</code></pre>
 readiness: setup_required</code></pre>
         <p><code>setup_required</code> is normal before provider setup is complete. After provider setup and asset import are complete, readiness should become <code>ready</code>.</p>
         <p>The first launch may download the TowerScout container image from GHCR. This can take several minutes. Keep the PowerShell window open while Docker downloads and starts the image.</p>
+        <p>If TowerScout finds an older UAT container from a previous session, setup starts a fresh container while keeping saved setup, imported assets, and support logs in named volumes.</p>
         <p>If support tells you to validate Podman, run <code>.\setup-towerscout.cmd -Engine podman</code> and reuse that engine value on helper commands. If support tells you to validate Docker GPU behavior, run <code>.\setup-towerscout.cmd -Engine docker -Gpu auto</code> or <code>.\setup-towerscout.cmd -Engine docker -Gpu on</code>.</p>
       </section>
       <section class="doc-section" id="assets">
@@ -111,6 +114,7 @@ readiness: setup_required</code></pre>
       <section class="doc-section" id="setup">
         <h2>Complete Setup</h2>
         <p>Use Setup Wizard or Settings to configure one valid Google Maps or Azure Maps key. Browser map SDK keys are client-visible, so V1 RC1 expects site/user-owned restricted keys.</p>
+        <p>If Google or Azure validation fails even though the key is correct, and support sees <code>CERTIFICATE_VERIFY_FAILED</code> in container logs, support should run <code>.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint &lt;windows-certificate-thumbprint&gt; -VerifyProvider google</code>, then restart TowerScout. The helper stores the combined CA bundle in the selected engine's config volume and updates local <code>.env</code> so future starts use that bundle automatically.</p>
       </section>
       <section class="doc-section" id="success">
         <h2>Confirm Success</h2>
@@ -123,6 +127,78 @@ readiness: setup_required</code></pre>
         <pre><code>.\scripts\stop.cmd -Engine docker
 .\start.bat -Engine docker -Gpu off</code></pre>
         <p>Provider setup and imported assets are stored in named volumes and should survive container restarts. Always use the same <code>-Engine</code> value you used during setup. Docker Desktop and Podman use separate local storage, so switching engines can make setup or imported assets appear to be missing.</p>
+        <p>TowerScout treats a healthy container that is less than 12 hours old as the current UAT session. If a container is stopped, unhealthy, or older than 12 hours, the launcher starts a fresh container and keeps named volumes by default. Support can change the session lifetime with <code>-SessionMaxHours</code> when a longer validation session is approved.</p>
+      </section>
+      <section class="doc-section" id="command-reference">
+        <h2>Command Reference</h2>
+        <p>Run commands from the extracted TowerScout application folder, such as <code>C:\Users\&lt;you&gt;\Documents\TowerScoutUAT\towerscout-v0.1.0-rc2</code>.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Purpose</th>
+              <th>Docker CPU/default</th>
+              <th>Docker GPU support-assigned</th>
+              <th>Podman CPU support-assigned</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>First setup</td>
+              <td><code>.\setup-towerscout.cmd</code></td>
+              <td><code>.\setup-towerscout.cmd -Engine docker -Gpu auto</code> or <code>.\setup-towerscout.cmd -Engine docker -Gpu on</code></td>
+              <td><code>.\setup-towerscout.cmd -Engine podman</code></td>
+            </tr>
+            <tr>
+              <td>Start or reopen</td>
+              <td><code>.\start.bat -Engine docker -Gpu off</code></td>
+              <td><code>.\start.bat -Engine docker -Gpu auto</code> or <code>.\start.bat -Engine docker -Gpu on</code></td>
+              <td><code>.\start.bat -Engine podman -Gpu off</code></td>
+            </tr>
+            <tr>
+              <td>Stop</td>
+              <td><code>.\scripts\stop.cmd -Engine docker</code></td>
+              <td><code>.\scripts\stop.cmd -Engine docker</code></td>
+              <td><code>.\scripts\stop.cmd -Engine podman</code></td>
+            </tr>
+            <tr>
+              <td>Restart</td>
+              <td><code>.\scripts\stop.cmd -Engine docker</code>, then <code>.\start.bat -Engine docker -Gpu off</code></td>
+              <td><code>.\scripts\stop.cmd -Engine docker</code>, then the assigned Docker GPU start command</td>
+              <td><code>.\scripts\stop.cmd -Engine podman</code>, then <code>.\start.bat -Engine podman -Gpu off</code></td>
+            </tr>
+            <tr>
+              <td>Status</td>
+              <td><code>.\scripts\status.cmd -Engine docker</code></td>
+              <td><code>.\scripts\status.cmd -Engine docker</code></td>
+              <td><code>.\scripts\status.cmd -Engine podman</code></td>
+            </tr>
+            <tr>
+              <td>Logs if support asks</td>
+              <td><code>.\scripts\logs.cmd -Engine docker -Tail 200</code></td>
+              <td><code>.\scripts\logs.cmd -Engine docker -Tail 200</code></td>
+              <td><code>.\scripts\logs.cmd -Engine podman -Tail 200</code></td>
+            </tr>
+            <tr>
+              <td>TLS CA import if support asks</td>
+              <td><code>.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint &lt;windows-certificate-thumbprint&gt; -VerifyProvider google</code></td>
+              <td><code>.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint &lt;windows-certificate-thumbprint&gt; -VerifyProvider google</code></td>
+              <td><code>.\scripts\import-tls-ca.cmd -Engine podman -Thumbprint &lt;windows-certificate-thumbprint&gt; -VerifyProvider google</code></td>
+            </tr>
+            <tr>
+              <td>Manual asset import fallback</td>
+              <td><code>.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180</code></td>
+              <td><code>.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180</code></td>
+              <td><code>.\scripts\import-assets.cmd -Engine podman -Source assets -VerifyHashes</code></td>
+            </tr>
+            <tr>
+              <td>Longer support session</td>
+              <td>Add <code>-SessionMaxHours 24</code> to setup, start, or import commands when support approves it.</td>
+              <td>Add <code>-SessionMaxHours 24</code> to the assigned Docker GPU command when support approves it.</td>
+              <td>Add <code>-SessionMaxHours 24</code> to setup, start, or import commands when support approves it.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>Use <code>-Gpu auto</code> for exploratory Docker GPU validation with CPU fallback. Use <code>-Gpu on</code> only when support expects CUDA to be available inside the container. Podman GPU launch is not validated for V1 RC1.</p>
       </section>
       <section class="doc-section" id="license">
         <h2>Source, Licenses, And Help</h2>

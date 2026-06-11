@@ -206,7 +206,7 @@ Record:
 
 ## If Something Fails
 
-Use `TESTER-ISSUE-REPORT-CHECKLIST.txt`.
+Use `TESTER-ISSUE-REPORT-CHECKLIST.txt` as the email/Teams issue report form.
 
 Stop and contact support if Docker Desktop is not installed/approved/running
 unless support explicitly assigned you the Podman path, WSL is unavailable or

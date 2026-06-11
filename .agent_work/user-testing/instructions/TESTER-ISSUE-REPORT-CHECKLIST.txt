@@ -1,135 +1,113 @@
-TOWERSCOUT RC1 TESTER ISSUE REPORT CHECKLIST
-============================================
+TOWERSCOUT RC1 TESTER ISSUE REPORT FORM
+=======================================
 
-Last reviewed: 2026-06-01
-Use this when you get blocked during RC1 package install, guided setup, startup, asset import, detection, export, or shutdown.
+Last reviewed: 2026-06-09
 
-IMPORTANT
-=========
+Use this form when TowerScout setup, startup, provider setup, detection, export,
+or shutdown does not work as expected. Paste the completed form into email or
+Teams. Keep it short; support will ask for more only if needed.
 
-- Do not send API keys.
-- Do not send your full `.env` file.
-- Do not send private AOI screenshots or exact private addresses unless explicitly approved.
-- Do not send raw detection API responses, tile/map URLs, browser network traces,
-  raw logs, or provider portal screenshots unless support explicitly approves a
-  reviewed/redacted copy.
-- Send screenshots and exact error text whenever possible after redacting sensitive information.
+DO NOT SEND
+===========
 
-WHAT TO SEND
-============
+- API keys or full `.env` files.
+- Private AOI screenshots, exact private addresses, or investigation data.
+- Raw logs, raw provider responses, browser network traces, tile/map URLs, or
+  exported datasets unless support explicitly approves reviewed/redacted copies.
+- Provider portal screenshots that show account, billing, quota, or key details.
 
-Please send all of the items below:
+ISSUE SUMMARY
+=============
 
-1. Which guide or checklist you followed:
-   - `docs/v1-rc1-quick-start.md`
-   - `docs/v1-rc1-package-guide.md`
-   - `docs/towerscout-user-guide.md`
-   - `RC1-PILOT-UAT-CHECKLIST.md`
-   - other:
+Result:
+  [ ] BLOCKED - I cannot continue.
+  [ ] FAIL - TowerScout runs, but the required workflow failed.
+  [ ] PASS_WITH_NOTES - The workflow completed, but something was confusing.
 
-2. Which step failed:
-   - extract package
-   - run guided setup/preflight
-   - extract assets manually
-   - start TowerScout
-   - import assets
-   - complete Setup Wizard
-   - open Settings Resource Links
-   - run bounded detection
-   - review results
-   - export results
-   - stop TowerScout
-   - other:
+Guide and step number:
 
-3. The exact command you ran when it failed.
+What you clicked or the exact command you ran:
 
-4. The exact error text.
+What you expected to happen:
 
-5. A screenshot of the failing window, if it does not expose secrets or private locations.
+What happened instead:
 
-6. The output of:
+Exact error text, if shown:
+
+Screenshot attached?
+  [ ] No
+  [ ] Yes, and I checked it does not show keys, private locations, provider
+      portals, raw logs, browser network traces, or sensitive data.
+
+SETUP DETAILS
+=============
+
+TowerScout package folder name:
+
+Release tag or release URL:
+
+Engine used:
+  [ ] Docker Desktop
+  [ ] Podman
+  [ ] Unsure
+
+Port shown in browser:
+  [ ] 5000
+  [ ] Other:
+  [ ] Unsure
+
+Did setup finish successfully?
+  [ ] Yes
+  [ ] No
+  [ ] Unsure
+
+Did Setup Wizard save the provider configuration?
+  [ ] Yes
+  [ ] No
+  [ ] Unsure
+
+Provider used:
+  [ ] Azure Maps
+  [ ] Google Maps
+  [ ] Neither yet
+  [ ] Unsure
+
+DETECTION DETAILS, IF THE ISSUE HAPPENED DURING DETECTION
+=========================================================
+
+Support-provided fixture name:
+
+Search text or location used:
+
+Shape and radius or boundary:
+
+Estimated tile count, if shown:
+
+Did the detection run start?
+  [ ] Yes
+  [ ] No
+  [ ] Unsure
+
+Did the review panel update?
+  [ ] Yes
+  [ ] No
+  [ ] Unsure
+
+WHAT YOU ALREADY TRIED
+======================
+
+Briefly list anything you tried after the issue appeared:
+
+SUPPORT MAY ASK FOR THESE LATER
+===============================
+
+Do not send these unless support asks.
 
 ```powershell
-ver
-docker --version
-docker compose version
+.\scripts\status.cmd -Engine docker
+.\scripts\logs.cmd -Engine docker -Tail 200
+Get-Content .\IMAGE.txt
 ```
 
-If using Podman instead of Docker Desktop, also send:
-
-```powershell
-podman --version
-podman machine list
-podman compose version
-```
-
-7. Package and asset information:
-
-- Release URL or release tag support gave you:
-- TowerScout package folder name:
-- Image tag/digest from `IMAGE.txt` or bootstrap output:
-- Asset bundle name/version:
-- Did `-VerifyHashes` pass?
-- Did the package ZIP checksum match its `.sha256` file?
-- Did the Model & Data Package ZIP checksum match its `.sha256` file?
-
-8. Setup/launch/import details:
-
-- Engine used: Docker Desktop / Podman
-- Setup or bootstrap command:
-- Did setup/preflight pass?
-- Launch command:
-- Port:
-- GPU mode: off / auto / on
-- Asset import command:
-
-9. Provider and network context:
-
-- Provider used: Azure Maps / Google Maps / neither yet
-- Did Setup Wizard save successfully?
-- Are you behind a VPN, proxy, TLS inspection, or restricted network?
-
-10. Detection context:
-
-- Support-provided fixture/AOI name:
-- Provider requested for the fixture:
-- Search text/location used:
-- Shape type and radius or boundary:
-- Estimated tile count:
-- Was zero detections listed as acceptable for this fixture?
-- Did detection start?
-- Did detection complete?
-- Did results appear in the right-hand panel?
-- Did address text/provider metadata appear?
-
-11. Anything you already tried that did not work.
-
-HOW TO CAPTURE TERMINAL OUTPUT
-==============================
-
-- If the error is visible in PowerShell, copy the relevant output and paste it into a text file.
-- Keep the PowerShell window open until you have taken any needed screenshot.
-- Do not include API keys or full `.env` file contents.
-- Do not include tile/map URLs, raw detection JSON, browser network traces, or
-  raw provider responses.
-- To capture package/image metadata, run `Get-Content .\IMAGE.txt` from the package folder and copy the output.
-
-WHAT A GOOD REPORT LOOKS LIKE
-=============================
-
-Example:
-
-- Guide used: `RC1-PILOT-UAT-CHECKLIST.md`
-- Failed step: guided setup/preflight
-- Command: `.\setup-towerscout.cmd`
-- Error: `asset_status=degraded; missing model_params/yolov5/newest.pt`
-- Windows: `Microsoft Windows [Version ...]`
-- Engine: Docker Desktop, Docker version copied from `docker --version`
-- Package folder: `towerscout-v0.1.0-rc2`
-- Image digest: copied from `IMAGE.txt` or launch output
-- Setup preflight: failed during asset validation
-- Asset hash verification: failed or not reached
-- Provider: Azure Maps
-- Screenshot attached: yes, redacted
-
-That is enough for the team to triage the issue quickly.
+If support assigned Podman, replace `-Engine docker` with `-Engine podman`.
+Send reviewed/redacted output only.

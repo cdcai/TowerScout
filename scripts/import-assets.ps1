@@ -11,6 +11,8 @@ param(
 
     [int] $RestartWaitSeconds = 120,
 
+    [int] $SessionMaxHours = 12,
+
     [switch] $Build,
 
     [switch] $VerifyHashes
@@ -18,6 +20,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot\lib\TowerScoutCompose.ps1"
+
+if ($SessionMaxHours -lt 0) {
+    throw "SessionMaxHours must be 0 or greater."
+}
 
 $repoRoot = Get-TowerScoutRepoRoot
 Initialize-TowerScoutEnvFile -RootPath $repoRoot
@@ -42,6 +48,9 @@ if (-not (Test-Path -LiteralPath $dataSource -PathType Container)) {
 }
 
 Write-Host "Starting TowerScout container so named volumes are available..."
+$composeCommand = Get-TowerScoutComposeCommand -Engine $Engine
+$effectiveEngine = [string] $composeCommand["Executable"]
+Invoke-TowerScoutStaleContainerGuard -EngineName $effectiveEngine -SessionMaxHours $SessionMaxHours | Out-Null
 Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @("up", "-d", "towerscout")
 if ($script:TowerScoutComposeExitCode -ne 0) {
     exit $script:TowerScoutComposeExitCode

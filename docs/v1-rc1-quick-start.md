@@ -118,6 +118,9 @@ Stop before continuing and contact your support lead if any of these happen:
 - The asset import reports missing, corrupt, or hash-failed files.
 - TowerScout reports readiness state `fatal`.
 - Provider validation repeatedly fails after you confirm the key is correct.
+  On managed networks, this may mean the container does not trust the local
+  TLS inspection certificate; support can import the site CA without needing
+  your provider key.
 
 Do not troubleshoot by sharing provider keys, full `.env` files, raw logs, raw
 screenshots, private AOIs, browser network traces, cached provider responses,
@@ -230,6 +233,11 @@ inside `assets\`.
 Open PowerShell in the extracted application folder that contains
 `setup-towerscout.cmd`, then run:
 
+Before running setup, confirm Docker Desktop is open and running. If support
+assigned the Podman path, confirm the Podman machine is running and the Compose
+provider is available. For Docker GPU setup, see the optional Docker GPU track
+below for the GPU setup command.
+
 ```powershell
 .\setup-towerscout.cmd
 ```
@@ -266,6 +274,10 @@ setup and asset import are complete, readiness should become `ready`.
 The first launch may download the TowerScout container image from GHCR. This
 can take several minutes on first run. Keep the PowerShell window open while
 Docker downloads and starts the image.
+
+If TowerScout finds an older UAT container from a previous session, setup starts
+a fresh container while keeping saved setup, imported assets, and support logs
+in named volumes.
 
 Readiness may be `setup_required` because provider setup is not complete, or
 `degraded` because assets are not imported yet. That is expected during first
@@ -459,6 +471,22 @@ Expected result: Setup Wizard saves the provider settings and TowerScout reloads
 or reports that setup is complete. Do not paste the provider key into issue
 reports, screenshots, or support chat.
 
+Managed-network note: if Google or Azure provider validation fails even though
+the key is correct, and support sees `CERTIFICATE_VERIFY_FAILED` in container
+logs, the problem is usually local TLS inspection. Support should import the
+site CA for the selected engine, then restart TowerScout:
+
+```powershell
+.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint <windows-certificate-thumbprint> -VerifyProvider google
+.\scripts\stop.cmd -Engine docker
+.\start.bat -Engine docker -Gpu off
+```
+
+The TLS helper stores the combined CA bundle in the selected engine's
+`towerscout_config` volume and updates the local `.env` so future starts use
+that bundle automatically. Do not send provider keys, full `.env` files, raw
+logs, or browser network traces when reporting this issue.
+
 ## 10. Confirm Success
 
 Run:
@@ -522,10 +550,37 @@ Start again:
 Provider setup and imported assets are stored in named volumes and should
 survive container restarts and replacement.
 
+TowerScout treats a healthy container that is less than 12 hours old as the
+current UAT session. If a container is stopped, unhealthy, or older than 12
+hours, the launcher starts a fresh container and keeps named volumes by
+default. Support can change the session lifetime with `-SessionMaxHours` when a
+longer validation session is approved.
+
 Important: always use the same `-Engine` value you used during setup. Docker
 Desktop and Podman use separate local storage. If you switch engines, provider
 setup or imported assets may appear to be missing because they are stored under
 the other engine.
+
+## Appendix: Command Reference
+
+Run commands from the extracted TowerScout application folder, such as
+`C:\Users\<you>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc2`.
+
+| Purpose | Docker CPU/default | Docker GPU support-assigned | Podman CPU support-assigned |
+|---|---|---|---|
+| First setup | `.\setup-towerscout.cmd` | `.\setup-towerscout.cmd -Engine docker -Gpu auto` or `.\setup-towerscout.cmd -Engine docker -Gpu on` | `.\setup-towerscout.cmd -Engine podman` |
+| Start or reopen | `.\start.bat -Engine docker -Gpu off` | `.\start.bat -Engine docker -Gpu auto` or `.\start.bat -Engine docker -Gpu on` | `.\start.bat -Engine podman -Gpu off` |
+| Stop | `.\scripts\stop.cmd -Engine docker` | `.\scripts\stop.cmd -Engine docker` | `.\scripts\stop.cmd -Engine podman` |
+| Restart | `.\scripts\stop.cmd -Engine docker`, then `.\start.bat -Engine docker -Gpu off` | `.\scripts\stop.cmd -Engine docker`, then the assigned Docker GPU start command | `.\scripts\stop.cmd -Engine podman`, then `.\start.bat -Engine podman -Gpu off` |
+| Status | `.\scripts\status.cmd -Engine docker` | `.\scripts\status.cmd -Engine docker` | `.\scripts\status.cmd -Engine podman` |
+| Logs if support asks | `.\scripts\logs.cmd -Engine docker -Tail 200` | `.\scripts\logs.cmd -Engine docker -Tail 200` | `.\scripts\logs.cmd -Engine podman -Tail 200` |
+| TLS CA import if support asks | `.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint <windows-certificate-thumbprint> -VerifyProvider google` | `.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint <windows-certificate-thumbprint> -VerifyProvider google` | `.\scripts\import-tls-ca.cmd -Engine podman -Thumbprint <windows-certificate-thumbprint> -VerifyProvider google` |
+| Manual asset import fallback | `.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180` | `.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180` | `.\scripts\import-assets.cmd -Engine podman -Source assets -VerifyHashes` |
+| Longer support session | Add `-SessionMaxHours 24` to setup, start, or import commands when support approves it. | Add `-SessionMaxHours 24` to the assigned Docker GPU command when support approves it. | Add `-SessionMaxHours 24` to setup, start, or import commands when support approves it. |
+
+Use `-Gpu auto` for exploratory Docker GPU validation with CPU fallback. Use
+`-Gpu on` only when support expects CUDA to be available inside the container.
+Podman GPU launch is not validated for V1 RC1.
 
 ## 12. Source, Licenses, And Help
 

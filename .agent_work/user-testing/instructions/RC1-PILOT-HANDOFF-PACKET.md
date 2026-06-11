@@ -263,6 +263,7 @@ Send these files or links to the tester:
 - `docs/v1-rc1-quick-start.md`
 - `.agent_work/user-testing/instructions/RC1-PILOT-UAT-CHECKLIST.md`
 - `.agent_work/user-testing/instructions/TESTER-ISSUE-REPORT-CHECKLIST.txt`
+  issue report form
 
 Include the filled release URL, filenames, setup command, fixture, and
 support contact from this packet in the tester message.

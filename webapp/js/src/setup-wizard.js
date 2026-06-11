@@ -115,6 +115,26 @@
     });
   }
 
+  async function validateProviderInput(provider, key, indicatorId, displayName, validationMessages) {
+    if (!key) {
+      return false;
+    }
+
+    try {
+      const result = await validateKey(provider, key);
+      const isValid = result.valid === true;
+      updateIndicator(indicatorId, isValid);
+      if (!isValid && result.message) {
+        validationMessages.push(`${displayName}: ${result.message}`);
+      }
+      return isValid;
+    } catch (error) {
+      updateIndicator(indicatorId, false);
+      validationMessages.push(`${displayName}: ${error.message}`);
+      return false;
+    }
+  }
+
   function setButtonBusy(buttonId, isBusy, idleText, busyText) {
     const button = document.getElementById(buttonId);
     if (!button) {
@@ -143,23 +163,20 @@
     try {
       const validationMessages = [];
 
-      if (googleKey) {
-        const googleResult = await validateKey('google', googleKey);
-        validatedKeys.google = googleResult.valid === true;
-        updateIndicator('google_key_status', validatedKeys.google);
-        if (!validatedKeys.google && googleResult.message) {
-          validationMessages.push(`Google Maps: ${googleResult.message}`);
-        }
-      }
-
-      if (azureKey) {
-        const azureResult = await validateKey('azure', azureKey);
-        validatedKeys.azure = azureResult.valid === true;
-        updateIndicator('azure_key_status', validatedKeys.azure);
-        if (!validatedKeys.azure && azureResult.message) {
-          validationMessages.push(`Azure Maps: ${azureResult.message}`);
-        }
-      }
+      validatedKeys.google = await validateProviderInput(
+        'google',
+        googleKey,
+        'google_key_status',
+        'Google Maps',
+        validationMessages
+      );
+      validatedKeys.azure = await validateProviderInput(
+        'azure',
+        azureKey,
+        'azure_key_status',
+        'Azure Maps',
+        validationMessages
+      );
 
       if (!validatedKeys.google && !validatedKeys.azure) {
         throw new Error(validationMessages.join(' ') || 'Provide at least one valid API key before continuing.');
@@ -187,8 +204,8 @@
     }
 
     const payload = {
-      google_api_key: document.getElementById('wizard_google_key').value.trim(),
-      azure_maps_subscription_key: document.getElementById('wizard_azure_key').value.trim(),
+      google_api_key: validatedKeys.google ? document.getElementById('wizard_google_key').value.trim() : '',
+      azure_maps_subscription_key: validatedKeys.azure ? document.getElementById('wizard_azure_key').value.trim() : '',
       default_map_provider: getSelectedDefaultProvider()
     };
 

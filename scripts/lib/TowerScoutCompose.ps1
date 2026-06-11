@@ -304,6 +304,213 @@ function Write-TowerScoutGpuModeSummary {
     }
 }
 
+function Get-TowerScoutComposeServiceContainerIds {
+    param(
+        [ValidateSet("auto", "docker", "podman")]
+        [string] $Engine = "auto",
+
+        [string] $ServiceName = "towerscout"
+    )
+
+    $repoRoot = Get-TowerScoutRepoRoot
+    $command = Get-TowerScoutComposeCommand -Engine $Engine
+    $composeFiles = @("-f", (Join-Path $repoRoot "compose.yaml"))
+
+    Push-Location $repoRoot
+    try {
+        $output = & $command["Executable"] @(($command["Arguments"]) + $composeFiles + @("ps", "-a", "-q", $ServiceName)) 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            return @()
+        }
+
+        return @($output | ForEach-Object { ([string] $_).Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    }
+    finally {
+        Pop-Location
+    }
+}
+
+function Get-TowerScoutContainerSessionInfo {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("docker", "podman")]
+        [string] $EngineName,
+
+        [Parameter(Mandatory = $true)]
+        [string] $ContainerId
+    )
+
+    $inspectOutput = & $EngineName container inspect $ContainerId 2>$null
+    if ($LASTEXITCODE -ne 0 -or $null -eq $inspectOutput) {
+        return $null
+    }
+
+    $inspect = @($inspectOutput | ConvertFrom-Json)[0]
+    $state = $inspect.State
+    $healthStatus = ""
+    if ($null -ne $state -and $state.PSObject.Properties.Name -contains "Health" -and $null -ne $state.Health) {
+        $healthStatus = [string] $state.Health.Status
+    }
+
+    $createdAt = $null
+    if ($inspect.PSObject.Properties.Name -contains "Created" -and -not [string]::IsNullOrWhiteSpace([string] $inspect.Created)) {
+        try {
+            $createdAt = [datetime]::Parse(
+                [string] $inspect.Created,
+                [System.Globalization.CultureInfo]::InvariantCulture,
+                [System.Globalization.DateTimeStyles]::AssumeUniversal
+            ).ToUniversalTime()
+        }
+        catch {
+            $createdAt = $null
+        }
+    }
+
+    return [pscustomobject]@{
+        Id = [string] $inspect.Id
+        Name = [string] $inspect.Name
+        StateStatus = [string] $state.Status
+        HealthStatus = $healthStatus
+        CreatedAt = $createdAt
+    }
+}
+
+function Get-TowerScoutContainerSessionPlan {
+    param(
+        [object[]] $Containers = @(),
+
+        [int] $SessionMaxHours = 12,
+
+        [datetime] $Now = (Get-Date)
+    )
+
+    if ($SessionMaxHours -lt 0) {
+        throw "SessionMaxHours must be 0 or greater."
+    }
+
+    $containerList = @($Containers | Where-Object { $null -ne $_ })
+    if ($containerList.Count -eq 0) {
+        return [pscustomobject]@{
+            Action = "start"
+            Reason = "No existing TowerScout container was found."
+            ContainerIds = @()
+            AgeHours = $null
+        }
+    }
+
+    $nonRunning = @($containerList | Where-Object { ([string] $_.StateStatus).ToLowerInvariant() -ne "running" })
+    if ($nonRunning.Count -gt 0) {
+        return [pscustomobject]@{
+            Action = "restart"
+            Reason = "An existing TowerScout container is not running."
+            ContainerIds = @($containerList | ForEach-Object { $_.Id })
+            AgeHours = $null
+        }
+    }
+
+    $unhealthy = @($containerList | Where-Object { ([string] $_.HealthStatus).ToLowerInvariant() -eq "unhealthy" })
+    if ($unhealthy.Count -gt 0) {
+        return [pscustomobject]@{
+            Action = "restart"
+            Reason = "An existing TowerScout container is unhealthy."
+            ContainerIds = @($containerList | ForEach-Object { $_.Id })
+            AgeHours = $null
+        }
+    }
+
+    $oldest = @($containerList | Where-Object { $null -ne $_.CreatedAt } | Sort-Object CreatedAt | Select-Object -First 1)
+    if ($SessionMaxHours -gt 0 -and $oldest.Count -gt 0) {
+        $ageHours = (($Now.ToUniversalTime()) - ($oldest[0].CreatedAt.ToUniversalTime())).TotalHours
+        if ($ageHours -ge $SessionMaxHours) {
+            return [pscustomobject]@{
+                Action = "restart"
+                Reason = "An existing TowerScout container is older than $SessionMaxHours hour(s)."
+                ContainerIds = @($containerList | ForEach-Object { $_.Id })
+                AgeHours = $ageHours
+            }
+        }
+    }
+
+    return [pscustomobject]@{
+        Action = "reuse"
+        Reason = "An existing TowerScout container is already running."
+        ContainerIds = @($containerList | ForEach-Object { $_.Id })
+        AgeHours = $null
+    }
+}
+
+function Invoke-TowerScoutContainerStopRemove {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("docker", "podman")]
+        [string] $EngineName,
+
+        [string[]] $ContainerIds = @()
+    )
+
+    foreach ($containerId in $ContainerIds) {
+        if ([string]::IsNullOrWhiteSpace($containerId)) {
+            continue
+        }
+
+        $shortId = $containerId
+        if ($shortId.Length -gt 12) {
+            $shortId = $shortId.Substring(0, 12)
+        }
+
+        Write-Host "Stopping TowerScout container $shortId before starting a fresh UAT session..."
+        & $EngineName container stop $containerId 2>$null | Out-Null
+
+        Write-Host "Removing TowerScout container $shortId without deleting named volumes..."
+        & $EngineName container rm $containerId 2>$null | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            & $EngineName container rm --force $containerId 2>$null | Out-Null
+        }
+        if ($LASTEXITCODE -ne 0) {
+            throw "Could not remove existing TowerScout container $shortId. Stop TowerScout through support guidance and try again."
+        }
+    }
+}
+
+function Invoke-TowerScoutStaleContainerGuard {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("docker", "podman")]
+        [string] $EngineName,
+
+        [int] $SessionMaxHours = 12
+    )
+
+    if ($SessionMaxHours -lt 0) {
+        throw "SessionMaxHours must be 0 or greater."
+    }
+
+    $ids = Get-TowerScoutComposeServiceContainerIds -Engine $EngineName -ServiceName "towerscout"
+    $containers = @()
+    foreach ($id in $ids) {
+        $info = Get-TowerScoutContainerSessionInfo -EngineName $EngineName -ContainerId $id
+        if ($null -ne $info) {
+            $containers += $info
+        }
+    }
+
+    $plan = Get-TowerScoutContainerSessionPlan -Containers $containers -SessionMaxHours $SessionMaxHours
+    if ($plan.Action -eq "start") {
+        Write-Host "UAT session check: no existing TowerScout container found."
+        return $plan
+    }
+
+    if ($plan.Action -eq "reuse") {
+        Write-Host "TowerScout is already running. Reusing the current UAT session if no launch settings changed."
+        return $plan
+    }
+
+    Write-Host "TowerScout found an older, stopped, or unhealthy session and is starting a fresh UAT session."
+    Write-Host "Saved setup, imported assets, and support logs are kept in named volumes."
+    Invoke-TowerScoutContainerStopRemove -EngineName $EngineName -ContainerIds $plan.ContainerIds
+    return $plan
+}
+
 function Invoke-TowerScoutCompose {
     param(
         [ValidateSet("auto", "docker", "podman")]

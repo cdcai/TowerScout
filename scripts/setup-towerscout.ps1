@@ -12,6 +12,8 @@ param(
 
     [int] $RestartWaitSeconds = 180,
 
+    [int] $SessionMaxHours = 12,
+
     [string] $AssetsPath = "assets",
 
     [string] $AssetZip = "",
@@ -60,6 +62,7 @@ $bootstrapParams = @{
     Gpu = $Gpu
     TimeoutSeconds = $TimeoutSeconds
     RestartWaitSeconds = $RestartWaitSeconds
+    SessionMaxHours = $SessionMaxHours
     AssetsPath = $AssetsPath
     MinimumFreeGB = $MinimumFreeGB
 }

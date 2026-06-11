@@ -9,6 +9,8 @@ param(
     [ValidateSet("off", "auto", "on")]
     [string] $Gpu = "off",
 
+    [int] $SessionMaxHours = $(if ($env:TOWERSCOUT_SESSION_MAX_HOURS) { [int] $env:TOWERSCOUT_SESSION_MAX_HOURS } else { 12 }),
+
     [switch] $Build,
 
     [switch] $NoBrowser
@@ -169,6 +171,9 @@ function Write-TowerScoutHostDiagnostics {
 if ($TimeoutSeconds -lt 5) {
     throw "TimeoutSeconds must be at least 5."
 }
+if ($SessionMaxHours -lt 0) {
+    throw "SessionMaxHours must be 0 or greater."
+}
 
 Initialize-TowerScoutEnvFile -RootPath $repoRoot
 
@@ -181,6 +186,7 @@ Write-Host "Starting TowerScout with $effectiveEngine on $appUrl..."
 Write-TowerScoutComposeProviderSummary -Engine $effectiveEngine
 Set-TowerScoutGpuEnvironment -Gpu $Gpu -Build:$Build
 Write-TowerScoutGpuModeSummary -EngineName $effectiveEngine -Gpu $Gpu -Build:$Build
+Invoke-TowerScoutStaleContainerGuard -EngineName $effectiveEngine -SessionMaxHours $SessionMaxHours | Out-Null
 
 $composeArgs = @("up", "-d")
 if ($Build) {

@@ -239,7 +239,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **User Value**: Ensures external testing starts from a repeatable, evidence-producing workflow instead of ad hoc feedback collection.
 
 ### **TASK-080: RC1 UAT User Guide And Setup Process Simplification**
-**Status**: IN_PROGRESS - rc2 Application Package and matching asset ZIP sidecar generated; local and downloaded GitHub release assets passed Docker Desktop setup, checksum verification, asset import, readiness, docs, `/license`, provider setup, and bounded Azure smoke; owner/reviewer signoff and tester/cohort selection remain pending
+**Status**: IN_PROGRESS - rc2 release validation passed earlier; pre-UAT follow-up docs/runtime/status-message changes are implemented with focused coverage; live Google first-launch passed after TLS CA support-path validation; Word visual QA and final pre-package validation passed; refreshed package build, final handoff signoff, and tester/cohort selection remain pending before external handoff
 **Type**: B/C (User Testing / Documentation / Release UX)
 **Priority**: HIGH
 **Estimated Effort**: 1-2 days (8-16 hours), plus optional launcher follow-through
@@ -280,6 +280,31 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
   `ready` with Azure configured and assets `ok`, and completed the public
   Azure fixture with `48` detection records, `8` tile records, right-panel
   address/provider metadata, and elapsed time about `56.38` seconds.
+- First-cohort Google setup validation feedback exposed a generic
+  `/api/config/validate-key` 502 in the Setup Wizard. The validation path now
+  reports provider network/TLS failures with support-safe guidance, the wizard
+  continues checking another entered provider if one provider fails, and
+  provider key previews were removed from route/browser logs.
+- Pre-UAT follow-up changes added a Docker/Podman-running setup reminder,
+  command appendix, corrected PubMed research link, concise email/Teams issue
+  form, provider-aware normal-mode output-panel messages, and a 12-hour UAT
+  stale-container guard that restarts stopped/unhealthy/stale containers while
+  preserving named volumes by default.
+- Live Google first-launch Setup Wizard verification passed after importing the
+  CDC/Zscaler TLS inspection CA into the isolated Docker stack. This confirms
+  the repeated Google failure was a managed-network container trust issue, not
+  a bad Google key or unresolved Setup Wizard defect.
+- Owner-edited Word UAT guide was integrated on 2026-06-10 with formatting and
+  readability changes. After a low-level heading correction triggered a Word
+  unreadable-content warning, the guide was restored byte-for-byte from the
+  Word-authored edited file and required command/TLS/support-safe evidence
+  content was structurally verified. Owner completed Microsoft Word visual QA
+  on 2026-06-11 and approved locking the guide for final validation.
+- Final pre-package validation passed on 2026-06-11 across focused unit,
+  release-package, frontend contract, bundle consistency, docs, agent-work,
+  whitespace, and targeted secret-safety checks.
+- Remaining approval gates are regeneration/validation of package artifacts,
+  final handoff signoff, and tester/cohort selection.
 
 **Dependencies**: `TASK-066`; `TASK-071`; `TASK-073`; `TASK-074`; `TASK-075`; possible `TASK-076` provider-key policy language.
 

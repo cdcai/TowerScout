@@ -134,6 +134,54 @@ $containerCertDir = "/app/webapp/config/certs"
 $containerCertPath = "$containerCertDir/$ContainerCertificateName"
 $containerBundlePath = "$containerCertDir/$BundleName"
 
+function Set-TowerScoutEnvFileValues {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $RootPath,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable] $Values
+    )
+
+    $envPath = Join-Path $RootPath ".env"
+    if (-not (Test-Path -LiteralPath $envPath -PathType Leaf)) {
+        throw "Expected .env to exist after initialization: $envPath"
+    }
+
+    $lines = [System.Collections.Generic.List[string]]::new()
+    foreach ($line in Get-Content -LiteralPath $envPath) {
+        $lines.Add([string] $line)
+    }
+
+    $updated = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    for ($index = 0; $index -lt $lines.Count; $index += 1) {
+        $lineText = [string] $lines[$index]
+        if ($lineText.TrimStart().StartsWith("#")) {
+            continue
+        }
+
+        foreach ($name in $Values.Keys) {
+            if ($updated.Contains([string] $name)) {
+                continue
+            }
+            $pattern = "^\s*" + [regex]::Escape([string] $name) + "\s*="
+            if ($lineText -match $pattern) {
+                $lines[$index] = "$name=$($Values[$name])"
+                [void] $updated.Add([string] $name)
+                break
+            }
+        }
+    }
+
+    foreach ($name in $Values.Keys) {
+        if (-not $updated.Contains([string] $name)) {
+            $lines.Add("$name=$($Values[$name])")
+        }
+    }
+
+    Set-Content -LiteralPath $envPath -Value $lines -Encoding ASCII
+}
+
 function Resolve-TowerScoutTlsVerifyProvider {
     if ($VerifyProvider -ne "auto") {
         return $VerifyProvider
@@ -284,9 +332,16 @@ try {
         }
     }
 
+    Set-TowerScoutEnvFileValues -RootPath $repoRoot -Values @{
+        REQUESTS_CA_BUNDLE = $containerBundlePath
+        SSL_CERT_FILE = $containerBundlePath
+    }
+
     Write-Host "Imported CA bundle:"
     Write-Host "  REQUESTS_CA_BUNDLE=$containerBundlePath"
     Write-Host "  SSL_CERT_FILE=$containerBundlePath"
+    Write-Host "Updated .env so future TowerScout starts use the combined CA bundle."
+    Write-Host "Restart TowerScout for the updated TLS settings to take effect."
 }
 finally {
     if (Test-Path -LiteralPath $tempPem) {

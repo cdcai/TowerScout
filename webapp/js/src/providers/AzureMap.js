@@ -65,7 +65,7 @@
 
         // Validate subscription key format
         if (this.subscriptionKey.length < 20 || !this.subscriptionKey.match(/^[A-Za-z0-9\-_]+$/)) {
-          console.warn('⚠️ Subscription key format may be invalid:', this.subscriptionKey.substring(0, 8) + '...');
+          console.warn('⚠️ Subscription key format may be invalid.');
         }
 
         // Now initialize Azure Maps with proper authentication and error recovery

@@ -713,23 +713,35 @@ If key validation says TowerScout could not reach the provider validation
 service and logs mention `CERTIFICATE_VERIFY_FAILED`, the container may not
 trust the local network inspection certificate.
 
-Import a local CA bundle for the selected engine:
+Import a local CA bundle for the selected engine. The helper copies the CA into
+the selected engine's persistent `towerscout_config` volume, builds a combined
+CA bundle, verifies provider TLS with an invalid test key, and updates the
+local `.env` so future TowerScout starts use the bundle automatically.
 
 ```powershell
-.\scripts\import-tls-ca.cmd -Thumbprint <windows-certificate-thumbprint>
+.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint <windows-certificate-thumbprint> -VerifyProvider google
+.\scripts\stop.cmd -Engine docker
+.\start.bat -Engine docker -Gpu off
 ```
 
 For Podman:
 
 ```powershell
 .\scripts\import-tls-ca.cmd -Engine podman -Thumbprint <windows-certificate-thumbprint>
+.\scripts\stop.cmd -Engine podman
+.\start.bat -Engine podman -Gpu off
 ```
 
 If the site blocks Google but uses Azure, choose Azure verification:
 
 ```powershell
-.\scripts\import-tls-ca.cmd -Engine podman -Thumbprint <windows-certificate-thumbprint> -VerifyProvider azure
+.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint <windows-certificate-thumbprint> -VerifyProvider azure
 ```
+
+Do not paste the literal placeholder text `<windows-certificate-thumbprint>`
+into PowerShell. Replace it with the actual Windows certificate thumbprint from
+the site's root or intermediate inspection CA. A website leaf/server
+certificate is not sufficient.
 
 `TOWERSCOUT_ALLOW_INSECURE_TLS=1` is a last-resort validation-only workaround.
 Do not use it as normal release configuration.

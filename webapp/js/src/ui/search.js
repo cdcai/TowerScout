@@ -272,9 +272,9 @@
     }
     let kinds = ["None", "Polygon", "Multiple polygons"]
     if (estimate) {
-      window.TowerScoutLogger.info("Estimating tile count for the selected search area...");
+      window.TowerScoutLogger.info(`Estimating tile count using ${getProviderDisplayName(provider)} imagery for the selected search area...`);
     } else {
-      window.TowerScoutLogger.info("Starting cooling tower detection...");
+      window.TowerScoutLogger.info(`Starting cooling tower detection using ${getDetectionWorkflowDescription(provider)}...`);
     }
 
     // erase the previous set of towers and tiles
@@ -315,7 +315,8 @@
           fatalError("Tile limit for this session exceeded. Please close browser to continue.")
           return;
         }
-        window.TowerScoutLogger.info("Estimated " + tileCount + " tile(s), expected time: "
+        window.TowerScoutLogger.info("Estimated " + tileCount + " tile(s) using "
+          + getProviderDisplayName(provider) + " imagery, expected time: "
           + (Math.round(tileCount * secsPerTile * 10) / 10) + " s");
         // let nt = estimateNumTiles(currentMap.getZoom());
         // window.TowerScoutLogger.debug("  Estimated tiles:" + nt);
@@ -384,6 +385,20 @@
       provider: payload.provider,
       polygons: payload.polygons
     });
+  }
+
+  function getProviderDisplayName(provider) {
+    if (provider === 'azure') {
+      return 'Azure Maps';
+    }
+    if (provider === 'google') {
+      return 'Google Maps';
+    }
+    return 'the selected map provider';
+  }
+
+  function getDetectionWorkflowDescription(provider) {
+    return `${getProviderDisplayName(provider)} imagery and geocoding with the local TowerScout detection model`;
   }
 
   function getActiveDetectionProvider() {
@@ -504,7 +519,9 @@
       setProgress(0);
     } else {
       enableProgress(null);
-      window.TowerScoutLogger.info('Starting detection without a fresh estimate. Progress is indeterminate until results return.');
+      window.TowerScoutLogger.info(
+        `Starting detection using ${getDetectionWorkflowDescription(payload.provider)} without a fresh estimate. Progress is indeterminate until results return.`
+      );
     }
 
     Detection.resetAll();
@@ -581,9 +598,13 @@
     const fingerprint = buildRequestFingerprint(payload);
 
     if (estimate) {
-      window.TowerScoutLogger.info('Estimating tile count for the selected search area...');
+      window.TowerScoutLogger.info(
+        `Estimating tile count using ${getProviderDisplayName(payload.provider)} imagery for the selected search area...`
+      );
     } else {
-      window.TowerScoutLogger.info('Starting cooling tower detection...');
+      window.TowerScoutLogger.info(
+        `Starting cooling tower detection using ${getDetectionWorkflowDescription(payload.provider)}...`
+      );
     }
 
     Detection.resetAll();
@@ -604,7 +625,8 @@
         };
 
         window.TowerScoutLogger.info(
-          'Estimated ' + estimateResult.tileCount + ' tile(s), expected time: '
+          'Estimated ' + estimateResult.tileCount + ' tile(s) using '
+          + getProviderDisplayName(payload.provider) + ' imagery, expected time: '
           + (Math.round(estimateResult.estimatedSeconds * 10) / 10) + ' s'
         );
         return;
@@ -673,7 +695,9 @@
       }
     });
 
-    window.TowerScoutLogger.info(`Processed ${processedDetections} detection(s) and ${processedTiles} tile record(s).`);
+    window.TowerScoutLogger.info(
+      `Processed ${processedDetections} detection(s) and ${processedTiles} tile record(s) using ${getProviderDisplayName(getActiveDetectionProvider())} imagery.`
+    );
     window.TowerScoutLogger.debug(`📊 ${Detection_detections.length} total detections with server-provided addresses.`);
 
     Detection.sort();
@@ -686,7 +710,10 @@
 
     let time = (performance.now() - startTime) / 1000;
     disableProgress(time, processedTiles);
-    window.TowerScoutLogger.info("Detection request completed in " + time + " s.");
+    window.TowerScoutLogger.info(
+      "Detection request completed in " + time + " s using "
+      + getProviderDisplayName(getActiveDetectionProvider()) + " imagery/geocoding."
+    );
   }
 
   function cancelRequest() {

@@ -18,6 +18,8 @@ SETUP_SCRIPT = REPO_ROOT / "scripts" / "setup-towerscout.ps1"
 BOOTSTRAP_LIB = REPO_ROOT / "scripts" / "lib" / "TowerScoutBootstrap.ps1"
 COMPOSE_LIB = REPO_ROOT / "scripts" / "lib" / "TowerScoutCompose.ps1"
 PACKAGE_SCRIPT = REPO_ROOT / "scripts" / "package-release.ps1"
+LAUNCH_SCRIPT = REPO_ROOT / "scripts" / "launch.ps1"
+IMPORT_ASSETS_SCRIPT = REPO_ROOT / "scripts" / "import-assets.ps1"
 
 
 def _powershell_executable():
@@ -43,6 +45,8 @@ def test_bootstrap_entrypoint_is_packaged_and_reuses_validated_scripts():
     setup_cmd = (REPO_ROOT / "setup-towerscout.cmd").read_text(encoding="utf-8")
     setup = SETUP_SCRIPT.read_text(encoding="utf-8")
     bootstrap = BOOTSTRAP_SCRIPT.read_text(encoding="utf-8")
+    launch = LAUNCH_SCRIPT.read_text(encoding="utf-8")
+    import_assets = IMPORT_ASSETS_SCRIPT.read_text(encoding="utf-8")
     package_script = PACKAGE_SCRIPT.read_text(encoding="utf-8")
 
     assert "scripts\\bootstrap.ps1" in bootstrap_cmd
@@ -61,6 +65,10 @@ def test_bootstrap_entrypoint_is_packaged_and_reuses_validated_scripts():
     assert "[switch] $VerifyOnly" in bootstrap
     assert "import-assets.ps1" in bootstrap
     assert "-VerifyHashes" in bootstrap
+    assert "SessionMaxHours = $SessionMaxHours" in setup
+    assert "-SessionMaxHours $SessionMaxHours" in bootstrap
+    assert "Invoke-TowerScoutStaleContainerGuard" in launch
+    assert "Invoke-TowerScoutStaleContainerGuard" in import_assets
     assert "Write-TowerScoutImagePullReadiness" in bootstrap
     assert "launch.ps1" in bootstrap
     assert "-NoBrowser:$NoBrowser" in bootstrap
@@ -440,6 +448,99 @@ def test_bootstrap_image_inspect_uses_small_formatted_output():
 
     assert '"image", "inspect", $image, "--format", "{{.Id}}"' in helper
     assert '"image", "inspect", $image)' not in helper
+
+
+def test_stale_container_guard_does_not_remove_named_volumes():
+    compose_helper = COMPOSE_LIB.read_text(encoding="utf-8")
+
+    assert "Invoke-TowerScoutStaleContainerGuard" in compose_helper
+    assert "container rm" in compose_helper
+    assert "down -v" not in compose_helper
+    assert "volume rm" not in compose_helper
+    assert "docker volume" not in compose_helper
+    assert "podman volume" not in compose_helper
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap helpers are Windows-only")
+def test_stale_container_session_plan_covers_uat_lifetime_decisions():
+    command = f"""
+    $ErrorActionPreference = "Stop"
+    . "{COMPOSE_LIB}"
+    $now = [datetime]"2026-06-09T12:00:00Z"
+
+    $start = Get-TowerScoutContainerSessionPlan -Containers @() -SessionMaxHours 12 -Now $now
+    if ($start.Action -ne "start") {{
+        throw "Expected no-container plan to start, got $($start.Action)"
+    }}
+
+    $young = [pscustomobject]@{{
+        Id = "young"
+        Name = "towerscout"
+        StateStatus = "running"
+        HealthStatus = "healthy"
+        CreatedAt = $now.AddHours(-2)
+    }}
+    $reuse = Get-TowerScoutContainerSessionPlan -Containers @($young) -SessionMaxHours 12 -Now $now
+    if ($reuse.Action -ne "reuse") {{
+        throw "Expected young healthy container to be reused, got $($reuse.Action)"
+    }}
+
+    $old = [pscustomobject]@{{
+        Id = "old"
+        Name = "towerscout"
+        StateStatus = "running"
+        HealthStatus = "healthy"
+        CreatedAt = $now.AddHours(-13)
+    }}
+    $restartOld = Get-TowerScoutContainerSessionPlan -Containers @($old) -SessionMaxHours 12 -Now $now
+    if ($restartOld.Action -ne "restart" -or $restartOld.Reason -notmatch "older than 12") {{
+        throw "Expected old container to restart, got $($restartOld.Action): $($restartOld.Reason)"
+    }}
+
+    $override = Get-TowerScoutContainerSessionPlan -Containers @($old) -SessionMaxHours 24 -Now $now
+    if ($override.Action -ne "reuse") {{
+        throw "Expected longer support TTL to reuse, got $($override.Action)"
+    }}
+
+    $stopped = [pscustomobject]@{{
+        Id = "stopped"
+        Name = "towerscout"
+        StateStatus = "exited"
+        HealthStatus = ""
+        CreatedAt = $now.AddHours(-1)
+    }}
+    $restartStopped = Get-TowerScoutContainerSessionPlan -Containers @($stopped) -SessionMaxHours 12 -Now $now
+    if ($restartStopped.Action -ne "restart" -or $restartStopped.Reason -notmatch "not running") {{
+        throw "Expected stopped container to restart, got $($restartStopped.Action): $($restartStopped.Reason)"
+    }}
+
+    $unhealthy = [pscustomobject]@{{
+        Id = "unhealthy"
+        Name = "towerscout"
+        StateStatus = "running"
+        HealthStatus = "unhealthy"
+        CreatedAt = $now.AddHours(-1)
+    }}
+    $restartUnhealthy = Get-TowerScoutContainerSessionPlan -Containers @($unhealthy) -SessionMaxHours 12 -Now $now
+    if ($restartUnhealthy.Action -ne "restart" -or $restartUnhealthy.Reason -notmatch "unhealthy") {{
+        throw "Expected unhealthy container to restart, got $($restartUnhealthy.Action): $($restartUnhealthy.Reason)"
+    }}
+
+    try {{
+        Get-TowerScoutContainerSessionPlan -Containers @($young) -SessionMaxHours -1 -Now $now | Out-Null
+        throw "Negative session lifetime was accepted."
+    }}
+    catch {{
+        if ($_.Exception.Message -notmatch "SessionMaxHours") {{
+            throw
+        }}
+    }}
+    "ok"
+    """
+    result = _run_powershell(command)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "ok" in result.stdout
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap helpers are Windows-only")

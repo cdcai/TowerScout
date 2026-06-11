@@ -265,16 +265,20 @@ If provider key validation fails with "Could not reach the provider validation s
 
 If provider key validation returns an internal error and the logs mention an invalid or missing `REQUESTS_CA_BUNDLE` / `SSL_CERT_FILE` path, the selected runtime volume does not contain the CA bundle named in `.env`. This can happen when switching between Docker and Podman because each engine has its own named volumes. Re-run the CA import helper for the selected engine.
 
-Preferred fix: import the local root/intermediate CA into the persistent config volume and use a combined bundle that keeps the container's normal Debian CA roots:
+Preferred fix: import the local root/intermediate CA into the persistent config volume and use a combined bundle that keeps the container's normal Debian CA roots. The helper updates the local `.env` after a successful import so future starts use the combined bundle automatically:
 
 ```powershell
 .\scripts\import-tls-ca.cmd -Thumbprint <windows-certificate-thumbprint>
+.\scripts\stop.cmd -Engine docker
+.\start.bat -Engine docker -Gpu off
 ```
 
 For Podman:
 
 ```powershell
 .\scripts\import-tls-ca.cmd -Engine podman -Thumbprint <windows-certificate-thumbprint>
+.\scripts\stop.cmd -Engine podman
+.\start.bat -Engine podman -Gpu off
 ```
 
 The helper verifies the combined CA bundle by making a provider request with an invalid test key. It uses `-VerifyProvider auto` by default, which follows `DEFAULT_MAP_PROVIDER` when available and otherwise uses Google. For Azure-first or Google-blocked sites, choose the provider explicitly or skip remote verification:
@@ -290,13 +294,14 @@ The helper can also import an exported PEM/CER/CRT file:
 .\scripts\import-tls-ca.cmd -CertificatePath C:\path\to\local-ca.pem
 ```
 
-After import, set both variables in `.env` and recreate the container:
+After import, `.env` should contain both combined-bundle variables:
 
 ```powershell
 REQUESTS_CA_BUNDLE=/app/webapp/config/certs/towerscout-ca-bundle.pem
 SSL_CERT_FILE=/app/webapp/config/certs/towerscout-ca-bundle.pem
-.\start.bat -Engine docker -Gpu off
 ```
+
+The helper writes these values automatically. Restart TowerScout after the helper completes.
 
 The helper verifies Google TLS with an invalid test key. A successful TLS fix returns a normal provider invalid-key response instead of a certificate verification error.
 
