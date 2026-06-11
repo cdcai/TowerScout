@@ -1,9 +1,9 @@
 # Current Tasks - Active Sprint
 
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
-**Last Updated**: June 2, 2026
+**Last Updated**: June 11, 2026
 **Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
-**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, `TASK-067`, and `TASK-074` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` post-PR28 final prerelease Docker Desktop package path passed through checksum verification, bootstrap/readiness from the GitHub Release Application Package, Settings-linked docs, `/license`, in-container asset hash verification, and bounded Azure detection smoke on the refreshed final digest, with Podman Docker Hub source-build TLS, Docker-Desktop-free Podman, and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` is active for clean-machine pilot/UAT planning and now has exact refreshed release artifact values, default smoke fixture, support contacts, provider-key evidence boundaries, a published rc2 prerelease, and a passed rc2 provider setup / bounded Azure smoke; tester cohort selection and owner/reviewer acceptance remain before external tester launch; `TASK-080` has simplified the first-cohort setup path, produced the consolidated Word guide, and passed rc2 uploaded/downloaded release-asset validation plus rc2 provider setup / bounded Azure smoke; owner/reviewer signoff and tester/cohort selection remain before external tester send.
+**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, `TASK-067`, and `TASK-074` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` post-PR28 final prerelease Docker Desktop package path passed through checksum verification, bootstrap/readiness from the GitHub Release Application Package, Settings-linked docs, `/license`, in-container asset hash verification, and bounded Azure detection smoke on the refreshed final digest, with Podman Docker Hub source-build TLS, Docker-Desktop-free Podman, and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` is active for clean-machine pilot/UAT planning and now has exact refreshed release artifact values, default smoke fixture, support contacts, provider-key evidence boundaries, published rc2/rc3 prereleases, rc2 provider setup / bounded Azure smoke, and rc3 package/downloaded-release setup validation; tester cohort selection and owner/reviewer acceptance remain before external tester launch; `TASK-080` has simplified the first-cohort setup path, produced and locked the consolidated Word guide, verified the Google first-launch TLS support path, and published/validated the refreshed rc3 UAT release package; owner/reviewer signoff and tester/cohort selection remain before external tester send.
 
 ---
 
@@ -239,7 +239,7 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **User Value**: Ensures external testing starts from a repeatable, evidence-producing workflow instead of ad hoc feedback collection.
 
 ### **TASK-080: RC1 UAT User Guide And Setup Process Simplification**
-**Status**: IN_PROGRESS - rc2 release validation passed earlier; pre-UAT follow-up docs/runtime/status-message changes are implemented with focused coverage; live Google first-launch passed after TLS CA support-path validation; Word visual QA and final pre-package validation passed; refreshed package build, final handoff signoff, and tester/cohort selection remain pending before external handoff
+**Status**: IN_PROGRESS - rc2 release validation passed earlier; pre-UAT follow-up docs/runtime/status-message changes are implemented with focused coverage; live Google first-launch passed after TLS CA support-path validation; Word visual QA and final pre-package validation passed; refreshed rc3 package/image/GitHub prerelease validation passed; final handoff signoff and tester/cohort selection remain pending before external handoff
 **Type**: B/C (User Testing / Documentation / Release UX)
 **Priority**: HIGH
 **Estimated Effort**: 1-2 days (8-16 hours), plus optional launcher follow-through
@@ -263,7 +263,21 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 - Word guide remains outside the release package for now; package-facing
   Markdown/HTML and UAT handoff docs now use the same
   `Documents\TowerScoutUAT` working-folder model.
-- Corrected UAT release version is `v0.1.0-rc2`, with source ref
+- Current refreshed UAT release version is `v0.1.0-rc3`, with source ref
+  `8ce6375e7f2b74df773e27e4f081e4199eb54a68` and image digest
+  `sha256:796e0a7a03d3000199b3a40cc074fa5ca140232706a8747ff4d0eac0e4d85d5f`.
+  The GitHub prerelease at
+  `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc3` includes
+  the four expected rc3 assets. Application Package checksum:
+  `d298607b7d7fd2a3d93c6118994e0e139d32626061e39fb950330ea5388e12f0`.
+  Model & Data Package checksum:
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+  Local Docker validation used isolated project
+  `towerscout-task080-rc3-smoke` on port `5016`, and downloaded-release
+  validation used isolated project `towerscout-task080-rc3-download` on port
+  `5017`; both reached readiness `setup_required` with assets `ok` and were
+  stopped afterward.
+- Prior corrected UAT release version was `v0.1.0-rc2`, with source ref
   `4e8054d27faa1f956998f85b665a4ea28fc01ed9` and image digest
   `sha256:f3caa7915f7a8d70326b2fa84d62ec86e142c38c7d22615106e192d7f7821946`.
 - Local rc2 package generation produced
@@ -303,8 +317,10 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 - Final pre-package validation passed on 2026-06-11 across focused unit,
   release-package, frontend contract, bundle consistency, docs, agent-work,
   whitespace, and targeted secret-safety checks.
-- Remaining approval gates are regeneration/validation of package artifacts,
-  final handoff signoff, and tester/cohort selection.
+- Refreshed rc3 package, image, GitHub prerelease, and downloaded-release setup
+  validation passed on 2026-06-11.
+- Remaining approval gates are final handoff signoff and tester/cohort
+  selection.
 
 **Dependencies**: `TASK-066`; `TASK-071`; `TASK-073`; `TASK-074`; `TASK-075`; possible `TASK-076` provider-key policy language.
 

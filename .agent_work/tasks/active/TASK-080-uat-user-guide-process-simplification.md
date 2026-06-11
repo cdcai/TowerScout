@@ -711,10 +711,61 @@ agent-work, whitespace, and secret-safety checks.
   matches. The Word guide text scan found zero Google key, Azure key, or
   `FLASK_SECRET_KEY` matches.
 **Result**: PASS for final pre-package validation.
-**Remaining Gate**: Regenerate and validate refreshed RC package artifacts so
-external testers receive the locked Word guide, stale-container guard,
-provider-key/TLS hardening, provider-aware status messages, corrected PubMed
-link, and updated UAT support materials.
+**Next**: Regenerate and validate refreshed RC package artifacts so external
+testers receive the locked Word guide, stale-container guard, provider-key/TLS
+hardening, provider-aware status messages, corrected PubMed link, and updated
+UAT support materials.
+
+### 2026-06-11 - RC3 Package Refresh And Release Validation Passed
+**Objective**: Produce and validate refreshed external UAT release artifacts
+after the locked Word guide and pre-UAT follow-up fixes were committed.
+**Execution**: Committed the validated source checkpoint
+`8ce6375e7f2b74df773e27e4f081e4199eb54a68`, pushed it to `main`, ran the
+manual GHCR publish workflow for `v0.1.0-rc3` with `pytorch_flavor=cuda121`,
+generated the rc3 Application Package ZIP with the pinned image digest, copied
+the unchanged model/data asset ZIP to the rc3 filename, published the four rc3
+assets to a GitHub prerelease, and validated both the local package artifacts
+and downloaded GitHub Release artifacts through isolated Docker CPU setup
+smokes.
+**Artifacts**:
+- GitHub prerelease:
+  `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc3`.
+- Source ref:
+  `8ce6375e7f2b74df773e27e4f081e4199eb54a68`.
+- Image:
+  `ghcr.io/j-schulein/towerscout:v0.1.0-rc3-cuda121@sha256:796e0a7a03d3000199b3a40cc074fa5ca140232706a8747ff4d0eac0e4d85d5f`.
+- Application Package checksum:
+  `d298607b7d7fd2a3d93c6118994e0e139d32626061e39fb950330ea5388e12f0`.
+- Model & Data Package checksum:
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+**Validation**:
+- The GHCR publish workflow completed successfully and uploaded image metadata.
+- Package summary found 47 files and the expected top-level release payload.
+- Release manifest validation passed with the known recommended-field warnings.
+- Package `IMAGE.txt`, `.env.example`, and `SOURCE.txt` pin the rc3 image
+  digest and source ref.
+- Package secret scan found only safe documentation mentions of the
+  `FLASK_SECRET_KEY` variable name.
+- Local rc3 package smoke used isolated project
+  `towerscout-task080-rc3-smoke` on port `5016`; setup found both ZIPs,
+  verified sidecars, imported assets with hash verification, pulled the pinned
+  image, and reached readiness `setup_required` with assets `ok`.
+- Downloaded-release smoke used isolated project
+  `towerscout-task080-rc3-download` on port `5017`; downloaded checksums
+  matched sidecars, setup verified both ZIPs, imported assets with hash
+  verification, reused the pinned image, and reached readiness `setup_required`
+  with assets `ok`.
+- Health returned `status=ok`; quick-start docs and `/license` returned HTTP
+  `200`; both isolated validation stacks were stopped after evidence capture.
+**Residual Caveat**: Live provider-key entry and bounded detection were not
+rerun during the rc3 package smoke to avoid handling real keys again. The live
+Google first-launch issue was verified after the managed-network TLS support
+path, and the bounded Azure detection smoke remains the standing provider-path
+evidence from the prior release validation.
+**Result**: PASS for refreshed rc3 package, image, and GitHub prerelease
+artifact validation.
+**Next**: Record owner/reviewer handoff signoff and tester/cohort selection
+before sending external UAT materials.
 
 ---
 
@@ -722,21 +773,24 @@ link, and updated UAT support materials.
 
 ### Test Summary
 **Test Date**: 2026-06-01 baseline; 2026-06-09 follow-up validation added;
-2026-06-11 final pre-package validation passed
+2026-06-11 final pre-package validation and rc3 package refresh validation
+passed
 **Test Environment**: Windows workspace, Python 3.12.5 virtual environment,
 PowerShell helpers  
 **Test Status**: PASS for setup-wrapper/docs-alignment slice, structural DOCX
-QA, 2026-06-09 follow-up changes, owner Word visual QA, and 2026-06-11 final
-pre-package validation; automated visual render remains blocked by missing
-local renderer dependencies
+QA, 2026-06-09 follow-up changes, owner Word visual QA, 2026-06-11 final
+pre-package validation, and refreshed rc3 package/GitHub prerelease validation;
+automated visual render remains blocked by missing local renderer dependencies
 
 ### Acceptance Criteria Validation
 
-Partial. Setup wrapper, Markdown/HTML/package-local alignment, consolidated
-Word guide structural QA, command appendix, stale-container guard, corrected
-research link, concise issue form, and in-app status/output panel follow-up
-passed focused validation. Live Google first-launch verification passed after
-the managed-network TLS CA support path was applied.
+Setup wrapper, Markdown/HTML/package-local alignment, consolidated Word guide
+structural QA, command appendix, stale-container guard, corrected research
+link, concise issue form, in-app status/output panel follow-up, and refreshed
+rc3 package/release artifact validation passed focused validation. Live Google
+first-launch verification passed after the managed-network TLS CA support path
+was applied. Final external launch still depends on owner/reviewer handoff
+signoff and tester/cohort selection.
 
 Commands run:
 
@@ -751,6 +805,76 @@ Commands run:
     warning.
 - `git diff --check`
   - passed.
+- `gh workflow run container-publish.yml --repo J-Schulein/TowerScout --ref main -f tag=v0.1.0-rc3 -f push_latest=false -f pytorch_flavor=cuda121`
+  - triggered GHCR publish run
+    `https://github.com/J-Schulein/TowerScout/actions/runs/27362352747`.
+- `gh run watch 27362352747 --repo J-Schulein/TowerScout --exit-status`
+  - passed; published
+    `ghcr.io/j-schulein/towerscout:v0.1.0-rc3-cuda121`.
+- `gh run download 27362352747 --repo J-Schulein/TowerScout --name image-metadata-v0.1.0-rc3-cuda121`
+  - downloaded image metadata showing digest
+    `sha256:796e0a7a03d3000199b3a40cc074fa5ca140232706a8747ff4d0eac0e4d85d5f`
+    and source ref
+    `8ce6375e7f2b74df773e27e4f081e4199eb54a68`.
+- `.\scripts\package-release.cmd -Version v0.1.0-rc3 -OutputDir dist -Image ghcr.io/j-schulein/towerscout:v0.1.0-rc3-cuda121 -ImageDigest sha256:796e0a7a03d3000199b3a40cc074fa5ca140232706a8747ff4d0eac0e4d85d5f -PytorchFlavor cuda121 -Force`
+  - generated `dist\towerscout-v0.1.0-rc3.zip` and checksum.
+- Asset ZIP copy/checksum generation
+  - copied the unchanged rc2 model/data package to
+    `dist\towerscout-v0.1.0-rc3-assets-towerscout-v1-assets-2026-05-05.zip`
+    and generated the rc3 checksum sidecar.
+- `.\.venv\Scripts\python.exe .agents\skills\towerscout-release-candidate-gate\scripts\summarize_release_package.py dist\towerscout-v0.1.0-rc3.zip`
+  - passed; 47 files found.
+- `.\.venv\Scripts\python.exe .agents\skills\towerscout-release-candidate-gate\scripts\check_release_manifest.py dist\towerscout-v0.1.0-rc3\release-manifest.v1.json dist\towerscout-v0.1.0-rc3`
+  - passed with known recommended-field warnings.
+- `.\.venv\Scripts\python.exe .agents\skills\towerscout-secret-and-provider-key-safety\scripts\scan_for_sensitive_terms.py dist\towerscout-v0.1.0-rc3`
+  - found only safe documentation mentions of the `FLASK_SECRET_KEY` variable
+    name.
+- `.\setup-towerscout.cmd -Engine docker -Gpu off -Port 5016 -NoBrowser -TimeoutSeconds 240 -RestartWaitSeconds 180`
+  - passed from the local rc3 package files with isolated
+    `COMPOSE_PROJECT_NAME=towerscout-task080-rc3-smoke`; found both ZIPs,
+    verified sidecars, imported assets with hash verification, pulled the
+    pinned image, and reached readiness `setup_required` with assets `ok`.
+- `Invoke-RestMethod http://localhost:5016/api/health`
+  - returned `status=ok`.
+- `Invoke-RestMethod http://localhost:5016/api/readiness`
+  - returned `state=setup_required`, `assets.status=ok`,
+    `runtime.device_policy=cpu`, `runtime.pytorch_flavor=cuda121`,
+    `runtime.selected_device=cpu`, and image digest
+    `sha256:796e0a7a03d3000199b3a40cc074fa5ca140232706a8747ff4d0eac0e4d85d5f`.
+- `Invoke-WebRequest` for package docs and `/license` on port `5016`
+  - all returned HTTP `200`.
+- `.\scripts\status.cmd -Engine docker -Port 5016`
+  - reported the isolated rc3 container healthy on
+    `0.0.0.0:5016->5000/tcp` and readiness `setup_required`.
+- `.\scripts\stop.cmd -Engine docker -Port 5016`
+  - stopped the isolated rc3 local-package validation stack.
+- `gh release create v0.1.0-rc3 ... --repo J-Schulein/TowerScout --target 8ce6375e7f2b74df773e27e4f081e4199eb54a68 --prerelease --latest=false`
+  - created the GitHub prerelease at
+    `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc3` with
+    the four expected rc3 assets.
+- `gh release download v0.1.0-rc3 --repo J-Schulein/TowerScout --dir .agent_work\tmp\rc3-release-download-validation-20260611 --pattern "towerscout-v0.1.0-rc3*"`
+  - downloaded the four uploaded assets for post-upload validation.
+- Downloaded checksum sidecar verification
+  - confirmed the Application Package checksum
+    `d298607b7d7fd2a3d93c6118994e0e139d32626061e39fb950330ea5388e12f0` and
+    Model & Data Package checksum
+    `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+- `.\setup-towerscout.cmd -Engine docker -Gpu off -Port 5017 -NoBrowser -TimeoutSeconds 240 -RestartWaitSeconds 180`
+  - passed from the downloaded rc3 release files with isolated
+    `COMPOSE_PROJECT_NAME=towerscout-task080-rc3-download`; found both ZIPs,
+    verified sidecars, imported assets with hash verification, reused the
+    pinned image, and reached readiness `setup_required` with assets `ok`.
+- `Invoke-RestMethod http://localhost:5017/api/health`
+  - returned `status=ok`.
+- `Invoke-RestMethod http://localhost:5017/api/readiness`
+  - returned `state=setup_required`, `assets.status=ok`,
+    `runtime.device_policy=cpu`, `runtime.pytorch_flavor=cuda121`,
+    `runtime.selected_device=cpu`, and image digest
+    `sha256:796e0a7a03d3000199b3a40cc074fa5ca140232706a8747ff4d0eac0e4d85d5f`.
+- `Invoke-WebRequest` for package quick start and `/license` on port `5017`
+  - both returned HTTP `200`.
+- `.\scripts\stop.cmd -Engine docker -Port 5017`
+  - stopped the isolated downloaded-release validation stack.
 - `.\scripts\package-release.cmd -Version v0.1.0-rc2 -OutputDir dist -Image ghcr.io/j-schulein/towerscout:v0.1.0-rc2-cuda121 -ImageDigest sha256:f3caa7915f7a8d70326b2fa84d62ec86e142c38c7d22615106e192d7f7821946 -PytorchFlavor cuda121 -Force`
   - generated the rc2 Application Package ZIP and checksum.
 - `.\.venv\Scripts\python.exe .agents\skills\towerscout-release-candidate-gate\scripts\summarize_release_package.py dist\towerscout-v0.1.0-rc2.zip`
@@ -885,16 +1009,18 @@ Commands run:
 - Live Google first-launch setup passed after the managed-network TLS CA was
   imported. UAT testers on similar managed networks may still need the
   documented CA-import support step.
-- The published RC package needs a refreshed package build before external
-  tester handoff because launcher/docs/frontend files changed after rc2 was
-  built.
+- The refreshed rc3 package/release path was validated through setup-required
+  readiness. Live provider-key entry and bounded detection were not rerun
+  during rc3 package smoke to avoid re-handling real provider keys; prior
+  Google first-launch and Azure bounded-smoke evidence remain the provider-path
+  basis.
 - Owner/reviewer signoff and tester/cohort selection remain pending before
   external handoff.
 
 ### Remediation Actions
 
-Refresh the RC package after owner approval of this slice, then record
-owner/reviewer signoff and tester/cohort selection before external handoff.
+Record owner/reviewer signoff and tester/cohort selection before external
+handoff.
 
 ### Sign-off
 
