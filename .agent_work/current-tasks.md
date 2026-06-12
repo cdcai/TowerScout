@@ -1,7 +1,7 @@
 # Current Tasks - Active Sprint
 
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
-**Last Updated**: June 11, 2026
+**Last Updated**: June 12, 2026
 **Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
 **Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, `TASK-067`, and `TASK-074` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` post-PR28 final prerelease Docker Desktop package path passed through checksum verification, bootstrap/readiness from the GitHub Release Application Package, Settings-linked docs, `/license`, in-container asset hash verification, and bounded Azure detection smoke on the refreshed final digest, with Podman Docker Hub source-build TLS, Docker-Desktop-free Podman, and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` is active for clean-machine pilot/UAT planning and now has exact refreshed release artifact values, default smoke fixture, support contacts, provider-key evidence boundaries, published rc2/rc3 prereleases, rc2 provider setup / bounded Azure smoke, and rc3 package/downloaded-release setup validation; tester cohort selection and owner/reviewer acceptance remain before external tester launch; `TASK-080` has simplified the first-cohort setup path, produced and locked the consolidated Word guide, verified the Google first-launch TLS support path, and published/validated the refreshed rc3 UAT release package; owner/reviewer signoff and tester/cohort selection remain before external tester send.
 
@@ -325,6 +325,28 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **Dependencies**: `TASK-066`; `TASK-071`; `TASK-073`; `TASK-074`; `TASK-075`; possible `TASK-076` provider-key policy language.
 
 **User Value**: Reduces first-cohort UAT friction by turning the validated release package path into a plain-language walkthrough that explains what users are doing, why each step matters, what success looks like, and how to report safe evidence if blocked.
+
+### **TASK-081: RC3 Runtime Hardening And Podman Independence**
+**Status**: IN_PROGRESS - runtime defaults, launcher/import hardening, route safety fixes, docs, focused automated validation, live Podman CPU launch/import validation, and live Docker Desktop CPU launch/import validation passed; GPU validation remains blocked pending suitable NVIDIA runtime evidence
+**Type**: C (Runtime Hardening / Podman Support / Release Validation)
+**Priority**: HIGH
+**Estimated Effort**: 2-4 days (16-32 hours), split between CPU-dev-able fixes and hardware-dependent GPU validation
+**Target Sprint**: Sprint 06 V1 RC1 / post-rc3 hardening
+**Task File**: `.agent_work/tasks/active/TASK-081-rc3-runtime-hardening-podman-independence.md`
+
+**Objective**: Implement the actionable RC3 runtime hardening, Podman independence, launcher/device-integrity, and reviewer-audit recommendations while preserving the CPU-safe UAT baseline and keeping Podman GPU support gated until hardware evidence exists.
+
+**Current Direction**:
+- Treat the empirical GPU/Podman replay as the controlling analysis: the observed Docker GPU, Docker CPU, and Podman CPU outputs matched on the same 25-tile fixture, so no model or TF32 precision change is currently justified as the T1000 fix.
+- Fix pre-UAT runtime correctness issues first: default image references, restart policy, liveness-based engine selection, and Podman asset import fallback.
+- Make selected runtime/device state unmistakable in launcher, import, readiness, and support output so stale containers or mode changes cannot silently reuse the wrong CPU/GPU path.
+- Productize Podman CPU independence through an explicit Compose-provider decision, provider/version reporting, focused tests, and documentation that distinguishes package runtime from source-build/TLS caveats.
+- Include the small reviewer-audit hardening items that are low-risk and release-relevant: upload filename sanitization, debug Azure route removal, and a pilot tile cap.
+- Keep Podman GPU implementation as a gated validation phase, not a support claim, until WSL2/CDI/preflight, parity, timing, and evidence criteria pass.
+
+**Dependencies**: `TASK-066`; `TASK-073`; `TASK-074`; `TASK-075`; `TASK-080`; owner-provided RC3 GPU/Podman and reviewer-audit documents dated 2026-06-11.
+
+**User Value**: Reduces the chance that external UAT is blocked by runtime ambiguity, stale device mode, Podman provider gaps, or known reviewer-audit quick fixes, while preserving honest support boundaries for GPU and Podman.
 
 ### **TASK-074: Runtime Prerequisite Preflight**
 **Status**: COMPLETED - post-merge package-artifact bootstrap validation passed

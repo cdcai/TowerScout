@@ -496,6 +496,20 @@
       throw new Error(`Invalid tile count response: ${JSON.stringify(result)}`);
     }
 
+    if (result.blockedByTileLimit === true) {
+      const tileLimit = Number(result.tileLimit);
+      const message = result.message || result.error || (
+        Number.isFinite(tileLimit)
+          ? `The selected area includes ${tileCount} tile(s), which exceeds the current pilot limit of ${tileLimit}.`
+          : 'The selected area exceeds the current pilot tile limit.'
+      );
+      const error = new Error(message);
+      error.blockedByTileLimit = true;
+      error.tileCount = tileCount;
+      error.tileLimit = Number.isFinite(tileLimit) ? tileLimit : null;
+      throw error;
+    }
+
     return {
       tileCount,
       estimatedSeconds: Number.isFinite(estimatedSeconds) ? estimatedSeconds : tileCount * secsPerTile
@@ -638,7 +652,9 @@
       disableProgress(0, 0);
 
       const msg = error.message || 'Unknown error occurred';
-      if (msg.includes('zipcode')) {
+      if (error.blockedByTileLimit) {
+        TowerScoutErrorHandler.showUserNotification(msg, 'warning', 8000);
+      } else if (msg.includes('zipcode')) {
         TowerScoutErrorHandler.showUserNotification(
           'Invalid ZIP code or search area. Please adjust your search boundaries.',
           'error'

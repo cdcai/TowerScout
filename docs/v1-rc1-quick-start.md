@@ -517,6 +517,10 @@ detections is an acceptable result. Do not choose a private investigation AOI
 for the first smoke test. Keep the first run small. The default RC1 Azure
 smoke fixture is about `8` tiles.
 
+The UAT package defaults to a pilot guard of `100` tiles. If TowerScout reports
+that the selected area exceeds the current pilot limit, reduce the search area
+or contact support before running a larger validation.
+
 Suggested smoke flow:
 
 1. Search for or navigate to the approved test location.
@@ -580,7 +584,9 @@ Run commands from the extracted TowerScout application folder, such as
 
 Use `-Gpu auto` for exploratory Docker GPU validation with CPU fallback. Use
 `-Gpu on` only when support expects CUDA to be available inside the container.
-Podman GPU launch is not validated for V1 RC1.
+With `-Gpu on`, the launcher checks readiness and fails closed unless
+TowerScout reports `selected_device=cuda`. Podman GPU launch is not validated
+for V1 RC1.
 
 ## 12. Source, Licenses, And Help
 

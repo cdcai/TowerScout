@@ -124,6 +124,10 @@ The publish workflow has an explicit PyTorch wheel flavor input:
 
 The workflow publishes flavor-specific tags. For example, a workflow tag input of `v0.1.0-rc2` with `cuda121` publishes `v0.1.0-rc2-cuda121`; `push_latest` publishes `latest-cpu` or `latest-cuda121`, not an ambiguous `latest`.
 
+Source-checkout and local-validation defaults use `latest-cpu` when no package
+digest is present. Release packages should still pin `TOWERSCOUT_IMAGE` to the
+exact digest recorded in the release handoff.
+
 For RC1, record the chosen flavor with the image digest in the release package. A CUDA-capable image remains CPU-safe when launched with `-Gpu off`, but GPU execution is not a supported claim until NVIDIA Docker host validation, fixed-fixture CPU/GPU parity, and timing evidence are captured.
 
 ## First Run
@@ -138,7 +142,9 @@ setup-towerscout.cmd
 
 Setup checks disk space, port availability, engine readiness, Compose
 availability, release metadata, asset ZIP checksum/layout, imports assets with
-hash verification when assets are available, then starts TowerScout. Use
+hash verification when assets are available, then starts TowerScout. Automatic
+engine selection prefers a reachable engine over an installed but stopped
+engine. Use
 `setup-towerscout.cmd -Engine podman` only for the support-directed Podman
 path, and use `setup-towerscout.cmd -Engine docker -Gpu auto|on` only for
 support-directed Docker GPU validation.
@@ -368,6 +374,10 @@ For a source checkout that already has local assets under `webapp/`, use:
 ```powershell
 .\scripts\import-assets.cmd -Source webapp -Engine docker -Build -VerifyHashes
 ```
+
+For Podman, asset import first uses the selected Compose provider's `cp`
+support. If that provider cannot copy files, the helper falls back to direct
+`podman cp` against the running TowerScout service container.
 
 Release-candidate validation should enable SHA-256 checks:
 

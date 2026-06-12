@@ -85,7 +85,7 @@ SHA-256 verification is available with `TOWERSCOUT_VERIFY_ASSET_HASHES=1` for re
 
 For release-candidate or support validation, prefer `setup-towerscout.cmd` for first setup so the package can discover the local Model & Data Package ZIP, verify checksum sidecars, reject unsafe layouts, import assets with hash verification, and launch. Manual validation can still run `scripts/import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180` during import unless support explicitly selected another engine.
 
-Hosted asset download is out of scope for the v1 control package. The supported v1 path is manifest-backed asset import from a local bundle using `setup-towerscout.cmd`, `bootstrap.cmd`, or `scripts/import-assets.cmd`, with SHA-256 verification for release-candidate and support validation. Docker Desktop is the primary RC1 pilot engine; Podman import support remains qualified by the selected engine's running machine and Compose provider. A hosted downloader requires a separate design for asset hosting, checksum enforcement, retries, proxy/TLS behavior, partial-download recovery, and restricted-network fallback.
+Hosted asset download is out of scope for the v1 control package. The supported v1 path is manifest-backed asset import from a local bundle using `setup-towerscout.cmd`, `bootstrap.cmd`, or `scripts/import-assets.cmd`, with SHA-256 verification for release-candidate and support validation. Docker Desktop is the primary RC1 pilot engine; Podman import support remains qualified by the selected engine's running machine and Compose provider. If a Podman Compose provider cannot perform `cp`, the helper falls back to direct `podman cp` against the running TowerScout service container. A hosted downloader requires a separate design for asset hosting, checksum enforcement, retries, proxy/TLS behavior, partial-download recovery, and restricted-network fallback.
 
 The asset ZIP root is `model_params/`, `data/`, and `asset_manifest.v1.json`. Users extract those entries into the package's `assets/` directory before import. The control package manifest remains authoritative; the asset ZIP manifest copy is used for release/support matching by manifest version and manifest file hash.
 
@@ -98,6 +98,7 @@ The GitHub Release control package is assembled by `scripts/package-release.cmd`
 - `.env.example` with the selected image reference
 - Windows `.cmd` wrappers and PowerShell helpers for setup, bootstrap, start, stop, logs, status, asset import, and TLS CA import
 - top-level `setup-towerscout.cmd` first-setup helper that defaults to Docker Desktop and `-Gpu off`, discovers local release artifacts, verifies checksum sidecars, stages safe asset ZIPs, imports assets with hash verification, and then calls the launcher
+- `TOWERSCOUT_PILOT_MAX_TILES=100` by default for the first UAT package guard; support can override it for approved larger validation
 - top-level `bootstrap.cmd` support helper for explicit artifact paths and advanced validation
 - top-level `start.bat` launcher that starts Compose, polls `/api/readiness`, and opens the browser at `http://localhost:<port>` after the app shell is reachable
 - V1 RC1 quick start, package guide, user guide, project overview, and this runtime contract
@@ -132,7 +133,7 @@ The default package launcher uses `-Gpu off`, keeps `compose.gpu.yaml` out of th
 Docker GPU launch is opt-in through `scripts/launch.ps1 -Engine docker -Gpu auto|on` or `start.bat -Engine docker -Gpu auto|on`. GPU overlay use requests NVIDIA GPU devices through Docker Compose device reservations, and these modes set TowerScout's runtime policy:
 
 - `auto`: start without the GPU overlay unless `TOWERSCOUT_GPU_AUTO_OVERLAY=1` has been set in the shell or `.env` after workstation-specific Docker GPU validation; otherwise fall back to CPU with diagnostics.
-- `on`: always add `compose.gpu.yaml`, require CUDA, and fail readiness when CUDA is unavailable.
+- `on`: always add `compose.gpu.yaml`, require CUDA, and fail readiness when CUDA is unavailable. The launcher also checks the readiness payload and fails closed unless TowerScout reports `selected_device=cuda`.
 
 Podman GPU launch is not part of the validated release path. Podman remains supported for CPU launch unless a later validation proves a Podman CDI GPU procedure.
 
@@ -141,6 +142,10 @@ Readiness diagnostics verify CUDA with a lightweight CUDA tensor probe when `TOW
 ## Upload Limit
 
 `TOWERSCOUT_MAX_REQUEST_BODY_BYTES` remains the single request-body/upload-size knob. Model upload remains disabled unless `TOWERSCOUT_ENABLE_MODEL_UPLOAD` is explicitly truthy.
+
+`TOWERSCOUT_PILOT_MAX_TILES` is a separate UAT guard. When set, detection stops
+before imagery download or model inference if the retained tile count exceeds
+the configured pilot limit.
 
 ## TLS Trust
 

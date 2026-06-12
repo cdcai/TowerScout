@@ -120,6 +120,7 @@ readiness: setup_required</code></pre>
         <h2>Confirm Success</h2>
         <pre><code>.\scripts\status.cmd -Engine docker</code></pre>
         <p>Readiness should become <code>ready</code> after provider setup and required assets are present. For a smoke check, support should provide the fixture before UAT starts: provider, public/non-sensitive location name, expected tile range, and whether zero detections is acceptable. Do not choose a private investigation AOI for the first smoke test. Estimate tiles first, keep the run small, then select <code>Find towers</code>. The default RC1 Azure smoke fixture is about <code>8</code> tiles.</p>
+        <p>The UAT package defaults to a pilot guard of <code>100</code> tiles. If TowerScout reports that the selected area exceeds the current pilot limit, reduce the search area or contact support before running a larger validation.</p>
         <p>Expected result: the detection workflow completes without crashing. For the default RC1 Azure fixture, expect a non-zero tower result. Exact counts may vary, but zero towers, no review-panel update, or a crash should be reported as <code>BLOCKED</code> or <code>FAIL</code>. For any future support-approved fixture, follow the zero-detection rule support provided for that fixture.</p>
       </section>
       <section class="doc-section" id="stop">
@@ -198,7 +199,7 @@ readiness: setup_required</code></pre>
             </tr>
           </tbody>
         </table>
-        <p>Use <code>-Gpu auto</code> for exploratory Docker GPU validation with CPU fallback. Use <code>-Gpu on</code> only when support expects CUDA to be available inside the container. Podman GPU launch is not validated for V1 RC1.</p>
+        <p>Use <code>-Gpu auto</code> for exploratory Docker GPU validation with CPU fallback. Use <code>-Gpu on</code> only when support expects CUDA to be available inside the container. With <code>-Gpu on</code>, the launcher checks readiness and fails closed unless TowerScout reports <code>selected_device=cuda</code>. Podman GPU launch is not validated for V1 RC1.</p>
       </section>
       <section class="doc-section" id="license">
         <h2>Source, Licenses, And Help</h2>

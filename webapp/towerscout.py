@@ -156,6 +156,39 @@ dev = 0
 MAX_TILES = 100000
 MAX_TILES_SESSION = 100000
 
+
+def _get_positive_int_env(name, default):
+    value = os.getenv(name, "").strip()
+    if not value:
+        return default
+    try:
+        parsed = int(value)
+    except ValueError:
+        return default
+    if parsed <= 0:
+        return default
+    return parsed
+
+
+def get_detection_tile_limit():
+    base_limit = _get_positive_int_env("TOWERSCOUT_MAX_TILES", MAX_TILES)
+    pilot_limit = _get_positive_int_env("TOWERSCOUT_PILOT_MAX_TILES", None)
+    if pilot_limit is None:
+        return base_limit
+    return min(base_limit, pilot_limit)
+
+
+def get_session_tile_limit():
+    return _get_positive_int_env("TOWERSCOUT_MAX_TILES_SESSION", MAX_TILES_SESSION)
+
+
+def _format_tile_limit_error(tile_count, tile_limit):
+    return (
+        f"The selected search area contains {tile_count} tile(s), which exceeds "
+        f"the current pilot limit of {tile_limit} tile(s). Select a smaller area "
+        "or ask support before running a larger validation."
+    )
+
 engines = {}
 
 engine_default = None
@@ -806,7 +839,8 @@ def _run_detection_request():
     if 'tiles' not in session:
         session['tiles'] = 0
 
-    if session['tiles'] > MAX_TILES_SESSION:
+    session_tile_limit = get_session_tile_limit()
+    if session['tiles'] > session_tile_limit:
         return jsonify({'error': 'Tile limit for this session exceeded. Please close browser to continue.'}), 400
 
     start = time.time()
@@ -881,17 +915,6 @@ def _run_detection_request():
         if exit_events.query(run_token):
             return cancelled_response('Detection was cancelled before tile preparation finished.')
 
-        perf_metrics.start_phase('model_initialization')
-        det = get_engine(engine)
-        perf_metrics.end_phase('model_initialization')
-        if hasattr(perf_metrics, "set_runtime_metadata"):
-            perf_metrics.set_runtime_metadata(
-                model_batch_size=getattr(det, 'batch_size', None),
-                model_device=getattr(det, 'device_label', None),
-            )
-        if exit_events.query(run_token):
-            return cancelled_response('Detection was cancelled before model initialization finished.')
-
         map_provider = _create_map_provider(provider)
         tiles, _nx, _ny, _meters, _h, _w, tile_stats = _build_tiles_for_request(
             map_provider,
@@ -929,10 +952,13 @@ def _run_detection_request():
         if exit_events.query(run_token):
             return cancelled_response('Detection was cancelled after tile preparation.')
 
-        if len(tiles) > MAX_TILES:
+        tile_limit = get_detection_tile_limit()
+        if len(tiles) > tile_limit:
+            message = _format_tile_limit_error(len(tiles), tile_limit)
             api_logger.warning(
-                "Detection request for session %s exceeds MAX_TILES with %s tile(s)",
+                "Detection request for session %s exceeds tile limit %s with %s tile(s)",
                 session_id,
+                tile_limit,
                 len(tiles),
             )
             _finish_detection_run(
@@ -941,12 +967,28 @@ def _run_detection_request():
                 run_token=run_token,
                 phase='error',
                 title='Detection blocked',
-                detail='The requested search area exceeds the tile limit for a single run.',
+                detail=message,
                 cancel_requested=False,
                 counts=tile_stats,
                 tile_count=len(tiles),
             )
-            return Response("[]", mimetype='application/json')
+            return jsonify({
+                'error': message,
+                'tileCount': len(tiles),
+                'tileLimit': tile_limit,
+                'blockedByTileLimit': True,
+            }), 400
+
+        perf_metrics.start_phase('model_initialization')
+        det = get_engine(engine)
+        perf_metrics.end_phase('model_initialization')
+        if hasattr(perf_metrics, "set_runtime_metadata"):
+            perf_metrics.set_runtime_metadata(
+                model_batch_size=getattr(det, 'batch_size', None),
+                model_device=getattr(det, 'device_label', None),
+            )
+        if exit_events.query(run_token):
+            return cancelled_response('Detection was cancelled before model initialization finished.')
 
         session['tiles'] += len(tiles)
 
@@ -1755,6 +1797,8 @@ def get_engines():
 @app.route('/debug-azure-maps')
 def debug_azure_maps():
     """Debug page for Azure Maps initialization issues"""
+    if os.getenv("TOWERSCOUT_ENABLE_DEBUG_AZURE_MAPS", "").strip().lower() not in ("1", "true", "yes", "on"):
+        flask_abort(404)
     api_logger.debug("Azure Maps debug page requested")
     return send_from_directory(str(script_dir), 'debug_azure_maps.html')
 
@@ -2351,7 +2395,8 @@ def estimate_detection_tiles():
     if 'tiles' not in session:
         session['tiles'] = 0
 
-    if session['tiles'] > MAX_TILES_SESSION:
+    session_tile_limit = get_session_tile_limit()
+    if session['tiles'] > session_tile_limit:
         return jsonify({
             'tileCount': -1,
             'estimatedSeconds': 0.0
@@ -2405,10 +2450,17 @@ def estimate_detection_tiles():
             len(tiles),
             perf_metrics.estimated_time_seconds,
         )
-        return jsonify({
+        tile_limit = get_detection_tile_limit()
+        blocked_by_limit = len(tiles) > tile_limit
+        response_payload = {
             'tileCount': len(tiles),
-            'estimatedSeconds': round(perf_metrics.estimated_time_seconds, 2)
-        })
+            'estimatedSeconds': round(perf_metrics.estimated_time_seconds, 2),
+            'tileLimit': tile_limit,
+            'blockedByTileLimit': blocked_by_limit,
+        }
+        if blocked_by_limit:
+            response_payload['message'] = _format_tile_limit_error(len(tiles), tile_limit)
+        return jsonify(response_payload)
     except ValidationError as e:
         api_logger.error("Validation error: %s", e.message)
         return jsonify({'error': f'Validation error: {e.message}'}), 400

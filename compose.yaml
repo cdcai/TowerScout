@@ -1,6 +1,6 @@
 services:
   towerscout:
-    image: ${TOWERSCOUT_IMAGE:-ghcr.io/j-schulein/towerscout:latest}
+    image: ${TOWERSCOUT_IMAGE:-ghcr.io/j-schulein/towerscout:latest-cpu}
     ports:
       - "${TOWERSCOUT_PORT:-5000}:5000"
     environment:
@@ -10,7 +10,9 @@ services:
       TOWERSCOUT_LAZY_MODEL_INIT: "1"
       TOWERSCOUT_STARTUP_PRELOAD: "0"
       TOWERSCOUT_DEVICE: ${TOWERSCOUT_DEVICE:-auto}
+      TOWERSCOUT_GPU_MODE: ${TOWERSCOUT_GPU_MODE:-off}
       TOWERSCOUT_GPU_CONCURRENCY: ${TOWERSCOUT_GPU_CONCURRENCY:-1}
+      TOWERSCOUT_PILOT_MAX_TILES: ${TOWERSCOUT_PILOT_MAX_TILES:-100}
       TOWERSCOUT_MAX_REQUEST_BODY_BYTES: ${TOWERSCOUT_MAX_REQUEST_BODY_BYTES:-52428800}
       TOWERSCOUT_VERIFY_ASSET_HASHES: ${TOWERSCOUT_VERIFY_ASSET_HASHES:-0}
       TOWERSCOUT_ALLOW_INSECURE_TLS: ${TOWERSCOUT_ALLOW_INSECURE_TLS:-0}
@@ -32,7 +34,7 @@ services:
       timeout: 5s
       start_period: 30s
       retries: 3
-    restart: unless-stopped
+    restart: always
 
 volumes:
   towerscout_config:

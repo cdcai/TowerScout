@@ -262,6 +262,10 @@ ghcr.io/j-schulein/towerscout:v0.1.0-rc2-cuda121@sha256:<digest>
 `IMAGE.txt`, `.env.example`, and `release-manifest.v1.json` record the selected
 PyTorch flavor, either `cpu` or `cuda121`.
 
+Source-checkout or local-validation defaults use the explicit `latest-cpu`
+tag when no package digest is present. Do not use a bare `latest` image tag for
+release or pilot instructions.
+
 ## Guided Setup Path
 
 For first setup, prefer the top-level setup entry point:
@@ -290,6 +294,8 @@ the validated bootstrap path.
 Setup performs the checks that users most often miss:
 
 - Docker or Podman CLI, daemon/machine, and Compose-provider readiness.
+- Automatic engine selection prefers a reachable engine over an installed but
+  stopped engine.
 - WSL 2 hint for Docker Desktop on Windows.
 - Local port availability.
 - Minimum free disk space.
@@ -299,7 +305,8 @@ Setup performs the checks that users most often miss:
 - Model & Data Package checksum verification.
 - Asset ZIP safety, direct-root layout, and control/asset manifest matching.
 - Named-volume asset import through `scripts\import-assets.ps1` with hash
-  verification enabled.
+  verification enabled; Podman can fall back to direct `podman cp` when the
+  selected Compose provider cannot copy files.
 - Startup through `scripts\launch.ps1`.
 
 If automatic ZIP discovery is ambiguous, move old ZIPs out of the UAT folder or
@@ -630,6 +637,10 @@ preferably `1-6` tiles. A successful smoke check means the detection workflow
 completes without crashing and the map/review panel update, even if the result
 count is zero for the selected area.
 
+The UAT package defaults to a `TOWERSCOUT_PILOT_MAX_TILES=100` guard. If a
+tester selects a larger area, TowerScout stops before imagery download or model
+inference and asks the tester to choose a smaller area or contact support.
+
 Do not use sensitive AOIs in broad screenshots or public issue reports.
 
 ## Troubleshooting
@@ -775,7 +786,8 @@ Useful evidence:
 - For Podman, the selected Compose provider.
 - Readiness state and recovery hints.
 - For GPU validation, the requested `-Gpu` mode and non-secret `ml_runtime`
-  readiness diagnostics.
+  readiness diagnostics. `-Gpu on` must report `selected_device=cuda` before it
+  is treated as a valid GPU launch.
 
 Simple metadata commands for first-line support:
 

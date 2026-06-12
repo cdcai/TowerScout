@@ -16,6 +16,33 @@ function Test-TowerScoutCommand {
     return $null -ne (Get-Command $Name -ErrorAction SilentlyContinue)
 }
 
+function Test-TowerScoutEngineReady {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("docker", "podman")]
+        [string] $EngineName
+    )
+
+    if (-not (Test-TowerScoutCommand $EngineName)) {
+        return $false
+    }
+
+    try {
+        $previousErrorActionPreference = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        try {
+            & $EngineName info 2>$null | Out-Null
+        }
+        finally {
+            $ErrorActionPreference = $previousErrorActionPreference
+        }
+        return $LASTEXITCODE -eq 0
+    }
+    catch {
+        return $false
+    }
+}
+
 function Get-TowerScoutComposeCommand {
     param(
         [ValidateSet("auto", "docker", "podman")]
@@ -23,13 +50,22 @@ function Get-TowerScoutComposeCommand {
     )
 
     if ($Engine -eq "auto") {
-        if (Test-TowerScoutCommand "docker") {
+        $dockerAvailable = Test-TowerScoutCommand "docker"
+        $podmanAvailable = Test-TowerScoutCommand "podman"
+
+        if ($dockerAvailable -and (Test-TowerScoutEngineReady -EngineName "docker")) {
             $Engine = "docker"
         }
-        elseif (Test-TowerScoutCommand "podman") {
+        elseif ($podmanAvailable -and (Test-TowerScoutEngineReady -EngineName "podman")) {
+            if ($dockerAvailable) {
+                Write-Host "Docker CLI was found but the Docker engine is not reachable; automatic engine selection chose Podman."
+            }
             $Engine = "podman"
         }
         else {
+            if ($dockerAvailable -or $podmanAvailable) {
+                throw "No reachable container engine found. Start Docker Desktop or a support-approved Podman machine and try again."
+            }
             throw "No supported container engine found. Install Docker or Podman and try again."
         }
     }
@@ -65,6 +101,24 @@ function Test-TowerScoutCommandOrPath {
     }
 
     return $null -ne (Get-Command $Value -ErrorAction SilentlyContinue)
+}
+
+function Get-TowerScoutObjectPropertyValue {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object] $InputObject,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Name
+    )
+
+    if ($null -eq $InputObject) {
+        return ""
+    }
+    if ($InputObject.PSObject.Properties.Name -notcontains $Name) {
+        return ""
+    }
+    return [string] $InputObject.PSObject.Properties[$Name].Value
 }
 
 function Get-TowerScoutEnvFileValue {
@@ -318,6 +372,8 @@ function Get-TowerScoutComposeServiceContainerIds {
 
     Push-Location $repoRoot
     try {
+        $previousErrorActionPreference = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
         $output = & $command["Executable"] @(($command["Arguments"]) + $composeFiles + @("ps", "-a", "-q", $ServiceName)) 2>$null
         if ($LASTEXITCODE -ne 0) {
             return @()
@@ -326,8 +382,86 @@ function Get-TowerScoutComposeServiceContainerIds {
         return @($output | ForEach-Object { ([string] $_).Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
     }
     finally {
+        $ErrorActionPreference = $previousErrorActionPreference
         Pop-Location
     }
+}
+
+function Get-TowerScoutComposeProjectName {
+    if (-not [string]::IsNullOrWhiteSpace($env:COMPOSE_PROJECT_NAME)) {
+        return $env:COMPOSE_PROJECT_NAME.Trim()
+    }
+    return (Split-Path (Get-TowerScoutRepoRoot) -Leaf).ToLowerInvariant()
+}
+
+function Get-TowerScoutPodmanServiceContainerId {
+    param(
+        [string] $ServiceName = "towerscout"
+    )
+
+    $projectName = Get-TowerScoutComposeProjectName
+    $labelSets = @(
+        @("io.podman.compose.project=$projectName", "io.podman.compose.service=$ServiceName"),
+        @("com.docker.compose.project=$projectName", "com.docker.compose.service=$ServiceName")
+    )
+
+    foreach ($labelSet in $labelSets) {
+        $ids = & podman ps `
+            --filter "label=$($labelSet[0])" `
+            --filter "label=$($labelSet[1])" `
+            --format "{{.ID}}" 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            $containerId = @($ids | ForEach-Object { ([string] $_).Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -First 1)
+            if ($containerId.Count -gt 0 -and -not [string]::IsNullOrWhiteSpace($containerId[0])) {
+                return [string] $containerId[0]
+            }
+        }
+    }
+
+    return ""
+}
+
+function Copy-TowerScoutContainerPath {
+    param(
+        [ValidateSet("auto", "docker", "podman")]
+        [string] $Engine = "auto",
+
+        [Parameter(Mandatory = $true)]
+        [string] $LocalPath,
+
+        [Parameter(Mandatory = $true)]
+        [string] $ContainerPath,
+
+        [switch] $Build,
+
+        [ValidateSet("off", "auto", "on")]
+        [string] $Gpu = "off"
+    )
+
+    Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @(
+        "cp",
+        $LocalPath,
+        "towerscout:$ContainerPath"
+    )
+    if ($script:TowerScoutComposeExitCode -eq 0) {
+        return
+    }
+
+    $copyExitCode = $script:TowerScoutComposeExitCode
+    $command = Get-TowerScoutComposeCommand -Engine $Engine
+    if ([string] $command["Executable"] -ne "podman") {
+        $script:TowerScoutComposeExitCode = $copyExitCode
+        return
+    }
+
+    Write-Host "Compose provider did not support cp; falling back to direct podman cp."
+    $containerId = Get-TowerScoutPodmanServiceContainerId -ServiceName "towerscout"
+    if ([string]::IsNullOrWhiteSpace($containerId)) {
+        throw "Could not locate the running TowerScout Podman container for direct copy fallback."
+    }
+
+    & podman cp $LocalPath "${containerId}:$ContainerPath"
+    $script:TowerScoutComposeExitCode = $LASTEXITCODE
 }
 
 function Get-TowerScoutContainerSessionInfo {
@@ -366,12 +500,56 @@ function Get-TowerScoutContainerSessionInfo {
         }
     }
 
+    $envValues = @{}
+    if (
+        $inspect.PSObject.Properties.Name -contains "Config" -and
+        $null -ne $inspect.Config -and
+        $inspect.Config.PSObject.Properties.Name -contains "Env" -and
+        $null -ne $inspect.Config.Env
+    ) {
+        foreach ($entry in @($inspect.Config.Env)) {
+            $text = [string] $entry
+            $separator = $text.IndexOf("=")
+            if ($separator -gt 0) {
+                $envValues[$text.Substring(0, $separator)] = $text.Substring($separator + 1)
+            }
+        }
+    }
+
+    $imageRef = ""
+    if (
+        $inspect.PSObject.Properties.Name -contains "Config" -and
+        $null -ne $inspect.Config -and
+        $inspect.Config.PSObject.Properties.Name -contains "Image"
+    ) {
+        $imageRef = [string] $inspect.Config.Image
+    }
+
+    $hostPort = ""
+    if (
+        $inspect.PSObject.Properties.Name -contains "NetworkSettings" -and
+        $null -ne $inspect.NetworkSettings -and
+        $inspect.NetworkSettings.PSObject.Properties.Name -contains "Ports" -and
+        $null -ne $inspect.NetworkSettings.Ports -and
+        $inspect.NetworkSettings.Ports.PSObject.Properties.Name -contains "5000/tcp"
+    ) {
+        $portBindings = @($inspect.NetworkSettings.Ports.PSObject.Properties["5000/tcp"].Value)
+        if ($portBindings.Count -gt 0 -and $null -ne $portBindings[0] -and $portBindings[0].PSObject.Properties.Name -contains "HostPort") {
+            $hostPort = [string] $portBindings[0].HostPort
+        }
+    }
+
     return [pscustomobject]@{
         Id = [string] $inspect.Id
         Name = [string] $inspect.Name
         StateStatus = [string] $state.Status
         HealthStatus = $healthStatus
         CreatedAt = $createdAt
+        GpuMode = [string] $envValues["TOWERSCOUT_GPU_MODE"]
+        DevicePolicy = [string] $envValues["TOWERSCOUT_DEVICE"]
+        ContainerEngine = [string] $envValues["TOWERSCOUT_CONTAINER_ENGINE"]
+        Image = $imageRef
+        HostPort = $hostPort
     }
 }
 
@@ -380,6 +558,16 @@ function Get-TowerScoutContainerSessionPlan {
         [object[]] $Containers = @(),
 
         [int] $SessionMaxHours = 12,
+
+        [string] $ExpectedGpuMode = "",
+
+        [string] $ExpectedDevicePolicy = "",
+
+        [string] $ExpectedContainerEngine = "",
+
+        [string] $ExpectedImage = "",
+
+        [string] $ExpectedHostPort = "",
 
         [datetime] $Now = (Get-Date)
     )
@@ -415,6 +603,86 @@ function Get-TowerScoutContainerSessionPlan {
             Reason = "An existing TowerScout container is unhealthy."
             ContainerIds = @($containerList | ForEach-Object { $_.Id })
             AgeHours = $null
+        }
+    }
+
+    $normalizedExpectedGpuMode = ([string] $ExpectedGpuMode).Trim().ToLowerInvariant()
+    if (-not [string]::IsNullOrWhiteSpace($normalizedExpectedGpuMode)) {
+        $gpuModeMismatch = @($containerList | Where-Object {
+            $currentGpuMode = (Get-TowerScoutObjectPropertyValue -InputObject $_ -Name "GpuMode").Trim().ToLowerInvariant()
+            -not [string]::IsNullOrWhiteSpace($currentGpuMode) -and $currentGpuMode -ne $normalizedExpectedGpuMode
+        })
+        if ($gpuModeMismatch.Count -gt 0) {
+            return [pscustomobject]@{
+                Action = "restart"
+                Reason = "An existing TowerScout container was started with a different GPU mode."
+                ContainerIds = @($containerList | ForEach-Object { $_.Id })
+                AgeHours = $null
+            }
+        }
+    }
+
+    $normalizedExpectedDevicePolicy = ([string] $ExpectedDevicePolicy).Trim().ToLowerInvariant()
+    if (-not [string]::IsNullOrWhiteSpace($normalizedExpectedDevicePolicy)) {
+        $devicePolicyMismatch = @($containerList | Where-Object {
+            $currentDevicePolicy = (Get-TowerScoutObjectPropertyValue -InputObject $_ -Name "DevicePolicy").Trim().ToLowerInvariant()
+            -not [string]::IsNullOrWhiteSpace($currentDevicePolicy) -and $currentDevicePolicy -ne $normalizedExpectedDevicePolicy
+        })
+        if ($devicePolicyMismatch.Count -gt 0) {
+            return [pscustomobject]@{
+                Action = "restart"
+                Reason = "An existing TowerScout container was started with a different ML device policy."
+                ContainerIds = @($containerList | ForEach-Object { $_.Id })
+                AgeHours = $null
+            }
+        }
+    }
+
+    $normalizedExpectedContainerEngine = ([string] $ExpectedContainerEngine).Trim().ToLowerInvariant()
+    if (-not [string]::IsNullOrWhiteSpace($normalizedExpectedContainerEngine)) {
+        $containerEngineMismatch = @($containerList | Where-Object {
+            $currentContainerEngine = (Get-TowerScoutObjectPropertyValue -InputObject $_ -Name "ContainerEngine").Trim().ToLowerInvariant()
+            -not [string]::IsNullOrWhiteSpace($currentContainerEngine) -and $currentContainerEngine -ne $normalizedExpectedContainerEngine
+        })
+        if ($containerEngineMismatch.Count -gt 0) {
+            return [pscustomobject]@{
+                Action = "restart"
+                Reason = "An existing TowerScout container was started with a different container engine."
+                ContainerIds = @($containerList | ForEach-Object { $_.Id })
+                AgeHours = $null
+            }
+        }
+    }
+
+    $normalizedExpectedImage = ([string] $ExpectedImage).Trim().ToLowerInvariant()
+    if (-not [string]::IsNullOrWhiteSpace($normalizedExpectedImage)) {
+        $imageMismatch = @($containerList | Where-Object {
+            $currentImage = (Get-TowerScoutObjectPropertyValue -InputObject $_ -Name "Image").Trim().ToLowerInvariant()
+            -not [string]::IsNullOrWhiteSpace($currentImage) -and $currentImage -ne $normalizedExpectedImage
+        })
+        if ($imageMismatch.Count -gt 0) {
+            return [pscustomobject]@{
+                Action = "restart"
+                Reason = "An existing TowerScout container was started with a different image reference."
+                ContainerIds = @($containerList | ForEach-Object { $_.Id })
+                AgeHours = $null
+            }
+        }
+    }
+
+    $normalizedExpectedHostPort = ([string] $ExpectedHostPort).Trim()
+    if (-not [string]::IsNullOrWhiteSpace($normalizedExpectedHostPort)) {
+        $portMismatch = @($containerList | Where-Object {
+            $currentHostPort = (Get-TowerScoutObjectPropertyValue -InputObject $_ -Name "HostPort").Trim()
+            -not [string]::IsNullOrWhiteSpace($currentHostPort) -and $currentHostPort -ne $normalizedExpectedHostPort
+        })
+        if ($portMismatch.Count -gt 0) {
+            return [pscustomobject]@{
+                Action = "restart"
+                Reason = "An existing TowerScout container was started with a different host port."
+                ContainerIds = @($containerList | ForEach-Object { $_.Id })
+                AgeHours = $null
+            }
         }
     }
 
@@ -478,7 +746,15 @@ function Invoke-TowerScoutStaleContainerGuard {
         [ValidateSet("docker", "podman")]
         [string] $EngineName,
 
-        [int] $SessionMaxHours = 12
+        [int] $SessionMaxHours = 12,
+
+        [string] $ExpectedGpuMode = "",
+
+        [string] $ExpectedDevicePolicy = "",
+
+        [string] $ExpectedImage = "",
+
+        [string] $ExpectedHostPort = ""
     )
 
     if ($SessionMaxHours -lt 0) {
@@ -494,7 +770,30 @@ function Invoke-TowerScoutStaleContainerGuard {
         }
     }
 
-    $plan = Get-TowerScoutContainerSessionPlan -Containers $containers -SessionMaxHours $SessionMaxHours
+    if ([string]::IsNullOrWhiteSpace($ExpectedGpuMode)) {
+        $ExpectedGpuMode = [string] $env:TOWERSCOUT_GPU_MODE
+    }
+    if ([string]::IsNullOrWhiteSpace($ExpectedDevicePolicy)) {
+        $ExpectedDevicePolicy = [string] $env:TOWERSCOUT_DEVICE
+    }
+    if ([string]::IsNullOrWhiteSpace($ExpectedImage)) {
+        $ExpectedImage = [string] $env:TOWERSCOUT_IMAGE
+    }
+    if ([string]::IsNullOrWhiteSpace($ExpectedImage)) {
+        $ExpectedImage = [string] (Get-TowerScoutEnvFileValue -Name "TOWERSCOUT_IMAGE")
+    }
+    if ([string]::IsNullOrWhiteSpace($ExpectedHostPort)) {
+        $ExpectedHostPort = [string] $env:TOWERSCOUT_PORT
+    }
+
+    $plan = Get-TowerScoutContainerSessionPlan `
+        -Containers $containers `
+        -SessionMaxHours $SessionMaxHours `
+        -ExpectedGpuMode $ExpectedGpuMode `
+        -ExpectedDevicePolicy $ExpectedDevicePolicy `
+        -ExpectedContainerEngine $EngineName `
+        -ExpectedImage $ExpectedImage `
+        -ExpectedHostPort $ExpectedHostPort
     if ($plan.Action -eq "start") {
         Write-Host "UAT session check: no existing TowerScout container found."
         return $plan
@@ -505,7 +804,8 @@ function Invoke-TowerScoutStaleContainerGuard {
         return $plan
     }
 
-    Write-Host "TowerScout found an older, stopped, or unhealthy session and is starting a fresh UAT session."
+    Write-Host "TowerScout found a stale, stopped, unhealthy, or launch-setting-mismatched session and is starting fresh."
+    Write-Host "Reason: $($plan.Reason)"
     Write-Host "Saved setup, imported assets, and support logs are kept in named volumes."
     Invoke-TowerScoutContainerStopRemove -EngineName $EngineName -ContainerIds $plan.ContainerIds
     return $plan
@@ -536,6 +836,7 @@ function Invoke-TowerScoutCompose {
     }
 
     Set-TowerScoutGpuEnvironment -Gpu $Gpu -Build:$Build
+    $env:TOWERSCOUT_CONTAINER_ENGINE = $effectiveEngine
 
     $composeFiles = @("-f", (Join-Path $repoRoot "compose.yaml"))
     if ($Build) {
@@ -551,10 +852,13 @@ function Invoke-TowerScoutCompose {
 
     Push-Location $repoRoot
     try {
+        $previousErrorActionPreference = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
         & $command["Executable"] @(($command["Arguments"]) + $composeFiles + $ComposeArguments)
         $script:TowerScoutComposeExitCode = $LASTEXITCODE
     }
     finally {
+        $ErrorActionPreference = $previousErrorActionPreference
         Pop-Location
     }
 }

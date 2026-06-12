@@ -6,5 +6,5 @@ param(
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot\lib\TowerScoutCompose.ps1"
 
-Invoke-TowerScoutCompose -Engine $Engine -ComposeArguments @("stop")
+Invoke-TowerScoutCompose -Engine $Engine -ComposeArguments @("down", "--remove-orphans")
 exit $script:TowerScoutComposeExitCode

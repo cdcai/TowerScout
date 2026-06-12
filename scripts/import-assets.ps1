@@ -50,6 +50,7 @@ if (-not (Test-Path -LiteralPath $dataSource -PathType Container)) {
 Write-Host "Starting TowerScout container so named volumes are available..."
 $composeCommand = Get-TowerScoutComposeCommand -Engine $Engine
 $effectiveEngine = [string] $composeCommand["Executable"]
+Set-TowerScoutGpuEnvironment -Gpu $Gpu -Build:$Build
 Invoke-TowerScoutStaleContainerGuard -EngineName $effectiveEngine -SessionMaxHours $SessionMaxHours | Out-Null
 Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @("up", "-d", "towerscout")
 if ($script:TowerScoutComposeExitCode -ne 0) {
@@ -57,21 +58,23 @@ if ($script:TowerScoutComposeExitCode -ne 0) {
 }
 
 Write-Host "Importing model assets from $modelSource..."
-Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @(
-    "cp",
-    (Join-Path $modelSource "."),
-    "towerscout:/app/webapp/model_params/"
-)
+Copy-TowerScoutContainerPath `
+    -Engine $Engine `
+    -Build:$Build `
+    -Gpu $Gpu `
+    -LocalPath (Join-Path $modelSource ".") `
+    -ContainerPath "/app/webapp/model_params/"
 if ($script:TowerScoutComposeExitCode -ne 0) {
     exit $script:TowerScoutComposeExitCode
 }
 
 Write-Host "Importing data assets from $dataSource..."
-Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @(
-    "cp",
-    (Join-Path $dataSource "."),
-    "towerscout:/app/webapp/data/"
-)
+Copy-TowerScoutContainerPath `
+    -Engine $Engine `
+    -Build:$Build `
+    -Gpu $Gpu `
+    -LocalPath (Join-Path $dataSource ".") `
+    -ContainerPath "/app/webapp/data/"
 if ($script:TowerScoutComposeExitCode -ne 0) {
     exit $script:TowerScoutComposeExitCode
 }

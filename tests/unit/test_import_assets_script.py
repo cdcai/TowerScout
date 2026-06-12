@@ -13,7 +13,8 @@ def test_import_assets_script_preserves_port_and_restarts_after_copy():
     env_init = script.index("Initialize-TowerScoutEnvFile -RootPath $repoRoot")
     port_assignment = script.index('$env:TOWERSCOUT_PORT = "$Port"')
     compose_start = script.index('@("up", "-d", "towerscout")')
-    data_copy = script.index('"towerscout:/app/webapp/data/"')
+    model_copy = script.index('-ContainerPath "/app/webapp/model_params/"')
+    data_copy = script.index('-ContainerPath "/app/webapp/data/"')
     restart = script.index('"restart",')
     wait = script.index("Waiting for TowerScout to reload imported assets")
     verify = script.index("Verifying imported assets with TowerScout manifest")
@@ -21,7 +22,8 @@ def test_import_assets_script_preserves_port_and_restarts_after_copy():
     assert "[int] $Port" in script
     assert env_init < port_assignment
     assert port_assignment < compose_start
-    assert data_copy < restart < wait < verify
+    assert "Copy-TowerScoutContainerPath" in script
+    assert compose_start < model_copy < data_copy < restart < wait < verify
     assert "/api/health" in script
     assert "/api/readiness" in script
     assert "/getengines" in script

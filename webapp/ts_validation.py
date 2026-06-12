@@ -318,6 +318,7 @@ class TowerScoutValidator:
         filename = secure_filename(file.filename)
         if not filename:
             raise ValidationError("Invalid filename")
+        file.filename = filename
         
         # Check file extension
         if '.' not in filename:
