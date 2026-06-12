@@ -52,8 +52,9 @@ def test_index_route_renders_towerscout_shell(client):
     assert response.status_code == 200
     assert b"TowerScout" in response.data
     assert b"/license" in response.data
+    assert b"/docs/quick-start.html" in response.data
     assert b"/docs/project-overview.html" in response.data
-    assert b"/docs/towerscout-user-guide.html" in response.data
+    assert b"/docs/user-guide.html" in response.data
     assert b"https://pubmed.ncbi.nlm.nih.gov/38906615/" in response.data
     assert b"sciencedirect.com/science/article/pii/S2589750024000943" not in response.data
     assert b"Documentation Placeholder" not in response.data
@@ -92,15 +93,20 @@ def test_license_text_route_exposes_plain_text_notices(client):
 
 def test_docs_routes_expose_package_local_docs(client):
     index_response = client.get("/docs/")
+    quick_start_response = client.get("/docs/quick-start.html")
     overview_response = client.get("/docs/project-overview.html")
-    user_guide_response = client.get("/docs/towerscout-user-guide.html")
+    user_guide_response = client.get("/docs/user-guide.html")
+    package_guide_response = client.get("/docs/package-guide.md")
     css_response = client.get("/docs/towerscout-docs.css")
 
     assert index_response.status_code == 200
     assert index_response.mimetype == "text/html"
-    assert b"TowerScout V1 RC1 Quick Start" in index_response.data
+    assert b"TowerScout Quick Start" in index_response.data
     assert b"Before You Start" in index_response.data
     assert b"You do not need Git, Python, Conda, Node.js, VS Code" in index_response.data
+    assert quick_start_response.status_code == 200
+    assert b"Document Metadata" in quick_start_response.data
+    assert b"Runtime scope" in quick_start_response.data
 
     assert overview_response.status_code == 200
     assert overview_response.mimetype == "text/html"
@@ -114,9 +120,28 @@ def test_docs_routes_expose_package_local_docs(client):
     assert b"Before Using This Guide" in user_guide_response.data
     assert b"Docker Desktop is installed, approved, and running" in user_guide_response.data
     assert b"qualified Podman path" in user_guide_response.data
+    assert package_guide_response.status_code == 200
+    assert b"TowerScout Package Guide" in package_guide_response.data
+    assert b"support-assigned and qualified" in package_guide_response.data
 
     assert css_response.status_code == 200
     assert "text/css" in css_response.content_type
+
+
+def test_legacy_doc_paths_are_compatibility_stubs(client):
+    quick_start_response = client.get("/docs/v1-rc1-quick-start.html")
+    user_guide_response = client.get("/docs/towerscout-user-guide.html")
+    package_guide_response = client.get("/docs/v1-rc1-package-guide.md")
+
+    assert quick_start_response.status_code == 200
+    assert b"Quick Start Has Moved" in quick_start_response.data
+    assert b"/docs/quick-start.html" in quick_start_response.data
+    assert user_guide_response.status_code == 200
+    assert b"User Guide Has Moved" in user_guide_response.data
+    assert b"/docs/user-guide.html" in user_guide_response.data
+    assert package_guide_response.status_code == 200
+    assert b"Package Guide Has Moved" in package_guide_response.data
+    assert b"docs/package-guide.md" in package_guide_response.data
 
 
 @pytest.mark.parametrize("path", sorted(towerscout.PUBLIC_DOC_FILES))
@@ -133,9 +158,10 @@ def test_each_public_doc_is_served(client, path):
         "../README.md",
         "..%2FREADME.md",
         "codex-skills/README.md",
+        "support/oci-quick-start.md",
         "project-overview.html/",
-        "project-overview.html/../towerscout-user-guide.html",
-        "project-overview.html%5C..%5Ctowerscout-user-guide.html",
+        "project-overview.html/../user-guide.html",
+        "project-overview.html%5C..%5Cuser-guide.html",
     ],
 )
 def test_docs_route_rejects_non_public_docs(client, path):

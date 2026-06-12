@@ -3,7 +3,7 @@
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
 **Last Updated**: June 12, 2026
 **Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
-**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, `TASK-067`, and `TASK-074` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` post-PR28 final prerelease Docker Desktop package path passed through checksum verification, bootstrap/readiness from the GitHub Release Application Package, Settings-linked docs, `/license`, in-container asset hash verification, and bounded Azure detection smoke on the refreshed final digest, with Podman Docker Hub source-build TLS, Docker-Desktop-free Podman, and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` is active for clean-machine pilot/UAT planning and now has exact refreshed release artifact values, default smoke fixture, support contacts, provider-key evidence boundaries, published rc2/rc3 prereleases, rc2 provider setup / bounded Azure smoke, and rc3 package/downloaded-release setup validation; tester cohort selection and owner/reviewer acceptance remain before external tester launch; `TASK-080` has simplified the first-cohort setup path, produced and locked the consolidated Word guide, verified the Google first-launch TLS support path, and published/validated the refreshed rc3 UAT release package; owner/reviewer signoff and tester/cohort selection remain before external tester send.
+**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, `TASK-067`, and `TASK-074` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged with NVIDIA-host validation still pending before broad GPU support claims; `TASK-066` post-PR28 final prerelease Docker Desktop package path passed through checksum verification, bootstrap/readiness from the GitHub Release Application Package, Settings-linked docs, `/license`, in-container asset hash verification, and bounded Azure detection smoke on the refreshed final digest, with Podman Docker Hub source-build TLS, Docker-Desktop-free Podman, and NVIDIA GPU evidence still bounded follow-ups; `TASK-073` is active for clean-machine pilot/UAT planning and now has exact refreshed release artifact values, default smoke fixture, support contacts, provider-key evidence boundaries, published rc2/rc3 prereleases, rc2 provider setup / bounded Azure smoke, and rc3 package/downloaded-release setup validation; tester cohort selection and owner/reviewer acceptance remain before external tester launch; `TASK-080` has simplified the first-cohort setup path, produced and locked the consolidated Word guide, verified the Google first-launch TLS support path, and published/validated the refreshed rc3 UAT release package; `TASK-081` runtime hardening is in focused PR review with live Docker Desktop and Podman CPU validation passed and GPU blocked by missing NVIDIA runtime evidence; `TASK-082` is active for rc4 documentation naming, package-doc clarity, app docs links, and repo-organization triage before the next package/image build.
 
 ---
 
@@ -347,6 +347,49 @@ Sprint 06 is not intended to declare final V1 completion. Final V1 completion sh
 **Dependencies**: `TASK-066`; `TASK-073`; `TASK-074`; `TASK-075`; `TASK-080`; owner-provided RC3 GPU/Podman and reviewer-audit documents dated 2026-06-11.
 
 **User Value**: Reduces the chance that external UAT is blocked by runtime ambiguity, stale device mode, Podman provider gaps, or known reviewer-audit quick fixes, while preserving honest support boundaries for GPU and Podman.
+
+### **TASK-082: RC4 Documentation And Package Organization**
+**Status**: IN_PROGRESS - PR #32 open as standalone Task-082 branch based on merged PR #31; reviewer-requested README encoding fix and compatibility-stub polish implemented with focused validation passing
+**Type**: B/C (Documentation / Release UX / Package Organization)
+**Priority**: HIGH
+**Estimated Effort**: 1-2 days (8-16 hours), plus optional package-smoke validation
+**Target Sprint**: Sprint 06 V1 RC1 / post-rc3 to rc4 readiness
+**Task File**: `.agent_work/tasks/active/TASK-082-rc4-docs-package-organization.md`
+
+**Objective**: Make the user-facing docs, release-package docs, app Resource
+Links, and repo documentation organization ready for the next `rc4` package
+without stale `v1-rc1`, `rc2`, or mixed-audience guidance confusing pilot users.
+
+**Current Direction**:
+- Replace release-candidate-specific primary doc filenames with stable names
+  such as `quick-start.md`, `package-guide.md`, `user-guide.md`, and
+  `project-overview.md`, while deciding whether old `v1-rc1-*` paths should be
+  retained as compatibility stubs.
+- Add visible metadata to user/support docs so readers can see which release
+  candidate they apply to, when they were reviewed, who the audience is, and
+  what runtime support boundary is in force.
+- Remove or clearly label stale `rc2`/`rc3` examples before `rc4` package
+  generation.
+- Keep the normal user path short and current: download the Application
+  Package ZIP plus checksum and Model & Data Package ZIP plus checksum, extract
+  only the Application Package ZIP, keep the Model & Data Package ZIP beside
+  the extracted folder, then run `setup-towerscout.cmd`.
+- Align all docs with the current support boundary from `TASK-081`: Docker CPU
+  primary, Podman CPU support-assigned and qualified, Docker GPU
+  support-assigned after validation, and Podman GPU not validated.
+- Update `README.md`, Settings Resource Links, `/docs/`, Flask public-doc
+  allowlists, package-release file inclusion, and tests together when docs are
+  renamed.
+- Classify `docs/` and repo-root material by audience/purpose before moving or
+  removing anything; keep broad moves for `Model/`, `SyntheticData/`,
+  `TowerScoutSite/`, and `hosting/` deferred unless explicitly approved.
+
+**Dependencies**: `TASK-071`; `TASK-073`; `TASK-074`; `TASK-075`; `TASK-080`;
+`TASK-081`; possible `TASK-076` provider-key policy review.
+
+**User Value**: Prevents the next release package from asking non-technical
+users to reason through stale RC labels, historical examples, duplicate docs,
+or implementation-contract material before they can install and run TowerScout.
 
 ### **TASK-074: Runtime Prerequisite Preflight**
 **Status**: COMPLETED - post-merge package-artifact bootstrap validation passed

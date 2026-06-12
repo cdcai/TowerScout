@@ -1,10 +1,20 @@
 # TowerScout Release Asset Bundle Contract
 
-This document defines the V1 RC1 contract for TowerScout runtime assets that are too large or policy-sensitive to keep in git. It is the handoff point between release packaging, end-user package documentation, and clean-machine validation.
+**Applies to**: Current V1 release-candidate package support path
+**Last reviewed**: 2026-06-12
+**Audience**: Release engineering, support, and release reviewers
+**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU is
+support-assigned and qualified; Docker GPU is support-assigned after NVIDIA
+Docker validation; Podman GPU is not validated
+
+This document defines the contract for TowerScout runtime assets that are too
+large or policy-sensitive to keep in git. It is the handoff point between
+release packaging, end-user package documentation, and clean-machine
+validation.
 
 ## Scope
 
-The V1 RC1 asset bundle covers:
+The asset bundle covers:
 
 - YOLOv5 detector weights.
 - EfficientNet-B5 secondary classifier weights.
@@ -13,19 +23,24 @@ The V1 RC1 asset bundle covers:
 
 The GitHub Release control package, GHCR image digest, and asset bundle are separate release artifacts. The control package contains the launcher, Compose files, helper scripts, docs, and `webapp/asset_manifest.v1.json`. The asset bundle contains the large runtime files named by that manifest.
 
-Hosted asset download, bundled OCI image archives, and air-gapped/offline release packages are out of scope for the V1 RC1 normal path. The package-local setup/bootstrap path can discover, verify, and stage a local Model & Data Package ZIP, but it does not download hosted assets. Restricted-network support remains a support-managed image preload plus local asset import unless a later task expands that contract.
+Hosted asset download, bundled OCI image archives, and air-gapped/offline
+release packages are out of scope for the normal path. The package-local
+setup/bootstrap path can discover, verify, and stage a local Model & Data
+Package ZIP, but it does not download hosted assets. Restricted-network support
+remains a support-managed image preload plus local asset import unless a later
+task expands that contract.
 
 ## Release Artifacts
 
-For a release version such as `v0.1.0-rc2`, the expected artifacts are:
+For a release version such as `<release-version>`, the expected artifacts are:
 
 | Artifact | Example | Purpose |
 | --- | --- | --- |
-| Control ZIP | `towerscout-v0.1.0-rc2.zip` | User-facing package with launcher, Compose, scripts, docs, manifest, and pinned image metadata. |
-| Control ZIP checksum | `towerscout-v0.1.0-rc2.zip.sha256` | SHA-256 checksum for the full control ZIP. |
+| Control ZIP | `towerscout-<release-version>.zip` | User-facing package with launcher, Compose, scripts, docs, manifest, and pinned image metadata. |
+| Control ZIP checksum | `towerscout-<release-version>.zip.sha256` | SHA-256 checksum for the full control ZIP. |
 | GHCR image digest | `ghcr.io/j-schulein/towerscout@sha256:<digest>` | Immutable Linux/AMD64 runtime image referenced by the control ZIP. |
-| Asset ZIP | `towerscout-v0.1.0-rc2-assets-towerscout-v1-assets-2026-05-05.zip` | Restricted-pilot or support-supplied local bundle containing model weights, ZIP-code data, and the asset manifest copy. |
-| Asset ZIP checksum | `towerscout-v0.1.0-rc2-assets-towerscout-v1-assets-2026-05-05.zip.sha256` | SHA-256 checksum for the full asset ZIP. |
+| Asset ZIP | `towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip` | Restricted-pilot or support-supplied local bundle containing model weights, ZIP-code data, and the asset manifest copy. |
+| Asset ZIP checksum | `towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip.sha256` | SHA-256 checksum for the full asset ZIP. |
 
 The release version in the control ZIP and asset ZIP names must match. The manifest version in the asset ZIP name must match the `manifest_version` in `webapp/asset_manifest.v1.json`.
 
@@ -125,7 +140,7 @@ The asset ZIP checksum sidecar must use this line format:
 Example:
 
 ```text
-<sha256>  towerscout-v0.1.0-rc2-assets-towerscout-v1-assets-2026-05-05.zip
+<sha256>  towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip
 ```
 
 Recommended first setup from a local asset ZIP kept beside the extracted
@@ -180,6 +195,10 @@ Typed importer exit codes are follow-up work unless `TASK-072` is explicitly exp
 
 The direct importer accepts an already-extracted source directory. The package setup/bootstrap path accepts a local ZIP path for first setup and rejects unsafe archive entries such as `..\`, absolute paths, paths escaping the extraction root, unexpected root entries, and nested `assets\assets\...` layouts.
 
-Public-release asset import still needs a stronger staged activation model than the V1 RC1 helper currently provides. Follow-up work must stage candidate assets, verify the manifest allowlist, byte sizes, and SHA-256 hashes before activation, and preserve the previous active asset set if validation fails unless `TASK-066` shows this is release-critical for RC1.
+Public-release asset import still needs a stronger staged activation model than
+the current helper provides. Follow-up work must stage candidate assets, verify
+the manifest allowlist, byte sizes, and SHA-256 hashes before activation, and
+preserve the previous active asset set if validation fails unless later
+release-candidate validation shows this is release-critical.
 
 A narrow release-manifest and compliance-payload slice is in scope for the AGPL-compliant RC path: the control package must include `release-manifest.v1.json`, `SOURCE.txt`, `SBOM.txt`, checksums, image digest metadata, model/data terms, provider terms, and revocation notes. Stronger staged allowlist-only asset activation remains follow-up unless `TASK-066` shows it is release-critical.

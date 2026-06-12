@@ -1,10 +1,17 @@
 # TowerScout OCI Quick Start
 
-This guide covers the v1 local container package shape for TowerScout for
-release/support users who need engine-level detail. External RC1 pilot users
-should start with `docs/v1-rc1-quick-start.md` instead.
+**Applies to**: Current V1 release-candidate package support path
+**Last reviewed**: 2026-06-12
+**Audience**: Release/support users who need engine-level detail
+**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU is
+support-assigned and qualified; Docker GPU is support-assigned after NVIDIA
+Docker validation; Podman GPU is not validated
 
-The primary RC1 pilot path is Docker Desktop with the WSL 2 backend, launched
+This guide covers the v1 local container package shape for TowerScout for
+release/support users who need engine-level detail. External pilot users
+should start with `docs/quick-start.md` instead.
+
+The primary pilot path is Docker Desktop with the WSL 2 backend, launched
 with CPU-safe `-Gpu off`. Podman remains a qualified support-directed package
 runtime path only when the workstation has a running Podman machine and an
 approved Compose provider.
@@ -15,7 +22,7 @@ approved Compose provider.
 - Single-user local use
 - CPU baseline
 - Normal outbound internet access for GHCR image pulls and map providers
-- Docker Desktop with WSL 2 backend for the primary RC1 pilot path, or a
+- Docker Desktop with WSL 2 backend for the primary pilot path, or a
   support-approved Podman machine and Compose provider for the qualified Podman
   path
 
@@ -23,7 +30,7 @@ Out of scope for v1: Mac, ARM64, air-gapped/offline installs, VDI, shared multi-
 
 ## Prerequisite Software
 
-The normal RC1 pilot package path expects Windows PowerShell, a modern browser,
+The normal pilot package path expects Windows PowerShell, a modern browser,
 normal outbound internet access, and Docker Desktop with the WSL 2 backend
 licensed, approved, installed, and running. The Podman path requires support
 direction, a created and running Podman machine, and an approved Compose
@@ -66,7 +73,7 @@ The release package is expected to include:
 - `webapp/asset_manifest.v1.json`
 - `IMAGE.txt`
 - `SHA256SUMS.txt`
-- V1 RC1 quick start, package guide, user guide, project overview, and runtime-contract documentation
+- Quick Start, Package Guide, User Guide, Project Overview, and runtime-contract documentation
 - release asset bundle contract documentation
 - a pinned GHCR image reference by digest
 
@@ -109,7 +116,7 @@ The manual GitHub Actions workflow `.github/workflows/container-publish.yml` pub
 ghcr.io/j-schulein/towerscout
 ```
 
-Run the workflow manually with a release tag such as `v0.1.0-rc2`. The workflow summary reports the immutable digest reference:
+Run the workflow manually with a release tag such as `<release-version>`. The workflow summary reports the immutable digest reference:
 
 ```text
 ghcr.io/j-schulein/towerscout@sha256:<digest>
@@ -122,13 +129,16 @@ The publish workflow has an explicit PyTorch wheel flavor input:
 - `cpu`: publishes the smaller CPU-wheel image.
 - `cuda121`: publishes the CUDA 12.1 PyTorch image for the single GPU-capable package path.
 
-The workflow publishes flavor-specific tags. For example, a workflow tag input of `v0.1.0-rc2` with `cuda121` publishes `v0.1.0-rc2-cuda121`; `push_latest` publishes `latest-cpu` or `latest-cuda121`, not an ambiguous `latest`.
+The workflow publishes flavor-specific tags. For example, a workflow tag input of `<release-version>` with `cuda121` publishes `<release-version>-cuda121`; `push_latest` publishes `latest-cpu` or `latest-cuda121`, not an ambiguous `latest`.
 
 Source-checkout and local-validation defaults use `latest-cpu` when no package
 digest is present. Release packages should still pin `TOWERSCOUT_IMAGE` to the
 exact digest recorded in the release handoff.
 
-For RC1, record the chosen flavor with the image digest in the release package. A CUDA-capable image remains CPU-safe when launched with `-Gpu off`, but GPU execution is not a supported claim until NVIDIA Docker host validation, fixed-fixture CPU/GPU parity, and timing evidence are captured.
+For each release candidate, record the chosen flavor with the image digest in
+the release package. A CUDA-capable image remains CPU-safe when launched with
+`-Gpu off`, but GPU execution is not a supported claim until NVIDIA Docker host
+validation, fixed-fixture CPU/GPU parity, and timing evidence are captured.
 
 ## First Run
 
@@ -161,7 +171,10 @@ start.bat -Engine docker -Gpu off
 
 The launcher creates `.env` from `.env.example` when `.env` is missing, starts the selected container engine, polls `/api/readiness`, and opens `http://localhost:5000` only after the application shell is reachable. Release packages should already pin `TOWERSCOUT_IMAGE` to an immutable digest in `.env.example`.
 
-If you open the browser manually, use `http://localhost:<port>` rather than `http://127.0.0.1:<port>`. The Azure Maps browser SDK passed release validation from the `localhost` origin and may reject some `127.0.0.1` browser requests due provider CORS behavior.
+If you open the browser manually, use `http://localhost:<port>` rather than
+the numeric loopback host. The Azure Maps browser SDK passed release
+validation from the `localhost` origin and may reject some numeric-loopback
+browser requests due provider CORS behavior.
 
 Provider keys are normally saved through Setup Wizard or Settings into the persistent `towerscout_config` volume. Do not put provider secrets in `.env` unless a site-specific support procedure requires it.
 
@@ -215,7 +228,10 @@ Scripts auto-detect the engine. To force one:
 .\scripts\status.cmd -Engine podman
 ```
 
-Docker Desktop use depends on license, procurement, endpoint policy, and local installation approval. It is the primary RC1 pilot runtime path. Podman is a qualified support path for V1 when Podman and a working Compose provider are installed, approved on the workstation, and explicitly selected by support.
+Docker Desktop use depends on license, procurement, endpoint policy, and local
+installation approval. It is the primary pilot runtime path. Podman is a
+qualified support path when Podman and a working Compose provider are
+installed, approved on the workstation, and explicitly selected by support.
 
 On Windows, `podman compose` is a wrapper around an external Compose provider such as `docker-compose` or `podman-compose`. The TowerScout scripts call `podman compose` for the Podman path, and release validation has confirmed the package can run with `podman-compose` selected explicitly through `PODMAN_COMPOSE_PROVIDER` while the Docker Desktop daemon is unavailable.
 
@@ -361,7 +377,11 @@ Then import and verify it:
 .\scripts\import-assets.cmd -Engine docker -Source assets
 ```
 
-The asset ZIP itself should not contain a top-level `assets/` directory. Its root should contain `model_params/`, `data/`, and `asset_manifest.v1.json`; extract those entries into the package's existing `assets/` directory. See `docs/release-asset-bundle-contract.md` for the release-matching, checksum, manifest-copy, and redistribution rules.
+The asset ZIP itself should not contain a top-level `assets/` directory. Its
+root should contain `model_params/`, `data/`, and `asset_manifest.v1.json`;
+extract those entries into the package's existing `assets/` directory. See
+`docs/release/release-asset-bundle-contract.md` for the release-matching,
+checksum, manifest-copy, and redistribution rules.
 
 For release-candidate or support validation, enable SHA-256 verification during import:
 

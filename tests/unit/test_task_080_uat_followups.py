@@ -20,7 +20,7 @@ ISSUE_FORM = (
     / "instructions"
     / "TESTER-ISSUE-REPORT-CHECKLIST.txt"
 )
-QUICK_START = REPO_ROOT / "docs" / "v1-rc1-quick-start.md"
+QUICK_START = REPO_ROOT / "docs" / "quick-start.md"
 
 
 def _docx_text(path: Path) -> str:

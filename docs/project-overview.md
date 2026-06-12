@@ -1,15 +1,23 @@
 # TowerScout Project Overview
 
+**Applies to**: Current V1 release-candidate package path, including the next
+`rc4` package unless release notes say otherwise
+**Last reviewed**: 2026-06-12
+**Audience**: Pilot users, support leads, and release reviewers
+**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU is
+support-assigned and qualified; Docker GPU is support-assigned after NVIDIA
+Docker validation; Podman GPU is not validated
+
 TowerScout is a local web application for identifying likely cooling towers
 from satellite and aerial imagery. Cooling towers can be relevant during
 Legionnaires' disease outbreak investigations and registry-building work.
 
-This document is the package-local V1 RC1 project overview used by the running
+This document is the package-local project overview used by the running
 app Resource Links section.
 
-## What The V1 RC1 Package Provides
+## What The Package Provides
 
-The V1 RC1 package provides a Windows-first local pilot path:
+The package provides a Windows-first local pilot path:
 
 - A GitHub Release Application Package ZIP.
 - A matching GitHub Release Model & Data Package ZIP.
@@ -27,13 +35,13 @@ The V1 RC1 package provides a Windows-first local pilot path:
 
 The normal pilot path is package-based. Source checkout, Python virtual
 environment, and Conda setup guides are legacy/source-install support material,
-not the preferred V1 RC1 pilot path.
+not the preferred pilot path.
 
 ## What Users Need Installed
 
 Pilot users need Windows 11 AMD64, PowerShell, a modern browser, normal outbound
 internet access, WSL 2/hardware virtualization support for Docker Desktop, and
-Docker Desktop installed, approved, and running as the primary RC1 pilot engine.
+Docker Desktop installed, approved, and running as the primary pilot engine.
 Plan for at least `15 GB` of free disk space; `25 GB` is a better first-setup
 target, especially for CUDA-capable images.
 Podman is a qualified support path only when support tells the user to use it
@@ -67,12 +75,12 @@ A typical TowerScout user:
 The User Guide is available in the running app Resource Links section and at:
 
 ```text
-http://localhost:5000/docs/towerscout-user-guide.html
+http://localhost:5000/docs/user-guide.html
 ```
 
 ## Release Boundary
 
-The V1 RC1 supported target is:
+The supported target is:
 
 - Windows 11 AMD64.
 - Single-user local use.
@@ -82,17 +90,17 @@ The V1 RC1 supported target is:
   package-runtime support only where explicitly approved.
 - One site/user-owned restricted Google Maps or Azure Maps provider key.
 
-Out of scope for V1 RC1: macOS, ARM64, air-gapped or fully offline installs,
+Out of scope for this release-candidate path: macOS, ARM64, air-gapped or fully offline installs,
 VDI, shared multi-user hosting, managed remote deployment, and native installer
 behavior.
 
 GPU launch is optional and Docker-first. The default launch remains CPU-safe.
-Podman GPU launch is not validated for V1 RC1.
+Podman GPU launch is not validated.
 
 ## Provider Keys
 
 TowerScout uses Google Maps or Azure Maps browser SDKs. Browser map SDK keys are
-visible to someone with access to the running browser app. For V1 RC1, provider
+visible to someone with access to the running browser app. For this package, provider
 keys are expected to be site/user-owned and restricted. Unrestricted shared
 TowerScout project keys are unsupported.
 
@@ -102,7 +110,7 @@ local policy.
 
 ## License And Source
 
-The YOLO-enabled V1 RC1 package/image is not Apache-2.0-only. It is distributed
+The YOLO-enabled package/image is not Apache-2.0-only. It is distributed
 with AGPL-3.0 obligations because it includes Ultralytics YOLOv5 runtime source
 and YOLO-derived detector weights.
 

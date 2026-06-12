@@ -93,7 +93,12 @@ COMPLIANCE_NOTICE_FILES = (
 PUBLIC_DOC_FILES = {
     "project-overview.html",
     "project-overview.md",
+    "quick-start.html",
+    "quick-start.md",
+    "package-guide.md",
     "towerscout-docs.css",
+    "user-guide.html",
+    "user-guide.md",
     "towerscout-user-guide.html",
     "towerscout-user-guide.md",
     "v1-rc1-package-guide.md",
@@ -1595,12 +1600,14 @@ def send_css(path):
 
 @app.route('/docs/')
 def send_docs_index():
-    return send_docs('v1-rc1-quick-start.html')
+    return send_docs('quick-start.html')
 
 
 @app.route('/docs/<path:path>')
 def send_docs(path):
     normalized_path = str(path).replace("\\", "/")
+    if normalized_path != normalized_path.strip("/") or "/" in normalized_path:
+        flask_abort(404)
     if normalized_path not in PUBLIC_DOC_FILES:
         flask_abort(404)
     return send_from_directory(str(DOCS_DIR), normalized_path)
@@ -1686,7 +1693,7 @@ def release_license_notice():
 </head>
 <body>
   <header class="page-header">
-    <p class="eyebrow">TowerScout V1 RC1</p>
+    <p class="eyebrow">TowerScout release-candidate package</p>
     <h1>Source/licenses</h1>
     <p class="lead">Packaged source, license, provider, model, data, SBOM, release manifest, and third-party notices for this local TowerScout runtime.</p>
   </header>
@@ -1700,7 +1707,7 @@ def release_license_notice():
     <main class="doc-main">
       <section class="doc-section">
         <h2>Release Notice</h2>
-        <p>The YOLO-enabled V1 RC1 package/image is not Apache-2.0-only. It is distributed with AGPL-3.0 obligations because it includes Ultralytics YOLOv5 runtime source and YOLO-derived detector weights.</p>
+        <p>The YOLO-enabled package/image is not Apache-2.0-only. It is distributed with AGPL-3.0 obligations because it includes Ultralytics YOLOv5 runtime source and YOLO-derived detector weights.</p>
         <p>The release control ZIP is authoritative for release-specific source, image digest, checksum, SBOM, and manifest metadata.</p>
         <p>Plain-text combined notices are available at <a href="/license.txt">/license.txt</a>.</p>
       </section>
