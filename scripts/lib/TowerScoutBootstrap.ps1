@@ -404,7 +404,24 @@ function Get-TowerScoutPortMappingConflict {
         [int] $Port
     )
 
+    $conflicts = @(Get-TowerScoutPortMappingConflicts -Lines $Lines -Port $Port)
+    if ($conflicts.Count -gt 0) {
+        return [string] $conflicts[0]
+    }
+
+    return ""
+}
+
+function Get-TowerScoutPortMappingConflicts {
+    param(
+        [string[]] $Lines = @(),
+
+        [Parameter(Mandatory = $true)]
+        [int] $Port
+    )
+
     $portPattern = "(:|\[::\]:)" + [regex]::Escape([string] $Port) + "->"
+    $conflicts = @()
     foreach ($line in $Lines) {
         $text = [string] $line
         if ($text -notmatch $portPattern) {
@@ -414,10 +431,10 @@ function Get-TowerScoutPortMappingConflict {
             continue
         }
 
-        return $text.Trim()
+        $conflicts += $text.Trim()
     }
 
-    return ""
+    return @($conflicts)
 }
 
 function Test-TowerScoutEnginePortMappings {
@@ -436,9 +453,10 @@ function Test-TowerScoutEnginePortMappings {
     }
 
     $lines = @($containers.StdOut -split "(`r`n|`n|`r)" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
-    $conflict = Get-TowerScoutPortMappingConflict -Lines $lines -Port $Port
-    if (-not [string]::IsNullOrWhiteSpace($conflict)) {
-        throw "Engine port check failed: $Engine has a stopped or created container with host port $Port reserved: $conflict. Remove the stale container through support guidance, or choose a different -Port."
+    $conflicts = @(Get-TowerScoutPortMappingConflicts -Lines $lines -Port $Port)
+    if ($conflicts.Count -gt 0) {
+        $conflictList = ($conflicts | ForEach-Object { " - $_" }) -join [Environment]::NewLine
+        throw "Engine port check failed: $Engine has stopped or created containers with host port $Port reserved:$([Environment]::NewLine)$conflictList$([Environment]::NewLine)Remove the stale containers through support guidance, or choose a different -Port."
     }
 
     $activeMapping = @($lines | Where-Object { ([string] $_) -match ("(:|\[::\]:)" + [regex]::Escape([string] $Port) + "->") })

@@ -337,6 +337,72 @@ def test_podman_gpu_provisioner_recovers_stale_cdi_once():
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell provisioner helpers are Windows-only")
+def test_podman_gpu_image_uses_package_template_digest_before_env_exists():
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task084-podman-image-{uuid.uuid4().hex}"
+    temp_root.mkdir(parents=True)
+    digest = "sha256:" + ("b" * 64)
+    (temp_root / ".env.example").write_text(
+        "\n".join(
+            [
+                "TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout:v0.1.0-ga-cuda121",
+                f"TOWERSCOUT_IMAGE_DIGEST={digest}",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        . "{PODMAN_GPU_LIB}"
+
+        function Get-TowerScoutPodmanGpuRepoRoot {{
+            return "{temp_root}"
+        }}
+
+        $env:TOWERSCOUT_IMAGE = ""
+        $env:TOWERSCOUT_IMAGE_DIGEST = ""
+        $resolved = Get-TowerScoutPodmanGpuImage
+        $expected = "ghcr.io/j-schulein/towerscout:v0.1.0-ga-cuda121@{digest}"
+        if ($resolved -ne $expected) {{
+            throw "Expected package template image '$expected', got '$resolved'"
+        }}
+
+        Set-Content -LiteralPath "{temp_root / '.env'}" -Encoding ASCII -Value @(
+            "TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout:local-cuda121",
+            "TOWERSCOUT_IMAGE_DIGEST="
+        )
+        $resolvedEnvWithoutDigest = Get-TowerScoutPodmanGpuImage
+        if ($resolvedEnvWithoutDigest -ne "ghcr.io/j-schulein/towerscout:local-cuda121") {{
+            throw ".env image should not append .env.example digest: $resolvedEnvWithoutDigest"
+        }}
+
+        Set-Content -LiteralPath "{temp_root / '.env'}" -Encoding ASCII -Value @(
+            "TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout:local-cuda121@{digest}",
+            "TOWERSCOUT_IMAGE_DIGEST=sha256:{'c' * 64}"
+        )
+        $resolvedEnv = Get-TowerScoutPodmanGpuImage
+        if ($resolvedEnv -ne "ghcr.io/j-schulein/towerscout:local-cuda121@{digest}") {{
+            throw ".env should win and should not append a second digest: $resolvedEnv"
+        }}
+
+        $env:TOWERSCOUT_IMAGE = "ghcr.io/j-schulein/towerscout:process-cuda121"
+        $env:TOWERSCOUT_IMAGE_DIGEST = "sha256:{'d' * 64}"
+        $resolvedProcessEnv = Get-TowerScoutPodmanGpuImage
+        if ($resolvedProcessEnv -ne "ghcr.io/j-schulein/towerscout:process-cuda121@sha256:{'d' * 64}") {{
+            throw "process environment image should use only process environment digest: $resolvedProcessEnv"
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell provisioner helpers are Windows-only")
 def test_podman_gpu_image_reference_splitter_handles_registry_ports_and_digests():
     command = f"""
     $ErrorActionPreference = "Stop"

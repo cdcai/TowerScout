@@ -137,6 +137,7 @@ def test_package_release_stages_digest_pinned_image():
         assert release_manifest["release_artifacts"]["asset_bundle"] == (
             f"towerscout-{package_id}-assets-towerscout-v1-assets-2026-05-05.zip"
         )
+        assert release_manifest["release_artifacts"]["asset_bundle_release_version"] == package_id
         assert release_manifest["release_artifacts"]["asset_bundle_sha256"] == asset_bundle_sha256
         assert release_manifest["release_artifacts"]["asset_bundle_sha256_sidecar"] == (
             f"towerscout-{package_id}-assets-towerscout-v1-assets-2026-05-05.zip.sha256"
@@ -194,6 +195,66 @@ def test_package_release_stages_digest_pinned_image():
         ]:
             assert (stage_path / "docs" / relative_path).is_file()
         assert not (stage_path / "docs" / "internal").exists()
+    finally:
+        shutil.rmtree(output_path, ignore_errors=True)
+
+
+def test_package_release_variants_share_asset_bundle_identity():
+    base_id = f"pytest-variants-{uuid.uuid4().hex}"
+    output_dir = Path(".agent_work") / "pytest-temp" / base_id
+    output_path = REPO_ROOT / output_dir
+    asset_bundle_sha256 = "5" * 64
+    cpu_digest = "sha256:" + ("6" * 64)
+    cuda_digest = "sha256:" + ("7" * 64)
+    try:
+        for suffix, digest, flavor in [
+            ("cpu", cpu_digest, "cpu"),
+            ("cuda121", cuda_digest, "cuda121"),
+        ]:
+            result = _run_package_release(
+                "-Version",
+                f"{base_id}-{suffix}",
+                "-OutputDir",
+                str(output_dir),
+                "-Image",
+                f"ghcr.io/j-schulein/towerscout:{base_id}-{suffix}",
+                "-ImageDigest",
+                digest,
+                "-AssetBundleSha256",
+                asset_bundle_sha256,
+                "-PytorchFlavor",
+                flavor,
+                "-AllowDirtySource",
+                "-NoZip",
+                "-Force",
+            )
+            assert result.returncode == 0, result.stderr + result.stdout
+
+        cpu_manifest = json.loads(
+            (
+                output_path
+                / f"towerscout-{base_id}-cpu"
+                / "release-manifest.v1.json"
+            ).read_text(encoding="utf-8")
+        )
+        cuda_manifest = json.loads(
+            (
+                output_path
+                / f"towerscout-{base_id}-cuda121"
+                / "release-manifest.v1.json"
+            ).read_text(encoding="utf-8")
+        )
+        assert_manifest_schema(cpu_manifest)
+        assert_manifest_schema(cuda_manifest)
+        cpu_artifacts = cpu_manifest["release_artifacts"]
+        cuda_artifacts = cuda_manifest["release_artifacts"]
+        assert cpu_artifacts["asset_bundle_release_version"] == base_id
+        assert cuda_artifacts["asset_bundle_release_version"] == base_id
+        assert cpu_artifacts["asset_bundle"] == cuda_artifacts["asset_bundle"]
+        assert cpu_artifacts["asset_bundle_sha256"] == asset_bundle_sha256
+        assert cuda_artifacts["asset_bundle_sha256"] == asset_bundle_sha256
+        assert cpu_manifest["pytorch_flavor"] == "cpu"
+        assert cuda_manifest["pytorch_flavor"] == "cuda121"
     finally:
         shutil.rmtree(output_path, ignore_errors=True)
 

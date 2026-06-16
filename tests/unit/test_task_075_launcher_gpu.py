@@ -3,6 +3,8 @@
 import os
 import shutil
 import subprocess
+import json
+import uuid
 from pathlib import Path
 
 import pytest
@@ -77,3 +79,69 @@ def test_gpu_launcher_helpers_use_cpu_safe_auto_and_build_indexes():
 
     assert result.returncode == 0, result.stdout + result.stderr
     assert "ok" in result.stdout
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
+def test_cpu_release_package_rejects_gpu_on_without_blocking_build_or_cuda_package():
+    powershell = _powershell_executable()
+    if powershell is None:
+        pytest.skip("PowerShell executable not found")
+
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task084-cpu-gpu-guard-{uuid.uuid4().hex}"
+    temp_root.mkdir(parents=True)
+    manifest_path = temp_root / "release-manifest.v1.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "release_version": "v0.1.0-ga-cpu",
+                "pytorch_flavor": "cpu",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    try:
+        helper_path = REPO_ROOT / "scripts" / "lib" / "TowerScoutCompose.ps1"
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        . "{helper_path}"
+
+        function Get-TowerScoutRepoRoot {{
+            return "{temp_root}"
+        }}
+
+        try {{
+            Set-TowerScoutGpuEnvironment -Gpu on
+            throw "CPU release package accepted -Gpu on."
+        }}
+        catch {{
+            if ($_.Exception.Message -notmatch "CPU TowerScout package" -or $_.Exception.Message -notmatch "CUDA 12.1 package") {{
+                throw
+            }}
+        }}
+
+        Set-TowerScoutGpuEnvironment -Gpu on -Build
+        if ($env:TOWERSCOUT_DEVICE -ne "cuda") {{
+            throw "Build path should still be able to request CUDA."
+        }}
+
+        Set-Content -LiteralPath "{manifest_path}" -Encoding ASCII -Value '{{"release_version":"v0.1.0-ga-cuda121","pytorch_flavor":"cuda121"}}'
+        Set-TowerScoutGpuEnvironment -Gpu on
+        if ($env:TOWERSCOUT_DEVICE -ne "cuda") {{
+            throw "CUDA release package should allow -Gpu on."
+        }}
+        "ok"
+        """
+
+        result = subprocess.run(
+            [powershell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)

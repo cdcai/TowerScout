@@ -1,6 +1,6 @@
 # TASK-083: RC5 Podman Independence, GPU CDI, And Release Validation
 
-**Status**: REVIEW_READY - Source implementation, Podman 5.8.2 blocker fixes, rc5 candidate image/package assembly, local Docker CPU smoke, live Docker GPU, Docker-Desktop-free Podman CPU, Podman GPU CDI, and fixed-fixture runtime parity are validated for RC5 candidate 3. PR #33 closure remains; GA package distribution polish is split to `TASK-084`.
+**Status**: COMPLETED - Source implementation, Podman 5.8.2 blocker fixes, rc5 candidate image/package assembly, local Docker CPU smoke, live Docker GPU, Docker-Desktop-free Podman CPU, Podman GPU CDI, and fixed-fixture runtime parity are validated for RC5 candidate 3. PR #33 merged on June 16, 2026; GA package distribution polish is split to `TASK-084`.
 **Priority**: CRITICAL
 **Type**: C (Runtime Support / Podman GPU / Release Validation)
 **Estimated Effort**: 3-6 days (24-48 hours), split across CPU-dev-able implementation, GPU-host validation, and package release validation
@@ -423,17 +423,26 @@ validated the published pre-release `v0.1.0-rc5-candidate.3` at source ref
 `sha256:841bc196c753654d359ff399e5ac5a547d4b2ab01150c7cc20eb2b7be73852ad`.
 Docker CPU, Docker GPU, Podman CPU, and Podman GPU CDI all reached readiness,
 and fixed-fixture parity was byte-identical at 45 detections over 25 tiles.
-**Decision**: Treat Task-083 runtime work as review-ready after PR #33 metadata
-is updated and the PR leaves draft. Split remaining GA packaging/distribution
-polish into `TASK-084`, specifically CPU/CUDA package strategy, Podman Compose
-provider onboarding, and public evidence sanitization.
-**Output**: Task-083 status updated to `REVIEW_READY`; `TASK-084` created and
+**Decision**: Treat Task-083 runtime work as complete after PR #33 merged.
+Split remaining GA packaging/distribution polish into `TASK-084`, specifically
+CPU/CUDA package strategy, Podman Compose provider onboarding, and public
+evidence sanitization.
+**Output**: Task-083 status updated to `COMPLETED`; `TASK-084` created and
 linked from the sprint tracker.
 **Validation**: The evidence packet's `SHA256SUMS.txt` verified locally during
 review, and the parity JSONs had identical per-tile detection counts across all
 four cells.
-**Next**: Update PR #33 body/draft state, complete review/merge, then pursue
-GA packaging hardening under Task-084.
+**Next**: Pursue GA packaging hardening under Task-084.
+
+### 2026-06-16 - PR #33 Merged
+**Objective**: Close the Task-083 source/runtime validation lane.
+**Context**: GitHub PR #33, `TASK-083 rc5 Podman independence and GPU CDI
+gates`, merged into `main` on June 16, 2026 at 14:37:23Z.
+**Decision**: Mark Task-083 complete and keep package-shape, provider
+onboarding, and final-publication gates in `TASK-084` and `TASK-085`.
+**Output**: Task status and sprint tracker language updated to remove stale
+review-ready and PR-closure wording.
+**Next**: Continue with `TASK-084`.
 
 ---
 
@@ -551,11 +560,10 @@ the immutable rc5 candidate image digest recorded above.
 
 ### Remediation Actions
 
-- Update PR #33 body to replace stale "live validation pending" language with
-  the RC5 candidate 3 evidence summary.
-- Remove draft status from PR #33 when the owner is ready for normal review.
-- Keep Task-083 runtime scope closed unless PR review identifies a source
-  defect.
+- PR #33 merged on June 16, 2026 after its body was updated with the RC5
+  candidate 3 evidence summary.
+- Keep Task-083 runtime scope closed unless a post-merge source defect is
+  identified.
 - Continue CPU/CUDA package strategy, Podman provider onboarding, and public
   evidence sanitization under `TASK-084`.
 
@@ -563,6 +571,5 @@ the immutable rc5 candidate image digest recorded above.
 
 Runtime sign-off is complete for the RC5 candidate 3 support boundary: Docker
 CPU, Docker GPU, Docker-Desktop-free Podman CPU, Podman GPU CDI, and
-fixed-fixture parity are validated. Task-083 remains open only for PR #33
-review/merge closure. GA packaging and first-run distribution hardening are
-tracked in `TASK-084`.
+fixed-fixture parity are validated. PR #33 is merged. GA packaging and
+first-run distribution hardening are tracked in `TASK-084`.

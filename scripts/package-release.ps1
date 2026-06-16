@@ -9,6 +9,8 @@ param(
 
     [string] $AssetBundleSha256 = "",
 
+    [string] $AssetBundleVersion = "",
+
     [string] $PytorchFlavor = "",
 
     [switch] $AllowMutableImage,
@@ -143,6 +145,32 @@ $packageName = "towerscout-$Version"
 $stagePath = Join-Path $outputRoot $packageName
 $zipPath = Join-Path $outputRoot "$packageName.zip"
 
+function Get-TowerScoutDefaultAssetBundleVersion {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $PackageVersion
+    )
+
+    $candidate = ([string] $PackageVersion).Trim()
+    foreach ($suffix in @("-cuda121", "-cpu")) {
+        if ($candidate.EndsWith($suffix, [System.StringComparison]::OrdinalIgnoreCase)) {
+            return $candidate.Substring(0, $candidate.Length - $suffix.Length)
+        }
+    }
+
+    return $candidate
+}
+
+if ([string]::IsNullOrWhiteSpace($AssetBundleVersion)) {
+    $AssetBundleVersion = Get-TowerScoutDefaultAssetBundleVersion -PackageVersion $Version
+}
+else {
+    $AssetBundleVersion = $AssetBundleVersion.Trim()
+}
+if ($AssetBundleVersion -notmatch "^[A-Za-z0-9][A-Za-z0-9._-]*$") {
+    throw "AssetBundleVersion must contain only letters, numbers, dots, underscores, and hyphens, and must start with a letter or number."
+}
+
 function Test-ChildPath {
     param(
         [Parameter(Mandatory = $true)]
@@ -229,12 +257,16 @@ $releaseFiles = @(
     "docs\support\oci-runtime-contract.md",
     "docs\release\release-asset-bundle-contract.md",
     "webapp\asset_manifest.v1.json",
+    "scripts\podman-compose-providers.v1.json",
     "scripts\lib\TowerScoutBootstrap.ps1",
     "scripts\lib\TowerScoutCompose.ps1",
+    "scripts\lib\TowerScoutPodmanComposeProvider.ps1",
     "scripts\lib\TowerScoutPodmanGpu.ps1",
     "scripts\setup-towerscout.ps1",
     "scripts\bootstrap.ps1",
     "scripts\enable-podman-gpu.ps1",
+    "scripts\install-podman-compose-provider.cmd",
+    "scripts\install-podman-compose-provider.ps1",
     "scripts\launch.ps1",
     "scripts\start.cmd",
     "scripts\start.ps1",
@@ -272,6 +304,10 @@ Optional validation tracks:
 
 setup-towerscout.cmd -Engine podman
 setup-towerscout.cmd -Gpu auto
+
+If Podman reports that no approved Compose provider is present:
+
+scripts\install-podman-compose-provider.cmd -Apply
 
 Advanced support fallback when an explicit path is needed:
 
@@ -325,7 +361,7 @@ if (Test-Path -LiteralPath $assetManifestPath -PathType Leaf) {
 $assetBundleName = ""
 $assetBundleSha256Sidecar = ""
 if (-not [string]::IsNullOrWhiteSpace($assetManifestVersion)) {
-    $assetBundleName = "towerscout-$Version-assets-$assetManifestVersion.zip"
+    $assetBundleName = "towerscout-$AssetBundleVersion-assets-$assetManifestVersion.zip"
     $assetBundleSha256Sidecar = "$assetBundleName.sha256"
 }
 
@@ -436,6 +472,7 @@ $manifest = [ordered]@{
         pytorch_flavor = $PytorchFlavor
         asset_manifest = "webapp/asset_manifest.v1.json"
         asset_bundle = $assetBundleName
+        asset_bundle_release_version = $AssetBundleVersion
         asset_bundle_sha256 = $AssetBundleSha256
         asset_bundle_sha256_sidecar = $assetBundleSha256Sidecar
         asset_bundle_sha256_reason = if ([string]::IsNullOrWhiteSpace($AssetBundleSha256)) { "Provide -AssetBundleSha256 from the Model & Data Package checksum sidecar during release assembly." } else { "" }

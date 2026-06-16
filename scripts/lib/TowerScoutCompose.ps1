@@ -3,6 +3,7 @@ $script:TowerScoutComposeExitCode = 0
 $script:TowerScoutCpuPytorchIndexUrl = "https://download.pytorch.org/whl/cpu"
 $script:TowerScoutCudaPytorchIndexUrl = "https://download.pytorch.org/whl/cu121"
 $script:TowerScoutDefaultPodmanMachineName = "podman-machine-default"
+. "$PSScriptRoot\TowerScoutPodmanComposeProvider.ps1"
 
 function Get-TowerScoutRepoRoot {
     return (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
@@ -130,6 +131,19 @@ function Get-TowerScoutEnvFileValue {
     )
 
     $envPath = Join-Path (Get-TowerScoutRepoRoot) ".env"
+    return Get-TowerScoutEnvFileValueFromPath -Path $envPath -Name $Name
+}
+
+function Get-TowerScoutEnvFileValueFromPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Path,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Name
+    )
+
+    $envPath = $Path
     if (-not (Test-Path -LiteralPath $envPath -PathType Leaf)) {
         return $null
     }
@@ -154,6 +168,127 @@ function Get-TowerScoutEnvFileValue {
     }
 
     return $null
+}
+
+function Get-TowerScoutReleaseManifest {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $RootPath
+    )
+
+    $manifestPath = Join-Path $RootPath "release-manifest.v1.json"
+    if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+        return $null
+    }
+
+    try {
+        return (Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json)
+    }
+    catch {
+        return $null
+    }
+}
+
+function Test-TowerScoutReleasePackageRoot {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $RootPath
+    )
+
+    $manifest = Get-TowerScoutReleaseManifest -RootPath $RootPath
+    if ($null -eq $manifest) {
+        return $false
+    }
+
+    $version = (Get-TowerScoutObjectPropertyValue -InputObject $manifest -Name "release_version").Trim()
+    return (-not [string]::IsNullOrWhiteSpace($version) -and $version -ne "template")
+}
+
+function Assert-TowerScoutPackageEnvImageMatch {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $RootPath
+    )
+
+    if (-not (Test-TowerScoutReleasePackageRoot -RootPath $RootPath)) {
+        return
+    }
+
+    $envPath = Join-Path $RootPath ".env"
+    $templatePath = Join-Path $RootPath ".env.example"
+    if (
+        -not (Test-Path -LiteralPath $envPath -PathType Leaf) -or
+        -not (Test-Path -LiteralPath $templatePath -PathType Leaf)
+    ) {
+        return
+    }
+
+    $expectedImage = [string] (Get-TowerScoutEnvFileValueFromPath -Path $templatePath -Name "TOWERSCOUT_IMAGE")
+    $actualImage = [string] (Get-TowerScoutEnvFileValueFromPath -Path $envPath -Name "TOWERSCOUT_IMAGE")
+    $expectedDigest = [string] (Get-TowerScoutEnvFileValueFromPath -Path $templatePath -Name "TOWERSCOUT_IMAGE_DIGEST")
+    $actualDigest = [string] (Get-TowerScoutEnvFileValueFromPath -Path $envPath -Name "TOWERSCOUT_IMAGE_DIGEST")
+
+    $mismatches = @()
+    if (-not [string]::IsNullOrWhiteSpace($expectedImage) -and $actualImage -ne $expectedImage) {
+        $mismatches += "TOWERSCOUT_IMAGE expected '$expectedImage' but found '$actualImage'"
+    }
+    if (-not [string]::IsNullOrWhiteSpace($expectedDigest) -and $actualDigest -ne $expectedDigest) {
+        $mismatches += "TOWERSCOUT_IMAGE_DIGEST expected '$expectedDigest' but found '$actualDigest'"
+    }
+
+    if ($mismatches.Count -gt 0) {
+        throw (
+            "Package image mismatch: .env does not match this package's pinned image. " +
+            ($mismatches -join "; ") +
+            ". Back up .env, copy .env.example to .env, then reapply provider/TLS settings. " +
+            "Do not reuse .env from another TowerScout package variant."
+        )
+    }
+}
+
+function Get-TowerScoutPackagePytorchFlavor {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $RootPath
+    )
+
+    $manifest = Get-TowerScoutReleaseManifest -RootPath $RootPath
+    if ($null -ne $manifest) {
+        $manifestFlavor = (Get-TowerScoutObjectPropertyValue -InputObject $manifest -Name "pytorch_flavor").Trim().ToLowerInvariant()
+        if (-not [string]::IsNullOrWhiteSpace($manifestFlavor)) {
+            return $manifestFlavor
+        }
+    }
+
+    $envFlavor = [string] (Get-TowerScoutEnvFileValue -Name "TOWERSCOUT_PYTORCH_FLAVOR")
+    if (-not [string]::IsNullOrWhiteSpace($envFlavor)) {
+        return $envFlavor.Trim().ToLowerInvariant()
+    }
+
+    return ""
+}
+
+function Assert-TowerScoutPackageGpuCompatibility {
+    param(
+        [ValidateSet("off", "auto", "on")]
+        [string] $Gpu = "off",
+
+        [switch] $Build
+    )
+
+    if ($Gpu -ne "on" -or $Build) {
+        return
+    }
+
+    $rootPath = Get-TowerScoutRepoRoot
+    if (-not (Test-TowerScoutReleasePackageRoot -RootPath $rootPath)) {
+        return
+    }
+
+    $packageFlavor = Get-TowerScoutPackagePytorchFlavor -RootPath $rootPath
+    if ($packageFlavor -eq "cpu") {
+        throw "This CPU TowerScout package does not support -Gpu on. Use the CUDA 12.1 package for GPU validation, or launch this CPU package with -Gpu off."
+    }
 }
 
 function Get-TowerScoutConfiguredPodmanMachineName {
@@ -238,20 +373,35 @@ function Get-TowerScoutPodmanComposeProviderOverride {
 
 function Initialize-TowerScoutPodmanComposeProvider {
     $providerOverride = Get-TowerScoutPodmanComposeProviderOverride
-    if ([string]::IsNullOrWhiteSpace($providerOverride)) {
-        return ""
+
+    if (-not [string]::IsNullOrWhiteSpace($providerOverride)) {
+        $check = Test-TowerScoutAnyApprovedPodmanComposeProvider -ProviderPath $providerOverride
+        if (-not $check.Accepted) {
+            if ((Test-TowerScoutDockerDesktopComposeProvider -Value $providerOverride) -or (Test-TowerScoutDockerDesktopComposeProvider -Value ([string] $check.Path))) {
+                throw "PODMAN_COMPOSE_PROVIDER points to Docker Desktop's bundled docker-compose.exe. Select an approved non-Docker-Desktop Compose provider for the Podman path."
+            }
+            throw "PODMAN_COMPOSE_PROVIDER is set to '$providerOverride', but it is not an approved Podman Compose provider: $($check.Reason). Run scripts\install-podman-compose-provider.cmd -Apply or set PODMAN_COMPOSE_PROVIDER to an approved provider path."
+        }
+
+        $env:PODMAN_COMPOSE_PROVIDER = $check.Path
+        return $check.Path
     }
 
-    $resolvedProvider = Resolve-TowerScoutCommandOrPath -Value $providerOverride
-    if ([string]::IsNullOrWhiteSpace($resolvedProvider)) {
-        throw "PODMAN_COMPOSE_PROVIDER is set to '$providerOverride', but that file or command was not found."
-    }
-    if (Test-TowerScoutDockerDesktopComposeProvider -Value $resolvedProvider) {
-        throw "PODMAN_COMPOSE_PROVIDER points to Docker Desktop's bundled docker-compose.exe. Select an approved non-Docker-Desktop Compose provider for the Podman path."
+    $approvedProviders = @(Find-TowerScoutApprovedPodmanComposeProviders)
+    if ($approvedProviders.Count -eq 1) {
+        $env:PODMAN_COMPOSE_PROVIDER = $approvedProviders[0].Path
+        return $approvedProviders[0].Path
     }
 
-    $env:PODMAN_COMPOSE_PROVIDER = $resolvedProvider
-    return $resolvedProvider
+    if ($approvedProviders.Count -gt 1) {
+        $providerList = [string]::Join(
+            [Environment]::NewLine,
+            @($approvedProviders | ForEach-Object { "  - $($_.Provider.display_name): $($_.Path)" })
+        )
+        throw "Multiple approved Podman Compose providers were found. Set PODMAN_COMPOSE_PROVIDER in .env to one of these paths before using the Podman path:$([Environment]::NewLine)$providerList"
+    }
+
+    throw "No approved Podman Compose provider was found. Run scripts\install-podman-compose-provider.cmd -Apply, or set PODMAN_COMPOSE_PROVIDER in .env to an approved provider path."
 }
 
 function Get-TowerScoutPodmanComposeVersionResult {
@@ -291,7 +441,11 @@ function Initialize-TowerScoutEnvFile {
 
     $envPath = Join-Path $RootPath ".env"
     $templatePath = Join-Path $RootPath ".env.example"
-    if ((Test-Path -LiteralPath $envPath -PathType Leaf) -or -not (Test-Path -LiteralPath $templatePath -PathType Leaf)) {
+    if (-not (Test-Path -LiteralPath $templatePath -PathType Leaf)) {
+        return
+    }
+    if (Test-Path -LiteralPath $envPath -PathType Leaf) {
+        Assert-TowerScoutPackageEnvImageMatch -RootPath $RootPath
         return
     }
 
@@ -309,13 +463,8 @@ function Write-TowerScoutComposeProviderSummary {
     $effectiveEngine = [string] $command["Executable"]
 
     if ($effectiveEngine -eq "podman") {
-        $providerOverride = Initialize-TowerScoutPodmanComposeProvider
-        if ([string]::IsNullOrWhiteSpace($providerOverride)) {
-            Write-Host "Podman Compose provider: selected by podman compose. Set PODMAN_COMPOSE_PROVIDER to force an approved non-Docker-Desktop provider."
-        }
-        else {
-            Write-Host "Podman Compose provider override: $providerOverride"
-        }
+        $providerPath = Initialize-TowerScoutPodmanComposeProvider
+        Write-Host "Podman Compose provider: $providerPath"
 
         try {
             $versionResult = Get-TowerScoutPodmanComposeVersionResult
@@ -373,6 +522,8 @@ function Set-TowerScoutGpuEnvironment {
 
         [switch] $Build
     )
+
+    Assert-TowerScoutPackageGpuCompatibility -Gpu $Gpu -Build:$Build
 
     $env:TOWERSCOUT_GPU_MODE = $Gpu
 
@@ -497,6 +648,52 @@ function Test-TowerScoutPodmanVersionAtLeast {
     return ($actualMajor -gt $Major -or ($actualMajor -eq $Major -and $actualMinor -ge $Minor))
 }
 
+function Join-TowerScoutProcessArguments {
+    param(
+        [string[]] $Arguments = @()
+    )
+
+    $quoted = foreach ($argument in $Arguments) {
+        $text = [string] $argument
+        if ($text -match '[\s"]') {
+            '"' + $text.Replace('"', '\"') + '"'
+        }
+        else {
+            $text
+        }
+    }
+
+    return ($quoted -join " ")
+}
+
+function Stop-TowerScoutProcessTree {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Diagnostics.Process] $Process
+    )
+
+    if ($Process.HasExited) {
+        return
+    }
+
+    if ($env:OS -eq "Windows_NT") {
+        try {
+            & taskkill.exe /PID $Process.Id /T /F 2>$null | Out-Null
+            return
+        }
+        catch {
+            # Fall back to direct process termination below.
+        }
+    }
+
+    try {
+        $Process.Kill()
+    }
+    catch {
+        # Best effort cleanup after a timed-out runtime probe.
+    }
+}
+
 function Invoke-TowerScoutPodmanCommand {
     param(
         [Parameter(Mandatory = $true)]
@@ -505,25 +702,58 @@ function Invoke-TowerScoutPodmanCommand {
         [int] $TimeoutSeconds = 30
     )
 
-    $previousErrorActionPreference = $ErrorActionPreference
-    $ErrorActionPreference = "Continue"
-    try {
-        $output = & podman @Arguments 2>&1
+    if ($TimeoutSeconds -lt 1) {
+        $TimeoutSeconds = 1
+    }
+
+    $podmanPath = Resolve-TowerScoutCommandOrPath -Value "podman"
+    if ([string]::IsNullOrWhiteSpace($podmanPath)) {
         return [pscustomobject]@{
-            ExitCode = $LASTEXITCODE
-            StdOut = [string]::Join([Environment]::NewLine, @($output))
-            StdErr = ""
+            ExitCode = 127
+            TimedOut = $false
+            StdOut = ""
+            StdErr = "Podman CLI was not found."
+        }
+    }
+
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo.FileName = $podmanPath
+    $process.StartInfo.Arguments = Join-TowerScoutProcessArguments -Arguments $Arguments
+    $process.StartInfo.UseShellExecute = $false
+    $process.StartInfo.RedirectStandardOutput = $true
+    $process.StartInfo.RedirectStandardError = $true
+    $process.StartInfo.CreateNoWindow = $true
+
+    try {
+        [void] $process.Start()
+        $completed = $process.WaitForExit($TimeoutSeconds * 1000)
+        if (-not $completed) {
+            Stop-TowerScoutProcessTree -Process $process
+            return [pscustomobject]@{
+                ExitCode = 124
+                TimedOut = $true
+                StdOut = ""
+                StdErr = "podman command timed out after $TimeoutSeconds seconds."
+            }
+        }
+
+        return [pscustomobject]@{
+            ExitCode = $process.ExitCode
+            TimedOut = $false
+            StdOut = $process.StandardOutput.ReadToEnd()
+            StdErr = $process.StandardError.ReadToEnd()
         }
     }
     catch {
         return [pscustomobject]@{
-            ExitCode = 1
+            ExitCode = 127
+            TimedOut = $false
             StdOut = ""
             StdErr = $_.Exception.Message
         }
     }
     finally {
-        $ErrorActionPreference = $previousErrorActionPreference
+        $process.Dispose()
     }
 }
 
@@ -786,6 +1016,11 @@ function Get-TowerScoutPodmanServiceContainerId {
     param(
         [string] $ServiceName = "towerscout"
     )
+
+    $composeIds = @(Get-TowerScoutComposeServiceContainerIds -Engine "podman" -ServiceName $ServiceName)
+    if ($composeIds.Count -gt 0 -and -not [string]::IsNullOrWhiteSpace([string] $composeIds[0])) {
+        return [string] $composeIds[0]
+    }
 
     $projectName = Get-TowerScoutComposeProjectName
     $labelSets = @(

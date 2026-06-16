@@ -1,5 +1,6 @@
 """Task-081 runtime and launcher hardening coverage."""
 
+import json
 import os
 import shutil
 import subprocess
@@ -17,6 +18,8 @@ COMPOSE_LIB = REPO_ROOT / "scripts" / "lib" / "TowerScoutCompose.ps1"
 LAUNCH_SCRIPT = REPO_ROOT / "scripts" / "launch.ps1"
 IMPORT_ASSETS_SCRIPT = REPO_ROOT / "scripts" / "import-assets.ps1"
 STOP_SCRIPT = REPO_ROOT / "scripts" / "stop.ps1"
+PROVIDER_CATALOG = REPO_ROOT / "scripts" / "podman-compose-providers.v1.json"
+PROVIDER_INSTALL_SCRIPT = REPO_ROOT / "scripts" / "install-podman-compose-provider.ps1"
 
 
 def _powershell_executable():
@@ -37,6 +40,19 @@ def _run_powershell(command: str):
     )
 
 
+def _write_podman_compose_provider(path: Path, version: str = "1.5.0"):
+    path.write_text(
+        "@echo off\r\n"
+        "if \"%1\"==\"version\" (\r\n"
+        f"  echo podman-compose version {version}\r\n"
+        "  exit /b 0\r\n"
+        ")\r\n"
+        "echo podman-compose %*\r\n"
+        "exit /b 0\r\n",
+        encoding="utf-8",
+    )
+
+
 def test_compose_defaults_use_cpu_tag_restart_and_runtime_guards():
     compose = COMPOSE_FILE.read_text(encoding="utf-8")
     env_example = ENV_EXAMPLE.read_text(encoding="utf-8")
@@ -51,7 +67,29 @@ def test_compose_defaults_use_cpu_tag_restart_and_runtime_guards():
     assert "TOWERSCOUT_GPU_MODE: ${TOWERSCOUT_GPU_MODE:-off}" in compose
     assert "TOWERSCOUT_PILOT_MAX_TILES: ${TOWERSCOUT_PILOT_MAX_TILES:-100}" in compose
     assert "PODMAN_COMPOSE_PROVIDER=" in env_example
-    assert "Docker-Desktop-free Podman validation" in env_example
+    assert "auto-detect exactly one" in env_example
+    assert "install-podman-compose-provider.cmd -Apply" in env_example
+
+
+def test_podman_compose_provider_installer_uses_isolated_venv_and_pinned_deps():
+    installer = PROVIDER_INSTALL_SCRIPT.read_text(encoding="utf-8")
+    catalog = json.loads(PROVIDER_CATALOG.read_text(encoding="utf-8"))
+    provider = next(
+        item for item in catalog["providers"] if item["id"] == "podman-compose-pypi-1.5.0"
+    )
+
+    requirements = {dependency["requirement"] for dependency in provider["dependencies"]}
+    assert provider["requires_python"] == ">=3.9"
+    assert requirements == {"python-dotenv==1.1.1", "PyYAML==6.0.2"}
+    assert "Join-Path $InstallDir \".venv\"" in installer
+    assert "@(\"-m\", \"venv\", $venvDir)" in installer
+    assert "\"pip\"" in installer
+    assert "\"install\"" in installer
+    assert "--only-binary" in installer
+    assert "foreach ($dependency in @($provider.dependencies))" in installer
+    assert "\"%~dp0.venv\\Scripts\\podman-compose.exe\" %*" in installer
+    assert "System.IO.Compression.ZipFile" not in installer
+    assert "podman_compose.py" not in installer
 
 
 def test_import_assets_uses_shared_copy_fallback_and_sets_gpu_environment():
@@ -90,33 +128,46 @@ def test_stop_script_uses_down_without_deleting_named_volumes():
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
 def test_auto_engine_selection_prefers_reachable_podman_when_docker_is_down():
-    command = f"""
-    $ErrorActionPreference = "Stop"
-    . "{COMPOSE_LIB}"
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task084-auto-provider-{uuid.uuid4().hex}"
+    temp_root.mkdir(parents=True)
+    provider = temp_root / "podman-compose.cmd"
+    _write_podman_compose_provider(provider)
 
-    function Test-TowerScoutCommand {{
-        param([string] $Name)
-        return $Name -in @("docker", "podman")
-    }}
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        $env:Path = "{temp_root}"
+        $env:PODMAN_COMPOSE_PROVIDER = ""
+        . "{COMPOSE_LIB}"
 
-    function Test-TowerScoutEngineReady {{
-        param([string] $EngineName)
-        return $EngineName -eq "podman"
-    }}
+        function Test-TowerScoutCommand {{
+            param([string] $Name)
+            return $Name -in @("docker", "podman")
+        }}
 
-    $command = Get-TowerScoutComposeCommand -Engine auto
-    if ($command["Executable"] -ne "podman") {{
-        throw "Expected automatic engine selection to choose reachable Podman."
-    }}
-    if ($command["Arguments"][0] -ne "compose") {{
-        throw "Expected Podman compose arguments."
-    }}
-    "ok"
-    """
-    result = _run_powershell(command)
+        function Test-TowerScoutEngineReady {{
+            param([string] $EngineName)
+            return $EngineName -eq "podman"
+        }}
 
-    assert result.returncode == 0, result.stdout + result.stderr
-    assert "ok" in result.stdout
+        $command = Get-TowerScoutComposeCommand -Engine auto
+        if ($command["Executable"] -ne "podman") {{
+            throw "Expected automatic engine selection to choose reachable Podman."
+        }}
+        if ($command["Arguments"][0] -ne "compose") {{
+            throw "Expected Podman compose arguments."
+        }}
+        if ($env:PODMAN_COMPOSE_PROVIDER -ne "{provider}") {{
+            throw "Expected provider auto-detection to set the approved provider."
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
@@ -184,8 +235,8 @@ def test_compose_invocation_allows_successful_provider_stderr_banner():
 def test_podman_compose_provider_override_uses_env_file_and_rejects_docker_desktop():
     temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task083-provider-{uuid.uuid4().hex}"
     temp_root.mkdir(parents=True)
-    provider = temp_root / "podman-compose.exe"
-    provider.write_text("stub provider", encoding="utf-8")
+    provider = temp_root / "podman-compose.cmd"
+    _write_podman_compose_provider(provider)
     (temp_root / ".env").write_text(
         f"PODMAN_COMPOSE_PROVIDER={provider}\n",
         encoding="utf-8",
@@ -241,6 +292,160 @@ def test_podman_compose_provider_override_uses_env_file_and_rejects_docker_deskt
             if ($_.Exception.Message -notmatch "Docker Desktop") {{
                 throw
             }}
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
+def test_podman_compose_provider_requires_single_approved_provider():
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task084-provider-policy-{uuid.uuid4().hex}"
+    empty_path_root = temp_root / "empty-path"
+    provider_a_root = temp_root / "provider-a"
+    provider_b_root = temp_root / "provider-b"
+    empty_path_root.mkdir(parents=True)
+    provider_a_root.mkdir(parents=True)
+    provider_b_root.mkdir(parents=True)
+    _write_podman_compose_provider(provider_a_root / "podman-compose.cmd")
+    _write_podman_compose_provider(provider_b_root / "podman-compose.cmd")
+
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        . "{COMPOSE_LIB}"
+
+        $env:PODMAN_COMPOSE_PROVIDER = ""
+        $env:Path = "{empty_path_root}"
+        try {{
+            Initialize-TowerScoutPodmanComposeProvider | Out-Null
+            throw "Missing provider was accepted."
+        }}
+        catch {{
+            if ($_.Exception.Message -notmatch "No approved Podman Compose provider") {{
+                throw
+            }}
+        }}
+
+        $env:PODMAN_COMPOSE_PROVIDER = ""
+        $env:Path = "{provider_a_root};{provider_b_root}"
+        try {{
+            Initialize-TowerScoutPodmanComposeProvider | Out-Null
+            throw "Ambiguous providers were accepted."
+        }}
+        catch {{
+            if ($_.Exception.Message -notmatch "Multiple approved Podman Compose providers") {{
+                throw
+            }}
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
+def test_podman_compose_provider_env_apply_preserves_existing_settings():
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task084-provider-apply-{uuid.uuid4().hex}"
+    temp_root.mkdir(parents=True)
+    provider = temp_root / "podman-compose.cmd"
+    _write_podman_compose_provider(provider)
+    env_file = temp_root / ".env"
+    env_file.write_text(
+        "TOWERSCOUT_PORT=5005\n"
+        "PODMAN_COMPOSE_PROVIDER=old-provider\n"
+        "TOWERSCOUT_GPU_MODE=off\n",
+        encoding="utf-8",
+    )
+
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        . "{REPO_ROOT}\\scripts\\lib\\TowerScoutPodmanComposeProvider.ps1"
+
+        $preview = Set-TowerScoutPodmanComposeProviderEnv -ProviderPath "{provider}" -RootPath "{temp_root}"
+        if ($preview.Applied) {{
+            throw "Preview mode should not apply .env changes."
+        }}
+        $before = Get-Content -LiteralPath "{env_file}" -Raw
+        if ($before -notmatch "PODMAN_COMPOSE_PROVIDER=old-provider") {{
+            throw "Preview mode changed .env."
+        }}
+
+        $applied = Set-TowerScoutPodmanComposeProviderEnv -ProviderPath "{provider}" -RootPath "{temp_root}" -Apply
+        if (-not $applied.Applied) {{
+            throw "Apply mode did not report an applied update."
+        }}
+        if (-not (Test-Path -LiteralPath $applied.BackupPath -PathType Leaf)) {{
+            throw "Apply mode did not create a backup."
+        }}
+        $after = Get-Content -LiteralPath "{env_file}" -Raw
+        if ($after -notmatch [regex]::Escape("PODMAN_COMPOSE_PROVIDER={provider}")) {{
+            throw "Apply mode did not set the provider path."
+        }}
+        if ($after -notmatch "TOWERSCOUT_PORT=5005" -or $after -notmatch "TOWERSCOUT_GPU_MODE=off") {{
+            throw "Apply mode did not preserve existing settings."
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
+def test_podman_command_timeout_and_cp_fallback_use_compose_ps():
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task084-podman-command-{uuid.uuid4().hex}"
+    temp_root.mkdir(parents=True)
+    podman_cmd = temp_root / "podman.cmd"
+    podman_cmd.write_text(
+        "@echo off\r\n"
+        "if \"%1\"==\"sleep\" (\r\n"
+        "  ping -n 6 127.0.0.1 > nul\r\n"
+        "  exit /b 0\r\n"
+        ")\r\n"
+        "echo podman %*\r\n"
+        "exit /b 0\r\n",
+        encoding="utf-8",
+    )
+
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        $env:Path = "{temp_root};" + $env:Path
+        . "{COMPOSE_LIB}"
+
+        $timeout = Invoke-TowerScoutPodmanCommand -Arguments @("sleep") -TimeoutSeconds 1
+        if ($timeout.ExitCode -ne 124 -or -not $timeout.TimedOut) {{
+            throw "Expected timeout exit 124, got $($timeout.ExitCode) timedOut=$($timeout.TimedOut)"
+        }}
+        if ($timeout.StdErr -notmatch "timed out") {{
+            throw "Expected timeout stderr guidance, got $($timeout.StdErr)"
+        }}
+
+        function Get-TowerScoutComposeServiceContainerIds {{
+            param([string] $Engine, [string] $ServiceName)
+            if ($Engine -ne "podman" -or $ServiceName -ne "towerscout") {{
+                throw "Unexpected compose ps lookup: $Engine $ServiceName"
+            }}
+            return @("compose-provider-id")
+        }}
+
+        $containerId = Get-TowerScoutPodmanServiceContainerId -ServiceName "towerscout"
+        if ($containerId -ne "compose-provider-id") {{
+            throw "Expected compose ps container id, got $containerId"
         }}
         "ok"
         """

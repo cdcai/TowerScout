@@ -195,6 +195,81 @@ def test_compose_helper_initializes_env_from_package_template_without_overwrite(
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap helpers are Windows-only")
+def test_package_env_image_mismatch_fails_closed_without_overwrite():
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task084-env-mismatch-{uuid.uuid4().hex}"
+    temp_root.mkdir(parents=True)
+    digest = "sha256:" + ("8" * 64)
+    expected_image = f"ghcr.io/j-schulein/towerscout:v0.1.0-ga-cpu@{digest}"
+    (temp_root / "release-manifest.v1.json").write_text(
+        json.dumps(
+            {
+                "release_version": "v0.1.0-ga-cpu",
+                "pytorch_flavor": "cpu",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (temp_root / ".env.example").write_text(
+        "\n".join(
+            [
+                f"TOWERSCOUT_IMAGE={expected_image}",
+                f"TOWERSCOUT_IMAGE_DIGEST={digest}",
+                "PODMAN_COMPOSE_PROVIDER=",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (temp_root / ".env").write_text(
+        "\n".join(
+            [
+                "TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout:old-cuda121",
+                "TOWERSCOUT_IMAGE_DIGEST=sha256:9999999999999999999999999999999999999999999999999999999999999999",
+                "PODMAN_COMPOSE_PROVIDER=C:\\Tools\\podman-compose.exe",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        . "{COMPOSE_LIB}"
+
+        try {{
+            Initialize-TowerScoutEnvFile -RootPath "{temp_root}"
+            throw "Package image mismatch was accepted."
+        }}
+        catch {{
+            if ($_.Exception.Message -notmatch "Package image mismatch") {{
+                throw
+            }}
+            if ($_.Exception.Message -notmatch "TOWERSCOUT_IMAGE_DIGEST") {{
+                throw "Mismatch message did not include digest detail."
+            }}
+        }}
+
+        $envText = Get-Content -LiteralPath "{temp_root / '.env'}" -Raw
+        if ($envText -notmatch "old-cuda121" -or $envText -notmatch "PODMAN_COMPOSE_PROVIDER") {{
+            throw "Existing .env was overwritten instead of failing closed."
+        }}
+
+        Set-Content -LiteralPath "{temp_root / '.env'}" -Encoding ASCII -Value @(
+            "TOWERSCOUT_IMAGE={expected_image}",
+            "TOWERSCOUT_IMAGE_DIGEST={digest}",
+            "PODMAN_COMPOSE_PROVIDER=C:\\Tools\\podman-compose.exe"
+        )
+        Initialize-TowerScoutEnvFile -RootPath "{temp_root}"
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap helpers are Windows-only")
 def test_bootstrap_helpers_verify_checksum_and_readiness_guidance():
     temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task074-checksum-{uuid.uuid4().hex}"
     temp_root.mkdir(parents=True)
@@ -721,6 +796,14 @@ def test_bootstrap_port_mapping_conflict_detects_stale_container():
     )
     if ($conflict -notmatch "Created") {{
         throw "Expected stale created container to be detected."
+    }}
+    $conflicts = @(Get-TowerScoutPortMappingConflicts -Port 5000 -Lines @(
+        "first Created 0.0.0.0:5000->5000/tcp",
+        "second Exited (0) 127.0.0.1:5000->5000/tcp",
+        "running Up 2 minutes 0.0.0.0:5000->5000/tcp"
+    ))
+    if ($conflicts.Count -ne 2) {{
+        throw "Expected two stale conflicts, got $($conflicts.Count): $($conflicts -join '; ')"
     }}
     $allowed = Get-TowerScoutPortMappingConflict -Port 5000 -Lines @(
         "towerscout-towerscout-1 Up 2 minutes 0.0.0.0:5000->5000/tcp"
