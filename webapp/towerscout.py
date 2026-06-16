@@ -3149,6 +3149,51 @@ def write_contents_file(tmpdirname, tiles, keep_refs, keep_ids, additions, meta)
 # upload dataset for further editing:
 #
 
+class UnsafeDatasetArchiveError(ValueError):
+    """Raised when a dataset ZIP member cannot be safely restored."""
+
+
+def _validate_dataset_zip_member_name(member_name):
+    """Validate a ZIP member name before it participates in restore paths."""
+    name = str(member_name)
+    if not name:
+        raise UnsafeDatasetArchiveError("empty ZIP member name")
+    if "\x00" in name:
+        raise UnsafeDatasetArchiveError("ZIP member contains a null byte")
+    if "\\" in name:
+        raise UnsafeDatasetArchiveError("ZIP member uses backslash path separators")
+    if ":" in name:
+        raise UnsafeDatasetArchiveError("ZIP member contains a drive or scheme prefix")
+    if name.startswith("/"):
+        raise UnsafeDatasetArchiveError("ZIP member uses an absolute path")
+
+    parts = name.split("/")
+    for index, part in enumerate(parts):
+        if part == "" and index == len(parts) - 1 and name.endswith("/"):
+            continue
+        if part in ("", ".", ".."):
+            raise UnsafeDatasetArchiveError("ZIP member contains an unsafe path segment")
+
+
+def _validate_dataset_zip_member_names(member_names):
+    for member_name in member_names:
+        _validate_dataset_zip_member_name(member_name)
+
+
+def _resolve_dataset_restore_target(tmpdirname, relative_name):
+    """Resolve an adapted dataset member path under the session temp directory."""
+    _validate_dataset_zip_member_name(relative_name)
+
+    base_dir = os.path.abspath(tmpdirname)
+    target_path = os.path.abspath(
+        os.path.join(base_dir, *str(relative_name).split("/"))
+    )
+    if os.path.commonpath([base_dir, target_path]) != base_dir:
+        raise UnsafeDatasetArchiveError("resolved dataset path escapes session temp directory")
+
+    return target_path
+
+
 @app.route('/uploaddataset', methods=['POST'])
 def upload_dataset():
     api_logger.info("Dataset upload requested")
@@ -3199,6 +3244,7 @@ def upload_dataset():
             # read previous results and tiles from content.txt and add to session
             # print(" zip contents:")
             filenames = zipf.namelist()
+            _validate_dataset_zip_member_names(filenames)
             
             # TASK-036: Skip root-level files (README.txt, contents.txt) when finding old_stem
             # Only use files in subfolders to extract the dataset prefix
@@ -3210,12 +3256,18 @@ def upload_dataset():
             old_stem = subfolder_files[0][:subfolder_files[0].index("/")]
             files = adapt_filenames(filenames, old_stem, new_stem)
             # print(files)
-            for f_zip, f_new in zip(zipf.namelist(), files):
+            for f_zip, f_new in zip(filenames, files):
+                if f_zip.endswith("/"):
+                    continue
                 api_logger.debug("Restoring dataset archive member %s to %s", f_zip, f_new)
                 if not f_zip.endswith(".xml"):
+                    target_path = _resolve_dataset_restore_target(tmpdirname, f_new)
+                    target_parent = os.path.dirname(target_path)
+                    if target_parent != os.path.abspath(tmpdirname):
+                        os.makedirs(target_parent, exist_ok=True)
                     with zipf.open(f_zip) as f:
-                        with open(tmpdirname+"/"+f_new, "wb") as f_target:
-                            api_logger.debug("Writing restored dataset file %s", tmpdirname+"/"+f_new)
+                        with open(target_path, "wb") as f_target:
+                            api_logger.debug("Writing restored dataset file %s", target_path)
                             f_target.write(f.read())
 
         # process contents file
@@ -3259,6 +3311,9 @@ def upload_dataset():
     except KeyError as e:
         api_logger.warning("Missing required field in restored dataset: %s", e)
         return jsonify({'error': f'Invalid dataset: missing field {str(e)}'}), 400
+    except UnsafeDatasetArchiveError as e:
+        api_logger.warning("Unsafe dataset ZIP member rejected: %s", e)
+        return jsonify({'error': 'Invalid dataset ZIP path'}), 400
     except Exception as e:
         api_logger.error("Unexpected error during dataset upload: %s", e, exc_info=True)
         return jsonify({'error': f'Failed to process dataset: {str(e)}'}), 500

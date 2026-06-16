@@ -491,6 +491,37 @@ explicitly excluded.
 while making the Docker-Desktop-free Podman path easier to execute without
 weakening the provider guardrail validated in RC5.
 
+### **TASK-085: Dataset ZIP Restore Path Traversal Hardening**
+**Status**: COMPLETED - source hardening and focused validation passed on June 16, 2026; keep active until sprint closeout
+**Type**: C (Security / Dataset Restore Hardening)
+**Priority**: HIGH
+**Estimated Effort**: 0.5-1 day (4-8 hours)
+**Target Sprint**: Sprint 06 V1 RC1 / pre-final-package gate
+**Task File**: `.agent_work/tasks/active/TASK-085-dataset-zip-restore-path-traversal-hardening.md`
+
+**Objective**: Harden dataset ZIP restore so uploaded dataset archives cannot
+write outside the session temp directory through traversal, absolute paths,
+backslashes, drive prefixes, or adapted restore targets that resolve outside
+the intended root.
+
+**Current Direction**:
+- Validate every ZIP member path before old-stem detection, filename
+  adaptation, or file writes.
+- Reject `..`, `.`, empty path segments, absolute paths, backslashes, drive or
+  scheme prefixes, and null bytes with a 400 support-safe error.
+- Resolve adapted restore targets and verify they remain below the session
+  temp directory before writing.
+- Preserve valid TowerScout dataset export/restore behavior.
+- Treat this as a hard pre-final-package gate for `TASK-084` unless dataset
+  restore is disabled or explicitly excluded from the package.
+
+**Dependencies**: Current `/uploaddataset` route and dataset export/restore
+tests; `TASK-084` final package sequencing.
+
+**User Value**: Keeps the investigation export/restore workflow while closing
+a release-blocking archive path traversal risk before broader package
+distribution.
+
 ### **TASK-074: Runtime Prerequisite Preflight**
 **Status**: COMPLETED - post-merge package-artifact bootstrap validation passed
 **Type**: B/C (Launcher / Supportability / Release UX)
@@ -536,7 +567,6 @@ Do not forget these follow-through tasks. They are intentionally kept in `.agent
 |---|---|---|
 | `TASK-068` Windows Test Portability And Script Validation | Script validation remains environment-sensitive, Flask route tests load local runtime config, or PowerShell/Windows coverage is needed before external UAT. | Useful release-support follow-through, especially around Windows-first helper scripts and isolating tests from local `.env`, logs, uploads, sessions, and cache paths. |
 | `TASK-077` Public Release Manifest And Asset Import Hardening | `TASK-069` AGPL release compliance needs a package payload, or `TASK-066` shows copy-then-verify import is too risky. | Pull forward the narrow compliance-payload slice now: release manifest, source URL/ref, checksums, image digest, SBOM reference, model/data terms, and revocation notes. Keep staged allowlist-only asset activation as follow-up unless validation makes it release-critical. |
-| `TASK-085` Dataset ZIP Restore Path Traversal Hardening | Before final GA/pilot package publication unless dataset restore is disabled or explicitly excluded. | RC5 review found that `/uploaddataset` validates the uploaded ZIP file but not every member path before writing restored files. Add ZIP member normalization, reject traversal/absolute/drive-prefixed paths, verify resolved writes stay under the session temp root, and preserve valid dataset restore behavior with regression tests. This does not need to block starting `TASK-084`, but it is a hard pre-final-package gate. |
 
 ---
 

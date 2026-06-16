@@ -9,6 +9,7 @@ import json
 import io
 import shutil
 import uuid
+import zipfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -649,5 +650,105 @@ def test_uploaddataset_restores_contents_into_session(client):
     with client.session_transaction() as sess:
         assert sess["tmpdirname"] == restore_dir
         assert sess["detections"] == restored_tiles
+        assert json.loads(sess["results"]) == restored_results
+        assert sess["metadata"] == restored_metadata
+
+
+def _dataset_zip_bytes(entries):
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, "w") as zipf:
+        for name, payload in entries.items():
+            zipf.writestr(name, payload)
+    archive.seek(0)
+    return archive
+
+
+@pytest.mark.parametrize(
+    "unsafe_member",
+    [
+        "../contents.txt",
+        "/absolute/evil.jpg",
+        "C:/evil.jpg",
+        "legacy-stem/train/images/../evil.jpg",
+        "legacy-stem/train/images/./evil.jpg",
+    ],
+)
+def test_uploaddataset_rejects_unsafe_zip_member_paths(client, tmp_path, unsafe_member):
+    restore_dir = tmp_path / "restore-session"
+    restore_dir.mkdir()
+    outside_target = tmp_path / "evil.jpg"
+    contents_json = json.dumps(
+        [
+            [{"index": 0, "filename": "legacy-stem/tile-0.jpg"}],
+            [{"id": "restored-1", "lat": 1.0, "lng": 2.0}],
+            {"provider": "google"},
+        ]
+    )
+    archive = _dataset_zip_bytes(
+        {
+            "legacy-stem/train/images/tile-0.jpg": "fake-image-bytes",
+            "contents.txt": contents_json,
+            unsafe_member: "unsafe",
+        }
+    )
+
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch(
+        "towerscout._make_session_tmpdir",
+        return_value=str(restore_dir),
+    ):
+        response = client.post(
+            "/uploaddataset",
+            data={"dataset": (archive, "dataset.zip")},
+            content_type="multipart/form-data",
+        )
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "Invalid dataset ZIP path"}
+    assert not outside_target.exists()
+
+
+def test_dataset_zip_member_validation_rejects_backslash_paths():
+    with pytest.raises(towerscout.UnsafeDatasetArchiveError):
+        towerscout._validate_dataset_zip_member_name(r"legacy-stem\train\images\evil.jpg")
+
+
+def test_uploaddataset_restores_valid_export_zip_without_path_escape(client, tmp_path):
+    restore_dir = tmp_path / "restore-session"
+    restore_dir.mkdir()
+    restored_results = [{"id": "restored-1", "lat": 1.0, "lng": 2.0}]
+    restored_metadata = {"provider": "google"}
+    contents_json = json.dumps(
+        [
+            [{"index": 0, "filename": "legacy-stem/tile-0.jpg"}],
+            restored_results,
+            restored_metadata,
+        ]
+    )
+    archive = _dataset_zip_bytes(
+        {
+            "README.txt": "dataset readme",
+            "legacy-stem/train/images/tile-0.jpg": "fake-image-bytes",
+            "legacy-stem/train/labels/tile-0.txt": "0 0.1 0.2 0.3 0.4",
+            "contents.txt": contents_json,
+        }
+    )
+
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch(
+        "towerscout._make_session_tmpdir",
+        return_value=str(restore_dir),
+    ):
+        response = client.post(
+            "/uploaddataset",
+            data={"dataset": (archive, "dataset.zip")},
+            content_type="multipart/form-data",
+        )
+
+    assert response.status_code == 200
+    assert response.get_json() == restored_results
+    assert (restore_dir / "tile-0.jpg").read_text(encoding="utf-8") == "fake-image-bytes"
+    assert (restore_dir / "tile-0.txt").read_text(encoding="utf-8") == "0 0.1 0.2 0.3 0.4"
+    assert (restore_dir / "contents.txt").read_text(encoding="utf-8") == contents_json
+    with client.session_transaction() as sess:
+        assert sess["tmpdirname"] == str(restore_dir)
         assert json.loads(sess["results"]) == restored_results
         assert sess["metadata"] == restored_metadata
