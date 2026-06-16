@@ -35,10 +35,10 @@
     <main class="doc-main">
       <section class="doc-section" id="metadata">
         <h2>Document Metadata</h2>
-        <p><strong>Applies to:</strong> Current V1 release-candidate package path, including the next rc4 package unless release notes say otherwise.</p>
-        <p><strong>Last reviewed:</strong> 2026-06-12.</p>
+        <p><strong>Applies to:</strong> Current V1 release-candidate package path, including RC5 unless release notes say otherwise.</p>
+        <p><strong>Last reviewed:</strong> 2026-06-15.</p>
         <p><strong>Audience:</strong> Pilot users and first-line support.</p>
-        <p><strong>Runtime scope:</strong> Docker Desktop CPU is the primary path; Podman CPU is support-assigned and qualified; Docker GPU is support-assigned after NVIDIA Docker validation; Podman GPU is not validated.</p>
+        <p><strong>Runtime scope:</strong> Docker Desktop CPU is the primary path; Podman CPU, Docker GPU, and Podman GPU are support-assigned RC5 paths after workstation-specific engine, Compose-provider, and NVIDIA validation.</p>
       </section>
       <section class="doc-section" id="prerequisites">
         <h2>Before You Start</h2>
@@ -51,7 +51,7 @@ wsl --list --verbose
 docker --version
 docker compose version</code></pre>
         <p>Expected result: WSL is installed, any listed Linux distribution uses version <code>2</code>, and Docker commands print version information while Docker Desktop is running.</p>
-        <p>Podman is a qualified package-runtime option only when support tells you to use it and the workstation already has a running Podman machine plus a working Compose provider such as <code>podman-compose</code>.</p>
+        <p>Podman is a qualified package-runtime option only when support tells you to use it and the workstation already has a running Podman machine plus an approved non-Docker-Desktop Compose provider. Podman GPU also requires an NVIDIA GPU, current Windows NVIDIA drivers, WSL2 Podman, and NVIDIA CDI validation.</p>
         <p>You do not need Git, Python, Conda, Node.js, VS Code, or a source-code checkout for the normal package path.</p>
         <p>Unless support has explicitly assigned you the Podman path, stop here and contact your site administrator or support lead if Docker Desktop is not already installed and approved on your workstation. Also stop if you do not already have a valid restricted provider key.</p>
         <p>If both Docker and Podman are installed, the launcher can choose Docker first. If support tells you to use Podman, use <code>-Engine podman</code> consistently on every helper command.</p>
@@ -103,7 +103,7 @@ readiness: setup_required</code></pre>
         <p><code>setup_required</code> is normal before provider setup is complete. After provider setup and asset import are complete, readiness should become <code>ready</code>.</p>
         <p>The first launch may download the TowerScout container image from GHCR. This can take several minutes. Keep the PowerShell window open while Docker downloads and starts the image.</p>
         <p>If TowerScout finds an older UAT container from a previous session, setup starts a fresh container while keeping saved setup, imported assets, and support logs in named volumes.</p>
-        <p>If support tells you to validate Podman, run <code>.\setup-towerscout.cmd -Engine podman</code> and reuse that engine value on helper commands. If support tells you to validate Docker GPU behavior, run <code>.\setup-towerscout.cmd -Engine docker -Gpu auto</code> or <code>.\setup-towerscout.cmd -Engine docker -Gpu on</code>.</p>
+        <p>If support tells you to validate Podman CPU, run <code>.\setup-towerscout.cmd -Engine podman</code> and reuse that engine value on helper commands. If support tells you to validate Docker GPU behavior, run <code>.\setup-towerscout.cmd -Engine docker -Gpu auto</code> or <code>.\setup-towerscout.cmd -Engine docker -Gpu on</code>. If support tells you to validate Podman GPU, confirm the CDI preflight first, then run <code>.\setup-towerscout.cmd -Engine podman -Gpu on</code>.</p>
       </section>
       <section class="doc-section" id="assets">
         <h2>Manual Asset Import Fallback</h2>
@@ -117,7 +117,11 @@ readiness: setup_required</code></pre>
       </section>
       <section class="doc-section" id="gpu">
         <h2>GPU Boundary</h2>
-        <p>The default launch is CPU-safe. Optional Docker GPU launch uses <code>-Gpu auto</code> or <code>-Gpu on</code> only after workstation-specific NVIDIA Docker validation. Podman GPU launch is not validated.</p>
+        <p>The default launch is CPU-safe. Optional GPU launch is support-assigned and should be used only after workstation-specific NVIDIA container validation for the selected engine.</p>
+        <pre><code>.\start.bat -Engine docker -Gpu auto
+.\start.bat -Engine docker -Gpu on
+.\start.bat -Engine podman -Gpu on</code></pre>
+        <p>For Podman GPU, support must validate the non-Docker-Desktop Compose provider and NVIDIA CDI path before launch. The RC5 validated path used Podman 5.8.2 on Windows 11 WSL2, standalone Docker Compose v5.1.4 selected through <code>PODMAN_COMPOSE_PROVIDER</code>, and NVIDIA CDI device <code>nvidia.com/gpu=all</code>.</p>
       </section>
       <section class="doc-section" id="setup">
         <h2>Complete Setup</h2>
@@ -148,6 +152,7 @@ readiness: setup_required</code></pre>
               <th>Docker CPU/default</th>
               <th>Docker GPU support-assigned</th>
               <th>Podman CPU support-assigned</th>
+              <th>Podman GPU support-assigned</th>
             </tr>
           </thead>
           <tbody>
@@ -156,17 +161,20 @@ readiness: setup_required</code></pre>
               <td><code>.\setup-towerscout.cmd</code></td>
               <td><code>.\setup-towerscout.cmd -Engine docker -Gpu auto</code> or <code>.\setup-towerscout.cmd -Engine docker -Gpu on</code></td>
               <td><code>.\setup-towerscout.cmd -Engine podman</code></td>
+              <td><code>.\setup-towerscout.cmd -Engine podman -Gpu on</code> after CDI validation</td>
             </tr>
             <tr>
               <td>Start or reopen</td>
               <td><code>.\start.bat -Engine docker -Gpu off</code></td>
               <td><code>.\start.bat -Engine docker -Gpu auto</code> or <code>.\start.bat -Engine docker -Gpu on</code></td>
               <td><code>.\start.bat -Engine podman -Gpu off</code></td>
+              <td><code>.\start.bat -Engine podman -Gpu on</code> after CDI validation</td>
             </tr>
             <tr>
               <td>Stop</td>
               <td><code>.\scripts\stop.cmd -Engine docker</code></td>
               <td><code>.\scripts\stop.cmd -Engine docker</code></td>
+              <td><code>.\scripts\stop.cmd -Engine podman</code></td>
               <td><code>.\scripts\stop.cmd -Engine podman</code></td>
             </tr>
             <tr>
@@ -174,11 +182,13 @@ readiness: setup_required</code></pre>
               <td><code>.\scripts\stop.cmd -Engine docker</code>, then <code>.\start.bat -Engine docker -Gpu off</code></td>
               <td><code>.\scripts\stop.cmd -Engine docker</code>, then the assigned Docker GPU start command</td>
               <td><code>.\scripts\stop.cmd -Engine podman</code>, then <code>.\start.bat -Engine podman -Gpu off</code></td>
+              <td><code>.\scripts\stop.cmd -Engine podman</code>, then <code>.\start.bat -Engine podman -Gpu on</code></td>
             </tr>
             <tr>
               <td>Status</td>
               <td><code>.\scripts\status.cmd -Engine docker</code></td>
               <td><code>.\scripts\status.cmd -Engine docker</code></td>
+              <td><code>.\scripts\status.cmd -Engine podman</code></td>
               <td><code>.\scripts\status.cmd -Engine podman</code></td>
             </tr>
             <tr>
@@ -186,11 +196,13 @@ readiness: setup_required</code></pre>
               <td><code>.\scripts\logs.cmd -Engine docker -Tail 200</code></td>
               <td><code>.\scripts\logs.cmd -Engine docker -Tail 200</code></td>
               <td><code>.\scripts\logs.cmd -Engine podman -Tail 200</code></td>
+              <td><code>.\scripts\logs.cmd -Engine podman -Tail 200</code></td>
             </tr>
             <tr>
               <td>TLS CA import if support asks</td>
               <td><code>.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint &lt;windows-certificate-thumbprint&gt; -VerifyProvider google</code></td>
               <td><code>.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint &lt;windows-certificate-thumbprint&gt; -VerifyProvider google</code></td>
+              <td><code>.\scripts\import-tls-ca.cmd -Engine podman -Thumbprint &lt;windows-certificate-thumbprint&gt; -VerifyProvider google</code></td>
               <td><code>.\scripts\import-tls-ca.cmd -Engine podman -Thumbprint &lt;windows-certificate-thumbprint&gt; -VerifyProvider google</code></td>
             </tr>
             <tr>
@@ -198,16 +210,18 @@ readiness: setup_required</code></pre>
               <td><code>.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180</code></td>
               <td><code>.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180</code></td>
               <td><code>.\scripts\import-assets.cmd -Engine podman -Source assets -VerifyHashes</code></td>
+              <td><code>.\scripts\import-assets.cmd -Engine podman -Source assets -VerifyHashes</code></td>
             </tr>
             <tr>
               <td>Longer support session</td>
               <td>Add <code>-SessionMaxHours 24</code> to setup, start, or import commands when support approves it.</td>
               <td>Add <code>-SessionMaxHours 24</code> to the assigned Docker GPU command when support approves it.</td>
               <td>Add <code>-SessionMaxHours 24</code> to setup, start, or import commands when support approves it.</td>
+              <td>Add <code>-SessionMaxHours 24</code> to setup, start, or import commands when support approves it.</td>
             </tr>
           </tbody>
         </table>
-        <p>Use <code>-Gpu auto</code> for exploratory Docker GPU validation with CPU fallback. Use <code>-Gpu on</code> only when support expects CUDA to be available inside the container. With <code>-Gpu on</code>, the launcher checks readiness and fails closed unless TowerScout reports <code>selected_device=cuda</code>. Podman GPU launch is not validated.</p>
+        <p>Use <code>-Gpu auto</code> for exploratory GPU validation with CPU fallback only after support has set the matching engine overlay gate. Use <code>-Gpu on</code> only when support expects CUDA to be available inside the container. With <code>-Gpu on</code>, the launcher checks readiness and fails closed unless TowerScout reports <code>selected_device=cuda</code>.</p>
       </section>
       <section class="doc-section" id="license">
         <h2>Source, Licenses, And Help</h2>

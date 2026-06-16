@@ -85,7 +85,10 @@ The current path forward is centered on finishing Sprint 06 V1 RC1 / pilot-ready
 1. Close out `TASK-066` with the digest-pinned Docker/Podman validation evidence and bounded caveats.
 2. Use the merged `TASK-067` route-test isolation and timeout safeguards as the automated-review baseline before broad pilot prep.
 3. Complete `TASK-073` clean-machine pilot/UAT planning before asking external users to test.
-4. Keep GPU acceleration support language bounded until NVIDIA Docker Desktop WSL2 validation, CPU/GPU parity, and timing evidence exist.
+4. Limit GPU acceleration support language to the RC5 evidence: Docker
+   GPU and Podman GPU are support-assigned paths after workstation-specific
+   NVIDIA validation and fixed-fixture parity, while Docker Desktop CPU remains
+   the primary pilot path.
 5. Route deeper package-runtime preflight automation to `TASK-074` if pilot planning or tester feedback shows launch friction remains too high.
 
 `TASK-026` CPU optimization and `TASK-029` multi-provider fallback remain follow-on backlog work unless Sprint 06 evidence makes them release-critical.
@@ -530,12 +533,18 @@ The current product direction is:
 - use the merged OCI-compatible container contract rather than a Docker Desktop-specific product path
 - make GitHub Releases the default user-facing delivery control plane
 - treat Docker Desktop as the primary controlled RC1 pilot engine unless the pilot cohort requires a different runtime
-- treat Podman as a qualified package-runtime option when a running Podman machine and approved Compose provider are available; do not claim Docker-Desktop-free Podman coverage from validation that delegated to Docker Desktop's Compose binary
+- treat Podman as a qualified package-runtime option when a running Podman
+  machine and approved non-Docker-Desktop Compose provider are available; RC5
+  validation covers Docker-Desktop-free Podman CPU and Podman GPU CDI with a
+  standalone Compose provider selected through `PODMAN_COMPOSE_PROVIDER`
 - preserve Docker compatibility for development/support fallback where licensing and endpoint policy allow
 - keep local source clone/build as a developer/support path, not the preferred normal-user install path
 - package normal users through a GitHub Release ZIP with `compose.yaml`, `.env` template, scripts, docs, manifest/checksums, and a pinned GHCR image digest; reserve OCI image archives for restricted-network fallback
 - manage large model/data assets through the release asset bundle contract, extracted package-local `assets/` layout, import helper, readiness checks, and manifest hash verification
-- preserve the single GPU-capable package direction with CPU-safe default launch; optional GPU launch is support-claimable only after NVIDIA Docker Desktop WSL2 validation
+- preserve the single GPU-capable package direction with CPU-safe default
+  launch; optional Docker GPU and Podman GPU launch are support-assigned only
+  after selected-engine NVIDIA validation and readiness shows
+  `selected_device=cuda`
 - clarify TowerScout's application license suitability separately from runtime-tooling choice
 
 ### Post-TASK-025 Guardrails

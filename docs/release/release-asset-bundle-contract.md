@@ -1,11 +1,11 @@
 # TowerScout Release Asset Bundle Contract
 
 **Applies to**: Current V1 release-candidate package support path
-**Last reviewed**: 2026-06-12
+**Last reviewed**: 2026-06-15
 **Audience**: Release engineering, support, and release reviewers
-**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU is
-support-assigned and qualified; Docker GPU is support-assigned after NVIDIA
-Docker validation; Podman GPU is not validated
+**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU, Docker
+GPU, and Podman GPU are support-assigned RC5 paths after workstation-specific
+engine, Compose-provider, and NVIDIA validation.
 
 This document defines the contract for TowerScout runtime assets that are too
 large or policy-sensitive to keep in git. It is the handoff point between

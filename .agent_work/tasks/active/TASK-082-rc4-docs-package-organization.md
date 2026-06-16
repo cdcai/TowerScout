@@ -1,6 +1,6 @@
 # TASK-082: RC4 Documentation And Package Organization
 
-**Status**: IN_PROGRESS - PR #32 open as standalone Task-082 branch based on merged PR #31; reviewer-requested README encoding fix and compatibility-stub polish implemented with focused validation passing
+**Status**: COMPLETED - landed on `main` as `v0.1.0-rc4` in commit `32074a7`; stable docs naming, package docs, app docs links, and repo-organization triage are validated for the rc4 baseline
 **Priority**: HIGH  
 **Type**: B/C (Documentation / Release UX / Package Organization)  
 **Estimated Effort**: 1-2 days (8-16 hours), plus optional package-smoke validation  
@@ -413,6 +413,15 @@ checks only.
 **Validation**: Mojibake scan returned no matches in `README.md`, `docs/`, or the Task-082 task file. Focused docs route/package/UAT tests passed with 49 tests, docs command scan passed, `.agent_work` validators passed, `py_compile` passed, and whitespace check was rerun after trailing-space cleanup.
 **Next**: Commit and push the focused reviewer-fix update to PR #32, then request re-review.
 
+### 2026-06-15 - Landed In RC4 Baseline
+**Objective**: Record Task-082 landing status after the rc4 image/package baseline was rebuilt.
+**Context**: Local `main`, `origin/main`, and tag `v0.1.0-rc4` all point to `32074a7 docs(task-082): stabilize RC package documentation`.
+**Decision**: Mark Task-082 as completed/landed while leaving this task file in `tasks/active/` until Sprint 06 closeout.
+**Execution**: Verified git history and updated Task-082 status language in this task file and `current-tasks.md`.
+**Output**: Task-082 status now reflects the landed rc4 baseline instead of the prior PR #32 review state.
+**Validation**: Planning/status validation rerun under the Task-083 checkpoint.
+**Next**: Continue Task-083 from the rc4 `main` baseline.
+
 ---
 
 ## Validation Results
@@ -466,5 +475,5 @@ checks only.
 
 ### Sign-off
 
-Not signed off. Implementation is ready for owner/reviewer review as a standalone
-Task-082 branch based on the merged PR #31 `main` state.
+Task implementation landed in `v0.1.0-rc4` (`32074a7`) and remains in
+`tasks/active/` until Sprint 06 closeout.

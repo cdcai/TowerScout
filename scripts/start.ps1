@@ -5,6 +5,8 @@ param(
     [ValidateSet("off", "auto", "on")]
     [string] $Gpu = "off",
 
+    [string] $PodmanMachineName = "",
+
     [switch] $Build
 )
 
@@ -19,5 +21,10 @@ if ($Build) {
     $composeArgs += "--build"
 }
 
-Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments $composeArgs
+Invoke-TowerScoutCompose `
+    -Engine $Engine `
+    -Build:$Build `
+    -Gpu $Gpu `
+    -PodmanMachineName $PodmanMachineName `
+    -ComposeArguments $composeArgs
 exit $script:TowerScoutComposeExitCode

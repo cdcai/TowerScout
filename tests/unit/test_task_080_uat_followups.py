@@ -45,23 +45,23 @@ def test_word_uat_guide_contains_pre_uat_followup_sections():
     compact = _compact(text)
 
     assert "Docker Desktop is open and running" in text
-    assert "Docker GPU Track section" in text
-    assert "Purpose of User Acceptance Testing" in text
-    assert "Appendix: Command Reference" in text
+    assert "6. Optional Support-Assigned Tracks" in text
+    assert "1. What You Are Testing" in text
+    assert "Appendix A. Command Reference" in text
     assert ".\\setup-towerscout.cmd -Engine docker -Gpu auto" in compact
-    assert ".\\scripts\\stop.cmd -Engine podman" in compact
-    assert "-SessionMaxHours 24" in text
-    assert "https://pubmed.ncbi.nlm.nih.gov/38906615/" in text
-    assert "Use this short form in email or Teams" in text
+    assert ".\\setup-towerscout.cmd -Engine podman -Gpu on" in compact
+    assert ".\\scripts\\status.cmd -Engine podman" in compact
+    assert "replace -Engine docker with -Engine podman" in text
+    assert "selected_device=cuda" in text
+    assert "What setup_required means" in text
+    assert "Short issue report form" in text
     assert "Command or button" in text
-    assert "Setup saved?" in text
+    assert "Provider setup and imported assets are stored in named volumes" in text
     assert "raw provider responses" in lower_text
     assert "API keys" in text
-    assert "CERTIFICATE_VERIFY_FAILED" in text
-    assert "local TLS inspection certificate" in text
+    assert "TLS inspection certificate" in text
     assert "scripts\\import-tls-ca.cmd" in text
-    assert "updates local .env" in text
-    assert "TLS CA import" in text and "support asks" in text
+    assert "TLS CA import" in text and "only if support asks" in text
 
 
 def test_quick_start_mirrors_command_appendix_and_stale_session_note():

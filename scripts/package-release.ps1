@@ -7,6 +7,8 @@ param(
 
     [string] $ImageDigest = "",
 
+    [string] $AssetBundleSha256 = "",
+
     [string] $PytorchFlavor = "",
 
     [switch] $AllowMutableImage,
@@ -37,6 +39,7 @@ if ([string]::IsNullOrWhiteSpace($ImageDigest)) {
 }
 
 $digestPattern = "sha256:[0-9a-f]{64}"
+$sha256Pattern = "[0-9a-f]{64}"
 if ([string]::IsNullOrWhiteSpace($ImageDigest) -and $Image -match "@($digestPattern)$") {
     $ImageDigest = $Matches[1]
 }
@@ -48,6 +51,16 @@ if ([string]::IsNullOrWhiteSpace($ImageDigest)) {
 }
 elseif ($ImageDigest -notmatch "^$digestPattern$") {
     throw "ImageDigest must match sha256:<64 lowercase hex>."
+}
+
+if (-not [string]::IsNullOrWhiteSpace($AssetBundleSha256)) {
+    $AssetBundleSha256 = $AssetBundleSha256.Trim().ToLowerInvariant()
+    if ($AssetBundleSha256 -match "^sha256:($sha256Pattern)$") {
+        $AssetBundleSha256 = $Matches[1]
+    }
+    elseif ($AssetBundleSha256 -notmatch "^$sha256Pattern$") {
+        throw "AssetBundleSha256 must match <64 lowercase hex> or sha256:<64 lowercase hex>."
+    }
 }
 
 if (($Image -match "@($digestPattern)$") -and -not [string]::IsNullOrWhiteSpace($ImageDigest) -and $Matches[1] -ne $ImageDigest) {
@@ -191,6 +204,7 @@ $releaseFiles = @(
     "start.bat",
     "compose.yaml",
     "compose.gpu.yaml",
+    "compose.gpu.podman.yaml",
     ".env.example",
     "LICENSE",
     "NOTICE",
@@ -217,8 +231,10 @@ $releaseFiles = @(
     "webapp\asset_manifest.v1.json",
     "scripts\lib\TowerScoutBootstrap.ps1",
     "scripts\lib\TowerScoutCompose.ps1",
+    "scripts\lib\TowerScoutPodmanGpu.ps1",
     "scripts\setup-towerscout.ps1",
     "scripts\bootstrap.ps1",
+    "scripts\enable-podman-gpu.ps1",
     "scripts\launch.ps1",
     "scripts\start.cmd",
     "scripts\start.ps1",
@@ -292,6 +308,30 @@ if (-not [string]::IsNullOrWhiteSpace($ImageDigest)) {
 }
 elseif ($AllowMutableImage) {
     Write-Warning "Creating a local-validation package with a mutable image reference. Do not use this package as a release artifact."
+}
+
+$assetManifestVersion = ""
+$assetManifestPath = Join-Path $repoRoot "webapp\asset_manifest.v1.json"
+if (Test-Path -LiteralPath $assetManifestPath -PathType Leaf) {
+    try {
+        $assetManifest = Get-Content -LiteralPath $assetManifestPath -Raw | ConvertFrom-Json
+        $assetManifestVersion = [string] $assetManifest.manifest_version
+    }
+    catch {
+        $assetManifestVersion = ""
+    }
+}
+
+$assetBundleName = ""
+$assetBundleSha256Sidecar = ""
+if (-not [string]::IsNullOrWhiteSpace($assetManifestVersion)) {
+    $assetBundleName = "towerscout-$Version-assets-$assetManifestVersion.zip"
+    $assetBundleSha256Sidecar = "$assetBundleName.sha256"
+}
+
+$controlZipSha256Sidecar = ""
+if (-not $NoZip) {
+    $controlZipSha256Sidecar = "$packageName.zip.sha256"
 }
 
 @"
@@ -389,11 +429,17 @@ $manifest = [ordered]@{
     release_artifacts = [ordered]@{
         control_zip = if ($NoZip) { "" } else { "$packageName.zip" }
         control_zip_sha256 = ""
+        control_zip_sha256_sidecar = $controlZipSha256Sidecar
+        control_zip_sha256_reason = if ($NoZip) { "No control ZIP was generated because -NoZip was used." } else { "Published in the adjacent control ZIP .sha256 sidecar instead of embedded in the ZIP manifest." }
         image = $effectiveImage
         image_digest = $ImageDigest
         pytorch_flavor = $PytorchFlavor
         asset_manifest = "webapp/asset_manifest.v1.json"
-        asset_bundle_sha256 = ""
+        asset_bundle = $assetBundleName
+        asset_bundle_sha256 = $AssetBundleSha256
+        asset_bundle_sha256_sidecar = $assetBundleSha256Sidecar
+        asset_bundle_sha256_reason = if ([string]::IsNullOrWhiteSpace($AssetBundleSha256)) { "Provide -AssetBundleSha256 from the Model & Data Package checksum sidecar during release assembly." } else { "" }
+        package_contents_sha256 = "SHA256SUMS.txt"
     }
     corresponding_source = [ordered]@{
         source_ref = $sourceRef
@@ -405,6 +451,7 @@ $manifest = [ordered]@{
             "Dockerfile",
             "compose.yaml",
             "compose.gpu.yaml",
+            "compose.gpu.podman.yaml",
             "scripts/",
             "webapp/requirements.txt",
             "package-lock.json"

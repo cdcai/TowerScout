@@ -91,6 +91,7 @@ def test_package_release_stages_digest_pinned_image():
     output_dir = Path(".agent_work") / "pytest-temp" / package_id
     output_path = REPO_ROOT / output_dir
     digest = "sha256:" + ("1" * 64)
+    asset_bundle_sha256 = "4" * 64
     try:
         result = _run_package_release(
             "-Version",
@@ -101,6 +102,8 @@ def test_package_release_stages_digest_pinned_image():
             "ghcr.io/j-schulein/towerscout:pytest-digest-cuda121",
             "-ImageDigest",
             digest,
+            "-AssetBundleSha256",
+            asset_bundle_sha256,
             "-PytorchFlavor",
             "cuda121",
             "-AllowDirtySource",
@@ -128,6 +131,18 @@ def test_package_release_stages_digest_pinned_image():
         assert release_manifest["release_artifacts"]["image_digest"] == digest
         assert release_manifest["release_artifacts"]["pytorch_flavor"] == "cuda121"
         assert release_manifest["release_artifacts"]["control_zip"] == ""
+        assert release_manifest["release_artifacts"]["control_zip_sha256"] == ""
+        assert release_manifest["release_artifacts"]["control_zip_sha256_sidecar"] == ""
+        assert "No control ZIP was generated" in release_manifest["release_artifacts"]["control_zip_sha256_reason"]
+        assert release_manifest["release_artifacts"]["asset_bundle"] == (
+            f"towerscout-{package_id}-assets-towerscout-v1-assets-2026-05-05.zip"
+        )
+        assert release_manifest["release_artifacts"]["asset_bundle_sha256"] == asset_bundle_sha256
+        assert release_manifest["release_artifacts"]["asset_bundle_sha256_sidecar"] == (
+            f"towerscout-{package_id}-assets-towerscout-v1-assets-2026-05-05.zip.sha256"
+        )
+        assert release_manifest["release_artifacts"]["asset_bundle_sha256_reason"] == ""
+        assert release_manifest["release_artifacts"]["package_contents_sha256"] == "SHA256SUMS.txt"
         assert REQUIRED_COMPLIANCE_FILES.issubset(
             set(release_manifest["compliance_files"])
         )
@@ -144,6 +159,9 @@ def test_package_release_stages_digest_pinned_image():
         assert "YOLO-derived/AGPL-governed" in asset_readme
         assert "bootstrap.cmd -AssetZip <path-to-asset-zip>" in asset_readme
         assert (stage_path / "compose.gpu.yaml").is_file()
+        assert (stage_path / "compose.gpu.podman.yaml").is_file()
+        assert (stage_path / "scripts" / "enable-podman-gpu.ps1").is_file()
+        assert (stage_path / "scripts" / "lib" / "TowerScoutPodmanGpu.ps1").is_file()
         for relative_path in [
             "LICENSE",
             "NOTICE",

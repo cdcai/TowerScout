@@ -19,11 +19,11 @@ source-code ZIP/TAR.GZ downloads for the normal package workflow.
 
 The normal package path assumes Windows 11 AMD64, Docker Desktop with the WSL 2
 backend as the primary pilot engine, normal outbound internet access, and one
-valid Google Maps or Azure Maps key. Podman CPU use is a qualified
-support-assigned path only when a running Podman machine and approved Compose
-provider are already available. Docker GPU use is support-assigned after NVIDIA
-Docker validation. Podman GPU is not validated. You do not need Git, Python,
-Conda, Node.js, VS Code, or a source checkout for the normal package workflow.
+valid Google Maps or Azure Maps key. Podman CPU, Docker GPU, and Podman GPU are
+qualified RC5 support-assigned paths only when the workstation has the required
+engine, approved Compose provider, and NVIDIA validation for the selected
+runtime. You do not need Git, Python, Conda, Node.js, VS Code, or a source
+checkout for the normal package workflow.
 
 ## About TowerScout
 

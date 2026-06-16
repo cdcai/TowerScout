@@ -1,12 +1,12 @@
 # TowerScout Quick Start
 
-**Applies to**: Current V1 release-candidate package path, including the next
-`rc4` package unless release notes say otherwise
-**Last reviewed**: 2026-06-12
+**Applies to**: Current V1 release-candidate package path, including RC5
+unless release notes say otherwise
+**Last reviewed**: 2026-06-15
 **Audience**: Pilot users and first-line support
-**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU is
-support-assigned and qualified; Docker GPU is support-assigned after NVIDIA
-Docker validation; Podman GPU is not validated
+**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU, Docker
+GPU, and Podman GPU are support-assigned RC5 paths after workstation-specific
+engine, Compose-provider, and NVIDIA validation.
 
 This is the short Windows pilot path for the TowerScout `agpl-yolo` release
 package. It assumes a Windows 11 AMD64 workstation, Docker Desktop as the
@@ -46,8 +46,10 @@ installing WSL, Docker Desktop, Podman, or provider credentials.
     Desktop from the Windows Start menu, and wait until Docker Desktop reports
     that it is running.
   - Podman is a qualified package-runtime option only when support tells you to
-    use it and the workstation already has a running Podman machine plus a
-    working Compose provider such as `podman-compose`.
+    use it and the workstation already has a running Podman machine plus an
+    approved non-Docker-Desktop Compose provider. Podman GPU also requires an
+    NVIDIA GPU, current Windows NVIDIA drivers, WSL2 Podman, and NVIDIA CDI
+    validation.
 - One valid site/user-owned Google Maps or Azure Maps provider key.
 
 You do not need Git, Python, Conda, Node.js, VS Code, or a source-code checkout
@@ -436,8 +438,9 @@ http://localhost:5000
 
 ## 8. Optional GPU Launch
 
-GPU launch is optional and Docker-first. Do not use it as the normal first-run
-path unless support is validating a workstation with NVIDIA Docker GPU access.
+GPU launch is optional and support-assigned. Do not use it as the normal
+first-run path unless support is validating a workstation with NVIDIA container
+GPU access for the selected engine.
 
 CPU-safe default:
 
@@ -452,14 +455,23 @@ Optional Docker GPU modes:
 .\start.bat -Engine docker -Gpu on
 ```
 
+Optional Podman GPU mode after support has validated NVIDIA CDI:
+
+```powershell
+.\start.bat -Engine podman -Gpu on
+```
+
 - `-Gpu off` forces CPU execution.
 - `-Gpu auto` uses CPU fallback unless `TOWERSCOUT_GPU_AUTO_OVERLAY=1` has been
-  set after workstation-specific Docker GPU validation.
-- `-Gpu on` requests the Docker GPU overlay and fails readiness if CUDA is not
-  available to the container.
+  set after workstation-specific Docker GPU validation or
+  `TOWERSCOUT_PODMAN_GPU_OVERLAY=1` has been set after Podman CDI validation.
+- `-Gpu on` requests the selected engine's GPU overlay and fails readiness if
+  CUDA is not available to the container.
 
-Podman GPU launch is not validated for the current release-candidate package. Use the CPU-safe Podman launch
-unless support provides a site-specific GPU procedure.
+For Podman GPU, support must validate the non-Docker-Desktop Compose provider
+and NVIDIA CDI path before launch. The RC5 validated path used Podman 5.8.2 on
+Windows 11 WSL2, standalone Docker Compose v5.1.4 selected through
+`PODMAN_COMPOSE_PROVIDER`, and NVIDIA CDI device `nvidia.com/gpu=all`.
 
 ## 9. Complete Setup
 
@@ -580,23 +592,23 @@ the other engine.
 Run commands from the extracted TowerScout application folder, such as
 `C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>`.
 
-| Purpose | Docker CPU/default | Docker GPU support-assigned | Podman CPU support-assigned |
-|---|---|---|---|
-| First setup | `.\setup-towerscout.cmd` | `.\setup-towerscout.cmd -Engine docker -Gpu auto` or `.\setup-towerscout.cmd -Engine docker -Gpu on` | `.\setup-towerscout.cmd -Engine podman` |
-| Start or reopen | `.\start.bat -Engine docker -Gpu off` | `.\start.bat -Engine docker -Gpu auto` or `.\start.bat -Engine docker -Gpu on` | `.\start.bat -Engine podman -Gpu off` |
-| Stop | `.\scripts\stop.cmd -Engine docker` | `.\scripts\stop.cmd -Engine docker` | `.\scripts\stop.cmd -Engine podman` |
-| Restart | `.\scripts\stop.cmd -Engine docker`, then `.\start.bat -Engine docker -Gpu off` | `.\scripts\stop.cmd -Engine docker`, then the assigned Docker GPU start command | `.\scripts\stop.cmd -Engine podman`, then `.\start.bat -Engine podman -Gpu off` |
-| Status | `.\scripts\status.cmd -Engine docker` | `.\scripts\status.cmd -Engine docker` | `.\scripts\status.cmd -Engine podman` |
-| Logs if support asks | `.\scripts\logs.cmd -Engine docker -Tail 200` | `.\scripts\logs.cmd -Engine docker -Tail 200` | `.\scripts\logs.cmd -Engine podman -Tail 200` |
-| TLS CA import if support asks | `.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint <windows-certificate-thumbprint> -VerifyProvider google` | `.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint <windows-certificate-thumbprint> -VerifyProvider google` | `.\scripts\import-tls-ca.cmd -Engine podman -Thumbprint <windows-certificate-thumbprint> -VerifyProvider google` |
-| Manual asset import fallback | `.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180` | `.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180` | `.\scripts\import-assets.cmd -Engine podman -Source assets -VerifyHashes` |
-| Longer support session | Add `-SessionMaxHours 24` to setup, start, or import commands when support approves it. | Add `-SessionMaxHours 24` to the assigned Docker GPU command when support approves it. | Add `-SessionMaxHours 24` to setup, start, or import commands when support approves it. |
+| Purpose | Docker CPU/default | Docker GPU support-assigned | Podman CPU support-assigned | Podman GPU support-assigned |
+|---|---|---|---|---|
+| First setup | `.\setup-towerscout.cmd` | `.\setup-towerscout.cmd -Engine docker -Gpu auto` or `.\setup-towerscout.cmd -Engine docker -Gpu on` | `.\setup-towerscout.cmd -Engine podman` | `.\setup-towerscout.cmd -Engine podman -Gpu on` after CDI validation |
+| Start or reopen | `.\start.bat -Engine docker -Gpu off` | `.\start.bat -Engine docker -Gpu auto` or `.\start.bat -Engine docker -Gpu on` | `.\start.bat -Engine podman -Gpu off` | `.\start.bat -Engine podman -Gpu on` after CDI validation |
+| Stop | `.\scripts\stop.cmd -Engine docker` | `.\scripts\stop.cmd -Engine docker` | `.\scripts\stop.cmd -Engine podman` | `.\scripts\stop.cmd -Engine podman` |
+| Restart | `.\scripts\stop.cmd -Engine docker`, then `.\start.bat -Engine docker -Gpu off` | `.\scripts\stop.cmd -Engine docker`, then the assigned Docker GPU start command | `.\scripts\stop.cmd -Engine podman`, then `.\start.bat -Engine podman -Gpu off` | `.\scripts\stop.cmd -Engine podman`, then `.\start.bat -Engine podman -Gpu on` |
+| Status | `.\scripts\status.cmd -Engine docker` | `.\scripts\status.cmd -Engine docker` | `.\scripts\status.cmd -Engine podman` | `.\scripts\status.cmd -Engine podman` |
+| Logs if support asks | `.\scripts\logs.cmd -Engine docker -Tail 200` | `.\scripts\logs.cmd -Engine docker -Tail 200` | `.\scripts\logs.cmd -Engine podman -Tail 200` | `.\scripts\logs.cmd -Engine podman -Tail 200` |
+| TLS CA import if support asks | `.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint <windows-certificate-thumbprint> -VerifyProvider google` | `.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint <windows-certificate-thumbprint> -VerifyProvider google` | `.\scripts\import-tls-ca.cmd -Engine podman -Thumbprint <windows-certificate-thumbprint> -VerifyProvider google` | `.\scripts\import-tls-ca.cmd -Engine podman -Thumbprint <windows-certificate-thumbprint> -VerifyProvider google` |
+| Manual asset import fallback | `.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180` | `.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180` | `.\scripts\import-assets.cmd -Engine podman -Source assets -VerifyHashes` | `.\scripts\import-assets.cmd -Engine podman -Source assets -VerifyHashes` |
+| Longer support session | Add `-SessionMaxHours 24` to setup, start, or import commands when support approves it. | Add `-SessionMaxHours 24` to the assigned Docker GPU command when support approves it. | Add `-SessionMaxHours 24` to setup, start, or import commands when support approves it. | Add `-SessionMaxHours 24` to setup, start, or import commands when support approves it. |
 
-Use `-Gpu auto` for exploratory Docker GPU validation with CPU fallback. Use
-`-Gpu on` only when support expects CUDA to be available inside the container.
-With `-Gpu on`, the launcher checks readiness and fails closed unless
-TowerScout reports `selected_device=cuda`. Podman GPU launch is not validated
-for the current release-candidate package.
+Use `-Gpu auto` for exploratory GPU validation with CPU fallback only after
+support has set the matching engine overlay gate. Use `-Gpu on` only when
+support expects CUDA to be available inside the container. With `-Gpu on`, the
+launcher checks readiness and fails closed unless TowerScout reports
+`selected_device=cuda`.
 
 ## 12. Source, Licenses, And Help
 

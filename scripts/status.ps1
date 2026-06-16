@@ -8,6 +8,7 @@ param(
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot\lib\TowerScoutCompose.ps1"
 
+Write-TowerScoutComposeProviderSummary -Engine $Engine
 Invoke-TowerScoutCompose -Engine $Engine -ComposeArguments @("ps")
 $composeExitCode = $script:TowerScoutComposeExitCode
 if ($composeExitCode -ne 0) {

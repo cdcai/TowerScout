@@ -221,7 +221,11 @@ This document specifies requirements for transforming TowerScout from a student 
 - Provide Compose-compatible configuration for the selected runtime host
 - Publish user-facing release package through GitHub Releases
 - Include quick-start docs, `compose.yaml`, `.env` template, scripts, pinned GHCR image reference by digest, optional OCI archive fallback, asset manifest, checksums, troubleshooting, and recovery guidance
-- Treat Podman as the preferred open-source Windows runtime target after release-support gates; `TASK-025` validated the Windows WSL engine path, and `TASK-065` validated `podman-compose 1.5.0` as a Docker-Desktop-free Compose provider
+- Treat Podman as the preferred open-source Windows runtime target after
+  release-support gates; `TASK-025` validated the Windows WSL engine path, and
+  `TASK-083` validated Docker-Desktop-free Podman CPU plus Podman GPU CDI with
+  an approved standalone Compose provider selected through
+  `PODMAN_COMPOSE_PROVIDER`
 - Preserve Docker-compatible developer/support path where licensing and endpoint policy allow
 - Keep source clone-and-build as a developer/support path, not the default normal-user deployment path
 - Do not promise ARM64, Mac, offline, VDI, or shared deployment until separately validated

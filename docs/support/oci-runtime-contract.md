@@ -1,11 +1,11 @@
 # TowerScout OCI Runtime Contract
 
 **Applies to**: Current V1 release-candidate package support path
-**Last reviewed**: 2026-06-12
+**Last reviewed**: 2026-06-15
 **Audience**: Release/support users and runtime maintainers
-**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU is
-support-assigned and qualified; Docker GPU is support-assigned after NVIDIA
-Docker validation; Podman GPU is not validated
+**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU, Docker
+GPU, and Podman GPU are support-assigned RC5 paths after workstation-specific
+engine, Compose-provider, and NVIDIA validation.
 
 This document summarizes the v1 container runtime contract. The detailed task evidence lives under `.agent_work/tasks/active/TASK-025/`.
 
@@ -110,7 +110,7 @@ The asset ZIP root is `model_params/`, `data/`, and `asset_manifest.v1.json`. Us
 The GitHub Release control package is assembled by `scripts/package-release.cmd` / `scripts/package-release.ps1`. It contains:
 
 - Compose runtime configuration
-- optional Docker GPU Compose overlay
+- optional Docker GPU and Podman GPU Compose overlays
 - `.env.example` with the selected image reference
 - Windows `.cmd` wrappers and PowerShell helpers for setup, bootstrap, start, stop, logs, status, asset import, and TLS CA import
 - top-level `setup-towerscout.cmd` first-setup helper that defaults to Docker Desktop and `-Gpu off`, discovers local release artifacts, verifies checksum sidecars, stages safe asset ZIPs, imports assets with hash verification, and then calls the launcher
@@ -151,12 +151,20 @@ Bundled OCI image archives are not part of the supported v1 release package. Res
 
 The default package launcher uses `-Gpu off`, keeps `compose.gpu.yaml` out of the Compose invocation, and sets `TOWERSCOUT_DEVICE=cpu` for the launch process. This keeps the local release path CPU-safe.
 
-Docker GPU launch is opt-in through `scripts/launch.ps1 -Engine docker -Gpu auto|on` or `start.bat -Engine docker -Gpu auto|on`. GPU overlay use requests NVIDIA GPU devices through Docker Compose device reservations, and these modes set TowerScout's runtime policy:
+Docker GPU launch is opt-in through `scripts/launch.ps1 -Engine docker -Gpu auto|on` or `start.bat -Engine docker -Gpu auto|on`. Podman GPU launch is opt-in through `scripts/launch.ps1 -Engine podman -Gpu on` or `start.bat -Engine podman -Gpu on` after CDI validation. GPU overlay use requests NVIDIA GPU devices through the selected engine, and these modes set TowerScout's runtime policy:
 
-- `auto`: start without the GPU overlay unless `TOWERSCOUT_GPU_AUTO_OVERLAY=1` has been set in the shell or `.env` after workstation-specific Docker GPU validation; otherwise fall back to CPU with diagnostics.
-- `on`: always add `compose.gpu.yaml`, require CUDA, and fail readiness when CUDA is unavailable. The launcher also checks the readiness payload and fails closed unless TowerScout reports `selected_device=cuda`.
+- `auto`: start without the selected engine's GPU overlay unless the matching
+  overlay validation gate has been set in the shell or `.env`; otherwise fall
+  back to CPU with diagnostics.
+- `on`: always add the selected engine's GPU overlay, require CUDA, and fail
+  readiness when CUDA is unavailable. The launcher also checks the readiness
+  payload and fails closed unless TowerScout reports `selected_device=cuda`.
 
-Podman GPU launch is not part of the validated release path. Podman remains supported for CPU launch unless a later validation proves a Podman CDI GPU procedure.
+Docker GPU uses `compose.gpu.yaml`. Podman GPU uses `compose.gpu.podman.yaml`
+and NVIDIA CDI device `nvidia.com/gpu=all`. The RC5 validated Podman GPU path
+requires a WSL2-backed Podman machine, an approved non-Docker-Desktop Compose
+provider, NVIDIA Container Toolkit/CDI registration inside the Podman machine,
+and readiness evidence showing `selected_device=cuda`.
 
 Readiness diagnostics verify CUDA with a lightweight CUDA tensor probe when `TOWERSCOUT_DEVICE=auto` or `cuda`; `torch.cuda.is_available()` alone is not treated as a sufficient release diagnostic.
 
@@ -190,11 +198,17 @@ Release-candidate validation should add real asset import, SHA-256 verification,
 
 The engine-aware scripts support `-Engine podman` through `podman compose`. On Windows, `podman compose` delegates Compose behavior to an external provider such as Docker Compose or `podman-compose` while wiring that provider to the Podman socket.
 
-The current local validation covers the Podman WSL engine path, named volumes, asset import, readiness, and containerized smoke behavior. A follow-up validation also proved that the Podman runtime path can start and smoke-test TowerScout while Docker Desktop is fully quit and the Docker daemon is unreachable.
+The current RC5 validation covers the Podman WSL engine path, named volumes,
+asset import, readiness, Docker-Desktop-free Podman CPU launch, and Podman GPU
+CDI launch. The validated provider strategy used standalone Docker Compose
+v5.1.4 selected explicitly through `PODMAN_COMPOSE_PROVIDER` rather than Docker
+Desktop's bundled `docker-compose.exe`.
 
-`TASK-065` validated a Docker-Desktop-free Compose-provider path with `podman-compose 1.5.0` selected explicitly through `PODMAN_COMPOSE_PROVIDER`. The release launcher reached readiness on Podman, status and health/readiness checks passed, the containerized `TASK-052` smoke passed, and Docker Desktop daemon access remained unavailable during the validation.
-
-Release qualification for Podman should include the selected Compose provider explicitly. The supported Podman path requires a running Podman machine and an approved Compose provider such as `podman-compose` that can talk to the Podman socket; if multiple providers are installed, `PODMAN_COMPOSE_PROVIDER` can be used to force the intended provider.
+Release qualification for Podman should include the selected Compose provider
+explicitly. The supported Podman path requires a running Podman machine and an
+approved non-Docker-Desktop Compose provider that can talk to the Podman socket;
+if multiple providers are installed, `PODMAN_COMPOSE_PROVIDER` can be used to
+force the intended provider.
 
 The launcher reports Compose-provider information before startup. For Podman, a `PODMAN_COMPOSE_PROVIDER` override is checked for existence before Compose is invoked so a mistyped provider path fails early with an actionable message.
 

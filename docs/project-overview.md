@@ -1,12 +1,12 @@
 # TowerScout Project Overview
 
-**Applies to**: Current V1 release-candidate package path, including the next
-`rc4` package unless release notes say otherwise
-**Last reviewed**: 2026-06-12
+**Applies to**: Current V1 release-candidate package path, including RC5
+unless release notes say otherwise
+**Last reviewed**: 2026-06-15
 **Audience**: Pilot users, support leads, and release reviewers
-**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU is
-support-assigned and qualified; Docker GPU is support-assigned after NVIDIA
-Docker validation; Podman GPU is not validated
+**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU, Docker
+GPU, and Podman GPU are support-assigned RC5 paths after workstation-specific
+engine, Compose-provider, and NVIDIA validation.
 
 TowerScout is a local web application for identifying likely cooling towers
 from satellite and aerial imagery. Cooling towers can be relevant during
@@ -25,7 +25,7 @@ The package provides a Windows-first local pilot path:
 - Docker Desktop primary pilot runtime configuration, with qualified Podman
   package-runtime support when a site explicitly chooses that path.
 - A CPU-safe default launcher.
-- Optional Docker GPU launch controls for validated NVIDIA hosts.
+- Optional Docker and Podman GPU launch controls for validated NVIDIA hosts.
 - Windows setup, bootstrap, launch, stop, status, log, asset import, and TLS CA
   helper scripts.
 - Package-local docs.
@@ -94,8 +94,9 @@ Out of scope for this release-candidate path: macOS, ARM64, air-gapped or fully 
 VDI, shared multi-user hosting, managed remote deployment, and native installer
 behavior.
 
-GPU launch is optional and Docker-first. The default launch remains CPU-safe.
-Podman GPU launch is not validated.
+GPU launch is optional and support-assigned. The default launch remains
+CPU-safe. Docker GPU and Podman GPU are supported in RC5 only after support
+validates the selected engine's NVIDIA container path.
 
 ## Provider Keys
 

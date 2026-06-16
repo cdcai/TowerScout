@@ -11,6 +11,8 @@ param(
 
     [int] $SessionMaxHours = $(if ($env:TOWERSCOUT_SESSION_MAX_HOURS) { [int] $env:TOWERSCOUT_SESSION_MAX_HOURS } else { 12 }),
 
+    [string] $PodmanMachineName = "",
+
     [switch] $Build,
 
     [switch] $NoBrowser
@@ -259,7 +261,12 @@ $composeArgs = @("up", "-d")
 if ($Build) {
     $composeArgs += "--build"
 }
-Invoke-TowerScoutCompose -Engine $effectiveEngine -Build:$Build -Gpu $Gpu -ComposeArguments $composeArgs
+Invoke-TowerScoutCompose `
+    -Engine $effectiveEngine `
+    -Build:$Build `
+    -Gpu $Gpu `
+    -PodmanMachineName $PodmanMachineName `
+    -ComposeArguments $composeArgs
 if ($script:TowerScoutComposeExitCode -ne 0) {
     Write-Host "TowerScout container startup failed. Check the selected engine, Compose provider, and local permissions."
     Write-TowerScoutHostDiagnostics -EngineName $effectiveEngine

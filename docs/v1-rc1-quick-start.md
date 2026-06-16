@@ -1,7 +1,7 @@
 # TowerScout Quick Start Has Moved
 
 **Applies to**: Historical `v1-rc1-*` links only
-**Last reviewed**: 2026-06-12
+**Last reviewed**: 2026-06-15
 **Audience**: Pilot users and support
 **Runtime scope**: See the current Quick Start
 

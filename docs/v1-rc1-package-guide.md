@@ -1,7 +1,7 @@
 # TowerScout Package Guide Has Moved
 
 **Applies to**: Historical `v1-rc1-*` links only
-**Last reviewed**: 2026-06-12
+**Last reviewed**: 2026-06-15
 **Audience**: First-line support, release validation, and pilot testers
 **Runtime scope**: See the current Package Guide
 

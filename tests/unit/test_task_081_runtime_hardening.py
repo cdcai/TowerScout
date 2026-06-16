@@ -3,6 +3,7 @@
 import os
 import shutil
 import subprocess
+import uuid
 from pathlib import Path
 
 import pytest
@@ -49,6 +50,8 @@ def test_compose_defaults_use_cpu_tag_restart_and_runtime_guards():
     assert "restart: always" in compose
     assert "TOWERSCOUT_GPU_MODE: ${TOWERSCOUT_GPU_MODE:-off}" in compose
     assert "TOWERSCOUT_PILOT_MAX_TILES: ${TOWERSCOUT_PILOT_MAX_TILES:-100}" in compose
+    assert "PODMAN_COMPOSE_PROVIDER=" in env_example
+    assert "Docker-Desktop-free Podman validation" in env_example
 
 
 def test_import_assets_uses_shared_copy_fallback_and_sets_gpu_environment():
@@ -62,6 +65,8 @@ def test_import_assets_uses_shared_copy_fallback_and_sets_gpu_environment():
     assert "io.podman.compose.project" in helper
     assert "com.docker.compose.project" in helper
     assert "$env:TOWERSCOUT_CONTAINER_ENGINE = $effectiveEngine" in helper
+    assert "Initialize-TowerScoutPodmanComposeProvider" in helper
+    assert "Assert-TowerScoutPodmanComposeProviderAllowed" in helper
 
 
 def test_launch_gpu_on_requires_cuda_readiness():
@@ -122,7 +127,12 @@ def test_compose_invocation_allows_successful_provider_stderr_banner():
     $stubDir = Join-Path "{REPO_ROOT}" ".agent_work\\pytest-temp"
     New-Item -ItemType Directory -Force -Path $stubDir | Out-Null
     $stubPath = Join-Path $stubDir "task081-provider-stderr.ps1"
-    Set-Content -LiteralPath $stubPath -Encoding UTF8 -Value "[Console]::Error.WriteLine('provider banner'); Write-Output 'abc123'; exit 0"
+    $stubScript = @(
+        "[Console]::Error.WriteLine('provider banner')",
+        "Write-Output 'abc123'",
+        "exit 0"
+    ) -join "; "
+    Set-Content -LiteralPath $stubPath -Encoding UTF8 -Value $stubScript
 
     function Get-TowerScoutRepoRoot {{
         return "{REPO_ROOT}"
@@ -168,6 +178,138 @@ def test_compose_invocation_allows_successful_provider_stderr_banner():
 
     assert result.returncode == 0, result.stdout + result.stderr
     assert "ok" in result.stdout
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
+def test_podman_compose_provider_override_uses_env_file_and_rejects_docker_desktop():
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task083-provider-{uuid.uuid4().hex}"
+    temp_root.mkdir(parents=True)
+    provider = temp_root / "podman-compose.exe"
+    provider.write_text("stub provider", encoding="utf-8")
+    (temp_root / ".env").write_text(
+        f"PODMAN_COMPOSE_PROVIDER={provider}\n",
+        encoding="utf-8",
+    )
+
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        . "{COMPOSE_LIB}"
+        function Get-TowerScoutRepoRoot {{
+            return "{temp_root}"
+        }}
+
+        $env:PODMAN_COMPOSE_PROVIDER = ""
+        $resolved = Initialize-TowerScoutPodmanComposeProvider
+        if ($resolved -ne "{provider}") {{
+            throw "Expected provider from .env, got $resolved"
+        }}
+        if ($env:PODMAN_COMPOSE_PROVIDER -ne "{provider}") {{
+            throw "Expected environment override to be set for podman compose."
+        }}
+
+        $env:PODMAN_COMPOSE_PROVIDER = "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker-compose.exe"
+        try {{
+            Initialize-TowerScoutPodmanComposeProvider | Out-Null
+            throw "Docker Desktop provider override was accepted."
+        }}
+        catch {{
+            if ($_.Exception.Message -notmatch "Docker Desktop") {{
+                throw
+            }}
+        }}
+
+        try {{
+            $dockerDesktopProviderLine = (
+                '>>>> Executing external compose provider ' +
+                '"C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker-compose.exe"'
+            )
+            $dockerDesktopEscapedProviderLine = (
+                '>>>> Executing external compose provider ' +
+                '"C:\\\\Program Files\\\\Docker\\\\Docker\\\\resources\\\\bin\\\\docker-compose.exe". <<<<'
+            )
+            if (-not (Test-TowerScoutDockerDesktopComposeProvider -Value $dockerDesktopEscapedProviderLine)) {{
+                throw "Docker Desktop provider output with escaped backslashes was not detected."
+            }}
+            Assert-TowerScoutPodmanComposeProviderAllowed -Lines @(
+                $dockerDesktopProviderLine,
+                $dockerDesktopEscapedProviderLine
+            )
+            throw "Docker Desktop provider output was accepted."
+        }}
+        catch {{
+            if ($_.Exception.Message -notmatch "Docker Desktop") {{
+                throw
+            }}
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
+def test_podman_gpu_gate_uses_configured_machine_from_env_file():
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task083-podman-machine-{uuid.uuid4().hex}"
+    temp_root.mkdir(parents=True)
+    (temp_root / ".env").write_text(
+        "TOWERSCOUT_PODMAN_MACHINE=towerscout-gpu-machine\n",
+        encoding="utf-8",
+    )
+
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        . "{COMPOSE_LIB}"
+
+        function Get-TowerScoutRepoRoot {{
+            return "{temp_root}"
+        }}
+
+        function Test-TowerScoutUseGpuOverlay {{
+            return $true
+        }}
+
+        function Test-TowerScoutPodmanGpuReady {{
+            param([string] $MachineName)
+            $script:CapturedMachineName = $MachineName
+            return [pscustomobject]@{{
+                Ready = $true
+                FailedRung = -1
+                Message = "ready"
+            }}
+        }}
+
+        $env:TOWERSCOUT_PODMAN_MACHINE = ""
+        $resolved = Get-TowerScoutConfiguredPodmanMachineName
+        if ($resolved -ne "towerscout-gpu-machine") {{
+            throw "Expected .env Podman machine, got $resolved"
+        }}
+
+        $overlay = Resolve-TowerScoutGpuComposeOverlay -EngineName podman -Gpu on
+        if ($overlay -ne "compose.gpu.podman.yaml") {{
+            throw "Expected Podman GPU overlay, got $overlay"
+        }}
+        if ($script:CapturedMachineName -ne "towerscout-gpu-machine") {{
+            throw "Expected GPU readiness check to use configured machine, got $script:CapturedMachineName"
+        }}
+
+        $explicit = Get-TowerScoutConfiguredPodmanMachineName -MachineName "explicit-machine"
+        if ($explicit -ne "explicit-machine") {{
+            throw "Explicit Podman machine should win, got $explicit"
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")

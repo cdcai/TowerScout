@@ -3,13 +3,13 @@
 This guide is for first-line support, internal release-candidate validation,
 and pilot testers using the TowerScout Windows package path.
 
-**Applies to**: Current V1 release-candidate package path, including the next
-`rc4` package unless release notes say otherwise
-**Last reviewed**: 2026-06-12
+**Applies to**: Current V1 release-candidate package path, including RC5
+unless release notes say otherwise
+**Last reviewed**: 2026-06-15
 **Audience**: First-line support, release validation, and pilot testers
-**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU is
-support-assigned and qualified; Docker GPU is support-assigned after NVIDIA
-Docker validation; Podman GPU is not validated
+**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU, Docker
+GPU, and Podman GPU are support-assigned RC5 paths after workstation-specific
+engine, Compose-provider, and NVIDIA validation.
 
 The package path is the preferred pilot path. Older source, virtual
 environment, and Conda tester guides are legacy source-install guidance and are
@@ -26,6 +26,8 @@ The current release-candidate package supports:
 - Docker Desktop as the primary controlled pilot engine.
 - Podman as a qualified package-runtime option only when a running Podman
   machine and approved Compose provider are already available.
+- Optional Docker GPU and Podman GPU launch only after support validates the
+  selected engine's NVIDIA container path.
 - One valid Google Maps or Azure Maps provider key.
 
 Out of scope for this release path:
@@ -64,8 +66,10 @@ Before a pilot user starts the package, confirm the workstation has:
     Docker's current Windows requirements include WSL `2.1.5` or later, 8 GB
     RAM, and hardware virtualization enabled in BIOS/UEFI.
   - Podman CLI or Podman Desktop is a qualified support path only when the
-    Podman machine is created and running and an approved Compose provider such
-    as `podman-compose` is installed.
+    Podman machine is created and running and an approved non-Docker-Desktop
+    Compose provider is installed.
+  - Podman GPU additionally requires Windows NVIDIA drivers, WSL2 Podman, and
+    a validated NVIDIA CDI device inside the Podman machine.
 - One valid site/user-owned restricted Google Maps or Azure Maps provider key.
 
 The package path does not require Git, Python, Conda, Node.js, VS Code, or a
@@ -526,31 +530,35 @@ launch path is CPU-safe either way:
 .\start.bat -Gpu off
 ```
 
-Docker GPU launch is optional and must be validated on the workstation before
-it is treated as supported:
+GPU launch is optional and must be validated on the workstation before it is
+treated as supported:
 
 ```powershell
 .\start.bat -Engine docker -Gpu auto
 .\start.bat -Engine docker -Gpu on
+.\start.bat -Engine podman -Gpu on
 ```
 
 - `-Gpu off` uses the default Compose file and sets `TOWERSCOUT_DEVICE=cpu`.
-- `-Gpu auto` sets `TOWERSCOUT_DEVICE=auto` and starts without the GPU overlay
-  unless `TOWERSCOUT_GPU_AUTO_OVERLAY=1` has been set in the shell or `.env`
-  after Docker GPU validation on that workstation.
-- `-Gpu on` adds `compose.gpu.yaml`, sets `TOWERSCOUT_DEVICE=cuda`, and fails
-  readiness if CUDA is unavailable to the container.
+- `-Gpu auto` sets `TOWERSCOUT_DEVICE=auto` and starts without the selected
+  engine's GPU overlay unless support has set the matching overlay validation
+  gate in the shell or `.env`.
+- `-Gpu on` adds the selected engine's GPU overlay, sets
+  `TOWERSCOUT_DEVICE=cuda`, and fails readiness if CUDA is unavailable to the
+  container.
 
-GPU launch requires a CUDA-capable TowerScout image plus a Docker host with
-NVIDIA GPU support available to containers. A host `nvidia-smi` result alone is
-not enough; Docker must be able to pass the GPU into the container. Podman GPU
-launch is not validated for this release path.
+GPU launch requires a CUDA-capable TowerScout image plus engine-specific NVIDIA
+container support. A host `nvidia-smi` result alone is not enough; Docker or
+Podman must be able to pass the GPU into the TowerScout container. Podman GPU
+requires the RC5 CDI path: approved non-Docker-Desktop Compose provider,
+WSL2-backed Podman machine, NVIDIA Container Toolkit/CDI registration, and a
+readiness result with `selected_device=cuda`.
 
 For optional GPU validation, the workstation also needs an NVIDIA GPU, current
-NVIDIA host drivers, Docker Desktop configured for GPU-capable Linux
-containers, and site-approved proof that Docker can expose the GPU to a test
-container. Do not set `TOWERSCOUT_GPU_AUTO_OVERLAY=1` until that validation has
-passed on the workstation.
+NVIDIA host drivers, selected-engine GPU validation, and site-approved proof
+that the engine can expose the GPU to a test container. Do not set
+`TOWERSCOUT_GPU_AUTO_OVERLAY=1` or `TOWERSCOUT_PODMAN_GPU_OVERLAY=1` until that
+validation has passed on the workstation.
 
 `/api/readiness` includes non-secret `ml_runtime` diagnostics that support can
 use to distinguish CPU-wheel images, CUDA runtime probe failures, and normal CPU
@@ -677,15 +685,14 @@ Common causes:
 For Podman, confirm:
 
 - Podman machine is created and running.
-- `podman compose` can use an approved Compose provider such as
-  `podman-compose`.
+- `podman compose` can use an approved non-Docker-Desktop Compose provider.
 - If needed, `PODMAN_COMPOSE_PROVIDER` points to the approved provider.
 
 The selected Compose provider must be explicitly validated in the target
-environment. If Docker Desktop is uninstalled, ensure `podman-compose` or
-another approved provider is installed and set through `PODMAN_COMPOSE_PROVIDER`
-when support needs to force that provider. The launcher reports
-Compose-provider information before startup and validates a
+environment. The RC5 validation used standalone Docker Compose v5.1.4 selected
+through `PODMAN_COMPOSE_PROVIDER` rather than Docker Desktop's bundled
+provider. The launcher reports Compose-provider information before startup,
+rejects Docker Desktop provider paths for the Podman path, and validates a
 `PODMAN_COMPOSE_PROVIDER` override before Compose is invoked.
 
 If Podman reports `rootlessport listen ... bind: address already in use` even

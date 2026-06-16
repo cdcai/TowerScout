@@ -1,12 +1,12 @@
 # TowerScout User Guide
 
-**Applies to**: Current V1 release-candidate package path, including the next
-`rc4` package unless release notes say otherwise
-**Last reviewed**: 2026-06-12
+**Applies to**: Current V1 release-candidate package path, including RC5
+unless release notes say otherwise
+**Last reviewed**: 2026-06-15
 **Audience**: Pilot users after first setup
-**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU is
-support-assigned and qualified; Docker GPU is support-assigned after NVIDIA
-Docker validation; Podman GPU is not validated
+**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU, Docker
+GPU, and Podman GPU are support-assigned RC5 paths after workstation-specific
+engine, Compose-provider, and NVIDIA validation.
 
 This guide explains the normal TowerScout workflow after the package is
 installed, assets are imported, and at least one map provider key is configured.

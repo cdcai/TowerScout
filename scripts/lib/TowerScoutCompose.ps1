@@ -2,6 +2,7 @@ Set-StrictMode -Version Latest
 $script:TowerScoutComposeExitCode = 0
 $script:TowerScoutCpuPytorchIndexUrl = "https://download.pytorch.org/whl/cpu"
 $script:TowerScoutCudaPytorchIndexUrl = "https://download.pytorch.org/whl/cu121"
+$script:TowerScoutDefaultPodmanMachineName = "podman-machine-default"
 
 function Get-TowerScoutRepoRoot {
     return (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
@@ -83,6 +84,7 @@ function Get-TowerScoutComposeCommand {
     if (-not (Test-TowerScoutCommand "podman")) {
         throw "Podman was selected but the podman command was not found."
     }
+    Initialize-TowerScoutPodmanComposeProvider | Out-Null
 
     return @{
         Executable = "podman"
@@ -154,6 +156,133 @@ function Get-TowerScoutEnvFileValue {
     return $null
 }
 
+function Get-TowerScoutConfiguredPodmanMachineName {
+    param(
+        [string] $MachineName = ""
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($MachineName)) {
+        return ([string] $MachineName).Trim()
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace([string] $env:TOWERSCOUT_PODMAN_MACHINE)) {
+        return ([string] $env:TOWERSCOUT_PODMAN_MACHINE).Trim()
+    }
+
+    $envFileMachine = [string] (Get-TowerScoutEnvFileValue -Name "TOWERSCOUT_PODMAN_MACHINE")
+    if (-not [string]::IsNullOrWhiteSpace($envFileMachine)) {
+        return $envFileMachine.Trim()
+    }
+
+    return $script:TowerScoutDefaultPodmanMachineName
+}
+
+function Resolve-TowerScoutCommandOrPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Value
+    )
+
+    if (Test-Path -LiteralPath $Value -PathType Leaf) {
+        return (Resolve-Path -LiteralPath $Value).Path
+    }
+
+    $command = Get-Command $Value -ErrorAction SilentlyContinue
+    if ($null -eq $command) {
+        return ""
+    }
+
+    if (
+        $command.PSObject.Properties.Name -contains "Source" -and
+        -not [string]::IsNullOrWhiteSpace([string] $command.Source)
+    ) {
+        return [string] $command.Source
+    }
+    if (
+        $command.PSObject.Properties.Name -contains "Path" -and
+        -not [string]::IsNullOrWhiteSpace([string] $command.Path)
+    ) {
+        return [string] $command.Path
+    }
+
+    return [string] $command.Name
+}
+
+function Test-TowerScoutDockerDesktopComposeProvider {
+    param(
+        [string] $Value = ""
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Value)) {
+        return $false
+    }
+
+    $normalized = ([string] $Value).Replace("/", "\")
+    # Podman prints external provider paths with escaped separators
+    # (for example C:\\Program Files\\Docker\\...). Collapse them before matching.
+    $normalized = $normalized -replace '\\{2,}', '\'
+    return (
+        $normalized -match "(?i)\\Docker\\Docker\\resources\\bin\\docker-compose(\.exe)?(\s|`"|$)" -or
+        $normalized -match "(?i)Docker Desktop"
+    )
+}
+
+function Get-TowerScoutPodmanComposeProviderOverride {
+    $providerOverride = [string] $env:PODMAN_COMPOSE_PROVIDER
+    if ([string]::IsNullOrWhiteSpace($providerOverride)) {
+        $providerOverride = [string] (Get-TowerScoutEnvFileValue -Name "PODMAN_COMPOSE_PROVIDER")
+    }
+
+    return ([string] $providerOverride).Trim()
+}
+
+function Initialize-TowerScoutPodmanComposeProvider {
+    $providerOverride = Get-TowerScoutPodmanComposeProviderOverride
+    if ([string]::IsNullOrWhiteSpace($providerOverride)) {
+        return ""
+    }
+
+    $resolvedProvider = Resolve-TowerScoutCommandOrPath -Value $providerOverride
+    if ([string]::IsNullOrWhiteSpace($resolvedProvider)) {
+        throw "PODMAN_COMPOSE_PROVIDER is set to '$providerOverride', but that file or command was not found."
+    }
+    if (Test-TowerScoutDockerDesktopComposeProvider -Value $resolvedProvider) {
+        throw "PODMAN_COMPOSE_PROVIDER points to Docker Desktop's bundled docker-compose.exe. Select an approved non-Docker-Desktop Compose provider for the Podman path."
+    }
+
+    $env:PODMAN_COMPOSE_PROVIDER = $resolvedProvider
+    return $resolvedProvider
+}
+
+function Get-TowerScoutPodmanComposeVersionResult {
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $versionOutput = & podman compose version 2>&1
+        return [pscustomobject]@{
+            ExitCode = $LASTEXITCODE
+            Lines = @($versionOutput)
+        }
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+}
+
+function Assert-TowerScoutPodmanComposeProviderAllowed {
+    param(
+        [string[]] $Lines = @()
+    )
+
+    foreach ($line in @($Lines)) {
+        $normalizedLine = ([string] $line).Replace([string][char]0, "")
+        $normalizedLine = $normalizedLine -replace ([string][char]27 + "\[[0-9;]*m"), ""
+        if (Test-TowerScoutDockerDesktopComposeProvider -Value $normalizedLine) {
+            throw "Podman Compose resolved to Docker Desktop's bundled docker-compose.exe. Set PODMAN_COMPOSE_PROVIDER to an approved non-Docker-Desktop provider before using the Podman path."
+        }
+    }
+}
+
 function Initialize-TowerScoutEnvFile {
     param(
         [Parameter(Mandatory = $true)]
@@ -180,27 +309,18 @@ function Write-TowerScoutComposeProviderSummary {
     $effectiveEngine = [string] $command["Executable"]
 
     if ($effectiveEngine -eq "podman") {
-        $providerOverride = $env:PODMAN_COMPOSE_PROVIDER
+        $providerOverride = Initialize-TowerScoutPodmanComposeProvider
         if ([string]::IsNullOrWhiteSpace($providerOverride)) {
-            Write-Host "Podman Compose provider: selected by podman compose. Set PODMAN_COMPOSE_PROVIDER to force an approved provider."
+            Write-Host "Podman Compose provider: selected by podman compose. Set PODMAN_COMPOSE_PROVIDER to force an approved non-Docker-Desktop provider."
         }
         else {
-            if (-not (Test-TowerScoutCommandOrPath -Value $providerOverride)) {
-                throw "PODMAN_COMPOSE_PROVIDER is set to '$providerOverride', but that file or command was not found."
-            }
             Write-Host "Podman Compose provider override: $providerOverride"
         }
 
         try {
-            $previousErrorActionPreference = $ErrorActionPreference
-            $ErrorActionPreference = "Continue"
-            try {
-                $versionOutput = & podman compose version 2>&1
-            }
-            finally {
-                $ErrorActionPreference = $previousErrorActionPreference
-            }
-            foreach ($line in $versionOutput) {
+            $versionResult = Get-TowerScoutPodmanComposeVersionResult
+            Assert-TowerScoutPodmanComposeProviderAllowed -Lines $versionResult.Lines
+            foreach ($line in $versionResult.Lines) {
                 $normalizedLine = ([string] $line).Replace([string][char]0, "")
                 $normalizedLine = $normalizedLine -replace ([string][char]27 + "\[[0-9;]*m"), ""
                 if ($normalizedLine -eq "System.Management.Automation.RemoteException") {
@@ -210,12 +330,13 @@ function Write-TowerScoutComposeProviderSummary {
                     Write-Host "  $normalizedLine"
                 }
             }
-            if ($LASTEXITCODE -ne 0) {
-                Write-Host "  podman compose version exited with code $LASTEXITCODE."
+            if ($versionResult.ExitCode -ne 0) {
+                Write-Host "  podman compose version exited with code $($versionResult.ExitCode)."
             }
         }
         catch {
             Write-Host "  Could not inspect podman compose provider: $($_.Exception.Message)"
+            throw
         }
     }
     elseif ($effectiveEngine -eq "docker") {
@@ -288,10 +409,19 @@ function Set-TowerScoutGpuEnvironment {
     }
 }
 
-function Test-TowerScoutNvidiaGpuDetected {
-    $override = $env:TOWERSCOUT_GPU_AUTO_OVERLAY
+function Test-TowerScoutBooleanGate {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Name
+    )
+
+    $envEntry = Get-Item "env:$Name" -ErrorAction SilentlyContinue
+    $override = ""
+    if ($null -ne $envEntry) {
+        $override = [string] $envEntry.Value
+    }
     if ([string]::IsNullOrWhiteSpace($override)) {
-        $override = Get-TowerScoutEnvFileValue -Name "TOWERSCOUT_GPU_AUTO_OVERLAY"
+        $override = [string] (Get-TowerScoutEnvFileValue -Name $Name)
     }
 
     $normalizedOverride = ([string] $override).Trim()
@@ -303,6 +433,209 @@ function Test-TowerScoutNvidiaGpuDetected {
     }
 
     return $false
+}
+
+function Test-TowerScoutNvidiaGpuDetected {
+    return Test-TowerScoutBooleanGate -Name "TOWERSCOUT_GPU_AUTO_OVERLAY"
+}
+
+function Test-TowerScoutPodmanGpuOverlayGate {
+    return Test-TowerScoutBooleanGate -Name "TOWERSCOUT_PODMAN_GPU_OVERLAY"
+}
+
+function Test-TowerScoutHostNvidiaSmi {
+    return $null -ne (Get-Command "nvidia-smi" -ErrorAction SilentlyContinue)
+}
+
+function New-TowerScoutPodmanGpuReadyResult {
+    param(
+        [bool] $Ready,
+
+        [int] $FailedRung,
+
+        [string] $Message
+    )
+
+    return [pscustomobject]@{
+        Ready = $Ready
+        FailedRung = $FailedRung
+        Message = $Message
+    }
+}
+
+function Convert-TowerScoutVersionPart {
+    param(
+        [string] $Value = ""
+    )
+
+    $match = [regex]::Match([string] $Value, "\d+")
+    if ($match.Success) {
+        return [int] $match.Value
+    }
+    return 0
+}
+
+function Test-TowerScoutPodmanVersionAtLeast {
+    param(
+        [string] $Version = "",
+
+        [int] $Major = 5,
+
+        [int] $Minor = 4
+    )
+
+    $parts = @(([string] $Version).Trim() -split "\.")
+    $actualMajor = 0
+    $actualMinor = 0
+    if ($parts.Count -ge 1) {
+        $actualMajor = Convert-TowerScoutVersionPart -Value $parts[0]
+    }
+    if ($parts.Count -ge 2) {
+        $actualMinor = Convert-TowerScoutVersionPart -Value $parts[1]
+    }
+
+    return ($actualMajor -gt $Major -or ($actualMajor -eq $Major -and $actualMinor -ge $Minor))
+}
+
+function Invoke-TowerScoutPodmanCommand {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]] $Arguments,
+
+        [int] $TimeoutSeconds = 30
+    )
+
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $output = & podman @Arguments 2>&1
+        return [pscustomobject]@{
+            ExitCode = $LASTEXITCODE
+            StdOut = [string]::Join([Environment]::NewLine, @($output))
+            StdErr = ""
+        }
+    }
+    catch {
+        return [pscustomobject]@{
+            ExitCode = 1
+            StdOut = ""
+            StdErr = $_.Exception.Message
+        }
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+}
+
+function Get-TowerScoutFirstJsonObject {
+    param(
+        [string] $Json = ""
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Json)) {
+        return $null
+    }
+
+    try {
+        $parsed = $Json | ConvertFrom-Json
+        $items = @($parsed)
+        if ($items.Count -gt 0) {
+            return $items[0]
+        }
+    }
+    catch {
+        return $null
+    }
+
+    return $null
+}
+
+function Get-TowerScoutPodmanMachineVmType {
+    param(
+        [object] $Machine
+    )
+
+    if ($null -eq $Machine) {
+        return ""
+    }
+
+    if ($Machine.PSObject.Properties.Name -contains "VMType") {
+        $vmType = ([string] $Machine.PSObject.Properties["VMType"].Value).Trim()
+        if (-not [string]::IsNullOrWhiteSpace($vmType)) {
+            return $vmType.ToLowerInvariant()
+        }
+    }
+
+    if ($Machine.PSObject.Properties.Name -contains "ConfigDir") {
+        $configDir = $Machine.PSObject.Properties["ConfigDir"].Value
+        if ($null -ne $configDir -and $configDir.PSObject.Properties.Name -contains "Path") {
+            $configPath = [string] $configDir.PSObject.Properties["Path"].Value
+            if (-not [string]::IsNullOrWhiteSpace($configPath)) {
+                $trimmed = $configPath -replace '[\\/]+$', ''
+                $idx = $trimmed.LastIndexOfAny([char[]]@('\', '/'))
+                return $trimmed.Substring($idx + 1).Trim().ToLowerInvariant()
+            }
+        }
+    }
+
+    return ""
+}
+
+function Test-TowerScoutPodmanGpuReady {
+    param(
+        [string] $MachineName = $(Get-TowerScoutConfiguredPodmanMachineName)
+    )
+
+    $MachineName = Get-TowerScoutConfiguredPodmanMachineName -MachineName $MachineName
+
+    if (-not (Test-TowerScoutCommand "podman")) {
+        return New-TowerScoutPodmanGpuReadyResult -Ready:$false -FailedRung 0 -Message "Podman CLI was not found."
+    }
+
+    $version = Invoke-TowerScoutPodmanCommand -Arguments @("version", "--format", "{{.Client.Version}}") -TimeoutSeconds 10
+    if ($version.ExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($version.StdOut)) {
+        return New-TowerScoutPodmanGpuReadyResult -Ready:$false -FailedRung 0 -Message "Podman version could not be read."
+    }
+    if (-not (Test-TowerScoutPodmanVersionAtLeast -Version $version.StdOut -Major 5 -Minor 4)) {
+        return New-TowerScoutPodmanGpuReadyResult -Ready:$false -FailedRung 0 -Message "Podman GPU through Compose requires Podman 5.4 or newer."
+    }
+
+    $inspect = Invoke-TowerScoutPodmanCommand -Arguments @("machine", "inspect", $MachineName) -TimeoutSeconds 15
+    if ($inspect.ExitCode -ne 0) {
+        return New-TowerScoutPodmanGpuReadyResult -Ready:$false -FailedRung 0 -Message "Podman machine '$MachineName' was not found or could not be inspected."
+    }
+
+    $machine = Get-TowerScoutFirstJsonObject -Json $inspect.StdOut
+    if ($null -eq $machine) {
+        return New-TowerScoutPodmanGpuReadyResult -Ready:$false -FailedRung 0 -Message "Podman machine '$MachineName' inspect output could not be parsed."
+    }
+
+    $running = (Get-TowerScoutObjectPropertyValue -InputObject $machine -Name "Running").Trim().ToLowerInvariant()
+    $state = (Get-TowerScoutObjectPropertyValue -InputObject $machine -Name "State").Trim().ToLowerInvariant()
+    if ($running -notin @("true", "1") -and $state -notin @("running", "started")) {
+        return New-TowerScoutPodmanGpuReadyResult -Ready:$false -FailedRung 0 -Message "Podman machine '$MachineName' is not running. Run 'podman machine start $MachineName' and retry."
+    }
+
+    $vmType = Get-TowerScoutPodmanMachineVmType -Machine $machine
+    if ($vmType -ne "wsl") {
+        return New-TowerScoutPodmanGpuReadyResult -Ready:$false -FailedRung 0 -Message "Podman GPU requires the WSL2 machine backend; machine '$MachineName' reports VMType='$vmType'."
+    }
+
+    if (-not (Test-TowerScoutHostNvidiaSmi)) {
+        return New-TowerScoutPodmanGpuReadyResult -Ready:$false -FailedRung 1 -Message "No NVIDIA driver tool was found on the Windows host; Podman GPU provisioning is not applicable on this CPU-only host."
+    }
+
+    $machineGpu = Invoke-TowerScoutPodmanCommand -Arguments @("machine", "ssh", $MachineName, "--", "/usr/lib/wsl/lib/nvidia-smi", "-L") -TimeoutSeconds 20
+    if ($machineGpu.ExitCode -ne 0 -or $machineGpu.StdOut -notmatch "GPU") {
+        return New-TowerScoutPodmanGpuReadyResult -Ready:$false -FailedRung 2 -Message "The NVIDIA GPU is not visible inside the Podman WSL2 machine. Update the Windows NVIDIA driver and WSL, then restart the Podman machine."
+    }
+
+    $cdi = Invoke-TowerScoutPodmanCommand -Arguments @("machine", "ssh", $MachineName, "--", "nvidia-ctk", "cdi", "list") -TimeoutSeconds 20
+    if ($cdi.ExitCode -ne 0 -or (($cdi.StdOut + $cdi.StdErr) -notmatch "nvidia\.com/gpu")) {
+        return New-TowerScoutPodmanGpuReadyResult -Ready:$false -FailedRung 3 -Message "No CDI GPU device (nvidia.com/gpu) is registered inside the Podman machine. Run scripts\enable-podman-gpu.ps1 and retry."
+    }
+
+    return New-TowerScoutPodmanGpuReadyResult -Ready:$true -FailedRung -1 -Message "Podman GPU CDI prerequisites are ready."
 }
 
 function Test-TowerScoutUseGpuOverlay {
@@ -322,7 +655,52 @@ function Test-TowerScoutUseGpuOverlay {
         return $true
     }
 
-    return ($EngineName -eq "docker" -and (Test-TowerScoutNvidiaGpuDetected))
+    if ($EngineName -eq "docker") {
+        return Test-TowerScoutNvidiaGpuDetected
+    }
+    if ($EngineName -eq "podman") {
+        return Test-TowerScoutPodmanGpuOverlayGate
+    }
+
+    return $false
+}
+
+function Resolve-TowerScoutGpuComposeOverlay {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("docker", "podman")]
+        [string] $EngineName,
+
+        [ValidateSet("off", "auto", "on")]
+        [string] $Gpu = "off",
+
+        [string] $PodmanMachineName = $(Get-TowerScoutConfiguredPodmanMachineName)
+    )
+
+    if (-not (Test-TowerScoutUseGpuOverlay -EngineName $EngineName -Gpu $Gpu)) {
+        return ""
+    }
+
+    if ($EngineName -eq "docker") {
+        return "compose.gpu.yaml"
+    }
+
+    $resolvedPodmanMachineName = Get-TowerScoutConfiguredPodmanMachineName -MachineName $PodmanMachineName
+    $ready = Test-TowerScoutPodmanGpuReady -MachineName $resolvedPodmanMachineName
+    if ([bool] $ready.Ready) {
+        return "compose.gpu.podman.yaml"
+    }
+
+    $message = [string] $ready.Message
+    if ([string]::IsNullOrWhiteSpace($message)) {
+        $message = "Podman GPU CDI prerequisites are not ready."
+    }
+    if ($Gpu -eq "on") {
+        throw "$message Run scripts\enable-podman-gpu.ps1 -VerifyOnly for diagnostics, then run scripts\enable-podman-gpu.ps1 after support approval."
+    }
+
+    Write-Warning "$message Continuing without the Podman GPU overlay because -Gpu auto is CPU-safe."
+    return ""
 }
 
 function Write-TowerScoutGpuModeSummary {
@@ -343,14 +721,24 @@ function Write-TowerScoutGpuModeSummary {
 
     if ($Gpu -eq "auto") {
         if (Test-TowerScoutUseGpuOverlay -EngineName $EngineName -Gpu $Gpu) {
-            Write-Host "GPU mode: auto. Explicit Docker GPU overlay validation override is enabled; Docker GPU overlay will be requested and TowerScout will fall back to CPU if CUDA is unavailable."
+            if ($EngineName -eq "podman") {
+                Write-Host "GPU mode: auto. Explicit Podman GPU overlay validation override is enabled; Podman CDI readiness will decide whether the overlay is used."
+            }
+            else {
+                Write-Host "GPU mode: auto. Explicit Docker GPU overlay validation override is enabled; Docker GPU overlay will be requested and TowerScout will fall back to CPU if CUDA is unavailable."
+            }
         }
         else {
-            Write-Host "GPU mode: auto. No explicit Docker GPU overlay validation override is set; starting without the GPU overlay and using TowerScout CPU fallback."
+            Write-Host "GPU mode: auto. No explicit $EngineName GPU overlay validation override is set; starting without the GPU overlay and using TowerScout CPU fallback."
         }
     }
     elseif ($Gpu -eq "on") {
-        Write-Host "GPU mode: on. Docker GPU overlay will be requested; TowerScout readiness will fail if CUDA is unavailable."
+        if ($EngineName -eq "podman") {
+            Write-Host "GPU mode: on. The Podman GPU overlay (compose.gpu.podman.yaml, CDI) will be requested; TowerScout readiness will fail if CUDA is unavailable."
+        }
+        else {
+            Write-Host "GPU mode: on. Docker GPU overlay will be requested; TowerScout readiness will fail if CUDA is unavailable."
+        }
     }
 
     if ($Build) {
@@ -821,29 +1209,38 @@ function Invoke-TowerScoutCompose {
         [switch] $Build,
 
         [ValidateSet("off", "auto", "on")]
-        [string] $Gpu = "off"
+        [string] $Gpu = "off",
+
+        [string] $PodmanMachineName = $(Get-TowerScoutConfiguredPodmanMachineName)
     )
 
     $repoRoot = Get-TowerScoutRepoRoot
     $command = Get-TowerScoutComposeCommand -Engine $Engine
     $effectiveEngine = [string] $command["Executable"]
-    $useGpuOverlay = Test-TowerScoutUseGpuOverlay -EngineName $effectiveEngine -Gpu $Gpu
-    if ($useGpuOverlay -and $effectiveEngine -ne "docker") {
-        throw "GPU launch currently requires Docker Compose with NVIDIA GPU support. Podman GPU launch is not validated for this release path."
-    }
-    if ($Gpu -eq "on" -and $effectiveEngine -ne "docker") {
-        throw "GPU launch currently requires Docker Compose with NVIDIA GPU support. Podman GPU launch is not validated for this release path."
+    $gpuOverlayFile = ""
+    if ($effectiveEngine -in @("docker", "podman")) {
+        $gpuOverlayFile = Resolve-TowerScoutGpuComposeOverlay `
+            -EngineName $effectiveEngine `
+            -Gpu $Gpu `
+            -PodmanMachineName (Get-TowerScoutConfiguredPodmanMachineName -MachineName $PodmanMachineName)
     }
 
     Set-TowerScoutGpuEnvironment -Gpu $Gpu -Build:$Build
     $env:TOWERSCOUT_CONTAINER_ENGINE = $effectiveEngine
+    if ($effectiveEngine -eq "podman") {
+        $versionResult = Get-TowerScoutPodmanComposeVersionResult
+        Assert-TowerScoutPodmanComposeProviderAllowed -Lines $versionResult.Lines
+        if ($versionResult.ExitCode -ne 0) {
+            throw "podman compose version exited with code $($versionResult.ExitCode). Confirm the approved Compose provider is installed and selected."
+        }
+    }
 
     $composeFiles = @("-f", (Join-Path $repoRoot "compose.yaml"))
     if ($Build) {
         $composeFiles += @("-f", (Join-Path $repoRoot "compose.build.yaml"))
     }
-    if ($useGpuOverlay) {
-        $gpuComposePath = Join-Path $repoRoot "compose.gpu.yaml"
+    if (-not [string]::IsNullOrWhiteSpace($gpuOverlayFile)) {
+        $gpuComposePath = Join-Path $repoRoot $gpuOverlayFile
         if (-not (Test-Path -LiteralPath $gpuComposePath -PathType Leaf)) {
             throw "GPU Compose overlay not found: $gpuComposePath"
         }

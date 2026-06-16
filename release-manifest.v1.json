@@ -31,11 +31,17 @@
   "release_artifacts": {
     "control_zip": "",
     "control_zip_sha256": "",
+    "control_zip_sha256_sidecar": "",
+    "control_zip_sha256_reason": "Template manifest does not identify a generated control ZIP.",
     "image": "",
     "image_digest": "",
     "pytorch_flavor": "cpu",
     "asset_manifest": "webapp/asset_manifest.v1.json",
-    "asset_bundle_sha256": ""
+    "asset_bundle": "",
+    "asset_bundle_sha256": "",
+    "asset_bundle_sha256_sidecar": "",
+    "asset_bundle_sha256_reason": "Template manifest does not identify a generated asset bundle.",
+    "package_contents_sha256": "SHA256SUMS.txt"
   },
   "corresponding_source": {
     "source_ref": "",
@@ -46,6 +52,7 @@
       "webapp/ts_yolov5.py",
       "Dockerfile",
       "compose.yaml",
+      "compose.gpu.podman.yaml",
       "scripts/",
       "webapp/requirements.txt",
       "package-lock.json"

@@ -13,13 +13,21 @@ import json
 import sys
 from pathlib import Path
 
-RECOMMENDED_KEYS = {
-    "releaseVersion",
-    "releasePosture",
-    "sourceRef",
-    "image",
-    "checksums",
-}
+def _nested_get(data: dict, *path: str) -> object | None:
+    current: object = data
+    for key in path:
+        if not isinstance(current, dict) or key not in current:
+            return None
+        current = current[key]
+    return current
+
+
+def _first_present(data: dict, paths: list[tuple[str, ...]]) -> object | None:
+    for path in paths:
+        value = _nested_get(data, *path)
+        if value not in (None, ""):
+            return value
+    return None
 
 
 def main() -> int:
@@ -47,11 +55,18 @@ def main() -> int:
     errors: list[str] = []
     warnings: list[str] = []
 
-    missing = sorted(RECOMMENDED_KEYS - set(data))
-    for key in missing:
-        warnings.append(f"recommended key missing: {key}")
+    recommended_fields = {
+        "release version": [("releaseVersion",), ("release_version",)],
+        "release posture": [("releasePosture",), ("track",)],
+        "source ref": [("sourceRef",), ("corresponding_source", "source_ref")],
+        "image": [("image",), ("release_artifacts", "image")],
+        "checksums": [("checksums",), ("release_artifacts", "package_contents_sha256")],
+    }
+    for label, paths in recommended_fields.items():
+        if _first_present(data, paths) is None:
+            warnings.append(f"recommended field missing: {label}")
 
-    image = data.get("image")
+    image = _first_present(data, [("image",), ("release_artifacts", "image")])
     if isinstance(image, dict):
         digest = image.get("digest") or image.get("pinnedDigest") or image.get("imageDigest")
         if not digest or "sha256:" not in str(digest):
@@ -68,6 +83,12 @@ def main() -> int:
                 warnings.append(f"checksum references missing file: {rel_path}")
     elif checksums is not None:
         warnings.append("checksums should be an object mapping files to hashes")
+    else:
+        package_contents = _nested_get(data, "release_artifacts", "package_contents_sha256")
+        if isinstance(package_contents, str) and package_contents:
+            candidate = root / package_contents
+            if not candidate.exists():
+                warnings.append(f"package contents checksum file missing: {package_contents}")
 
     print(f"manifest: {manifest_path}")
     print(f"release root: {root}")

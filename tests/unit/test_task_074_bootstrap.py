@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import uuid
 import zipfile
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -146,6 +147,16 @@ def test_bootstrap_verify_only_does_not_stage_asset_zip_before_exit():
     assert "Test-TowerScoutAssetZipReleaseMatch -RootPath $repoRoot -ZipPath $resolvedAssetZip" in bootstrap
     assert bootstrap.index("Resolve-TowerScoutBootstrapEngine") < bootstrap.index("if ($VerifyOnly)")
     assert bootstrap.index("if ($VerifyOnly)") < bootstrap.index("Expand-TowerScoutAssetZip")
+
+
+def test_bootstrap_reuses_valid_staged_assets_before_extracting_asset_zip():
+    bootstrap = BOOTSTRAP_SCRIPT.read_text(encoding="utf-8")
+
+    assert "$hasExistingStagedAssets = Test-TowerScoutStagedAssets" in bootstrap
+    assert "if ($hasExistingStagedAssets)" in bootstrap
+    assert "Reusing the staged assets and continuing with engine import." in bootstrap
+    assert bootstrap.index("$hasExistingStagedAssets = Test-TowerScoutStagedAssets") < bootstrap.index("if ($VerifyOnly)")
+    assert bootstrap.index("if ($hasExistingStagedAssets)") < bootstrap.index("Expand-TowerScoutAssetZip")
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap helpers are Windows-only")
@@ -350,7 +361,10 @@ def test_bootstrap_asset_zip_uses_temporary_staging_and_cleans_failed_extract():
                 throw "Failed extraction left final asset entry behind: $entry"
             }}
         }}
-        if ((Test-Path -LiteralPath "{bad_assets}") -and ((Get-ChildItem -LiteralPath "{bad_assets}" -Directory -Filter ".staging-*" | Measure-Object).Count -ne 0)) {{
+        if (
+            (Test-Path -LiteralPath "{bad_assets}") -and
+            ((Get-ChildItem -LiteralPath "{bad_assets}" -Directory -Filter ".staging-*" | Measure-Object).Count -ne 0)
+        ) {{
             throw "Temporary staging folder was not removed after failed extraction."
         }}
         "ok"
@@ -397,6 +411,129 @@ def test_bootstrap_staged_assets_must_match_control_manifest():
         }}
         catch {{
             if ($_.Exception.Message -notmatch "does not match the control package manifest") {{
+                throw
+            }}
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap helpers are Windows-only")
+def test_bootstrap_staged_assets_verify_files_before_reuse_and_zip_can_repair():
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task083-staged-repair-{uuid.uuid4().hex}"
+    assets = temp_root / "assets"
+    control_manifest = temp_root / "webapp" / "asset_manifest.v1.json"
+    asset_zip = temp_root / "towerscout-v0.0.0-assets-task083-test-assets.zip"
+    good_payload = b"known-good-model"
+    bad_payload = b"X" * len(good_payload)
+    control_manifest.parent.mkdir(parents=True)
+    (assets / "model_params" / "yolov5").mkdir(parents=True)
+    (assets / "data").mkdir(parents=True)
+
+    manifest = {
+        "schema_version": 1,
+        "manifest_version": "task083-test-assets",
+        "assets": [
+            {
+                "id": "required-model",
+                "path": "model_params/yolov5/newest.pt",
+                "required": True,
+                "bytes": len(good_payload),
+                "sha256": hashlib.sha256(good_payload).hexdigest().upper(),
+            }
+        ],
+    }
+    manifest_text = json.dumps(manifest, sort_keys=True)
+    control_manifest.write_text(manifest_text, encoding="utf-8")
+    (assets / "asset_manifest.v1.json").write_text(manifest_text, encoding="utf-8")
+    (assets / "model_params" / "yolov5" / "newest.pt").write_bytes(bad_payload)
+
+    with zipfile.ZipFile(asset_zip, "w") as package:
+        package.writestr("model_params/yolov5/newest.pt", good_payload)
+        package.writestr("data/tiny.dat", b"x")
+        package.writestr("asset_manifest.v1.json", manifest_text)
+
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        . "{BOOTSTRAP_LIB}"
+
+        try {{
+            Test-TowerScoutStagedAssets -RootPath "{temp_root}" -AssetsPath "{assets}" | Out-Null
+            throw "Corrupt staged assets were accepted."
+        }}
+        catch {{
+            if ($_.Exception.Message -notmatch "SHA-256") {{
+                throw
+            }}
+        }}
+
+        $repairable = Test-TowerScoutStagedAssets `
+            -RootPath "{temp_root}" `
+            -AssetsPath "{assets}" `
+            -AllowRepair
+        if ($repairable) {{
+            throw "Corrupt staged assets should not be reused when repair is allowed."
+        }}
+
+        Expand-TowerScoutAssetZip `
+            -RootPath "{temp_root}" `
+            -ZipPath "{asset_zip}" `
+            -AssetsPath "{assets}" `
+            -ReplaceExisting
+        $repaired = Test-TowerScoutStagedAssets -RootPath "{temp_root}" -AssetsPath "{assets}"
+        if (-not $repaired) {{
+            throw "Expected repaired staged assets to validate."
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap helpers are Windows-only")
+def test_bootstrap_partial_staged_assets_fail_with_rerun_guidance():
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task083-partial-assets-{uuid.uuid4().hex}"
+    assets = temp_root / "assets"
+    control_manifest = temp_root / "webapp" / "asset_manifest.v1.json"
+    asset_zip = temp_root / "assets.zip"
+    control_manifest.parent.mkdir(parents=True)
+    assets.mkdir(parents=True)
+    (assets / "model_params").mkdir()
+
+    manifest = {
+        "schema_version": 1,
+        "manifest_version": "task083-test-assets",
+        "assets": [],
+    }
+    manifest_text = json.dumps(manifest, sort_keys=True)
+    control_manifest.write_text(manifest_text, encoding="utf-8")
+
+    with zipfile.ZipFile(asset_zip, "w") as package:
+        package.writestr("model_params/yolov5/newest.pt", b"weights")
+        package.writestr("data/tl_2025_us_zcta520/tl_2025_us_zcta520.shp", b"shape")
+        package.writestr("asset_manifest.v1.json", manifest_text)
+
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        . "{BOOTSTRAP_LIB}"
+        try {{
+            Expand-TowerScoutAssetZip -RootPath "{temp_root}" -ZipPath "{asset_zip}" -AssetsPath "{assets}"
+            throw "Partial staged assets were accepted."
+        }}
+        catch {{
+            if ($_.Exception.Message -notmatch "valid staged assets are reused automatically") {{
                 throw
             }}
         }}
