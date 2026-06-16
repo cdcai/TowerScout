@@ -1,12 +1,13 @@
 # TowerScout Quick Start
 
-**Applies to**: Current V1 release-candidate package path, including RC5
-unless release notes say otherwise
-**Last reviewed**: 2026-06-15
+**Applies to**: Current V1 release-candidate package path after RC5 package
+hardening, unless release notes say otherwise
+**Last reviewed**: 2026-06-16
 **Audience**: Pilot users and first-line support
-**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU, Docker
-GPU, and Podman GPU are support-assigned RC5 paths after workstation-specific
-engine, Compose-provider, and NVIDIA validation.
+**Runtime scope**: The CPU Application Package is the normal path. The CUDA
+12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are
+support-assigned paths after workstation-specific engine, Compose-provider,
+and NVIDIA validation.
 
 This is the short Windows pilot path for the TowerScout `agpl-yolo` release
 package. It assumes a Windows 11 AMD64 workstation, Docker Desktop as the
@@ -18,9 +19,12 @@ For detailed support guidance, see `docs/package-guide.md`.
 Terms used in this guide:
 
 - **Application Package**: the smaller TowerScout app/control ZIP that contains
-  scripts, docs, Compose files, and release metadata.
+  scripts, docs, Compose files, and release metadata. There are two variants:
+  `cpu` for normal/non-GPU use and `cuda121` for support-validated NVIDIA GPU
+  workstations.
 - **Model & Data Package**: the larger asset ZIP, also called the asset bundle,
-  that contains model weights and ZIP-code data.
+  that contains model weights and ZIP-code data. The CPU and CUDA Application
+  Packages use the same Model & Data Package for this release path.
 
 ## Before You Start
 
@@ -36,10 +40,11 @@ installing WSL, Docker Desktop, Podman, or provider credentials.
   `2.1.5` or later, virtualization enabled in BIOS/UEFI, and at least 8 GB RAM.
 - Normal outbound internet access so the container engine can pull the pinned
   TowerScout image from GHCR and TowerScout can reach the selected map provider.
-- Enough local disk space for the Application Package, Model & Data Package,
-  container image, and Docker or Podman volumes. Plan for at least `15 GB`
-  free; `25 GB` free is a better target for first setup. CUDA-capable images use
-  substantially more space than CPU-only images.
+- Enough local disk space for the selected Application Package, Model & Data
+  Package, container image, and Docker or Podman volumes. Plan for at least
+  `15 GB` free for the CPU package; `25 GB` free is a better target for first
+  setup and CUDA validation. CUDA images use substantially more space than
+  CPU-only images.
 - One container engine, selected as follows:
   - Docker Desktop is the primary pilot path. During Docker Desktop
     installation, keep the WSL 2 backend selected when prompted, start Docker
@@ -149,8 +154,9 @@ direct release URL, use that link. In the examples below, replace
 `<release-version>` with the exact release tag or filename text from that
 release.
 
-In the release `Assets` section, download all four TowerScout release files.
-Most browsers save downloaded files to your Windows `Downloads` folder.
+In the release `Assets` section, download one Application Package variant and
+the shared Model & Data Package. Most browsers save downloaded files to your
+Windows `Downloads` folder.
 
 After the downloads finish, create a new empty working folder, such as:
 
@@ -163,11 +169,20 @@ paste them into this `TowerScoutUAT` working folder.
 
 Download these files from the same release:
 
-- Application Package ZIP: `towerscout-<release-version>.zip`
-- Application Package checksum: `towerscout-<release-version>.zip.sha256`
+- CPU Application Package ZIP for normal users:
+  `towerscout-<release-version>-cpu.zip`
+- CPU Application Package checksum:
+  `towerscout-<release-version>-cpu.zip.sha256`
 - Model & Data Package ZIP: `towerscout-<release-version>-assets-<asset-version>.zip`
 - Model & Data Package checksum:
   `towerscout-<release-version>-assets-<asset-version>.zip.sha256`
+
+Use the CUDA package only when support assigns GPU validation:
+
+- CUDA Application Package ZIP:
+  `towerscout-<release-version>-cuda121.zip`
+- CUDA Application Package checksum:
+  `towerscout-<release-version>-cuda121.zip.sha256`
 
 Keep these four files together in the `TowerScoutUAT` working folder. Only the
 Application Package ZIP is extracted in the normal setup path. Leave the Model
@@ -184,10 +199,15 @@ normal pilot install.
 Before extracting anything, confirm the folder contains these four files from
 the same release:
 
-- `towerscout-<release-version>.zip`
-- `towerscout-<release-version>.zip.sha256`
+- `towerscout-<release-version>-cpu.zip`
+- `towerscout-<release-version>-cpu.zip.sha256`
 - `towerscout-<release-version>-assets-<asset-version>.zip`
 - `towerscout-<release-version>-assets-<asset-version>.zip.sha256`
+
+If support assigned GPU validation, replace the `-cpu` Application Package and
+checksum with the matching `-cuda121` files. Do not keep both CPU and CUDA
+Application Package ZIPs in the same UAT working folder unless support asks you
+to compare them.
 
 The exact Model & Data Package filename can change by release. The release
 version must match between the Application Package and the Model & Data
@@ -208,14 +228,14 @@ towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip
 In the `TowerScoutUAT` folder, extract only the Application Package ZIP:
 
 ```text
-towerscout-<release-version>.zip
+towerscout-<release-version>-cpu.zip
 ```
 
 Extract it inside the `TowerScoutUAT` folder. Most Windows ZIP tools will
 create an extracted folder named:
 
 ```text
-C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>
+C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>-cpu
 ```
 
 Do not extract the Model & Data Package ZIP for the normal setup path. After
@@ -224,11 +244,11 @@ like this:
 
 ```text
 TowerScoutUAT\
-  towerscout-<release-version>.zip
-  towerscout-<release-version>.zip.sha256
+  towerscout-<release-version>-cpu.zip
+  towerscout-<release-version>-cpu.zip.sha256
   towerscout-<release-version>-assets-<asset-version>.zip
   towerscout-<release-version>-assets-<asset-version>.zip.sha256
-  towerscout-<release-version>\
+  towerscout-<release-version>-cpu\
     setup-towerscout.cmd
     bootstrap.cmd
     start.bat
@@ -316,16 +336,18 @@ confirm Docker Desktop is running.
 
 ## 5. Optional Runtime Validation Tracks
 
-Run the default Docker CPU setup first unless support assigned a different
-track. If support asks you to validate Podman, run setup with Podman and keep
-using `-Engine podman` on later status, logs, import, stop, and start commands:
+Run the CPU Application Package first unless support assigned the CUDA package
+or a different engine. If support asks you to validate Podman CPU, run setup
+with Podman and keep using `-Engine podman` on later status, logs, import,
+stop, and start commands:
 
 ```powershell
 .\setup-towerscout.cmd -Engine podman
 ```
 
 If support asks you to validate Docker GPU behavior on a workstation with
-NVIDIA Docker GPU support, use one of these setup commands:
+NVIDIA Docker GPU support, use the CUDA Application Package and one of these
+setup commands:
 
 ```powershell
 .\setup-towerscout.cmd -Engine docker -Gpu auto
@@ -334,6 +356,8 @@ NVIDIA Docker GPU support, use one of these setup commands:
 
 Use `-Gpu auto` for exploratory GPU validation with CPU fallback. Use `-Gpu on`
 only when support expects CUDA to be available inside the container.
+The CPU Application Package rejects `-Gpu on`; use the CUDA package for GPU
+validation.
 
 ## 6. Manual Asset Staging And Import Fallback
 
@@ -439,8 +463,9 @@ http://localhost:5000
 ## 8. Optional GPU Launch
 
 GPU launch is optional and support-assigned. Do not use it as the normal
-first-run path unless support is validating a workstation with NVIDIA container
-GPU access for the selected engine.
+first-run path unless support assigned the CUDA Application Package and is
+validating a workstation with NVIDIA container GPU access for the selected
+engine.
 
 CPU-safe default:
 
@@ -467,6 +492,9 @@ Optional Podman GPU mode after support has validated NVIDIA CDI:
   `TOWERSCOUT_PODMAN_GPU_OVERLAY=1` has been set after Podman CDI validation.
 - `-Gpu on` requests the selected engine's GPU overlay and fails readiness if
   CUDA is not available to the container.
+- The CPU Application Package rejects `-Gpu on` with guidance to use the CUDA
+  package. The CUDA package still fails closed unless readiness reports
+  `selected_device=cuda`.
 
 For Podman GPU, support must validate the non-Docker-Desktop Compose provider
 and NVIDIA CDI path before launch. The RC5 validated path used Podman 5.8.2 on
@@ -590,7 +618,7 @@ the other engine.
 ## Appendix: Command Reference
 
 Run commands from the extracted TowerScout application folder, such as
-`C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>`.
+`C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>-cpu`.
 
 | Purpose | Docker CPU/default | Docker GPU support-assigned | Podman CPU support-assigned | Podman GPU support-assigned |
 |---|---|---|---|---|

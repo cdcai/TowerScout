@@ -1,11 +1,12 @@
 # TowerScout Release Asset Bundle Contract
 
 **Applies to**: Current V1 release-candidate package support path
-**Last reviewed**: 2026-06-15
+**Last reviewed**: 2026-06-16
 **Audience**: Release engineering, support, and release reviewers
-**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU, Docker
-GPU, and Podman GPU are support-assigned RC5 paths after workstation-specific
-engine, Compose-provider, and NVIDIA validation.
+**Runtime scope**: The CPU Application Package is the primary path; the CUDA
+12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are
+support-assigned paths after workstation-specific engine, Compose-provider,
+and NVIDIA validation.
 
 This document defines the contract for TowerScout runtime assets that are too
 large or policy-sensitive to keep in git. It is the handoff point between
@@ -36,13 +37,20 @@ For a release version such as `<release-version>`, the expected artifacts are:
 
 | Artifact | Example | Purpose |
 | --- | --- | --- |
-| Control ZIP | `towerscout-<release-version>.zip` | User-facing package with launcher, Compose, scripts, docs, manifest, and pinned image metadata. |
-| Control ZIP checksum | `towerscout-<release-version>.zip.sha256` | SHA-256 checksum for the full control ZIP. |
-| GHCR image digest | `ghcr.io/j-schulein/towerscout@sha256:<digest>` | Immutable Linux/AMD64 runtime image referenced by the control ZIP. |
+| CPU control ZIP | `towerscout-<release-version>-cpu.zip` | Default user-facing package with launcher, Compose, scripts, docs, manifest, and pinned CPU image metadata. |
+| CPU control ZIP checksum | `towerscout-<release-version>-cpu.zip.sha256` | SHA-256 checksum for the full CPU control ZIP. |
+| CUDA control ZIP | `towerscout-<release-version>-cuda121.zip` | Support-assigned NVIDIA GPU package with launcher, Compose, scripts, docs, manifest, and pinned CUDA 12.1 image metadata. |
+| CUDA control ZIP checksum | `towerscout-<release-version>-cuda121.zip.sha256` | SHA-256 checksum for the full CUDA control ZIP. |
+| GHCR image digest | `ghcr.io/j-schulein/towerscout@sha256:<digest>` | Immutable Linux/AMD64 runtime image referenced by each control ZIP. |
 | Asset ZIP | `towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip` | Restricted-pilot or support-supplied local bundle containing model weights, ZIP-code data, and the asset manifest copy. |
 | Asset ZIP checksum | `towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip.sha256` | SHA-256 checksum for the full asset ZIP. |
 
-The release version in the control ZIP and asset ZIP names must match. The manifest version in the asset ZIP name must match the `manifest_version` in `webapp/asset_manifest.v1.json`.
+The release version in the control ZIP and asset ZIP names must match. The
+control ZIP adds an image flavor suffix (`-cpu` or `-cuda121`); the shared
+asset ZIP does not. The manifest version in the asset ZIP name must match the
+`manifest_version` in `webapp/asset_manifest.v1.json`. CPU and CUDA control
+package manifests should identify the same asset ZIP filename and SHA-256
+unless a release note explicitly says assets differ by variant.
 
 Under the AGPL-compliant YOLO release direction, the asset ZIP may move forward for a YOLO-enabled `agpl-yolo` release only when the release manifest, model notices, and source offer clearly identify the YOLO detector weights as YOLO-derived/AGPL-governed unless separate written model terms say otherwise. If reviewers reject the AGPL release posture or the model terms cannot be documented, external publication falls back to a restricted-pilot or bring-your-own-assets path.
 
@@ -104,7 +112,7 @@ Release/support validation must compare:
 - Control manifest `manifest_version` and asset ZIP manifest `manifest_version`.
 - Control manifest file hash and asset ZIP manifest file hash.
 
-Current import automation verifies required asset presence and byte sizes, and verifies asset SHA-256 hashes when requested. `setup-towerscout.cmd` discovers the local Model & Data Package ZIP in the extracted package folder or parent UAT folder, verifies the asset ZIP checksum sidecar, rejects unsafe or nested ZIP layouts, enforces the expected asset ZIP filename when package release metadata is available, and rejects control/asset manifest file-hash mismatches before calling `scripts/import-assets.cmd -VerifyHashes`. `bootstrap.cmd -AssetZip <asset-zip>` remains the explicit-path support helper behind that setup flow. Direct `scripts/import-assets.cmd` use still expects an already-staged source directory and does not enforce release filename matching by itself.
+Current import automation verifies required asset presence and byte sizes, and verifies asset SHA-256 hashes when requested. `setup-towerscout.cmd` discovers the local Model & Data Package ZIP in the extracted package folder or parent UAT folder, verifies the asset ZIP checksum sidecar, rejects unsafe or nested ZIP layouts, enforces the expected asset ZIP filename from `release_artifacts.asset_bundle` when package release metadata is available, and rejects control/asset manifest file-hash mismatches before calling `scripts/import-assets.cmd -VerifyHashes`. `bootstrap.cmd -AssetZip <asset-zip>` remains the explicit-path support helper behind that setup flow. Direct `scripts/import-assets.cmd` use still expects an already-staged source directory and does not enforce release filename matching by itself.
 
 ## Required Assets
 

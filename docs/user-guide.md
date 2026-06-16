@@ -1,12 +1,13 @@
 # TowerScout User Guide
 
-**Applies to**: Current V1 release-candidate package path, including RC5
-unless release notes say otherwise
-**Last reviewed**: 2026-06-15
+**Applies to**: Current V1 release-candidate package path after RC5 package
+hardening, unless release notes say otherwise
+**Last reviewed**: 2026-06-16
 **Audience**: Pilot users after first setup
-**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU, Docker
-GPU, and Podman GPU are support-assigned RC5 paths after workstation-specific
-engine, Compose-provider, and NVIDIA validation.
+**Runtime scope**: The CPU Application Package is the primary path; the CUDA
+12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are
+support-assigned paths after workstation-specific engine, Compose-provider,
+and NVIDIA validation.
 
 This guide explains the normal TowerScout workflow after the package is
 installed, assets are imported, and at least one map provider key is configured.

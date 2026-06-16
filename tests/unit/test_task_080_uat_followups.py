@@ -45,9 +45,12 @@ def test_word_uat_guide_contains_pre_uat_followup_sections():
     compact = _compact(text)
 
     assert "Docker Desktop is open and running" in text
-    assert "6. Optional Support-Assigned Tracks" in text
+    assert "Table of Contents" in text
     assert "1. What You Are Testing" in text
-    assert "Appendix A. Command Reference" in text
+    assert "Appendix A. Optional Support-Assigned Tracks" in text
+    assert "Appendix B. Command Reference" in text
+    assert "Appendix C. Source, Licenses, And Notices" in text
+    assert "6. Optional Support-Assigned Tracks" not in text
     assert ".\\setup-towerscout.cmd -Engine docker -Gpu auto" in compact
     assert ".\\setup-towerscout.cmd -Engine podman -Gpu on" in compact
     assert ".\\scripts\\status.cmd -Engine podman" in compact

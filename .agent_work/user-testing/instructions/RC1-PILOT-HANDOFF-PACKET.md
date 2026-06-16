@@ -7,7 +7,7 @@ the pilot run. Do not send this packet until all required values are complete.
 ## Handoff Status
 
 - Packet owner: Jonathan Schulein / TowerScout release owner
-- Prepared date: 2026-06-02
+- Prepared date: 2026-06-16
 - Approved for tester use: `NO`
 - Approver:
 - Approval date:
@@ -16,9 +16,30 @@ the pilot run. Do not send this packet until all required values are complete.
 
 ## Current Readiness Notes
 
-As of the rc2 provider setup and bounded Azure smoke check on 2026-06-02,
-leave `Approved for tester use` set to `NO` until the tester cohort is
-selected and the release owner explicitly approves this packet for send.
+As of the GA package-hardening update on 2026-06-16, leave `Approved for
+tester use` set to `NO` until the current release package is rebuilt, the
+selected Application Package variant is filled in below, the tester cohort is
+selected, and the release owner explicitly approves this packet for send.
+
+Current package-variant rules for the next package handoff:
+
+- Normal testers receive one CPU Application Package ZIP and checksum:
+  `towerscout-<release-version>-cpu.zip` and
+  `towerscout-<release-version>-cpu.zip.sha256`.
+- Support-assigned GPU testers receive one CUDA 12.1 Application Package ZIP
+  and checksum instead:
+  `towerscout-<release-version>-cuda121.zip` and
+  `towerscout-<release-version>-cuda121.zip.sha256`.
+- Both variants use the same Model & Data Package ZIP and checksum from the
+  same GitHub Release `Assets` section.
+- Do not send both Application Package variants to a tester unless support is
+  explicitly asking for comparison testing.
+- The CPU Application Package is expected to reject `-Gpu on`. GPU validation
+  requires the CUDA 12.1 Application Package and must not be counted as passed
+  unless readiness reports `runtime.selected_device=cuda`.
+- Podman remains support-assigned. If a connected Windows host has Podman but
+  no approved Compose provider, instruct the tester to run
+  `.\scripts\install-podman-compose-provider.cmd -Apply` before retrying setup.
 
 Resolved since the PR27 readiness check:
 
@@ -68,32 +89,44 @@ Remaining before tester handoff:
 ## Required Release Values
 
 - GitHub release URL:
-  `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc2`
-- Release tag: `v0.1.0-rc2`
-- Accepted source ref: `4e8054d27faa1f956998f85b665a4ea28fc01ed9`
-- Application Package ZIP: `towerscout-v0.1.0-rc2.zip`
-- Application Package checksum file: `towerscout-v0.1.0-rc2.zip.sha256`
+  `<release-url>`
+- Release tag: `<release-tag>`
+- Accepted source ref: `<source-ref>`
+- Selected Application Package variant:
+  `[ ] CPU default  [ ] CUDA 12.1 support-assigned`
+- CPU Application Package ZIP, if selected:
+  `towerscout-<release-version>-cpu.zip`
+- CPU Application Package checksum file, if selected:
+  `towerscout-<release-version>-cpu.zip.sha256`
+- CUDA 12.1 Application Package ZIP, if selected:
+  `towerscout-<release-version>-cuda121.zip`
+- CUDA 12.1 Application Package checksum file, if selected:
+  `towerscout-<release-version>-cuda121.zip.sha256`
 - Model & Data Package ZIP:
-  `towerscout-v0.1.0-rc2-assets-towerscout-v1-assets-2026-05-05.zip`
+  `towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip`
 - Model & Data Package checksum file:
-  `towerscout-v0.1.0-rc2-assets-towerscout-v1-assets-2026-05-05.zip.sha256`
+  `towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip.sha256`
 - Expected image reference from `IMAGE.txt`:
-  `ghcr.io/j-schulein/towerscout:v0.1.0-rc2-cuda121@sha256:f3caa7915f7a8d70326b2fa84d62ec86e142c38c7d22615106e192d7f7821946`
-- Expected package folder name after extraction: `towerscout-v0.1.0-rc2`
+  `<selected-image-reference>@sha256:<digest>`
+- Expected package folder name after extraction:
+  `towerscout-<release-version>-cpu` or
+  `towerscout-<release-version>-cuda121`
 - Application Package SHA-256:
-  `f3ec4eef0b47c4276d671bac1cf75fa85e515ce386cfa38976daba070cc3f51c`
+  `<sha256 for selected Application Package>`
 - Model & Data Package SHA-256:
-  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`
+  `<sha256 for Model & Data Package>`
 
-All four release files must come from the same GitHub release `Assets` section.
-Do not ask testers to use the green GitHub `Code` button or GitHub's automatic
-source-code ZIP/TAR.GZ downloads.
+The four files sent to a tester are one selected Application Package ZIP, that
+package's checksum, the shared Model & Data Package ZIP, and that package's
+checksum. All four release files must come from the same GitHub release
+`Assets` section. Do not ask testers to use the green GitHub `Code` button or
+GitHub's automatic source-code ZIP/TAR.GZ downloads.
 
 ## Required Runtime Path
 
 - Primary engine: `docker`
-- Required launch mode: `-Gpu off`
-- Supported default setup command:
+- Required default launch mode: `-Gpu off`
+- Supported default CPU setup command:
 
 ```powershell
 .\setup-towerscout.cmd
@@ -113,8 +146,21 @@ the tester's actual Windows user folder:
 .\setup-towerscout.cmd -PackageZip C:\Users\<tester>\Documents\TowerScoutUAT\<application-package-zip> -AssetZip C:\Users\<tester>\Documents\TowerScoutUAT\<model-data-package-zip>
 ```
 
-Only provide a Podman command if support explicitly assigned the Podman path and
-confirmed the Podman machine plus Compose provider are running.
+Only provide GPU commands if support explicitly assigned the CUDA 12.1
+Application Package:
+
+```powershell
+.\setup-towerscout.cmd -Engine docker -Gpu auto
+.\setup-towerscout.cmd -Engine docker -Gpu on
+```
+
+Only provide Podman commands if support explicitly assigned the Podman path. If
+the Podman machine is present but no approved Compose provider is available,
+have the tester run:
+
+```powershell
+.\scripts\install-podman-compose-provider.cmd -Apply
+```
 
 ## Required Smoke-Test Fixture
 
@@ -260,6 +306,7 @@ investigation AOI for the first smoke test.
 
 Send these files or links to the tester:
 
+- `.agent_work/user-testing/instructions/TowerScout_V1_RC1_UAT_User_Guide.docx`
 - `docs/v1-rc1-quick-start.md`
 - `.agent_work/user-testing/instructions/RC1-PILOT-UAT-CHECKLIST.md`
 - `.agent_work/user-testing/instructions/TESTER-ISSUE-REPORT-CHECKLIST.txt`
@@ -291,6 +338,7 @@ Ask only for support-safe evidence:
 - WSL 2 status if known.
 - Release URL or release tag used.
 - Package filenames used and checksum pass/fail result.
+- Selected Application Package variant: CPU or CUDA 12.1.
 - `Get-Content .\IMAGE.txt` output.
 - Setup or launcher output showing engine, port, and readiness state.
 - `.\scripts\status.cmd -Engine docker` output, or the selected engine.
@@ -308,16 +356,20 @@ credentials.
 
 ## Final Pre-Send Check
 
-- [x] Exact release URL/tag is filled in.
-- [x] Accepted source ref is filled in and matches `SOURCE.txt` plus
+- [ ] Exact release URL/tag is filled in.
+- [ ] Accepted source ref is filled in and matches `SOURCE.txt` plus
       `release-manifest.v1.json`.
-- [x] Exact Application Package filename is filled in.
-- [x] Exact Model & Data Package filename is filled in.
-- [x] Checksum filenames are filled in.
-- [x] The four rc2 release assets are uploaded to the GitHub prerelease.
-- [x] Downloaded rc2 release assets have passed Docker Desktop runtime
+- [ ] Selected Application Package variant is filled in.
+- [ ] Exact selected Application Package filename is filled in.
+- [ ] Exact Model & Data Package filename is filled in.
+- [ ] Checksum filenames are filled in.
+- [ ] The four selected release assets are uploaded to the GitHub release.
+- [ ] Downloaded release assets have passed Docker Desktop runtime
       validation.
-- [x] Provider setup and bounded Azure smoke passed for the rc2 release path.
+- [ ] CUDA package readiness reports `runtime.selected_device=cuda` if GPU
+      validation is being assigned.
+- [ ] Provider setup and bounded Azure smoke passed for the current release
+      path.
 - [x] Smoke-test fixture is filled in.
 - [x] Support contact is filled in.
 - [ ] Tester has Docker Desktop/WSL 2 approval or an explicitly assigned Podman

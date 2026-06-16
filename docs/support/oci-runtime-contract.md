@@ -1,11 +1,12 @@
 # TowerScout OCI Runtime Contract
 
 **Applies to**: Current V1 release-candidate package support path
-**Last reviewed**: 2026-06-15
+**Last reviewed**: 2026-06-16
 **Audience**: Release/support users and runtime maintainers
-**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU, Docker
-GPU, and Podman GPU are support-assigned RC5 paths after workstation-specific
-engine, Compose-provider, and NVIDIA validation.
+**Runtime scope**: The CPU Application Package is the primary path; the CUDA
+12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are
+support-assigned paths after workstation-specific engine, Compose-provider,
+and NVIDIA validation.
 
 This document summarizes the v1 container runtime contract. The detailed task evidence lives under `.agent_work/tasks/active/TASK-025/`.
 
@@ -141,15 +142,17 @@ Image publication is handled by the manual GitHub Actions workflow `.github/work
 The publish workflow requires an explicit PyTorch wheel flavor selection. `cpu`
 uses the CPU PyTorch wheel index. `cuda121` uses the CUDA 12.1 PyTorch wheel
 index and labels the image with `org.towerscout.pytorch.flavor`. The workflow
-publishes flavor-specific tags such as `<release-version>-cuda121` and
-`latest-cuda121` to avoid CPU/CUDA tag collisions. Release evidence and the
-control package must record which flavor produced the pinned digest.
+publishes flavor-specific tags such as `<release-version>-cpu` and
+`<release-version>-cuda121` to avoid CPU/CUDA tag collisions. Release evidence
+and each control package must record which flavor produced the pinned digest.
+The CPU and CUDA control packages should point to the same Model & Data Package
+filename and SHA-256 unless a release note explicitly says assets differ.
 
 Bundled OCI image archives are not part of the supported v1 release package. Restricted-network support for v1 should preload the pinned image into the selected engine image store through a site/support procedure, then use the normal control package. A packaged OCI archive fallback remains follow-on release engineering work until archive creation, checksum/signature handling, import UX, and Docker/Podman validation are implemented.
 
 ## GPU Runtime Boundary
 
-The default package launcher uses `-Gpu off`, keeps `compose.gpu.yaml` out of the Compose invocation, and sets `TOWERSCOUT_DEVICE=cpu` for the launch process. This keeps the local release path CPU-safe.
+The default package launcher uses `-Gpu off`, keeps `compose.gpu.yaml` out of the Compose invocation, and sets `TOWERSCOUT_DEVICE=cpu` for the launch process. This keeps the local release path CPU-safe. The CPU Application Package rejects `-Gpu on`; use the CUDA Application Package for GPU validation.
 
 Docker GPU launch is opt-in through `scripts/launch.ps1 -Engine docker -Gpu auto|on` or `start.bat -Engine docker -Gpu auto|on`. Podman GPU launch is opt-in through `scripts/launch.ps1 -Engine podman -Gpu on` or `start.bat -Engine podman -Gpu on` after CDI validation. GPU overlay use requests NVIDIA GPU devices through the selected engine, and these modes set TowerScout's runtime policy:
 
@@ -206,11 +209,12 @@ Desktop's bundled `docker-compose.exe`.
 
 Release qualification for Podman should include the selected Compose provider
 explicitly. The supported Podman path requires a running Podman machine and an
-approved non-Docker-Desktop Compose provider that can talk to the Podman socket;
-if multiple providers are installed, `PODMAN_COMPOSE_PROVIDER` can be used to
-force the intended provider.
+approved non-Docker-Desktop Compose provider that can talk to the Podman socket.
+When `PODMAN_COMPOSE_PROVIDER` is blank, TowerScout auto-detects exactly one
+approved provider from `PATH`; if none or multiple approved providers are
+found, it fails with a clear next action.
 
-The launcher reports Compose-provider information before startup. For Podman, a `PODMAN_COMPOSE_PROVIDER` override is checked for existence before Compose is invoked so a mistyped provider path fails early with an actionable message.
+The launcher reports Compose-provider information before startup. For Podman, a `PODMAN_COMPOSE_PROVIDER` override is checked before Compose is invoked so a mistyped or unapproved provider path fails early with an actionable message. The package includes `scripts\install-podman-compose-provider.cmd` for connected support/setup use; `-Apply` installs the approved provider into a package-local isolated environment and updates only `PODMAN_COMPOSE_PROVIDER` in `.env`.
 
 Podman/rootless port forwarding can report a port bind conflict from inside the
 Podman machine even when the Windows host port appears free. Support should

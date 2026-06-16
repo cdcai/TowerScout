@@ -3,13 +3,14 @@
 This guide is for first-line support, internal release-candidate validation,
 and pilot testers using the TowerScout Windows package path.
 
-**Applies to**: Current V1 release-candidate package path, including RC5
-unless release notes say otherwise
-**Last reviewed**: 2026-06-15
+**Applies to**: Current V1 release-candidate package path after RC5 package
+hardening, unless release notes say otherwise
+**Last reviewed**: 2026-06-16
 **Audience**: First-line support, release validation, and pilot testers
-**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU, Docker
-GPU, and Podman GPU are support-assigned RC5 paths after workstation-specific
-engine, Compose-provider, and NVIDIA validation.
+**Runtime scope**: The CPU Application Package is the primary path; the CUDA
+12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are
+support-assigned paths after workstation-specific engine, Compose-provider,
+and NVIDIA validation.
 
 The package path is the preferred pilot path. Older source, virtual
 environment, and Conda tester guides are legacy source-install guidance and are
@@ -22,6 +23,10 @@ The current release-candidate package supports:
 - Windows 11 on AMD64.
 - Single-user local use.
 - CPU baseline.
+- Two digest-pinned Application Package variants:
+  - `cpu` for normal and non-GPU users.
+  - `cuda121` only for support-validated NVIDIA GPU workstations.
+- One shared Model & Data Package ZIP for both Application Package variants.
 - Normal outbound internet access for GHCR image pulls and map providers.
 - Docker Desktop as the primary controlled pilot engine.
 - Podman as a qualified package-runtime option only when a running Podman
@@ -142,10 +147,17 @@ download these files from the release `Assets` section, not from the green
 GitHub `Code` button and not from GitHub's automatic `Source code (zip)` or
 `Source code (tar.gz)` links.
 
-Application Package:
+Application Package, choose exactly one variant:
 
-- `towerscout-<release-version>.zip`
-- `towerscout-<release-version>.zip.sha256`
+- CPU package for normal/non-GPU users:
+  - `towerscout-<release-version>-cpu.zip`
+  - `towerscout-<release-version>-cpu.zip.sha256`
+- CUDA 12.1 package for support-validated NVIDIA GPU workstations:
+  - `towerscout-<release-version>-cuda121.zip`
+  - `towerscout-<release-version>-cuda121.zip.sha256`
+
+Do not put both Application Package variants in a normal tester handoff folder
+unless support is intentionally comparing CPU and CUDA behavior.
 
 Model & Data Package:
 
@@ -155,6 +167,9 @@ Model & Data Package:
 The exact asset filename can change by release. The Application Package ZIP,
 Model & Data Package ZIP, `IMAGE.txt`, `release-manifest.v1.json`, and
 `webapp/asset_manifest.v1.json` must agree about the release handoff.
+Both CPU and CUDA Application Package manifests should name the same Model &
+Data Package filename and SHA-256 unless a release note explicitly says assets
+changed by variant.
 
 Do not ask users to type the angle brackets from `<release-version>` or
 `<asset-version>`. They should copy the exact Application Package and Model &
@@ -173,7 +188,9 @@ C:\Users\<you>\Documents\TowerScoutUAT
 ```
 
 The release version in the Application Package and Model & Data Package
-filenames must match.
+filenames must match. The Application Package will include `-cpu` or
+`-cuda121`; the shared Model & Data Package filename does not include an image
+flavor.
 
 The Application Package contains launch scripts, Compose files, docs,
 compliance files, `IMAGE.txt`, `SHA256SUMS.txt`, `release-manifest.v1.json`,
@@ -268,11 +285,13 @@ The package `.env.example` should pin `TOWERSCOUT_IMAGE` to an immutable GHCR
 digest reference such as:
 
 ```text
-ghcr.io/j-schulein/towerscout:<release-version>-cuda121@sha256:<digest>
+ghcr.io/j-schulein/towerscout:<release-version>-cpu@sha256:<digest>
 ```
 
 `IMAGE.txt`, `.env.example`, and `release-manifest.v1.json` record the selected
 PyTorch flavor, either `cpu` or `cuda121`.
+The CPU package rejects `-Gpu on`. The CUDA package still requires GPU
+readiness evidence before it is treated as a valid GPU launch.
 
 Source-checkout or local-validation defaults use the explicit `latest-cpu`
 tag when no package digest is present. Do not use a bare `latest` image tag for
@@ -290,11 +309,11 @@ The expected first-cohort folder layout is:
 
 ```text
 C:\Users\<you>\Documents\TowerScoutUAT\
-  towerscout-<release-version>.zip
-  towerscout-<release-version>.zip.sha256
+  towerscout-<release-version>-cpu.zip
+  towerscout-<release-version>-cpu.zip.sha256
   towerscout-<release-version>-assets-<asset-version>.zip
   towerscout-<release-version>-assets-<asset-version>.zip.sha256
-  towerscout-<release-version>\
+  towerscout-<release-version>-cpu\
     setup-towerscout.cmd
 ```
 
@@ -325,7 +344,7 @@ If automatic ZIP discovery is ambiguous, move old ZIPs out of the UAT folder or
 pass explicit paths:
 
 ```powershell
-.\setup-towerscout.cmd -PackageZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>.zip -AssetZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>-assets-<asset-version>.zip
+.\setup-towerscout.cmd -PackageZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>-cpu.zip -AssetZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>-assets-<asset-version>.zip
 ```
 
 Useful setup options:
@@ -523,8 +542,10 @@ For a non-default port:
 
 ## Optional GPU Launch Boundary
 
-The release package can carry a CPU or CUDA-capable PyTorch image. The default
-launch path is CPU-safe either way:
+The release path now has separate CPU and CUDA Application Packages. The CPU
+package is the normal package for non-GPU users. The CUDA package is for
+support-validated NVIDIA GPU workstations. The default launch path is CPU-safe
+for either package:
 
 ```powershell
 .\start.bat -Gpu off
@@ -547,10 +568,11 @@ treated as supported:
   `TOWERSCOUT_DEVICE=cuda`, and fails readiness if CUDA is unavailable to the
   container.
 
-GPU launch requires a CUDA-capable TowerScout image plus engine-specific NVIDIA
+`-Gpu on` is rejected in the CPU package with package-aware guidance to use the
+CUDA package. GPU launch requires the CUDA package plus engine-specific NVIDIA
 container support. A host `nvidia-smi` result alone is not enough; Docker or
 Podman must be able to pass the GPU into the TowerScout container. Podman GPU
-requires the RC5 CDI path: approved non-Docker-Desktop Compose provider,
+requires the CDI path: approved non-Docker-Desktop Compose provider,
 WSL2-backed Podman machine, NVIDIA Container Toolkit/CDI registration, and a
 readiness result with `selected_device=cuda`.
 
@@ -694,6 +716,17 @@ through `PODMAN_COMPOSE_PROVIDER` rather than Docker Desktop's bundled
 provider. The launcher reports Compose-provider information before startup,
 rejects Docker Desktop provider paths for the Podman path, and validates a
 `PODMAN_COMPOSE_PROVIDER` override before Compose is invoked.
+
+If no approved provider is present, the package includes the connected helper:
+
+```powershell
+.\scripts\install-podman-compose-provider.cmd -Apply
+```
+
+The helper installs the approved `podman-compose` provider into a package-local
+isolated Python environment, verifies pinned package hashes, backs up `.env`,
+and updates only `PODMAN_COMPOSE_PROVIDER`. Running the helper without
+`-Apply` prints the recommended `.env` setting without changing `.env`.
 
 If Podman reports `rootlessport listen ... bind: address already in use` even
 when Windows shows the port as free, retry with a non-default package port and

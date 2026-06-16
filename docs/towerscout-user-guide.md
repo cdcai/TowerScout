@@ -1,7 +1,7 @@
 # TowerScout User Guide Has Moved
 
 **Applies to**: Historical `towerscout-user-guide.*` links only
-**Last reviewed**: 2026-06-15
+**Last reviewed**: 2026-06-16
 **Audience**: Pilot users and support
 **Runtime scope**: See the current User Guide
 

@@ -1,12 +1,13 @@
 # TowerScout Project Overview
 
-**Applies to**: Current V1 release-candidate package path, including RC5
-unless release notes say otherwise
-**Last reviewed**: 2026-06-15
+**Applies to**: Current V1 release-candidate package path after RC5 package
+hardening, unless release notes say otherwise
+**Last reviewed**: 2026-06-16
 **Audience**: Pilot users, support leads, and release reviewers
-**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU, Docker
-GPU, and Podman GPU are support-assigned RC5 paths after workstation-specific
-engine, Compose-provider, and NVIDIA validation.
+**Runtime scope**: The CPU Application Package is the primary path; the CUDA
+12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are
+support-assigned paths after workstation-specific engine, Compose-provider,
+and NVIDIA validation.
 
 TowerScout is a local web application for identifying likely cooling towers
 from satellite and aerial imagery. Cooling towers can be relevant during
@@ -19,9 +20,12 @@ app Resource Links section.
 
 The package provides a Windows-first local pilot path:
 
-- A GitHub Release Application Package ZIP.
-- A matching GitHub Release Model & Data Package ZIP.
-- A pinned GHCR container image digest.
+- A GitHub Release CPU Application Package ZIP for normal users.
+- A GitHub Release CUDA 12.1 Application Package ZIP for support-validated
+  NVIDIA GPU workstations.
+- A shared GitHub Release Model & Data Package ZIP used by both package
+  variants.
+- A pinned GHCR container image digest in each Application Package.
 - Docker Desktop primary pilot runtime configuration, with qualified Podman
   package-runtime support when a site explicitly chooses that path.
 - A CPU-safe default launcher.
@@ -42,8 +46,8 @@ not the preferred pilot path.
 Pilot users need Windows 11 AMD64, PowerShell, a modern browser, normal outbound
 internet access, WSL 2/hardware virtualization support for Docker Desktop, and
 Docker Desktop installed, approved, and running as the primary pilot engine.
-Plan for at least `15 GB` of free disk space; `25 GB` is a better first-setup
-target, especially for CUDA-capable images.
+Plan for at least `15 GB` of free disk space for the CPU package; `25 GB` is a
+better first-setup target for CUDA validation.
 Podman is a qualified support path only when support tells the user to use it
 and the workstation already has a running Podman machine plus an approved
 Compose provider. Users also need one site/user-owned restricted Google Maps or
@@ -57,8 +61,9 @@ source-code checkout.
 A typical TowerScout user:
 
 1. Opens the TowerScout GitHub Releases page, selects the exact release support
-   provided, and downloads the Application Package, Model & Data Package, and
-   matching checksum files from the release `Assets` section.
+   provided, and downloads the assigned Application Package variant, the shared
+   Model & Data Package, and matching checksum files from the release `Assets`
+   section.
 2. Extracts only the Application Package ZIP, leaves the Model & Data Package
    ZIP beside the extracted folder, and runs `setup-towerscout.cmd` for first
    setup so the package can find the asset ZIP, verify checksums, import
@@ -86,8 +91,8 @@ The supported target is:
 - Single-user local use.
 - CPU baseline.
 - Normal outbound internet access.
-- Docker Desktop as the primary pilot runtime, with qualified Podman
-  package-runtime support only where explicitly approved.
+- CPU Application Package on Docker Desktop as the primary pilot runtime, with
+  qualified Podman package-runtime support only where explicitly approved.
 - One site/user-owned restricted Google Maps or Azure Maps provider key.
 
 Out of scope for this release-candidate path: macOS, ARM64, air-gapped or fully offline installs,
@@ -95,8 +100,9 @@ VDI, shared multi-user hosting, managed remote deployment, and native installer
 behavior.
 
 GPU launch is optional and support-assigned. The default launch remains
-CPU-safe. Docker GPU and Podman GPU are supported in RC5 only after support
-validates the selected engine's NVIDIA container path.
+CPU-safe. The CPU package rejects `-Gpu on`; Docker GPU and Podman GPU use the
+CUDA package only after support validates the selected engine's NVIDIA
+container path and readiness reports `selected_device=cuda`.
 
 ## Provider Keys
 

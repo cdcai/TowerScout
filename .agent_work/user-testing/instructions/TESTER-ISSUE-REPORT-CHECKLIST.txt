@@ -1,7 +1,7 @@
 TOWERSCOUT RC1 TESTER ISSUE REPORT FORM
 =======================================
 
-Last reviewed: 2026-06-09
+Last reviewed: 2026-06-16
 
 Use this form when TowerScout setup, startup, provider setup, detection, export,
 or shutdown does not work as expected. Paste the completed form into email or
@@ -46,9 +46,26 @@ TowerScout package folder name:
 
 Release tag or release URL:
 
+Application Package variant used:
+  [ ] CPU default
+  [ ] CUDA 12.1 support-assigned
+  [ ] Unsure
+
 Engine used:
   [ ] Docker Desktop
   [ ] Podman
+  [ ] Unsure
+
+GPU mode, if any:
+  [ ] Not assigned / CPU mode
+  [ ] Support assigned GPU validation
+  [ ] I tried GPU without support assigning it
+  [ ] Unsure
+
+If support assigned Podman, did you run the provider helper?
+  [ ] Not assigned Podman
+  [ ] Yes: .\scripts\install-podman-compose-provider.cmd -Apply
+  [ ] No
   [ ] Unsure
 
 Port shown in browser:

@@ -1,6 +1,9 @@
 # User Testing Instructions
 
-Use this folder for tester-facing reporting instructions. For RC1 package-path pilot testing, start with the RC1 checklist and use the reporting form if the tester gets blocked.
+Use this folder for tester-facing reporting instructions. For package-path pilot
+testing, start with the UAT guide and RC1 checklist, then use the reporting form
+if the tester gets blocked. Normal testers receive the CPU Application Package.
+CUDA 12.1 and Podman tracks are support-assigned.
 
 ## Setup Guides
 
@@ -18,8 +21,8 @@ Use this folder for tester-facing reporting instructions. For RC1 package-path p
 ## Internal Handoff Rule
 
 Before sending instructions to a tester, fill out the RC1 Pilot / UAT Handoff
-Packet with the exact release URL, artifact filenames, smoke fixture, and
-support contact.
+Packet with the exact release URL, selected Application Package variant,
+artifact filenames, smoke fixture, and support contact.
 
 Once the tester sends the issue report form answers and artifacts:
 

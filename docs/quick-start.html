@@ -35,15 +35,15 @@
     <main class="doc-main">
       <section class="doc-section" id="metadata">
         <h2>Document Metadata</h2>
-        <p><strong>Applies to:</strong> Current V1 release-candidate package path, including RC5 unless release notes say otherwise.</p>
-        <p><strong>Last reviewed:</strong> 2026-06-15.</p>
+        <p><strong>Applies to:</strong> Current V1 release-candidate package path after RC5 package hardening, unless release notes say otherwise.</p>
+        <p><strong>Last reviewed:</strong> 2026-06-16.</p>
         <p><strong>Audience:</strong> Pilot users and first-line support.</p>
-        <p><strong>Runtime scope:</strong> Docker Desktop CPU is the primary path; Podman CPU, Docker GPU, and Podman GPU are support-assigned RC5 paths after workstation-specific engine, Compose-provider, and NVIDIA validation.</p>
+        <p><strong>Runtime scope:</strong> The CPU Application Package is the normal path. The CUDA 12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are support-assigned paths after workstation-specific engine, Compose-provider, and NVIDIA validation.</p>
       </section>
       <section class="doc-section" id="prerequisites">
         <h2>Before You Start</h2>
-        <p>Confirm Windows 11 AMD64, Windows PowerShell, a modern browser, normal outbound internet access, at least <code>15 GB</code> free disk space, and one valid site/user-owned provider key. <code>25 GB</code> free is a better target for first setup.</p>
-        <p><strong>Application Package</strong> means the smaller app/control ZIP with scripts, docs, Compose files, and release metadata. <strong>Model &amp; Data Package</strong> means the larger asset ZIP, also called the asset bundle, with model weights and ZIP-code data.</p>
+        <p>Confirm Windows 11 AMD64, Windows PowerShell, a modern browser, normal outbound internet access, at least <code>15 GB</code> free disk space for the CPU package, and one valid site/user-owned provider key. <code>25 GB</code> free is a better target for CUDA validation.</p>
+        <p><strong>Application Package</strong> means the smaller app/control ZIP with scripts, docs, Compose files, and release metadata. There are two variants: <code>cpu</code> for normal/non-GPU use and <code>cuda121</code> for support-validated NVIDIA GPU workstations. <strong>Model &amp; Data Package</strong> means the larger asset ZIP, also called the asset bundle, with model weights and ZIP-code data. Both Application Package variants use the same Model &amp; Data Package for this release path.</p>
         <p>Docker Desktop with the WSL 2 backend is the primary pilot engine. During Docker Desktop installation, keep the WSL 2 backend selected when prompted, start Docker Desktop from the Windows Start menu, and wait until Docker Desktop reports that it is running.</p>
         <p>Docker's current Windows requirements include WSL <code>2.1.5</code> or later, 8 GB RAM, and hardware virtualization enabled in BIOS/UEFI. If your workstation is managed by IT, ask your site administrator before installing WSL, Docker Desktop, Podman, or provider credentials.</p>
         <pre><code>wsl --status
@@ -69,19 +69,19 @@ docker compose version</code></pre>
       <section class="doc-section" id="download">
         <h2>Get The Release Files</h2>
         <p>Open <a href="https://github.com/J-Schulein/TowerScout/releases">https://github.com/J-Schulein/TowerScout/releases</a> in your browser, then open the exact release that support told you to use. If support provides a direct release URL, use that link.</p>
-        <p>In the release <code>Assets</code> section, download all four TowerScout release files. Most browsers save downloaded files to your Windows <code>Downloads</code> folder. After the downloads finish, create a new empty working folder such as <code>C:\Users\&lt;you&gt;\Documents\TowerScoutUAT</code>, then copy the four downloaded TowerScout files from <code>Downloads</code> into that working folder.</p>
-        <p>Download the Application Package ZIP, Application Package checksum, Model &amp; Data Package ZIP, and Model &amp; Data Package checksum from the same release. Keep the four files together in <code>TowerScoutUAT</code>. For the normal setup path, extract only the Application Package ZIP and leave the Model &amp; Data Package ZIP plus both <code>.sha256</code> files beside the extracted folder.</p>
+        <p>In the release <code>Assets</code> section, download one Application Package variant and the shared Model &amp; Data Package. Most browsers save downloaded files to your Windows <code>Downloads</code> folder. After the downloads finish, create a new empty working folder such as <code>C:\Users\&lt;you&gt;\Documents\TowerScoutUAT</code>, then copy the four downloaded TowerScout files from <code>Downloads</code> into that working folder.</p>
+        <p>Normal users download the CPU Application Package ZIP (<code>towerscout-&lt;release-version&gt;-cpu.zip</code>), its checksum, the shared Model &amp; Data Package ZIP, and the asset checksum from the same release. Use the CUDA Application Package (<code>towerscout-&lt;release-version&gt;-cuda121.zip</code>) only when support assigns GPU validation. Keep the four files together in <code>TowerScoutUAT</code>. For the normal setup path, extract only the Application Package ZIP and leave the Model &amp; Data Package ZIP plus both <code>.sha256</code> files beside the extracted folder.</p>
         <p>Do not use the green GitHub <code>Code</code> button or GitHub's automatic <code>Source code (zip)</code> or <code>Source code (tar.gz)</code> downloads for normal pilot setup.</p>
         <p>The release version must match between the Application Package and the Model &amp; Data Package. If the versions differ, stop and download the matching files from the same GitHub release.</p>
       </section>
       <section class="doc-section" id="verify">
         <h2>Confirm The Release Files Match</h2>
-        <p>Before extracting anything, confirm the folder contains the Application Package ZIP, Application Package checksum, Model &amp; Data Package ZIP, and Model &amp; Data Package checksum from the same release. The release version should match in both ZIP filenames.</p>
+        <p>Before extracting anything, confirm the folder contains exactly one Application Package ZIP and checksum, plus the shared Model &amp; Data Package ZIP and checksum from the same release. The Application Package is usually the <code>-cpu</code> variant. If support assigned GPU validation, replace it with the matching <code>-cuda121</code> variant. Do not keep both variants in the same UAT folder unless support asks you to compare them.</p>
         <p>Setup verifies the checksum sidecars during first run. If support asks for manual checksum evidence, use the package guide for the detailed <code>Get-FileHash</code> or <code>certutil</code> commands.</p>
       </section>
       <section class="doc-section" id="extract">
         <h2>Extract The Application Package</h2>
-        <p>In the <code>TowerScoutUAT</code> folder, extract only the Application Package ZIP. Most Windows ZIP tools will create <code>C:\Users\&lt;you&gt;\Documents\TowerScoutUAT\towerscout-&lt;release-version&gt;</code>. After extraction, <code>TowerScoutUAT</code> should contain the four downloaded files plus one extracted <code>towerscout-&lt;release-version&gt;</code> folder.</p>
+        <p>In the <code>TowerScoutUAT</code> folder, extract only the Application Package ZIP. Most Windows ZIP tools will create <code>C:\Users\&lt;you&gt;\Documents\TowerScoutUAT\towerscout-&lt;release-version&gt;-cpu</code> for the normal package. After extraction, <code>TowerScoutUAT</code> should contain the four downloaded files plus one extracted package folder.</p>
         <p>Do not extract the Model &amp; Data Package ZIP for the normal setup path. The extracted Application Package folder should contain <code>setup-towerscout.cmd</code>, <code>bootstrap.cmd</code>, <code>start.bat</code>, Compose files, <code>scripts\</code>, <code>docs\</code>, and an empty <code>assets\</code> folder. Do not put the Model &amp; Data Package ZIP inside <code>assets\</code>.</p>
       </section>
       <section class="doc-section" id="start">
@@ -103,7 +103,7 @@ readiness: setup_required</code></pre>
         <p><code>setup_required</code> is normal before provider setup is complete. After provider setup and asset import are complete, readiness should become <code>ready</code>.</p>
         <p>The first launch may download the TowerScout container image from GHCR. This can take several minutes. Keep the PowerShell window open while Docker downloads and starts the image.</p>
         <p>If TowerScout finds an older UAT container from a previous session, setup starts a fresh container while keeping saved setup, imported assets, and support logs in named volumes.</p>
-        <p>If support tells you to validate Podman CPU, run <code>.\setup-towerscout.cmd -Engine podman</code> and reuse that engine value on helper commands. If support tells you to validate Docker GPU behavior, run <code>.\setup-towerscout.cmd -Engine docker -Gpu auto</code> or <code>.\setup-towerscout.cmd -Engine docker -Gpu on</code>. If support tells you to validate Podman GPU, confirm the CDI preflight first, then run <code>.\setup-towerscout.cmd -Engine podman -Gpu on</code>.</p>
+        <p>If support tells you to validate Podman CPU, run <code>.\setup-towerscout.cmd -Engine podman</code> and reuse that engine value on helper commands. If support tells you to validate Docker GPU behavior, use the CUDA Application Package and run <code>.\setup-towerscout.cmd -Engine docker -Gpu auto</code> or <code>.\setup-towerscout.cmd -Engine docker -Gpu on</code>. If support tells you to validate Podman GPU, confirm the CDI preflight first, then use the CUDA package and run <code>.\setup-towerscout.cmd -Engine podman -Gpu on</code>. The CPU package rejects <code>-Gpu on</code>.</p>
       </section>
       <section class="doc-section" id="assets">
         <h2>Manual Asset Import Fallback</h2>
@@ -117,11 +117,11 @@ readiness: setup_required</code></pre>
       </section>
       <section class="doc-section" id="gpu">
         <h2>GPU Boundary</h2>
-        <p>The default launch is CPU-safe. Optional GPU launch is support-assigned and should be used only after workstation-specific NVIDIA container validation for the selected engine.</p>
+        <p>The default launch is CPU-safe. Optional GPU launch is support-assigned and should be used only with the CUDA Application Package after workstation-specific NVIDIA container validation for the selected engine.</p>
         <pre><code>.\start.bat -Engine docker -Gpu auto
 .\start.bat -Engine docker -Gpu on
 .\start.bat -Engine podman -Gpu on</code></pre>
-        <p>For Podman GPU, support must validate the non-Docker-Desktop Compose provider and NVIDIA CDI path before launch. The RC5 validated path used Podman 5.8.2 on Windows 11 WSL2, standalone Docker Compose v5.1.4 selected through <code>PODMAN_COMPOSE_PROVIDER</code>, and NVIDIA CDI device <code>nvidia.com/gpu=all</code>.</p>
+        <p>The CPU package rejects <code>-Gpu on</code>. The CUDA package still fails closed unless readiness reports <code>selected_device=cuda</code>. For Podman GPU, support must validate the non-Docker-Desktop Compose provider and NVIDIA CDI path before launch. The RC5 validated path used Podman 5.8.2 on Windows 11 WSL2, standalone Docker Compose v5.1.4 selected through <code>PODMAN_COMPOSE_PROVIDER</code>, and NVIDIA CDI device <code>nvidia.com/gpu=all</code>.</p>
       </section>
       <section class="doc-section" id="setup">
         <h2>Complete Setup</h2>
@@ -144,7 +144,7 @@ readiness: setup_required</code></pre>
       </section>
       <section class="doc-section" id="command-reference">
         <h2>Command Reference</h2>
-        <p>Run commands from the extracted TowerScout application folder, such as <code>C:\Users\&lt;you&gt;\Documents\TowerScoutUAT\towerscout-&lt;release-version&gt;</code>.</p>
+        <p>Run commands from the extracted TowerScout application folder, such as <code>C:\Users\&lt;you&gt;\Documents\TowerScoutUAT\towerscout-&lt;release-version&gt;-cpu</code>.</p>
         <table>
           <thead>
             <tr>

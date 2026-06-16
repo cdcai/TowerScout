@@ -6,7 +6,10 @@ Use this checklist for controlled V1 RC1 package-path pilot testing.
 
 - Windows 11 AMD64.
 - Docker Desktop as the primary runtime engine.
+- CPU Application Package as the default package variant.
 - CPU-default launch with `-Gpu off`.
+- CUDA 12.1 Application Package only when support explicitly assigns GPU
+  validation.
 - Azure Maps or Google Maps provider key.
 - `setup-towerscout.cmd` first-run setup with package-local assets imported
   with hash verification.
@@ -15,9 +18,10 @@ Use this checklist for controlled V1 RC1 package-path pilot testing.
 
 Do not use the default checklist result to claim GPU acceleration,
 Docker-Desktop-free Podman support, source-build support,
-restricted-network/offline support, or large-AOI performance. If support
-assigns an optional Podman or GPU validation track, record that track
-separately.
+restricted-network/offline support, or large-AOI performance. The CPU
+Application Package is expected to reject `-Gpu on`. If support assigns an
+optional Podman or GPU validation track, use the assigned package variant and
+record that track separately.
 
 ## Before You Start
 
@@ -27,8 +31,13 @@ Confirm you have:
 - Exact Model & Data Package filename from support.
 - Smoke-test fixture from support: provider, public/non-sensitive location,
   expected tile range, and whether zero detections is acceptable.
-- TowerScout Application Package ZIP and matching `.sha256` checksum file from
-  the GitHub Release `Assets` section.
+- TowerScout CPU Application Package ZIP
+  `towerscout-<release-version>-cpu.zip` and matching `.sha256` checksum file
+  from the GitHub Release `Assets` section, unless support explicitly assigned
+  the CUDA 12.1 Application Package.
+- TowerScout CUDA 12.1 Application Package ZIP
+  `towerscout-<release-version>-cuda121.zip` and matching `.sha256` checksum
+  file only when support explicitly assigned GPU validation.
 - TowerScout Model & Data Package ZIP and matching `.sha256` checksum file from
   the same GitHub Release `Assets` section.
 - A provider key from the release owner or your organization.
@@ -42,8 +51,8 @@ Confirm you have:
 Use the release page at `https://github.com/J-Schulein/TowerScout/releases`,
 or the direct release URL support provides. Do not use GitHub's automatic
 `Source code (zip)` or `Source code (tar.gz)` downloads for normal pilot setup.
-Those are source snapshots, not the RC1 Application Package. Do not use the
-green GitHub `Code` button for the normal pilot install.
+Those are source snapshots, not a TowerScout Application Package. Do not use
+the green GitHub `Code` button for the normal pilot install.
 
 Do not send API keys, full `.env` files, private AOI screenshots, unredacted
 logs, raw detection API responses, tile/map URLs, browser network traces, or
@@ -73,10 +82,13 @@ Expected result: WSL is installed, any listed Linux distribution uses version
 
 ## Test Steps
 
-1. Confirm the Application Package and Model & Data Package filenames are from
-   the same release version. Create a new empty working folder, such as
-   `C:\Users\<you>\Documents\TowerScoutUAT`, then copy the four downloaded
-   release files from your `Downloads` folder into it.
+1. Confirm the selected Application Package and Model & Data Package filenames
+   are from the same release version. Create a new empty working folder, such
+   as `C:\Users\<you>\Documents\TowerScoutUAT`, then copy the four downloaded
+   release files from your `Downloads` folder into it. Normal testers should
+   have the CPU Application Package. GPU testers should have the CUDA 12.1
+   Application Package instead. Do not place both Application Package variants
+   in the same UAT working folder unless support asks for comparison testing.
 2. Extract only the TowerScout Application Package ZIP. Do not manually extract
    the Model & Data Package ZIP for the normal setup path. Extract the
    Application Package ZIP inside the `TowerScoutUAT` working folder.
@@ -84,11 +96,11 @@ Expected result: WSL is installed, any listed Linux distribution uses version
 
    ```text
    C:\Users\<you>\Documents\TowerScoutUAT\
-     towerscout-v0.1.0-rc2.zip
-     towerscout-v0.1.0-rc2.zip.sha256
-     towerscout-v0.1.0-rc2-assets-<asset-version>.zip
-     towerscout-v0.1.0-rc2-assets-<asset-version>.zip.sha256
-     towerscout-v0.1.0-rc2\
+     towerscout-<release-version>-cpu.zip
+     towerscout-<release-version>-cpu.zip.sha256
+     towerscout-<release-version>-assets-<asset-version>.zip
+     towerscout-<release-version>-assets-<asset-version>.zip.sha256
+     towerscout-<release-version>-cpu\
        setup-towerscout.cmd
    ```
 
@@ -114,10 +126,11 @@ Expected result: WSL is installed, any listed Linux distribution uses version
    asks for an explicit ZIP path, use the exact Model & Data Package filename:
 
    ```powershell
-   .\setup-towerscout.cmd -AssetZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc2-assets-<asset-version>.zip
+   .\setup-towerscout.cmd -AssetZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>-assets-<asset-version>.zip
    ```
 
-   Do not type the angle brackets from `<asset-version>`.
+   Do not type the angle brackets from `<release-version>` or
+   `<asset-version>`.
 
    Optional validation tracks only when assigned by support:
 
@@ -125,6 +138,18 @@ Expected result: WSL is installed, any listed Linux distribution uses version
    .\setup-towerscout.cmd -Engine podman
    .\setup-towerscout.cmd -Engine docker -Gpu auto
    .\setup-towerscout.cmd -Engine docker -Gpu on
+   ```
+
+   GPU validation requires the CUDA 12.1 Application Package. The CPU
+   Application Package is expected to reject `-Gpu on`. If the CUDA package
+   still reports `runtime.selected_device=cpu` during a GPU track, record the
+   result as blocked and send the issue report form.
+
+   If support assigned Podman and setup reports that no approved Compose
+   provider is available, run the connected-host helper and retry setup:
+
+   ```powershell
+   .\scripts\install-podman-compose-provider.cmd -Apply
    ```
 
    If you use `-Engine podman`, keep using `-Engine podman` on later status,
@@ -197,6 +222,7 @@ Record:
 - Windows version.
 - Runtime engine and version.
 - Package version/folder name.
+- Application Package variant: CPU or CUDA 12.1.
 - Image digest shown by package metadata or launch output.
 - Asset import result.
 - Provider used.
@@ -212,7 +238,9 @@ Stop and contact support if Docker Desktop is not installed/approved/running
 unless support explicitly assigned you the Podman path, WSL is unavailable or
 reports version `1`, a checksum does not match, asset import reports
 missing/corrupt/hash-failed files, readiness reports `fatal`, or provider
-validation repeatedly fails after the key value has been checked.
+validation repeatedly fails after the key value has been checked. For a GPU
+track, also stop and report the issue if support assigned the CUDA package but
+readiness never reports `runtime.selected_device=cuda`.
 
 Capture exact error text and the step where it failed. Screenshots are useful
 only when they do not reveal API keys, private locations, tile/map URLs, raw

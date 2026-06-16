@@ -800,7 +800,7 @@ function Get-TowerScoutJsonFile {
     return (Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json)
 }
 
-function Get-TowerScoutReleaseVersion {
+function Get-TowerScoutReleaseManifest {
     param(
         [Parameter(Mandatory = $true)]
         [string] $RootPath
@@ -808,16 +808,82 @@ function Get-TowerScoutReleaseVersion {
 
     $manifestPath = Join-Path $RootPath "release-manifest.v1.json"
     if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+        return $null
+    }
+
+    return (Get-TowerScoutJsonFile -Path $manifestPath)
+}
+
+function Get-TowerScoutObjectPropertyValue {
+    param(
+        [object] $InputObject,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Name
+    )
+
+    if ($null -eq $InputObject) {
+        return $null
+    }
+
+    $property = $InputObject.PSObject.Properties[$Name]
+    if ($null -eq $property) {
+        return $null
+    }
+
+    return $property.Value
+}
+
+function Get-TowerScoutObjectStringProperty {
+    param(
+        [object] $InputObject,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Name
+    )
+
+    $value = Get-TowerScoutObjectPropertyValue -InputObject $InputObject -Name $Name
+    if ($null -eq $value) {
         return ""
     }
 
-    $manifest = Get-TowerScoutJsonFile -Path $manifestPath
-    $version = [string] $manifest.release_version
+    return ([string] $value).Trim()
+}
+
+function Get-TowerScoutReleaseVersion {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $RootPath
+    )
+
+    $manifest = Get-TowerScoutReleaseManifest -RootPath $RootPath
+    $version = Get-TowerScoutObjectStringProperty -InputObject $manifest -Name "release_version"
     if ([string]::IsNullOrWhiteSpace($version) -or $version -eq "template") {
         return ""
     }
 
     return $version
+}
+
+function Get-TowerScoutExpectedAssetBundleName {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $RootPath
+    )
+
+    $manifest = Get-TowerScoutReleaseManifest -RootPath $RootPath
+    $releaseArtifacts = Get-TowerScoutObjectPropertyValue -InputObject $manifest -Name "release_artifacts"
+    $assetBundle = Get-TowerScoutObjectStringProperty -InputObject $releaseArtifacts -Name "asset_bundle"
+    if ([string]::IsNullOrWhiteSpace($assetBundle)) {
+        return ""
+    }
+
+    $fileName = [System.IO.Path]::GetFileName($assetBundle)
+    if ([string]::IsNullOrWhiteSpace($fileName) -or $fileName -notlike "*.zip") {
+        throw "release-manifest.v1.json release_artifacts.asset_bundle does not identify a ZIP filename."
+    }
+
+    return $fileName
 }
 
 function Get-TowerScoutSetupSearchRoots {
@@ -904,10 +970,16 @@ function Find-TowerScoutSetupAssetZip {
         return (Resolve-TowerScoutBootstrapPath -RootPath $RootPath -Path $AssetZip -Label "Model & Data Package ZIP")
     }
 
-    $releaseVersion = Get-TowerScoutReleaseVersion -RootPath $RootPath
     $patterns = @("towerscout-*-assets-*.zip")
-    if (-not [string]::IsNullOrWhiteSpace($releaseVersion) -and ($releaseVersion -notlike "*@*")) {
-        $patterns = @("towerscout-$releaseVersion-assets-*.zip")
+    $expectedAssetBundleName = Get-TowerScoutExpectedAssetBundleName -RootPath $RootPath
+    if (-not [string]::IsNullOrWhiteSpace($expectedAssetBundleName)) {
+        $patterns = @($expectedAssetBundleName)
+    }
+    else {
+        $releaseVersion = Get-TowerScoutReleaseVersion -RootPath $RootPath
+        if (-not [string]::IsNullOrWhiteSpace($releaseVersion) -and ($releaseVersion -notlike "*@*")) {
+            $patterns = @("towerscout-$releaseVersion-assets-*.zip")
+        }
     }
 
     return (Find-TowerScoutSetupZipCandidate -RootPath $RootPath -Patterns $patterns -PackageLabel "Model & Data Package")
@@ -1012,11 +1084,16 @@ function Test-TowerScoutAssetReleaseMatch {
     }
 
     if (-not [string]::IsNullOrWhiteSpace($AssetZipPath)) {
-        $releaseVersion = Get-TowerScoutReleaseVersion -RootPath $RootPath
         $assetManifest = Get-TowerScoutJsonFile -Path $AssetManifestPath
         $assetVersion = [string] $assetManifest.manifest_version
-        if (-not [string]::IsNullOrWhiteSpace($releaseVersion) -and -not [string]::IsNullOrWhiteSpace($assetVersion)) {
-            $expectedName = "towerscout-$releaseVersion-assets-$assetVersion.zip"
+        $expectedName = Get-TowerScoutExpectedAssetBundleName -RootPath $RootPath
+        if ([string]::IsNullOrWhiteSpace($expectedName)) {
+            $releaseVersion = Get-TowerScoutReleaseVersion -RootPath $RootPath
+            if (-not [string]::IsNullOrWhiteSpace($releaseVersion) -and -not [string]::IsNullOrWhiteSpace($assetVersion)) {
+                $expectedName = "towerscout-$releaseVersion-assets-$assetVersion.zip"
+            }
+        }
+        if (-not [string]::IsNullOrWhiteSpace($expectedName)) {
             $actualName = [System.IO.Path]::GetFileName($AssetZipPath)
             if ($actualName -ne $expectedName) {
                 throw "Asset ZIP filename '$actualName' does not match expected release artifact '$expectedName'."

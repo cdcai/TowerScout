@@ -1,26 +1,31 @@
 # TowerScout OCI Quick Start
 
 **Applies to**: Current V1 release-candidate package support path
-**Last reviewed**: 2026-06-15
+**Last reviewed**: 2026-06-16
 **Audience**: Release/support users who need engine-level detail
-**Runtime scope**: Docker Desktop CPU is the primary path; Podman CPU, Docker
-GPU, and Podman GPU are support-assigned RC5 paths after workstation-specific
-engine, Compose-provider, and NVIDIA validation.
+**Runtime scope**: The CPU Application Package is the primary path; the CUDA
+12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are
+support-assigned paths after workstation-specific engine, Compose-provider,
+and NVIDIA validation.
 
 This guide covers the v1 local container package shape for TowerScout for
 release/support users who need engine-level detail. External pilot users
 should start with `docs/quick-start.md` instead.
 
-The primary pilot path is Docker Desktop with the WSL 2 backend, launched
-with CPU-safe `-Gpu off`. Podman remains a qualified support-directed package
-runtime path only when the workstation has a running Podman machine and an
-approved non-Docker-Desktop Compose provider.
+The primary pilot path is the CPU Application Package on Docker Desktop with
+the WSL 2 backend, launched with CPU-safe `-Gpu off`. The CUDA 12.1 Application
+Package is for support-validated NVIDIA GPU workstations. Podman remains a
+qualified support-directed package runtime path only when the workstation has a
+running Podman machine and an approved non-Docker-Desktop Compose provider.
 
 ## Supported V1 Target
 
 - Windows 11 on AMD64
 - Single-user local use
 - CPU baseline
+- Two digest-pinned Application Package variants: `cpu` for normal users and
+  `cuda121` for support-validated NVIDIA GPU workstations
+- One shared Model & Data Package ZIP for both Application Package variants
 - Normal outbound internet access for GHCR image pulls and map providers
 - Docker Desktop with WSL 2 backend for the primary pilot path, or a
   support-approved Podman machine and Compose provider for the qualified Podman
@@ -107,10 +112,14 @@ the control ZIP by the pinned image digest in `IMAGE.txt`.
 Release maintainers can assemble the control package from a source checkout:
 
 ```powershell
-.\scripts\package-release.cmd -Version v0.1.0 -Image ghcr.io/j-schulein/towerscout:v0.1.0-cuda121 -ImageDigest sha256:<digest> -PytorchFlavor cuda121
+.\scripts\package-release.cmd -Version <release-version>-cpu -Image ghcr.io/j-schulein/towerscout:<release-version>-cpu -ImageDigest sha256:<cpu-digest> -PytorchFlavor cpu -AssetBundleVersion <release-version> -AssetBundleSha256 <asset-zip-sha256>
+.\scripts\package-release.cmd -Version <release-version>-cuda121 -Image ghcr.io/j-schulein/towerscout:<release-version>-cuda121 -ImageDigest sha256:<cuda121-digest> -PytorchFlavor cuda121 -AssetBundleVersion <release-version> -AssetBundleSha256 <asset-zip-sha256>
 ```
 
-This creates `dist\towerscout-v0.1.0\`, `dist\towerscout-v0.1.0.zip`, and `dist\towerscout-v0.1.0.zip.sha256`. The package includes `IMAGE.txt` for the release image reference and `SHA256SUMS.txt` for the files inside the package.
+This creates separate CPU and CUDA control package folders, ZIPs, and checksum
+sidecars. Both generated manifests should point to the same shared Model & Data
+Package filename and SHA-256. Each package includes `IMAGE.txt` for the
+release image reference and `SHA256SUMS.txt` for the files inside the package.
 
 Release package generation requires `-ImageDigest` with an immutable `sha256:<digest>` reference, a git source ref, a clean working tree, and an explicit or inferred PyTorch flavor (`cpu` or `cuda121`). For developer-only local validation with a mutable image tag, pass `-AllowMutableImage` explicitly. For local validation packages only, `-AllowMissingSourceRef` and `-AllowDirtySource` can bypass source-ref and clean-tree enforcement.
 
@@ -133,7 +142,8 @@ Use that digest reference when generating the release package.
 The publish workflow has an explicit PyTorch wheel flavor input:
 
 - `cpu`: publishes the smaller CPU-wheel image.
-- `cuda121`: publishes the CUDA 12.1 PyTorch image for the single GPU-capable package path.
+- `cuda121`: publishes the CUDA 12.1 PyTorch image for the support-assigned GPU
+  package path.
 
 The workflow publishes flavor-specific tags. For example, a workflow tag input of `<release-version>` with `cuda121` publishes `<release-version>-cuda121`; `push_latest` publishes `latest-cpu` or `latest-cuda121`, not an ambiguous `latest`.
 
@@ -142,9 +152,10 @@ digest is present. Release packages should still pin `TOWERSCOUT_IMAGE` to the
 exact digest recorded in the release handoff.
 
 For each release candidate, record the chosen flavor with the image digest in
-the release package. A CUDA-capable image remains CPU-safe when launched with
-`-Gpu off`. GPU execution is supportable only after selected-engine NVIDIA
-container validation, readiness evidence, and fixed-fixture parity are captured.
+the release package. The CPU package is the normal package and rejects
+`-Gpu on`. The CUDA package remains CPU-safe when launched with `-Gpu off`, but
+GPU execution is supportable only after selected-engine NVIDIA container
+validation, readiness evidence, and fixed-fixture parity are captured.
 
 ## First Run
 
@@ -225,7 +236,7 @@ GPU launch is opt-in and support-assigned:
 - `-Gpu on` adds the selected engine's GPU overlay, sets
   `TOWERSCOUT_DEVICE=cuda`, and fails readiness if CUDA is unavailable.
 
-GPU launch requires a CUDA-capable TowerScout image plus selected-engine NVIDIA
+GPU launch requires the CUDA Application Package plus selected-engine NVIDIA
 GPU support available to containers. Docker GPU uses `compose.gpu.yaml`.
 Podman GPU uses `compose.gpu.podman.yaml` and NVIDIA CDI
 `nvidia.com/gpu=all` after `scripts\enable-podman-gpu.ps1` validates or
@@ -272,6 +283,10 @@ Podman support prerequisites:
 - Podman machine is created and running.
 - An approved non-Docker-Desktop Compose provider is installed and can talk to
   the Podman socket.
+- If no approved provider is present, run
+  `scripts\install-podman-compose-provider.cmd -Apply` from the package root.
+  Running the helper without `-Apply` prints the recommended `.env` setting
+  without changing `.env`.
 - If Docker Desktop's bundled Compose provider might be selected, set
   `PODMAN_COMPOSE_PROVIDER` to the approved provider path before running
   TowerScout.

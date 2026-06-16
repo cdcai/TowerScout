@@ -123,7 +123,9 @@ def test_docs_routes_expose_package_local_docs(client):
     assert b"qualified Podman path" in user_guide_response.data
     assert package_guide_response.status_code == 200
     assert b"TowerScout Package Guide" in package_guide_response.data
-    assert b"Podman GPU are support-assigned RC5 paths" in package_guide_response.data
+    assert b"CPU Application Package is the primary path" in package_guide_response.data
+    assert b"12.1 Application Package" in package_guide_response.data
+    assert b"support-assigned paths" in package_guide_response.data
 
     assert css_response.status_code == 200
     assert "text/css" in css_response.content_type

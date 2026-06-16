@@ -139,6 +139,63 @@ def test_setup_zip_discovery_finds_uat_downloads_and_requires_sidecars():
         shutil.rmtree(uat_root, ignore_errors=True)
 
 
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap helpers are Windows-only")
+def test_setup_zip_discovery_uses_manifest_asset_bundle_for_variant_package():
+    uat_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task084-setup-{uuid.uuid4().hex}"
+    app_root = uat_root / "towerscout-v0.1.0-ga-cpu"
+    app_root.mkdir(parents=True)
+    shared_asset_zip = uat_root / "towerscout-v0.1.0-ga-assets-task084-test-assets.zip"
+    flavor_asset_zip = uat_root / "towerscout-v0.1.0-ga-cpu-assets-task084-test-assets.zip"
+    package_zip = uat_root / "towerscout-v0.1.0-ga-cpu.zip"
+    (app_root / "release-manifest.v1.json").write_text(
+        json.dumps(
+            {
+                "release_version": "v0.1.0-ga-cpu",
+                "release_artifacts": {
+                    "asset_bundle": shared_asset_zip.name,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    shared_asset_zip.write_bytes(b"shared asset package")
+    flavor_asset_zip.write_bytes(b"wrong flavor-specific asset package")
+    package_zip.write_bytes(b"application package")
+    shared_asset_zip.with_suffix(".zip.sha256").write_text(
+        f"hash  {shared_asset_zip.name}\n",
+        encoding="utf-8",
+    )
+    flavor_asset_zip.with_suffix(".zip.sha256").write_text(
+        f"hash  {flavor_asset_zip.name}\n",
+        encoding="utf-8",
+    )
+    package_zip.with_suffix(".zip.sha256").write_text(
+        f"hash  {package_zip.name}\n",
+        encoding="utf-8",
+    )
+
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        . "{BOOTSTRAP_LIB}"
+        $asset = Find-TowerScoutSetupAssetZip -RootPath "{app_root}"
+        if ($asset -ne "{shared_asset_zip}") {{
+            throw "Wrong asset ZIP discovered: $asset"
+        }}
+        $package = Find-TowerScoutSetupPackageZip -RootPath "{app_root}"
+        if ($package -ne "{package_zip}") {{
+            throw "Wrong package ZIP discovered: $package"
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(uat_root, ignore_errors=True)
+
+
 def test_bootstrap_verify_only_does_not_stage_asset_zip_before_exit():
     bootstrap = BOOTSTRAP_SCRIPT.read_text(encoding="utf-8")
     helper = BOOTSTRAP_LIB.read_text(encoding="utf-8")
@@ -441,6 +498,63 @@ def test_bootstrap_asset_zip_uses_temporary_staging_and_cleans_failed_extract():
             ((Get-ChildItem -LiteralPath "{bad_assets}" -Directory -Filter ".staging-*" | Measure-Object).Count -ne 0)
         ) {{
             throw "Temporary staging folder was not removed after failed extraction."
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap helpers are Windows-only")
+def test_bootstrap_asset_zip_release_match_uses_manifest_asset_bundle_name():
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task084-assets-{uuid.uuid4().hex}"
+    package_root = temp_root / "towerscout-v0.1.0-ga-cpu"
+    control_manifest = package_root / "webapp" / "asset_manifest.v1.json"
+    expected_zip = temp_root / "towerscout-v0.1.0-ga-assets-task084-test-assets.zip"
+    wrong_zip = temp_root / "towerscout-v0.1.0-ga-cpu-assets-task084-test-assets.zip"
+    asset_manifest = {
+        "schema_version": 1,
+        "manifest_version": "task084-test-assets",
+        "assets": [],
+    }
+    asset_manifest_text = json.dumps(asset_manifest, sort_keys=True)
+    release_manifest = {
+        "release_version": "v0.1.0-ga-cpu",
+        "release_artifacts": {
+            "asset_bundle": expected_zip.name,
+        },
+    }
+
+    control_manifest.parent.mkdir(parents=True)
+    control_manifest.write_text(asset_manifest_text, encoding="utf-8")
+    (package_root / "release-manifest.v1.json").write_text(
+        json.dumps(release_manifest, sort_keys=True),
+        encoding="utf-8",
+    )
+
+    for zip_path in [expected_zip, wrong_zip]:
+        with zipfile.ZipFile(zip_path, "w") as package:
+            package.writestr("model_params/yolov5/newest.pt", b"weights")
+            package.writestr("data/tl_2025_us_zcta520/tl_2025_us_zcta520.shp", b"shape")
+            package.writestr("asset_manifest.v1.json", asset_manifest_text)
+
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        . "{BOOTSTRAP_LIB}"
+        Test-TowerScoutAssetZipReleaseMatch -RootPath "{package_root}" -ZipPath "{expected_zip}"
+        try {{
+            Test-TowerScoutAssetZipReleaseMatch -RootPath "{package_root}" -ZipPath "{wrong_zip}"
+            throw "Flavor-specific asset ZIP name was accepted."
+        }}
+        catch {{
+            if ($_.Exception.Message -notmatch "expected release artifact") {{
+                throw
+            }}
         }}
         "ok"
         """
