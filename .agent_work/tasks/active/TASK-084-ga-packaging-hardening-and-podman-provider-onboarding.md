@@ -1,6 +1,6 @@
 # TASK-084: GA Packaging Hardening And Podman Provider Onboarding
 
-**Status**: IN_PROGRESS - implementation slice completed on June 16, 2026 for RC5 runtime cleanup, shared asset bundle identity, package guardrails, and Podman provider onboarding; final image publication, evidence packets, docs, and `TASK-085` gate remain
+**Status**: IN_PROGRESS - implementation slice completed on June 16, 2026 for RC5 runtime cleanup, shared asset bundle identity, package guardrails, and Podman provider onboarding; `TASK-085` is merged/validated, and final image publication, package evidence, and docs remain
 **Priority**: HIGH
 **Type**: C (Release Packaging / Distribution / First-Run Support)
 **Estimated Effort**: 2-4 days (16-32 hours), including runtime-defect cleanup, two-package generation, Podman provider onboarding, docs, and validation
@@ -63,9 +63,8 @@ Supporting analysis:
   shall write it only when invoked with an explicit apply flag.
 - Normal `start.bat` / `scripts/launch.ps1` execution shall not silently
   download or install provider executables.
-- `TASK-085` owns dataset ZIP path traversal hardening and is a hard
-  pre-final-package gate unless dataset restore is disabled or explicitly
-  excluded from the final GA/pilot package.
+- `TASK-085` owns dataset ZIP path traversal hardening and was merged/validated
+  before final GA/pilot package publication.
 
 ## Requirements
 
@@ -193,9 +192,8 @@ with pinned runtime dependencies instead of relying on global Python packages.
 - [ ] Final CPU package evidence includes Docker CPU and Podman CPU validation.
 - [ ] Final CUDA package evidence includes Docker GPU and Podman GPU CDI
       validation, or the CUDA package is held from final publication.
-- [ ] No final GA/pilot package is published until `TASK-085` is merged and
-      validated, unless dataset restore is disabled or explicitly excluded from
-      that package.
+- [x] `TASK-085` dataset ZIP restore hardening is merged and validated before
+      final GA/pilot package publication.
 - [ ] User/support docs explain the selected package and Podman-provider path in
       plain language.
 
@@ -263,13 +261,13 @@ with pinned runtime dependencies instead of relying on global Python packages.
    - Tie the evidence summary to source ref, image digest, package checksum,
      shared asset checksum, manifest, and SBOM/provenance entries.
 
-6. **TASK-085 Handoff**
+6. **TASK-085 Gate Closure**
    - Keep dataset ZIP restore path traversal hardening out of `TASK-084` source
      implementation scope.
-   - Treat `TASK-085` as a hard gate before any final GA/pilot package is cut
-     or published, unless dataset restore is disabled or explicitly excluded.
-   - Carry the path traversal cases and valid-restore regression expectations
-     into the `TASK-085` active task when it is selected.
+   - Treat `TASK-085` as closed for the final package gate after PR #35 merged
+     on June 16, 2026 with focused validation.
+   - Keep dataset restore enabled in the final package path, backed by the
+     `TASK-085` traversal regression coverage.
 
 ## Validation Strategy
 
@@ -401,8 +399,8 @@ to implement before cutting final CPU/CUDA package artifacts.
 - `.venv\Scripts\python.exe -m pytest tests\unit\test_task_075_launcher_gpu.py tests\unit\test_task_081_runtime_hardening.py tests\unit\test_task_074_bootstrap.py tests\unit\test_podman_gpu_enablement.py tests\unit\test_release_package_script.py tests\unit\test_release_manifest_schema.py -q -p no:cacheprovider`
   passed with `46 passed`.
 **Open Gates**: CPU/CUDA image publication and digest capture, final package
-assembly/evidence, broader docs pass, public evidence sanitization, and
-`TASK-085` dataset ZIP path traversal hardening remain open.
+assembly/evidence, broader docs pass, and public evidence sanitization remain
+open. The `TASK-085` dataset ZIP path traversal gate is now closed.
 
 ### 2026-06-16 - PR 34 Merge-Readiness Blockers Remediated
 **Objective**: Address the two blocking findings from the PR #34
@@ -446,3 +444,22 @@ explicit argument, process environment pair, `.env` pair, then
 **Next**: Commit and push the remediation to PR #34, then keep PR #35 stacked
 until PR #34 merges and can become the base for the dataset ZIP restore
 hardening PR.
+
+### 2026-06-16 - PR 34 And PR 35 Merged; Final Package Gate Opened
+**Objective**: Update task state after the GA packaging implementation slice and
+dataset ZIP restore hardening both landed on `main`.
+**Context**: PR #34 merged the `TASK-084` runtime cleanup, package guardrails,
+and Podman provider onboarding work. PR #35 then merged the `TASK-085`
+dataset ZIP restore traversal hardening after rebasing onto the merged
+`TASK-084` baseline.
+**Decision**: Treat the `TASK-085` pre-final-package gate as satisfied for
+`TASK-084`. Do not publish final GA/pilot packages until the remaining
+artifact gates are complete: CPU/CUDA image digests, package ZIP generation,
+manifest/checksum/source/SBOM consistency, CPU Docker/Podman validation, CUDA
+Docker GPU/Podman GPU CDI validation or hold decision, docs, and sanitized
+evidence.
+**Output**: Active task status and acceptance criteria updated; final package
+gate checklist created at
+`.agent_work/tasks/active/TASK-084/final-package-gate-checklist-2026-06-16.md`.
+**Next**: Finalize release inputs, capture image digests, generate the CPU and
+CUDA control packages, and run the package validation matrix.

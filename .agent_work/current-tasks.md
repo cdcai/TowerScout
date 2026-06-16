@@ -3,7 +3,7 @@
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
 **Last Updated**: June 16, 2026
 **Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
-**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, `TASK-067`, and `TASK-074` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged and its GPU support claims are now bounded by `TASK-083` evidence; `TASK-066` post-PR28 final prerelease Docker Desktop package path passed through checksum verification, bootstrap/readiness from the GitHub Release Application Package, Settings-linked docs, `/license`, in-container asset hash verification, and bounded Azure detection smoke on the refreshed final digest; `TASK-073` is active for clean-machine pilot/UAT planning and now has exact refreshed release artifact values, default smoke fixture, support contacts, provider-key evidence boundaries, published rc2/rc3 prereleases, rc2 provider setup / bounded Azure smoke, and rc3 package/downloaded-release setup validation; tester cohort selection and owner/reviewer acceptance remain before external tester launch; `TASK-080` has simplified the first-cohort setup path, produced and locked the consolidated Word guide, verified the Google first-launch TLS support path, and published/validated the refreshed rc3 UAT release package; `TASK-081` runtime hardening landed on `main`; `TASK-082` landed on `main` as `v0.1.0-rc4` with stable docs naming and package wiring; `TASK-083` landed through merged PR #33 after validating RC5 candidate 3 across Docker CPU, Docker GPU, Docker-Desktop-free Podman CPU, Podman GPU CDI, and fixed-fixture parity; `TASK-084` now owns GA package distribution polish, including CPU/CUDA package strategy, shared asset-package consistency, Podman Compose provider onboarding, and final-package gate preparation for `TASK-085`.
+**Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, `TASK-067`, and `TASK-074` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged and its GPU support claims are now bounded by `TASK-083` evidence; `TASK-066` post-PR28 final prerelease Docker Desktop package path passed through checksum verification, bootstrap/readiness from the GitHub Release Application Package, Settings-linked docs, `/license`, in-container asset hash verification, and bounded Azure detection smoke on the refreshed final digest; `TASK-073` is active for clean-machine pilot/UAT planning and now has exact refreshed release artifact values, default smoke fixture, support contacts, provider-key evidence boundaries, published rc2/rc3 prereleases, rc2 provider setup / bounded Azure smoke, and rc3 package/downloaded-release setup validation; tester cohort selection and owner/reviewer acceptance remain before external tester launch; `TASK-080` has simplified the first-cohort setup path, produced and locked the consolidated Word guide, verified the Google first-launch TLS support path, and published/validated the refreshed rc3 UAT release package; `TASK-081` runtime hardening landed on `main`; `TASK-082` landed on `main` as `v0.1.0-rc4` with stable docs naming and package wiring; `TASK-083` landed through merged PR #33 after validating RC5 candidate 3 across Docker CPU, Docker GPU, Docker-Desktop-free Podman CPU, Podman GPU CDI, and fixed-fixture parity; `TASK-084` merged its GA packaging implementation slice through PR #34; `TASK-085` merged its dataset ZIP restore traversal hardening through PR #35; the remaining `TASK-084` work is final CPU/CUDA image publication, package generation, docs, validation evidence, and sanitized release evidence.
 
 ---
 
@@ -435,7 +435,7 @@ candidate that can honestly claim Docker-Desktop-free Podman support and, if
 validation passes, gated Podman GPU support without changing model behavior.
 
 ### **TASK-084: GA Packaging Hardening And Podman Provider Onboarding**
-**Status**: IN_PROGRESS - runtime cleanup, shared asset-bundle identity, package guardrails, and Podman provider onboarding implementation slice passed focused validation; final image publication, evidence, docs, and `TASK-085` gate remain
+**Status**: IN_PROGRESS - runtime cleanup, shared asset-bundle identity, package guardrails, and Podman provider onboarding implementation slice passed focused validation; `TASK-085` is merged/validated; final image publication, evidence, and docs remain
 **Type**: C (Release Packaging / Distribution / First-Run Support)
 **Priority**: HIGH
 **Estimated Effort**: 2-4 days (16-32 hours), including runtime-defect cleanup, two-package generation, Podman provider onboarding, docs, and validation
@@ -475,6 +475,8 @@ provider setup easier for Docker-Desktop-free users.
 - Include `SOURCE.txt`, exact source ref, SBOM/provenance, package checksums,
   image digests, shared asset checksum, and manifest consistency in final
   evidence.
+- Treat the dataset ZIP restore traversal gate as closed after `TASK-085`
+  merged through PR #35 and passed focused validation.
 - Require final CUDA package validation on both Docker GPU and Podman GPU CDI;
   hold or label the CUDA package as pre-release/support-only if GPU evidence is
   unavailable.
@@ -483,9 +485,8 @@ provider setup easier for Docker-Desktop-free users.
 
 **Dependencies**: `TASK-083`; `TASK-066`; `TASK-071`; `TASK-074`; release image
 workflow and package generation scripts; published CPU and CUDA image digests;
-connected provider-helper download availability during support setup; `TASK-085`
-as a hard pre-final-package gate unless dataset restore is disabled or
-explicitly excluded.
+connected provider-helper download availability during support setup;
+`TASK-085` is satisfied for the pre-final-package security gate after PR #35.
 
 **User Value**: Reduces download size and first-run confusion for CPU users,
 while making the Docker-Desktop-free Podman path easier to execute without
@@ -512,8 +513,7 @@ the intended root.
 - Resolve adapted restore targets and verify they remain below the session
   temp directory before writing.
 - Preserve valid TowerScout dataset export/restore behavior.
-- Treat this as a hard pre-final-package gate for `TASK-084` unless dataset
-  restore is disabled or explicitly excluded from the package.
+- This hard pre-final-package gate for `TASK-084` is now closed after PR #35.
 
 **Dependencies**: Current `/uploaddataset` route and dataset export/restore
 tests; `TASK-084` final package sequencing.

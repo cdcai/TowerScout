@@ -4,19 +4,24 @@
 **Scope**: Recommended path for `TASK-084` and `TASK-085`
 **Primary task**: `.agent_work/tasks/active/TASK-084-ga-packaging-hardening-and-podman-provider-onboarding.md`
 **Follow-on task**: `TASK-085 Dataset ZIP Restore Path Traversal Hardening`
+**Status update**: PR #34 (`TASK-084`) and PR #35 (`TASK-085`) merged on
+2026-06-16. The dataset ZIP restore traversal gate is closed; remaining
+`TASK-084` work is final CPU/CUDA image publication, control package assembly,
+runtime validation, docs, and sanitized evidence.
 
 ## Executive Summary
 
 RC5 candidate 3 proved the runtime matrix: Docker CPU, Docker GPU, Docker-Desktop-free Podman CPU, Podman GPU CDI, and fixed-fixture parity all passed. The remaining work is not a model or detection change. It is release packaging, Podman first-run support, and a separate dataset restore security hardening item.
 
-Recommended sequencing after reviewer feedback:
+Recommended sequencing after reviewer feedback, with current state:
 
-1. Complete the `TASK-084` RC5 runtime-defect cleanup slice.
-2. Complete the `TASK-084` two-package and Podman-provider onboarding slices.
-3. Complete `TASK-085` dataset ZIP restore path traversal hardening.
-4. Cut and publish final GA/pilot packages only after both tasks are merged and
-   validated, unless dataset restore is disabled or explicitly excluded.
-5. Run final artifact validation across CPU Docker, CPU Podman, CUDA Docker
+1. Completed: `TASK-084` RC5 runtime-defect cleanup slice.
+2. Completed: `TASK-084` package guardrails and Podman-provider onboarding
+   implementation slice.
+3. Completed: `TASK-085` dataset ZIP restore path traversal hardening.
+4. Next: cut and publish final GA/pilot packages only after image, package,
+   evidence, docs, and runtime-validation gates are complete.
+5. Next: run final artifact validation across CPU Docker, CPU Podman, CUDA Docker
    GPU, CUDA Podman GPU CDI, manifest/env/image/checksum/source/SBOM
    consistency, and shared asset ZIP compatibility.
 
@@ -370,7 +375,8 @@ The final publication gate should be:
 
 ## Recommended Next Step
 
-Use this revised memo as the working implementation reference. Start
-`TASK-084` with the RC5 runtime-defect cleanup slice, then implement the
-package/provider changes, then select `TASK-085` before cutting any final
-GA/pilot package.
+Use this revised memo plus
+`.agent_work/tasks/active/TASK-084/final-package-gate-checklist-2026-06-16.md`
+as the working package-publication gate. Finalize release inputs, capture CPU
+and CUDA image digests, generate the CPU/CUDA control ZIPs, and run the
+validation/evidence matrix before publishing any final GA/pilot package.
