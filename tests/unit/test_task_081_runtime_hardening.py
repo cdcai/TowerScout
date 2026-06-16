@@ -98,7 +98,7 @@ def test_import_assets_uses_shared_copy_fallback_and_sets_gpu_environment():
 
     assert "Set-TowerScoutGpuEnvironment -Gpu $Gpu -Build:$Build" in import_assets
     assert "Copy-TowerScoutContainerPath" in import_assets
-    assert "Compose provider did not support cp; falling back to direct podman cp." in helper
+    assert "podman cp $LocalPath" in helper
     assert "Get-TowerScoutPodmanServiceContainerId" in helper
     assert "io.podman.compose.project" in helper
     assert "com.docker.compose.project" in helper
@@ -229,6 +229,79 @@ def test_compose_invocation_allows_successful_provider_stderr_banner():
 
     assert result.returncode == 0, result.stdout + result.stderr
     assert "ok" in result.stdout
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
+def test_podman_copy_uses_direct_podman_cp_without_provider_cp_noise():
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task084-podman-copy-{uuid.uuid4().hex}"
+    temp_root.mkdir(parents=True)
+    local_asset = temp_root / "asset.txt"
+    local_asset.write_text("asset", encoding="utf-8")
+
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        . "{COMPOSE_LIB}"
+        $podmanShimDir = Join-Path "{temp_root}" "bin"
+        New-Item -ItemType Directory -Force -Path $podmanShimDir | Out-Null
+        $podmanShimPath = Join-Path $podmanShimDir "podman.cmd"
+        $podmanCallsPath = Join-Path "{temp_root}" "podman-calls.txt"
+        $podmanShim = @(
+            '@echo off',
+            ('echo %*>> "' + $podmanCallsPath + '"'),
+            'if "%1"=="compose" echo compose-provider-id&& exit /b 0',
+            'if "%1"=="ps" echo direct-container-id&& exit /b 0',
+            'if "%1"=="cp" exit /b 0',
+            'exit /b 1'
+        ) -join "`r`n"
+        Set-Content -LiteralPath $podmanShimPath -Encoding ASCII -Value $podmanShim
+        $env:PATH = "$podmanShimDir;$env:PATH"
+
+        function Get-TowerScoutRepoRoot {{
+            return "{temp_root}"
+        }}
+        function Get-TowerScoutComposeCommand {{
+            param([string] $Engine)
+            if ($Engine -ne "podman") {{
+                throw "Expected podman engine, got $Engine"
+            }}
+            return @{{
+                Executable = "podman"
+                Arguments = @("compose")
+            }}
+        }}
+        function Invoke-TowerScoutCompose {{
+            throw "Podman copy should use direct podman cp, not compose cp."
+        }}
+
+        $env:COMPOSE_PROJECT_NAME = "task084-project"
+        Copy-TowerScoutContainerPath `
+            -Engine podman `
+            -LocalPath "{local_asset}" `
+            -ContainerPath "/app/model_params/asset.txt"
+
+        if ($script:TowerScoutComposeExitCode -ne 0) {{
+            throw "Expected direct podman cp exit 0, got $script:TowerScoutComposeExitCode"
+        }}
+        $joinedCalls = Get-Content -LiteralPath $podmanCallsPath -Raw
+        if ($joinedCalls -notmatch "compose .* ps -a -q towerscout") {{
+            throw "Expected provider compose ps lookup, got $joinedCalls"
+        }}
+        if ($joinedCalls -match "ps .*io\\.podman\\.compose\\.project=task084-project") {{
+            throw "Expected compose ps to avoid label fallback, got $joinedCalls"
+        }}
+        if ($joinedCalls -notmatch "cp .*compose-provider-id:/app/model_params/asset.txt") {{
+            throw "Expected direct podman cp call, got $joinedCalls"
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
+        os.environ.pop("COMPOSE_PROJECT_NAME", None)
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
@@ -455,6 +528,46 @@ def test_podman_command_timeout_and_cp_fallback_use_compose_ps():
         assert "ok" in result.stdout
     finally:
         shutil.rmtree(temp_root, ignore_errors=True)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
+def test_compose_project_name_sanitizes_release_package_folder_dots():
+    package_root = REPO_ROOT / ".agent_work" / "pytest-temp" / "towerscout-v0.1.0-rc6-cpu"
+    package_root.mkdir(parents=True, exist_ok=True)
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        . "{COMPOSE_LIB}"
+        function Get-TowerScoutRepoRoot {{
+            return "{package_root}"
+        }}
+
+        $env:COMPOSE_PROJECT_NAME = ""
+        $projectName = Get-TowerScoutComposeProjectName
+        if ($projectName -ne "towerscout-v010-rc6-cpu") {{
+            throw "Expected sanitized package project name, got $projectName"
+        }}
+
+        Set-Content -LiteralPath "{package_root / ".env"}" -Encoding UTF8 -Value "COMPOSE_PROJECT_NAME=env-file-project"
+        $envFileProjectName = Get-TowerScoutComposeProjectName
+        if ($envFileProjectName -ne "env-file-project") {{
+            throw "Expected .env COMPOSE_PROJECT_NAME to win over folder fallback, got $envFileProjectName"
+        }}
+
+        $env:COMPOSE_PROJECT_NAME = "explicit-project"
+        $explicit = Get-TowerScoutComposeProjectName
+        if ($explicit -ne "explicit-project") {{
+            throw "Expected explicit COMPOSE_PROJECT_NAME to win, got $explicit"
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(package_root, ignore_errors=True)
+        os.environ.pop("COMPOSE_PROJECT_NAME", None)
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")

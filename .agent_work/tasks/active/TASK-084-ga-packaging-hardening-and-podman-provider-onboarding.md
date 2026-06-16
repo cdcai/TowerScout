@@ -1,6 +1,6 @@
 # TASK-084: GA Packaging Hardening And Podman Provider Onboarding
 
-**Status**: IN_PROGRESS - implementation slice completed on June 16, 2026 for RC5 runtime cleanup, shared asset bundle identity, package guardrails, Podman provider onboarding, and user/support docs; `TASK-085` is merged/validated, and final image publication plus package evidence remain
+**Status**: IN_PROGRESS - implementation slice completed on June 16, 2026 for RC5 runtime cleanup, shared asset bundle identity, package guardrails, Podman provider onboarding, and user/support docs; `TASK-085` is merged/validated; RC6 CPU/CUDA images and control ZIPs are generated and statically validated; Docker CPU and CUDA CPU-fallback package smokes passed; Podman CPU smoke exposed and confirmed a release-package project-name normalization blocker; source fix/tests and locally patched package validation passed; committing the fix, rebuilding/retesting publishable ZIPs, GPU-host validation/hold decision, and sanitized release evidence remain
 **Priority**: HIGH
 **Type**: C (Release Packaging / Distribution / First-Run Support)
 **Estimated Effort**: 2-4 days (16-32 hours), including runtime-defect cleanup, two-package generation, Podman provider onboarding, docs, and validation
@@ -156,8 +156,8 @@ with pinned runtime dependencies instead of relying on global Python packages.
       requirement for this task.
 - [x] Owner decision recorded that third-party Compose provider binaries shall
       not be bundled in the GA control package.
-- [ ] CPU image is published and digest-pinned.
-- [ ] Package generation emits separate CPU and CUDA control ZIPs without
+- [x] CPU image is published and digest-pinned.
+- [x] Package generation emits separate CPU and CUDA control ZIPs without
       mutable tags in release runtime paths.
 - [x] Both package manifests identify the same shared Model & Data Package
       filename and SHA-256 unless a documented asset difference exists.
@@ -190,6 +190,8 @@ with pinned runtime dependencies instead of relying on global Python packages.
       `SOURCE.txt`, SBOM artifacts or references, and sanitized runtime
       validation summaries.
 - [ ] Final CPU package evidence includes Docker CPU and Podman CPU validation.
+      Podman CPU passed against a locally patched generated package, but the
+      publishable ZIPs must be rebuilt after the source fix lands.
 - [ ] Final CUDA package evidence includes Docker GPU and Podman GPU CDI
       validation, or the CUDA package is held from final publication.
 - [x] `TASK-085` dataset ZIP restore hardening is merged and validated before
@@ -530,5 +532,183 @@ shared `towerscout-<release-version>-assets-...zip`.
 - `git diff --check` passed.
 - `.venv\Scripts\python.exe .agents\skills\towerscout-end-user-docs-check\scripts\check_doc_commands.py . docs README.md`
   passed.
-**Next**: Commit and push the PR #37 remediation, then update the PR body
-before merge review.
+**Next**: PR #37 is merged; sync local `main`, refresh the final package gate
+baseline, then collect final release inputs before image publication.
+
+### 2026-06-16 - PR 37 Merged And Final Package Baseline Refreshed
+**Objective**: Move from the user/support docs PR into the final Task-084
+package gate using the actual merged source baseline.
+**Context**: PR #37 merged after adding CPU/CUDA package docs, the Word UAT
+Guide TOC/appendix restructuring, and the asset lookup remediation for
+variant control packages sharing one unsuffixed Model & Data Package ZIP.
+**Execution**:
+- Fetched/pruned GitHub refs and fast-forwarded local `main` to
+  `be67e67382e437b36fd1851fb89bc44e6f590200`.
+- Updated the final package gate checklist source baseline from the older
+  `ff01c10f6b45` placeholder to the post-PR #37 `main` ref.
+- Marked the final package gate docs items complete for CPU/CUDA package
+  selection and Podman approved-provider helper guidance.
+**Output**: Task state now points at the current post-PR #37 `main` baseline.
+**Next**: Select the final release version/name, capture the shared asset ZIP
+filename and SHA-256, then publish/capture CPU and CUDA image digests before
+generating final control ZIPs.
+
+### 2026-06-16 - RC6 CPU/CUDA Images And Control Packages Cut
+**Objective**: Generate both RC6 package variants from the post-PR #37 source
+baseline so runtime validation can proceed against actual release artifacts.
+**Context**: The selected release name is `v0.1.0-rc6`. Air-gapped/offline
+install is out of scope, and both package variants intentionally share the same
+Model & Data Package ZIP.
+**Execution**:
+- Reused the validated asset bundle bytes as
+  `dist\v0.1.0-rc6\towerscout-v0.1.0-rc6-assets-towerscout-v1-assets-2026-05-05.zip`.
+- Published CPU and CUDA 12.1 images from `main` at
+  `be67e67382e437b36fd1851fb89bc44e6f590200`.
+- Generated `towerscout-v0.1.0-rc6-cpu.zip` and
+  `towerscout-v0.1.0-rc6-cuda121.zip` with `-AssetBundleVersion v0.1.0-rc6`
+  and the shared asset SHA-256.
+**Output**:
+- Shared asset ZIP SHA-256:
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+- CPU image:
+  `ghcr.io/j-schulein/towerscout:v0.1.0-rc6-cpu@sha256:2c21e8cc6b65b1b15a82e8d679a6e13781d29b1664515b8236a5529d6385ed9a`.
+- CUDA image:
+  `ghcr.io/j-schulein/towerscout:v0.1.0-rc6-cuda121@sha256:98a9843d3e07abd6d93d19b4fae89d7db3aab319baeb85115dd0508368401b41`.
+- CPU control ZIP SHA-256:
+  `65b0595de84934347ccec7e156da7e2e101f6588d4fa18cca45424dce3caae5e`.
+- CUDA control ZIP SHA-256:
+  `99af4a53f2044a96715a2def10ac11407ad4eef9ce550b66c9e007bed1faacd0`.
+**Validation**:
+- `git diff --check` passed before package generation.
+- Static release manifest checks passed for both package directories.
+- Package summaries showed both ZIPs contain expected top-level files,
+  compliance notices, docs, scripts, `release-manifest.v1.json`, and
+  `webapp/asset_manifest.v1.json`.
+- `.venv\Scripts\python.exe -m pytest tests\unit\test_release_package_script.py tests\unit\test_release_manifest_schema.py tests\unit\test_task_074_bootstrap.py -q -p no:cacheprovider`
+  passed with `27 passed`.
+- CPU and CUDA `setup-towerscout.cmd -VerifyOnly` reached package ZIP and
+  shared asset ZIP checksum verification before host engine preflight failed.
+- CPU package `start.bat -Gpu on` failed closed with package-aware guidance to
+  use the CUDA 12.1 package.
+**Open Runtime Gates**:
+- Docker runtime validation is blocked on this local host because Docker
+  Desktop is not running or reachable.
+- Podman runtime validation is blocked on this local host because no approved
+  Compose provider is configured and `podman compose` reports a Podman machine
+  connection mismatch.
+**Next**: Start Docker Desktop or repair Podman provider/machine state, then
+run CPU Docker/Podman setup smokes and CUDA Docker GPU/Podman GPU CDI smokes
+against these RC6 artifacts.
+
+### 2026-06-16 - RC6 Docker CPU And CUDA Fallback Smokes
+**Objective**: Validate the generated RC6 package artifacts against Docker
+Desktop after the host was restarted and Docker became reachable.
+**Context**: The initial local package cut could only run static checks because
+Docker Desktop was not reachable. After restart, Docker Desktop reported server
+version `29.5.3`.
+**Execution**:
+- Attempted CPU package setup on port `5005`; package and asset checks passed,
+  but startup failed because an existing unrelated `towerscout-towerscout-1`
+  container already owned host port `5005`.
+- Cleaned up only the failed RC6 CPU compose container/network and retried on
+  port `5015`.
+- Ran the CPU package through
+  `setup-towerscout.cmd -Engine docker -Port 5015 -Gpu off -NoBrowser
+  -TimeoutSeconds 240 -RestartWaitSeconds 240`.
+- Captured CPU package status, then stopped the RC6 CPU package container.
+- Ran the CUDA package through
+  `setup-towerscout.cmd -Engine docker -Port 5016 -Gpu on -NoBrowser
+  -TimeoutSeconds 300 -RestartWaitSeconds 300`; the image pulled, but Docker's
+  NVIDIA prestart hook failed before app startup because no WSL-visible NVIDIA
+  adapters were found.
+- Cleaned up the failed CUDA GPU compose attempt.
+- Ran the CUDA package CPU-fallback path through
+  `setup-towerscout.cmd -Engine docker -Port 5016 -Gpu off -NoBrowser
+  -TimeoutSeconds 300 -RestartWaitSeconds 300`.
+- Captured CUDA package status, then stopped the RC6 CUDA package container.
+**Output**:
+- CPU Docker package smoke passed with readiness `setup_required`,
+  `asset_status=ok`, `runtime.container_engine=docker`,
+  `device_policy=cpu`, `selected_device=cpu`, `pytorch_flavor=cpu`, and image
+  digest
+  `sha256:2c21e8cc6b65b1b15a82e8d679a6e13781d29b1664515b8236a5529d6385ed9a`.
+- CPU status snapshot reported Docker Compose v5.1.4, a healthy container, all
+  nine asset entries `ok`, `torch_version=2.2.1+cpu`, and
+  `torch_cuda_available=false`.
+- CUDA Docker GPU launch failed closed with NVIDIA runtime error
+  `WSL environment detected but no adapters were found`; Docker GPU release
+  evidence remains open until a WSL-visible NVIDIA adapter is available, or the
+  CUDA package is held/labeled support-candidate.
+- CUDA CPU-fallback package smoke passed with readiness `setup_required`,
+  `asset_status=ok`, `runtime.container_engine=docker`,
+  `device_policy=cpu`, `selected_device=cpu`, `pytorch_flavor=cuda121`, and
+  image digest
+  `sha256:98a9843d3e07abd6d93d19b4fae89d7db3aab319baeb85115dd0508368401b41`.
+- CUDA status snapshot reported Docker Compose v5.1.4, a healthy container,
+  all nine asset entries `ok`, `torch_version=2.2.1+cu121`,
+  `torch_cuda_build=12.1`, and `torch_cuda_available=false` while GPU mode was
+  off.
+**Validation**: Docker CPU and CUDA CPU-fallback package paths are validated.
+Docker GPU remains blocked by host NVIDIA adapter exposure, and Podman CPU/GPU
+remain pending.
+**Next**: Either validate Docker GPU and Podman GPU on a host with WSL-visible
+NVIDIA adapters plus a ready approved Podman Compose provider, or make an
+explicit hold/support-candidate decision for the CUDA package before final
+publication.
+
+### 2026-06-16 - RC6 Podman CPU Smoke And Rebuild Blocker
+**Objective**: Answer the open Podman validation question against the generated
+RC6 CPU package.
+**Context**: Docker validation passed after host restart, but Podman had not
+yet been exercised against the RC6 artifacts. The host reported Podman
+`5.8.2`; `podman info` was reachable, while the default `podman compose`
+connection still had a stale machine/provider URI.
+**Execution**:
+- Ran the package-local
+  `scripts\install-podman-compose-provider.cmd -Apply -Force` helper against
+  `dist\v0.1.0-rc6\towerscout-v0.1.0-rc6-cpu`; the connected helper downloaded
+  the approved PyPI `podman-compose` 1.5.0 wheel, verified SHA-256, created the
+  package-local provider `.venv`, installed pinned `python-dotenv==1.1.1` and
+  `PyYAML==6.0.2`, and updated only package `.env`
+  `PODMAN_COMPOSE_PROVIDER` after backup.
+- Ran
+  `setup-towerscout.cmd -Engine podman -Port 5017 -Gpu off -NoBrowser
+  -TimeoutSeconds 300 -RestartWaitSeconds 300`.
+- The first run started the container but failed during asset import because
+  direct `podman cp` fallback could not find the service container.
+- Diagnosed that `podman-compose` labels the package project as
+  `towerscout-v010-rc6-cpu`, while the helper searched for the raw dotted
+  folder name `towerscout-v0.1.0-rc6-cpu`.
+- Updated source `Get-TowerScoutComposeProjectName` to normalize non
+  `[a-z0-9_-]` characters out of the inferred package folder name while still
+  honoring explicit `COMPOSE_PROJECT_NAME`.
+- Changed Podman asset copy to use provider `compose ps` for service container
+  identity, then direct `podman cp`, instead of first invoking unsupported
+  provider `cp`; label lookup remains as a fallback and now honors
+  `COMPOSE_PROJECT_NAME` from package `.env`.
+- Added focused regression coverage for dotted release-package project-name
+  normalization and direct Podman copy.
+- Applied the same source fix locally to the ignored generated CPU package for
+  validation only; the existing RC6 ZIPs were cut before the fix and must be
+  rebuilt before publication.
+**Output**:
+- Locally patched Podman CPU package smoke passed on port `5017` with
+  readiness `setup_required`, `asset_status=ok`,
+  `runtime.container_engine=podman`, `device_policy=cpu`,
+  `selected_device=cpu`, `pytorch_flavor=cpu`, and image digest
+  `sha256:2c21e8cc6b65b1b15a82e8d679a6e13781d29b1664515b8236a5529d6385ed9a`.
+- Status snapshot showed the approved package-local provider path, a healthy
+  Podman container, all nine asset entries `ok`, and the expected CPU PyTorch
+  runtime.
+- The RC6 Podman validation container was stopped and removed after evidence
+  capture.
+**Validation**:
+- `.venv\Scripts\python.exe -m pytest tests\unit\test_task_081_runtime_hardening.py -q -p no:cacheprovider`
+  passed with `15 passed`.
+- `.venv\Scripts\python.exe -m pytest tests\unit\test_task_081_runtime_hardening.py tests\unit\test_task_074_bootstrap.py tests\unit\test_release_package_script.py tests\unit\test_release_manifest_schema.py -q -p no:cacheprovider`
+  passed with `42 passed`.
+- `git diff --check` passed.
+**Next**: Commit this Podman source fix, rebuild CPU and CUDA control ZIPs
+from the updated source ref, then rerun CPU Podman validation against the
+rebuilt publishable CPU ZIP. CUDA GPU and Podman GPU CDI remain gated on a
+WSL-visible NVIDIA host or an explicit hold/support-candidate decision.

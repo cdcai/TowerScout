@@ -1009,7 +1009,14 @@ function Get-TowerScoutComposeProjectName {
     if (-not [string]::IsNullOrWhiteSpace($env:COMPOSE_PROJECT_NAME)) {
         return $env:COMPOSE_PROJECT_NAME.Trim()
     }
-    return (Split-Path (Get-TowerScoutRepoRoot) -Leaf).ToLowerInvariant()
+
+    $envFileProjectName = [string] (Get-TowerScoutEnvFileValue -Name "COMPOSE_PROJECT_NAME")
+    if (-not [string]::IsNullOrWhiteSpace($envFileProjectName)) {
+        return $envFileProjectName.Trim()
+    }
+
+    $leafName = (Split-Path (Get-TowerScoutRepoRoot) -Leaf).ToLowerInvariant()
+    return ($leafName -replace "[^a-z0-9_-]", "")
 }
 
 function Get-TowerScoutPodmanServiceContainerId {
@@ -1061,30 +1068,34 @@ function Copy-TowerScoutContainerPath {
         [string] $Gpu = "off"
     )
 
+    $command = Get-TowerScoutComposeCommand -Engine $Engine
+    if ([string] $command["Executable"] -eq "podman") {
+        $containerId = Get-TowerScoutPodmanServiceContainerId -ServiceName "towerscout"
+        if ([string]::IsNullOrWhiteSpace($containerId)) {
+            throw "Could not locate the running TowerScout Podman container for direct copy."
+        }
+
+        & podman cp $LocalPath "${containerId}:$ContainerPath"
+        $copySucceeded = $?
+        try {
+            $script:TowerScoutComposeExitCode = [int] $LASTEXITCODE
+        }
+        catch {
+            if ($copySucceeded) {
+                $script:TowerScoutComposeExitCode = 0
+            }
+            else {
+                $script:TowerScoutComposeExitCode = 1
+            }
+        }
+        return
+    }
+
     Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @(
         "cp",
         $LocalPath,
         "towerscout:$ContainerPath"
     )
-    if ($script:TowerScoutComposeExitCode -eq 0) {
-        return
-    }
-
-    $copyExitCode = $script:TowerScoutComposeExitCode
-    $command = Get-TowerScoutComposeCommand -Engine $Engine
-    if ([string] $command["Executable"] -ne "podman") {
-        $script:TowerScoutComposeExitCode = $copyExitCode
-        return
-    }
-
-    Write-Host "Compose provider did not support cp; falling back to direct podman cp."
-    $containerId = Get-TowerScoutPodmanServiceContainerId -ServiceName "towerscout"
-    if ([string]::IsNullOrWhiteSpace($containerId)) {
-        throw "Could not locate the running TowerScout Podman container for direct copy fallback."
-    }
-
-    & podman cp $LocalPath "${containerId}:$ContainerPath"
-    $script:TowerScoutComposeExitCode = $LASTEXITCODE
 }
 
 function Get-TowerScoutContainerSessionInfo {
