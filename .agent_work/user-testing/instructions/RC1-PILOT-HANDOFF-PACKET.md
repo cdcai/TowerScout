@@ -18,10 +18,11 @@ selected, and the release owner approves the packet.
 
 RC6 package generation, CPU runtime validation, Podman CPU validation,
 CPU-package GPU guardrail validation, Docker GPU validation, Podman GPU CDI
-validation, and public-safe evidence preparation have passed. Leave
-`Approved for tester use` set to `NO` until the official `v0.1.0-rc6` GitHub
-release is published, downloaded-release verification passes, the tester cohort
-is selected, and the owner/reviewer approves this packet.
+validation, public-safe evidence preparation, official `v0.1.0-rc6`
+publication, and downloaded-release verification have passed. Leave
+`Approved for tester use` set to `NO` until the tester cohort is selected, the
+official tester path completes any required provider setup / bounded Azure
+smoke, and the owner/reviewer approves this packet.
 
 Package-variant rules:
 
@@ -43,7 +44,6 @@ Package-variant rules:
 
 - GitHub release URL:
   `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc6`
-  (pending official publication)
 - Release tag: `v0.1.0-rc6`
 - Accepted source ref: `12daa5536f580f76d063559e86b9a474451bc54b`
 - Selected Application Package variant:
@@ -152,6 +152,12 @@ investigation AOI for the first smoke test.
   readiness `selected_device=cuda`.
 - Google and Azure provider detection both completed on CUDA in the support GPU
   validation pass.
+- Official downloaded-release validation passed on 2026-06-17: the CPU
+  Application Package and shared Model & Data Package were downloaded from the
+  GitHub Release, verified against their sidecars, staged/imported with hash
+  verification, and launched on Docker Desktop with readiness
+  `state=setup_required`, `components.assets.status=ok`, and
+  `runtime.selected_device=cpu`.
 - Public-safe GPU validation summary:
   `.agent_work/context/analysis/TowerScout-rc6-gpu-validation-evidence-emailsafe/TowerScout-rc6-gpu-validation-evidence/PUBLIC-SUMMARY.md`.
 
@@ -209,15 +215,15 @@ credentials.
 
 ## Final Pre-Send Check
 
-- [ ] Official `v0.1.0-rc6` release URL/tag is published and verified.
+- [x] Official `v0.1.0-rc6` release URL/tag is published and verified.
 - [x] Accepted source ref is filled in and matches `SOURCE.txt` plus
       `release-manifest.v1.json`.
 - [x] Selected default Application Package variant is filled in.
 - [x] Exact selected Application Package filename is filled in.
 - [x] Exact Model & Data Package filename is filled in.
 - [x] Checksum filenames are filled in.
-- [ ] The four selected release assets are uploaded to the GitHub release.
-- [ ] Downloaded release assets have passed Docker Desktop runtime validation.
+- [x] The four selected release assets are uploaded to the GitHub release.
+- [x] Downloaded release assets have passed Docker Desktop runtime validation.
 - [x] CUDA package readiness reports `runtime.selected_device=cuda` for the
       support GPU validation basis.
 - [ ] Provider setup and bounded Azure smoke passed for the official

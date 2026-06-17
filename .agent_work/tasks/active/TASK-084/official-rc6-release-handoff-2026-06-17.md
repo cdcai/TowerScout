@@ -1,10 +1,12 @@
 # TASK-084 Official RC6 Release Handoff
 
 **Date**: 2026-06-17  
-**Status**: READY_FOR_OWNER_APPROVAL - official GitHub release publication is
-not yet executed.  
+**Status**: PUBLISHED_AND_POST_VALIDATED - official GitHub release publication
+and downloaded-release verification passed on 2026-06-17.
 **Target release tag**: `v0.1.0-rc6`  
 **Target source ref**: `12daa5536f580f76d063559e86b9a474451bc54b`
+**Published release URL**:
+`https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc6`
 
 ## Publication Boundary
 
@@ -64,7 +66,7 @@ The optional public validation evidence attachment is
 
 ## Publication Command Template
 
-Run only after owner/reviewer approval:
+Executed after owner/reviewer approval:
 
 ```powershell
 gh release create v0.1.0-rc6 `
@@ -86,19 +88,51 @@ After publication, download the uploaded `v0.1.0-rc6` assets into a fresh
 validation folder and verify both checksum sidecars before approving tester
 send.
 
+## Publication Result
+
+- Official GitHub release published:
+  `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc6`.
+- GitHub release metadata verified after publication:
+  - tag: `v0.1.0-rc6`
+  - title: `TowerScout v0.1.0-rc6`
+  - prerelease: `true`
+  - target: `12daa5536f580f76d063559e86b9a474451bc54b`
+  - published timestamp: `2026-06-17T16:15:03Z`
+- All six required assets were uploaded to the official release.
+
 ## Post-Publication Checks
 
-- `gh release view v0.1.0-rc6 --repo J-Schulein/TowerScout`
-- Download only `towerscout-v0.1.0-rc6*` release assets into a clean
-  validation folder.
-- Verify CPU package, CUDA package, and shared asset ZIP sidecars match the
-  expected SHA-256 values above.
-- Run a downloaded-release CPU package setup/readiness smoke with Docker
-  Desktop on an unused port.
-- If assigning GPU testers immediately, keep the existing support GPU evidence
-  as the CUDA runtime authority and record any additional official-release
-  downloaded-asset GPU smoke separately.
-- Update `RC1-PILOT-HANDOFF-PACKET.md` with the final release URL and approval
-  fields.
-- Mark `TASK-084` complete only after publication and post-publication
-  downloaded-asset verification are recorded.
+- [x] `gh release view v0.1.0-rc6 --repo J-Schulein/TowerScout` verified the
+      tag, title, prerelease flag, target commit, publish timestamp, URL, and
+      six uploaded assets.
+- [x] Downloaded only `towerscout-v0.1.0-rc6*` release assets into a clean
+      validation folder:
+      `.agent_work/tmp/rc6-post-publication-20260617-121723`.
+- [x] Verified CPU package, CUDA package, and shared asset ZIP SHA-256 values
+      against both the expected values above and their downloaded sidecars:
+  - CPU package:
+    `fc32112935d4b7d32e9a9d24272648692e6362cecbd99fd3f3b748ec9757f83d`
+  - CUDA package:
+    `79800f2ca0af4b274e07878c8ba69cdcc1ba1822618c9a5661bfab004980c603`
+  - Shared Model & Data Package:
+    `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`
+- [x] Ran a downloaded-release CPU package setup/readiness smoke with Docker
+      Desktop on port `5006` from the extracted downloaded CPU package.
+- [x] Downloaded CPU package setup verified the CPU package sidecar, verified
+      the shared Model & Data Package sidecar, staged assets, imported assets
+      with hash verification, and started TowerScout successfully.
+- [x] Downloaded CPU package readiness returned `state=setup_required`,
+      `components.assets.status=ok`, `components.config.status=setup_required`,
+      `runtime.container_engine=docker`, `runtime.device_policy=cpu`,
+      `runtime.selected_device=cpu`, and `runtime.pytorch_flavor=cpu`; the app
+      root returned HTTP `200`.
+- [x] Stopped and removed the temporary downloaded-package validation
+      container after evidence capture.
+- [x] Existing support GPU evidence remains the CUDA runtime authority for
+      Docker GPU and Podman GPU CDI because it was captured on the assigned
+      WSL-visible NVIDIA host against the accepted RC6 artifacts.
+- [x] Updated `RC1-PILOT-HANDOFF-PACKET.md` with the final release URL and
+      downloaded-release verification state while keeping tester-send approval
+      gated on tester/cohort selection and owner/reviewer packet approval.
+- [x] `TASK-084` can now be marked complete; remaining external tester launch
+      gates belong to `TASK-073` / UAT handoff approval.

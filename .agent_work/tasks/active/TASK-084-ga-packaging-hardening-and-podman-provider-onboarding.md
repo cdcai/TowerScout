@@ -1,6 +1,10 @@
 # TASK-084: GA Packaging Hardening And Podman Provider Onboarding
 
-**Status**: IN_PROGRESS - implementation slice completed on June 16, 2026 for RC5 runtime cleanup, shared asset bundle identity, package guardrails, Podman provider onboarding, and user/support docs; `TASK-085` is merged/validated; PR #38 landed the Podman package asset-import stabilization; RC6 CPU/CUDA images and control ZIPs were rebuilt from `main` at `12daa5536f580f76d063559e86b9a474451bc54b`; static checks, Docker CPU, Docker CUDA CPU-fallback, Podman CPU with approved package-local provider, CPU-package `-Gpu on` guardrail validation, Docker GPU validation, Podman GPU CDI validation, public-safe evidence summary preparation, and official release handoff drafting passed; remaining work is owner approval to publish official `v0.1.0-rc6` and post-publication downloaded-asset verification
+**Status**: COMPLETED - implementation, package rebuild, Docker CPU,
+Docker CUDA CPU-fallback, Podman CPU, CPU-package `-Gpu on` guardrail,
+Docker GPU, Podman GPU CDI, public-safe evidence, official `v0.1.0-rc6`
+publication, and post-publication downloaded-release verification passed on
+June 17, 2026; remaining external tester launch gates belong to `TASK-073`.
 **Priority**: HIGH
 **Type**: C (Release Packaging / Distribution / First-Run Support)
 **Estimated Effort**: 2-4 days (16-32 hours), including runtime-defect cleanup, two-package generation, Podman provider onboarding, docs, and validation
@@ -863,3 +867,49 @@ and a command template without publishing before owner approval.
 **Next**: After approval, publish the official `v0.1.0-rc6` prerelease, verify
 downloaded release assets, then mark TASK-084 complete and hand off to
 TASK-073 tester/cohort approval.
+
+### 2026-06-17 - Official RC6 Release Published And Post-Validated
+**Objective**: Execute the approved official release publication and validate
+the assets exactly as external testers will download them.
+**Context**: PR #39 merged the public-safe release handoff and evidence
+tracking. The remaining `TASK-084` gate was official `v0.1.0-rc6` publication
+followed by downloaded-release checksum and runtime validation.
+**Execution**:
+- Published the official GitHub prerelease:
+  `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc6`.
+- Verified the release metadata: tag `v0.1.0-rc6`, title
+  `TowerScout v0.1.0-rc6`, prerelease `true`, target commit
+  `12daa5536f580f76d063559e86b9a474451bc54b`, and published timestamp
+  `2026-06-17T16:15:03Z`.
+- Downloaded only the official `towerscout-v0.1.0-rc6*` release assets into a
+  fresh validation folder:
+  `.agent_work/tmp/rc6-post-publication-20260617-121723`.
+- Verified downloaded CPU, CUDA, and shared Model & Data Package ZIP SHA-256
+  values against both expected release values and their downloaded sidecars.
+- Extracted the downloaded CPU package and ran the package setup flow with the
+  downloaded CPU ZIP and shared Model & Data Package ZIP on Docker Desktop
+  port `5006`.
+**Output**:
+- CPU package SHA-256:
+  `fc32112935d4b7d32e9a9d24272648692e6362cecbd99fd3f3b748ec9757f83d`.
+- CUDA package SHA-256:
+  `79800f2ca0af4b274e07878c8ba69cdcc1ba1822618c9a5661bfab004980c603`.
+- Shared Model & Data Package SHA-256:
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+- Downloaded CPU setup verified package and asset sidecars, staged assets,
+  imported assets with hash verification, started TowerScout, and returned
+  readiness `state=setup_required` with `components.assets.status=ok`,
+  `runtime.container_engine=docker`, `runtime.device_policy=cpu`,
+  `runtime.selected_device=cpu`, and `runtime.pytorch_flavor=cpu`.
+- The app root returned HTTP `200`; the temporary validation container was
+  stopped and removed after evidence capture.
+**Validation**:
+- Official release metadata and uploaded-asset digests verified through
+  `gh release view`.
+- Downloaded release ZIP hashes and sidecars matched the expected release
+  handoff values.
+- Downloaded CPU package setup/readiness smoke passed on Docker Desktop.
+**Next**: `TASK-084` is complete. Continue with `TASK-073` tester/cohort
+selection, provider setup / bounded Azure smoke for the official tester path
+when credentials and tester environment are available, and owner/reviewer UAT
+packet approval before external tester send.
