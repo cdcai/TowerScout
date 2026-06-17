@@ -1,6 +1,10 @@
 # TASK-073: Clean-Machine Pilot / UAT Execution Plan
 
-**Status**: IN_PROGRESS - RC6 handoff packet refreshed with exact CPU/CUDA package values, public-safe evidence boundary, support contacts, and default smoke fixture; official RC6 publication, downloaded-release validation, tester cohort selection, and owner/reviewer acceptance remain pending
+**Status**: IN_PROGRESS - RC6 handoff packet refreshed with exact CPU/CUDA
+package values, public-safe evidence boundary, support contacts, default smoke
+fixture, official RC6 publication, and downloaded-release validation; tester
+cohort selection, provider setup / bounded Azure smoke in the official tester
+path, and owner/reviewer acceptance remain pending
 **Priority**: HIGH  
 **Type**: B/C (User Testing / Release Validation)  
 **Estimated Effort**: 0.5-1 day (4-8 hours)  
@@ -54,9 +58,9 @@ This task should make external testing repeatable, bounded, and evidence-produci
 - [x] UAT checklist is updated to use the implemented `TASK-074` bootstrap path for first setup.
 - [x] Reviewer documentation feedback is incorporated into the pilot handoff instructions.
 - [x] UAT handoff packet template captures exact release URL/tag, artifact filenames, smoke fixture, and support contact before tester launch.
-- [ ] Official RC6 GitHub Release assets are published and match the accepted release source ref.
+- [x] Official RC6 GitHub Release assets are published and match the accepted release source ref.
 - [x] RC6 package/image pair is regenerated and internally validated after Task-084 package hardening.
-- [ ] Official RC6 downloaded-release package path is verified after publication.
+- [x] Official RC6 downloaded-release package path is verified after publication.
 - [ ] Owner/reviewer accepts the pilot/UAT plan before external testers start.
 
 ## Dependencies
@@ -477,6 +481,34 @@ checks in the current handoff slice.
 **Next**: Publish official `v0.1.0-rc6` only after owner approval, then verify
 the downloaded release assets before changing the packet approval state.
 
+### 2026-06-17 - Official RC6 Publication Gates Closed
+**Objective**: Bring `TASK-073` back in sync after the official RC6 release
+publication and post-publication downloaded-asset validation were recorded
+through `TASK-084`.
+**Context**: `TASK-084` is complete and PR #40 merged the official
+`v0.1.0-rc6` publication evidence. The UAT handoff packet now has the final
+release URL, exact artifact values, and downloaded CPU package validation
+state, while tester/cohort selection and owner/reviewer packet approval remain
+outside the release packaging lane.
+**Decision**: Mark the official RC6 release asset publication and downloaded
+release package path criteria complete in `TASK-073`, but keep the UAT packet
+approval at `NO` until the selected tester/cohort, official tester-path
+provider setup / bounded Azure smoke, and owner/reviewer approval are recorded.
+**Execution**:
+- Updated this task's status to show official RC6 publication and
+  downloaded-release validation as complete.
+- Checked off the official GitHub Release publication and downloaded-release
+  package-path acceptance criteria.
+- Left tester/cohort selection, official tester-path provider smoke, and
+  owner/reviewer acceptance pending.
+**Output**: `TASK-073` now points at the remaining UAT approval gates rather
+than completed `TASK-084` publication work.
+**Validation**: Pending post-edit `.agent_work` validation and diff checks.
+**Next**: Select the tester/cohort, perform or explicitly schedule the
+provider setup / bounded Azure smoke in the official tester path, then fill
+approver, approval date, and tester/cohort before changing the UAT handoff
+packet to approved.
+
 ---
 
 ## Validation Results
@@ -485,9 +517,10 @@ the downloaded release assets before changing the packet approval state.
 **Test Date**: May 27-June 17, 2026
 **Test Environment**: Documentation/task-state validation and internal release
 package validation; no external pilot run yet
-**Test Status**: READY_FOR_OWNER_APPROVAL - RC6 package identities and UAT
-handoff packet are prepared; official RC6 publication, downloaded-release
-validation, tester cohort, and owner/reviewer approval remain pending
+**Test Status**: IN_PROGRESS - RC6 package identities and UAT handoff packet
+are prepared; official RC6 publication and downloaded-release validation have
+passed; provider setup / bounded Azure smoke in the official tester path,
+tester cohort, and owner/reviewer approval remain pending
 
 ### Acceptance Criteria Validation
 - [x] Start/stop criteria documented - PASS - See Pilot Start Criteria and Pilot Stop Criteria.
@@ -502,8 +535,8 @@ validation, tester cohort, and owner/reviewer approval remain pending
 - [x] UAT handoff packet template ready - PASS - See `.agent_work/user-testing/instructions/RC1-PILOT-HANDOFF-PACKET.md`; final release, fixture, support contact, and provider-key guidance are filled.
 - [x] V1 completion gate documented - PASS - See V1 Completion Gate After Pilot.
 - [x] RC6 package/image pair regenerated and internally validated from accepted source ref - PASS - See `TASK-084` final package gate.
-- [ ] Official RC6 release published - PENDING - publish `v0.1.0-rc6` only after owner/reviewer approval.
-- [ ] Official RC6 downloaded-release validation - PENDING - verify the uploaded release assets from a clean download before tester send.
+- [x] Official RC6 release published - PASS - `v0.1.0-rc6` is published and targets accepted source ref `12daa5536f580f76d063559e86b9a474451bc54b`.
+- [x] Official RC6 downloaded-release validation - PASS - official release assets were downloaded, sidecars verified, and the downloaded CPU package setup/readiness smoke passed on Docker Desktop with assets `ok`.
 - [x] Default public smoke fixture selected - PASS - Azure Maps, `200 west st, New York, NY 10282`, `150 meter` circle, about `8` tiles; zero detections is not acceptable.
 - [ ] Owner/reviewer acceptance - PENDING.
 
@@ -522,6 +555,6 @@ validation, tester cohort, and owner/reviewer approval remain pending
 
 The RC6 handoff packet, default public smoke fixture, support contacts, and
 support-safe evidence boundaries are ready for owner/reviewer review. External
-pilot should not start until the official RC6 release is published, downloaded
-release assets are verified, the tester cohort is selected, and the packet is
-explicitly approved for tester send.
+pilot should not start until the official tester path has completed or
+scheduled provider setup / bounded Azure smoke, the tester cohort is selected,
+and the packet is explicitly approved for tester send.
