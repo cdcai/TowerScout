@@ -1,6 +1,6 @@
 # TASK-084: GA Packaging Hardening And Podman Provider Onboarding
 
-**Status**: IN_PROGRESS - implementation slice completed on June 16, 2026 for RC5 runtime cleanup, shared asset bundle identity, package guardrails, Podman provider onboarding, and user/support docs; `TASK-085` is merged/validated; RC6 CPU/CUDA images and control ZIPs are generated and statically validated; Docker CPU and CUDA CPU-fallback package smokes passed; Podman CPU smoke exposed and confirmed a release-package project-name normalization blocker; source fix/tests and locally patched package validation passed; committing the fix, rebuilding/retesting publishable ZIPs, GPU-host validation/hold decision, and sanitized release evidence remain
+**Status**: IN_PROGRESS - implementation slice completed on June 16, 2026 for RC5 runtime cleanup, shared asset bundle identity, package guardrails, Podman provider onboarding, and user/support docs; `TASK-085` is merged/validated; PR #38 landed the Podman package asset-import stabilization; RC6 CPU/CUDA images and control ZIPs were rebuilt from `main` at `12daa5536f580f76d063559e86b9a474451bc54b`; static checks, Docker CPU, Docker CUDA CPU-fallback, Podman CPU with approved package-local provider, CPU-package `-Gpu on` guardrail validation, Docker GPU validation, Podman GPU CDI validation, public-safe evidence summary preparation, and official release handoff drafting passed; remaining work is owner approval to publish official `v0.1.0-rc6` and post-publication downloaded-asset verification
 **Priority**: HIGH
 **Type**: C (Release Packaging / Distribution / First-Run Support)
 **Estimated Effort**: 2-4 days (16-32 hours), including runtime-defect cleanup, two-package generation, Podman provider onboarding, docs, and validation
@@ -165,7 +165,7 @@ with pinned runtime dependencies instead of relying on global Python packages.
       gives a clear repair action instead of silently reusing the wrong image.
 - [x] CPU package `-Gpu on` fails with a package-aware "use CUDA package"
       message.
-- [ ] CUDA package `-Gpu on` remains fail-closed unless readiness reports
+- [x] CUDA package `-Gpu on` remains fail-closed unless readiness reports
       `selected_device=cuda`.
 - [x] Podman provider auto-detect is implemented and tested for blank
       `PODMAN_COMPOSE_PROVIDER`.
@@ -185,14 +185,12 @@ with pinned runtime dependencies instead of relying on global Python packages.
 - [x] Podman `cp` fallback, Podman GPU image resolution, command timeout, and
       stopped-port-conflict reporting fixes from RC5 review are implemented and
       covered by focused regression tests.
-- [ ] Final package evidence includes `-AssetBundleSha256`,
+- [x] Final package evidence includes `-AssetBundleSha256`,
       `release-manifest.v1.json`, package checksum sidecars, image digest(s),
       `SOURCE.txt`, SBOM artifacts or references, and sanitized runtime
       validation summaries.
-- [ ] Final CPU package evidence includes Docker CPU and Podman CPU validation.
-      Podman CPU passed against a locally patched generated package, but the
-      publishable ZIPs must be rebuilt after the source fix lands.
-- [ ] Final CUDA package evidence includes Docker GPU and Podman GPU CDI
+- [x] Final CPU package evidence includes Docker CPU and Podman CPU validation.
+- [x] Final CUDA package evidence includes Docker GPU and Podman GPU CDI
       validation, or the CUDA package is held from final publication.
 - [x] `TASK-085` dataset ZIP restore hardening is merged and validated before
       final GA/pilot package publication.
@@ -712,3 +710,156 @@ connection still had a stale machine/provider URI.
 from the updated source ref, then rerun CPU Podman validation against the
 rebuilt publishable CPU ZIP. CUDA GPU and Podman GPU CDI remain gated on a
 WSL-visible NVIDIA host or an explicit hold/support-candidate decision.
+
+### 2026-06-16 - PR 38 Merged; RC6 Packages Rebuilt And CPU Gates Passed
+**Objective**: Refresh the RC6 release artifacts after the Podman
+release-package asset import fix landed on `main`.
+**Context**: PR #38 fixed package-local Podman asset import by keeping
+provider-backed `compose ps` lookup ahead of direct `podman cp` and by reading
+`COMPOSE_PROJECT_NAME` from the package `.env` before label fallback. The prior
+RC6 ZIPs were pre-fix validation artifacts only.
+**Execution**:
+- Fast-forwarded local `main` to
+  `12daa5536f580f76d063559e86b9a474451bc54b`.
+- Re-published CPU and CUDA 12.1 images from that source ref so OCI revision
+  metadata matches the rebuilt control packages.
+- Rebuilt `towerscout-v0.1.0-rc6-cpu.zip` and
+  `towerscout-v0.1.0-rc6-cuda121.zip` with the shared Model & Data Package
+  ZIP and its SHA-256.
+- Expanded the rebuilt ZIPs beside the shared asset ZIP and validated the
+  package setup path from those expanded artifacts.
+**Output**:
+- CPU image:
+  `ghcr.io/j-schulein/towerscout:v0.1.0-rc6-cpu@sha256:d2b4f668e62ecbcdc0e0b5a5db4d8fbf2865651f5854484ada5db042956a75bd`.
+- CUDA image:
+  `ghcr.io/j-schulein/towerscout:v0.1.0-rc6-cuda121@sha256:392b162b2ebe5f94126e8d7db9b75c4fbcc1652449f8376d0a7a5a5979eec3b0`.
+- CPU control ZIP SHA-256:
+  `fc32112935d4b7d32e9a9d24272648692e6362cecbd99fd3f3b748ec9757f83d`.
+- CUDA control ZIP SHA-256:
+  `79800f2ca0af4b274e07878c8ba69cdcc1ba1822618c9a5661bfab004980c603`.
+**Validation**:
+- `git diff --check` passed.
+- Package summaries for both rebuilt ZIPs found expected runtime files,
+  compliance notices, docs, scripts, `release-manifest.v1.json`, and
+  `webapp/asset_manifest.v1.json`.
+- `.venv\Scripts\python.exe -m pytest tests\unit\test_release_package_script.py tests\unit\test_release_manifest_schema.py tests\unit\test_task_074_bootstrap.py -q -p no:cacheprovider`
+  passed with `27 passed`.
+- Rebuilt CPU package Docker smoke passed on port `5015` with readiness
+  `setup_required`, `asset_status=ok`, `selected_device=cpu`,
+  `pytorch_flavor=cpu`, and the final CPU image digest.
+- Rebuilt CUDA package Docker CPU-fallback smoke passed on port `5016` with
+  readiness `setup_required`, `asset_status=ok`, `selected_device=cpu`,
+  `pytorch_flavor=cuda121`, `torch_version=2.2.1+cu121`, and the final CUDA
+  image digest.
+- Rebuilt CPU package Podman smoke passed on port `5017` after the package
+  helper installed the approved `podman-compose` 1.5.0 provider into a
+  package-local `.venv` with pinned `python-dotenv` and `PyYAML` dependencies.
+- Rebuilt CPU package `start.bat -Gpu on` failed closed with package-aware
+  guidance to use the CUDA package.
+- Docker and Podman smoke containers were stopped and removed after status
+  capture; only the unrelated pre-existing `towerscout-towerscout-1` Docker
+  container remained on port `5005`.
+**Next**: Decide whether to run GPU validation on a WSL-visible NVIDIA host or
+hold/label the CUDA package as support-candidate, then prepare a sanitized
+final evidence summary.
+
+### 2026-06-16 - Unofficial GPU Validation Prerelease Published
+**Objective**: Make the rebuilt RC6 candidate artifacts available to the GPU
+machine without consuming the official `v0.1.0-rc6` release tag.
+**Context**: Local transfer of the six RC6 artifacts to the GPU machine was not
+practical. The official `v0.1.0-rc6` release name should remain reserved until
+the CUDA Docker GPU and Podman GPU CDI gates are resolved.
+**Decision**: Publish an unofficial GitHub prerelease using tag
+`gpu-validation-2026-06-16`, title
+`Unofficial GPU Validation Build - v0.1.0-rc6 Candidate`, and target commit
+`12daa5536f580f76d063559e86b9a474451bc54b`.
+**Execution**:
+- Uploaded the rebuilt CPU Application Package ZIP and checksum sidecar.
+- Uploaded the rebuilt CUDA 12.1 Application Package ZIP and checksum sidecar.
+- Uploaded the shared Model & Data Package ZIP and checksum sidecar.
+- Uploaded `README-GPU-VALIDATION.md` and used it as the release notes so the
+  GPU-machine tester has commands, pass criteria, and evidence-capture
+  expectations at the download source.
+**Output**:
+- Prerelease URL:
+  `https://github.com/J-Schulein/TowerScout/releases/tag/gpu-validation-2026-06-16`.
+- The prerelease is marked as prerelease and targets
+  `12daa5536f580f76d063559e86b9a474451bc54b`.
+- Uploaded release asset digests reported by GitHub match the expected ZIP
+  SHA-256 values for the CPU ZIP, CUDA ZIP, and shared asset ZIP.
+**Next**: Use this prerelease on the GPU machine for Docker GPU and Podman GPU
+CDI validation. Keep the official `v0.1.0-rc6` release unpublished until those
+results are accepted or a CUDA hold/support-candidate decision is made.
+
+### 2026-06-17 - RC6 GPU Host Evidence Accepted And Evidence Packet Hardened
+**Objective**: Close the final CUDA runtime evidence gate and convert the
+email-safe GPU evidence packet into a standalone, public-safe handoff summary.
+**Context**: The GPU host evidence folder contained Docker GPU, Podman GPU CDI,
+Google, Azure, and CPU-package guardrail artifacts from the unofficial
+`gpu-validation-2026-06-16` prerelease. Review found the runtime evidence was
+strong enough to accept the CUDA package, but the packet needed standalone
+provenance and a public-safe summary that omits raw AOI/local context.
+**Execution**:
+- Reviewed the GPU validation evidence folder:
+  `.agent_work/context/analysis/TowerScout-rc6-gpu-validation-evidence-emailsafe/TowerScout-rc6-gpu-validation-evidence/`.
+- Accepted Docker GPU and Podman GPU CDI readiness because both reached
+  `ready` with `device_policy=cuda`, `selected_device=cuda`,
+  `pytorch_flavor=cuda121`, `torch_cuda_available=true`,
+  `cuda_device_name="NVIDIA T1000 8GB"`, assets `ok`, and the final CUDA image
+  digest
+  `sha256:392b162b2ebe5f94126e8d7db9b75c4fbcc1652449f8376d0a7a5a5979eec3b0`.
+- Accepted end-to-end detection because Google and Azure both ran on CUDA for
+  Docker GPU and Podman GPU CDI, with YOLOv5 primary inference and EfficientNet
+  secondary classification reporting CUDA execution.
+- Kept the Podman/Google summary conservative: the included Podman/Google log
+  captures the matching `49` selected high-mode run; Docker/Google supplies
+  repeated high/low evidence.
+- Added `ARTIFACT-PROVENANCE.md` so the packet records source ref, prerelease
+  tag, CPU/CUDA package checksums, shared asset checksum, image digests, and
+  the runtime evidence index.
+- Added `PUBLIC-SUMMARY.md` as the public-safe external attachment and kept the
+  local internal evidence summary ignored with the raw evidence artifacts.
+**Output**:
+- Final CUDA package evidence now includes Docker GPU and Podman GPU CDI
+  validation.
+- The CPU package guardrail evidence remains accepted: `-Gpu on` exits `1`
+  before container startup with package-aware guidance to use the CUDA package.
+- The final package gate checklist now marks the CUDA GPU, Podman GPU CDI,
+  provenance, and public-safe evidence gates complete.
+**Validation**:
+- `python .agent_work\scripts\validate_agent_work.py` passed.
+- `git diff --check` passed.
+- `python .agents\skills\towerscout-secret-and-provider-key-safety\scripts\scan_for_sensitive_terms.py .agent_work\context\analysis\TowerScout-rc6-gpu-validation-evidence-emailsafe\TowerScout-rc6-gpu-validation-evidence\PUBLIC-SUMMARY.md .agent_work\context\analysis\TowerScout-rc6-gpu-validation-evidence-emailsafe\TowerScout-rc6-gpu-validation-evidence\ARTIFACT-PROVENANCE.md`
+  returned `matches: 0`.
+- Targeted grep over `PUBLIC-SUMMARY.md` and `ARTIFACT-PROVENANCE.md` found no
+  raw AOI, local user paths, key-preview strings, or common provider-key
+  patterns.
+**Next**: Prepare the official `v0.1.0-rc6` release handoff/publication step
+using the CPU package as the default user path and the CUDA package as the
+support-validated NVIDIA GPU path.
+
+### 2026-06-17 - Official RC6 Release Handoff Drafted
+**Objective**: Convert the accepted RC6 package and GPU evidence into an
+owner-reviewable official GitHub release handoff.
+**Context**: The repository is public, so raw email-safe GPU artifacts with AOI
+and local validation context must not be staged or attached publicly. The
+official release needs exact assets, checksums, image digests, release notes,
+and a command template without publishing before owner approval.
+**Execution**:
+- Added `.gitignore` inside the local RC6 GPU evidence folder so only
+  `ARTIFACT-PROVENANCE.md` and `PUBLIC-SUMMARY.md` are tracked; the local
+  internal evidence summary and raw evidence artifacts remain ignored.
+- Added `.agent_work/tasks/active/TASK-084/official-rc6-release-notes.md` as
+  public-safe release notes.
+- Added `.agent_work/tasks/active/TASK-084/official-rc6-release-handoff-2026-06-17.md`
+  with required release assets, checksums, image digests, release settings,
+  publication command template, and post-publication checks.
+- Refreshed the RC1 Pilot / UAT handoff packet with exact RC6 artifact values
+  while keeping approval set to `NO`.
+**Output**:
+- Official release publication is ready for owner/reviewer approval.
+- Release publication itself remains intentionally unexecuted.
+**Validation**: Pending final post-edit validation in the current handoff slice.
+**Next**: After approval, publish the official `v0.1.0-rc6` prerelease, verify
+downloaded release assets, then mark TASK-084 complete and hand off to
+TASK-073 tester/cohort approval.

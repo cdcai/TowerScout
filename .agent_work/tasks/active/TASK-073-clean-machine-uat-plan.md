@@ -1,6 +1,6 @@
 # TASK-073: Clean-Machine Pilot / UAT Execution Plan
 
-**Status**: IN_PROGRESS - rc2 prerelease package, downloaded-release validation, provider setup, and bounded Azure smoke passed; tester cohort and owner/reviewer acceptance pending
+**Status**: IN_PROGRESS - RC6 handoff packet refreshed with exact CPU/CUDA package values, public-safe evidence boundary, support contacts, and default smoke fixture; official RC6 publication, downloaded-release validation, tester cohort selection, and owner/reviewer acceptance remain pending
 **Priority**: HIGH  
 **Type**: B/C (User Testing / Release Validation)  
 **Estimated Effort**: 0.5-1 day (4-8 hours)  
@@ -54,8 +54,9 @@ This task should make external testing repeatable, bounded, and evidence-produci
 - [x] UAT checklist is updated to use the implemented `TASK-074` bootstrap path for first setup.
 - [x] Reviewer documentation feedback is incorporated into the pilot handoff instructions.
 - [x] UAT handoff packet template captures exact release URL/tag, artifact filenames, smoke fixture, and support contact before tester launch.
-- [x] Final GitHub Release assets are published and match the accepted release source ref.
-- [x] Final package/image pair is regenerated or owner-accepted after Task-073 documentation updates.
+- [ ] Official RC6 GitHub Release assets are published and match the accepted release source ref.
+- [x] RC6 package/image pair is regenerated and internally validated after Task-084 package hardening.
+- [ ] Official RC6 downloaded-release package path is verified after publication.
 - [ ] Owner/reviewer accepts the pilot/UAT plan before external testers start.
 
 ## Dependencies
@@ -96,12 +97,12 @@ Pilot/UAT may start only when all of the following are true:
 - The final Application Package, GHCR image digest, and Settings-linked docs are generated from the accepted release source ref, or any image/package docs drift is explicitly owner/reviewer accepted.
 - `TASK-071` package docs are available from the package and from Settings Resource Links.
 - User-facing docs explain Docker Desktop/WSL 2 prerequisites, PowerShell command location, expected command outcomes, and support-safe recovery steps for first launch.
-- `TASK-066` CPU-default Docker Desktop package path has passed with assets imported and one bounded detection smoke.
+- `TASK-066` CPU-default Docker Desktop package path has passed with assets imported and one bounded detection smoke, and `TASK-084` RC6 CPU/CUDA package gates have passed.
 - `TASK-066` residual caveats are explicitly included in pilot support language:
   - Docker Desktop is the primary pilot engine.
   - Podman is qualified only as a package-runtime path when the machine has a working Podman machine and Compose provider.
   - Docker-Desktop-free Podman and Podman source-build/base-image-pull support are not claimed.
-  - GPU acceleration is not claimed until NVIDIA Docker Desktop WSL2 validation, CPU/GPU parity, and timing evidence pass.
+  - CUDA GPU support is support-assigned only; RC6 Docker GPU and Podman GPU CDI evidence passed on the support GPU host.
 - `TASK-067` route-test timeout/isolation fix is merged.
 - A provider key is available to the tester and has been restricted/managed according to the provider-key release policy chosen for the pilot.
 - The tester has an owner-provided public smoke-test fixture with provider, public/non-sensitive location, expected tile range, and whether zero detections is acceptable.
@@ -126,7 +127,7 @@ Pause or stop pilot/UAT if any of the following occur:
 - **Provider**: Azure Maps or Google Maps, with the provider used recorded in the report.
 - **Assets**: Package-local `assets/` import using the documented asset bundle and hash verification.
 - **Detection smoke**: Owner-provided public fixture with provider, public/non-sensitive location, expected tile range, and zero-detection acceptability rule. The default RC1 fixture is about 8 tiles.
-- **Out of scope unless explicitly approved**: GPU acceleration claims, Docker-Desktop-free Podman support, source-build validation, restricted-network/offline preload, large AOIs, and private/sensitive screenshot collection.
+- **Out of scope unless explicitly approved**: broad GPU acceleration claims beyond the support-validated CUDA package path, source-build validation, restricted-network/offline preload, large AOIs, and private/sensitive screenshot collection.
 
 ### Tester Acceptance Checklist
 
@@ -137,10 +138,10 @@ Each tester should complete the package path in this order:
 3. Place the four release files in a new empty folder and compare each ZIP to its matching `.sha256` file before extraction.
 4. Extract the Application Package ZIP to a local folder without spaces or special characters if possible.
 5. Open Windows PowerShell in the extracted package folder.
-6. Run the CPU-default Docker Desktop bootstrap path with the Model & Data Package ZIP:
-   - `.\bootstrap.cmd -Engine docker -Gpu off -AssetZip .\towerscout-v0.1.0-rc1-assets-<asset-version>.zip`
-   - If the ZIPs remain in Downloads, use full paths with `-PackageZip` and `-AssetZip`.
-   - Expected outcome: bootstrap reports disk, port, engine, Compose, checksum, and asset-layout checks; imports assets with hash verification; starts TowerScout; and opens `http://localhost:5000` or allows the tester to open that address manually.
+6. Run the CPU-default Docker Desktop setup path:
+   - `.\setup-towerscout.cmd`
+   - If the ZIPs remain in Downloads or automatic discovery is ambiguous, use full paths with `-PackageZip` and `-AssetZip`.
+   - Expected outcome: setup reports disk, port, engine, Compose, checksum, and asset-layout checks; imports assets with hash verification; starts TowerScout; and opens `http://localhost:5000` or allows the tester to open that address manually.
 7. Use the manual fallback only when support directs it:
    - Extract the Model & Data Package entries into the package-local `assets\` folder.
    - Launch with `.\start.bat -Engine docker -Gpu off`.
@@ -443,16 +444,50 @@ until tester/cohort selection and owner/reviewer approval are filled.
 **Next**: Select tester/cohort and record owner/reviewer approval before
 external tester launch.
 
+### 2026-06-17 - RC6 Pilot Handoff Packet Refreshed
+**Objective**: Replace the rc2/rc3-era tester handoff values with the current
+RC6 package identities and support boundaries.
+**Context**: `TASK-084` completed RC6 CPU/CUDA package generation, CPU Docker
+and Podman validation, CUDA Docker GPU and Podman GPU CDI validation, and
+public-safe evidence preparation. The external tester handoff packet still
+contained rc2-specific release evidence and needed to be reset around official
+`v0.1.0-rc6` publication.
+**Decision**: Keep the tester-facing default path as Docker Desktop plus the
+CPU Application Package. Treat CUDA and Podman as support-assigned tracks.
+Keep the UAT packet approval at `NO` until the official `v0.1.0-rc6` GitHub
+release is published, downloaded-release verification passes, a tester/cohort
+is selected, and the owner/reviewer approves the packet.
+**Execution**:
+- Rewrote `.agent_work/user-testing/instructions/RC1-PILOT-HANDOFF-PACKET.md`
+  with exact RC6 source ref, CPU/CUDA package names, checksum sidecars, image
+  digests, shared Model & Data Package identity, default smoke fixture,
+  support contacts, and public-safe evidence boundary.
+- Updated this task's status and acceptance criteria so official RC6
+  publication and downloaded-release validation are correctly shown as pending
+  rather than inherited from older rc2/rc3 validation.
+- Updated the tester acceptance checklist language in this task to use
+  `setup-towerscout.cmd` as the normal first setup path.
+**Output**:
+- RC6 handoff packet is ready for owner/reviewer review but not approved for
+  tester send.
+- Official RC6 publication and downloaded-release validation remain the next
+  release-control gates.
+**Validation**: Pending final post-edit `.agent_work` validation and diff
+checks in the current handoff slice.
+**Next**: Publish official `v0.1.0-rc6` only after owner approval, then verify
+the downloaded release assets before changing the packet approval state.
+
 ---
 
 ## Validation Results
 
 ### Test Summary
-**Test Date**: May 27-June 2, 2026
-**Test Environment**: Documentation/task-state validation only; no external pilot run yet
-**Test Status**: READY_FOR_OWNER_APPROVAL - rc2 prerelease package path,
-downloaded-release validation, provider setup, and default smoke fixture passed
-internal validation; tester cohort and owner/reviewer approval remain pending
+**Test Date**: May 27-June 17, 2026
+**Test Environment**: Documentation/task-state validation and internal release
+package validation; no external pilot run yet
+**Test Status**: READY_FOR_OWNER_APPROVAL - RC6 package identities and UAT
+handoff packet are prepared; official RC6 publication, downloaded-release
+validation, tester cohort, and owner/reviewer approval remain pending
 
 ### Acceptance Criteria Validation
 - [x] Start/stop criteria documented - PASS - See Pilot Start Criteria and Pilot Stop Criteria.
@@ -463,12 +498,13 @@ internal validation; tester cohort and owner/reviewer approval remain pending
 - [x] Non-command-line first-launch guidance added - PASS - User docs and UAT checklist now include PowerShell location, Docker Desktop/WSL 2 checks, default Docker commands, expected outcomes, and support-safe recovery instructions.
 - [x] Low-risk install-UX hardening added - PASS - Quick Start, Package Guide, Project Overview, Settings-linked HTML, and UAT checklist now clarify Application Package versus Model & Data Package naming, GitHub Release asset selection, checksums, disk-space targets, nested asset layout mistakes, first image-pull delay, support stop points, and smoke-test expectations.
 - [x] Runtime prerequisite preflight completed - PASS - `TASK-074` created, implemented, validated, and incorporated into the bootstrap-first UAT path.
-- [x] UAT checklist aligned to implemented bootstrap - PASS - The checklist now uses `bootstrap.cmd` for first setup and keeps manual import as fallback.
+- [x] UAT checklist aligned to implemented setup path - PASS - The checklist now uses `setup-towerscout.cmd` for first setup and keeps manual import as fallback.
 - [x] UAT handoff packet template ready - PASS - See `.agent_work/user-testing/instructions/RC1-PILOT-HANDOFF-PACKET.md`; final release, fixture, support contact, and provider-key guidance are filled.
 - [x] V1 completion gate documented - PASS - See V1 Completion Gate After Pilot.
-- [x] Final package/image pair regenerated and validated from accepted source ref - PASS - See 2026-06-02 rc2 release path evidence.
-- [x] Prerelease published - PASS - `v0.1.0-rc2` is published at `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc2`.
-- [x] Default public smoke fixture internally validated - PASS - Azure Maps, `200 west st, New York, NY 10282`, `150 meter` circle, about `8` tiles, `48` detection records, `8` tile records, and address/provider metadata in the right-hand panel.
+- [x] RC6 package/image pair regenerated and internally validated from accepted source ref - PASS - See `TASK-084` final package gate.
+- [ ] Official RC6 release published - PENDING - publish `v0.1.0-rc6` only after owner/reviewer approval.
+- [ ] Official RC6 downloaded-release validation - PENDING - verify the uploaded release assets from a clean download before tester send.
+- [x] Default public smoke fixture selected - PASS - Azure Maps, `200 west st, New York, NY 10282`, `150 meter` circle, about `8` tiles; zero detections is not acceptable.
 - [ ] Owner/reviewer acceptance - PENDING.
 
 ### Issues Identified
@@ -484,7 +520,8 @@ internal validation; tester cohort and owner/reviewer approval remain pending
 
 ### Sign-off
 
-The rc2 published prerelease, refreshed final digest, default public smoke
-fixture, support contacts, and support-safe evidence boundaries are ready for
-owner/reviewer review. External pilot should not start until the tester cohort
-is selected and the packet is explicitly approved for tester send.
+The RC6 handoff packet, default public smoke fixture, support contacts, and
+support-safe evidence boundaries are ready for owner/reviewer review. External
+pilot should not start until the official RC6 release is published, downloaded
+release assets are verified, the tester cohort is selected, and the packet is
+explicitly approved for tester send.
