@@ -13,7 +13,6 @@
 # the provider-independent part of maps
 #
 
-import requests
 import time
 import random
 import tempfile
@@ -24,6 +23,15 @@ import aiohttp
 import aiofiles
 from ts_logging import get_maps_logger
 from ts_errors import MapProviderError, NetworkError
+from ts_provider_http import (
+    PROVIDER_NETWORK_BLOCKED,
+    PROVIDER_TIMEOUT,
+    TLS_CA_UNTRUSTED,
+    create_provider_ssl_context,
+    provider_repair_command,
+    provider_support_action,
+    redact_provider_url,
+)
 
 # Initialize logger for this module
 maps_logger = get_maps_logger()
@@ -34,14 +42,41 @@ def _allow_insecure_tls():
     return os.getenv('TOWERSCOUT_ALLOW_INSECURE_TLS', '').strip().lower() in TRUTHY_ENV_VALUES
 
 
-def _build_connector():
-    if _allow_insecure_tls():
+def _provider_name_from_url(url):
+    if "maps.googleapis.com" in url:
+        return "google"
+    if "atlas.microsoft.com" in url:
+        return "azure"
+    return "unknown"
+
+
+def _build_connector(provider):
+    ssl_context = create_provider_ssl_context(provider)
+    if ssl_context is False:
         maps_logger.warning(
             "Map downloads are running with TLS verification disabled because "
             "TOWERSCOUT_ALLOW_INSECURE_TLS is enabled."
         )
         return aiohttp.TCPConnector(limit=50, limit_per_host=16, ssl=False)
-    return aiohttp.TCPConnector(limit=50, limit_per_host=16)
+    return aiohttp.TCPConnector(limit=50, limit_per_host=16, ssl=ssl_context)
+
+
+def _network_error(provider, category, message, url, cause=None, timeout=None):
+    details = {
+        "provider": provider,
+        "category": category,
+    }
+    support_action = provider_support_action(category, provider)
+    if support_action:
+        details["support_action"] = support_action
+        details["repair_command"] = provider_repair_command(provider)
+    return NetworkError(
+        message,
+        url=redact_provider_url(url),
+        cause=cause,
+        timeout=timeout,
+        details=details,
+    )
 
 
 class Map:
@@ -59,7 +94,12 @@ class Map:
                 url = self.get_url(tile)
                 urls.append(url)
                 tile['url'] = url
-                maps_logger.debug(f"Generated URL for tile {tile.get('id', '?')}: {url[:100]}...")
+                tile['provider_url_redacted'] = redact_provider_url(url)
+                maps_logger.debug(
+                    "Generated provider URL for tile %s: %s",
+                    tile.get('id', '?'),
+                    tile['provider_url_redacted'],
+                )
                 if self.has_metadata:
                     urls.append(self.get_meta_url(tile))
             
@@ -157,7 +197,8 @@ async def gather_urls(urls, dir, fname, metadata):
         maps_logger.info(f"Starting download of {len(urls)} map tiles")
         
         # Create session with proper error handling
-        connector = _build_connector()
+        provider = _provider_name_from_url(urls[0]) if urls else "unknown"
+        connector = _build_connector(provider)
         timeout = aiohttp.ClientTimeout(total=300)  # 5 minute total timeout
         
         async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
@@ -184,6 +225,8 @@ async def fetch(semaphore, session, url, dir, fname, i, max_retries=3):
     if url.endswith(" (meta)"):
         url = url[0:-7]
         meta = True
+    provider = _provider_name_from_url(url)
+    redacted_url = redact_provider_url(url)
     
     retry_count = 0
     while retry_count <= max_retries:
@@ -204,14 +247,14 @@ async def fetch(semaphore, session, url, dir, fname, i, max_retries=3):
                             maps_logger.error(f"File write failed for {filename}: {e}")
                             raise NetworkError(
                                 f"Failed to write downloaded file: {filename}",
-                                url=url,
+                                url=redacted_url,
                                 cause=e
                             )
                     
                     elif response.status == 429:
                         # Rate limited - exponential backoff
                         retry_after = int(response.headers.get('Retry-After', 2 ** retry_count))
-                        maps_logger.warning(f"Rate limited (429) for {url}, retrying after {retry_after}s")
+                        maps_logger.warning("Rate limited (429) for %s, retrying after %ss", redacted_url, retry_after)
                         await asyncio.sleep(retry_after)
                         retry_count += 1
                         continue
@@ -219,14 +262,14 @@ async def fetch(semaphore, session, url, dir, fname, i, max_retries=3):
                     elif response.status in [500, 502, 503, 504]:
                         # Server errors - retry with backoff
                         backoff_time = 2 ** retry_count
-                        maps_logger.warning(f"Server error {response.status} for {url}, retrying after {backoff_time}s")
+                        maps_logger.warning("Server error %s for %s, retrying after %ss", response.status, redacted_url, backoff_time)
                         await asyncio.sleep(backoff_time)
                         retry_count += 1
                         continue
                         
                     else:
                         # Client error or other status - don't retry
-                        maps_logger.error(f"HTTP {response.status} for {url}: {response.reason}")
+                        maps_logger.error("HTTP %s for %s: %s", response.status, redacted_url, response.reason)
                         raise MapProviderError(
                             f"Map API returned status {response.status}: {response.reason}",
                             provider="unknown",
@@ -234,35 +277,60 @@ async def fetch(semaphore, session, url, dir, fname, i, max_retries=3):
                         )
                         
         except asyncio.TimeoutError:
-            maps_logger.warning(f"Timeout for {url}, attempt {retry_count + 1}/{max_retries + 1}")
+            maps_logger.warning("Timeout for %s, attempt %s/%s", redacted_url, retry_count + 1, max_retries + 1)
             retry_count += 1
             if retry_count <= max_retries:
                 await asyncio.sleep(2 ** retry_count)  # Exponential backoff
                 continue
             else:
-                raise NetworkError(
+                raise _network_error(
+                    provider,
+                    PROVIDER_TIMEOUT,
                     f"Request timeout after {max_retries + 1} attempts",
                     url=url,
-                    timeout=30
+                    timeout=30,
                 )
-                
+
+        except aiohttp.ClientSSLError as e:
+            maps_logger.warning(
+                "TLS verification failed for %s, attempt %s/%s",
+                redacted_url,
+                retry_count + 1,
+                max_retries + 1,
+            )
+            raise _network_error(
+                provider,
+                TLS_CA_UNTRUSTED,
+                "TLS certificate validation failed during map tile download",
+                url=url,
+                cause=e,
+                timeout=30,
+            )
+
         except aiohttp.ClientError as e:
-            maps_logger.warning(f"Network error for {url}, attempt {retry_count + 1}/{max_retries + 1}: {e}")
+            maps_logger.warning(
+                "Network error for %s, attempt %s/%s",
+                redacted_url,
+                retry_count + 1,
+                max_retries + 1,
+            )
             retry_count += 1
             if retry_count <= max_retries:
                 await asyncio.sleep(2 ** retry_count)  # Exponential backoff
                 continue
             else:
-                raise NetworkError(
-                    f"Network error after {max_retries + 1} attempts: {str(e)}",
+                raise _network_error(
+                    provider,
+                    PROVIDER_NETWORK_BLOCKED,
+                    f"Network error after {max_retries + 1} attempts",
                     url=url,
-                    cause=e
+                    cause=e,
                 )
                 
         except Exception as e:
-            maps_logger.error(f"Unexpected error fetching {url}: {e}")
+            maps_logger.error("Unexpected error fetching %s: %s", redacted_url, e)
             raise MapProviderError(
-                f"Unexpected error during map tile download: {str(e)}",
+                "Unexpected error during map tile download",
                 provider="unknown",
                 cause=e
             )

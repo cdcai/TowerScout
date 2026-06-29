@@ -240,9 +240,13 @@ $releaseFiles = @(
     "MODEL_LICENSES.md",
     "DATA_LICENSES.md",
     "PROVIDER_TERMS.md",
+    "docs\docker-cpu-user-guide.md",
+    "docs\docker-gpu-user-guide.md",
     "docs\quick-start.md",
     "docs\quick-start.html",
     "docs\package-guide.md",
+    "docs\podman-cpu-user-guide.md",
+    "docs\podman-gpu-user-guide.md",
     "docs\user-guide.md",
     "docs\user-guide.html",
     "docs\project-overview.md",
@@ -279,7 +283,9 @@ $releaseFiles = @(
     "scripts\import-assets.cmd",
     "scripts\import-assets.ps1",
     "scripts\import-tls-ca.cmd",
-    "scripts\import-tls-ca.ps1"
+    "scripts\import-tls-ca.ps1",
+    "scripts\repair-provider-tls.cmd",
+    "scripts\repair-provider-tls.ps1"
 )
 
 foreach ($file in $releaseFiles) {

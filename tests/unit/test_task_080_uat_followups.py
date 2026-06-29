@@ -63,8 +63,8 @@ def test_word_uat_guide_contains_pre_uat_followup_sections():
     assert "raw provider responses" in lower_text
     assert "API keys" in text
     assert "TLS inspection certificate" in text
-    assert "scripts\\import-tls-ca.cmd" in text
-    assert "TLS CA import" in text and "only if support asks" in text
+    assert "scripts\\repair-provider-tls.cmd" in text or "scripts\\import-tls-ca.cmd" in text
+    assert ("TLS CA repair" in text or "TLS CA import" in text) and "only if support asks" in text
 
 
 def test_quick_start_mirrors_command_appendix_and_stale_session_note():
@@ -83,7 +83,7 @@ def test_quick_start_mirrors_command_appendix_and_stale_session_note():
     assert "CERTIFICATE_VERIFY_FAILED" in text
     assert "TLS inspection certificate" in text
     assert "updates the local `.env`" in text
-    assert ".\\scripts\\import-tls-ca.cmd -Engine docker" in text
+    assert ".\\scripts\\repair-provider-tls.cmd -Provider google -Engine docker" in text
     assert "Do not send provider keys, full `.env` files" in text
 
 

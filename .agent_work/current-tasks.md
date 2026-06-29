@@ -1,7 +1,7 @@
 # Current Tasks - Active Sprint
 
 **Sprint Period**: Sprint 06 planning / V1 RC1 readiness begins May 11, 2026  
-**Last Updated**: June 17, 2026
+**Last Updated**: June 29, 2026
 **Focus**: Produce a V1 RC1 / pilot-ready AGPL-compliant YOLO-enabled release path by closing release-support carry-forward work, correcting release compliance artifacts, writing package-based end-user docs, validating the clean-machine release candidate, and preparing pilot / UAT execution.
 **Status**: Sprint 06 committed lane selected. `TASK-065`, `TASK-072`, `TASK-079`, `TASK-071`, `TASK-067`, and `TASK-074` are completed and remain in the active task folder until sprint closeout; `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline; `TASK-075` implementation is merged and its GPU support claims are now bounded by `TASK-083` evidence; `TASK-066` post-PR28 final prerelease Docker Desktop package path passed through checksum verification, bootstrap/readiness from the GitHub Release Application Package, Settings-linked docs, `/license`, in-container asset hash verification, and bounded Azure detection smoke on the refreshed final digest; `TASK-073` is active for clean-machine pilot/UAT planning and now has an RC6 handoff packet with exact artifact values, default smoke fixture, support contacts, and provider-key evidence boundaries; official RC6 release publication and downloaded-release validation are complete, while tester cohort selection and owner/reviewer acceptance remain before external tester launch; `TASK-080` has simplified the first-cohort setup path, produced and locked the consolidated Word guide, verified the Google first-launch TLS support path, and published/validated the refreshed rc3 UAT release package; `TASK-081` runtime hardening landed on `main`; `TASK-082` landed on `main` as `v0.1.0-rc4` with stable docs naming and package wiring; `TASK-083` landed through merged PR #33 after validating RC5 candidate 3 across Docker CPU, Docker GPU, Docker-Desktop-free Podman CPU, Podman GPU CDI, and fixed-fixture parity; `TASK-084` merged its GA packaging implementation slice through PR #34 and Podman package asset-import stabilization through PR #38, then completed official `v0.1.0-rc6` publication and downloaded-release verification on June 17, 2026; `TASK-085` merged its dataset ZIP restore traversal hardening through PR #35; RC6 CPU/CUDA images and control ZIPs were rebuilt from `main` at `12daa5536f580f76d063559e86b9a474451bc54b`; static checks, Docker CPU, Docker CUDA CPU-fallback, Podman CPU with approved package-local provider, CPU-package `-Gpu on` guardrail validation, Docker GPU validation, Podman GPU CDI validation, public-safe evidence summary preparation, official release handoff, publication, and downloaded CPU package validation have passed.
 
@@ -521,6 +521,155 @@ tests; `TASK-084` final package sequencing.
 **User Value**: Keeps the investigation export/restore workflow while closing
 a release-blocking archive path traversal risk before broader package
 distribution.
+
+### **TASK-086: Provider TLS Auto-Repair And Setup Triage**
+**Status**: COMPLETED - V3 CPU managed-network proof passed the normal Google TLS repair/setup path without `-VerifyProvider none`, and owner-confirmed CUDA managed-network validation shows the Task-086 TLS repair fix works for the CUDA package path; Task-086 is the rc7 TLS repair baseline while Task-087 remains a follow-on one-click helper plan
+**Type**: B/C (Runtime Support / Provider Setup / TLS Trust)
+**Priority**: HIGH
+**Estimated Effort**: 3-5 days (24-40 hours) plus one managed-network validation pass
+**Target Sprint**: Sprint 06 post-RC6 UAT follow-up / next pilot package
+**Task File**: `.agent_work/tasks/active/TASK-086-provider-tls-auto-repair-and-setup-triage.md`
+
+**Objective**: Add a guided, support-safe provider TLS diagnosis and repair
+path that reduces manual Windows certificate thumbprint hunting when Google
+Maps or Azure Maps validation fails inside the container on a managed
+TLS-inspected network, while centralizing provider HTTP/TLS handling and
+improving Setup Wizard triage for invalid-key versus TLS trust failures.
+
+**Completed Implementation**:
+- Added shared provider HTTP/TLS handling across validation, geocoding, map
+  proxy, async imagery downloads, keyless TLS preflight, and redacted provider
+  URL surfaces.
+- Added `scripts/repair-provider-tls.ps1/.cmd` as the guided dry-run-first
+  support wrapper, with `-Provider`, `-Engine`, `-Gpu`, `-Thumbprint`,
+  `-CertificatePath`, and explicit `-Apply` semantics. Apply mode delegates to
+  `scripts/import-tls-ca.cmd`.
+- Updated Setup Wizard and Settings to preserve structured backend
+  `details`/`category`/`support_action`/`repair_command` fields, allow Azure to
+  persist when Google needs TLS repair and Azure is selected/default, and avoid
+  treating repairable TLS failures as bad keys.
+- Updated Docker CPU/GPU, Podman CPU/GPU, Quick Start, Package Guide, OCI
+  support docs, runtime contract, and `.env.example` so the guided repair
+  helper is the preferred path and low-level `import-tls-ca` is support
+  fallback.
+- Added focused tests for helper safety text/delegation, provider/GPU
+  forwarding, category mapping, frontend structured-error preservation,
+  read-only TLS status, map proxy/imagery redaction, and package inclusion.
+
+**Latest Validation**:
+- `node webapp\build.js` passed.
+- PowerShell parser checks passed for `scripts/repair-provider-tls.ps1` and
+  `scripts/import-tls-ca.ps1`.
+- `python -m py_compile` passed for changed Python backend modules.
+- Focused pytest suite passed: 110 tests.
+- `git diff --check` passed.
+- `python .agent_work\scripts\validate_agent_work.py` passed.
+- Internal validation release package correction passed manifest, sidecar
+  checksum, and package `SHA256SUMS.txt` verification for both
+  `tls-validation-2026-06-26-cpu` and
+  `tls-validation-2026-06-26-cuda121`.
+- Source fix commit `280b073a40d0d95098de9fe443b25fddab6a90a7` was tagged as
+  `tls-validation-2026-06-26-V2`.
+- CPU and CUDA 12.1 V2 image publish runs passed, and V2 CPU/CUDA Application
+  Package ZIPs plus a shared V2 Model & Data Package ZIP were published to
+  `https://github.com/J-Schulein/TowerScout/releases/tag/tls-validation-2026-06-26-V2`.
+- V2 package validation passed package-shape summaries, generated manifest
+  checks, sidecar checksum verification, package `SHA256SUMS.txt`
+  verification, and local runtime-artifact hygiene checks.
+- Downloaded V2 managed-network CPU validation proved the combined CA bundle
+  repair works when `import-tls-ca.cmd ... -VerifyProvider none` is used:
+  `.env` persisted the bundle path, the restarted app reached `ready`, and
+  Google key validation completed without `CERTIFICATE_VERIFY_FAILED`.
+- Identified the remaining V2 gap as inline `python -c` verifier command
+  construction in `scripts/import-tls-ca.ps1`, not as a failure of the CA
+  import/bundle strategy.
+- Patched the provider verifier to copy a temporary `.py` file into the
+  container and execute it by path, avoiding Compose quote stripping.
+- V3 source-fix validation passed PowerShell parser checks, focused importer
+  regression tests, the 80-test related package/config/route unit subset, and
+  `.agent_work` validation.
+- Source fix commit `cd362ec976a37c1f5fd13bac03c8e657720f49ba` was tagged as
+  `tls-validation-2026-06-26-V3`.
+- CPU and CUDA 12.1 V3 image publish runs passed, and V3 CPU/CUDA Application
+  Package ZIPs plus a shared V3 Model & Data Package ZIP were published to
+  `https://github.com/J-Schulein/TowerScout/releases/tag/tls-validation-2026-06-26-V3`.
+- V3 package validation passed package-shape summaries, generated manifest
+  checks, sidecar checksum verification, package `SHA256SUMS.txt`
+  verification, and local runtime-artifact hygiene checks.
+- Downloaded V3 CPU managed-network validation passed the normal
+  `repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Apply`
+  path without using `-VerifyProvider none`; `.env` persisted the combined CA
+  bundle path, the restarted app reached `ready`, Google was configured, and
+  logs showed no `CERTIFICATE_VERIFY_FAILED`, V2 `SyntaxError`, or traceback.
+- Owner-confirmed V3 CUDA managed-network validation shows the Task-086 TLS
+  repair fix works for the CUDA package path. Raw terminal output,
+  certificate subjects, certificate thumbprints, provider keys, provider
+  responses, and local environment details were not recorded in the task
+  tracker.
+
+**Remaining**:
+- None for the Task-086 rc7 baseline. `TASK-087` carries the optional
+  post-rc7/follow-on one-click host-side helper plan if the team decides to
+  improve the repair UX beyond the validated command path.
+
+**Dependencies**: `TASK-073`; `TASK-074`; `TASK-080`; `TASK-084`; current
+`scripts/import-tls-ca.*`, `scripts/launch.ps1`, provider validation, setup
+wizard, package docs, and a managed-network validation environment.
+
+**User Value**: Converts a repeated UAT support blocker into a guided repair
+workflow, reducing the chance that valid Google provider setup stalls because a
+tester or support contact cannot safely identify the correct local TLS
+inspection CA.
+
+### **TASK-087: Host-Side TLS Repair Control Plane**
+**Status**: PLANNED_NOT_STARTED_REVIEWER_FEEDBACK_INCORPORATED - reviewer-gated implementation plan now requires helper transport proof, security proof, product integration proof, and managed-network package validation before user-facing package inclusion; do not treat as a default rc7 blocker unless tester workflow evidence requires it
+**Type**: B/C (Runtime Support / Setup UX / TLS Trust)
+**Priority**: MEDIUM-HIGH
+**Estimated Effort**: 4-7 days (32-56 hours), plus package validation on a managed TLS-inspected network
+**Target Sprint**: Post-`TASK-086` / rc7 follow-up unless selected as a release blocker
+**Task File**: `.agent_work/tasks/active/TASK-087-host-side-tls-repair-control-plane.md`
+
+**Objective**: Design and implement a support-safe host-side repair control
+plane that lets TowerScout present a guided "repair TLS trust and restart"
+action when provider setup detects a managed-network TLS certificate trust
+failure, while reusing the validated `TASK-086` repair flow and preserving the
+user's selected engine, GPU mode, port, and package variant.
+
+**Current Direction**:
+- Keep `TASK-086` as the validated repair baseline and command fallback for
+  rc7 unless the team explicitly promotes `TASK-087` into the rc7 critical path.
+- Use a trusted package-local Windows host helper, not direct browser command
+  execution and not a container-mounted Docker/Podman control socket.
+- Bind the helper to loopback only, require a per-launch random token, expose
+  only allowlisted operations, and reject arbitrary command/script arguments.
+- Capture the runtime profile from the launcher path so repair/restart uses the
+  same engine, GPU mode, port, and CPU/CUDA package intent the user selected.
+- Start with a helper transport proof of concept before frontend integration,
+  because PowerShell listener, URL ACL, and endpoint-security behavior must be
+  proven on the target Windows environment.
+- Require sanitized helper progress states instead of raw subprocess output,
+  because the existing manual TLS repair scripts can print support-sensitive
+  local certificate subjects and thumbprints.
+- Require runtime-profile identity checks so stale, wrong-package,
+  wrong-container, expired-token, and ambiguous multi-instance operations are
+  rejected before repair/restart.
+- Prefer direct browser-to-loopback-helper calls for the first slice only if
+  Phase 1 validates CORS, origin, token, and private-network behavior; keep
+  backend brokering as a fallback requiring renewed design review.
+- Treat helper-unavailable as a normal fallback to the documented
+  `repair-provider-tls.cmd` command path, not as a setup failure.
+- Keep all progress and evidence support-safe: no API keys, helper tokens,
+  certificate subjects, raw thumbprints, raw provider responses, or environment
+  dumps.
+
+**Dependencies**: `TASK-086`; `TASK-073`; `TASK-074`; `TASK-080`; package
+launcher/runtime profile; provider setup error classification; Docker CPU/CUDA
+package paths; managed-network validation environment.
+
+**User Value**: Converts the working command-based TLS repair into a guided
+setup action for managed-network users, reducing first-run support friction
+without weakening the manual fallback or the provider-key/certificate safety
+boundaries.
 
 ### **TASK-074: Runtime Prerequisite Preflight**
 **Status**: COMPLETED - post-merge package-artifact bootstrap validation passed

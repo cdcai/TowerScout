@@ -96,6 +96,10 @@ def test_docs_routes_expose_package_local_docs(client):
     index_response = client.get("/docs/")
     quick_start_response = client.get("/docs/quick-start.html")
     overview_response = client.get("/docs/project-overview.html")
+    docker_cpu_response = client.get("/docs/docker-cpu-user-guide.md")
+    docker_gpu_response = client.get("/docs/docker-gpu-user-guide.md")
+    podman_cpu_response = client.get("/docs/podman-cpu-user-guide.md")
+    podman_gpu_response = client.get("/docs/podman-gpu-user-guide.md")
     user_guide_response = client.get("/docs/user-guide.html")
     package_guide_response = client.get("/docs/package-guide.md")
     css_response = client.get("/docs/towerscout-docs.css")
@@ -114,6 +118,14 @@ def test_docs_routes_expose_package_local_docs(client):
     assert b"Project Overview" in overview_response.data
     assert b"What Users Need Installed" in overview_response.data
     assert b"source-code checkout" in overview_response.data
+    assert docker_cpu_response.status_code == 200
+    assert b"TowerScout Docker CPU User Guide" in docker_cpu_response.data
+    assert docker_gpu_response.status_code == 200
+    assert b"TowerScout Docker GPU User Guide" in docker_gpu_response.data
+    assert podman_cpu_response.status_code == 200
+    assert b"TowerScout Podman CPU User Guide" in podman_cpu_response.data
+    assert podman_gpu_response.status_code == 200
+    assert b"TowerScout Podman GPU User Guide" in podman_gpu_response.data
 
     assert user_guide_response.status_code == 200
     assert user_guide_response.mimetype == "text/html"
@@ -359,6 +371,108 @@ def test_validate_key_route_reports_actionable_network_failure(client):
     assert payload["details"]["provider"] == "google"
     assert payload["details"]["category"] == "provider_validation_network"
     assert "AIzaSyEXAMPLE1234567890abcdefghijklmno" not in json.dumps(payload)
+
+
+def test_save_keys_allows_valid_default_provider_when_other_provider_needs_tls_repair(client):
+    google_tls_error = NetworkError(
+        "google validation request failed TLS verification",
+        user_message="TowerScout could not verify the Google Maps TLS certificate.",
+        details={
+            "provider": "google",
+            "category": "tls_ca_untrusted",
+            "support_action": "Run scripts\\repair-provider-tls.cmd for Google Maps.",
+            "repair_command": "scripts\\repair-provider-tls.cmd -Provider google",
+        },
+    )
+
+    def validate_provider(provider, _key):
+        if provider == "google":
+            raise google_tls_error
+        return {
+            "valid": True,
+            "provider": "azure",
+            "category": "tls_ok",
+            "message": "Azure Maps subscription key validated successfully.",
+        }
+
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch.object(
+        towerscout.ts_config,
+        "validate_api_key",
+        side_effect=validate_provider,
+    ), patch.object(towerscout.ts_config, "update_env_file") as mock_update, patch.object(
+        towerscout,
+        "refresh_runtime_config",
+        return_value=False,
+    ):
+        response = client.post(
+            "/api/config/save-keys",
+            json={
+                "google_api_key": "google-test-key",
+                "azure_maps_subscription_key": "azure-test-key",
+                "default_map_provider": "azure",
+            },
+        )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["success"] is True
+    assert payload["persisted_providers"] == ["azure"]
+    assert payload["validation_results"]["google"]["details"]["category"] == "tls_ca_untrusted"
+    assert payload["validation_results"]["azure"]["valid"] is True
+    mock_update.assert_called_once()
+    updates = mock_update.call_args.args[0]
+    assert updates == {
+        "DEFAULT_MAP_PROVIDER": "azure",
+        "AZURE_MAPS_SUBSCRIPTION_KEY": "azure-test-key",
+    }
+
+
+def test_save_keys_rejects_invalid_selected_default_provider(client):
+    google_tls_error = NetworkError(
+        "google validation request failed TLS verification",
+        user_message="TowerScout could not verify the Google Maps TLS certificate.",
+        details={"provider": "google", "category": "tls_ca_untrusted"},
+    )
+
+    def validate_provider(provider, _key):
+        if provider == "google":
+            raise google_tls_error
+        return {"valid": True, "provider": "azure", "category": "tls_ok"}
+
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch.object(
+        towerscout.ts_config,
+        "validate_api_key",
+        side_effect=validate_provider,
+    ), patch.object(towerscout.ts_config, "update_env_file") as mock_update:
+        response = client.post(
+            "/api/config/save-keys",
+            json={
+                "google_api_key": "google-test-key",
+                "azure_maps_subscription_key": "azure-test-key",
+                "default_map_provider": "google",
+            },
+        )
+
+    assert response.status_code == 400
+    payload = response.get_json()
+    assert payload["success"] is False
+    assert "selected default provider" in payload["message"]
+    assert payload["validation_results"]["google"]["details"]["category"] == "tls_ca_untrusted"
+    assert payload["validation_results"]["azure"]["valid"] is True
+    mock_update.assert_not_called()
+
+
+def test_provider_tls_status_route_uses_keyless_provider_probe(client):
+    with patch.object(
+        towerscout.ts_config,
+        "check_provider_tls_status",
+        return_value={"provider": "google", "reachable": True, "category": "tls_ok"},
+    ) as mock_status:
+        response = client.get("/api/config/tls-status?provider=google")
+
+    assert response.status_code == 200
+    assert response.get_json()["category"] == "tls_ok"
+    mock_status.assert_called_once_with("google")
 
 
 def test_key_routes_do_not_log_key_previews(client, monkeypatch):

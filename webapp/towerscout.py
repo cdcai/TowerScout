@@ -44,6 +44,11 @@ from ts_performance import PerformanceMetrics
 import ts_config
 import ts_device
 import ts_runtime
+from ts_provider_http import (
+    classify_provider_response,
+    provider_get,
+    redact_provider_url,
+)
 from shutil import rmtree
 import zipfile
 import asyncio
@@ -93,6 +98,10 @@ COMPLIANCE_NOTICE_FILES = (
 PUBLIC_DOC_FILES = {
     "project-overview.html",
     "project-overview.md",
+    "docker-cpu-user-guide.md",
+    "docker-gpu-user-guide.md",
+    "podman-cpu-user-guide.md",
+    "podman-gpu-user-guide.md",
     "quick-start.html",
     "quick-start.md",
     "package-guide.md",
@@ -1311,7 +1320,7 @@ def _run_detection_request():
                 'class_name': 'tile',
                 'conf': 1,
                 'metadata': tile['metadata'],
-                'url': tile['url'],
+                'url': tile.get('provider_url_redacted') or redact_provider_url(tile.get('url')),
                 'id': tile.get('id', -1),
                 'selected': True
             })
@@ -1937,14 +1946,24 @@ def save_api_keys():
 
     validation_results = {}
     if merged_google and not ts_config.is_placeholder(merged_google):
-        validation_results['google'] = ts_config.validate_api_key('google', merged_google)
-        if not validation_results['google']['valid']:
-            return jsonify(validation_results['google']), 400
+        try:
+            validation_results['google'] = ts_config.validate_api_key('google', merged_google)
+        except NetworkError as error:
+            validation_results['google'] = {
+                **error.to_dict(),
+                'valid': False,
+                'provider': 'google',
+            }
 
     if merged_azure and not ts_config.is_placeholder(merged_azure):
-        validation_results['azure'] = ts_config.validate_api_key('azure', merged_azure)
-        if not validation_results['azure']['valid']:
-            return jsonify(validation_results['azure']), 400
+        try:
+            validation_results['azure'] = ts_config.validate_api_key('azure', merged_azure)
+        except NetworkError as error:
+            validation_results['azure'] = {
+                **error.to_dict(),
+                'valid': False,
+                'provider': 'azure',
+            }
 
     if not validation_results:
         return jsonify({
@@ -1952,11 +1971,35 @@ def save_api_keys():
             'message': 'At least one valid API key is required to save configuration.'
         }), 400
 
+    valid_providers = {
+        provider for provider, result in validation_results.items()
+        if result.get('valid') is True
+    }
+    if not valid_providers:
+        return jsonify({
+            'success': False,
+            'message': 'At least one valid API key is required to save configuration.',
+            'validation_results': validation_results,
+        }), 400
+
+    if default_provider not in valid_providers:
+        return jsonify({
+            'success': False,
+            'message': (
+                f"The selected default provider ({default_provider}) did not validate. "
+                "Select a provider that validates successfully before saving."
+            ),
+            'default_map_provider': default_provider,
+            'validation_results': validation_results,
+        }), 400
+
     updates = {
-        'GOOGLE_API_KEY': merged_google,
-        'AZURE_MAPS_SUBSCRIPTION_KEY': merged_azure,
         'DEFAULT_MAP_PROVIDER': default_provider,
     }
+    if 'google' in valid_providers:
+        updates['GOOGLE_API_KEY'] = merged_google
+    if 'azure' in valid_providers:
+        updates['AZURE_MAPS_SUBSCRIPTION_KEY'] = merged_azure
 
     ts_config.update_env_file(updates)
     refresh_runtime_config()
@@ -1967,6 +2010,8 @@ def save_api_keys():
         'message': 'Configuration updated successfully.',
         'needs_setup': needs_setup,
         'default_map_provider': os.getenv('DEFAULT_MAP_PROVIDER', 'azure'),
+        'persisted_providers': sorted(valid_providers),
+        'validation_results': validation_results,
     })
 
 
@@ -1978,6 +2023,20 @@ def get_config_status():
     status['azure']['preview'] = _mask_key_preview(os.getenv('AZURE_MAPS_SUBSCRIPTION_KEY', ''))
     status['needs_setup'] = needs_setup
     return jsonify(status)
+
+
+@app.route('/api/config/tls-status', methods=['GET'])
+def get_provider_tls_status():
+    """Return provider TLS reachability status without using user API keys."""
+    requested_provider = request.args.get('provider')
+    if requested_provider:
+        provider = TowerScoutValidator.validate_provider(requested_provider)
+        return jsonify(ts_config.check_provider_tls_status(provider))
+
+    return jsonify({
+        'google': ts_config.check_provider_tls_status('google'),
+        'azure': ts_config.check_provider_tls_status('azure'),
+    })
 
 
 @app.route('/api/config/reset-session', methods=['POST'])
@@ -2220,6 +2279,17 @@ def map_proxy(provider, service):
     except ValidationError as e:
         api_logger.warning(f"Map proxy validation error: {e}")
         return jsonify({'error': str(e)}), 400
+    except NetworkError as e:
+        api_logger.warning(
+            "Map proxy network/provider error for %s/%s. category=%s",
+            provider,
+            service,
+            e.details.get("category"),
+        )
+        return jsonify(e.to_dict()), 502
+    except MapProviderError as e:
+        api_logger.warning("Map proxy provider error for %s/%s: %s", provider, service, e.message)
+        return jsonify(e.to_dict()), 502
     except Exception as e:
         api_logger.error(f"Map proxy error for {provider}/{service}: {e}")
         return jsonify({'error': f'Internal map proxy error for {provider}/{service}'}), 500
@@ -2237,8 +2307,6 @@ def _get_content_type(service):
 
 def _handle_google_proxy(service, params):
     """Handle Google Maps API proxying"""
-    import requests
-    
     if not google_api_key:
         raise Exception("Google API key not configured")
         
@@ -2258,24 +2326,33 @@ def _handle_google_proxy(service, params):
     else:
         raise Exception(f"Unknown Google service: {service}")
         
-    try:
-        response = requests.get(url, params=params, timeout=30)
-        maps_logger.info(f"Google API response: status={response.status_code}, size={len(response.content)} bytes")
-        
-        if response.status_code != 200:
-            maps_logger.error(f"Google API error: {response.status_code} - {response.text[:200]}...")
-            raise Exception(f"Google API returned status {response.status_code}: {response.text}")
-        
-        return response.content
-    except requests.RequestException as e:
-        maps_logger.error(f"Google API network error: {e}")
-        raise Exception(f"Google API network error: {e}")
+    response = provider_get(
+        'google',
+        url,
+        params=params,
+        timeout=30,
+        purpose=f"Google Maps proxy {service}",
+    )
+    maps_logger.info("Google API response: status=%s, size=%s bytes", response.status_code, len(response.content))
+
+    if response.status_code != 200:
+        category = classify_provider_response('google', response)
+        maps_logger.error("Google API error: status=%s category=%s", response.status_code, category)
+        raise NetworkError(
+            "Google Maps proxy request returned a non-success status",
+            url=redact_provider_url(url, params),
+            details={
+                "provider": "google",
+                "category": category,
+                "status_code": response.status_code,
+            },
+        )
+
+    return response.content
 
 
 def _handle_azure_proxy(service, params):
     """Handle Azure Maps API proxying with secure authentication and comprehensive error handling"""
-    import requests
-    
     if not azure_api_key:
         raise Exception("Azure Maps API key not configured")
         
@@ -2329,45 +2406,50 @@ def _handle_azure_proxy(service, params):
     else:
         raise Exception(f"Unknown Azure service: {service}")
         
-    try:
-        # Make API request with timeout and proper error handling
-        response = requests.get(url, params=search_params, timeout=30)
-        maps_logger.info(f"Azure API response: status={response.status_code}, size={len(response.content)} bytes")
-        
-        # Handle specific Azure API error codes
-        if response.status_code == 401:
-            maps_logger.error("Azure API authentication failed - check subscription key validity")
-            raise Exception("Azure Maps authentication failed: Invalid or expired subscription key")
-        elif response.status_code == 403:
-            maps_logger.error("Azure API forbidden - check subscription key permissions")
-            raise Exception("Azure Maps access denied: Subscription key lacks required permissions for this service")
-        elif response.status_code == 429:
-            maps_logger.error("Azure API rate limit exceeded")
-            raise Exception("Azure Maps rate limit exceeded: Please wait before making more requests")
-        elif response.status_code == 404 and service == 'tiles':
-            maps_logger.warning(f"Azure tile not found: zoom={search_params.get('zoom')}, x={search_params.get('x')}, y={search_params.get('y')}")
-            raise Exception("Requested map tile not available at this zoom level or location")
-        elif response.status_code != 200:
-            error_text = response.text[:200] if response.text else "Unknown error"
-            maps_logger.error(f"Azure API error {response.status_code}: {error_text}...")
-            raise Exception(f"Azure API returned status {response.status_code}: {error_text}")
-        
-        # Validate response content
-        if len(response.content) == 0:
-            maps_logger.warning(f"Azure API returned empty response for {service}")
-            raise Exception("Azure API returned empty response")
-            
-        return response.content
-        
-    except requests.Timeout:
-        maps_logger.error("Azure API request timeout")
-        raise Exception("Azure Maps request timeout: Service temporarily unavailable")
-    except requests.ConnectionError as e:
-        maps_logger.error(f"Azure API connection error: {e}")
-        raise Exception("Azure Maps connection failed: Please check internet connectivity")
-    except requests.RequestException as e:
-        maps_logger.error(f"Azure API network error: {e}")
-        raise Exception(f"Azure Maps network error: {e}")
+    response = provider_get(
+        'azure',
+        url,
+        params=search_params,
+        timeout=30,
+        purpose=f"Azure Maps proxy {service}",
+    )
+    maps_logger.info("Azure API response: status=%s, size=%s bytes", response.status_code, len(response.content))
+
+    if response.status_code == 404 and service == 'tiles':
+        maps_logger.warning(
+            "Azure tile not found: zoom=%s, x=%s, y=%s",
+            search_params.get('zoom'),
+            search_params.get('x'),
+            search_params.get('y'),
+        )
+        raise MapProviderError(
+            "Requested map tile is not available",
+            provider="azure",
+            api_response_code=response.status_code,
+            user_message="Requested map tile is not available at this zoom level or location.",
+        )
+    if response.status_code != 200:
+        category = classify_provider_response('azure', response)
+        maps_logger.error("Azure API error: status=%s category=%s", response.status_code, category)
+        raise NetworkError(
+            "Azure Maps proxy request returned a non-success status",
+            url=redact_provider_url(url, search_params),
+            details={
+                "provider": "azure",
+                "category": category,
+                "status_code": response.status_code,
+            },
+        )
+
+    if len(response.content) == 0:
+        maps_logger.warning("Azure API returned empty response for %s", service)
+        raise MapProviderError(
+            "Azure Maps returned an empty response",
+            provider="azure",
+            user_message="Azure Maps returned an empty response.",
+        )
+
+    return response.content
 
 # zipcode boundary lookup
 
@@ -2828,7 +2910,7 @@ def make_persistable_tile_results(tiles):
         'labelfilename': tile['filename'][0:-4]+".txt",
         'detections':tile['detections'],
         'metadata':tile['metadata'],
-        'url':tile['url'],
+        'url': tile.get('provider_url_redacted') or redact_provider_url(tile.get('url')),
         'index':tile['id'],
     } for tile in tiles]
 

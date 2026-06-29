@@ -1,8 +1,8 @@
 # TowerScout Project Overview
 
-**Applies to**: Current V1 release-candidate package path after RC5 package
-hardening, unless release notes say otherwise
-**Last reviewed**: 2026-06-16
+**Applies to**: Current V1 release-candidate package path through the RC7
+provider TLS repair baseline, unless release notes say otherwise
+**Last reviewed**: 2026-06-29
 **Audience**: Pilot users, support leads, and release reviewers
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
 12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are

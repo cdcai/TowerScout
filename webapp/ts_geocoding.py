@@ -30,7 +30,8 @@ from flask import has_request_context, session
 
 from ts_errors import TowerScoutError, ConfigurationError, NetworkError
 from ts_logging import get_api_logger
-from ts_tls import INSECURE_TLS_ENV_VAR, tls_verification_enabled, validate_configured_tls_bundle
+from ts_provider_http import PROVIDER_HTTP_ERROR, provider_get, response_redacted_url
+from ts_tls import INSECURE_TLS_ENV_VAR, tls_verification_enabled
 
 
 class GeocodingProvider(Enum):
@@ -164,33 +165,15 @@ class GeocodingService:
                 INSECURE_TLS_ENV_VAR,
             )
 
-    def _request(self, url: str, params: Dict[str, Any]) -> requests.Response:
-        if self.verify_tls:
-            validate_configured_tls_bundle()
-
-        try:
-            return requests.get(
-                url,
-                params=params,
-                timeout=10,
-                verify=self.verify_tls,
-            )
-        except requests.RequestException:
-            raise
-        except OSError as exc:
-            raise NetworkError(
-                "Configured TLS CA bundle could not be used for geocoding request",
-                user_message=(
-                    "The configured TLS CA bundle could not be used. "
-                    "Run scripts/import-tls-ca.cmd for the selected Docker or Podman engine, "
-                    "or update REQUESTS_CA_BUNDLE and SSL_CERT_FILE to a valid certificate bundle."
-                ),
-                details={
-                    "category": "tls_ca_bundle",
-                    "support_action": "Run scripts/import-tls-ca.cmd for the selected container engine.",
-                },
-                cause=exc,
-            ) from exc
+    def _request(self, provider: GeocodingProvider, url: str, params: Dict[str, Any]) -> requests.Response:
+        provider_name = "azure" if provider == GeocodingProvider.AZURE_MAPS else "google"
+        return provider_get(
+            provider_name,
+            url,
+            params=params,
+            timeout=10,
+            purpose="geocoding request",
+        )
 
     def _track_request(self, provider: GeocodingProvider, success: bool):
         """Update request counters only when a Flask request context exists."""
@@ -290,7 +273,7 @@ class GeocodingService:
             }
             
             self.logger.debug(f"Azure Maps geocoding request: {lat}, {lng}")
-            response = self._request(url, params)
+            response = self._request(GeocodingProvider.AZURE_MAPS, url, params)
             response.raise_for_status()
             
             data = response.json()
@@ -329,12 +312,18 @@ class GeocodingService:
         except NetworkError:
             raise
         except requests.RequestException as e:
-            self.logger.error(f"Azure Maps API error: {e}")
-            # NetworkError accepts url and timeout, not provider/coordinates
+            status_code = getattr(getattr(e, "response", None), "status_code", None)
+            self.logger.error("Azure Maps API error during geocoding. status=%s", status_code)
             raise NetworkError(
-                f"Azure Maps API request failed: {e}",
-                url=f"https://atlas.microsoft.com/search/address/reverse/json?query={lat},{lng}"
-            )
+                "Azure Maps API request failed",
+                url=response_redacted_url(getattr(e, "response", None)),
+                cause=e,
+                details={
+                    "provider": "azure",
+                    "category": PROVIDER_HTTP_ERROR,
+                    "status_code": status_code,
+                },
+            ) from e
         except Exception as e:
             self.logger.error(f"Azure Maps processing error: {e}")
             raise GeocodingError(
@@ -365,7 +354,7 @@ class GeocodingService:
             }
             
             self.logger.debug(f"Google Maps geocoding request: {lat}, {lng}")
-            response = self._request(url, params)
+            response = self._request(GeocodingProvider.GOOGLE_MAPS, url, params)
             response.raise_for_status()
             
             data = response.json()
@@ -406,12 +395,18 @@ class GeocodingService:
         except NetworkError:
             raise
         except requests.RequestException as e:
-            self.logger.error(f"Google Maps API error: {e}")
-            # NetworkError accepts url and timeout, not provider/coordinates
+            status_code = getattr(getattr(e, "response", None), "status_code", None)
+            self.logger.error("Google Maps API error during geocoding. status=%s", status_code)
             raise NetworkError(
-                f"Google Maps API request failed: {e}",
-                url=f"https://maps.googleapis.com/maps/api/geocode/json?latlng={lat},{lng}"
-            )
+                "Google Maps API request failed",
+                url=response_redacted_url(getattr(e, "response", None)),
+                cause=e,
+                details={
+                    "provider": "google",
+                    "category": PROVIDER_HTTP_ERROR,
+                    "status_code": status_code,
+                },
+            ) from e
         except Exception as e:
             self.logger.error(f"Google Maps processing error: {e}")
             raise GeocodingError(
@@ -438,22 +433,6 @@ class GeocodingService:
             GeocodingError: If all providers fail
         """
         fallback_provider = self.providers[0] if self.providers else GeocodingProvider.AZURE_MAPS
-        if self.verify_tls:
-            try:
-                validate_configured_tls_bundle()
-            except NetworkError as e:
-                self.logger.warning(
-                    "Geocoding skipped because TLS CA bundle configuration is invalid: %s",
-                    e.user_message,
-                )
-                return GeocodingResult(
-                    address="",
-                    provider=fallback_provider,
-                    confidence=0.0,
-                    coordinates=(lat, lng),
-                    success=False,
-                    error_message=e.user_message or str(e),
-                )
 
         # Check rate limits
         if not self._check_rate_limit():
@@ -492,9 +471,13 @@ class GeocodingService:
                     continue
             
             except NetworkError as e:
-                self.logger.warning("Provider %s failed: %s", provider.value, e)
+                self.logger.warning(
+                    "Provider %s failed. category=%s",
+                    provider.value,
+                    e.details.get("category"),
+                )
                 last_error_message = e.user_message or str(e)
-                if e.details.get("category") == "tls_ca_bundle":
+                if e.details.get("category") in {"tls_bundle_missing", "tls_bundle_unusable", "tls_ca_untrusted"}:
                     return GeocodingResult(
                         address="",
                         provider=provider,
@@ -533,16 +516,6 @@ class GeocodingService:
         Returns:
             List of geocoding results (may be empty if no results found)
         """
-        if self.verify_tls:
-            try:
-                validate_configured_tls_bundle()
-            except NetworkError as e:
-                self.logger.warning(
-                    "Forward geocoding skipped because TLS CA bundle configuration is invalid: %s",
-                    e.user_message,
-                )
-                return []
-
         self.logger.info(f"Forward geocoding query: {query[:50]}... (preferred: {preferred_provider})")
         
         # Determine provider order based on preference
@@ -589,7 +562,7 @@ class GeocodingService:
                 'typeahead': 'true'
             }
             
-            response = self._request(url, params)
+            response = self._request(GeocodingProvider.AZURE_MAPS, url, params)
             self._track_request(GeocodingProvider.AZURE_MAPS, response.status_code == 200)
             
             if response.status_code == 429:
@@ -623,7 +596,8 @@ class GeocodingService:
             return results
             
         except requests.RequestException as e:
-            self.logger.warning(f"Azure Maps forward geocoding request failed: {e}")
+            status_code = getattr(getattr(e, "response", None), "status_code", None)
+            self.logger.warning("Azure Maps forward geocoding request failed. status=%s", status_code)
             return []
         except Exception as e:
             self.logger.error(f"Azure Maps forward geocoding error: {e}")
@@ -643,7 +617,7 @@ class GeocodingService:
                 'key': self.google_key
             }
             
-            response = self._request(url, params)
+            response = self._request(GeocodingProvider.GOOGLE_MAPS, url, params)
             self._track_request(GeocodingProvider.GOOGLE_MAPS, response.status_code == 200)
             
             if response.status_code == 429:
@@ -678,7 +652,8 @@ class GeocodingService:
             return results
             
         except requests.RequestException as e:
-            self.logger.warning(f"Google Maps forward geocoding request failed: {e}")
+            status_code = getattr(getattr(e, "response", None), "status_code", None)
+            self.logger.warning("Google Maps forward geocoding request failed. status=%s", status_code)
             return []
         except Exception as e:
             self.logger.error(f"Google Maps forward geocoding error: {e}")

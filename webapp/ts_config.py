@@ -26,7 +26,18 @@ from ts_tls import (
     TLS_CA_BUNDLE_ENV_VARS,
     TRUTHY_ENV_VALUES,
     allow_insecure_tls,
-    configured_tls_bundle_error,
+)
+from ts_provider_http import (
+    INVALID_PROVIDER_KEY,
+    PROVIDER_API_NOT_AUTHORIZED,
+    PROVIDER_HTTP_ERROR,
+    TLS_OK,
+    classify_provider_response,
+    provider_get,
+    provider_repair_command,
+    provider_response_summary,
+    provider_support_action,
+    response_tls_verification_bypassed,
 )
 from ts_validation import TowerScoutValidator, ValidationError as InputValidationError
 
@@ -198,37 +209,18 @@ def _provider_display_name(provider: str) -> str:
     return PROVIDER_DISPLAY_NAMES.get(provider, provider.title())
 
 
-def _configured_tls_bundle_error() -> NetworkError | None:
-    return configured_tls_bundle_error()
-
-
-def _validation_get(url: str, params: Dict[str, Any]) -> requests.Response:
-    verify_tls = not _allow_insecure_tls()
-    if verify_tls:
-        bundle_error = _configured_tls_bundle_error()
-        if bundle_error is not None:
-            raise bundle_error
-
-        response = requests.get(
-            url,
-            params=params,
-            timeout=VALIDATION_TIMEOUT_SECONDS,
-        )
-        setattr(response, "_tls_verification_bypassed", False)
-        return response
-
-    response = requests.get(
+def _validation_get(provider: str, url: str, params: Dict[str, Any]) -> requests.Response:
+    return provider_get(
+        provider,
         url,
         params=params,
         timeout=VALIDATION_TIMEOUT_SECONDS,
-        verify=False,
+        purpose="API key validation",
     )
-    setattr(response, "_tls_verification_bypassed", True)
-    return response
 
 
 def _apply_tls_warning(result: Dict[str, Any], response: requests.Response) -> Dict[str, Any]:
-    if getattr(response, "_tls_verification_bypassed", False):
+    if response_tls_verification_bypassed(response):
         result["warning"] = (
             "TLS certificate verification is disabled because "
             f"{INSECURE_TLS_ENV_VAR}=1 is enabled in the local environment."
@@ -237,8 +229,36 @@ def _apply_tls_warning(result: Dict[str, Any], response: requests.Response) -> D
     return result
 
 
+def _validation_result(
+    response: requests.Response,
+    *,
+    provider: str,
+    valid: bool,
+    message: str,
+    category: str,
+) -> Dict[str, Any]:
+    result: Dict[str, Any] = {
+        "valid": valid,
+        "message": message,
+        "category": category,
+        "status_code": response.status_code,
+    }
+    summary = provider_response_summary(response)
+    if summary.get("url"):
+        result["provider_url"] = summary["url"]
+    support_action = provider_support_action(category, provider)
+    if support_action:
+        result["support_action"] = support_action
+    if category in {INVALID_PROVIDER_KEY, PROVIDER_API_NOT_AUTHORIZED}:
+        result["repair_command"] = None
+    elif support_action:
+        result["repair_command"] = provider_repair_command(provider)
+    return _apply_tls_warning(result, response)
+
+
 def _validate_google_key(key: str) -> Dict[str, Any]:
     static_response = _validation_get(
+        "google",
         "https://maps.googleapis.com/maps/api/staticmap",
         {
             "center": "0,0",
@@ -249,12 +269,17 @@ def _validate_google_key(key: str) -> Dict[str, Any]:
     )
 
     if static_response.status_code != 200:
-        return _apply_tls_warning({
-            "valid": False,
-            "message": f"Google Maps validation failed with status {static_response.status_code}."
-        }, static_response)
+        category = classify_provider_response("google", static_response)
+        return _validation_result(
+            static_response,
+            provider="google",
+            valid=False,
+            category=category,
+            message=f"Google Maps validation failed with status {static_response.status_code}.",
+        )
 
     geocode_response = _validation_get(
+        "google",
         "https://maps.googleapis.com/maps/api/geocode/json",
         {
             "latlng": "40.714956,-74.015074",
@@ -265,47 +290,63 @@ def _validate_google_key(key: str) -> Dict[str, Any]:
     )
 
     if geocode_response.status_code != 200:
-        return _apply_tls_warning({
-            "valid": False,
-            "message": (
+        category = classify_provider_response("google", geocode_response)
+        return _validation_result(
+            geocode_response,
+            provider="google",
+            valid=False,
+            category=category,
+            message=(
                 "Google Maps key passed Static Maps validation but Geocoding API "
                 f"validation failed with status {geocode_response.status_code}."
-            )
-        }, geocode_response)
+            ),
+        )
 
     try:
         geocode_data = geocode_response.json()
     except ValueError:
-        return _apply_tls_warning({
-            "valid": False,
-            "message": "Google Geocoding validation returned invalid JSON."
-        }, geocode_response)
-
-    geocode_status = geocode_data.get("status")
-    if geocode_status == "OK":
-        return _apply_tls_warning(
-            {
-                "valid": True,
-                "message": "Google Maps API key validated successfully for map and geocoding access."
-            },
-            geocode_response
+        return _validation_result(
+            geocode_response,
+            provider="google",
+            valid=False,
+            category=PROVIDER_HTTP_ERROR,
+            message="Google Geocoding validation returned invalid JSON.",
         )
 
-    geocode_error = geocode_data.get("error_message") or geocode_status or "Unknown geocoding error"
-    return _apply_tls_warning(
-        {
-            "valid": False,
-            "message": (
-                "Google Maps key is not authorized for the Geocoding API. "
-                f"Google returned: {geocode_error}"
-            )
-        },
-        geocode_response
+    category = classify_provider_response("google", geocode_response, body_json=geocode_data)
+    if category == TLS_OK:
+        return _validation_result(
+            geocode_response,
+            provider="google",
+            valid=True,
+            category=category,
+            message="Google Maps API key validated successfully for map and geocoding access.",
+        )
+
+    geocode_status = geocode_data.get("status") or "UNKNOWN"
+    if category == PROVIDER_API_NOT_AUTHORIZED:
+        message = (
+            "Google Maps key reached Google but is not authorized for one or more required APIs."
+        )
+    elif category == INVALID_PROVIDER_KEY:
+        message = "Google Maps key reached Google but was rejected."
+    else:
+        message = (
+            "Google Maps key is not authorized for the Geocoding API. "
+            f"Google returned status {geocode_status}."
+        )
+    return _validation_result(
+        geocode_response,
+        provider="google",
+        valid=False,
+        category=category,
+        message=message,
     )
 
 
 def _validate_azure_key(key: str) -> Dict[str, Any]:
     attribution_response = _validation_get(
+        "azure",
         "https://atlas.microsoft.com/map/attribution",
         {
             "api-version": "2024-04-01",
@@ -314,12 +355,16 @@ def _validate_azure_key(key: str) -> Dict[str, Any]:
     )
 
     if attribution_response.status_code == 200:
-        return _apply_tls_warning(
-            {"valid": True, "message": "Azure Maps subscription key validated successfully."},
-            attribution_response
+        return _validation_result(
+            attribution_response,
+            provider="azure",
+            valid=True,
+            category=TLS_OK,
+            message="Azure Maps subscription key validated successfully.",
         )
 
     search_response = _validation_get(
+        "azure",
         "https://atlas.microsoft.com/search/address/json",
         {
             "api-version": "1.0",
@@ -331,100 +376,97 @@ def _validate_azure_key(key: str) -> Dict[str, Any]:
     )
 
     if search_response.status_code == 200:
-        return _apply_tls_warning(
-            {
-                "valid": True,
-                "message": "Azure Maps subscription key validated successfully."
-            },
-            search_response
+        return _validation_result(
+            search_response,
+            provider="azure",
+            valid=True,
+            category=TLS_OK,
+            message="Azure Maps subscription key validated successfully.",
         )
 
-    return _apply_tls_warning({
-        "valid": False,
-        "message": (
+    category = classify_provider_response("azure", search_response)
+    return _validation_result(
+        search_response,
+        provider="azure",
+        valid=False,
+        category=category,
+        message=(
             "Azure Maps validation failed with statuses "
             f"{attribution_response.status_code} (attribution) and {search_response.status_code} (search)."
-        )
-    }, search_response)
+        ),
+    )
 
 
 def validate_api_key(provider: str, key: str) -> Dict[str, Any]:
     validated_provider = validate_provider_name(provider)
     sanitized_key = sanitize_api_key(key, f"{validated_provider}_api_key")
 
-    try:
-        result = (
-            _validate_google_key(sanitized_key)
-            if validated_provider == "google"
-            else _validate_azure_key(sanitized_key)
-        )
-    except requests.Timeout as exc:
-        provider_label = _provider_display_name(validated_provider)
-        raise NetworkError(
-            f"{validated_provider} validation request timed out",
-            timeout=VALIDATION_TIMEOUT_SECONDS,
-            cause=exc,
-            user_message=(
-                f"TowerScout timed out while validating the {provider_label} key. "
-                "Check internet or proxy access from the local TowerScout runtime, then try again."
-            ),
-            details={
-                "provider": validated_provider,
-                "category": "provider_validation_timeout",
-                "support_action": "Confirm local/container network access to the provider validation endpoints.",
-            },
-        ) from exc
-    except requests.exceptions.SSLError as exc:
-        provider_label = _provider_display_name(validated_provider)
-        raise NetworkError(
-            f"{validated_provider} validation request failed TLS verification",
-            cause=exc,
-            user_message=(
-                f"TowerScout could not verify the {provider_label} TLS certificate. "
-                "If your network uses TLS inspection, ask support to run scripts/import-tls-ca.cmd "
-                "for the selected Docker or Podman engine."
-            ),
-            details={
-                "provider": validated_provider,
-                "category": "provider_validation_tls",
-                "support_action": "Run scripts/import-tls-ca.cmd for the selected container engine.",
-            },
-        ) from exc
-    except requests.RequestException as exc:
-        provider_label = _provider_display_name(validated_provider)
-        raise NetworkError(
-            f"{validated_provider} validation request failed",
-            cause=exc,
-            user_message=(
-                f"TowerScout could not reach {provider_label} from the local server. "
-                "Check internet or proxy access, then try again. If this is a managed network, "
-                "contact support without sending API keys or raw network traces."
-            ),
-            details={
-                "provider": validated_provider,
-                "category": "provider_validation_network",
-                "support_action": "Confirm local/container network access to the provider validation endpoints.",
-            },
-        ) from exc
-    except OSError as exc:
-        raise NetworkError(
-            f"{validated_provider} validation request failed because TLS configuration is invalid",
-            cause=exc,
-            user_message=(
-                "The configured TLS CA bundle could not be used. "
-                "Run scripts/import-tls-ca.cmd for the selected Docker or Podman engine, "
-                "or update REQUESTS_CA_BUNDLE and SSL_CERT_FILE to a valid certificate bundle."
-            ),
-            details={
-                "provider": validated_provider,
-                "category": "provider_validation_tls",
-                "support_action": "Run scripts/import-tls-ca.cmd for the selected container engine.",
-            },
-        ) from exc
+    result = (
+        _validate_google_key(sanitized_key)
+        if validated_provider == "google"
+        else _validate_azure_key(sanitized_key)
+    )
 
     result["provider"] = validated_provider
     result["tested_at"] = datetime.utcnow().isoformat() + "Z"
     return result
+
+
+def check_provider_tls_status(provider: str) -> Dict[str, Any]:
+    """Check provider TLS reachability without using a user API key."""
+
+    validated_provider = validate_provider_name(provider)
+    try:
+        if validated_provider == "google":
+            response = _validation_get(
+                "google",
+                "https://maps.googleapis.com/maps/api/geocode/json",
+                {"latlng": "0,0"},
+            )
+            try:
+                body_json = response.json()
+            except ValueError:
+                body_json = None
+            category = classify_provider_response(
+                "google",
+                response,
+                body_json=body_json,
+                auth_failure_is_tls_ok=True,
+            )
+        else:
+            response = _validation_get(
+                "azure",
+                "https://atlas.microsoft.com/map/attribution",
+                {"api-version": "2024-04-01"},
+            )
+            category = classify_provider_response(
+                "azure",
+                response,
+                auth_failure_is_tls_ok=True,
+            )
+
+        result = {
+            "provider": validated_provider,
+            "reachable": category == TLS_OK,
+            "category": category,
+            "status_code": response.status_code,
+            "tested_at": datetime.utcnow().isoformat() + "Z",
+        }
+        if category == TLS_OK:
+            result["message"] = f"{_provider_display_name(validated_provider)} TLS reachability check succeeded."
+        else:
+            result["message"] = f"{_provider_display_name(validated_provider)} TLS reachability check returned {category}."
+        return _apply_tls_warning(result, response)
+    except NetworkError as error:
+        payload = error.to_dict()
+        return {
+            "provider": validated_provider,
+            "reachable": False,
+            "category": payload.get("details", {}).get("category"),
+            "message": payload.get("message"),
+            "details": payload.get("details", {}),
+            "tested_at": datetime.utcnow().isoformat() + "Z",
+        }
 
 
 def _read_env_lines(env_path: Path) -> list[str]:

@@ -13,10 +13,62 @@
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      throw new Error(data.message || data.error || `Request failed with status ${response.status}`);
+      const error = new Error(data.message || data.error || `Request failed with status ${response.status}`);
+      error.status = response.status;
+      error.payload = data;
+      error.details = data.details || {};
+      error.category = data.category || (data.details && data.details.category);
+      throw error;
     }
 
     return data;
+  }
+
+  function providerFailureMessage(displayName, payload) {
+    if (!payload) {
+      return '';
+    }
+
+    const details = payload.details || {};
+    const message = payload.message || payload.technical_message || payload.error || 'Validation failed.';
+    const category = payload.category || details.category;
+    const supportAction = payload.support_action || details.support_action;
+    const repairCommand = payload.repair_command || details.repair_command;
+    const parts = [`${displayName}: ${message}`];
+    if (category) {
+      parts.push(`Category: ${category}.`);
+    }
+    if (supportAction) {
+      parts.push(supportAction);
+    }
+    if (repairCommand && (!supportAction || !supportAction.includes(repairCommand))) {
+      parts.push(`Suggested command: ${repairCommand}`);
+    }
+    return parts.join(' ');
+  }
+
+  function updateIndicatorsFromValidation(validationResults = {}) {
+    if (validationResults.google) {
+      updateIndicator('settings_google_status', validationResults.google.valid === true);
+    }
+    if (validationResults.azure) {
+      updateIndicator('settings_azure_status', validationResults.azure.valid === true);
+    }
+  }
+
+  function saveFailureMessage(error) {
+    const payload = error.payload || {};
+    const validationResults = payload.validation_results || {};
+    const messages = [];
+
+    if (validationResults.google && validationResults.google.valid !== true) {
+      messages.push(providerFailureMessage('Google Maps', validationResults.google));
+    }
+    if (validationResults.azure && validationResults.azure.valid !== true) {
+      messages.push(providerFailureMessage('Azure Maps', validationResults.azure));
+    }
+
+    return [payload.message || error.message, ...messages].filter(Boolean).join(' ');
   }
 
   function getSettingsElement() {
@@ -144,25 +196,7 @@
     const state = readCurrentState();
 
     try {
-      if (state.google) {
-        const googleResult = await fetchJson('/api/config/validate-key', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ provider: 'google', key: state.google })
-        });
-        updateIndicator('settings_google_status', googleResult.valid === true);
-      }
-
-      if (state.azure) {
-        const azureResult = await fetchJson('/api/config/validate-key', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ provider: 'azure', key: state.azure })
-        });
-        updateIndicator('settings_azure_status', azureResult.valid === true);
-      }
-
-      await fetchJson('/api/config/save-keys', {
+      const result = await fetchJson('/api/config/save-keys', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -171,13 +205,28 @@
           default_map_provider: state.defaultProvider
         })
       });
+      updateIndicatorsFromValidation(result.validation_results);
 
       originalState = { ...state };
       setDirty(false);
-      TowerScoutErrorHandler.showUserNotification('Settings saved successfully.', 'success');
+      const failedGoogle = result.validation_results && result.validation_results.google && result.validation_results.google.valid !== true;
+      const failedAzure = result.validation_results && result.validation_results.azure && result.validation_results.azure.valid !== true;
+      if (failedGoogle || failedAzure) {
+        const messages = [];
+        if (failedGoogle) {
+          messages.push(providerFailureMessage('Google Maps', result.validation_results.google));
+        }
+        if (failedAzure) {
+          messages.push(providerFailureMessage('Azure Maps', result.validation_results.azure));
+        }
+        TowerScoutErrorHandler.showUserNotification(`Settings saved. ${messages.join(' ')}`, 'info');
+      } else {
+        TowerScoutErrorHandler.showUserNotification('Settings saved successfully.', 'success');
+      }
       await loadStatus();
     } catch (error) {
-      TowerScoutErrorHandler.showUserNotification(error.message, 'error');
+      updateIndicatorsFromValidation((error.payload && error.payload.validation_results) || {});
+      TowerScoutErrorHandler.showUserNotification(saveFailureMessage(error), 'error');
     }
   }
 

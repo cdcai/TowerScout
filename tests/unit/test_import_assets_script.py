@@ -1,9 +1,12 @@
 from pathlib import Path
+import re
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 IMPORT_ASSETS_SCRIPT = REPO_ROOT / "scripts" / "import-assets.ps1"
 IMPORT_TLS_CA_SCRIPT = REPO_ROOT / "scripts" / "import-tls-ca.ps1"
+REPAIR_PROVIDER_TLS_SCRIPT = REPO_ROOT / "scripts" / "repair-provider-tls.ps1"
+REPAIR_PROVIDER_TLS_CMD = REPO_ROOT / "scripts" / "repair-provider-tls.cmd"
 START_SCRIPT = REPO_ROOT / "scripts" / "start.ps1"
 
 
@@ -57,4 +60,43 @@ def test_tls_ca_import_persists_bundle_paths_in_env_file():
     assert "Updated .env so future TowerScout starts use the combined CA bundle." in script
     assert "Restart TowerScout for the updated TLS settings to take effect." in script
     assert "TrimStart().StartsWith(\"#\")" in script
+    assert "_tls_body" not in script
+    assert "_tls_category" in script
+    assert "except requests.exceptions.SSLError" in script
+    assert "google_tls_category=tls_certificate_error" in script
+    assert "ok = r.status_code in (200, 400, 401, 403)" in script
+    assert "function Invoke-TowerScoutTlsProviderVerification" in script
+    assert "Copy-TowerScoutFileIntoContainer -LocalPath $localVerifyPath" in script
+    assert "/tmp/towerscout-tls-verify-$verifyId.py" in script
+    assert '"python",' in script
+    assert "$containerVerifyPath" in script
+    assert not re.search(r'"python",\s*"-c"', script)
+    assert "Provider TLS verification failed; .env was not updated." in script
     assert verify < persist < imported
+
+
+def test_provider_tls_repair_wrapper_is_dry_run_first_and_delegates_to_importer():
+    script = REPAIR_PROVIDER_TLS_SCRIPT.read_text(encoding="utf-8")
+    cmd = REPAIR_PROVIDER_TLS_CMD.read_text(encoding="utf-8")
+
+    assert "[switch] $Apply" in script
+    assert "Dry run only" in script
+    assert "Get-TowerScoutRemoteCertificateChain" in script
+    assert "Select-TowerScoutTlsCaCandidate" in script
+    assert "$callbackChainElements" in script
+    assert "X509Certificate2]::new($chainCertificate.RawData)" in script
+    assert "return $callbackChainElements" in script
+    assert "if ($element.Index -eq 0)" in script
+    assert "Multiple CA candidates have the same score" in script
+    assert "Format-TowerScoutRepairCommand" in script
+    assert "scripts\\repair-provider-tls.cmd" in script
+    assert "scripts\\import-tls-ca.cmd" in script
+    assert "Join-Path $PSScriptRoot \"import-tls-ca.cmd\"" in script
+    assert "\"-Provider\", $Provider" in script
+    assert "\"-Gpu\", $Gpu" in script
+    assert "Support-sensitive local output" in script
+    assert "issuer={0}" in script
+    assert "Write-Host \"  $repairCommand\"" in script
+    assert "Write-Host \"  $importCommand -Apply\"" not in script
+    assert "No API keys or provider response bodies" in script
+    assert "repair-provider-tls.ps1" in cmd

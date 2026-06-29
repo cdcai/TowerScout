@@ -215,13 +215,45 @@ function Get-TowerScoutTlsVerificationScript {
     )
 
     if ($Provider -eq "azure") {
-        return "import requests; r=requests.get('https://atlas.microsoft.com/map/attribution', params={'api-version':'2024-04-01','subscription-key':'invalid'}, timeout=10); print('azure_tls_status=' + str(r.status_code)); print('azure_tls_body=' + r.text[:80].replace(chr(10), ' ')); raise SystemExit(0 if r.status_code in (200, 401, 403) else 1)"
+        return @'
+import requests
+try:
+    r = requests.get("https://atlas.microsoft.com/map/attribution", params={"api-version": "2024-04-01"}, timeout=10)
+    ok = r.status_code in (200, 400, 401, 403)
+    print("azure_tls_status=" + str(r.status_code))
+    print("azure_tls_category=" + ("tls_ok" if ok else "provider_http_error"))
+    raise SystemExit(0 if ok else 1)
+except requests.exceptions.SSLError:
+    print("azure_tls_status=unavailable")
+    print("azure_tls_category=tls_certificate_error")
+    raise SystemExit(1)
+except requests.exceptions.RequestException:
+    print("azure_tls_status=unavailable")
+    print("azure_tls_category=network_error")
+    raise SystemExit(1)
+'@
     }
 
-    return "import requests; r=requests.get('https://maps.googleapis.com/maps/api/geocode/json?address=test&key=invalid', timeout=10); print('google_tls_status=' + str(r.status_code)); print('google_tls_body=' + r.text[:80].replace(chr(10), ' ')); raise SystemExit(0 if r.status_code == 200 else 1)"
+    return @'
+import requests
+try:
+    r = requests.get("https://maps.googleapis.com/maps/api/geocode/json", params={"address": "test"}, timeout=10)
+    ok = r.status_code in (200, 400, 401, 403)
+    print("google_tls_status=" + str(r.status_code))
+    print("google_tls_category=" + ("tls_ok" if ok else "provider_http_error"))
+    raise SystemExit(0 if ok else 1)
+except requests.exceptions.SSLError:
+    print("google_tls_status=unavailable")
+    print("google_tls_category=tls_certificate_error")
+    raise SystemExit(1)
+except requests.exceptions.RequestException:
+    print("google_tls_status=unavailable")
+    print("google_tls_category=network_error")
+    raise SystemExit(1)
+'@
 }
 
-function Copy-TowerScoutCertificateIntoContainer {
+function Copy-TowerScoutFileIntoContainer {
     param(
         [Parameter(Mandatory = $true)]
         [string] $LocalPath,
@@ -269,6 +301,67 @@ function Copy-TowerScoutCertificateIntoContainer {
     $script:TowerScoutComposeExitCode = $LASTEXITCODE
 }
 
+function Invoke-TowerScoutTlsProviderVerification {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("google", "azure")]
+        [string] $Provider,
+
+        [Parameter(Mandatory = $true)]
+        [string] $ContainerBundlePath
+    )
+
+    $pythonVerify = Get-TowerScoutTlsVerificationScript -Provider $Provider
+    $verifyId = [Guid]::NewGuid().ToString("N")
+    $localVerifyPath = Join-Path ([System.IO.Path]::GetTempPath()) "towerscout-tls-verify-$verifyId.py"
+    $containerVerifyPath = "/tmp/towerscout-tls-verify-$verifyId.py"
+    $copiedVerifyScript = $false
+
+    Set-Content -LiteralPath $localVerifyPath -Value $pythonVerify -Encoding ASCII
+
+    try {
+        Copy-TowerScoutFileIntoContainer -LocalPath $localVerifyPath -ContainerPath $containerVerifyPath
+        if ($script:TowerScoutComposeExitCode -ne 0) {
+            return
+        }
+        $copiedVerifyScript = $true
+
+        Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @(
+            "exec",
+            "-T",
+            "towerscout",
+            "env",
+            "REQUESTS_CA_BUNDLE=$ContainerBundlePath",
+            "SSL_CERT_FILE=$ContainerBundlePath",
+            "python",
+            $containerVerifyPath
+        )
+    }
+    finally {
+        if (Test-Path -LiteralPath $localVerifyPath) {
+            Remove-Item -LiteralPath $localVerifyPath -Force
+        }
+
+        if ($copiedVerifyScript) {
+            $verificationExitCode = $script:TowerScoutComposeExitCode
+            try {
+                Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @(
+                    "exec",
+                    "-T",
+                    "towerscout",
+                    "rm",
+                    "-f",
+                    $containerVerifyPath
+                )
+            }
+            catch {
+                Write-Host "Warning: could not remove temporary TLS verification script from the container."
+            }
+            $script:TowerScoutComposeExitCode = $verificationExitCode
+        }
+    }
+}
+
 try {
     Write-Host "Starting TowerScout container so the persistent config volume is available..."
     Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @("up", "-d", "towerscout")
@@ -290,7 +383,7 @@ try {
     }
 
     Write-Host "Importing TLS CA certificate from $sourceDescription..."
-    Copy-TowerScoutCertificateIntoContainer -LocalPath $tempPem -ContainerPath $containerCertPath
+    Copy-TowerScoutFileIntoContainer -LocalPath $tempPem -ContainerPath $containerCertPath
     if ($script:TowerScoutComposeExitCode -ne 0) {
         exit $script:TowerScoutComposeExitCode
     }
@@ -314,20 +407,11 @@ try {
         Write-Host "Skipping remote TLS verification by request."
     }
     else {
-        $pythonVerify = Get-TowerScoutTlsVerificationScript -Provider $resolvedVerifyProvider
         Write-Host "Verifying $resolvedVerifyProvider TLS through the combined CA bundle..."
-        Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @(
-            "exec",
-            "-T",
-            "towerscout",
-            "env",
-            "REQUESTS_CA_BUNDLE=$containerBundlePath",
-            "SSL_CERT_FILE=$containerBundlePath",
-            "python",
-            "-c",
-            $pythonVerify
-        )
+        Invoke-TowerScoutTlsProviderVerification -Provider $resolvedVerifyProvider -ContainerBundlePath $containerBundlePath
         if ($script:TowerScoutComposeExitCode -ne 0) {
+            Write-Host "Provider TLS verification failed; .env was not updated."
+            Write-Host "Re-run scripts\repair-provider-tls.cmd in dry-run mode and use the selected CA, or provide a full PEM CA chain with -CertificatePath."
             exit $script:TowerScoutComposeExitCode
         }
     }

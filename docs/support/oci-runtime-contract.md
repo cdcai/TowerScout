@@ -113,12 +113,13 @@ The GitHub Release control package is assembled by `scripts/package-release.cmd`
 - Compose runtime configuration
 - optional Docker GPU and Podman GPU Compose overlays
 - `.env.example` with the selected image reference
-- Windows `.cmd` wrappers and PowerShell helpers for setup, bootstrap, start, stop, logs, status, asset import, and TLS CA import
+- Windows `.cmd` wrappers and PowerShell helpers for setup, bootstrap, start, stop, logs, status, asset import, guided provider TLS repair, and TLS CA import
 - top-level `setup-towerscout.cmd` first-setup helper that defaults to Docker Desktop and `-Gpu off`, discovers local release artifacts, verifies checksum sidecars, stages safe asset ZIPs, imports assets with hash verification, and then calls the launcher
 - `TOWERSCOUT_PILOT_MAX_TILES=100` by default for the first UAT package guard; support can override it for approved larger validation
 - top-level `bootstrap.cmd` support helper for explicit artifact paths and advanced validation
 - top-level `start.bat` launcher that starts Compose, polls `/api/readiness`, and opens the browser at `http://localhost:<port>` after the app shell is reachable
-- Quick Start, Package Guide, User Guide, Project Overview, and this runtime contract
+- Quick Start, Package Guide, User Guide, Project Overview, runtime-specific
+  Docker/Podman CPU/GPU user guides, and this runtime contract
 - the release asset bundle contract
 - `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.md`, `MODEL_LICENSES.md`, `DATA_LICENSES.md`, and `PROVIDER_TERMS.md`
 - `SOURCE.txt`, `SBOM.txt`, and `release-manifest.v1.json`
@@ -183,11 +184,13 @@ the configured pilot limit.
 
 Provider-key validation and provider API calls should verify TLS by default. Container deployments behind TLS-inspecting proxies or endpoint tools may need to provide a local CA bundle through the persistent config volume and set `REQUESTS_CA_BUNDLE` / `SSL_CERT_FILE` to the in-container PEM path.
 
-`scripts/import-tls-ca.cmd` can export a Windows certificate-store entry by thumbprint, include its Windows chain, copy it into `/app/webapp/config/certs/`, and build `/app/webapp/config/certs/towerscout-ca-bundle.pem` by appending the imported CA material to the container's default Debian CA bundle. After a successful import, the helper updates the release `.env` so both `REQUESTS_CA_BUNDLE` and `SSL_CERT_FILE` point at that combined bundle path. TowerScout must be restarted for the updated environment to take effect.
+`scripts/repair-provider-tls.cmd` is the preferred support entry point for managed-network provider TLS failures. Its default dry run inspects the Windows-observed Google or Azure TLS chain, excludes the provider leaf certificate, ranks CA candidates by conservative CA/trust-store evidence, stops on ambiguity, labels certificate details as local/support-sensitive, and prints the exact `-Apply` command when it finds one safe candidate. Apply mode delegates the trust mutation to `scripts/import-tls-ca.cmd`.
+
+`scripts/import-tls-ca.cmd` remains the lower-level mutation helper. It can export a Windows certificate-store entry by thumbprint, include its Windows chain, copy it into `/app/webapp/config/certs/`, and build `/app/webapp/config/certs/towerscout-ca-bundle.pem` by appending the imported CA material to the container's default Debian CA bundle. After a successful import, the helper updates the release `.env` so both `REQUESTS_CA_BUNDLE` and `SSL_CERT_FILE` point at that combined bundle path. TowerScout must be restarted for the updated environment to take effect.
 
 Docker and Podman use separate named volumes, so CA import must be run for the selected engine. If `.env` points at `/app/webapp/config/certs/towerscout-ca-bundle.pem` but that file is missing from the selected engine's config volume, provider-key validation will fail until the CA helper is run for that engine. `TASK-065` identified this as a supportability case that should return a clearer setup error instead of a generic internal server error.
 
-The CA import helper supports `-VerifyProvider auto|google|azure|none`. `auto` follows `DEFAULT_MAP_PROVIDER` when available and otherwise uses Google; `azure` avoids a Google-only verification assumption for Azure-first or Google-blocked sites; `none` builds the bundle without making a remote verification request.
+The guided repair helper supports `-Provider google|azure`, `-Engine auto|docker|podman`, and `-Gpu off|auto|on`, and forwards the selected engine/GPU profile to the import helper so the repaired config volume matches the runtime profile. The CA import helper supports `-VerifyProvider auto|google|azure|none`. `auto` follows `DEFAULT_MAP_PROVIDER` when available and otherwise uses Google; `azure` avoids a Google-only verification assumption for Azure-first or Google-blocked sites; `none` builds the bundle without making a remote verification request.
 
 `TOWERSCOUT_ALLOW_INSECURE_TLS=1` exists only as a local validation fallback for provider-key checks and should not be used as the normal release posture.
 

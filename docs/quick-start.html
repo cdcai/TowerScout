@@ -35,8 +35,8 @@
     <main class="doc-main">
       <section class="doc-section" id="metadata">
         <h2>Document Metadata</h2>
-        <p><strong>Applies to:</strong> Current V1 release-candidate package path after RC5 package hardening, unless release notes say otherwise.</p>
-        <p><strong>Last reviewed:</strong> 2026-06-16.</p>
+        <p><strong>Applies to:</strong> Current V1 release-candidate package path through the RC7 provider TLS repair baseline, unless release notes say otherwise.</p>
+        <p><strong>Last reviewed:</strong> 2026-06-29.</p>
         <p><strong>Audience:</strong> Pilot users and first-line support.</p>
         <p><strong>Runtime scope:</strong> The CPU Application Package is the normal path. The CUDA 12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are support-assigned paths after workstation-specific engine, Compose-provider, and NVIDIA validation.</p>
       </section>
@@ -126,7 +126,7 @@ readiness: setup_required</code></pre>
       <section class="doc-section" id="setup">
         <h2>Complete Setup</h2>
         <p>Use Setup Wizard or Settings to configure one valid Google Maps or Azure Maps key. Browser map SDK keys are client-visible, so the package expects site/user-owned restricted keys.</p>
-        <p>If Google or Azure validation fails even though the key is correct, and support sees <code>CERTIFICATE_VERIFY_FAILED</code> in container logs, support should run <code>.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint &lt;windows-certificate-thumbprint&gt; -VerifyProvider google</code>, then restart TowerScout. The helper stores the combined CA bundle in the selected engine's config volume and updates local <code>.env</code> so future starts use that bundle automatically.</p>
+        <p>If Google or Azure validation fails even though the key is correct, and support sees <code>CERTIFICATE_VERIFY_FAILED</code> in container logs, the Setup Wizard or Settings may show a suggested dry-run command that preserves the active engine and GPU mode. Support should run the guided TLS repair helper for the selected runtime, review the local support-sensitive dry-run output, then run the generated apply command and restart TowerScout. For Azure validation failures, support may use <code>-Provider azure</code>. The helper stores the combined CA bundle in the selected engine's config volume and updates local <code>.env</code> so future starts use that bundle automatically.</p>
       </section>
       <section class="doc-section" id="success">
         <h2>Confirm Success</h2>
@@ -199,11 +199,11 @@ readiness: setup_required</code></pre>
               <td><code>.\scripts\logs.cmd -Engine podman -Tail 200</code></td>
             </tr>
             <tr>
-              <td>TLS CA import if support asks</td>
-              <td><code>.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint &lt;windows-certificate-thumbprint&gt; -VerifyProvider google</code></td>
-              <td><code>.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint &lt;windows-certificate-thumbprint&gt; -VerifyProvider google</code></td>
-              <td><code>.\scripts\import-tls-ca.cmd -Engine podman -Thumbprint &lt;windows-certificate-thumbprint&gt; -VerifyProvider google</code></td>
-              <td><code>.\scripts\import-tls-ca.cmd -Engine podman -Thumbprint &lt;windows-certificate-thumbprint&gt; -VerifyProvider google</code></td>
+              <td>TLS CA repair if support asks</td>
+              <td><code>.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off</code></td>
+              <td><code>.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu auto</code> or <code>.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu on</code></td>
+              <td><code>.\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu off</code></td>
+              <td><code>.\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu on</code></td>
             </tr>
             <tr>
               <td>Manual asset import fallback</td>

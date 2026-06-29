@@ -70,6 +70,7 @@ The release package is expected to include:
 - `scripts/logs.cmd` / `scripts/logs.ps1`
 - `scripts/status.cmd` / `scripts/status.ps1`
 - `scripts/import-assets.cmd` / `scripts/import-assets.ps1`
+- `scripts/repair-provider-tls.cmd` / `scripts/repair-provider-tls.ps1`
 - `scripts/import-tls-ca.cmd` / `scripts/import-tls-ca.ps1`
 - `scripts/enable-podman-gpu.ps1`
 - `LICENSE`
@@ -84,7 +85,8 @@ The release package is expected to include:
 - `webapp/asset_manifest.v1.json`
 - `IMAGE.txt`
 - `SHA256SUMS.txt`
-- Quick Start, Package Guide, User Guide, Project Overview, and runtime-contract documentation
+- Quick Start, Package Guide, User Guide, Project Overview, runtime-specific
+  Docker/Podman CPU/GPU user guides, and runtime-contract documentation
 - release asset bundle contract documentation
 - a pinned GHCR image reference by digest
 
@@ -331,10 +333,18 @@ If provider key validation fails with "Could not reach the provider validation s
 
 If provider key validation returns an internal error and the logs mention an invalid or missing `REQUESTS_CA_BUNDLE` / `SSL_CERT_FILE` path, the selected runtime volume does not contain the CA bundle named in `.env`. This can happen when switching between Docker and Podman because each engine has its own named volumes. Re-run the CA import helper for the selected engine.
 
-Preferred fix: import the local root/intermediate CA into the persistent config volume and use a combined bundle that keeps the container's normal Debian CA roots. The helper updates the local `.env` after a successful import so future starts use the combined bundle automatically:
+Preferred fix: run the guided provider TLS repair helper first. The dry run
+inspects the Windows-observed provider TLS chain, avoids the provider leaf
+certificate, ranks CA candidates, stops on ambiguity, and prints the exact
+apply command when it finds one safe candidate. After apply, the lower-level
+import helper copies the selected root/intermediate CA into the persistent
+config volume and uses a combined bundle that keeps the container's normal
+Debian CA roots. The helper updates the local `.env` after a successful import
+so future starts use the combined bundle automatically:
 
 ```powershell
-.\scripts\import-tls-ca.cmd -Thumbprint <windows-certificate-thumbprint>
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Apply
 .\scripts\stop.cmd -Engine docker
 .\start.bat -Engine docker -Gpu off
 ```
@@ -342,23 +352,32 @@ Preferred fix: import the local root/intermediate CA into the persistent config 
 For Podman:
 
 ```powershell
-.\scripts\import-tls-ca.cmd -Engine podman -Thumbprint <windows-certificate-thumbprint>
+.\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu off
+.\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu off -Apply
 .\scripts\stop.cmd -Engine podman
 .\start.bat -Engine podman -Gpu off
 ```
 
-The helper verifies the combined CA bundle by making a provider request with an invalid test key. It uses `-VerifyProvider auto` by default, which follows `DEFAULT_MAP_PROVIDER` when available and otherwise uses Google. For Azure-first or Google-blocked sites, choose the provider explicitly or skip remote verification:
+The helper verifies the combined CA bundle by making a provider request with an
+invalid test key. For Azure-first or Google-blocked sites, choose the provider
+explicitly:
 
 ```powershell
-.\scripts\import-tls-ca.cmd -Engine podman -Thumbprint <windows-certificate-thumbprint> -VerifyProvider azure
-.\scripts\import-tls-ca.cmd -Engine podman -Thumbprint <windows-certificate-thumbprint> -VerifyProvider none
+.\scripts\repair-provider-tls.cmd -Provider azure -Engine podman -Gpu off
 ```
 
-The helper can also import an exported PEM/CER/CRT file:
+If support already knows the correct CA thumbprint or has an exported
+PEM/CER/CRT file, pass it through the repair wrapper:
 
 ```powershell
-.\scripts\import-tls-ca.cmd -CertificatePath C:\path\to\local-ca.pem
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Thumbprint <windows-certificate-thumbprint> -Apply
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -CertificatePath C:\path\to\local-ca.pem -Apply
 ```
+
+If automatic discovery is ambiguous or unavailable, support may call
+`scripts\import-tls-ca.cmd` directly with the known `-Thumbprint` or
+`-CertificatePath`; it remains the lower-level mutation helper and supports
+`-VerifyProvider auto|google|azure|none`.
 
 After import, `.env` should contain both combined-bundle variables:
 
