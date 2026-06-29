@@ -278,21 +278,7 @@ function Copy-TowerScoutFileIntoContainer {
     }
 
     Write-Host "Compose provider did not support cp; falling back to direct podman cp."
-    $projectName = (Split-Path (Get-TowerScoutRepoRoot) -Leaf).ToLowerInvariant()
-    $containerId = & podman ps `
-        --filter "label=io.podman.compose.project=$projectName" `
-        --filter "label=io.podman.compose.service=towerscout" `
-        --format "{{.ID}}" |
-        Select-Object -First 1
-
-    if ([string]::IsNullOrWhiteSpace($containerId)) {
-        $containerId = & podman ps `
-            --filter "label=com.docker.compose.project=$projectName" `
-            --filter "label=com.docker.compose.service=towerscout" `
-            --format "{{.ID}}" |
-            Select-Object -First 1
-    }
-
+    $containerId = Get-TowerScoutPodmanServiceContainerId -ServiceName "towerscout"
     if ([string]::IsNullOrWhiteSpace($containerId)) {
         throw "Could not locate the running TowerScout Podman container for direct copy fallback."
     }

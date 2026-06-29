@@ -348,7 +348,7 @@ def classify_provider_response(
                 return PROVIDER_HTTP_ERROR
         return TLS_OK
 
-    if auth_failure_is_tls_ok and status_code in {401, 403}:
+    if auth_failure_is_tls_ok and status_code in {400, 401, 403}:
         return TLS_OK
     if status_code in {401, 403}:
         return INVALID_PROVIDER_KEY

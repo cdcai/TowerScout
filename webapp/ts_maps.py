@@ -27,6 +27,7 @@ from ts_provider_http import (
     PROVIDER_NETWORK_BLOCKED,
     PROVIDER_TIMEOUT,
     TLS_CA_UNTRUSTED,
+    TLS_REPAIR_CATEGORIES,
     create_provider_ssl_context,
     provider_repair_command,
     provider_support_action,
@@ -108,6 +109,8 @@ class Map:
             maps_logger.info(f"Satellite map download completed for {len(tiles)} tiles")
             return self.has_metadata
             
+        except (MapProviderError, NetworkError):
+            raise
         except Exception as e:
             maps_logger.error(f"Satellite map download failed: {e}")
             raise MapProviderError(
@@ -370,6 +373,25 @@ async def fetch_all(semaphore, session, urls, dir, fname, metadata):
                 failed_tile_count,
                 total_tiles,
             )
+            tls_repair_errors = [
+                result
+                for result in results
+                if isinstance(result, NetworkError)
+                and result.details.get("category") in TLS_REPAIR_CATEGORIES
+            ]
+            if tls_repair_errors:
+                tls_error = tls_repair_errors[0]
+                tls_error.details.update(
+                    {
+                        "successful_tile_count": successful_tile_count,
+                        "failed_tile_count": failed_tile_count,
+                        "failed_asset_count": failed_asset_count,
+                        "total_tile_count": total_tiles,
+                        "failed_tile_ids": sorted(failed_tile_ids),
+                    }
+                )
+                raise tls_error
+
             raise MapProviderError(
                 f"Failed to download required imagery for {failed_tile_count} of {total_tiles} tile(s).",
                 provider="unknown",
@@ -394,7 +416,7 @@ async def fetch_all(semaphore, session, urls, dir, fname, metadata):
         return results
         
     except Exception as e:
-        if isinstance(e, MapProviderError):
+        if isinstance(e, (MapProviderError, NetworkError)):
             raise
         else:
             maps_logger.error(f"Batch download error: {e}")

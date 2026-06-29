@@ -39,6 +39,16 @@ def test_classify_google_auth_failure_as_tls_ok_for_keyless_probe():
     assert classify_provider_response("google", response, body_json=body_json) == INVALID_PROVIDER_KEY
 
 
+def test_classify_azure_bad_request_as_tls_ok_for_keyless_probe():
+    response = Mock(status_code=400)
+
+    assert classify_provider_response(
+        "azure",
+        response,
+        auth_failure_is_tls_ok=True,
+    ) == TLS_OK
+
+
 def test_provider_repair_command_uses_runtime_engine_and_gpu(monkeypatch):
     monkeypatch.setenv("TOWERSCOUT_CONTAINER_ENGINE", "podman")
     monkeypatch.setenv("TOWERSCOUT_GPU_MODE", "on")
@@ -85,6 +95,27 @@ def test_check_provider_tls_status_uses_keyless_google_probe(monkeypatch):
     assert result["category"] == TLS_OK
     assert captured["provider"] == "google"
     assert "key" not in captured["params"]
+
+
+def test_check_provider_tls_status_treats_keyless_azure_400_as_reachable(monkeypatch):
+    response = Mock(status_code=400)
+    captured = {}
+
+    def fake_get(provider, url, *, params, timeout, purpose):
+        captured["provider"] = provider
+        captured["url"] = url
+        captured["params"] = params
+        return response
+
+    monkeypatch.setattr(ts_config, "provider_get", fake_get)
+
+    result = ts_config.check_provider_tls_status("azure")
+
+    assert result["reachable"] is True
+    assert result["category"] == TLS_OK
+    assert result["status_code"] == 400
+    assert captured["provider"] == "azure"
+    assert "subscription-key" not in captured["params"]
 
 
 def test_ts_maps_build_connector_uses_shared_provider_ssl_context(monkeypatch):

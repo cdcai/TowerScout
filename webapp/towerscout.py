@@ -1030,7 +1030,7 @@ def _run_detection_request():
         perf_metrics.start_phase('tile_download')
         try:
             meta = map_provider.get_sat_maps(tiles, request_loop, tmpdirname, tmpfilename)
-        except MapProviderError as error:
+        except (MapProviderError, NetworkError) as error:
             perf_metrics.end_phase('tile_download')
             successful_tiles = int(error.details.get('successful_tile_count', 0))
             failed_tiles = int(
@@ -1064,6 +1064,17 @@ def _run_detection_request():
                 },
                 tile_count=len(tiles),
             )
+            if isinstance(error, NetworkError):
+                payload = error.to_dict()
+                support_action = error.details.get('support_action')
+                repair_command = error.details.get('repair_command')
+                message_parts = [error.user_message or error.message]
+                if support_action:
+                    message_parts.append(support_action)
+                elif repair_command:
+                    message_parts.append(f"Suggested command: {repair_command}")
+                payload['error'] = f"Imagery download failed: {' '.join(message_parts)}"
+                return jsonify(payload), 502
             return jsonify({'error': f'Imagery download failed: {error.message}'}), 502
         else:
             perf_metrics.end_phase('tile_download')
