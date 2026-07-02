@@ -1,6 +1,6 @@
 # TASK-066: Release Candidate Validation Gate
 
-**Status**: IN_PROGRESS - post-PR28 final prerelease Docker Desktop package path and bounded provider smoke passed; Podman source-build TLS, Docker-Desktop-free Podman, and NVIDIA GPU evidence pending
+**Status**: COMPLETED - RC1 package gate passed with bounded caveats; later RC7.1 validation superseded the tester-facing release identity
 **Priority**: CRITICAL  
 **Type**: C (Release Engineering / Validation)  
 **Estimated Effort**: 1-2 days (8-16 hours)  
@@ -91,7 +91,7 @@ This task is the bridge between engineered release readiness and real user testi
 **Objective**: Create detailed Sprint 06 task documentation for release-candidate validation.  
 **Context**: Sprint 06 planning intentionally places clean-machine validation after asset contract and package docs, so external user testing starts only after the known package/docs/assets path has been internally proven.  
 **Decision**: Treat `TASK-066` as an internal release-candidate gate, not broad external UAT. External tester planning belongs to `TASK-073`.  
-**Execution**: Created `.agent_work/tasks/active/TASK-066-release-candidate-validation-gate.md` and synchronized the task with `current-tasks.md`.  
+**Execution**: Created `.agent_work/tasks/completed/TASK-066-release-candidate-validation-gate.md` and synchronized the task with `current-tasks.md`.
 **Output**: Task file ready for intake.  
 **Validation**: Pending `.agent_work` validation after all Sprint 06 task files are created.  
 **Next**: Wait for `TASK-072` and `TASK-071` deliverables, then build the validation checklist and execute the clean-machine gate.
@@ -392,3 +392,5 @@ This task is the bridge between engineered release readiness and real user testi
 ### Sign-off
 
 Docker Desktop and Podman CPU-default RC1 package runtime validation passed against the digest-pinned GHCR image and can proceed to controlled UAT preparation if Docker Desktop remains the primary pilot engine and Podman is documented as a qualified package-runtime path. The route-test isolation/timeout gap is closed by `TASK-067` / PR #19. `TASK-074` bootstrap/preflight follow-through is complete and passed clean post-merge package validation. Do not claim GPU acceleration until NVIDIA Docker Desktop WSL2 evidence exists. Do not claim Docker-Desktop-free Podman or Podman source-build support until the external Compose-provider dependency and Docker Hub TLS/base-image pull blocker are resolved or tested on a clean Podman-only host.
+
+Sprint 6 closeout note, 2026-07-02: this task is closed as the RC1 validation gate. The later RC6 and RC7.1 package evidence supersedes the exact tester-facing artifact identity, while this task remains the historical source for the first release-candidate package gate, blocker fixes, and bounded caveats.

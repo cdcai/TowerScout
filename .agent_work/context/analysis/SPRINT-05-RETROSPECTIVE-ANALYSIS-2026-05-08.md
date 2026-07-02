@@ -3,7 +3,7 @@
 **Date**: May 8, 2026  
 **Sprint Period**: April 7-May 8, 2026, including active extension after April 25  
 **Scope**: Runtime determinism, local YOLO ownership, smoke baseline, release hardening, OCI packaging, launcher MVP, and release-support handoff  
-**Status**: Sprint 05 implementation closeout complete; `TASK-065` remains active as Sprint 06 release-support carry-forward
+**Status**: Sprint 05 implementation closeout complete; `TASK-065` was carried into Sprint 06 and later closed during Sprint 06 release-readiness work
 
 ---
 
@@ -27,7 +27,7 @@ The trade-off is that the sprint extended well past the original planning window
 | Responsiveness/performance | `TASK-064` handled the targeted ProviderStateManager and inference-mode baseline concerns without widening into broad optimization. |
 | OCI runtime | `TASK-025` delivered the Docker-compatible / OCI image, Compose runtime, volume contract, readiness/health endpoints, asset import, GHCR digest validation, and Podman evidence. |
 | Launcher UX | `TASK-054` delivered the Windows-first launcher MVP and release-package entrypoint. |
-| Release-support follow-through | `TASK-065` is implementation-complete but still needs release-owner language review and commit/PR closeout. |
+| Release-support follow-through | `TASK-065` was implementation-complete at Sprint 05 closeout and later closed during Sprint 06 release-readiness work. |
 
 ---
 

@@ -160,7 +160,7 @@ This task must settle the asset bundle before end-user package documentation and
 **Objective**: Create detailed Sprint 06 task documentation for the release asset bundle contract.  
 **Context**: Sprint 06 planning identified the asset bundle contract as the first committed-lane task because package docs and meaningful user testing depend on knowing exactly what external files users receive and where they go.  
 **Decision**: Keep this task focused on defining the V1 RC1 asset contract and routing broader restricted-network enhancement work to `TASK-070` unless it becomes a launch requirement.  
-**Execution**: Created `.agent_work/tasks/active/TASK-072-release-asset-bundle-contract.md` and synchronized the task with `current-tasks.md`.  
+**Execution**: Created `.agent_work/tasks/completed/TASK-072-release-asset-bundle-contract.md` and synchronized the task with `current-tasks.md`.
 **Output**: Task file ready for intake.  
 **Validation**: Pending `.agent_work` validation after all Sprint 06 task files are created.  
 **Next**: Start inventory of `webapp/asset_manifest.v1.json`, current OCI docs, and import helper behavior.

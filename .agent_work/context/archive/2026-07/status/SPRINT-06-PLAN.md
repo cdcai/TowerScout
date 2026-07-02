@@ -58,7 +58,7 @@ ONNX or other non-Ultralytics runtime migration is not a pre-RC blocker under th
 
 The longer-term public release plan should use a clean curated public release line rather than publishing the current working repository history as-is. The current repository should remain the development/workshop repo, while the public line should include only approved source code, public-safe documentation, tests, release scripts, license/notice files, and intentionally selected decision records. Internal planning material, broad `.agent_work/` history, model weights, raw data assets, scratch artifacts, and ambiguous third-party or historical content should be excluded unless explicitly reviewed and approved.
 
-The full Task-069 sign-off plan is recorded in `.agent_work/tasks/active/TASK-069/TASK-069-SIGN-OFF-PLAN-2026-05-14.md`.
+The full Task-069 sign-off plan is recorded in `.agent_work/tasks/completed/TASK-069/TASK-069-SIGN-OFF-PLAN-2026-05-14.md`.
 
 ---
 

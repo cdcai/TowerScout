@@ -365,9 +365,9 @@ Tests:
 
 Task and validation context:
 
-- `.agent_work/tasks/active/TASK-074-runtime-prerequisite-preflight.md`
+- `.agent_work/tasks/completed/TASK-074-runtime-prerequisite-preflight.md`
 - `.agent_work/current-tasks.md`
-- `.agent_work/tasks/active/TASK-073-clean-machine-uat-plan.md`
+- `.agent_work/tasks/completed/TASK-073-clean-machine-uat-plan.md`
 - `.agent_work/user-testing/instructions/RC1-PILOT-UAT-CHECKLIST.md`
 
 User/support docs:

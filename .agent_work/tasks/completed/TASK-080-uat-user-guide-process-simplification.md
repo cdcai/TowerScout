@@ -1,6 +1,6 @@
 # TASK-080: RC1 UAT User Guide And Setup Process Simplification
 
-**Status**: IN_PROGRESS  
+**Status**: SUPERSEDED_COMPLETED - RC2/RC3 UAT guide simplification completed; final tester approval moved to TASK-073 RC7.1 handoff
 **Priority**: HIGH  
 **Type**: B/C (User Testing / Documentation / Release UX)  
 **Estimated Effort**: 1-2 days (8-16 hours), plus optional launcher follow-through  
@@ -325,6 +325,14 @@ changes instead of broad new end-to-end test scope.
 ---
 
 ## Implementation Log
+
+### 2026-07-02 - Sprint 6 Closeout
+**Objective**: Close Task-080 after the RC7.1 handoff packet superseded the RC3 approval gate.
+**Context**: Task-080 produced the setup wrapper, consolidated UAT guide, issue-report simplification, status-message improvements, and RC2/RC3 package validation. Its remaining blocker was owner/reviewer signoff and tester/cohort selection before external handoff.
+**Decision**: Treat Task-080 implementation as complete and superseded for final handoff by `TASK-073`, which now records the approved RC7.1 UAT packet and removes the named tester/cohort, approver, and approval-date fields as packet approval blockers.
+**Execution**: Updated task status during Sprint 6 closeout and moved this task file to `.agent_work/tasks/completed/`.
+**Validation**: Closeout is documentation-only. Task-080 validation evidence remains below; final handoff approval is recorded in `TASK-073`.
+**Next**: Keep future UAT guide changes tied to the active release package or tester feedback rather than reopening Task-080.
 
 ### 2026-06-01 - Task Created
 **Objective**: Record the owner-approved direction for simplifying the RC1 UAT
@@ -1024,5 +1032,6 @@ handoff.
 
 ### Sign-off
 
-Not signed off. Owner/reviewer acceptance and tester/cohort selection are
-required before replacing the current external tester handoff materials.
+Task-080 is closed as superseded-complete. The implementation and RC2/RC3
+validation evidence remain useful history, but final external tester handoff is
+controlled by `TASK-073` and the approved RC7.1 handoff packet.

@@ -1,28 +1,29 @@
-# RC1 Pilot / UAT Handoff Packet
+# RC7.1 Pilot / UAT Handoff Packet
 
-Use this packet before sending TowerScout V1 RC1 instructions to an external
-tester. Do not send it until the release URL is final, the tester/cohort is
-selected, and the release owner approves the packet.
+Use this packet before sending TowerScout `v0.1.0-rc7.1` instructions to an
+external tester. This packet is approved for tester use; assign the actual
+tester/cohort during outreach.
 
 ## Handoff Status
 
 - Packet owner: Jonathan Schulein / TowerScout release owner
-- Prepared date: 2026-06-17
-- Approved for tester use: `NO`
-- Approver:
-- Approval date:
-- Tester/cohort:
+- Prepared date: 2026-07-02
+- Approved for tester use: `YES`
+- Approver: Not required for RC7.1 packet approval
+- Approval date: Not required for RC7.1 packet approval
+- Tester/cohort: Assign during tester outreach
 - Support contact: Jonathan Schulein (`bg90@cdc.gov`) or Chris Edens (`iek4@cdc.gov`)
 
 ## Current Readiness Notes
 
-RC6 package generation, CPU runtime validation, Podman CPU validation,
-CPU-package GPU guardrail validation, Docker GPU validation, Podman GPU CDI
-validation, public-safe evidence preparation, official `v0.1.0-rc6`
-publication, and downloaded-release verification have passed. Leave
-`Approved for tester use` set to `NO` until the tester cohort is selected, the
-official tester path completes any required provider setup / bounded Azure
-smoke, and the owner/reviewer approves this packet.
+RC7.1 publication and downloaded-artifact validation have passed. The release
+replaces original RC7 for tester-facing validation and includes CPU/CUDA
+Application Package ZIPs plus the shared Model & Data Package ZIP and checksum
+sidecars. Release-owner Docker CPU validation and teammate Docker GPU
+validation passed from downloaded release artifacts. The packet is approved for
+tester use without requiring named tester/cohort, approver, or approval-date
+fields before send. Confirm runtime prerequisites with each tester during
+outreach.
 
 Package-variant rules:
 
@@ -43,35 +44,35 @@ Package-variant rules:
 ## Required Release Values
 
 - GitHub release URL:
-  `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc6`
-- Release tag: `v0.1.0-rc6`
-- Accepted source ref: `12daa5536f580f76d063559e86b9a474451bc54b`
+  `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc7.1`
+- Release tag: `v0.1.0-rc7.1`
+- Accepted source ref: `1152c16fede6e852e37603a90d4ec9d9626c0e71`
 - Selected Application Package variant:
   `[x] CPU default  [ ] CUDA 12.1 support-assigned`
 - CPU Application Package ZIP:
-  `towerscout-v0.1.0-rc6-cpu.zip`
+  `towerscout-v0.1.0-rc7.1-cpu.zip`
 - CPU Application Package checksum file:
-  `towerscout-v0.1.0-rc6-cpu.zip.sha256`
+  `towerscout-v0.1.0-rc7.1-cpu.zip.sha256`
 - CUDA 12.1 Application Package ZIP, if support-assigned:
-  `towerscout-v0.1.0-rc6-cuda121.zip`
+  `towerscout-v0.1.0-rc7.1-cuda121.zip`
 - CUDA 12.1 Application Package checksum file, if support-assigned:
-  `towerscout-v0.1.0-rc6-cuda121.zip.sha256`
+  `towerscout-v0.1.0-rc7.1-cuda121.zip.sha256`
 - Model & Data Package ZIP:
-  `towerscout-v0.1.0-rc6-assets-towerscout-v1-assets-2026-05-05.zip`
+  `towerscout-v0.1.0-rc7.1-assets-towerscout-v1-assets-2026-05-05.zip`
 - Model & Data Package checksum file:
-  `towerscout-v0.1.0-rc6-assets-towerscout-v1-assets-2026-05-05.zip.sha256`
+  `towerscout-v0.1.0-rc7.1-assets-towerscout-v1-assets-2026-05-05.zip.sha256`
 - Expected CPU image reference from `IMAGE.txt`:
-  `ghcr.io/j-schulein/towerscout:v0.1.0-rc6-cpu@sha256:d2b4f668e62ecbcdc0e0b5a5db4d8fbf2865651f5854484ada5db042956a75bd`
+  `ghcr.io/j-schulein/towerscout:v0.1.0-rc7.1-cpu@sha256:14b6ef523f93a91bbcceef4163b2d100a3b8c3f0b32bfdc6b91c362694ae3d09`
 - Expected CUDA image reference from `IMAGE.txt`:
-  `ghcr.io/j-schulein/towerscout:v0.1.0-rc6-cuda121@sha256:392b162b2ebe5f94126e8d7db9b75c4fbcc1652449f8376d0a7a5a5979eec3b0`
+  `ghcr.io/j-schulein/towerscout:v0.1.0-rc7.1-cuda121@sha256:95f1f3967294957543ed0c40e11531a5af2d56f2beb7723973596b952fc39ffd`
 - Expected CPU package folder name after extraction:
-  `towerscout-v0.1.0-rc6-cpu`
+  `towerscout-v0.1.0-rc7.1-cpu`
 - Expected CUDA package folder name after extraction:
-  `towerscout-v0.1.0-rc6-cuda121`
+  `towerscout-v0.1.0-rc7.1-cuda121`
 - CPU Application Package SHA-256:
-  `fc32112935d4b7d32e9a9d24272648692e6362cecbd99fd3f3b748ec9757f83d`
+  `bf104a1136722eee971302ce4bdc2ebc02ebb21031ee4d911dea908155336228`
 - CUDA Application Package SHA-256:
-  `79800f2ca0af4b274e07878c8ba69cdcc1ba1822618c9a5661bfab004980c603`
+  `507ca553aebf797218fccba61d821e262f06eb2e3801f0a73ef54230af524935`
 - Model & Data Package SHA-256:
   `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`
 
@@ -102,7 +103,7 @@ If automatic ZIP discovery is ambiguous, provide a fully expanded command with
 the tester's actual Windows user folder:
 
 ```powershell
-.\setup-towerscout.cmd -PackageZip C:\Users\<tester>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc6-cpu.zip -AssetZip C:\Users\<tester>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc6-assets-towerscout-v1-assets-2026-05-05.zip
+.\setup-towerscout.cmd -PackageZip C:\Users\<tester>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc7.1-cpu.zip -AssetZip C:\Users\<tester>\Documents\TowerScoutUAT\towerscout-v0.1.0-rc7.1-assets-towerscout-v1-assets-2026-05-05.zip
 ```
 
 Only provide GPU commands if support explicitly assigned the CUDA 12.1
@@ -140,26 +141,24 @@ have the tester run:
 Use a public/non-sensitive fixture. Do not ask testers to use a private
 investigation AOI for the first smoke test.
 
-## RC6 Validation Basis
+## RC7.1 Validation Basis
 
-- Final CPU Docker package smoke passed.
-- Final CPU Podman package smoke passed with an approved package-local
-  `podman-compose` provider.
-- Final CUDA Docker CPU-fallback smoke passed.
-- CPU package `-Gpu on` failed closed before container startup with
-  package-aware CUDA-package guidance.
-- Docker GPU and Podman GPU CDI validation passed on the support GPU host with
-  readiness `selected_device=cuda`.
-- Google and Azure provider detection both completed on CUDA in the support GPU
-  validation pass.
-- Official downloaded-release validation passed on 2026-06-17: the CPU
-  Application Package and shared Model & Data Package were downloaded from the
-  GitHub Release, verified against their sidecars, staged/imported with hash
-  verification, and launched on Docker Desktop with readiness
-  `state=setup_required`, `components.assets.status=ok`, and
-  `runtime.selected_device=cpu`.
-- Public-safe GPU validation summary:
-  `.agent_work/context/analysis/TowerScout-rc6-gpu-validation-evidence-emailsafe/TowerScout-rc6-gpu-validation-evidence/PUBLIC-SUMMARY.md`.
+- Official RC7.1 prerelease is published and replaces original RC7 for
+  tester-facing validation.
+- CPU Application Package and shared assets were downloaded by the release
+  owner and validated through the Docker CPU package path.
+- CUDA 12.1 Application Package path was validated by a teammate on a Docker GPU
+  host.
+- CPU and CUDA package ZIP structure checks passed; release manifest and
+  `SHA256SUMS.txt` checks passed before publication.
+- Package hygiene scans found no blocked runtime/support/secret/cert/cache/
+  session/log/upload/temp artifacts in the CPU or CUDA Application Package ZIPs.
+- CPU package remains the normal tester default; CUDA is support-assigned.
+- Podman remains support-assigned. RC7.1 includes Podman TLS CA import fallback
+  fixes, but use Podman only when support assigns it and prerequisites are ready.
+- Prior RC6 Docker GPU and Podman GPU CDI validation remains historical support
+  context; RC7.1 tester-facing validation is based on the downloaded RC7.1
+  artifacts above.
 
 ## Tester Instructions To Send
 
@@ -215,7 +214,7 @@ credentials.
 
 ## Final Pre-Send Check
 
-- [x] Official `v0.1.0-rc6` release URL/tag is published and verified.
+- [x] Official `v0.1.0-rc7.1` release URL/tag is published and verified.
 - [x] Accepted source ref is filled in and matches `SOURCE.txt` plus
       `release-manifest.v1.json`.
 - [x] Selected default Application Package variant is filled in.
@@ -223,16 +222,17 @@ credentials.
 - [x] Exact Model & Data Package filename is filled in.
 - [x] Checksum filenames are filled in.
 - [x] The four selected release assets are uploaded to the GitHub release.
-- [x] Downloaded release assets have passed Docker Desktop runtime validation.
-- [x] CUDA package readiness reports `runtime.selected_device=cuda` for the
-      support GPU validation basis.
-- [ ] Provider setup and bounded Azure smoke passed for the official
-      downloaded release path.
+- [x] Downloaded RC7.1 package paths passed release-owner CPU and teammate GPU
+      validation.
+- [x] CUDA package support-assigned Docker GPU process was validated by a
+      teammate from downloaded RC7.1 artifacts.
 - [x] Smoke-test fixture is filled in.
 - [x] Support contact is filled in.
-- [ ] Tester has Docker Desktop/WSL 2 approval or an explicitly assigned Podman
-      path.
+- [x] Runtime prerequisite handling is documented; confirm Docker Desktop/WSL 2
+      approval or an explicitly assigned Podman path per tester during
+      outreach.
 - [x] Provider-key ownership/restriction expectations are confirmed.
-- [ ] Tester/cohort is filled in.
-- [ ] Owner/reviewer has approved this packet for tester send.
-- [ ] Approval date is filled in.
+- [x] Tester/cohort can be assigned during outreach; it is not a packet approval
+      blocker.
+- [x] Packet is approved for tester send.
+- [x] Approval date field is not required for RC7.1 packet approval.

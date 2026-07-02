@@ -1,6 +1,6 @@
 # TASK-075: Single GPU-Capable Package Implementation
 
-**Status**: IN_PROGRESS - PR review hardening implemented; NVIDIA host validation pending
+**Status**: COMPLETED - CPU-safe GPU-capable package implementation completed; live GPU support evidence and package delivery continued through TASK-083 and TASK-084
 **Priority**: CRITICAL
 **Type**: C (Runtime Policy / Hardware Compatibility / Release Packaging)
 **Estimated Effort**: 1-3 days (8-24 hours), split by validation availability
@@ -117,6 +117,14 @@ This task starts from the Task-079 plan and PR #14 review disposition. It must n
 - Mixed precision may improve speed but can shift outputs; keep it opt-in until benchmarked.
 
 ## Implementation Log
+
+### 2026-07-02 - Sprint 6 Closeout
+**Objective**: Close Task-075 as the implementation baseline for GPU-capable package support.
+**Context**: Task-075 implemented the shared device policy, readiness diagnostics, CPU/CUDA image flavor metadata, optional GPU overlay, launcher GPU modes, and CPU-safe defaults. Later Sprint 6 tasks produced the support-assigned live GPU evidence and package-delivery decisions.
+**Decision**: Mark Task-075 complete for implementation. Treat `TASK-083` as the RC5 Docker/Podman GPU evidence source and `TASK-084` as the CPU/CUDA package-delivery source.
+**Execution**: Updated task status during Sprint 6 closeout and moved this task file to `.agent_work/tasks/completed/`.
+**Validation**: Closeout is documentation-only. Original focused and unit validation remains recorded in the implementation log below.
+**Next**: Keep any future GPU support improvements in new tasks rather than reopening Task-075.
 
 ### 2026-05-21 - PR Review GPU Supportability Fixes Implemented
 **Objective**: Address PR #15 reviewer feedback before NVIDIA host validation.

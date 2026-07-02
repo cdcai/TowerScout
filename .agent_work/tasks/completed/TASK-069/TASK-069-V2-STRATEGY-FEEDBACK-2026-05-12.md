@@ -5,8 +5,8 @@
 **Reviewer input**: `C:\Users\bg90\OneDrive - CDC\TS Resources\Planning\Task-069 (Licensing)\TowerScout Local Deployment and Compliance Strategy_2026.05.12_v2.docx`
 **Related analysis**:
 
-- `.agent_work/tasks/active/TASK-069/TASK-069-OPEN-SOURCE-COMPLIANCE-STRATEGY-2026-05-12.md`
-- `.agent_work/tasks/active/TASK-069/TASK-069-REVIEWER-RESPONSE-CRITIQUE-2026-05-12.md`
+- `.agent_work/tasks/completed/TASK-069/TASK-069-OPEN-SOURCE-COMPLIANCE-STRATEGY-2026-05-12.md`
+- `.agent_work/tasks/completed/TASK-069/TASK-069-REVIEWER-RESPONSE-CRITIQUE-2026-05-12.md`
 
 ## Executive Summary
 

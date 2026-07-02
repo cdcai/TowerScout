@@ -1,6 +1,6 @@
 # TASK-081: RC3 Runtime Hardening And Podman Independence
 
-**Status**: IN_PROGRESS - implementation slice completed with focused automated validation; live Podman and Docker Desktop CPU runtime validation passed; GPU validation pending suitable NVIDIA runtime evidence
+**Status**: COMPLETED - runtime hardening and CPU validation completed; live GPU evidence continued through TASK-083 and package delivery through TASK-084
 **Priority**: HIGH  
 **Type**: C (Runtime Hardening / Podman Support / Release Validation)  
 **Estimated Effort**: 2-4 days (16-32 hours), split between CPU-dev-able fixes and hardware-dependent GPU validation  
@@ -234,6 +234,14 @@ coordinates, and user-identifying paths.
 
 ## Implementation Log
 
+### 2026-07-02 - Sprint 6 Closeout
+**Objective**: Close Task-081 as the RC3 runtime-hardening baseline.
+**Context**: Task-081 delivered runtime defaults, launcher/import hardening, route safety fixes, live Podman CPU validation, and live Docker Desktop CPU validation. Its remaining GPU validation gate was later handled by `TASK-083`, while package delivery was carried by `TASK-084`.
+**Decision**: Mark Task-081 complete at Sprint 6 closeout and preserve later GPU/package evidence in the owning follow-on tasks.
+**Execution**: Updated task status and moved this task file to `.agent_work/tasks/completed/`.
+**Validation**: Closeout is documentation-only. Original automated, Podman CPU, and Docker Desktop CPU validation evidence remains below.
+**Next**: Keep future runtime hardening under new tasks or `TASK-087` where it directly affects host-side TLS repair.
+
 ### 2026-06-12 - Task Documentation Created
 **Objective**: Create active task documentation for the RC3 runtime hardening and Podman independence implementation plan.  
 **Context**: The owner asked for `TASK-081` documentation after reviewing the June 11 RC3 GPU/Podman analysis packet and reviewer audit. The recommendations cut across runtime defaults, launcher behavior, Podman support, GPU validation, CI, docs, and small release hardening items.  
@@ -331,7 +339,7 @@ coordinates, and user-identifying paths.
 
 ### Issues Identified
 
-- Full-tree secret scan reports pre-existing sensitive artifacts and environment-variable references outside this Task-081 change set, including old browser-run summaries under `.agent_work/context/analysis/browser-runs/`. This should be handled as separate evidence hygiene, not as part of the runtime-code implementation.
+- Full-tree secret scan reports pre-existing sensitive artifacts and environment-variable references outside this Task-081 change set, including old browser-run summaries under `.agent_work/context/archive/2026-07/analysis/browser-runs/`. This should be handled as separate evidence hygiene, not as part of the runtime-code implementation.
 - Live Podman launch initially exposed that Podman Compose provider banners on stderr could abort PowerShell under `$ErrorActionPreference = "Stop"` during both stale-session `compose ps` inspection and main Compose invocation.
 - Live Podman launch initially exposed that `Write-TowerScoutReadinessSummary` assumed optional readiness `runtime.device_policy` fields were always present under strict mode.
 - Live Podman import/status initially exposed stale local `.env` engine metadata: `TOWERSCOUT_CONTAINER_ENGINE=docker` could leak into a Podman-launched container unless the selected engine overrides shell env before Compose runs.
@@ -349,4 +357,7 @@ coordinates, and user-identifying paths.
 
 ### Sign-off
 
-Automated implementation validation, live Podman CPU package-runtime validation, and live Docker Desktop CPU runtime validation passed. Keep task open until GPU validation is run on a host where NVIDIA runtime evidence is available, or record GPU as an explicit RC3 support caveat.
+Automated implementation validation, live Podman CPU package-runtime validation,
+and live Docker Desktop CPU runtime validation passed. The remaining GPU support
+evidence was carried forward to `TASK-083`, and CPU/CUDA package delivery was
+carried forward to `TASK-084`; Task-081 is closed at Sprint 6 closeout.

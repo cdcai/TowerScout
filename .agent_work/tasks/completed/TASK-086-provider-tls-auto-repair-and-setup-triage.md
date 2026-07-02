@@ -1,10 +1,10 @@
 # TASK-086: Provider TLS Auto-Repair And Setup Triage
 
-**Status**: COMPLETED - V3 CPU managed-network proof passed and owner-confirmed CUDA managed-network validation shows the Task-086 TLS repair fix works for the CUDA package path; keep Task-087 as a follow-on one-click helper plan, not an rc7 baseline blocker
+**Status**: COMPLETED - RC7.1 published and downloaded-artifact CPU/GPU validation passed with the Task-086 TLS repair baseline; keep Task-087 as a follow-on one-click helper plan, not an RC7.1 baseline blocker
 **Priority**: HIGH
 **Type**: B/C (Runtime Support / Provider Setup / TLS Trust)
 **Estimated Effort**: 3-5 days (24-40 hours) plus one managed-network validation pass
-**Target Sprint**: Sprint 06 post-RC6 UAT follow-up / next pilot package
+**Target Sprint**: Sprint 06 post-RC6 UAT follow-up / RC7.1 pilot package
 
 ## Objective
 
@@ -1251,9 +1251,9 @@ CUDA 12.1 V3 package through the same managed-network proof or accept CPU live
 proof plus CUDA package/image validation.
 **Decision**: Treat Task-086 as complete based on owner-reported confirmation
 that the Task-086 fix also works with CUDA on a managed network. Keep the
-manual/guided command path from Task-086 as the rc7 baseline. Keep
+manual/guided command path from Task-086 as the RC7.1 baseline. Keep
 `TASK-087` as a separate follow-on plan for a one-click host-side repair helper
-after rc7 unless tester evidence promotes it.
+after RC7.1 unless tester evidence promotes it.
 **Execution**:
 - Recorded owner confirmation that the V3 CUDA package path works on a managed
   network with the Task-086 TLS repair fix.
@@ -1267,9 +1267,9 @@ after rc7 unless tester evidence promotes it.
 - V3 CPU and CUDA 12.1 image publish and package validation previously passed.
 - V3 CUDA managed-network behavior is owner-confirmed as working for the
   Task-086 fix.
-**Next**: Use Task-086 as the rc7 provider TLS repair baseline, then proceed
-with Sprint 6 closeout planning, repository housekeeping, rc7 package/docs
-refinement, and rc7 publication sequencing.
+**Next**: Use Task-086 as the RC7.1 provider TLS repair baseline, then proceed
+with Sprint 6 closeout planning, repository housekeeping, RC7.1 package/docs
+refinement, and publication sequencing.
 
 ### 2026-06-29 - RC7 Setup Wizard Repair Command Check
 **Objective**: Confirm the startup wizard's TLS/CA repair guidance before
@@ -1302,4 +1302,30 @@ mode selected at setup.
   `.\scripts\repair-provider-tls.cmd -Provider google -Engine <engine> -Gpu
   <mode>` commands.
 **Decision**: Treat the startup wizard TLS/CA command guidance as corrected for
-rc7 packaging once this change is included in the release source ref.
+RC7.1 packaging once this change is included in the release source ref.
+
+### 2026-07-02 - Official RC7.1 Package Validation Recorded
+**Objective**: Close Task-086 against the published RC7.1 package set and record
+the final tester-facing validation boundary.
+**Context**: RC7.1 replaces original RC7 for tester-facing validation and
+includes CPU/CUDA Application Package ZIPs plus the shared Model & Data Package
+ZIP and checksum sidecars from source ref
+`1152c16fede6e852e37603a90d4ec9d9626c0e71`.
+**Decision**: Treat RC7.1 as validated for the Task-086 baseline based on
+release-owner Docker CPU validation and teammate Docker GPU validation from
+downloaded release artifacts. Keep `TASK-087` as a post-RC7.1 follow-on unless
+explicitly promoted.
+**Execution**:
+- Recorded official RC7.1 release identity and downloaded-artifact validation
+  status in the active task and UAT handoff packet.
+- Kept evidence support-safe by not recording raw logs, provider keys, raw
+  provider responses, local certificate subjects/thumbprints, or local
+  environment details.
+**Validation**:
+- GitHub release state was verified for `v0.1.0-rc7.1`: published prerelease,
+  target source ref `1152c16fede6e852e37603a90d4ec9d9626c0e71`, CPU/CUDA/shared
+  asset ZIPs, and checksum sidecars.
+- Local CPU and CUDA package summary checks passed.
+- CPU and CUDA package sensitive-term scans reported zero matches.
+**Next**: Proceed to UAT handoff approval and Sprint 6 closeout; keep
+`TASK-087` as a post-RC7.1 follow-on unless promoted.

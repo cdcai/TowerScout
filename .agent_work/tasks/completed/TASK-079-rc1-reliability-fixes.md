@@ -1,4 +1,4 @@
-﻿# TASK-079: RC1 Reliability Fixes And Performance Instrumentation
+# TASK-079: RC1 Reliability Fixes And Performance Instrumentation
 
 **Status**: COMPLETED - Phase 3 CPU optimization validated; single GPU-capable package plan handed to TASK-075
 **Priority**: CRITICAL
@@ -225,7 +225,7 @@ This task protects the V1 RC1 package path by prioritizing correctness, supporta
 **Objective**: Incorporate the external PR #14 review into the Task-079 single GPU-capable package plan before using it to scope `TASK-075`.
 **Context**: The reviewer agreed PR #14 is appropriate RC reliability and measurement work, but emphasized that it is not the GPU package implementation. The strongest gaps were explicit device policy, shared readiness diagnostics, EfficientNet GPU memory-bound chunking, visible validation artifacts, and avoiding unrelated distributed-training abstractions.
 **Decision**: Accept the review refinements. `TASK-075` should begin with a shared `TOWERSCOUT_DEVICE=auto|cpu|cuda` resolver, per-chunk EfficientNet CUDA transfer, non-loading readiness diagnostics, explicit GPU concurrency policy, fixed-fixture parity checks, and Docker-first GPU validation while keeping default Compose CPU-safe.
-**Execution**: Updated `.agent_work/context/analysis/task-079-single-gpu-capable-package-plan.md` with a PR #14 review disposition, revised application-code priorities, expanded validation matrix, added risks/mitigations, and reordered implementation phases so runtime policy and GPU memory safety come before proof packaging.
+**Execution**: Updated `.agent_work/tasks/completed/TASK-079/task-079-single-gpu-capable-package-plan.md` with a PR #14 review disposition, revised application-code priorities, expanded validation matrix, added risks/mitigations, and reordered implementation phases so runtime policy and GPU memory safety come before proof packaging.
 **Output**: `TASK-075` handoff now reflects the reviewer-approved implementation entry criteria rather than treating implicit `torch.cuda.is_available()` behavior as sufficient.
 **Validation**: Passed `python .agent_work\scripts\validate_agent_work.py` and `git diff --check`.
 **Next**: Commit the plan update and push it to PR #14.
@@ -234,7 +234,7 @@ This task protects the V1 RC1 package path by prioritizing correctness, supporta
 **Objective**: Address the remaining slowdown observed after the Phase 3 secondary-classifier optimization and capture the accepted single GPU-capable package direction before moving into `TASK-075`.
 **Context**: The May 20 user run showed Task-079's secondary-classifier batching was applied, but the remaining 65.76s workflow was dominated by CPU YOLO inference (`23.25s`), sequential Azure reverse geocoding (`19.89s`), and cold YOLO initialization (`13.80s`). The detection estimate still reported `~2.4s` for an 8-tile run because it used the stale `0.3s/tile` fallback.
 **Decision**: Keep this follow-up RC-safe: do not change model weights, thresholds, detection result JSON fields, package asset layout, or default Compose GPU requirements. Reduce unnecessary geocoding work for outside-AOI detections, improve diagnostics, make estimates history-based, expose YOLO CPU batch sizing as configuration, and document the single GPU-capable package as a separate implementation plan.
-**Execution**: Added provider-alias normalization and legacy alias reads for geocoding cache keys; changed automatic detection address attachment to reverse-geocode only class-0 detections inside the AOI while assigning coordinate fallback to outside class-0 detections; recorded geocoding cache/provider timing and count metadata; changed performance estimates to use recent provider-specific workflow seconds per tile with conservative fallback and cold-model overhead; added `TOWERSCOUT_YOLO_CPU_BATCH_SIZE` / `TOWERSCOUT_YOLO_CUDA_BATCH_SIZE`; recorded PyTorch CUDA build/device metadata; added focused regression tests; and created `.agent_work/context/analysis/task-079-single-gpu-capable-package-plan.md`.
+**Execution**: Added provider-alias normalization and legacy alias reads for geocoding cache keys; changed automatic detection address attachment to reverse-geocode only class-0 detections inside the AOI while assigning coordinate fallback to outside class-0 detections; recorded geocoding cache/provider timing and count metadata; changed performance estimates to use recent provider-specific workflow seconds per tile with conservative fallback and cold-model overhead; added `TOWERSCOUT_YOLO_CPU_BATCH_SIZE` / `TOWERSCOUT_YOLO_CUDA_BATCH_SIZE`; recorded PyTorch CUDA build/device metadata; added focused regression tests; and created `.agent_work/tasks/completed/TASK-079/task-079-single-gpu-capable-package-plan.md`.
 **Output**: Expected next bounded run behavior is fewer automatic geocoding provider calls when detections fall outside the drawn AOI, clearer performance JSON metadata for geocoding bottlenecks, a more realistic estimate before detection, and a supportable path to evaluate a single CUDA-capable image with CPU fallback.
 **Validation**: Passed `.venv\Scripts\python.exe -m pytest tests\unit\test_geocoding.py tests\unit\test_task_079_reliability.py tests\unit\test_yolov5_secondary_metrics.py -q -p no:cacheprovider`, `.venv\Scripts\python.exe -m py_compile webapp\towerscout.py webapp\ts_geocache.py webapp\ts_performance.py webapp\ts_yolov5.py`, and `python .agent_work\scripts\validate_agent_work.py`.
 **Next**: Use the single GPU-capable package plan as the starting point for `TASK-075`.
@@ -324,7 +324,7 @@ This task protects the V1 RC1 package path by prioritizing correctness, supporta
 **Objective**: Create a release-critical task for the geocoding/address display, Azure drawing validation, and model performance instrumentation fixes identified during pre-RC testing.
 **Context**: Sprint 06 is near the V1 RC1 package/docs/validation gate. These findings affect user-visible reliability and supportability, and they need to be resolved or measured before `TASK-071` docs and `TASK-066` clean-machine validation can be trusted.
 **Decision**: Split the work into three phases: Phase 1 hardens correctness and adds timing instrumentation for RC1; Phase 2 benchmarks optimization candidates; Phase 3 implements optimization only if Phase 2 proves a material, low-risk win.
-**Execution**: Created `.agent_work/tasks/active/TASK-079-rc1-reliability-fixes.md` and synchronized `.agent_work/current-tasks.md`.
+**Execution**: Created `.agent_work/tasks/completed/TASK-079-rc1-reliability-fixes.md` and synchronized `.agent_work/current-tasks.md`.
 **Output**: Task file ready for intake.
 **Validation**: Pending `.agent_work` validation after task synchronization.
 **Next**: Start Phase 1 by implementing geocoding TLS preflight, cache clustering correction, Azure drawing validation cleanup, and performance phase timing.
@@ -353,7 +353,7 @@ This task protects the V1 RC1 package path by prioritizing correctness, supporta
 - `.venv\Scripts\python.exe -m pytest tests/integration/test_end_to_end.py -q -p no:cacheprovider`
 - `.venv\Scripts\python.exe -m pytest tests/unit -q -p no:cacheprovider`
 - `python .agent_work/scripts/validate_agent_work.py`
-- `git diff --check -- .agent_work/tasks/active/TASK-079-rc1-reliability-fixes.md .agent_work/current-tasks.md`
+- `git diff --check -- .agent_work/tasks/completed/TASK-079-rc1-reliability-fixes.md .agent_work/current-tasks.md`
 
 **Fixed Local Benchmark Passed**:
 - Cached 6-tile fixture from the Azure smoke run.

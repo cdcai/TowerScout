@@ -14,7 +14,7 @@ The repository is public. Do not publish or commit raw GPU evidence files that
 contain the fixed test AOI, local validation paths, or host-specific context.
 Use only the public-safe evidence summary:
 
-` .agent_work/context/analysis/TowerScout-rc6-gpu-validation-evidence-emailsafe/TowerScout-rc6-gpu-validation-evidence/PUBLIC-SUMMARY.md`
+` .agent_work/tasks/completed/TASK-084/evidence/TowerScout-rc6-gpu-validation-evidence-emailsafe/TowerScout-rc6-gpu-validation-evidence/PUBLIC-SUMMARY.md`
 
 The local raw evidence packet remains internal/email-safe only.
 
@@ -62,7 +62,7 @@ The optional public validation evidence attachment is
 - Mark as prerelease: yes
 - Mark as latest: no
 - Release notes source:
-  `.agent_work/tasks/active/TASK-084/official-rc6-release-notes.md`
+  `.agent_work/tasks/completed/TASK-084/official-rc6-release-notes.md`
 
 ## Publication Command Template
 
@@ -79,7 +79,7 @@ gh release create v0.1.0-rc6 `
   --repo J-Schulein/TowerScout `
   --target 12daa5536f580f76d063559e86b9a474451bc54b `
   --title "TowerScout v0.1.0-rc6" `
-  --notes-file .agent_work\tasks\active\TASK-084\official-rc6-release-notes.md `
+  --notes-file .agent_work\tasks\completed\TASK-084\official-rc6-release-notes.md `
   --prerelease `
   --latest=false
 ```

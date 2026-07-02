@@ -35,7 +35,7 @@ node tests\frontend\test_detection_workflow_smoke.js --provider=google --base-ur
 - UI provider: `google`.
 - Backend provider: `google`.
 
-**Artifact**: `.agent_work/context/analysis/browser-runs/20260508-125149-google/summary.json`
+**Artifact**: `.agent_work/context/archive/2026-07/analysis/browser-runs/20260508-125149-google/summary.json`
 
 ## Azure Detection Smoke
 
@@ -54,7 +54,7 @@ node tests\frontend\test_detection_workflow_smoke.js --provider=azure --base-url
 - Browser console/network evidence showed an Azure Maps satellite styling request failing CORS preflight from the `127.0.0.1` origin with HTTP 503 and no `Access-Control-Allow-Origin` response header.
 - No TowerScout backend provider-validation or detection failure was identified in this attempt.
 
-**Artifact**: `.agent_work/context/analysis/browser-runs/20260508-124932-azure/summary.json`
+**Artifact**: `.agent_work/context/archive/2026-07/analysis/browser-runs/20260508-124932-azure/summary.json`
 
 **Rerun Command**:
 
@@ -77,7 +77,7 @@ node tests\frontend\test_detection_workflow_smoke.js --provider=azure --base-url
 - UI provider: `azure`.
 - Backend provider: `azure`.
 
-**Artifact**: `.agent_work/context/analysis/browser-runs/20260508-125226-azure/summary.json`
+**Artifact**: `.agent_work/context/archive/2026-07/analysis/browser-runs/20260508-125226-azure/summary.json`
 
 ## Decision
 

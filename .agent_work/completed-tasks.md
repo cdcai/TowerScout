@@ -1,15 +1,80 @@
 # Completed Tasks
 
-**Last Updated**: May 8, 2026  
-**Sprint 01 Performance**: 7 of 7 tasks completed (100%), ~32 hours actual effort  
-**Sprint 02 Performance**: 5 of 5 tasks completed (100%), ~61 hours actual effort  
-**Sprint 03 Performance**: 8 of 8 tasks completed (100%), ~56 hours actual effort (March 11-18, 2026)  
-**Sprint 04 Performance**: 7 of 7 core tasks completed (100%), 19 days actual (March 19 - April 6, 2026)  
-**Sprint 05 Performance**: 10 completed task files moved to `tasks/completed/`; `TASK-065` carried into Sprint 06 release-support review  
+**Last Updated**: July 2, 2026
+**Sprint 01 Performance**: 7 of 7 tasks completed (100%), ~32 hours actual effort
+**Sprint 02 Performance**: 5 of 5 tasks completed (100%), ~61 hours actual effort
+**Sprint 03 Performance**: 8 of 8 tasks completed (100%), ~56 hours actual effort (March 11-18, 2026)
+**Sprint 04 Performance**: 7 of 7 core tasks completed (100%), 19 days actual (March 19 - April 6, 2026)
+**Sprint 05 Performance**: 10 completed task files moved to `tasks/completed/`; `TASK-065` carried into Sprint 06 release-support review and later closed there
+**Sprint 06 Performance**: 17 completed/superseded task artifacts moved to `tasks/completed/`; RC7.1 validated for tester-facing package use; `TASK-087` selected as Sprint 07 active work
 **Archive Locations**: 
 - Tasks completed before December 19, 2025: `context/archive/2026-01-16-archived-completed-tasks.md`
 - TASK-034 (January 7, 2026): `context/archive/2026-02/2026-02-12-archived-task-034.md`
 - May 2026 context cleanup: `context/archive/2026-05/`
+- Sprint 06 plan archived: `context/archive/2026-07/status/SPRINT-06-PLAN.md`
+
+---
+
+## SPRINT 06 COMPLETED TASKS (May 11 - July 2, 2026)
+
+**Sprint Summary**: Sprint 06 turned the Sprint 05 runtime/container foundation into a controlled V1 RC / pilot package path. The sprint extended from the original RC1 plan through RC7.1 because release validation exposed real packaging, documentation, Podman, GPU, asset, dataset-restore, and managed-network TLS gaps that needed to be fixed before tester handoff.
+
+**Sprint Goal**: Produce and internally validate a V1 RC / pilot-ready local release package path for Windows 11 AMD64 users, including AGPL-compliant YOLO notices, asset delivery, package documentation, release policy boundaries, clean-machine validation, and UAT handoff.
+
+**Sprint Status**: COMPLETE for the release-readiness lane. `v0.1.0-rc7.1` is the validated tester-facing package set. Final V1 completion remains pending pilot/UAT feedback and blocker disposition.
+
+### Sprint 06 Overview
+
+**Primary Objectives Achieved**:
+1. `TASK-065`: Release packaging/runtime support language accepted.
+2. `TASK-069`: AGPL-governed YOLO-enabled RC posture recorded for controlled release planning.
+3. `TASK-072`: Asset bundle layout, versioning, checksums, and release matching documented.
+4. `TASK-071`: Package-based user/support documentation added and wired into package/app docs.
+5. `TASK-066`: RC1 package validation gate passed with Docker Desktop and qualified Podman CPU-default boundaries.
+6. `TASK-067`: Route-test timeout and local-runtime isolation gap closed.
+7. `TASK-073`: RC7.1 UAT handoff packet approved for tester use.
+8. `TASK-074`: Bootstrap/preflight flow validated for package first-run setup.
+9. `TASK-075`, `TASK-083`, and `TASK-084`: CPU/CUDA package model, support-assigned GPU validation, Podman provider onboarding, and RC6 package publication path completed.
+10. `TASK-085`: Dataset ZIP restore path traversal hardening completed before final package distribution.
+11. `TASK-086`: Managed-network provider TLS repair baseline validated and published through RC7.1.
+
+**Key Outcomes**:
+- GitHub Release packages became the normal tester-facing delivery path.
+- CPU and CUDA Application Package variants plus a shared Model & Data Package were generated, checksummed, and validated.
+- Docker Desktop remains the normal tester default; Podman and CUDA remain support-assigned with explicit prerequisites.
+- Setup, Settings, docs, package scripts, and release notes now distinguish invalid provider keys from repairable managed-network TLS trust failures.
+- The validated `TASK-086` command repair path remains the baseline, and `TASK-087` is selected as the Sprint 07 guided host-side repair UX work.
+
+**Carried Forward**:
+- `TASK-087`: selected as active Sprint 07 work.
+- `TASK-076`: provider API key exposure/restriction policy remains a near-term backlog item.
+- `TASK-068`: Windows script portability/test coverage remains useful if Sprint 07 helper work expands script risk.
+- `TASK-070`: restricted-network/offline package enhancements remain follow-up unless pilot needs make them release-critical.
+- V1 final completion waits for pilot/UAT results.
+
+**Retrospective**: See [SPRINT-06-RETROSPECTIVE-ANALYSIS-2026-07-02.md](./context/analysis/SPRINT-06-RETROSPECTIVE-ANALYSIS-2026-07-02.md).
+
+### Sprint 06 Task Files
+
+- [TASK-065 release packaging runtime support](./tasks/completed/TASK-065-release-packaging-runtime-support.md)
+- [TASK-066 release candidate validation gate](./tasks/completed/TASK-066-release-candidate-validation-gate.md)
+- [TASK-067 CI release gate tightening](./tasks/completed/TASK-067-ci-release-gate-tightening.md)
+- [TASK-069 license and release policy review](./tasks/completed/TASK-069/)
+- [TASK-071 end-user release docs](./tasks/completed/TASK-071-end-user-release-docs.md)
+- [TASK-072 release asset bundle contract](./tasks/completed/TASK-072-release-asset-bundle-contract.md)
+- [TASK-073 clean-machine UAT plan](./tasks/completed/TASK-073-clean-machine-uat-plan.md)
+- [TASK-074 runtime prerequisite preflight](./tasks/completed/TASK-074-runtime-prerequisite-preflight.md)
+- [TASK-075 single GPU-capable package](./tasks/completed/TASK-075-single-gpu-capable-package.md)
+- [TASK-079 RC1 reliability fixes](./tasks/completed/TASK-079-rc1-reliability-fixes.md)
+- [TASK-080 UAT user guide process simplification](./tasks/completed/TASK-080-uat-user-guide-process-simplification.md)
+- [TASK-081 RC3 runtime hardening and Podman independence](./tasks/completed/TASK-081-rc3-runtime-hardening-podman-independence.md)
+- [TASK-082 RC4 docs package organization](./tasks/completed/TASK-082-rc4-docs-package-organization.md)
+- [TASK-083 RC5 Podman independence GPU release](./tasks/completed/TASK-083-rc5-podman-independence-gpu-release.md)
+- [TASK-084 GA packaging hardening and Podman provider onboarding](./tasks/completed/TASK-084-ga-packaging-hardening-and-podman-provider-onboarding.md)
+- [TASK-085 dataset ZIP restore path traversal hardening](./tasks/completed/TASK-085-dataset-zip-restore-path-traversal-hardening.md)
+- [TASK-086 provider TLS auto-repair and setup triage](./tasks/completed/TASK-086-provider-tls-auto-repair-and-setup-triage.md)
+
+Task-local support folders for `TASK-065`, `TASK-069`, `TASK-084`, and `TASK-086` are preserved under `tasks/completed/`.
 
 ---
 
@@ -19,7 +84,7 @@
 
 **Sprint Goal**: Establish a reliable local runtime baseline, then package that baseline through an OCI-compatible container contract and launcher-first user path.
 
-**Sprint Status**: COMPLETE for finished task artifacts. `TASK-065` remains active as Sprint 06 release-support carry-forward pending release-owner support-language review and commit/PR checkpoint.
+**Sprint Status**: COMPLETE for finished task artifacts. `TASK-065` was carried into Sprint 06 and is now closed in the Sprint 06 release-readiness record.
 
 ### Sprint 05 Overview
 
@@ -44,8 +109,8 @@
 - Launcher work added a Windows-first startup path over the container runtime and release package.
 
 **Carried Forward**:
-- `TASK-065`: Release packaging and runtime support follow-through is implementation-complete but remains active pending release-owner review and PR/commit checkpoint.
-- Release-candidate validation, CI release gate tightening, Windows script portability, license/release policy review, and restricted-network package enhancements remain backlog work.
+- `TASK-065`: Release packaging and runtime support follow-through carried into Sprint 06 and is now complete.
+- Release-candidate validation, CI release gate tightening, and license/release policy review were completed during Sprint 06; Windows script portability and restricted-network package enhancements remain backlog watch items.
 
 **Retrospective**: See [SPRINT-05-RETROSPECTIVE-ANALYSIS-2026-05-08.md](./context/analysis/SPRINT-05-RETROSPECTIVE-ANALYSIS-2026-05-08.md).
 

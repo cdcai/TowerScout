@@ -2,7 +2,7 @@
 
 **Date**: 2026-06-16
 **Scope**: Recommended path for `TASK-084` and `TASK-085`
-**Primary task**: `.agent_work/tasks/active/TASK-084-ga-packaging-hardening-and-podman-provider-onboarding.md`
+**Primary task**: `.agent_work/tasks/completed/TASK-084-ga-packaging-hardening-and-podman-provider-onboarding.md`
 **Follow-on task**: `TASK-085 Dataset ZIP Restore Path Traversal Hardening`
 **Status update**: PR #34 (`TASK-084`) and PR #35 (`TASK-085`) merged on
 2026-06-16. The dataset ZIP restore traversal gate is closed; remaining
@@ -376,7 +376,7 @@ The final publication gate should be:
 ## Recommended Next Step
 
 Use this revised memo plus
-`.agent_work/tasks/active/TASK-084/final-package-gate-checklist-2026-06-16.md`
+`.agent_work/tasks/completed/TASK-084/final-package-gate-checklist-2026-06-16.md`
 as the working package-publication gate. Finalize release inputs, capture CPU
 and CUDA image digests, generate the CPU/CUDA control ZIPs, and run the
 validation/evidence matrix before publishing any final GA/pilot package.

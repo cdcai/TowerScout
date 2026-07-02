@@ -108,7 +108,7 @@ This task should replace or clearly distinguish older source/Conda tester guidan
 **Objective**: Create detailed Sprint 06 task documentation for end-user release package documentation.  
 **Context**: Sprint 06 planning identified that broad end-user testing should wait until package docs and asset instructions are clear. Existing tester guides target source/Conda flows and do not represent the V1 RC1 release package path.  
 **Decision**: Keep this task focused on package-based user documentation, with source-install guidance treated as legacy/support material unless explicitly needed.  
-**Execution**: Created `.agent_work/tasks/active/TASK-071-end-user-release-docs.md` and synchronized the task with `current-tasks.md`.  
+**Execution**: Created `.agent_work/tasks/completed/TASK-071-end-user-release-docs.md` and synchronized the task with `current-tasks.md`.
 **Output**: Task file ready for intake.  
 **Validation**: Pending `.agent_work` validation after all Sprint 06 task files are created.  
 **Next**: Start documentation inventory and draft the V1 RC1 quick start against the `agpl-yolo` compliance payload and completed asset contract.

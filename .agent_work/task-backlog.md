@@ -1,18 +1,17 @@
 # Task Backlog - Remaining Work
 
-**Last Updated**: June 16, 2026
-**Planning State**: Sprint 05 completed work has been removed from the backlog. Sprint 06 now follows an AGPL-compliant YOLO-enabled RC/pilot path: `TASK-069` sign-off is sufficient to merge PR #11 as the internal controlled AGPL-governed RC planning and compliance baseline, `TASK-072` is completed, and package docs/validation continue against the corrected compliance payload.
-**Ordering Method**: The ordered backlog below is based on current project value, dependency shape, and the shortest credible path to a v1 local release that non-technical pilot users can install and run.
+**Last Updated**: July 2, 2026
+**Planning State**: Sprint 06 is closed through the validated `v0.1.0-rc7.1` tester-facing package set. `TASK-087` is selected as active Sprint 07 work and is tracked in `current-tasks.md`, not in the backlog.
+**Ordering Method**: Remaining work is ordered by release/pilot risk first, then post-release architecture and maintenance value.
 
 ---
 
 ## Cleanup Notes
 
-- Removed completed or current-task-only backlog entries for `TASK-051`, `TASK-052`, `TASK-054`, `TASK-055`, `TASK-056`, `TASK-057`, `TASK-062`, `TASK-063`, `TASK-064`, `TASK-025`, and `TASK-065`.
-- Kept `TASK-029` in the backlog because it was not started.
-- Archived the not-started `TASK-029` active task artifact under `.agent_work/context/archive/2026-05/not-started-task-artifacts/`; the backlog row below is now the planning source for that task until it is selected.
-- Added release-readiness tasks for asset delivery, end-user package documentation, clean-machine UAT planning, runtime preflight, GPU/CUDA scope, provider-key release policy, and public-release asset/release-manifest hardening.
-- Moved mobile responsiveness, NumPy 2 migration, Sprint 04 deferred quick wins, advanced filtering, performance dashboard, and user preferences out of the ordered release backlog. They remain visible in the parking lot / technical-debt register below.
+- Removed completed Sprint 06 release-readiness entries from the ordered backlog: `TASK-065`, `TASK-066`, `TASK-067`, `TASK-069`, `TASK-071`, `TASK-072`, `TASK-073`, `TASK-074`, `TASK-075`, `TASK-079`, `TASK-080`, `TASK-081`, `TASK-082`, `TASK-083`, `TASK-084`, `TASK-085`, and `TASK-086`.
+- Selected `TASK-087` as active Sprint 07 work.
+- Kept follow-on release support, policy, restricted-network, architecture, and performance tasks visible for future selection.
+- Kept parked field-use and technical-debt items separate from ordered release/pilot work.
 
 ---
 
@@ -20,57 +19,40 @@
 
 | Order | Task | Status | Type | Estimated Effort | Key Dependencies | Recommended Disposition And Rationale |
 |---:|---|---|---|---|---|---|
-| 1 | `TASK-072` Release Asset Bundle Contract | COMPLETED | C (Release Engineering / Asset Governance) | 1-2 days (8-16h) | `TASK-065`; current asset manifest | Completed in the active Sprint 06 lane. Defines exactly how model weights and ZIP-code data are bundled, versioned, checksummed, distributed, placed next to the release package, imported, verified, and matched to a TowerScout release. External asset ZIP publication now follows the `TASK-069` AGPL-compliant YOLO release posture and model-terms labeling. |
-| 2 | `TASK-069` License And Release Policy Review | SIGN_OFF_RECORDED | C (Legal / Release Policy / Governance) | 0.5-1 day technical prep plus owner/legal review | `TASK-025`; `TASK-065`; owner/legal availability | Promoted to active Sprint 06 work for the controlled AGPL-governed YOLO-enabled RC direction. Sign-off is sufficient to merge PR #11 as the internal Sprint 06 RC baseline and does not constitute final public open-source approval. Deliver corrected YOLO AGPL attribution, release decision memo, model/data/provider terms, source-offer requirements, release control package compliance payload, image generic notices/OCI labels, and reviewer feedback material. |
-| 3 | `TASK-071` End-User Release Package Documentation | NOT_STARTED | B/C (Documentation / User Enablement) | 1-2 days (8-16h) | `TASK-069`; `TASK-072`; release package shape | Add and keep second. Produce the package-based quick start and full user guide for the AGPL-compliant YOLO-enabled package, including what to download, where assets go, how to launch, how to configure provider keys, how to find source/license notices, how to validate success, and how to report problems. |
-| 4 | `TASK-066` Release Candidate Validation Gate | NOT_STARTED | C (Release Engineering / Validation) | 1-2 days (8-16h) | `TASK-065`; `TASK-069`; `TASK-071`; `TASK-072`; agreed release package shape | Keep as the bridge between internal release readiness and external user testing. Prove the release ZIP, pinned image digest, checksums, release manifest, source/SBOM references, model notices, asset import, provider setup, TLS CA import, first-run restart behavior, and bounded detection from a clean user-facing path. |
-| 5 | `TASK-073` Clean-Machine Pilot / UAT Execution Plan | ACTIVE | B/C (User Testing / Release Validation) | 0.5-1 day (4-8h) | `TASK-066`; `TASK-067`; draft user package docs | Active Sprint 06 task. Define pilot tester instructions, acceptance checklist, environment capture, friction logging, issue-report workflow, success criteria, and support escalation before asking end users to test. The `TASK-066` Flask route-test timeout/isolation gap is closed by `TASK-067` / PR #19. |
-| 6 | `TASK-077` Public Release Manifest And Asset Import Hardening | PARTIAL_IN_SCOPE | C (Release Engineering / Compliance) | 2-4 days full task; narrow slice in Sprint 06 | `TASK-069`; `TASK-072`; `TASK-066` validation evidence | Pull forward the narrow compliance-payload slice now: release manifest, source URL/ref, checksums, image digest, SBOM reference, model/data terms, and revocation notes. Leave staged allowlist-only asset activation as follow-up unless `TASK-066` shows it is release-critical. |
-| 7 | `TASK-076` Provider API Key Exposure And Restriction Policy | NOT_STARTED | C (Security / Release Policy) | 0.5-1.5 days (4-12h) | Current setup/settings and provider-loading behavior; `TASK-069` alignment | Keep near-active. Browser map SDK keys are still exposed to the client through provider-loading routes, and AGPL does not change provider/API obligations. Decide and document whether v1 accepts this with strict provider-side key restrictions, referrer limits, quota controls, and user guidance, or whether further proxy/auth changes are required before wider distribution. |
-| 8 | `TASK-085` Dataset ZIP Restore Path Traversal Hardening | COMPLETED | C (Security / Dataset Restore Hardening) | 0.5-1 day (4-8h) | Current `/uploaddataset` restore path and dataset export/restore tests; `TASK-084` final package sequencing | Completed after the first `TASK-084` implementation slice as the hard pre-final-package gate. The dataset upload route now rejects unsafe ZIP member names before restore processing, verifies resolved write targets remain below the session temp directory, preserves valid dataset restore behavior, and has traversal regression tests. |
-| 9 | `TASK-074` Runtime Prerequisite Preflight | SELECTED_ACTIVE | B/C (Launcher / Supportability) | 1-2 days (8-16h) | `TASK-071`; `TASK-073`; launcher/runtime scripts | Selected into the active Sprint 06 lane after install-UX review. Provide a user/support bootstrap/preflight that checks engine presence, Podman machine state, Compose provider, WSL/virtualization hints, port availability, disk space, release checksums, asset ZIP layout, TLS guidance, and readiness state before or during launch. |
-| 10 | `TASK-067` CI Release Gate Tightening | ACTIVE_SLICE_COMPLETED | C (CI / Release Engineering) | 0.5-1 day active slice; 1-2 days full task | `TASK-066` checklist | Active Sprint 06 slice completed in PR #19: pytest/CI timeout safeguards, isolated Flask route-test runtime paths, and stale legacy `AGENTS.md/` guidance removal. Later slices can promote package, digest, manifest, docs/license route, and launcher checks into CI or documented required/manual gates. |
-| 11 | `TASK-068` Windows Test Portability And Script Validation | NOT_STARTED | B/C (Testing / Developer Experience) | 0.5-1 day (4-8h) | `TASK-065`; current release helper tests; `TASK-066` script findings | Keep as a release-support follow-up. Decide whether PowerShell release-helper coverage stays Windows-only or gains explicit PowerShell Core coverage in CI, and add deeper Windows helper-script validation if pilot prep exposes gaps. |
-| 12 | `TASK-075` Single GPU-Capable Package Implementation | ACTIVE | C (Runtime Policy / Hardware Compatibility / Release Packaging) | 1-3 days (8-24h) | Current CPU baseline; `TASK-051` CUDA audit; `TASK-079` single-package plan | Active in Sprint 06. Start with shared `TOWERSCOUT_DEVICE` policy resolution, EfficientNet memory-bound CUDA chunking, readiness diagnostics, and fixed-fixture parity checks; keep the default launch CPU-safe, add optional GPU launch overlay, validate CPU fallback on non-GPU hosts, and validate NVIDIA Docker Desktop WSL2 before claiming GPU support. |
-| 13 | `TASK-070` Restricted-Network Package Enhancements | NOT_STARTED | B/C (Release Engineering / Offline Support) | 1-3 days (8-24h) | `TASK-066`; normal connected release path validated | Keep, but after the normal connected release path is validated. This should not block v1 unless restricted-network support becomes a launch requirement. |
-| 14 | `TASK-078` Permissive Apache-Only Runtime Migration | NOT_STARTED | C (ML Runtime / Release Policy) | TBD after PoC | `TASK-069`; current YOLO validation baseline | Later separate track for an Apache-compatible/permissive public release. Evaluate ONNX or another non-Ultralytics runtime, remove AGPL YOLO from the default runtime, and validate detector behavior before claiming an Apache-only package/image. This belongs with the later clean curated public release line, not the Sprint 06 RC gate. |
-| 15 | `TASK-058` Background Detection Jobs And Durable Run State | NOT_STARTED | C (Architecture / Reliability) | 3-5 days (24-40h) | Release baseline stable; current progress/cancel contract understood | Keep as the highest-value post-release architecture work. Long-running detection should not stay bound to request/thread-local assumptions, but this should not preempt the release package path unless release work intentionally pauses. |
-| 16 | `TASK-059` Backend Layer Decomposition And Logging Consolidation | NOT_STARTED | C (Architecture / Maintainability) | 3-5 days (24-40h) | `TASK-058` | Keep after `TASK-058`. Route/service boundaries should follow the actual job and state ownership model rather than be guessed first. |
-| 17 | `TASK-027` Enhanced Error Handling | NOT_STARTED | A/B (Reliability / UX) | 1-2 days (8-16h) | Existing logging and support diagnostics | Keep. Better user-facing recovery, retry, and troubleshooting messages compound release-support value. Fold any still-relevant Sprint 04 deferred error-handler quick wins into this task. |
-| 18 | `TASK-026` CPU Optimization | NOT_STARTED | C (Performance) | 2-3 days (16-24h) | Current inference baseline; release host assumptions | Keep. CPU-only performance matters for the selected local deployment baseline, but it should follow release-candidate validation so optimization starts from a stable package. |
-| 19 | `TASK-029` Multi-Provider Fallback | NOT_STARTED | B (Reliability) | 2-3 days (16-24h) | Provider abstraction; improved error handling preferred | Keep, but not before release gates. Automatic fallback can improve reliability, but it must preserve provider provenance and avoid masking unsafe/no-key conditions. |
-| 20 | `TASK-060` Frontend Build Modernization | NOT_STARTED | B (Frontend Infrastructure) | 1-2 days (8-16h) | Stable release branch or explicit modernization window | Keep. Manual ordered concatenation is maintenance risk, but changing the build pipeline is not necessary for the immediate release gate. |
+| 1 | `TASK-076` Provider API Key Exposure And Restriction Policy | NOT_STARTED | C (Security / Release Policy) | 0.5-1.5 days (4-12h) | Current setup/settings and provider-loading behavior; release-owner policy input | Pull forward before broader distribution if provider-key ownership, restriction, quota, and support expectations remain informal. Browser map SDK keys are client-visible by design, so the release needs clear provider-side restrictions and user/support guidance. |
+| 2 | `TASK-068` Windows Test Portability And Script Validation | NOT_STARTED | B/C (Testing / Developer Experience) | 0.5-1 day (4-8h) | Current Windows launcher/import/TLS helper scripts; `TASK-087` helper proof findings | Pull forward if Sprint 07 exposes helper or PowerShell behavior that should be covered by repeatable Windows-first validation rather than manual evidence only. |
+| 3 | `TASK-077` Public Release Manifest And Asset Import Hardening | PARTIAL_FOLLOW_UP | C (Release Engineering / Compliance) | 1-3 days depending on scope | Current package manifest/checksum flow; asset import helper; release evidence | Keep as a follow-up for staged/allowlist-only asset activation or additional manifest hardening if pilot feedback shows import risk. The narrow compliance payload was substantially addressed during Sprint 06 package work. |
+| 4 | `TASK-070` Restricted-Network Package Enhancements | NOT_STARTED | B/C (Release Engineering / Offline Support) | 1-3 days (8-24h) | Normal connected package path validated; pilot restricted-network requirements | Pull forward only if restricted-network or offline preload support becomes a launch requirement. RC7.1 remains a connected package path with support-managed exceptions. |
+| 5 | `TASK-078` Permissive Apache-Only Runtime Migration | NOT_STARTED | C (ML Runtime / Release Policy) | TBD after PoC | `TASK-069`; current YOLO validation baseline | Later public-release track. Evaluate ONNX or another non-Ultralytics runtime, remove AGPL YOLO from the default package/image, and validate detector behavior before claiming an Apache-compatible package. |
+| 6 | `TASK-058` Background Detection Jobs And Durable Run State | NOT_STARTED | C (Architecture / Reliability) | 3-5 days (24-40h) | Release baseline stable; current progress/cancel contract understood | Highest-value post-release architecture work once pilot blockers are handled. Long-running detection should eventually move away from request/thread-local assumptions. |
+| 7 | `TASK-059` Backend Layer Decomposition And Logging Consolidation | NOT_STARTED | C (Architecture / Maintainability) | 3-5 days (24-40h) | `TASK-058` preferred first | Keep after durable job/state ownership is clear. Route/service boundaries should follow the actual job and state model rather than be guessed first. |
+| 8 | `TASK-027` Enhanced Error Handling | NOT_STARTED | A/B (Reliability / UX) | 1-2 days (8-16h) | Existing logging, setup, provider, and support diagnostics | Keep as a release-support improvement. Fold still-relevant Sprint 04 deferred error-handler quick wins into this task. |
+| 9 | `TASK-026` CPU Optimization | NOT_STARTED | C (Performance) | 2-3 days (16-24h) | Stable package/runtime baseline; representative CPU benchmarks | Keep after pilot feedback unless CPU performance becomes a confirmed tester blocker. Optimization should start from the validated package path, not source-only assumptions. |
+| 10 | `TASK-029` Multi-Provider Fallback | NOT_STARTED | B (Reliability) | 2-3 days (16-24h) | Provider abstraction; improved error classification preferred | Keep, but do not pull before policy/error-handling clarity. Automatic fallback must preserve provider provenance and avoid masking unsafe/no-key or quota conditions. |
+| 11 | `TASK-060` Frontend Build Modernization | NOT_STARTED | B (Frontend Infrastructure) | 1-2 days (8-16h) | Stable release branch or explicit modernization window | Keep as maintenance. Manual ordered concatenation is a risk, but changing the build pipeline is not necessary for the immediate pilot path. |
+
+---
+
+## Active Elsewhere
+
+| Task | Active Location | Notes |
+|---|---|---|
+| `TASK-087` Host-Side TLS Repair Control Plane | `.agent_work/current-tasks.md`; `.agent_work/tasks/active/TASK-087-host-side-tls-repair-control-plane.md` | Selected as Sprint 07 active work. Starts with helper transport and security proof before product UI integration. |
 
 ---
 
 ## Parking Lot / Technical-Debt Register
 
-These items should not compete with the Sprint 06 release-readiness lane. Keep them visible for later planning, but do not treat them as ordered v1 release blockers unless new evidence changes their priority.
+These items should not compete with Sprint 07 unless tester feedback changes their priority.
 
 | Item | Status | Recommended Handling | Rationale |
 |---|---|---|---|
-| `TASK-028` Mobile Responsiveness | PARKED | Move to later field-use backlog | The v1 supported target is Windows 11 AMD64 local desktop use. Mobile/tablet improvement is useful later but not required before first local release validation. |
-| `TASK-061` Coordinated NumPy 2 Runtime Migration | TECH_DEBT | Track in dependency maintenance register | Important eventually, but the current release baseline intentionally holds a NumPy 1.x stack. Do not mix this into Sprint 06 unless a security/support issue forces it. |
-| Sprint 04 Deferred Quick Wins | MERGE | Fold into `TASK-027` or close if stale | Browser refresh warning and error-handler standardization should not survive as a standalone backlog item. |
+| `TASK-028` Mobile Responsiveness | PARKED | Move to later field-use backlog | The v1 supported target remains Windows 11 AMD64 local desktop use. |
+| `TASK-061` Coordinated NumPy 2 Runtime Migration | TECH_DEBT | Track in dependency maintenance | Important eventually, but the current release baseline intentionally holds a NumPy 1.x stack. |
+| Sprint 04 Deferred Quick Wins | MERGE | Fold into `TASK-027` or close if stale | Browser refresh warning and error-handler standardization should not survive as standalone backlog items. |
 | Advanced Filtering | PARKED | Revisit after pilot feedback | Valuable only if larger-result-set review becomes a confirmed user bottleneck. |
-| Performance Dashboard | PARKED / RESHAPE | Reconsider as lightweight support diagnostics if needed | Current release needs actionable status/log/preflight output more than an in-app dashboard. |
-| User Preferences | PARKED | Revisit after repeated-user workflow evidence | Setup and Settings already cover part of this value. Add preference surface only when pilot feedback shows real need. |
-
----
-
-## Sprint 06 Selection Guidance
-
-Do not automatically select this whole list for Sprint 06. A conservative Sprint 06 should close `TASK-065`, then execute a small release-readiness slice in dependency order:
-
-1. `TASK-069` to settle the AGPL-compliant YOLO release posture and compliance payload.
-2. `TASK-071` to write package-based end-user docs against that posture and the completed asset contract.
-3. `TASK-066` to validate the package/docs/assets/source-notice path from a clean user-facing environment.
-4. `TASK-073` to prepare external pilot / UAT execution after the internal release-candidate gate.
-5. `TASK-076` to resolve provider-key exposure boundaries before broadening distribution.
-
-`TASK-077` has a narrow compliance-payload slice in Sprint 06. `TASK-074` has been selected for active planning after `TASK-073` install-UX review exposed enough first-launch friction to justify bootstrap/preflight work before broad external testing. Future `TASK-067` ratchets and `TASK-068` remain high-value follow-through if capacity remains or if `TASK-066`/`TASK-073` exposes additional automation needs. `TASK-085` should be selected immediately after `TASK-084` implementation and before any final GA/pilot package is cut, unless dataset restore is disabled or explicitly excluded. The May 27, 2026 route-test timeout/isolation finding and stale legacy `AGENTS.md/` guidance cleanup were completed in the active `TASK-067` slice before broad `TASK-073` pilot prep.
-
-If the release path pauses, `TASK-058` is the best next architecture investment. It should precede `TASK-059`.
+| Performance Dashboard | PARKED / RESHAPE | Reconsider as lightweight support diagnostics if needed | Current release support needs actionable status/log/preflight output more than an in-app dashboard. |
+| User Preferences | PARKED | Revisit after repeated-user workflow evidence | Setup and Settings already cover part of this value. Add preference surfaces only when pilot feedback shows real need. |
 
 ---
 
@@ -82,7 +64,8 @@ If the release path pauses, `TASK-058` is the best next architecture investment.
 | Sprint 02 | February-March 2026 | Complete | Architecture work |
 | Sprint 03 | March 11-18, 2026 | Complete | Legacy feature restoration and Google Maps API migration |
 | Sprint 04 | March 19-April 6, 2026 | Complete | Setup/settings, performance investigation, cleanup, detection stabilization |
-| Sprint 05 | April 7-May 8, 2026 | Closeout | Runtime determinism, local YOLO ownership, smoke baseline, release hardening, OCI packaging, launcher MVP |
+| Sprint 05 | April 7-May 8, 2026 | Complete | Runtime determinism, local YOLO ownership, smoke baseline, release hardening, OCI packaging, launcher MVP |
+| Sprint 06 | May 11-July 2, 2026 | Complete | V1 RC package path validated through RC7.1; `TASK-087` selected for Sprint 07 |
 
 ---
 
@@ -90,5 +73,4 @@ If the release path pauses, `TASK-058` is the best next architecture investment.
 
 - [Current Tasks](./current-tasks.md)
 - [Completed Tasks](./completed-tasks.md)
-- [Sprint 05 Retrospective Analysis](./context/analysis/SPRINT-05-RETROSPECTIVE-ANALYSIS-2026-05-08.md)
-- [Sprint 06 Plan](./context/status/SPRINT-06-PLAN.md)
+- [Sprint 06 Retrospective Analysis](./context/analysis/SPRINT-06-RETROSPECTIVE-ANALYSIS-2026-07-02.md)

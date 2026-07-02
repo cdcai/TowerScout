@@ -449,7 +449,7 @@ This decision best satisfies the client expectation while reducing downstream am
 - `scripts/package-release.ps1`
 - `scripts/import-assets.ps1`
 - `.github/workflows/container-publish.yml`
-- `.agent_work/context/status/SPRINT-06-PLAN.md`
+- `.agent_work/context/archive/2026-07/status/SPRINT-06-PLAN.md`
 
 ### External References
 

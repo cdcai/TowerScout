@@ -464,7 +464,7 @@ Docker GPU/Podman GPU CDI validation or hold decision, docs, and sanitized
 evidence.
 **Output**: Active task status and acceptance criteria updated; final package
 gate checklist created at
-`.agent_work/tasks/active/TASK-084/final-package-gate-checklist-2026-06-16.md`.
+`.agent_work/tasks/completed/TASK-084/final-package-gate-checklist-2026-06-16.md`.
 **Next**: Finalize release inputs, capture image digests, generate the CPU and
 CUDA control packages, and run the package validation matrix.
 
@@ -805,7 +805,7 @@ strong enough to accept the CUDA package, but the packet needed standalone
 provenance and a public-safe summary that omits raw AOI/local context.
 **Execution**:
 - Reviewed the GPU validation evidence folder:
-  `.agent_work/context/analysis/TowerScout-rc6-gpu-validation-evidence-emailsafe/TowerScout-rc6-gpu-validation-evidence/`.
+  `.agent_work/tasks/completed/TASK-084/evidence/TowerScout-rc6-gpu-validation-evidence-emailsafe/TowerScout-rc6-gpu-validation-evidence/`.
 - Accepted Docker GPU and Podman GPU CDI readiness because both reached
   `ready` with `device_policy=cuda`, `selected_device=cuda`,
   `pytorch_flavor=cuda121`, `torch_cuda_available=true`,
@@ -833,7 +833,7 @@ provenance and a public-safe summary that omits raw AOI/local context.
 **Validation**:
 - `python .agent_work\scripts\validate_agent_work.py` passed.
 - `git diff --check` passed.
-- `python .agents\skills\towerscout-secret-and-provider-key-safety\scripts\scan_for_sensitive_terms.py .agent_work\context\analysis\TowerScout-rc6-gpu-validation-evidence-emailsafe\TowerScout-rc6-gpu-validation-evidence\PUBLIC-SUMMARY.md .agent_work\context\analysis\TowerScout-rc6-gpu-validation-evidence-emailsafe\TowerScout-rc6-gpu-validation-evidence\ARTIFACT-PROVENANCE.md`
+- `python .agents\skills\towerscout-secret-and-provider-key-safety\scripts\scan_for_sensitive_terms.py .agent_work\tasks\completed\TASK-084\evidence\TowerScout-rc6-gpu-validation-evidence-emailsafe\TowerScout-rc6-gpu-validation-evidence\PUBLIC-SUMMARY.md .agent_work\tasks\completed\TASK-084\evidence\TowerScout-rc6-gpu-validation-evidence-emailsafe\TowerScout-rc6-gpu-validation-evidence\ARTIFACT-PROVENANCE.md`
   returned `matches: 0`.
 - Targeted grep over `PUBLIC-SUMMARY.md` and `ARTIFACT-PROVENANCE.md` found no
   raw AOI, local user paths, key-preview strings, or common provider-key
@@ -853,9 +853,9 @@ and a command template without publishing before owner approval.
 - Added `.gitignore` inside the local RC6 GPU evidence folder so only
   `ARTIFACT-PROVENANCE.md` and `PUBLIC-SUMMARY.md` are tracked; the local
   internal evidence summary and raw evidence artifacts remain ignored.
-- Added `.agent_work/tasks/active/TASK-084/official-rc6-release-notes.md` as
+- Added `.agent_work/tasks/completed/TASK-084/official-rc6-release-notes.md` as
   public-safe release notes.
-- Added `.agent_work/tasks/active/TASK-084/official-rc6-release-handoff-2026-06-17.md`
+- Added `.agent_work/tasks/completed/TASK-084/official-rc6-release-handoff-2026-06-17.md`
   with required release assets, checksums, image digests, release settings,
   publication command template, and post-publication checks.
 - Refreshed the RC1 Pilot / UAT handoff packet with exact RC6 artifact values

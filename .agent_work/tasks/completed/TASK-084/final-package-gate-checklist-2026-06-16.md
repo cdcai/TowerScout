@@ -176,7 +176,7 @@ The prerelease is marked as a prerelease, targets
 ## Remote GPU Host Validation
 
 - Evidence folder:
-  `.agent_work/context/analysis/TowerScout-rc6-gpu-validation-evidence-emailsafe/TowerScout-rc6-gpu-validation-evidence/`.
+  `.agent_work/tasks/completed/TASK-084/evidence/TowerScout-rc6-gpu-validation-evidence-emailsafe/TowerScout-rc6-gpu-validation-evidence/`.
 - Docker GPU and Podman GPU CDI both reached readiness `ready` with
   `device_policy=cuda`, `selected_device=cuda`, `pytorch_flavor=cuda121`,
   `torch_cuda_available=true`, `cuda_device_name="NVIDIA T1000 8GB"`,

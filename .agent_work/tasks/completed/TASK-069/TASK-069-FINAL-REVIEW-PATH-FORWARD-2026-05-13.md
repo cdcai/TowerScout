@@ -8,7 +8,7 @@
 
 Date: 2026-05-13
 Reviewed source: `TowerScout Final Strategy Roadmap Review_2026.05.13.docx`
-Related roadmap: `.agent_work/tasks/active/TASK-069/TASK-069-FINAL-STRATEGY-ROADMAP-2026-05-12.md`
+Related roadmap: `.agent_work/tasks/completed/TASK-069/TASK-069-FINAL-STRATEGY-ROADMAP-2026-05-12.md`
 
 ## Executive Conclusion
 
