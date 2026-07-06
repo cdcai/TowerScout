@@ -92,6 +92,7 @@ webapp/tmp*/
 *.bak
 tmp/
 webapp/tmp.py
+.towerscout-runtime/
 
 # Local analysis artifacts
 .agent_work/context/analysis/browser-runs/

@@ -20,6 +20,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot\lib\TowerScoutCompose.ps1"
+. "$PSScriptRoot\lib\TowerScoutHostHelper.ps1"
 
 $repoRoot = Get-TowerScoutRepoRoot
 $appUrl = "http://localhost:$Port"
@@ -248,8 +249,18 @@ Initialize-TowerScoutEnvFile -RootPath $repoRoot
 
 $composeCommand = Get-TowerScoutComposeCommand -Engine $Engine
 $effectiveEngine = [string] $composeCommand["Executable"]
+$packageFlavor = Get-TowerScoutPackagePytorchFlavor -RootPath $repoRoot
+if ([string]::IsNullOrWhiteSpace($packageFlavor)) {
+    $packageFlavor = "source"
+}
 $env:TOWERSCOUT_CONTAINER_ENGINE = $effectiveEngine
 $env:TOWERSCOUT_PORT = "$Port"
+Save-TowerScoutHostHelperLaunchProfile `
+    -Engine $effectiveEngine `
+    -Gpu $Gpu `
+    -AppPort $Port `
+    -RootPath $repoRoot `
+    -PackageFlavor $packageFlavor | Out-Null
 
 Write-Host "Starting TowerScout with $effectiveEngine on $appUrl..."
 Write-TowerScoutComposeProviderSummary -Engine $effectiveEngine

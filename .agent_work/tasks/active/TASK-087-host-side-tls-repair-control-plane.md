@@ -430,6 +430,13 @@ Operation lifecycle rules:
   window.
 - Stop cleanup must terminate or invalidate active operations and helper
   credentials whenever `scripts\stop.cmd` is used for the selected engine.
+- For the non-mutating control-plane slice, `planned` operations remain active
+  until their operation timeout; after timeout, status polling returns
+  `operation_expired` with HTTP 410 and clears the operation lock.
+- Before mutating execution is enabled, each script-exit state must be classified
+  as success, retryable failure, support-escalation failure, or timeout. Retrying
+  with a new authorization must be allowed only after the prior operation reaches
+  a terminal state or is cleared by timeout/stop cleanup.
 
 ### 4. Restart Orchestration
 
@@ -473,6 +480,76 @@ helper should map subprocess exit codes and known output markers to sanitized
 states such as `inspecting_certificate_chain`, `ca_candidate_selected`,
 `ca_candidate_ambiguous`, `importing_bundle`, `provider_tls_verified`,
 `restarting`, `readiness_waiting`, `ready`, and `failed`.
+
+#### Controlled Execution Design Review Target
+
+The first mutating execution design must remain Docker CPU/CUDA only and must
+not expose product UI or Podman remediation. The helper may execute only the
+internally generated operation plan from `New-TowerScoutProviderTlsRepairOperationPlan`.
+Browser input must never change script path, command path, engine, GPU mode,
+app port, provider argument order, `-Apply`, `-NoBrowser`, timeout values, or
+working directory.
+
+Controlled command runner contract:
+
+- Accept only the already accepted operation plan and runtime profile.
+- Reject any plan whose `InternalCommands` script paths are not the exact
+  allowlisted package-local wrappers:
+  `scripts\repair-provider-tls.cmd`, `scripts\stop.cmd`, and `start.bat`.
+- Resolve command paths under the captured package root and reject paths that
+  escape that root.
+- Build process invocations from structured argument arrays only. Do not build
+  shell command strings from browser input.
+- Treat Windows `.cmd` and `.bat` execution as an explicit interpreter boundary:
+  the helper must select a fixed local Windows command interpreter, keep that
+  interpreter non-browser-selectable, and test that browser input cannot alter
+  interpreter path or interpreter flags.
+- Use one package-root working directory for all steps.
+- Capture stdout/stderr only for internal marker parsing and support-safe
+  diagnostics. Do not return raw subprocess output to the browser, readiness,
+  status, logs intended for normal users, task evidence, or PR evidence.
+- Map each step outcome to the public state table below and persist only
+  support-safe state, step, timestamps, operation id, provider enum, runtime
+  summary, timeout metadata, and next action.
+- Enforce per-step timeouts and the existing overall operation timeout. If a
+  step hangs, mark `operation_timeout`, clean up the child process if possible,
+  and leave restart fallback guidance.
+- Keep same-authorization requests idempotent while an operation is active or
+  terminal-but-retained. Different authorization while active returns
+  `operation_busy`.
+- Permit a new authorization only after terminal failure is retained and the
+  prior operation is explicitly cleared, expires, or stop cleanup invalidates the
+  helper session. Do not automatically retry without user/support confirmation.
+
+Script-exit public-state policy:
+
+| Public state | Source step | Classification | Retry / next action |
+|---|---|---|---|
+| `tls_repair_completed` | repair exit 0 | Intermediate success | Continue to runtime stop. |
+| `tls_repair_selection_required` | repair exit 2 | Terminal support-escalation | Do not retry automatically; use manual dry-run/support selection. |
+| `tls_repair_failed` | repair nonzero other than 2 | Terminal support-escalation | Allow new authorization only after status review or timeout/cleanup; keep manual command fallback. |
+| `runtime_stopped` | stop exit 0 | Intermediate success | Continue to restart. |
+| `runtime_stop_failed` | stop nonzero | Terminal retryable with support review | Do not start runtime; allow retry only after user/support confirms runtime state. |
+| `ready` | start/readiness success | Terminal success when readiness passes | Return repair complete and ask user to retry provider validation. |
+| `readiness_timeout` | start/readiness exit 2 | Terminal timeout | Provide fallback guidance; allow new authorization after timeout/cleanup if app remains unavailable. |
+| `runtime_start_failed` | start nonzero other than 2 | Terminal support-escalation | Keep manual start command fallback; do not retry automatically. |
+| `readiness_failed` | readiness nonzero other than 2 | Terminal support-escalation | Keep manual status/log guidance; do not retry automatically. |
+| `operation_timeout` | any timed-out step | Terminal timeout | Kill/cleanup child process if possible, clear or expire lock according to timeout policy, and require new authorization for retry. |
+
+Execution-runner tests required before enabling execution:
+
+- Prove browser input cannot alter script path, command path, engine, GPU mode,
+  app port, provider argument order, `-Apply`, `-NoBrowser`, or timeout values.
+- Prove browser input cannot alter the fixed `.cmd`/`.bat` interpreter path or
+  interpreter flags.
+- Prove raw stdout/stderr, local paths, certificate details, provider keys, and
+  helper tokens are absent from public operation status.
+- Prove timeouts produce `operation_timeout` without leaving concurrent active
+  operation locks.
+- Prove same authorization remains idempotent and different authorization remains
+  `operation_busy` during each active execution step.
+- Prove terminal success, retryable failure, support-escalation failure, and
+  timeout states follow the table above.
 
 ### 5. Podman Compose Provider Preflight And Remediation
 
@@ -655,7 +732,93 @@ Optional validation:
   Compose provider check/remediation when that scope is included.
 - Multi-instance behavior when another TowerScout package is already running.
 
-### 9. Implementation Phases
+### 9. Internal Live Wrapper Validation Runbook
+
+Do not run the live `repair-provider-tls.cmd -Apply`, `stop.cmd`, and
+`start.bat` sequence until this runbook is reviewed for the selected validation
+window. The live run is internal only; it must not enable product UI,
+`provider_tls_repair=true`, browser-triggered default mutation, Podman
+remediation, or tester-facing guided repair packaging.
+
+Runbook scope:
+
+- Package/profile: current package-local checkout or validation package for PR
+  #45, Docker runtime profile only, CPU/off first. CUDA can follow only after
+  the Docker CPU/off sequence is understood.
+- Runtime state: TowerScout may be running on the selected app port before the
+  live sequence begins; the validation intentionally allows the helper runner
+  to stop and restart that runtime.
+- Provider: start with `google`, because `TASK-086` established the Google Maps
+  managed-network TLS repair baseline. Azure may be tested later only if the
+  repairable TLS category is reproduced and the same support-safety boundaries
+  apply.
+- Port: use the selected runtime profile port, normally `5000` unless the
+  validation host already has a deliberate alternate port.
+- Expected wrapper sequence: repair, stop, start. No other script or shell
+  command is in scope for the helper-controlled live run.
+- Expected timeout budget: repair step 300 seconds, stop step 120 seconds,
+  start/readiness step 180 seconds, with the existing overall operation timeout
+  and operation-lock behavior retained.
+- Rollback/manual fallback: keep the audited command path available:
+  `.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Apply`,
+  `.\scripts\stop.cmd -Engine docker`, and
+  `.\start.bat -Engine docker -Gpu off -Port 5000 -NoBrowser -TimeoutSeconds 180`.
+- Evidence location: record only sanitized states in this task file or a
+  task-local proof note under `.agent_work/tasks/active/TASK-087/` if the
+  evidence needs more space.
+
+Pre-run checklist:
+
+- Confirm the branch/PR head under validation.
+- Confirm no product UI repair button is enabled.
+- Confirm the public helper runtime profile still reports
+  `provider_tls_repair=false` and `podman_provider_repair=false`.
+- Confirm `ExecutionEnabled` is supplied only by the internal validation path,
+  not by browser input or a persisted default.
+- Confirm the selected provider, engine, GPU mode, and app port match the
+  intended validation profile.
+- Confirm no second TowerScout package instance is using the same runtime
+  profile or app port.
+- Confirm the manual fallback commands above are available before the run.
+
+Sanitized evidence to record:
+
+- Branch or PR head SHA.
+- Runtime summary: `engine=docker`, GPU mode, app port, package flavor label.
+- Operation states only, such as `tls_repair_completed`, `runtime_stopped`,
+  `ready`, `readiness_timeout`, `tls_repair_failed`, or `operation_timeout`.
+- Step order and terminal classification.
+- Whether readiness returned and provider setup could be retried.
+- Confirmation that no raw subprocess output, helper token, operation
+  credential, `.env` content, certificate subject, certificate thumbprint,
+  provider key, local full path, browser network trace, screenshot, or support
+  log was recorded.
+
+Abort conditions:
+
+- The wrapper contract differs from the expected repair/stop/start sequence.
+- Browser input can enable execution or change wrapper paths, arguments,
+  command interpreter, GPU mode, engine, port, or timeouts.
+- Any public status, task evidence, PR evidence, or helper output includes raw
+  subprocess output, helper credentials, certificate details, provider keys,
+  `.env` values, or full local paths.
+- The runtime profile is stale, ambiguous, or points at another package or app
+  port.
+- Endpoint protection blocks helper execution in a way that requires bypassing
+  the security model.
+
+Post-run checklist:
+
+- Record sanitized PASS/FAIL/PARTIAL evidence.
+- If the app is left stopped or degraded, run the manual start fallback before
+  ending the validation window.
+- Keep product UI, `provider_tls_repair=true`, browser-triggered default
+  mutation, Podman remediation, and tester-facing packaging blocked until the
+  live evidence is reviewed.
+- Ask the reviewer to evaluate whether the live evidence is sufficient to move
+  to Gate 3 product integration design.
+
+### 10. Implementation Phases
 
 #### Phase 1: Design Spike
 
@@ -874,6 +1037,940 @@ Exit criteria:
   can expose local environment details if helper output is not sanitized.
 
 ## Implementation Log
+
+### 2026-07-06 - Patched Live Wrapper Rerun Passed
+
+**Objective**: Rerun the approved internal Docker CPU/off provider TLS repair
+validation against patched PR head `c55814b`.
+
+**Context**: The previous live run was `PARTIAL` because ordinary stop cleanup
+cleared helper operation metadata before the controlled runner could persist
+stop status and continue to start. The `7177cc1` fix preserved ordinary stop
+cleanup while allowing helper-controlled stop to defer session invalidation.
+The source-checkout Docker image prerequisite was prepared before rerun.
+
+**Decision**: Execute the internal helper-controlled repair, stop, start
+sequence only after fresh release-owner approval. Keep product UI,
+`provider_tls_repair=true`, browser-triggered default mutation, Podman
+remediation, and tester-facing packaging blocked.
+
+**Execution**: Ran the approved internal live Docker CPU/off validation for
+`google` on port `5000`. The helper-controlled operation returned terminal
+state `ready`, current step `start`, and classification `terminal_success`.
+Post-run checks confirmed the app was reachable on port `5000` and the Docker
+service was running / healthy with `towerscout:local`.
+
+**Validation**:
+
+- PASS: helper-controlled operation returned `ready`.
+- PASS: readiness returned on port `5000`.
+- PASS: Docker service state was running / healthy.
+- PASS: no fallback command was needed.
+- PASS: sanitized evidence recorded in
+  `.agent_work/tasks/active/TASK-087/live-wrapper-validation-2026-07-06.md`.
+
+**Next**: Ask the reviewer to assess the patched live-run evidence before
+starting any Gate 3 product integration design or user-facing enablement.
+
+### 2026-07-06 - Docker Rerun Prerequisite Prepared
+
+**Objective**: Prepare the Docker runtime prerequisite needed before requesting
+a patched Task-087 live-wrapper rerun.
+
+**Context**: Reviewer feedback accepted the `7177cc1` stop-cleanup fix for
+internal rerun, but called out that the previous fallback start could not prove
+readiness because the source-checkout runtime expected `towerscout:local` and
+that image was not available.
+
+**Decision**: Prepare the local source-checkout image without rerunning the
+mutating helper validation. Keep product UI, `provider_tls_repair=true`,
+browser-triggered default mutation, Podman remediation, and tester-facing
+packaging blocked.
+
+**Execution**: Performed targeted Docker cleanup through the package stop path,
+confirmed the source checkout resolves to `towerscout:local`, built the local
+Docker image, and confirmed this checkout's Compose project remained stopped /
+clear afterward. No broad Docker prune or unrelated image/container cleanup was
+performed.
+
+**Validation**:
+
+- PASS: `docker image inspect towerscout:local`
+- PASS: `docker compose -f compose.yaml config --images`
+- PASS: `docker compose -f compose.yaml ps --all`
+- PASS: `git status --short --branch`
+
+**Next**: Request fresh explicit approval before rerunning the mutating Docker
+CPU/off live validation against patched head `7177cc1`.
+
+### 2026-07-06 - Live Wrapper Partial Run And Stop Cleanup Fix
+
+**Objective**: Run the approved internal Docker CPU/off live-wrapper validation
+and close the helper-controlled stop cleanup gap it exposed.
+
+**Context**: The release owner approved the internal `google` provider
+validation on port `5000`, including `repair-provider-tls.cmd -Apply`,
+`stop.cmd`, and `start.bat`. Product UI exposure, `provider_tls_repair=true`,
+browser-triggered default mutation, Podman remediation, and tester-facing
+packaging remained blocked.
+
+**Decision**: Treat the run as `PARTIAL` rather than retrying automatically.
+The controlled runner reached the stop step, but normal stop cleanup cleared
+the active helper session metadata before the helper could persist the stop
+result and continue to the start step. Preserve ordinary user/support stop
+cleanup, but mark helper-controlled stop subprocesses so `stop.ps1` defers
+session invalidation only for the active controlled operation.
+
+**Execution**: Updated `scripts\stop.ps1` to skip helper-session invalidation
+only when `TOWERSCOUT_HOST_HELPER_CONTROLLED_OPERATION=1` is present. Updated
+the controlled command resolver/process runner to attach that fixed environment
+marker only to the allowlisted stop wrapper. Added focused unit coverage that
+asserts the marker reaches the controlled stop wrapper and that normal stop
+cleanup remains present. Updated
+`.agent_work/tasks/active/TASK-087/live-wrapper-validation-2026-07-06.md` with
+the sanitized partial-run outcome.
+
+**Validation**:
+
+- PASS:
+  `.\.venv\Scripts\python.exe -m pytest tests\unit\test_task_087_host_helper.py -q -p no:cacheprovider`
+- PASS: PowerShell parser checks for `scripts\stop.ps1` and
+  `scripts\lib\TowerScoutHostHelper.ps1`
+- PASS: `python .agent_work\scripts\validate_agent_work.py`
+- PASS:
+  `python .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .`
+- PASS: `git diff --check`
+
+**Next**: Commit and push the fix, then ask for fresh explicit approval before
+rerunning the mutating Docker CPU/off live validation against the patched
+branch.
+
+### 2026-07-06 - Live Wrapper Evidence Note Prepared
+
+**Objective**: Prepare the run-specific evidence note requested before the
+first internal live-wrapper validation window.
+
+**Context**: The reviewer cleared `0132b13` for internal Docker CPU/off
+live-wrapper validation only, while keeping product UI,
+`provider_tls_repair=true`, browser-triggered default mutation, Podman
+remediation, and tester-facing guided repair packaging blocked.
+
+**Decision**: Create a task-local proof note under the owning Task-087 support
+folder rather than recording run-specific evidence in `.agent_work/context/`.
+Keep the note support-safe and concrete enough to use before execution.
+
+**Execution**: Added
+`.agent_work/tasks/active/TASK-087/live-wrapper-validation-2026-07-06.md` with
+planned PR head, Docker CPU/off runtime profile, provider, port, wrapper
+sequence, timeout budget, fallback commands, pre-run checklist, sanitized
+evidence fields, abort conditions, and post-run gate.
+
+**Validation**:
+
+- PASS: `python .agent_work\scripts\validate_agent_work.py`
+- PASS:
+  `python .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .`
+- PASS: `git diff --check`
+
+**Next**: Request explicit approval before running any live command that repairs
+TLS trust or stops/restarts the Docker runtime.
+
+### 2026-07-02 - Internal Live Wrapper Validation Runbook Added
+
+**Objective**: Incorporate the reviewer's `e0bb8b5` feedback before running any
+live repair/stop/start sequence.
+
+**Context**: The reviewer accepted the non-mutating real-wrapper contract proof
+as sufficient to proceed to explicit internal live-wrapper validation. They did
+not identify a code blocker, but required a short validation runbook before
+running the mutating sequence.
+
+**Decision**: Add the runbook as a tracked Task-087 gate before live execution.
+Keep product UI exposure, `provider_tls_repair=true`, browser-triggered default
+mutation, Podman remediation, and tester-facing guided repair packaging blocked
+until live evidence is reviewed.
+
+**Execution**: Added an internal live wrapper validation runbook covering the
+selected Docker profile, provider, app port, expected repair/stop/start
+sequence, timeout budget, rollback/manual fallback commands, pre-run checks,
+sanitized evidence fields, abort conditions, and post-run review requirements.
+
+**Validation**:
+
+- PASS: `python .agent_work\scripts\validate_agent_work.py`
+- PASS:
+  `python .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .`
+- PASS: `git diff --check`
+- PASS:
+  `.\.venv\Scripts\python.exe -m pytest tests\unit\test_task_087_host_helper.py -q -p no:cacheprovider`
+
+**Next**: Commit and push the runbook checkpoint, then schedule the internal
+live Docker validation window before any Gate 3 product integration work.
+
+### 2026-07-02 - Non-Mutating Real Wrapper Contract Proof Added
+
+**Objective**: Continue from the reviewer recommendation toward internal
+real-wrapper validation without running the mutating repair/stop/start sequence
+by default.
+
+**Context**: The reviewer accepted the controlled runner for internal
+validation, with user-facing enablement still blocked. The prior
+pre-default-mutation follow-ups were addressed in `186224d`. The remaining
+milestone is real-wrapper validation, but the real sequence includes
+`repair-provider-tls.cmd -Apply`, `stop.cmd`, and `start.bat`, so live execution
+must be handled as a deliberate validation window rather than an incidental
+unit-test side effect.
+
+**Decision**: Add a non-mutating real-wrapper contract proof first. The proof
+resolves the actual package-local wrappers from the current checkout, validates
+the fixed command contract, and returns only support-safe metadata with
+`executed=false`. Product UI exposure, `provider_tls_repair=true`, default
+browser-triggered mutation, live repair execution, and Podman remediation remain
+blocked.
+
+**Execution**:
+
+- Added `Test-TowerScoutHostHelperRealWrapperContract` to resolve the real
+  Docker first-slice wrappers and validate fixed step order, argument counts,
+  timeouts, `cmd.exe`, fixed interpreter flags, and working directory without
+  executing any wrapper.
+- Added a sanitized self-test scenario,
+  `provider_tls_repair_real_wrapper_contract`, that reports
+  `real_wrapper_contract_validated` and `executed=false` without command paths,
+  wrapper names, helper tokens, local paths, certificate details, or raw output.
+- Added focused pytest coverage proving the contract result is non-mutating,
+  Docker/off/port-specific, ordered as repair/stop/start, and support-safe.
+
+**Gate**: Gate 2 controlled-runner to internal real-wrapper validation handoff,
+still pre-product-UI and pre-default-mutation.
+
+**Result**: PASS for the non-mutating real-wrapper contract proof. Actual
+wrapper execution remains pending explicit internal validation with the selected
+Docker package/runtime state.
+
+**Validation**:
+
+- PASS:
+  `.\.venv\Scripts\python.exe -m pytest tests\unit\test_task_087_host_helper.py -q -p no:cacheprovider`
+- PASS:
+  `.\.venv\Scripts\python.exe -m pytest tests\unit\test_config.py tests\unit\test_error_sanitization.py -q -p no:cacheprovider`
+- PASS:
+  `python .agents\skills\towerscout-secret-and-provider-key-safety\scripts\scan_for_sensitive_terms.py scripts\lib`
+- PASS: `python .agent_work\scripts\validate_agent_work.py`
+- PASS:
+  `python .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .`
+- PASS: `git diff --check`
+
+**Next**: Request reviewer feedback on the non-mutating real-wrapper contract
+proof. If accepted, schedule an explicit internal live-wrapper validation window
+for Docker CPU/CUDA where repair, stop, start, readiness polling, and reconnect
+state can be observed without enabling product UI or Podman remediation.
+
+### 2026-07-02 - Controlled Runner Review Hardening Tests Added
+
+**Objective**: Close the reviewer follow-ups from `5a73075` before any
+user-facing enablement or real-wrapper default mutation.
+
+**Context**: The reviewer accepted the internal controlled-runner checkpoint but
+requested explicit coverage for package roots containing CMD metacharacters,
+browser attempts to pass `execution_enabled`, and tampered command-wrapper
+script names for all three controlled steps.
+
+**Decision**: Add targeted tests only unless they expose a real runner gap. Keep
+product UI exposure, `provider_tls_repair=true`, browser-triggered default
+mutation, and Podman remediation blocked.
+
+**Execution**:
+
+- Extended the controlled-runner test to execute a harmless temp wrapper from a
+  package-root path containing spaces, `&`, and parentheses.
+- Added a direct operation-POST test proving browser input with
+  `execution_enabled=true` is rejected as an unexpected field.
+- Added tampered script-name rejection checks for the repair, stop, and start
+  wrapper slots.
+
+**Gate**: Gate 2 controlled-runner hardening, still pre-product-UI and
+pre-default-mutation.
+
+**Result**: PASS. The new hardening tests passed without production helper-code
+changes, so the existing controlled runner already handled the reviewed path
+safety and script-name tampering cases.
+
+**Validation**:
+
+- PASS:
+  `.\.venv\Scripts\python.exe -m pytest tests\unit\test_task_087_host_helper.py -q -p no:cacheprovider`
+- PASS:
+  `.\.venv\Scripts\python.exe -m pytest tests\unit\test_config.py tests\unit\test_error_sanitization.py -q -p no:cacheprovider`
+- PASS:
+  `python .agents\skills\towerscout-secret-and-provider-key-safety\scripts\scan_for_sensitive_terms.py scripts\lib`
+- PASS: `python .agent_work\scripts\validate_agent_work.py`
+- PASS:
+  `python .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .`
+- PASS: `git diff --check`
+
+**Next**: Request reviewer feedback on the hardening-test follow-up, then proceed
+to internal real-wrapper controlled validation only if the reviewer agrees the
+Gate 2 controlled-runner boundary is sufficient.
+
+### 2026-07-02 - Controlled Runner Execution Slice Added
+
+**Objective**: Implement the first controlled execution-design slice behind the
+existing host-helper operation plan while keeping product UI exposure,
+`provider_tls_repair=true`, Podman remediation, and default mutating execution
+blocked.
+
+**Context**: The reviewer accepted `bb0ef3b` as an acceptable controlled
+execution design scope and requested one follow-up before merge: explicitly
+account for the Windows `.cmd`/`.bat` interpreter boundary. The next slice was
+allowed only as command-runner control implementation, not user-facing repair
+enablement.
+
+**Decision**: Keep execution disabled by default and add a gated controlled
+runner that can be invoked directly by tests. The runner validates the accepted
+operation plan, exact wrapper names, fixed wrapper arguments, package-root path
+containment, fixed `cmd.exe` interpreter selection, fixed interpreter flags,
+per-step timeouts, and support-safe public status before any command can run.
+
+**Execution**:
+
+- Updated `scripts/lib/TowerScoutHostHelper.ps1` with support-safe state
+  classification, persisted operation status metadata, explicit step timeouts,
+  package-local command resolution, fixed Windows command-interpreter handling,
+  structured argument validation, subprocess timeout cleanup, and a gated
+  controlled execution path.
+- Updated `tests/unit/test_task_087_host_helper.py` to prove the runner remains
+  gated, rejects mutated command arguments, uses fixed `cmd.exe`, executes only
+  harmless temp wrappers during tests, handles a package root with spaces,
+  maps timeout to `operation_timeout`, expires timeout locks on poll, and keeps
+  fake raw stdout/stderr/local path/certificate details out of public status.
+- Updated this Task-087 document to record the `.cmd`/`.bat` interpreter-boundary
+  requirement and test gate.
+
+**Observed Status Codes / Labels**:
+
+- `planned`
+- `tls_repair_completed`
+- `runtime_stopped`
+- `ready`
+- `operation_timeout`
+- `operation_expired`
+
+**Gate**: Gate 2 controlled execution implementation, still pre-product-UI and
+pre-default-mutation.
+
+**Result**: PASS for the controlled runner slice. The implementation can run the
+allowlisted command sequence only when explicitly invoked with execution enabled
+from internal code/tests; the browser operation endpoint still uses the default
+planning-only path and capabilities continue to report `provider_tls_repair=false`.
+
+**Validation**:
+
+- PASS:
+  `.\.venv\Scripts\python.exe -m pytest tests\unit\test_task_087_host_helper.py -q -p no:cacheprovider`
+- PASS:
+  `.\.venv\Scripts\python.exe -m pytest tests\unit\test_config.py tests\unit\test_error_sanitization.py -q -p no:cacheprovider`
+- PASS: `python .agent_work\scripts\validate_agent_work.py`
+- PASS:
+  `python .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .`
+- PASS: `git diff --check`
+- PASS:
+  `python .agents\skills\towerscout-secret-and-provider-key-safety\scripts\scan_for_sensitive_terms.py scripts\lib`
+
+**Next**: Request reviewer feedback on the controlled runner implementation
+before exposing any product UI path, setting `provider_tls_repair=true`, enabling
+default browser-triggered mutation, or adding Podman remediation.
+
+### 2026-07-02 - Mutating Execution Design Review Scope Added
+
+**Objective**: Record the handoff criteria for the first mutating repair/restart
+execution design review without enabling script execution, product UI exposure,
+or Podman remediation.
+
+**Context**: The reviewer accepted `84d6e49` as sufficient for the
+operation-control checkpoint and recommended moving to a narrowly scoped
+execution-design review. The accepted boundary remains Docker CPU/CUDA only.
+`provider_tls_repair=true`, product UI entry points, and Podman Compose provider
+remediation remain blocked until later checkpoints explicitly approve them.
+
+**Decision**: Add a design-only controlled runner contract, explicit script-exit
+to public-state mapping, timeout/retry semantics, and required execution-runner
+tests. The browser may only authorize the internally generated operation plan;
+it must not influence script path, command path, engine, GPU mode, app port,
+provider argument order, `-Apply`, `-NoBrowser`, timeout values, or working
+directory.
+
+**Execution**: Updated the restart orchestration section with the first
+controlled execution design review target. The section requires package-local
+allowlisted wrappers, package-root path containment, structured argument arrays,
+support-safe public status, timeout handling, idempotent same-authorization
+behavior, `operation_busy` for different active authorization, and terminal state
+classification before any execution code is enabled.
+
+**Observed Status Codes / Labels**:
+
+- `tls_repair_completed`
+- `tls_repair_selection_required`
+- `tls_repair_failed`
+- `runtime_stopped`
+- `runtime_stop_failed`
+- `ready`
+- `readiness_timeout`
+- `runtime_start_failed`
+- `readiness_failed`
+- `operation_timeout`
+
+**Gate**: Gate 2 Security Proof to controlled execution-design handoff.
+
+**Result**: Documentation-only PASS. The task now states the expected mutating
+execution design review scope, but no mutating command runner, product UI
+entry point, Podman remediation path, or `provider_tls_repair=true` exposure has
+been implemented.
+
+**Validation**:
+
+- PASS:
+  `python .agent_work\scripts\validate_agent_work.py`
+- PASS:
+  `python .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .`
+- PASS: `git diff --check`
+
+**Next**: Ask the reviewer to verify the execution design scope before
+implementation proceeds. The next implementation slice should still be reviewed
+as execution-design work first, not product UI enablement.
+
+### 2026-07-02 - Operation-Control Hardening Follow-Up
+
+**Objective**: Address reviewer follow-ups that should be complete before the
+first mutating repair/restart execution design is reviewed.
+
+**Context**: The reviewer accepted `1342f0b` as a non-mutating checkpoint but
+recommended endpoint-specific CORS/method handling, byte-exact or explicitly
+ASCII-only POST body handling, full script-exit mapping tests, and deterministic
+terminal/retry/cleanup semantics before moving toward execution.
+
+**Decision**: Keep the helper non-mutating and narrow the request surface now.
+Use byte-level request parsing with explicit ASCII-only request bodies for this
+JSON schema, because accepted provider/confirmation/authorization fields are
+ASCII by contract. Return CORS allowed methods based on the resolved endpoint:
+`GET, OPTIONS` for health/runtime/status endpoints and `POST, OPTIONS` only for
+`/operations/provider-tls-repair`.
+
+**Execution**: Replaced the helper request-body read path with raw byte reads
+through the header/body boundary, ASCII validation, and exact `Content-Length`
+body reads. Added endpoint-level allowed-method resolution, preflight method
+validation, and endpoint-specific CORS response headers. Extended the helper
+self-test with minimal preflight coverage for health, provider-operation POST,
+operation-status GET, and wrong-method rejection. Extended the focused pytest
+PowerShell probe to cover every script-exit mapping row.
+
+**Gate**: Gate 2 Security Proof, non-mutating hardening before execution design
+**Observed States**: `cors_preflight_ok`, `rejected_method`, `planned`,
+`operation_busy`, `tls_repair_completed`, `tls_repair_selection_required`,
+`tls_repair_failed`, `runtime_stopped`, `runtime_stop_failed`, `ready`,
+`runtime_start_failed`, `readiness_timeout`, `readiness_failed`,
+`operation_timeout`
+**Result**: PASS for the hardening follow-up. Product UI, mutating
+repair/restart execution, Podman remediation, and `provider_tls_repair=true`
+remain blocked.
+**Redaction Check**: No helper tokens, operation authorizations, local paths,
+command paths, provider keys, certificate details, or raw subprocess output are
+returned in public helper self-test output.
+
+**Validation**: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File
+scripts\host-helper.ps1 -SelfTest` passed. `.venv\Scripts\python.exe -m pytest
+tests\unit\test_task_087_host_helper.py -q -p no:cacheprovider` passed with 4
+tests.
+
+**Next**: Run full repo/task hygiene checks, push PR #45, update the PR body to
+match the implemented operation-control slice, and ask for reviewer feedback
+before preparing the first mutating execution design.
+
+### 2026-07-02 - Reviewer Operation-Control Checkpoint Reviewed
+
+**Objective**: Record reviewer feedback for PR #45 at `1342f0b` before moving
+from the bounded non-mutating operation-control slice toward execution design.
+
+**Context**: The reviewer accepted `1342f0b` as an acceptable Gate 1/Gate 2
+checkpoint. The slice now includes bounded `POST /operations/provider-tls-repair`
+request parsing, required `operation_authorization`, same-authorization
+idempotency, different-authorization `operation_busy`, sanitized
+`GET /operations/{operation_id}` status polling, `execution_enabled=false`, and
+script-exit-to-public-state mapping. Product UI, mutating repair/restart
+execution, and Podman remediation remain blocked.
+
+**Decision**: Treat the checkpoint as accepted, but require another
+non-mutating hardening pass before any first mutating repair/restart execution
+slice. The required follow-ups are endpoint-specific CORS/method responses,
+byte-exact or explicitly ASCII-only POST body handling, script-exit mapping test
+coverage, deterministic terminal/retry/cleanup semantics, and an updated PR body
+that no longer describes the implemented operation-control slice as future work.
+
+**Execution**: Verified the reviewer feedback against the branch state and PR
+metadata. The PR body still described bounded POST parsing, short-lived
+operation authorization, sanitized status, cleanup, and script-exit mapping as
+the next intended slice even though `1342f0b` implements that work.
+
+**Gate**: Gate 2 Security Proof, reviewer checkpoint before execution design
+**Observed States**: `planned`, `operation_busy`, `rejected_unexpected_field`,
+`rejected_operation_authorization`, `execution_enabled=false`
+**Result**: PASS for the non-mutating operation-control checkpoint. Mutating
+execution remains blocked until the follow-ups above are complete and reviewed.
+
+**Validation**: Review-only checkpoint. No code changed for this entry.
+
+**Next**: Implement the non-mutating hardening follow-up, validate, push to PR
+#45, and update the PR body before requesting the next reviewer pass.
+
+### 2026-07-02 - Bounded Operation Request Control Slice
+
+**Objective**: Add the next non-mutating host-helper operation controls before
+any TLS repair, restart, or Podman remediation execution is exposed.
+
+**Context**: The reviewer approved continuing beyond the Gate 1/Gate 2
+checkpoint into bounded POST parsing, short-lived operation authorization,
+sanitized async status, timeout cleanup, and script-exit mapping tables while
+keeping product UI, mutating scripts, and Podman installer remediation blocked.
+
+**Decision**: Allow only one browser-posted operation endpoint,
+`POST /operations/provider-tls-repair`, with a small JSON body, fixed field
+allowlist, required `operation_authorization`, and public status polling through
+`GET /operations/{operation_id}`. Same authorization returns the existing
+operation, different authorization returns `operation_busy`, and public status
+continues to report `execution_enabled=false` until the mutating repair slice is
+explicitly authorized.
+
+**Execution**: Added bounded POST body parsing, content-type and content-length
+checks, `operation_authorization` validation, operation-status polling,
+same-authorization idempotency, existing-operation busy handling, timeout/expired
+status cleanup, and script-exit-to-public-state mapping. Kept
+`provider_tls_repair=false`, left `repair-provider-tls.cmd`, `stop.cmd`, and
+`start.bat` unexecuted, and kept Podman remediation out of the browser API.
+
+**Gate**: Gate 2 Security Proof, non-mutating operation-control slice
+**Observed States**: `planned`, `operation_busy`, `rejected_unexpected_field`,
+`rejected_operation_authorization`, `tls_repair_completed`,
+`readiness_timeout`, `operation_timeout`
+**Result**: PASS for bounded request/control-plane behavior. Product UI,
+mutating TLS repair/restart execution, and Podman provider installation remain
+blocked.
+**Redaction Check**: Public operation responses omit helper tokens, operation
+authorizations, command paths, local paths, certificate details, provider keys,
+and raw subprocess output. Rejected invalid providers still collapse to
+`provider=unknown`.
+
+**Validation**: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File
+scripts\host-helper.ps1 -SelfTest` passed. `.venv\Scripts\python.exe -m pytest
+tests\unit\test_task_087_host_helper.py -q -p no:cacheprovider` passed with 4
+tests, including a direct PowerShell probe for plan/status/idempotency/busy
+behavior plus unexpected-field and invalid-authorization rejection. Endpoint
+protection rejected an earlier large PowerShell self-test
+fixture, so the integrated self-test remains focused on stable transport proof
+and the expanded operation API assertions live in the Python test module.
+
+**Next**: Run repository hygiene checks, push the PR #45 update, and request
+reviewer feedback before deciding whether to begin the first mutating
+repair/restart execution slice.
+
+### 2026-07-02 - Rejected Provider Reflection Hardening
+
+**Objective**: Address the PR #45 reviewer finding that rejected provider
+status should not reflect caller-controlled invalid provider text before any
+browser-exposed operation endpoint exists.
+
+**Context**: The reviewer accepted `95ea6fb` as a Gate 1/Gate 2 checkpoint and
+recommended continuing into the next non-mutating operation-control slice. The
+one must-fix before browser-accessible POST exposure was that invalid provider
+input such as `google;Start-Process` was rejected but could still appear in the
+rejected operation's public status.
+
+**Decision**: Treat invalid-provider reflection as a pre-POST blocker. Rejected
+operation plans may report an approved provider enum when one was supplied, but
+non-allowlisted provider text must collapse to `unknown` in all public rejected
+operation status.
+
+**Execution**: Updated the rejected operation-plan helper to sanitize provider
+status centrally before building either the internal rejected plan or public
+operation status. Extended the helper self-test and focused pytest coverage to
+prove `google;Start-Process` returns `rejected_unknown_provider` with
+`provider=unknown` and the caller-controlled text is absent from public self-test
+output.
+
+**Gate**: Gate 2 Security Proof, rejected-input redaction hardening
+**Observed States**: `rejected_unknown_provider`, `provider=unknown`
+**Result**: PASS. The helper still has no mutating repair/restart endpoint,
+`provider_tls_repair` remains unavailable, and product UI remains blocked.
+**Redaction Check**: Invalid caller provider text, command paths, helper tokens,
+local paths, certificate details, provider keys, raw subprocess output, and
+operation credentials are not returned in public self-test output.
+
+**Validation**: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File
+scripts\host-helper.ps1 -SelfTest` passed. `.venv\Scripts\python.exe -m pytest
+tests\unit\test_task_087_host_helper.py -q -p no:cacheprovider` passed with 2
+tests.
+
+**Next**: Update the PR description to reflect the visible helper proof,
+non-mutating Docker operation boundary, and rejected-provider reflection fix,
+then continue only into bounded non-mutating operation-control work.
+
+### 2026-07-02 - Docker TLS Operation Boundary Slice
+
+**Objective**: Add the first non-mutating provider TLS repair operation
+contract before exposing any repair/restart endpoint.
+
+**Context**: The visible helper window is now locally viable, and the next
+reviewer-approved direction is to move toward a support-guided Docker CPU/CUDA
+repair MVP without product UI or Podman installer exposure. The remaining risk
+is browser-controlled host mutation, so the helper needs an allowlisted
+operation boundary before it can run the `TASK-086` repair path.
+
+**Decision**: Add a Docker-only provider TLS repair operation plan and
+package-local operation lock, but keep `provider_tls_repair` capability
+advertised as unavailable and do not add a mutating POST endpoint yet. The plan
+accepts only `provider=google|azure`, the fixed confirmation value
+`repair_tls_and_restart`, and the captured runtime profile. It derives repair,
+stop, and restart commands internally, rejects Podman for the first slice, and
+returns only sanitized public states.
+
+**Execution**: Extended `scripts\lib\TowerScoutHostHelper.ps1` with operation
+planning, fixed confirmation validation, Docker-only runtime gating, one active
+operation lock per helper session, nonce fingerprinting without storing raw
+operation credentials, and stop-path cleanup for active operation lock files.
+The helper self-test now proves the Docker plan is accepted, Podman is blocked,
+bad confirmation is rejected, non-allowlisted providers are rejected, duplicate
+starts return `operation_busy`, and public operation status does not expose
+command paths, helper tokens, local paths, certificate details, or raw
+subprocess output.
+
+**Phase 1 Evidence - 2026-07-02 - Docker Operation Boundary**
+
+**Gate**: Gate 2 Security Proof, non-mutating operation-contract slice
+**Environment**: Windows source/package-like script context, Docker CPU profile
+shape, public-safe validation labels only
+**Objective**: Validate allowlisted provider TLS operation planning, Docker-only
+first-slice gating, fixed confirmation enforcement, single-operation locking,
+and public-status redaction before adding repair/restart execution.
+**Command Category**: operation plan / allowlist rejection / confirmation
+rejection / duplicate-operation lock / helper self-test
+**Inputs**: `provider=google`, `engine=docker`, `gpu=off`,
+`confirmation=repair_tls_and_restart`, plus negative Podman, confirmation, and
+provider inputs
+**Observed States**: `planned`, `unsupported_runtime`,
+`rejected_confirmation`, `rejected_unknown_provider`, `operation_busy`
+**Result**: PASS for non-mutating operation boundary proof. Product UI,
+mutating endpoints, actual TLS repair execution, restart orchestration, and
+Podman provider remediation remain blocked.
+**Redaction Check**: No helper token, helper listener port, local path, provider
+key, certificate detail, raw subprocess output, command path, thumbprint, or
+operation credential was returned in public self-test output.
+
+**Validation**: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File
+scripts\host-helper.ps1 -SelfTest` passed. `.venv\Scripts\python.exe -m pytest
+tests\unit\test_task_087_host_helper.py -q -p no:cacheprovider` passed with 2
+tests. The unqualified system `python -m pytest ...` failed before test
+execution because that interpreter does not have `pytest` installed; the
+project virtualenv was used for validation.
+
+**Next**: Add bounded POST-body parsing, short-lived operation authorization,
+asynchronous sanitized operation status, execution timeout/cleanup, and
+script-exit mapping before enabling the helper to run `repair-provider-tls.cmd`
+or restart TowerScout.
+
+### 2026-07-02 - Visible Helper Lifecycle Proof
+
+**Objective**: Validate the reviewer-approved visible helper-window lifecycle
+candidate before adding any mutating repair/restart endpoint.
+
+**Context**: The PR #45 follow-up reviewer accepted the Gate 1 hardening and
+recommended validating `scripts\host-helper-visible.cmd` next. The visible
+helper model is intended to avoid the hidden detached PowerShell pattern that
+triggered endpoint protection/AMSI while still proving that a helper can survive
+the launching wrapper process and be invalidated by the package stop path.
+
+**Decision**: Treat the visible helper window as a viable Gate 1 lifecycle proof
+candidate based on local validation, but keep product UI, TLS repair operation
+endpoints, restart orchestration, and Podman remediation blocked until the team
+confirms the visible-window UX and endpoint-policy behavior are acceptable for
+the target managed Windows environment.
+
+**Execution**: Created a temporary sanitized validation harness under
+`.agent_work\tmp\` and ran it outside the sandbox boundary so the visible helper
+PowerShell window could open. The harness cleared stale helper sessions, launched
+`scripts\host-helper-visible.cmd`, waited for package-local session metadata,
+used the token internally without printing it, called the loopback `/health`
+endpoint, invalidated the helper through `scripts\host-helper.ps1 -Stop`,
+verified session/token files were removed, and verified the helper endpoint was
+no longer reachable after stop cleanup.
+
+**Phase 1 Evidence - 2026-07-02 - Visible Helper Lifecycle**
+
+**Gate**: Gate 1 Helper Transport Proof / Gate 2 Security Proof
+**Environment**: Windows source/package-like script context, Docker CPU profile
+shape, public-safe validation labels only
+**Objective**: Validate visible helper launch, wrapper-process return,
+loopback health reachability, package-local session/token creation, stop-path
+invalidation, and post-stop listener cleanup.
+**Command Category**: visible helper start / health check / origin-token check /
+stop cleanup / lifecycle validation
+**Inputs**: `engine=docker`, `gpu=off`, `package_flavor=self-test-visible`,
+sanitized health request, stop invalidation request
+**Observed States**: `started`, `returned`, `created`, `ready`, `cleared`,
+`reachable_after_stop=false`
+**Result**: PASS for local visible-helper lifecycle proof; target managed
+endpoint UX/policy confirmation still required before product integration.
+**Redaction Check**: No helper token, helper listener port, local path, provider
+key, certificate detail, raw subprocess output, `.env` value, or support log was
+recorded.
+**Follow-Up**: User confirmed in-session that the visible helper window was
+observable during the slower manual check and no endpoint-protection alert,
+warning, quarantine, or suspicious-process notification appeared. Continue to
+the first support-guided Docker CPU/CUDA repair MVP design, while keeping
+product UI and mutating endpoints blocked until operation locking,
+authorization, timeout/cleanup, and sanitized progress are implemented.
+
+**Validation**: The temporary visible-helper harness returned `result=passed`,
+`visible_window_launch=started`, `wrapper_process=returned`,
+`session_metadata=created`, `token_file=created_then_removed`,
+`health_check=ready`, `stop_invalidation=cleared`, and
+`reachable_after_stop=false`. A follow-up session-directory check found no
+remaining helper session/token files.
+
+**Next**: Remove the temporary harness, rerun task/document validators, commit
+the evidence update, and then decide whether to proceed into the Docker-only
+repair operation slice or pause for reviewer/user confirmation on the visible
+window UX.
+
+### 2026-07-02 - Reviewer Gate 1 Hardening Follow-Up
+
+**Objective**: Incorporate the PR #45 Gate 1 reviewer feedback that can be
+addressed before repair/restart operation work begins.
+
+**Context**: The reviewer accepted the loopback `TcpListener` transport proof
+but recommended blocking product UI and mutating operations until the helper
+lifecycle model is redesigned without the hidden detached PowerShell pattern
+that triggered endpoint protection. The reviewer also identified low-risk
+hardening: narrow CORS methods to the implemented API, add HTTP request
+hardening before future POST operations, avoid hardcoded package flavor in
+launch profiles, and preserve package artifact hygiene.
+
+**Decision**: Accept the low-risk hardening now and keep lifecycle work in Gate
+1. Use a transparent visible helper command as the next lifecycle proof
+candidate instead of reintroducing hidden detached PowerShell. Do not wire this
+visible helper command into product UI or automatic launcher behavior yet; it is
+for reviewer/manual endpoint-policy validation before selecting the final
+helper lifecycle model.
+
+**Execution**: Tightened helper CORS from `GET, POST, OPTIONS` to `GET,
+OPTIONS`, added basic helper request timeouts plus request-line/header-count/
+header-byte limits, extended the helper self-test to assert the GET-only CORS
+policy, changed launcher profile capture to use the real package PyTorch flavor
+when available, added `scripts\host-helper-visible.cmd` as an explicit visible
+helper-window entry point, and updated `scripts\package-release.ps1` to include
+the helper scripts/library so release package generation does not copy a
+`launch.ps1` that dot-sources a missing helper library.
+
+**Phase 1 Evidence - 2026-07-02 - Reviewer Hardening Follow-Up**
+
+**Gate**: Gate 1 Helper Transport Proof / Gate 2 Security Proof
+**Environment**: Windows source/package-like script context, Docker CPU profile
+shape, public-safe self-test labels only
+**Objective**: Validate GET-only CORS policy, bounded request parsing, helper
+artifact package inclusion, and the next transparent lifecycle proof candidate.
+**Command Category**: health check / origin-token check / allowlist rejection /
+stop cleanup / release-package hygiene / lifecycle design
+**Inputs**: `engine=docker`, `gpu=off`, sanitized self-test runtime profile,
+valid token scenario, wrong token scenario, wrong origin scenario, unknown
+endpoint scenario, CORS preflight scenario, invalidated-session scenario
+**Observed States**: `ready`, `rejected_token`, `rejected_origin`,
+`rejected_unknown_endpoint`, `cors_preflight_ok`, `session_invalidated`
+**Result**: PARTIAL
+**Redaction Check**: No helper tokens, helper listener ports, local paths,
+provider keys, certificate details, raw subprocess output, `.env` values, or
+support logs were recorded.
+**Follow-Up**: Manually validate the visible helper-window entry point on the
+target Windows endpoint-policy environment, then either accept that lifecycle
+model for the first product slice or replace it with a native/supervised helper
+before adding repair/restart operations.
+
+**Validation**: PowerShell parser checks passed for
+`scripts\lib\TowerScoutHostHelper.ps1`, `scripts\launch.ps1`, and
+`scripts\package-release.ps1`. `powershell.exe -NoProfile -ExecutionPolicy
+Bypass -File scripts\host-helper.ps1 -SelfTest` passed with the existing loopback
+security scenarios and the new GET-only CORS assertion.
+
+**Next**: Run full `.agent_work` and diff validation, then decide whether to
+ask the reviewer to manually test the visible helper lifecycle proof before
+continuing into any mutating helper operation.
+
+### 2026-07-02 - Launch Profile Capture And Endpoint Protection Finding
+
+**Objective**: Continue Gate 1 by double-checking the initial helper proof,
+adding shared launcher runtime-profile capture, and testing whether a detached
+PowerShell helper path is viable.
+
+**Context**: The first helper proof validated loopback binding, origin/token
+checks, endpoint allowlisting, sanitized responses, and basic session
+invalidation. The next Gate 1 question was whether the PowerShell helper could
+move toward launcher-exit survival without weakening the security model or
+leaving stale helper sessions behind.
+
+**Decision**: Keep support-safe launch-profile capture and invalidated-session
+handling, but do not keep the hidden detached PowerShell process attempt. During
+double-check validation, the local endpoint protection/AMSI path blocked the
+helper library when the detached helper implementation embedded a hidden
+PowerShell child-process launch. That is a valid Gate 1 feasibility finding, so
+the AV-triggering detached code was removed before committing. Detached
+lifecycle remains open and should be redesigned rather than forced through a
+pattern endpoint protection rejects.
+
+**Execution**: Added `Save-TowerScoutHostHelperLaunchProfile` and called it from
+`scripts\launch.ps1` after the effective engine and port are known, so
+setup/bootstrap/start/launch paths refresh a shared package-local runtime
+profile through the launcher. The profile records only support-safe metadata:
+engine, GPU mode, app port/base URL, package flavor, helper version, timestamp,
+and package-root identity hash. Added helper-session ID validation, package-local
+token-file cleanup, helper-port refresh in session metadata, and listener-loop
+session checks so invalidated sessions return `session_invalidated` and the
+listener can exit once the session is cleared. Added an `invalidated_session`
+self-test scenario.
+
+**Phase 1 Evidence - 2026-07-02 - Launch Profile And Invalidation Handling**
+
+**Gate**: Gate 1 Helper Transport Proof / Gate 2 Security Proof
+**Environment**: Windows source/package-like script context, Docker CPU profile
+shape, public-safe self-test labels only
+**Objective**: Validate launcher runtime-profile capture, token/session cleanup,
+invalidated-session response handling, and endpoint-protection feasibility for
+the proposed detached PowerShell lifecycle.
+**Command Category**: runtime profile capture / helper start / origin-token
+check / stop cleanup / endpoint protection feasibility
+**Inputs**: `engine=docker`, `gpu=off`, sanitized self-test runtime profile,
+launch-profile metadata, session cleanup metadata
+**Observed States**: `profile_captured`, `ready`, `rejected_token`,
+`rejected_origin`, `rejected_unknown_endpoint`, `cors_preflight_ok`,
+`session_invalidated`, `blocked_by_endpoint_protection`
+**Result**: PARTIAL
+**Redaction Check**: No helper tokens, helper listener ports, local paths,
+provider keys, certificate details, raw subprocess output, `.env` values, or
+support logs were recorded.
+**Follow-Up**: Redesign helper launch/lifecycle without the rejected hidden
+PowerShell child-process pattern. Candidate follow-ups include a safer
+package-local supervisor pattern, a small native helper proof, or another
+endpoint-policy-approved process model before product UI integration.
+
+**Validation**: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File
+scripts\host-helper.ps1 -SelfTest`, `powershell.exe -NoProfile -ExecutionPolicy
+Bypass -File scripts\host-helper.ps1 -Stop`, focused launch-profile and
+session/token cleanup checks, `python .agent_work\scripts\validate_agent_work.py`,
+and `git diff --check` passed after removing the AV-triggering detached process
+attempt.
+
+**Next**: Continue Gate 1 with lifecycle design alternatives that can survive
+launcher exit without triggering endpoint protection, then prove package-local
+script invocation only after the lifecycle model is accepted.
+
+### 2026-07-02 - Helper Session Invalidation Scaffold Added
+
+**Objective**: Add the first package-local helper session invalidation path so
+`scripts\stop.ps1` can invalidate helper metadata before stopping the selected
+container runtime.
+
+**Context**: Gate 1 requires the helper to self-terminate or be invalidated
+when the package runtime stops whenever practical. The initial loopback proof
+did not write durable token material, but it also did not give the stop path
+any helper-session state to clear.
+
+**Decision**: Add ignored package-local helper session metadata under
+`.towerscout-runtime\host-helper\` and keep token material out of the metadata.
+Use support-safe package-root identity hashing rather than recording full local
+paths in helper session JSON. Treat this as invalidation scaffolding only; full
+helper detachment, heartbeat, process termination, and container-exit detection
+remain later Gate 1 work.
+
+**Execution**: Added session metadata save/clear helpers, a `scripts\host-helper.ps1
+-Stop` invalidation mode, `.towerscout-runtime/` git ignore coverage, and
+`scripts\stop.ps1` cleanup before Compose shutdown. Active helper request
+handling now returns a sanitized `session_invalidated` state if its session
+metadata has been cleared.
+
+**Phase 1 Evidence - 2026-07-02 - Session Invalidation**
+
+**Gate**: Gate 1 Helper Transport Proof / Gate 2 Security Proof
+**Environment**: Windows source/package-like script context, Docker CPU profile
+shape, public-safe self-test labels only
+**Objective**: Validate helper session metadata can be saved without token
+material and invalidated by the stop-style cleanup path.
+**Command Category**: stop cleanup / session invalidation
+**Inputs**: `engine=docker`, `gpu=off`, sanitized self-test runtime profile
+**Observed States**: `active`, `invalidated`, `session_invalidated`
+**Result**: PASS
+**Redaction Check**: No helper tokens, helper listener ports, local paths,
+provider keys, certificate details, raw subprocess output, `.env` values, or
+support logs were recorded.
+**Follow-Up**: Add detached helper start, launcher profile refresh, heartbeat
+or TTL, and process termination/cleanup proof before product UI integration.
+
+**Validation**: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File
+scripts\host-helper.ps1 -SelfTest`, `powershell.exe -NoProfile -ExecutionPolicy
+Bypass -File scripts\host-helper.ps1 -Stop`, a focused PowerShell
+save/clear/active-state check, and `git diff --check` passed.
+
+**Next**: Continue Gate 1 with detached helper lifecycle and trusted
+launcher-generated runtime profile refresh across setup/bootstrap/start/launch.
+
+### 2026-07-02 - Gate 1 Loopback Helper Proof Started
+
+**Objective**: Add the first package-local host helper proof for Gate 1/Gate 2
+transport primitives before any product UI or restart orchestration work.
+
+**Context**: Task-087 requires a browser-reachable host helper that binds only
+to loopback, avoids administrator URL ACL setup, accepts TowerScout localhost
+origins only, requires a per-run token, and returns sanitized states. The first
+implementation slice is intentionally limited to transport/security proof; it
+does not expose a repair button, run TLS repair, run the Podman provider
+installer, or restart TowerScout.
+
+**Decision**: Use a PowerShell `TcpListener` proof instead of `HttpListener` for
+the first helper transport because `TcpListener` binds directly to
+`127.0.0.1` and avoids Windows URL ACL registration. Add a self-test mode so
+the listener, origin check, token check, endpoint allowlist, and CORS preflight
+handling can be validated without leaving a background helper process running.
+
+**Execution**: Added `scripts\lib\TowerScoutHostHelper.ps1`,
+`scripts\host-helper.ps1`, and `scripts\host-helper.cmd`. The helper proof
+creates an internal runtime profile, generates an in-memory token, exposes
+sanitized `GET /health` and `GET /runtime-profile` responses, rejects unknown
+endpoints, rejects bad origins, rejects missing/wrong tokens, and supports
+browser CORS preflight for the allowlisted endpoints.
+
+**Phase 1 Evidence - 2026-07-02 - Loopback Self-Test**
+
+**Gate**: Gate 1 Helper Transport Proof / Gate 2 Security Proof
+**Environment**: Windows source/package-like script context, Docker CPU profile
+shape, public-safe self-test labels only
+**Objective**: Validate loopback listener feasibility, TowerScout localhost
+origin enforcement, token enforcement, endpoint allowlist rejection, and
+sanitized helper responses.
+**Command Category**: helper start / health check / origin-token check /
+allowlist rejection
+**Inputs**: `engine=docker`, `gpu=off`, sanitized self-test runtime profile,
+valid token scenario, wrong token scenario, wrong origin scenario, unknown
+endpoint scenario
+**Observed States**: `ready`, `rejected_token`, `rejected_origin`,
+`rejected_unknown_endpoint`, `cors_preflight_ok`
+**Result**: PASS
+**Redaction Check**: No tokens, helper listener ports, local paths, provider
+keys, certificate details, raw subprocess output, `.env` values, or support
+logs were recorded.
+**Follow-Up**: Add lifecycle/runtime-profile file handling, stop cleanup, and
+allowlisted script-invocation proof before product UI integration.
+
+**Validation**: `powershell.exe -NoProfile -ExecutionPolicy Bypass -File
+scripts\host-helper.ps1 -SelfTest` passed. `git diff --check` passed.
+
+**Next**: Extend the proof toward runtime-profile persistence, helper
+lifecycle/stop cleanup, and allowlisted script invocation while keeping product
+UI integration blocked behind Gates 1 and 2.
 
 ### 2026-07-02 - Reviewer Minor Follow-Up Added
 
