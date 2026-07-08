@@ -450,6 +450,27 @@ files reported no editor diagnostics.
 **Next**: Checkpoint the completed Task-088 documentation slice, then move into
 tag creation and image/package assembly from a clean tree.
 
+### 2026-07-08 - Owner Account Checks Recorded For R1-08
+**Objective**: Close the remaining manual fork-repository account checks from
+R1-08 before tag/build execution proceeds.
+**Context**: External review R1 left the fork homepage field and logged-in
+draft-release check as explicit owner-account actions that could not be fully
+verified from local git state.
+**Decision**: Record the repo-owner confirmation directly in Task-088 and treat
+the visible `Pre-release` badges as non-blocking because they are published
+releases, not unpublished drafts.
+**Execution**: The repo owner updated the repository homepage URL on GitHub to
+the correct site location and reviewed the Releases page while logged in. The
+visible releases carried `Pre-release` badges only, and no entries were marked
+`Draft`.
+**Output**: Task-088 now carries explicit evidence that the dead homepage link
+was corrected and that no owner-visible draft releases remain.
+**Validation**: Owner manual check on github.com: homepage field updated to the
+correct live site location; Releases page reviewed while logged in and no
+`Draft` badge observed on any release entry.
+**Next**: Keep the branch/tag flow on the R1-01 sequencing path, then proceed
+with the merge-to-`main`, CI-green, and stable-tag steps.
+
 ---
 
 ## Validation Results

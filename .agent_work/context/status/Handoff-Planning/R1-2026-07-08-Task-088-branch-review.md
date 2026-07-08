@@ -200,7 +200,9 @@ Reword "rc7" to "current release" / "v0.1.0". Then re-run `./.venv/Scripts/pytho
 
 ### R1-08 · LOW (fork repo settings) — A5 owner-account checks not recorded
 
-**Status:** OPEN — manual owner-account checks still need to be performed and recorded
+**Status:** RESOLVED — repo homepage updated to the correct live site location and no owner-visible draft releases remain
+
+**Evidence:** Repo owner updated the GitHub homepage field to the correct live site location and reviewed the Releases page while logged in on 2026-07-08; visible release entries carried `Pre-release` badges only, and no entries were marked `Draft`.
 
 **What:**
 - The fork's homepage field still points at the dead URL `https://groups.ischool.berkeley.edu/TowerScout/` (404) — verified via the public API during this review.
