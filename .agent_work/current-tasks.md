@@ -75,25 +75,26 @@ Because the project end date is now close, Sprint 07 also carries a bounded rele
 **Evidence Handling**:
 Do not record provider keys, helper tokens, certificate subjects, raw thumbprints, raw provider responses, `.env` files, raw logs, browser network traces, screenshots, private AOIs, or local environment dumps in task evidence. Use sanitized operation states and public-safe summaries only.
 
-### **TASK-088: Stable v0.1.0 Release And Handoff Closeout**
-**Status**: IN_PROGRESS - PR #46 merged; pre-merge gate closed; pre-tag source pass now active
+### **TASK-088: Stable Release And Handoff Closeout**
+**Status**: IN_PROGRESS - `v0.1.0` remains a historical tag with published images but no final release assets; validated publication path now targets a follow-on stable release after launcher hardening and remaining D4 validation
 **Type**: C (Release Engineering / Documentation / Handoff)
 **Priority**: HIGH
 **Estimated Effort**: 2-4 days (16-32 hours), excluding owner-gated migration follow-through
 **Target Sprint**: Sprint 07
 **Task File**: `.agent_work/tasks/active/TASK-088-stable-release-and-handoff-closeout.md`
 
-**Objective**: Execute the bounded pre-handoff work needed to cut stable `v0.1.0` from the fork, validate it, finalize user/support guidance, and leave a clean, reviewable release package plus handoff record for cdcai.
+**Objective**: Execute the bounded pre-handoff work needed to close out the fork-side stable release path, validate it, finalize user/support guidance, and leave a clean, reviewable release package plus handoff record for cdcai.
 
 **Current Scope**:
 1. Formalize the reviewed handoff plan into task-tracked execution rather than leaving it only in status analysis.
 2. Record the merged PR #46 baseline and execute the pre-tag source pass required for a trustworthy stable release.
-3. Validate the rebuilt stable package set and publish the fork-side stable release.
+3. Validate the rebuilt stable package set and publish the fork-side stable release under the post-fix release identity.
 4. Finalize the handoff notes, guides, and operator-facing documentation needed before migration execution begins.
 
 **Important Boundaries**:
 - Keep the fork release self-consistent even if cdcai release recreation happens later.
 - Resolve the namespace/download-home sequencing explicitly before the first public stable package is published.
+- Do not publish final GitHub Release assets under the current `v0.1.0` identity; the preferred path is a follow-on stable release (currently `v0.1.1`) built from the launcher-hardened source state.
 - Treat any `rc7.1` promotion fallback as an explicit release-identity decision, not as an implicit rename.
 
 ### **TASK-089: cdcai Migration Execution And Ownership Transfer**

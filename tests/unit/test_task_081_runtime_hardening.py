@@ -18,6 +18,7 @@ COMPOSE_LIB = REPO_ROOT / "scripts" / "lib" / "TowerScoutCompose.ps1"
 LAUNCH_SCRIPT = REPO_ROOT / "scripts" / "launch.ps1"
 IMPORT_ASSETS_SCRIPT = REPO_ROOT / "scripts" / "import-assets.ps1"
 STOP_SCRIPT = REPO_ROOT / "scripts" / "stop.ps1"
+STATUS_SCRIPT = REPO_ROOT / "scripts" / "status.ps1"
 PROVIDER_CATALOG = REPO_ROOT / "scripts" / "podman-compose-providers.v1.json"
 PROVIDER_INSTALL_SCRIPT = REPO_ROOT / "scripts" / "install-podman-compose-provider.ps1"
 
@@ -102,6 +103,8 @@ def test_import_assets_uses_shared_copy_fallback_and_sets_gpu_environment():
     assert "Get-TowerScoutPodmanServiceContainerId" in helper
     assert "io.podman.compose.project" in helper
     assert "com.docker.compose.project" in helper
+    assert '"NVIDIA_VISIBLE_DEVICES"' in helper
+    assert '"NVIDIA_DRIVER_CAPABILITIES"' in helper
     assert "$env:TOWERSCOUT_CONTAINER_ENGINE = $effectiveEngine" in helper
     assert "Initialize-TowerScoutPodmanComposeProvider" in helper
     assert "Assert-TowerScoutPodmanComposeProviderAllowed" in helper
@@ -124,6 +127,64 @@ def test_stop_script_uses_down_without_deleting_named_volumes():
     assert '@("stop")' not in stop_script
     assert "--volumes" not in compose_line
     assert "-v" not in compose_line
+
+
+def test_status_script_reports_engine_image_identity_and_fails_on_mismatch():
+    status_script = STATUS_SCRIPT.read_text(encoding="utf-8")
+
+    assert 'Initialize-TowerScoutEnvFile -RootPath $repoRoot' in status_script
+    assert "Test-TowerScoutRunningImageMatchesPackage" in status_script
+    assert "Running image:" in status_script
+    assert "Running image digest:" in status_script
+    assert '$imageIdentityCheck.Reason -eq "mismatch"' in status_script
+    assert '$imageIdentityCheck.Reason -eq "container_not_found"' in status_script
+    assert "No running TowerScout container found for this package." in status_script
+    assert "Running container image does not match this package's pinned identity." in status_script
+    assert "exit 1" in status_script
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
+def test_status_script_preserves_down_state_when_container_is_missing():
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task088-status-down-{uuid.uuid4().hex}"
+    temp_root.mkdir(parents=True)
+    lib_dir = temp_root / "lib"
+    lib_dir.mkdir(parents=True)
+    status_copy = temp_root / "status.ps1"
+    status_copy.write_text(STATUS_SCRIPT.read_text(encoding="utf-8"), encoding="utf-8")
+    (temp_root / ".env.example").write_text(
+        "TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout:v0.1.1-cpu@sha256:" + ("1" * 64) + "\n",
+        encoding="utf-8",
+    )
+    (temp_root / "release-manifest.v1.json").write_text(
+        json.dumps({"release_version": "v0.1.1-cpu", "pytorch_flavor": "cpu"}),
+        encoding="utf-8",
+    )
+    stub_lib = lib_dir / "TowerScoutCompose.ps1"
+    stub_lib.write_text(
+        "function Get-TowerScoutRepoRoot { return \"" + str(temp_root).replace("\\", "\\\\") + "\" }\n"
+        "function Initialize-TowerScoutEnvFile { param([string] $RootPath) }\n"
+        "function Write-TowerScoutComposeProviderSummary { param([string] $Engine) }\n"
+        "function Invoke-TowerScoutCompose { param([string] $Engine, [string[]] $ComposeArguments) $script:TowerScoutComposeExitCode = 0 }\n"
+        "function Test-TowerScoutRunningImageMatchesPackage { param([string] $Engine) return [pscustomobject]@{ Checked = $true; Matches = $false; Reason = \"container_not_found\"; ExpectedImage = \"\"; ExpectedDigest = \"\"; Identity = $null } }\n",
+        encoding="utf-8",
+    )
+
+    try:
+        result = subprocess.run(
+            [_powershell_executable(), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(status_copy), "-Port", "5999"],
+            cwd=temp_root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        assert result.returncode == 2, result.stdout + result.stderr
+        combined = result.stdout + result.stderr
+        assert "No running TowerScout container found for this package." in combined
+        assert "Running container image does not match this package's pinned identity." not in combined
+        assert "TowerScout readiness endpoint is not reachable" in combined
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
@@ -229,6 +290,70 @@ def test_compose_invocation_allows_successful_provider_stderr_banner():
 
     assert result.returncode == 0, result.stdout + result.stderr
     assert "ok" in result.stdout
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
+def test_running_image_identity_check_matches_pinned_digest_from_engine_inspect():
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task088-image-identity-{uuid.uuid4().hex}"
+    temp_root.mkdir(parents=True)
+    digest = "sha256:" + ("4" * 64)
+    expected_image = f"ghcr.io/j-schulein/towerscout:v0.1.1-cpu@{digest}"
+    (temp_root / "release-manifest.v1.json").write_text(
+        json.dumps({"release_version": "v0.1.1-cpu", "pytorch_flavor": "cpu"}),
+        encoding="utf-8",
+    )
+    (temp_root / ".env").write_text(
+        "\n".join(
+            [
+                f"TOWERSCOUT_IMAGE={expected_image}",
+                f"TOWERSCOUT_IMAGE_DIGEST={digest}",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        . "{COMPOSE_LIB}"
+
+        function Get-TowerScoutRepoRoot {{
+            return "{temp_root}"
+        }}
+
+        function Get-TowerScoutRunningImageIdentity {{
+            param([string] $Engine, [string] $ServiceName)
+            return [pscustomobject]@{{
+                EngineName = "docker"
+                ContainerId = "container-123"
+                ConfigImage = "{expected_image}"
+                ImageId = "sha256:imageid123"
+                RepoDigests = @("{expected_image}")
+                ActualDigest = "{digest}"
+            }}
+        }}
+
+        $result = Test-TowerScoutRunningImageMatchesPackage -Engine docker -RootPath "{temp_root}"
+        if (-not $result.Checked) {{
+            throw "Expected running image identity check to run."
+        }}
+        if (-not $result.Matches) {{
+            throw "Expected running image identity check to match the pinned digest."
+        }}
+        if ($result.Identity.ConfigImage -ne "{expected_image}") {{
+            throw "Expected Config.Image to match the pinned image."
+        }}
+        if ($result.Identity.ActualDigest -ne "{digest}") {{
+            throw "Expected actual digest to match the pinned digest."
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")

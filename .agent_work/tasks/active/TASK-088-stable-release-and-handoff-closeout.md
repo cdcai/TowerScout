@@ -471,34 +471,214 @@ correct live site location; Releases page reviewed while logged in and no
 **Next**: Keep the branch/tag flow on the R1-01 sequencing path, then proceed
 with the merge-to-`main`, CI-green, and stable-tag steps.
 
+### 2026-07-08 - Stable Tag, Image Digests, And Control Packages Captured
+**Objective**: Cut the stable tag, capture immutable image references, and
+assemble the release control packages from the tagged baseline.
+**Context**: `main@dfe9e6b` was green and cleared by the external pre-tag
+review. The remaining release-assembly gate was to publish the CPU/CUDA images,
+capture their digests, and rebuild the control packages from a clean tagged
+tree.
+**Decision**: Create and push annotated tag `v0.1.0`, use the published GitHub
+Actions metadata as the digest source of truth, and build the packages from a
+detached `v0.1.0` worktree so the release guardrails see a clean git state.
+**Execution**: Created and pushed `v0.1.0`; dispatched `container-publish.yml`
+for CPU and CUDA; downloaded `image-metadata.json` artifacts from runs
+`28969615686` and `28969617992`; captured digests
+`sha256:0c1ea5035acefca81f2c099c65cc89badcbc120c0bbbc2662303233c34f25f5b`
+and `sha256:9f1563eb18eee12e0344f43d83a53072f84c9811482915f299e1c87fc5ed9c68`;
+created detached worktree `../TowerScout-v0.1.0-build`; built
+`towerscout-v0.1.0-cpu.zip` and `towerscout-v0.1.0-cuda121.zip` into
+`../TowerScout-v0.1.0-packages/` with the verified asset-bundle checksum
+`00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+**Output**: Stable tag `v0.1.0` exists on origin; published images are pinned
+to immutable GHCR digests; clean control-package ZIPs and checksum sidecars
+exist for both CPU and CUDA variants.
+**Validation**: Both workflow runs succeeded; the packaged ZIP sidecars verify
+after CRLF normalization; `IMAGE.txt` inside each ZIP carries the expected
+digest-pinned image reference; `release-manifest.v1.json` inside each ZIP names
+asset bundle `towerscout-v0.1.0-assets-towerscout-v1-assets-2026-05-05.zip`
+with the expected SHA-256.
+**Next**: Complete the remaining D4 validation pass against the rebuilt stable
+packages and capture that evidence before final release publication closes.
+
+### 2026-07-08 - Package Gate Checks And Optional Podman CPU Smoke
+**Objective**: Execute the strongest bounded validation available on this host
+before the full D4 pass, and determine whether the rebuilt CPU package can
+still reach readiness on the Podman path.
+**Context**: The archived D4 harness and `fixtures-20260707` bundle referenced
+by the handoff docs are not present on this machine, and Docker Desktop was not
+running, so the full fixture-parity/live-smoke protocol could not yet be
+executed locally.
+**Decision**: Run the release-focused unit checks and manifest/package
+inspection now, then treat a Podman CPU setup/readiness smoke as the cheapest
+additional runtime validation slice available on this host.
+**Execution**: Ran the release-focused unit suite; summarized both rebuilt
+control ZIPs; validated their packaged manifests; confirmed Docker was
+unavailable locally; staged the stable asset ZIP under the stable filename; ran
+the packaged Podman compose-provider installer; traced two local-only issues
+(`REQUESTS_CA_BUNDLE` / `SSL_CERT_FILE` pointing at a dead Git-for-Windows path,
+and stale host-shell `TOWERSCOUT_*` overrides that masked the package-local
+image settings); reran the Podman CPU package setup from the extracted package
+root with explicit environment export; captured readiness and cleaned up the
+Podman container.
+**Output**: Release-focused tests are green; both rebuilt packages have the
+expected file shape and manifest keys; the CPU package reached Podman
+`setup_required` readiness with `asset_status=ok`, `container_engine=podman`,
+`device_policy=cpu`, `selected_device=cpu`, `pytorch_flavor=cpu`, app version
+`v0.1.0`, and image digest
+`sha256:0c1ea5035acefca81f2c099c65cc89badcbc120c0bbbc2662303233c34f25f5b`.
+**Validation**: `71` release/package unit tests passed; package summary and
+manifest checks passed for both ZIPs; the Podman CPU smoke imported all assets,
+reported `asset_status=ok`, and reached healthy `setup_required` readiness on
+port `5020` before cleanup. Full D4 fixture parity/live smoke remains pending.
+**Next**: After host restart, rerun the Docker-side setup/readiness smoke with
+Docker Desktop up, then continue into the full D4 harness protocol once the
+archived harness/fixture bundle is available on the validation machine.
+
+### 2026-07-08 - Docker CPU Package Smoke Confirmed With Clean Launch Environment
+**Objective**: Validate that the rebuilt CPU package reaches Docker readiness
+using the pinned GHCR image and imported assets, and distinguish package issues
+from host-environment overrides.
+**Context**: After Docker Desktop came back up, the first CPU smoke attempt on
+port `5021` failed during `docker cp` of the large ZIP-code shapefile and the
+status snapshot still showed `IMAGE=towerscout:local`. The extracted package
+`.env` already carried the correct pinned GHCR reference, so the remaining
+hypothesis was that the host shell environment was overriding the package image
+selection.
+**Decision**: Repair the incomplete Docker asset import in place, then rerun
+the Docker CPU smoke from a clean PowerShell process with the stale
+`TOWERSCOUT_*` host overrides and CA-bundle overrides removed.
+**Execution**: Confirmed the first Docker setup reached a healthy container but
+left `zcta-2025-shp` corrupt and `zcta-2025-shx` missing after a closed-pipe
+copy failure; reran `scripts\import-assets.ps1 -Engine docker -Port 5021
+-VerifyHashes` from the extracted package to repair the asset volume; observed
+that the host shell exported `TOWERSCOUT_IMAGE=towerscout:local`; rendered
+`docker compose config` both with and without those shell overrides; reran the
+CPU package setup on port `5022` from a clean PowerShell environment so Docker
+Compose resolved the pinned GHCR image from the package `.env`.
+**Output**: The repaired Docker package imported all assets successfully, and
+the clean rerun reached healthy `setup_required` readiness on port `5022` with
+`container_engine=docker`, `device_policy=cpu`, `selected_device=cpu`,
+`pytorch_flavor=cpu`, app version `v0.1.0`, and image digest
+`sha256:0c1ea5035acefca81f2c099c65cc89badcbc120c0bbbc2662303233c34f25f5b`.
+**Validation**: `import-assets.ps1` completed with `asset_status=ok` and
+`verify_hashes=True`; `status.ps1` after the clean rerun showed the container
+running as
+`ghcr.io/j-schulein/towerscout:v0.1.0-cpu@sha256:0c1ea5035acefca81f2c099c65cc89badcbc120c0bbbc2662303233c34f25f5b`
+with all required and optional assets `ok`; `stop.ps1` removed the container
+and network cleanly.
+**Next**: Keep the Docker host-shell `TOWERSCOUT_IMAGE=towerscout:local`
+override out of future package-smoke shells, then continue to the remaining D4
+fixture-parity/live-smoke protocol when the archived harness and fixture bundle
+are available.
+
+### 2026-07-08 - Release Package Launch-Environment Hardening
+**Objective**: Remove the host-shell override hazard from the packaged launch
+path before any GitHub Release assets are published.
+**Context**: Docker and Podman CPU package smokes both passed when run from a
+clean process, but this workstation exported stale `TOWERSCOUT_*` values that
+overrode the package `.env` and could misroute the packaged runtime to
+`towerscout:local`.
+**Decision**: Fix the shared release-package compose helper rather than rely on
+operator discipline, and add a regression test that proves release-package
+`.env` values replace stale process overrides.
+**Execution**: Updated `scripts/lib/TowerScoutCompose.ps1` so
+`Initialize-TowerScoutEnvFile` synchronizes managed release-package environment
+variables from `.env` into the process for release-package roots, clearing blank
+values instead of preserving stale process overrides; added focused regression
+coverage in `tests/unit/test_task_074_bootstrap.py`.
+**Output**: Package launcher scripts now prefer the package's pinned image/TLS
+settings over stale host-shell values when running from a release package.
+**Validation**: `tests/unit/test_task_074_bootstrap.py` plus
+`tests/unit/test_import_assets_script.py` passed (`26` tests); additionally,
+`tests/unit/test_release_package_script.py` plus
+`tests/unit/test_task_081_runtime_hardening.py` passed (`20` tests).
+**Next**: Decide release identity before publication: the existing `v0.1.0`
+tag predates this launcher hardening, so do not publish final release assets
+against that tag unless the source/tag/image story is intentionally updated.
+
+### 2026-07-08 - R3 Review Accepted And v0.1.1 Path Chosen
+**Objective**: Close the release-identity question after the external R3
+publication-decision review and convert the recommendation into the active
+execution path.
+**Context**: R3 independently verified the publication-decision memo, confirmed
+that the host-drift issue is systemic but latent, and highlighted that the D4
+gate needed an engine-level digest cross-check in addition to the launcher
+hardening. The review also confirmed that the hardening fix remained local and
+therefore could not be treated as part of the already-public `v0.1.0` source
+or image identity.
+**Decision**: Accept the R3 recommendation. Keep `v0.1.0` as a historical tag
+with published images but no final release assets, and shift the fork-side
+stable publication target to a follow-on release identifier, currently
+`v0.1.1`.
+**Execution**: Recorded the decision in the publication memo and sprint task
+tracker, implemented the shared launcher hardening in source, and added an
+engine-level running-image identity check to the shared compose/status path so
+future package validation is not forced to trust readiness JSON alone.
+**Output**: The source tree now reflects the agreed release path: launcher
+hardening plus digest-cross-check changes are in local source and validated,
+but final publication remains intentionally blocked until those changes are
+committed, reviewed, merged, and rebuilt into a new stable release identity.
+**Validation**: `tests/unit/test_task_074_bootstrap.py`,
+`tests/unit/test_import_assets_script.py`,
+`tests/unit/test_release_package_script.py`, and
+`tests/unit/test_task_081_runtime_hardening.py` all passed after the hardening
+and digest-cross-check changes.
+**Next**: Prepare the fix branch/commit, run the focused validation slice on
+that branch, and then cut the follow-on release build/tag sequence (`v0.1.1`)
+only after CI is green at the post-fix merge SHA.
+
+### 2026-07-08 - Post-R4 Windows Validation Re-Run Recorded For PR #47
+**Objective**: Close the remaining pre-merge evidence gap identified by the R5
+re-review by recording the post-fix Windows validation slice after the R4
+blocker fixes landed on PR #47.
+**Context**: R5 confirmed that the code/test fixes in PR #47 were merge-ready,
+but noted that the repo still lacked an explicit record that the Windows-only
+behavioral slices were rerun after the R4 blocker and follow-up fixes.
+**Decision**: Record the exact post-fix Windows validation slice in the task
+log rather than rely on the PR description alone.
+**Execution**: After applying the R4 fixes (`status.ps1` down-state handling,
+status env sync, managed NVIDIA variables, `$isMatch` rename, and artifact
+cleanup), reran the focused Windows validation slice from the PR branch.
+**Output**: TASK-088 now carries the post-fix Windows validation evidence that
+R5 asked to see before PR #47 is undrafted and merged.
+**Validation**: `./.venv/Scripts/python -m pytest tests/unit/test_task_074_bootstrap.py tests/unit/test_task_081_runtime_hardening.py tests/unit/test_import_assets_script.py tests/unit/test_release_package_script.py -q -p no:cacheprovider` -> `49 passed`; `python .agent_work/scripts/validate_agent_work.py` -> passed; `git diff --check` -> passed.
+**Next**: Undraft PR #47 once CI remains green, and merge it with **Squash and merge** so the previously committed artifact debris never lands in `main` history.
+
 ---
 
 ## Validation Results
 
 ### Test Summary
-**Test Date**: Pending
-**Test Environment**: Pending
-**Test Status**: PENDING
+**Test Date**: 2026-07-08
+**Test Environment**: GitHub Actions image publish runs plus local Windows
+tagged-worktree package assembly, package-focused validation, and local Podman
+and Docker CPU package smoke, plus release-package launcher hardening tests
+**Test Status**: PARTIAL
 
 ### Acceptance Criteria Validation
 - [x] **Task tracking created**: Completed 2026-07-08
 - [x] **Pre-merge cleanup dispositioned**: Completed 2026-07-08
 - [x] **Task-088 entered from merged main baseline**: Completed 2026-07-08
-- [ ] **Pre-tag cleanup completed**: Pending
+- [x] **Pre-tag cleanup completed**: Completed 2026-07-08
 - [ ] **Stable package validation recorded**: Pending
 - [ ] **Guidance and handoff docs finalized**: Pending
 - [ ] **Residual decisions closed or delegated**: Pending
 
 ### Issues Identified
 
-- The handoff plan still requires explicit resolution of fork-versus-cdcai
-  namespace sequencing before the first public stable package is finalized.
-- If `rc7.1` fallback is used, release identity must be handled explicitly in
-  docs and release notes rather than treated as an invisible relabel.
+- Full D4 fixture-parity/live-smoke validation is still blocked on this
+  machine because the archived `ts-detect-harness.ps1` plus
+  `fixtures-20260707` bundle referenced by the handoff docs is not present
+  locally.
+- The current `v0.1.0` tag and already-published GHCR image tags predate the
+  release-package launcher hardening. The agreed path is a follow-on stable
+  release (`v0.1.1` preferred), but that new identity still needs a real fix
+  commit, review, merge, rebuild, and final validation before publication.
 - Local `test_config.py` runs can fail if the shell carries TLS-bundle
   environment state; unsetting `REQUESTS_CA_BUNDLE` and `SSL_CERT_FILE` before
   that slice restores the expected local baseline.
 
 ### Sign-off
 
-Pending
+Pending full D4 validation and release publication.

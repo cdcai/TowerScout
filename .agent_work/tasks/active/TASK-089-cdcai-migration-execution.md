@@ -38,6 +38,10 @@ capture anything that diverges from the dry-run-validated plan.
   the cdcai-rebuilt packages with release-note disclosure, or use a later
   documented post-tag rewrite or point-release path instead of silently
   changing tag meaning.
+- WHEN fork-side release publication moves to a follow-on stable identifier
+  after `v0.1.0` tag-only history is preserved, THE SYSTEM SHALL treat that
+  follow-on release as the migration baseline and SHALL NOT push the historical
+  asset-less `v0.1.0` tag to cdcai as if it were the validated stable release.
 - WHEN backlog transfer is attempted, THE SYSTEM SHALL use cdcai Issues only if
   they are enabled, otherwise it SHALL use an explicitly approved alternate
   durable destination.
@@ -57,6 +61,9 @@ capture anything that diverges from the dry-run-validated plan.
 - [ ] The chosen cdcai package-facing release URL and image-default strategy is
   explicitly recorded and, if fork-facing values remain in the tagged tree,
   disclosed in the cdcai release notes.
+- [ ] The selected cdcai migration tag/image set excludes the historical
+  asset-less `v0.1.0` tag and instead uses the post-fix validated stable
+  release line.
 - [ ] Backlog transfer lands in cdcai Issues or an explicitly approved
       alternate durable destination.
 
@@ -98,6 +105,27 @@ falling between the fork-side and cdcai-side task files.
 **Validation**: Pending later cdcai execution.
 **Next**: Preserve the fork-side stable release wording through the tag/build
 flow, and revisit the cdcai-facing package wording only during Task-089.
+
+### 2026-07-08 - Historical v0.1.0 Disposition Added
+**Objective**: Prevent the cdcai migration path from inheriting a misleading
+stable tag if the fork-side release line moves to a follow-on post-fix stable
+identifier.
+**Context**: The fork now has a public historical `v0.1.0` tag with published
+images but no final release assets, while the agreed fork-side publication path
+has shifted to a post-fix follow-on stable release (currently `v0.1.1`).
+**Decision**: Treat the historical `v0.1.0` tag as fork-only history for
+traceability and do not push it to `cdcai/TowerScout` as the stable migration
+baseline. Task-089 should migrate the post-fix validated stable release line
+instead.
+**Execution**: Added requirement and acceptance-criterion coverage for the
+historical `v0.1.0` disposition.
+**Output**: The migration task now explicitly distinguishes between historical
+fork tags and the actual validated stable line that should be recreated under
+cdcai ownership.
+**Validation**: Pending later cdcai execution.
+**Next**: Once the follow-on stable release identifier is cut and validated,
+record the exact tag/image set that Task-089 will push or recreate on the cdcai
+side.
 
 ---
 
@@ -143,6 +171,9 @@ or migration-only step is now captured here rather than implied.
   documented fallback destination.
 - Registry-copy versus rebuild remains a live execution choice driven by
   permissions and available tooling.
+- If the fork publishes a follow-on stable release after `v0.1.0`, the exact
+  cdcai tag/image set must be updated in the migration runbook before Task-089
+  starts execution.
 
 ### Sign-off
 

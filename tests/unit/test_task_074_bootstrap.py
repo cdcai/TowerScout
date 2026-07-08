@@ -252,6 +252,72 @@ def test_compose_helper_initializes_env_from_package_template_without_overwrite(
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap helpers are Windows-only")
+def test_release_package_env_sync_overrides_stale_process_values():
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task074-env-sync-{uuid.uuid4().hex}"
+    temp_root.mkdir(parents=True)
+    digest = "sha256:" + ("3" * 64)
+    expected_image = f"ghcr.io/j-schulein/towerscout:v0.1.0-ga-cpu@{digest}"
+    (temp_root / "release-manifest.v1.json").write_text(
+        json.dumps(
+            {
+                "release_version": "v0.1.0-ga-cpu",
+                "pytorch_flavor": "cpu",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (temp_root / ".env.example").write_text(
+        "\n".join(
+            [
+                f"TOWERSCOUT_IMAGE={expected_image}",
+                f"TOWERSCOUT_IMAGE_DIGEST={digest}",
+                "REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt",
+                "SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt",
+                "TOWERSCOUT_CONTAINER_ENGINE=",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        . "{COMPOSE_LIB}"
+
+        $env:TOWERSCOUT_IMAGE = "towerscout:local"
+        $env:TOWERSCOUT_IMAGE_DIGEST = "sha256:{'9' * 64}"
+        $env:REQUESTS_CA_BUNDLE = "C:/bad/certs.pem"
+        $env:SSL_CERT_FILE = "C:/bad/certs.pem"
+        $env:TOWERSCOUT_CONTAINER_ENGINE = "docker"
+
+        Initialize-TowerScoutEnvFile -RootPath "{temp_root}"
+
+        if ($env:TOWERSCOUT_IMAGE -ne "{expected_image}") {{
+            throw "Expected TOWERSCOUT_IMAGE to sync from package .env."
+        }}
+        if ($env:TOWERSCOUT_IMAGE_DIGEST -ne "{digest}") {{
+            throw "Expected TOWERSCOUT_IMAGE_DIGEST to sync from package .env."
+        }}
+        if ($env:REQUESTS_CA_BUNDLE -ne "/etc/ssl/certs/ca-certificates.crt") {{
+            throw "Expected REQUESTS_CA_BUNDLE to sync from package .env."
+        }}
+        if ($env:SSL_CERT_FILE -ne "/etc/ssl/certs/ca-certificates.crt") {{
+            throw "Expected SSL_CERT_FILE to sync from package .env."
+        }}
+        if (-not [string]::IsNullOrEmpty($env:TOWERSCOUT_CONTAINER_ENGINE)) {{
+            throw "Expected blank package TOWERSCOUT_CONTAINER_ENGINE to clear the stale process value."
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell bootstrap helpers are Windows-only")
 def test_package_env_image_mismatch_fails_closed_without_overwrite():
     temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task084-env-mismatch-{uuid.uuid4().hex}"
     temp_root.mkdir(parents=True)

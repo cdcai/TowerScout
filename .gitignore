@@ -16,6 +16,7 @@ htmlcov/
 *.cover
 .hypothesis/
 test/
+test-artifacts/
 tests/__pycache__/
 tests/**/__pycache__/
 
@@ -37,6 +38,7 @@ webapp/flask_session/*
 # Logs
 *.log
 logs/
+artifacts/
 webapp/logs/*
 
 # Cache files

@@ -446,11 +446,67 @@ function Initialize-TowerScoutEnvFile {
     }
     if (Test-Path -LiteralPath $envPath -PathType Leaf) {
         Assert-TowerScoutPackageEnvImageMatch -RootPath $RootPath
+        Sync-TowerScoutPackageEnvToProcess -RootPath $RootPath
         return
     }
 
     Copy-Item -LiteralPath $templatePath -Destination $envPath
     Write-Host "Created .env from .env.example."
+    Sync-TowerScoutPackageEnvToProcess -RootPath $RootPath
+}
+
+function Get-TowerScoutPackageManagedEnvironmentNames {
+    return @(
+        "COMPOSE_PROJECT_NAME",
+        "NVIDIA_DRIVER_CAPABILITIES",
+        "NVIDIA_VISIBLE_DEVICES",
+        "PODMAN_COMPOSE_PROVIDER",
+        "PYTORCH_INDEX_URL",
+        "REQUESTS_CA_BUNDLE",
+        "SSL_CERT_FILE",
+        "TOWERSCOUT_ALLOW_INSECURE_TLS",
+        "TOWERSCOUT_CONTAINER_ENGINE",
+        "TOWERSCOUT_DEVICE",
+        "TOWERSCOUT_GPU_AUTO_OVERLAY",
+        "TOWERSCOUT_GPU_CONCURRENCY",
+        "TOWERSCOUT_GPU_MODE",
+        "TOWERSCOUT_IMAGE",
+        "TOWERSCOUT_IMAGE_DIGEST",
+        "TOWERSCOUT_MAX_REQUEST_BODY_BYTES",
+        "TOWERSCOUT_PILOT_MAX_TILES",
+        "TOWERSCOUT_PODMAN_GPU_OVERLAY",
+        "TOWERSCOUT_PODMAN_MACHINE",
+        "TOWERSCOUT_PORT",
+        "TOWERSCOUT_PYTORCH_FLAVOR",
+        "TOWERSCOUT_VERIFY_ASSET_HASHES",
+        "YOLO_CONFIG_DIR"
+    )
+}
+
+function Sync-TowerScoutPackageEnvToProcess {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $RootPath
+    )
+
+    if (-not (Test-TowerScoutReleasePackageRoot -RootPath $RootPath)) {
+        return
+    }
+
+    $envPath = Join-Path $RootPath ".env"
+    if (-not (Test-Path -LiteralPath $envPath -PathType Leaf)) {
+        return
+    }
+
+    foreach ($name in Get-TowerScoutPackageManagedEnvironmentNames) {
+        $value = Get-TowerScoutEnvFileValueFromPath -Path $envPath -Name $name
+        if ($null -eq $value -or [string]::IsNullOrWhiteSpace([string] $value)) {
+            Remove-Item -Path "Env:$name" -ErrorAction SilentlyContinue
+        }
+        else {
+            Set-Item -Path "Env:$name" -Value $value
+        }
+    }
 }
 
 function Write-TowerScoutComposeProviderSummary {
@@ -1005,6 +1061,28 @@ function Get-TowerScoutComposeServiceContainerIds {
     }
 }
 
+function Get-TowerScoutComposeServiceContainerId {
+    param(
+        [ValidateSet("auto", "docker", "podman")]
+        [string] $Engine = "auto",
+
+        [string] $ServiceName = "towerscout"
+    )
+
+    $command = Get-TowerScoutComposeCommand -Engine $Engine
+    $effectiveEngine = [string] $command["Executable"]
+    if ($effectiveEngine -eq "podman") {
+        return Get-TowerScoutPodmanServiceContainerId -ServiceName $ServiceName
+    }
+
+    $containerIds = @(Get-TowerScoutComposeServiceContainerIds -Engine $effectiveEngine -ServiceName $ServiceName)
+    if ($containerIds.Count -gt 0 -and -not [string]::IsNullOrWhiteSpace([string] $containerIds[0])) {
+        return [string] $containerIds[0]
+    }
+
+    return ""
+}
+
 function Get-TowerScoutComposeProjectName {
     if (-not [string]::IsNullOrWhiteSpace($env:COMPOSE_PROJECT_NAME)) {
         return $env:COMPOSE_PROJECT_NAME.Trim()
@@ -1017,6 +1095,157 @@ function Get-TowerScoutComposeProjectName {
 
     $leafName = (Split-Path (Get-TowerScoutRepoRoot) -Leaf).ToLowerInvariant()
     return ($leafName -replace "[^a-z0-9_-]", "")
+}
+
+function Get-TowerScoutRunningImageIdentity {
+    param(
+        [ValidateSet("auto", "docker", "podman")]
+        [string] $Engine = "auto",
+
+        [string] $ServiceName = "towerscout"
+    )
+
+    $command = Get-TowerScoutComposeCommand -Engine $Engine
+    $effectiveEngine = [string] $command["Executable"]
+    $containerId = Get-TowerScoutComposeServiceContainerId -Engine $effectiveEngine -ServiceName $ServiceName
+    if ([string]::IsNullOrWhiteSpace($containerId)) {
+        return $null
+    }
+
+    $previousErrorActionPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = "Continue"
+        $imageId = (& $effectiveEngine inspect --type container --format "{{.Image}}" $containerId 2>$null | Select-Object -First 1)
+        $configImage = (& $effectiveEngine inspect --type container --format "{{.Config.Image}}" $containerId 2>$null | Select-Object -First 1)
+        if ($LASTEXITCODE -ne 0) {
+            return $null
+        }
+
+        $repoDigestsJson = "[]"
+        if (-not [string]::IsNullOrWhiteSpace([string] $imageId)) {
+            $repoDigestsResult = & $effectiveEngine inspect --type image --format "{{json .RepoDigests}}" ([string] $imageId).Trim() 2>$null
+            if ($LASTEXITCODE -eq 0 -and $null -ne $repoDigestsResult) {
+                $repoDigestsJson = [string] ($repoDigestsResult | Select-Object -First 1)
+            }
+        }
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+
+    $repoDigests = @()
+    if (-not [string]::IsNullOrWhiteSpace($repoDigestsJson)) {
+        try {
+            $parsedDigests = ConvertFrom-Json $repoDigestsJson
+            if ($parsedDigests -is [System.Array]) {
+                $repoDigests = @($parsedDigests | ForEach-Object { [string] $_ })
+            }
+            elseif ($null -ne $parsedDigests) {
+                $repoDigests = @([string] $parsedDigests)
+            }
+        }
+        catch {
+            $repoDigests = @()
+        }
+    }
+
+    $actualDigest = ""
+    foreach ($repoDigest in $repoDigests) {
+        if ([string]::IsNullOrWhiteSpace($repoDigest)) {
+            continue
+        }
+        if ($repoDigest -match "@(?<digest>sha256:[0-9a-f]{64})$") {
+            $actualDigest = $Matches["digest"]
+            break
+        }
+    }
+
+    return [pscustomobject]@{
+        EngineName = $effectiveEngine
+        ContainerId = [string] $containerId
+        ConfigImage = ([string] $configImage).Trim()
+        ImageId = ([string] $imageId).Trim()
+        RepoDigests = $repoDigests
+        ActualDigest = $actualDigest
+    }
+}
+
+function Test-TowerScoutRunningImageMatchesPackage {
+    param(
+        [ValidateSet("auto", "docker", "podman")]
+        [string] $Engine = "auto",
+
+        [string] $RootPath = $(Get-TowerScoutRepoRoot),
+
+        [string] $ServiceName = "towerscout"
+    )
+
+    if (-not (Test-TowerScoutReleasePackageRoot -RootPath $RootPath)) {
+        return [pscustomobject]@{
+            Checked = $false
+            Matches = $true
+            Reason = "not_release_package"
+            ExpectedImage = ""
+            ExpectedDigest = ""
+            Identity = $null
+        }
+    }
+
+    $envPath = Join-Path $RootPath ".env"
+    $expectedImage = [string] (Get-TowerScoutEnvFileValueFromPath -Path $envPath -Name "TOWERSCOUT_IMAGE")
+    $expectedDigest = [string] (Get-TowerScoutEnvFileValueFromPath -Path $envPath -Name "TOWERSCOUT_IMAGE_DIGEST")
+    if ([string]::IsNullOrWhiteSpace($expectedImage) -and [string]::IsNullOrWhiteSpace($expectedDigest)) {
+        return [pscustomobject]@{
+            Checked = $false
+            Matches = $true
+            Reason = "no_expected_identity"
+            ExpectedImage = $expectedImage
+            ExpectedDigest = $expectedDigest
+            Identity = $null
+        }
+    }
+
+    $identity = Get-TowerScoutRunningImageIdentity -Engine $Engine -ServiceName $ServiceName
+    if ($null -eq $identity) {
+        return [pscustomobject]@{
+            Checked = $true
+            Matches = $false
+            Reason = "container_not_found"
+            ExpectedImage = $expectedImage
+            ExpectedDigest = $expectedDigest
+            Identity = $null
+        }
+    }
+
+    $isMatch = $true
+    if (
+        [string]::IsNullOrWhiteSpace($expectedDigest) -and
+        -not [string]::IsNullOrWhiteSpace($expectedImage) -and
+        $identity.ConfigImage -ne $expectedImage
+    ) {
+        $isMatch = $false
+    }
+    if (-not [string]::IsNullOrWhiteSpace($expectedDigest)) {
+        $digestMatch = $false
+        foreach ($repoDigest in @($identity.RepoDigests)) {
+            if ([string] $repoDigest -match "@" + [regex]::Escape($expectedDigest) + "$") {
+                $digestMatch = $true
+                break
+            }
+        }
+        if (-not $digestMatch -and $identity.ActualDigest -ne $expectedDigest) {
+            $isMatch = $false
+        }
+    }
+
+    return [pscustomobject]@{
+        Checked = $true
+        Matches = $isMatch
+        Reason = if ($isMatch) { "match" } else { "mismatch" }
+        ExpectedImage = $expectedImage
+        ExpectedDigest = $expectedDigest
+        Identity = $identity
+    }
 }
 
 function Get-TowerScoutPodmanServiceContainerId {
