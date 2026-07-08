@@ -656,17 +656,17 @@ These decisions are accepted as the starting contract for `TASK-025`. The only a
 
 ### 2026-05-07 - Google TLS Inspection CA Import Validation
 **Objective**: Validate the secure Google provider TLS fix for the containerized app behind local TLS inspection without disabling certificate verification.
-**Context**: Google key validation previously failed with `502 BAD GATEWAY` and container logs showed `CERTIFICATE_VERIFY_FAILED` for `maps.googleapis.com`. A peer-certificate probe inside the container showed Google traffic was being intercepted by Zscaler and issued by the CDC `CDC-G2-ZSH` certificate chain.
+**Context**: Google key validation previously failed with `502 BAD GATEWAY` and container logs showed `CERTIFICATE_VERIFY_FAILED` for `maps.googleapis.com`. A peer-certificate probe inside the container showed Google traffic was being intercepted by Zscaler and issued by the local organization TLS-inspection certificate chain.
 **Decision**: Add a release/support helper that imports a Windows CA certificate by thumbprint or a PEM/CER/CRT file into the persistent config volume, builds a combined CA bundle from the container's default Debian bundle plus the local CA chain, and verifies Google TLS with an invalid test key. Keep `TOWERSCOUT_ALLOW_INSECURE_TLS=1` as a last-resort local validation fallback only.
 **Execution**:
 - Confirmed the baseline container still failed Google HTTPS with `CERTIFICATE_VERIFY_FAILED` using `/etc/ssl/certs/ca-certificates.crt`.
 - Inspected the peer certificate inside the container with `openssl s_client`.
-- Identified the intercepted Google certificate as `subject=CN = upload.video.google.com, O = Zscaler Inc., OU = Zscaler Inc.` with issuer `CDC-G2-ZSH`.
-- Located `CDC-G2-ZSH` in the Windows certificate store with thumbprint `C69667336E90D872FA44ACE4EB25412E52F406B9`.
+- Identified the intercepted Google certificate as `subject=CN = upload.video.google.com, O = Zscaler Inc., OU = Zscaler Inc.` with the expected local TLS-inspection issuer.
+- Located the expected local TLS-inspection CA in the Windows certificate store and captured the required thumbprint in operator-only notes.
 - Added `scripts/import-tls-ca.ps1` and `scripts/import-tls-ca.cmd`.
 - Updated the helper after validation exposed two issues:
   - initial shell quoting for inline Python verification was fragile through Windows Compose
-  - importing only `CDC-G2-ZSH` was insufficient because the container also needed the `CDC-G2` issuer
+  - importing only the local inspection leaf CA was insufficient because the container also needed the issuing CA in the local chain
 - Updated the helper to run verification without shell quoting and to include the Windows certificate chain for thumbprint imports.
 - Imported the CDC/Zscaler CA chain into `/app/webapp/config/certs/local-ca.pem` and built `/app/webapp/config/certs/towerscout-ca-bundle.pem`.
 - Recreated the Docker container with `REQUESTS_CA_BUNDLE=/app/webapp/config/certs/towerscout-ca-bundle.pem` and `SSL_CERT_FILE=/app/webapp/config/certs/towerscout-ca-bundle.pem`.
@@ -685,9 +685,9 @@ These decisions are accepted as the starting contract for `TASK-025`. The only a
 **Validation**:
 - `docker compose -f compose.yaml -f compose.build.yaml exec -T towerscout python -c "...requests.get('https://maps.googleapis.com/...')"` before CA import -> reproduced `CERTIFICATE_VERIFY_FAILED`
 - `docker compose -f compose.yaml -f compose.build.yaml exec -T towerscout sh -c "echo | openssl s_client ..."` -> identified Zscaler/CDC certificate issuer
-- Windows certificate-store lookup for `CDC-G2-ZSH` -> found thumbprint `C69667336E90D872FA44ACE4EB25412E52F406B9`
+- Windows certificate-store lookup for the expected local TLS-inspection CA -> found the required thumbprint in operator-only notes
 - PowerShell AST parse of `scripts/import-tls-ca.ps1` -> passed
-- `.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint C69667336E90D872FA44ACE4EB25412E52F406B9` -> passed after chain-export fix
+- `.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint <thumbprint>` -> passed after chain-export fix
 - Container recreate with combined CA bundle environment variables -> passed
 - `POST /api/config/validate-key` with invalid Google test key -> HTTP `200`, provider-level invalid-key response, no `502`
 - Owner UI validation with real Google key after CA bundle fix -> passed
@@ -1061,7 +1061,7 @@ These decisions are accepted as the starting contract for `TASK-025`. The only a
 - Podman Docker-engine-unavailable validation -> passed; Docker client could not reach `dockerDesktopLinuxEngine`, no `docker-desktop` WSL distro was running, Podman started TowerScout on port `5001`, readiness reported `runtime.container_engine: podman` and assets `ok`, containerized `TASK-052` smoke passed, and Docker remained unavailable afterward.
 - Docker Desktop restore after Podman validation -> passed; Docker server `29.4.1`, Compose service healthy on port `5000`, health `ok`, readiness `ready`, assets `ok`, Azure and Google configured, persisted secret present, and CA bundle env vars configured.
 - Baseline in-container Google HTTPS probe before CA import -> reproduced `CERTIFICATE_VERIFY_FAILED`.
-- `.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint C69667336E90D872FA44ACE4EB25412E52F406B9` -> passed after chain-export fix, Google TLS returned provider invalid-key JSON.
+- `.\scripts\import-tls-ca.cmd -Engine docker -Thumbprint <thumbprint>` -> passed after chain-export fix, Google TLS returned provider invalid-key JSON.
 - Docker container recreate with `REQUESTS_CA_BUNDLE=/app/webapp/config/certs/towerscout-ca-bundle.pem` and `SSL_CERT_FILE=/app/webapp/config/certs/towerscout-ca-bundle.pem` -> passed.
 - `POST /api/config/validate-key` with invalid Google test key -> HTTP `200`, `valid: false`, `message: Google Maps validation failed with status 403.`
 - Real Google key entry through containerized UI after CA bundle fix -> passed per owner validation.

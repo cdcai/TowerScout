@@ -2,18 +2,23 @@ TowerScout SBOM Reference
 
 Release track: agpl-yolo
 
-This checked-in file records the release requirement for a software bill of
-materials. It is not the generated SBOM itself.
+This checked-in file records TowerScout's SBOM expectation and current release
+posture. It is not the generated SBOM itself.
 
-Each TowerScout YOLO-enabled release candidate should publish or attach an SBOM
-for the exact release package and container image. At minimum, the SBOM should
-cover:
+TowerScout does not currently generate an SBOM automatically as part of the
+release packaging flow. Release maintainers should attach a release-specific
+SBOM for the exact package and image when one is available. If no generated
+SBOM is attached, reviewers must rely on the pinned release metadata and the
+tracked dependency manifests below.
+
+At minimum, a release-specific SBOM should cover:
 
 - Python packages from webapp/requirements.txt.
 - Frontend packages from package-lock.json.
 - OS packages installed in the container image.
 - Vendored Ultralytics YOLOv5 source under webapp/vendor/yolov5_local/.
 
-The generated release control ZIP is authoritative for release-specific SBOM
-metadata and includes SHA256SUMS.txt, IMAGE.txt, and release-manifest.v1.json so
-reviewers can match the SBOM to the package and image digest.
+The generated release control ZIP is authoritative for release-specific image,
+checksum, and source metadata and includes `SHA256SUMS.txt`, `IMAGE.txt`, and
+`release-manifest.v1.json` so reviewers can match a separately generated SBOM
+to the package and image digest.

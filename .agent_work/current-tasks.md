@@ -1,9 +1,9 @@
 # Current Tasks - Active Sprint
 
 **Sprint Period**: Sprint 07 begins July 2, 2026
-**Last Updated**: July 6, 2026
-**Focus**: Advance Task-087 from helper proof into product integration proof while keeping browser-triggered host repair disabled until review.
-**Status**: Sprint 06 is closed. The release path is validated through `v0.1.0-rc7.1`, and completed Sprint 06 task files have moved to `.agent_work/tasks/completed/`. PR #45 merged the Task-087 Gate 1 / Gate 2 helper proof; Gate 3 product integration proof is now in progress.
+**Last Updated**: July 8, 2026
+**Focus**: Execute the TASK-088 pre-tag stable-release closeout from merged `main` while keeping Task-087 helper enablement dark and explicitly deferred.
+**Status**: Sprint 06 is closed. The release path is validated through `v0.1.0-rc7.1`, completed Sprint 06 task files have moved to `.agent_work/tasks/completed/`, and PR #46 is now merged on `main` as the baseline for stable-release closeout.
 
 ---
 
@@ -45,12 +45,14 @@ Deliver a proof-backed, support-safe host-side control plane that can guide mana
 
 Sprint 07 starts with helper transport and security proof. Product UI integration and package inclusion are gated until the helper can prove loopback binding, token/origin controls, allowlisted script invocation, sanitized progress states, and correct runtime-profile targeting.
 
+Because the project end date is now close, Sprint 07 also carries a bounded release-transition lane for stable `v0.1.0` closeout and cdcai handoff. That work must preserve the `TASK-086` fallback and must not weaken the dark-control-plane guardrails while release and migration steps proceed.
+
 ---
 
-## Active Sprint 07 Task
+## Active Sprint 07 Tasks
 
 ### **TASK-087: Host-Side TLS Repair Control Plane**
-**Status**: IN_PROGRESS - Gate 3 product integration proof started after PR #45 helper proof merge
+**Status**: IN_PROGRESS - Gate 3 non-mutating proof merged on `main`; later helper enablement and managed-network validation remain deferred
 **Type**: B/C (Runtime Support / Setup UX / TLS Trust)
 **Priority**: MEDIUM-HIGH
 **Estimated Effort**: 4-7 days (32-56 hours), plus managed-network package validation
@@ -66,12 +68,49 @@ Sprint 07 starts with helper transport and security proof. Product UI integratio
 
 **Current Sprint 07 Work Sequence**:
 1. Gate 1 / Gate 2 helper proof: merged in PR #45 with controlled Docker CPU/off live-wrapper evidence and helper security constraints.
-2. Gate 3 product integration proof: in progress, starting with structured provider-validation state retention and non-mutating repair-display predicates.
-3. Gate 3 follow-up: add visible fallback/repair UI only after reviewer accepts the state-retention contract and helper availability boundary.
-4. Gate 4 managed-network package validation: blocked until Gate 3 passes and the release owner approves user-facing package inclusion.
+2. Gate 3 non-mutating proof: merged through PR #46 on `main`, including the reviewed CI/gate hardening.
+3. Gate 3 follow-up: add visible fallback/repair UI only after release work allows the later helper-availability and browser-mutation enablement slice to begin.
+4. Gate 4 managed-network package validation: blocked until the later helper enablement slice passes and the release owner approves user-facing package inclusion.
 
 **Evidence Handling**:
 Do not record provider keys, helper tokens, certificate subjects, raw thumbprints, raw provider responses, `.env` files, raw logs, browser network traces, screenshots, private AOIs, or local environment dumps in task evidence. Use sanitized operation states and public-safe summaries only.
+
+### **TASK-088: Stable v0.1.0 Release And Handoff Closeout**
+**Status**: IN_PROGRESS - PR #46 merged; pre-merge gate closed; pre-tag source pass now active
+**Type**: C (Release Engineering / Documentation / Handoff)
+**Priority**: HIGH
+**Estimated Effort**: 2-4 days (16-32 hours), excluding owner-gated migration follow-through
+**Target Sprint**: Sprint 07
+**Task File**: `.agent_work/tasks/active/TASK-088-stable-release-and-handoff-closeout.md`
+
+**Objective**: Execute the bounded pre-handoff work needed to cut stable `v0.1.0` from the fork, validate it, finalize user/support guidance, and leave a clean, reviewable release package plus handoff record for cdcai.
+
+**Current Scope**:
+1. Formalize the reviewed handoff plan into task-tracked execution rather than leaving it only in status analysis.
+2. Record the merged PR #46 baseline and execute the pre-tag source pass required for a trustworthy stable release.
+3. Validate the rebuilt stable package set and publish the fork-side stable release.
+4. Finalize the handoff notes, guides, and operator-facing documentation needed before migration execution begins.
+
+**Important Boundaries**:
+- Keep the fork release self-consistent even if cdcai release recreation happens later.
+- Resolve the namespace/download-home sequencing explicitly before the first public stable package is published.
+- Treat any `rc7.1` promotion fallback as an explicit release-identity decision, not as an implicit rename.
+
+### **TASK-089: cdcai Migration Execution And Ownership Transfer**
+**Status**: BLOCKED - awaiting owner-side access, Issues enablement, and package-publish confirmation
+**Type**: C (Repository Migration / Release Ownership / Handoff)
+**Priority**: HIGH
+**Estimated Effort**: 1-2 days (8-16 hours) once prerequisites are satisfied
+**Target Sprint**: Sprint 07
+**Task File**: `.agent_work/tasks/active/TASK-089-cdcai-migration-execution.md`
+
+**Objective**: Transfer the validated stable release line, selected tags, image ownership, release assets, and durable task/backlog context from the fork back to `cdcai/TowerScout` without breaking source provenance or digest-pinned package behavior.
+
+**Blocked By**:
+1. cdcai collaborator write for the execution owner.
+2. cdcai confirmation for Actions and `packages:write` behavior.
+3. cdcai GHCR publish ownership and visibility flip.
+4. cdcai Issues enablement or an explicitly approved alternate backlog destination.
 
 ---
 

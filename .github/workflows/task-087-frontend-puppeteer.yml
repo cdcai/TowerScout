@@ -2,12 +2,14 @@ name: Task-087 Frontend Puppeteer Templates
 
 on:
   pull_request:
-    branches: ['**']
+    branches: [ main ]
   push:
     branches:
-      - feature/task-087-gate3-product-integration
       - main
   workflow_dispatch: {}
+
+permissions:
+  contents: read
 
 defaults:
   run:
@@ -78,7 +80,7 @@ jobs:
           npx wait-on http://127.0.0.1:5000 --timeout 60000
 
       - name: Diagnostics - capture webserver status
-        if: always()
+        if: failure()
         run: |
           sleep 1
           echo "-- process list (filtered) --"
@@ -160,7 +162,7 @@ jobs:
           bash ./scripts/ci_start_services.sh
 
       - name: Diagnostics - capture helper and webserver status
-        if: always()
+        if: failure()
         run: |
           sleep 1
           echo "-- process list (filtered) --"

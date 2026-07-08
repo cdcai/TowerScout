@@ -1,16 +1,19 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TowerScout User Guide</title>
   <link rel="stylesheet" href="/docs/towerscout-docs.css">
 </head>
+
 <body>
   <header class="page-header">
-    <p class="eyebrow">TowerScout release-candidate package</p>
+    <p class="eyebrow">TowerScout release package</p>
     <h1>User Guide</h1>
-    <p class="lead">Use this guide after TowerScout is installed, assets are imported, and at least one map provider key is configured.</p>
+    <p class="lead">Use this guide after TowerScout is installed, assets are imported, and at least one map provider key
+      is configured.</p>
   </header>
   <div class="doc-frame">
     <nav class="doc-nav" aria-label="User guide sections">
@@ -29,57 +32,86 @@
     <main class="doc-main">
       <section class="doc-section" id="metadata">
         <h2>Document Metadata</h2>
-        <p><strong>Applies to:</strong> Current V1 release-candidate package path through the RC7 provider TLS repair baseline, unless release notes say otherwise.</p>
-        <p><strong>Last reviewed:</strong> 2026-06-29.</p>
+        <p><strong>Applies to:</strong> Current V1 package path through the stable v0.1.0 closeout, unless release notes
+          say otherwise.</p>
+        <p><strong>Last reviewed:</strong> 2026-07-08.</p>
         <p><strong>Audience:</strong> Pilot users after first setup.</p>
-        <p><strong>Runtime scope:</strong> The CPU Application Package is the primary path; the CUDA 12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are support-assigned paths after workstation-specific engine, Compose-provider, and NVIDIA validation.</p>
+        <p><strong>Runtime scope:</strong> The CPU Application Package is the primary path; the CUDA 12.1 Application
+          Package, Podman CPU, Docker GPU, and Podman GPU are support-assigned paths after workstation-specific engine,
+          Compose-provider, and NVIDIA validation.</p>
       </section>
       <section class="doc-section" id="before">
         <h2>Before Using This Guide</h2>
-        <p>This guide assumes the package setup work is already complete: Docker Desktop is installed, approved, and running for the primary pilot path or support has explicitly directed you to a qualified Podman path; required assets are imported; TowerScout opens at <code>http://localhost:5000</code>; and at least one provider key is configured.</p>
-        <p>When this guide shows package commands, run them from Windows PowerShell opened in the extracted TowerScout package folder. Commands that begin with <code>.\</code> run scripts from that folder.</p>
+        <p>This guide assumes the package setup work is already complete: Docker Desktop is installed, approved, and
+          running for the primary pilot path or support has explicitly directed you to a qualified Podman path; required
+          assets are imported; TowerScout opens at <code>http://localhost:5000</code>; and at least one provider key is
+          configured.</p>
+        <p>When this guide shows package commands, run them from Windows PowerShell opened in the extracted TowerScout
+          package folder. Commands that begin with <code>.\</code> run scripts from that folder.</p>
         <p>If any of those are not true, start with the <a href="/docs/quick-start.html">Quick Start</a>.</p>
       </section>
       <section class="doc-section" id="provider">
         <h2>Choose A Provider</h2>
-        <p>TowerScout supports Google Maps and Azure Maps. One valid provider key is enough to start. If both are configured, use the provider selector for the current workflow.</p>
-        <p class="callout">Browser map SDK keys are client-visible. The package assumes site/user-owned restricted keys.</p>
+        <p>TowerScout supports Google Maps and Azure Maps. One valid provider key is enough to start. If both are
+          configured, use the provider selector for the current workflow.</p>
+        <p class="callout">Browser map SDK keys are client-visible. The package assumes site/user-owned restricted keys.
+        </p>
       </section>
       <section class="doc-section" id="area">
         <h2>Define A Search Area</h2>
-        <p>Search by address, city, neighborhood, ZIP code, or manual pan and zoom. Keep first searches small so tile counts and processing time stay manageable.</p>
-        <p>For custom search-area polygons, Azure Maps uses double-click to complete the polygon. Google Maps uses right-click outside to complete the polygon.</p>
+        <p>Search by address, city, neighborhood, ZIP code, or manual pan and zoom. Keep first searches small so tile
+          counts and processing time stay manageable.</p>
+        <p>For custom search-area polygons, Azure Maps uses double-click to complete the polygon. Google Maps uses
+          right-click outside to complete the polygon.</p>
       </section>
       <section class="doc-section" id="detect">
         <h2>Estimate And Detect</h2>
-        <p>Select <code>Estimate tiles</code> before <code>Find towers</code>. The estimate shows expected tile count and rough processing time. If the count is too large, clear the area or draw a smaller one before detecting.</p>
+        <p>Select <code>Estimate tiles</code> before <code>Find towers</code>. The estimate shows expected tile count
+          and rough processing time. If the count is too large, clear the area or draw a smaller one before detecting.
+        </p>
       </section>
       <section class="doc-section" id="review">
         <h2>Review Results</h2>
-        <p>Results appear on the map and in the detection list. Select results to center or highlight them, uncheck likely false positives, and adjust the confidence slider to control what is visible and exported.</p>
+        <p>Results appear on the map and in the detection list. Select results to center or highlight them, uncheck
+          likely false positives, and adjust the confidence slider to control what is visible and exported.</p>
       </section>
       <section class="doc-section" id="manual">
         <h2>Manual Towers</h2>
-        <p>Manual tower detections are corrections added after a detection run. They are different from custom search-area polygons. Select <code>Add Towers</code>, draw around the tower, complete the polygon, and select <code>Save Towers</code>.</p>
+        <p>Manual tower detections are corrections added after a detection run. They are different from custom
+          search-area polygons. Select <code>Add Towers</code>, draw around the tower, complete the polygon, and select
+          <code>Save Towers</code>.</p>
       </section>
       <section class="doc-section" id="export">
         <h2>Export And Restore</h2>
-        <p><code>Download results</code> exports CSV and KML. <code>Download dataset</code> saves the current tiles, labels, metadata, and manual additions as <code>dataset.zip</code>. <code>Restore dataset</code> reloads a previous dataset ZIP.</p>
-        <p>Treat dataset ZIPs as sensitive local data because they may contain locations, investigation context, imagery tiles, and manual corrections.</p>
+        <p><code>Download results</code> exports CSV and KML. <code>Download dataset</code> saves the current tiles,
+          labels, metadata, and manual additions as <code>dataset.zip</code>. <code>Restore dataset</code> reloads a
+          previous dataset ZIP.</p>
+        <p>Treat dataset ZIPs as sensitive local data because they may contain locations, investigation context, imagery
+          tiles, and manual corrections.</p>
       </section>
       <section class="doc-section" id="resources">
         <h2>Setup And Resource Links</h2>
-        <p>Settings can update provider keys, change the default provider, show performance summary, clear cache, and open Resource Links for Project Overview, User Guide, Source/licenses, Video Guides, and the research article.</p>
-        <p>The formatted source/license browser page is available at <a href="/license">/license</a>. Plain-text combined notices are available at <a href="/license.txt">/license.txt</a> for scripts, copy/paste, or archival use.</p>
+        <p>Settings can update provider keys, change the default provider, show performance summary, clear cache, and
+          open Resource Links for Project Overview, User Guide, Source/licenses, Video Guides, and the research article.
+        </p>
+        <p>The formatted source/license browser page is available at <a href="/license">/license</a>. Plain-text
+          combined notices are available at <a href="/license.txt">/license.txt</a> for scripts, copy/paste, or archival
+          use.</p>
       </section>
       <section class="doc-section" id="help">
         <h2>Getting Help</h2>
-        <p>Report what you were trying to do, the release version, Docker Desktop or support-directed Podman engine choice, readiness state from <code>scripts\status.cmd -Engine docker</code> or the same command with the explicitly selected engine, and a reviewed redacted log summary if support asks for it.</p>
-        <p>For fuller troubleshooting and support details, open the package guide at <a href="/docs/package-guide.md">/docs/package-guide.md</a>.</p>
-        <p>Do not share provider keys, <code>.env</code>, raw logs, raw screenshots, browser network traces, cached provider responses, exported datasets, named-volume contents, or sensitive AOIs unless your site has approved handling.</p>
+        <p>Report what you were trying to do, the release version, Docker Desktop or support-directed Podman engine
+          choice, readiness state from <code>scripts\status.cmd -Engine docker</code> or the same command with the
+          explicitly selected engine, and a reviewed redacted log summary if support asks for it.</p>
+        <p>For fuller troubleshooting and support details, open the package guide at <a
+            href="/docs/package-guide.md">/docs/package-guide.md</a>.</p>
+        <p>Do not share provider keys, <code>.env</code>, raw logs, raw screenshots, browser network traces, cached
+          provider responses, exported datasets, named-volume contents, or sensitive AOIs unless your site has approved
+          handling.</p>
         <p>First-run setup is covered in the <a href="/docs/quick-start.html">Quick Start</a>.</p>
       </section>
     </main>
   </div>
 </body>
+
 </html>

@@ -14,7 +14,7 @@ data/tl_2025_us_zcta520/
 
 Release packaging must include the manifest version, file sizes, and SHA-256
 hashes from `webapp/asset_manifest.v1.json`. The asset bundle contract is in
-`docs/release-asset-bundle-contract.md`.
+`docs/release/release-asset-bundle-contract.md`.
 
 ## Release Requirements
 

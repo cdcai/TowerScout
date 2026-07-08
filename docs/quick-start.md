@@ -1,8 +1,8 @@
 # TowerScout Quick Start
 
-**Applies to**: Current V1 release-candidate package path through the RC7
-provider TLS repair baseline, unless release notes say otherwise
-**Last reviewed**: 2026-06-29
+**Applies to**: Current V1 package path through the stable `v0.1.0` closeout,
+unless release notes say otherwise
+**Last reviewed**: 2026-07-08
 **Audience**: Pilot users and first-line support
 **Runtime scope**: The CPU Application Package is the normal path. The CUDA
 12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are
@@ -11,8 +11,8 @@ and NVIDIA validation.
 
 This is the short Windows pilot path for the TowerScout `agpl-yolo` release
 package. It assumes a Windows 11 AMD64 workstation, Docker Desktop as the
-primary pilot engine, normal outbound internet access, and one approved Google
-Maps or Azure Maps provider key.
+primary controlled runtime, normal outbound internet access, and one approved
+Google Maps or Azure Maps provider key.
 
 For detailed support guidance, see `docs/package-guide.md`.
 

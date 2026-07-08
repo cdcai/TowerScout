@@ -1,7 +1,7 @@
 # Task Backlog - Remaining Work
 
-**Last Updated**: July 2, 2026
-**Planning State**: Sprint 06 is closed through the validated `v0.1.0-rc7.1` tester-facing package set. `TASK-087` is selected as active Sprint 07 work and is tracked in `current-tasks.md`, not in the backlog.
+**Last Updated**: July 8, 2026
+**Planning State**: Sprint 06 is closed through the validated `v0.1.0-rc7.1` tester-facing package set. `TASK-087`, `TASK-088`, and `TASK-089` are now tracked in `current-tasks.md`, not in the ordered backlog.
 **Ordering Method**: Remaining work is ordered by release/pilot risk first, then post-release architecture and maintenance value.
 
 ---
@@ -10,6 +10,8 @@
 
 - Removed completed Sprint 06 release-readiness entries from the ordered backlog: `TASK-065`, `TASK-066`, `TASK-067`, `TASK-069`, `TASK-071`, `TASK-072`, `TASK-073`, `TASK-074`, `TASK-075`, `TASK-079`, `TASK-080`, `TASK-081`, `TASK-082`, `TASK-083`, `TASK-084`, `TASK-085`, and `TASK-086`.
 - Selected `TASK-087` as active Sprint 07 work.
+- Selected `TASK-088` as the active stable-release and handoff closeout lane.
+- Selected `TASK-089` as the blocked cdcai migration execution lane pending owner-side prerequisites.
 - Kept follow-on release support, policy, restricted-network, architecture, and performance tasks visible for future selection.
 - Kept parked field-use and technical-debt items separate from ordered release/pilot work.
 
@@ -38,6 +40,8 @@
 | Task | Active Location | Notes |
 |---|---|---|
 | `TASK-087` Host-Side TLS Repair Control Plane | `.agent_work/current-tasks.md`; `.agent_work/tasks/active/TASK-087-host-side-tls-repair-control-plane.md` | Selected as Sprint 07 active work. Starts with helper transport and security proof before product UI integration. |
+| `TASK-088` Stable v0.1.0 Release And Handoff Closeout | `.agent_work/current-tasks.md`; `.agent_work/tasks/active/TASK-088-stable-release-and-handoff-closeout.md` | Selected as active release-transition work. Owns the bounded pre-handoff cleanup, stable release validation, guide finalization, and fork-side release publication. |
+| `TASK-089` cdcai Migration Execution And Ownership Transfer | `.agent_work/current-tasks.md`; `.agent_work/tasks/active/TASK-089-cdcai-migration-execution.md` | Selected as blocked release-transition work. Starts only after owner-side access, GHCR publish ownership, and backlog-destination prerequisites are confirmed. |
 
 ---
 
