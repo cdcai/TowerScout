@@ -1,7 +1,7 @@
 # TowerScout Project Overview
 
-**Applies to**: Current V1 release-candidate package path through the RC7
-provider TLS repair baseline, unless release notes say otherwise
+**Applies to**: Current V1 package path through the stable `v0.1.0` closeout,
+unless release notes say otherwise
 **Last reviewed**: 2026-06-29
 **Audience**: Pilot users, support leads, and release reviewers
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
@@ -95,9 +95,9 @@ The supported target is:
   qualified Podman package-runtime support only where explicitly approved.
 - One site/user-owned restricted Google Maps or Azure Maps provider key.
 
-Out of scope for this release-candidate path: macOS, ARM64, air-gapped or fully offline installs,
-VDI, shared multi-user hosting, managed remote deployment, and native installer
-behavior.
+Out of scope for the current package path: macOS, ARM64, air-gapped or fully
+offline installs, VDI, shared multi-user hosting, managed remote deployment,
+and native installer behavior.
 
 GPU launch is optional and support-assigned. The default launch remains
 CPU-safe. The CPU package rejects `-Gpu on`; Docker GPU and Podman GPU use the

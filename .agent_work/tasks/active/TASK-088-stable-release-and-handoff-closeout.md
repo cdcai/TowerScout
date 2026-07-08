@@ -126,10 +126,10 @@ implementation strategy.
     conflict using the reviewed recipe.
 - [x] Decide the fork-side stable release download-home wording and keep it
     self-consistent with the actual fork-published `v0.1.0` artifacts.
-- [ ] Complete the required documentation fixes for host-helper docs,
+- [x] Complete the required documentation fixes for host-helper docs,
     provenance, cross-references, and SBOM/HANDOFF posture.
-- [ ] Decide whether to take any of the optional dead-code deletions before the
-    stable tag.
+- [x] Decide whether to take any of the optional dead-code deletions before the
+  stable tag.
 - [x] Remove the stale `v0.1.0` tag and prepare the fresh stable tag flow.
 
 ---
@@ -358,6 +358,69 @@ decision rather than an implicit holdover.
 image defaults still point to `ghcr.io/j-schulein/towerscout`.
 **Next**: Finish the remaining documentation decisions, especially the stale
 `.github/copilot-instructions.md` disposition, before package assembly begins.
+
+### 2026-07-08 - Copilot Instructions Refreshed And Optional Deletions Deferred
+**Objective**: Close the last required documentation decision and explicitly
+disposition the optional dead-code pass before package assembly begins.
+**Context**: The remaining required documentation item was the stale
+`.github/copilot-instructions.md` status/path-forward guidance. The optional
+dead-code deletions remained available but were not release-blocking.
+**Decision**: Refresh `.github/copilot-instructions.md` narrowly to the current
+post-merge Task-088/Task-089 state and defer the optional dead-code deletions
+to later follow-up so the stable release path stays focused on bounded required
+changes.
+**Execution**: Updated the stale status/path-forward sections of
+`.github/copilot-instructions.md` and explicitly chose not to take the optional
+dead-code deletion bundle before the stable tag.
+**Output**: The required documentation cluster is complete, and the optional
+dead-code question is now an explicit defer rather than an unresolved item.
+**Validation**: Targeted grep/readback over `.github/copilot-instructions.md`
+confirmed the stale Sprint 06 / RC1 / Task-073 path-forward language was
+removed; no editor diagnostics reported for the file; `.agent_work` validation
+remained green.
+**Next**: Enter release assembly: verify the located asset-bundle ZIP choice,
+create the fresh `v0.1.0` tag, and dispatch the CPU/CUDA image builds.
+
+### 2026-07-08 - Asset Bundle Source Verified
+**Objective**: Lock the source of the shared Model & Data Package ZIP before
+starting stable package assembly.
+**Context**: Task-088 package assembly reuses the validated rc7.1 asset bundle
+under a renamed stable filename, so the exact source ZIP and checksum needed to
+be re-verified on the current workstation.
+**Decision**: Use the copy under `../TS Release Packages/TowerScoutRC7.1/` as
+the canonical local source for the stable-release asset-bundle rename step.
+**Execution**: Verified that the selected ZIP and its `.sha256` sidecar match,
+then cross-checked the other discovered local copies in `../Downloads/` and
+`../TowerScoutDemo/` to confirm they are byte-identical.
+**Output**: A known-good local source exists for the stable asset-bundle rename
+and sidecar regeneration step.
+**Validation**: The selected ZIP hash is
+`00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`, matching
+its sidecar and all other discovered local copies.
+**Next**: Enter release assembly from a clean git tree: create the fresh
+`v0.1.0` tag, dispatch CPU/CUDA image builds, and assemble the release
+packages from the returned digests.
+
+### 2026-07-08 - Settings-Linked Docs Refreshed
+**Objective**: Update the docs exposed through the Settings screen so they no
+longer present stale release-candidate wording during the stable-release
+closeout.
+**Context**: The Settings UI links directly to Quick Start, Project Overview,
+and User Guide content. Those docs still described the package path as a
+release-candidate/RC7 baseline even though Task-088 is preparing the stable
+`v0.1.0` cut.
+**Decision**: Refresh the Settings-linked docs and their markdown sources to
+neutral or stable-closeout wording, but keep the historical `v1-rc1-*` and
+`towerscout-user-guide.*` compatibility stubs in place because they are still
+publicly served and covered by route tests.
+**Execution**: Updated `docs/quick-start.{md,html}`,
+`docs/project-overview.{md,html}`, and `docs/user-guide.{md,html}`.
+**Output**: The docs reachable from Settings now describe the current package
+path more accurately without breaking the compatibility-doc route surface.
+**Validation**: `git diff --check` over the six updated docs passed; all six
+files reported no editor diagnostics.
+**Next**: Checkpoint the completed Task-088 documentation slice, then move into
+tag creation and image/package assembly from a clean tree.
 
 ---
 

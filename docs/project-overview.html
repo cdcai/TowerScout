@@ -8,7 +8,7 @@
 </head>
 <body>
   <header class="page-header">
-    <p class="eyebrow">TowerScout release-candidate package</p>
+    <p class="eyebrow">TowerScout release package</p>
     <h1>Project Overview</h1>
     <p class="lead">TowerScout is a local web application for identifying likely cooling towers from satellite and aerial imagery during investigation and registry-building workflows.</p>
   </header>
@@ -26,7 +26,7 @@
     <main class="doc-main">
       <section class="doc-section" id="metadata">
         <h2>Document Metadata</h2>
-        <p><strong>Applies to:</strong> Current V1 release-candidate package path through the RC7 provider TLS repair baseline, unless release notes say otherwise.</p>
+        <p><strong>Applies to:</strong> Current V1 package path through the stable v0.1.0 closeout, unless release notes say otherwise.</p>
         <p><strong>Last reviewed:</strong> 2026-06-29.</p>
         <p><strong>Audience:</strong> Pilot users, support leads, and release reviewers.</p>
         <p><strong>Runtime scope:</strong> The CPU Application Package is the primary path; the CUDA 12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are support-assigned paths after workstation-specific engine, Compose-provider, and NVIDIA validation.</p>
@@ -56,7 +56,7 @@
       </section>
       <section class="doc-section" id="boundary">
         <h2>Release Boundary</h2>
-        <p>The current release-candidate package targets Windows 11 AMD64, single-user local use, CPU baseline operation, normal outbound internet access, the CPU Application Package on Docker Desktop as the primary pilot runtime, qualified Podman package-runtime support only where explicitly approved, and one site/user-owned restricted provider key.</p>
+        <p>The current package path targets Windows 11 AMD64, single-user local use, CPU baseline operation, normal outbound internet access, the CPU Application Package on Docker Desktop as the primary controlled runtime, qualified Podman package-runtime support only where explicitly approved, and one site/user-owned restricted provider key.</p>
         <p>GPU launch is optional and support-assigned. The default launch remains CPU-safe. The CPU package rejects <code>-Gpu on</code>; Docker GPU and Podman GPU use the CUDA package only after support validates the selected engine's NVIDIA container path and readiness reports <code>selected_device=cuda</code>.</p>
       </section>
       <section class="doc-section" id="keys">

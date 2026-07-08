@@ -1,7 +1,7 @@
 # TowerScout User Guide
 
-**Applies to**: Current V1 release-candidate package path through the RC7
-provider TLS repair baseline, unless release notes say otherwise
+**Applies to**: Current V1 package path through the stable `v0.1.0` closeout,
+unless release notes say otherwise
 **Last reviewed**: 2026-06-29
 **Audience**: Pilot users after first setup
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
@@ -61,7 +61,7 @@ the provider selector to choose the imagery source for the current workflow.
 Provider key reminders:
 
 - Browser map SDK keys are visible to someone who can access the running app.
-- The release-candidate package assumes site/user-owned restricted keys.
+- The package assumes site/user-owned restricted keys.
 - Unrestricted shared TowerScout project keys are unsupported.
 - Do not share keys, `.env`, browser network traces, screenshots that reveal
   keys, cached provider responses, or raw logs unless your site has approved
