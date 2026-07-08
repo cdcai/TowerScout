@@ -50,6 +50,7 @@ webapp/.env
 webapp/config/.env
 webapp/config/.env.backup.*
 webapp/config/.env.lock
+.env.*
 *.env
 !.env.example
 apikey.txt

@@ -33,6 +33,11 @@ capture anything that diverges from the dry-run-validated plan.
 - WHEN runtime images are republished or copied to `ghcr.io/cdcai`, THE SYSTEM
   SHALL either preserve the validated digest or re-anchor validation against the
   new digest and rebuilt packages.
+- WHEN the cdcai-side rebuild still uses the tagged `v0.1.0` tree, THE SYSTEM
+  SHALL either explicitly accept fork-facing release URLs and image defaults in
+  the cdcai-rebuilt packages with release-note disclosure, or use a later
+  documented post-tag rewrite or point-release path instead of silently
+  changing tag meaning.
 - WHEN backlog transfer is attempted, THE SYSTEM SHALL use cdcai Issues only if
   they are enabled, otherwise it SHALL use an explicitly approved alternate
   durable destination.
@@ -49,6 +54,9 @@ capture anything that diverges from the dry-run-validated plan.
 - [ ] The cdcai-side stable release is recreated from validated artifacts.
 - [ ] Post-transfer verification confirms clone, pull, package, and source-ref
       integrity.
+- [ ] The chosen cdcai package-facing release URL and image-default strategy is
+  explicitly recorded and, if fork-facing values remain in the tagged tree,
+  disclosed in the cdcai release notes.
 - [ ] Backlog transfer lands in cdcai Issues or an explicitly approved
       alternate durable destination.
 
@@ -69,6 +77,27 @@ capture anything that diverges from the dry-run-validated plan.
 4. Recreate the stable cdcai release and verify it from a fresh consumer path.
 5. Transfer backlog/handoff context and close out the fork-side transition
    notes.
+
+### 2026-07-08 - Namespace Carry-Forward Decision Recorded
+**Objective**: Close the gap between Task-088's fork-side release-home decision
+and Task-089's later cdcai rebuild responsibilities before the stable tag
+exists.
+**Context**: Task-088 intentionally keeps the fork-side stable release URLs and
+image defaults on the J-Schulein side for the fork `v0.1.0` cut. Without an
+explicit Task-089 follow-through rule, that choice would silently carry into a
+later cdcai rebuild from the same tagged tree.
+**Decision**: If Task-089 rebuilds cdcai packages directly from the tagged
+`v0.1.0` tree, fork-facing URLs and image defaults are explicitly accepted as a
+known carry-forward and must be disclosed in the cdcai release notes. A later
+namespace rewrite may still happen in a post-tag follow-up or point release,
+but it must not silently redefine what the `v0.1.0` tag means.
+**Execution**: Added requirement and acceptance-criterion coverage for the
+namespace carry-forward decision.
+**Output**: The namespace consequence is now owned by Task-089 instead of
+falling between the fork-side and cdcai-side task files.
+**Validation**: Pending later cdcai execution.
+**Next**: Preserve the fork-side stable release wording through the tag/build
+flow, and revisit the cdcai-facing package wording only during Task-089.
 
 ---
 

@@ -258,6 +258,7 @@ $releaseFiles = @(
     "docs\towerscout-user-guide.md",
     "docs\towerscout-user-guide.html",
     "docs\support\oci-quick-start.md",
+    "docs\support\host-helper.md",
     "docs\support\oci-runtime-contract.md",
     "docs\release\release-asset-bundle-contract.md",
     "webapp\asset_manifest.v1.json",

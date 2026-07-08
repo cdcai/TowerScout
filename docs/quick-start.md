@@ -2,7 +2,7 @@
 
 **Applies to**: Current V1 package path through the stable `v0.1.0` closeout,
 unless release notes say otherwise
-**Last reviewed**: 2026-06-29
+**Last reviewed**: 2026-07-08
 **Audience**: Pilot users and first-line support
 **Runtime scope**: The CPU Application Package is the normal path. The CUDA
 12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are

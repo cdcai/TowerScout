@@ -816,10 +816,10 @@ ambiguous or unavailable, support may still use the lower-level
 `TOWERSCOUT_ALLOW_INSECURE_TLS=1` is a last-resort validation-only workaround.
 Do not use it as normal release configuration.
 
-The rc7 provider TLS repair path is the guided script workflow above. The
+The current provider TLS repair path is the guided script workflow above. The
 package now ships host-helper scaffolding for a future browser-triggered repair
 flow, but that control plane remains disabled in the current release baseline;
-see [docs/support/host-helper.md](../support/host-helper.md).
+see [docs/support/host-helper.md](support/host-helper.md).
 
 ### Restricted Networks
 

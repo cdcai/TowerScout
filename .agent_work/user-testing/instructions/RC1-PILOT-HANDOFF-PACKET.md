@@ -13,6 +13,7 @@ tester/cohort during outreach.
 - Approval date: Not required for RC7.1 packet approval
 - Tester/cohort: Assign during tester outreach
 - Support contact: Jonathan Schulein (`bg90@cdc.gov`) or Chris Edens (`iek4@cdc.gov`)
+- Support ownership transfers to cdcai at the final project handoff.
 
 ## Current Readiness Notes
 

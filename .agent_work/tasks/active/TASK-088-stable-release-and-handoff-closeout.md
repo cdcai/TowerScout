@@ -94,6 +94,17 @@ execution begins. It is intentionally narrower than the full remaining
 - [ ] Shared rate-limiter key scoping and a non-interference test if the team
       wants that hygiene landed before package validation.
 
+### Validation Prerequisite
+
+- [ ] The validation cell `.env` is confirmed to carry the post-rotation Azure
+  key before the D4 live-smoke and setup-wizard checks begin.
+
+### External Guide Tracking
+
+- [ ] Workstream F guide edits (F1-F9 in the implementation strategy) are
+  explicitly tracked to completion, including ownership of the out-of-repo
+  deck/docx/html updates.
+
 ### Explicitly not a TASK-088 start gate
 
 - Simulated-helper `GET /operations/:id` shape alignment. This is required
@@ -400,6 +411,23 @@ its sidecar and all other discovered local copies.
 **Next**: Enter release assembly from a clean git tree: create the fresh
 `v0.1.0` tag, dispatch CPU/CUDA image builds, and assemble the release
 packages from the returned digests.
+
+### 2026-07-08 - Review-R1 Pre-Tag Guardrails Added
+**Objective**: Fold the remaining high/medium review findings into Task-088
+before the stable tag exists.
+**Context**: External review R1 identified several sequencing and hygiene gaps
+that were not large rework, but did need explicit ownership before tag/build.
+**Decision**: Address the low-risk repo/package/workflow fixes now, add the
+namespace and validation-key tracking rules to the task files, and keep the
+manual account-level checks as explicit pending items.
+**Execution**: Added the validation `.env` prerequisite and Workstream F guide
+tracking to this task file, while related namespace, workflow, package-guide,
+and `.gitignore` fixes were applied in the working tree.
+**Output**: The pre-tag tracker now covers the reviewer-raised prerequisites
+that could otherwise be lost between release assembly and later migration work.
+**Validation**: Pending after the current fix batch is validated.
+**Next**: Validate the current fix batch, then update the review log/status and
+re-check tag/build readiness.
 
 ### 2026-07-08 - Settings-Linked Docs Refreshed
 **Objective**: Update the docs exposed through the Settings screen so they no

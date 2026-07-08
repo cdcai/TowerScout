@@ -629,7 +629,8 @@ trust issue.
 **Evidence**: An isolated Docker validation stack on port `5015` initially
 failed Google provider validation with `CERTIFICATE_VERIFY_FAILED` against
 Google APIs. The exported website certificate was an end-entity certificate,
-not a CA. The matching Windows CA was `CDC-G2-ZSH`. After importing that CA
+not a CA. The matching Windows CA was the expected local organization
+TLS-inspection root. After importing that CA
 with `scripts\import-tls-ca.cmd`, the helper verified Google TLS with an
 invalid test key and returned the expected invalid-key provider response rather
 than a certificate failure.

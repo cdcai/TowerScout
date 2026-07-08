@@ -66,7 +66,7 @@ git push origin :improvements :feature/geocoding-system-integration
 Their only unique content is 3 stale Dec-2025/Jan-2026 docs commits, proven superseded (*branches-7*). This also removes the leftover pre-BFG log files (*secrets-2*). The key they expose is dead as of the 2026-07-08 rotation, but a browsable (even dead) credential at a public branch tip is still a handoff blemish — delete before the cdcai push.
 
 ### A3. Redaction commit in `.agent_work`
-- `.agent_work/tasks/completed/TASK-025-docker-containerization.md` lines 659, 664, 665, 669, 688, 690, 1064 — replace the CA name `CDC-G2-ZSH` and thumbprint `C696…06B9` with `<org-ca-name>` / `<thumbprint>` (*agent-work-1*).
+- `.agent_work/tasks/completed/TASK-025-docker-containerization.md` lines 659, 664, 665, 669, 688, 690, 1064 — replace the recorded local TLS-inspection CA name and thumbprint with `<org-ca-name>` / `<thumbprint>` (*agent-work-1*).
 - `.agent_work/tasks/completed/TASK-080-uat-user-guide-process-simplification.md` line 632 — same CA-name redaction.
 - `.agent_work/user-testing/instructions/RC1-PILOT-HANDOFF-PACKET.md` — add one line: support ownership transfers to cdcai at handoff (*agent-work-3*).
 - Optional cosmetic: strip the 19 `filecite` LLM-citation artifacts from `.agent_work/context/status/TASK-087-PR46-97b2d9a-start-contract-review.md` (*p2-pr46-8*).
