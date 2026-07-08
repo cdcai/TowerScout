@@ -455,16 +455,16 @@ This file is a release-package reference, not the generated SBOM itself.
 "@ | Set-Content -LiteralPath (Join-Path $stagePath "SBOM.txt") -Encoding ASCII
 
 $manifest = [ordered]@{
-    schema_version = 1
-    track = "agpl-yolo"
-    release_version = $Version
-    release_statement = "TowerScout-authored code may be Apache-2.0 where confirmed, but the YOLO-enabled package/image is distributed with AGPL-3.0 obligations."
-    generated_utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-    image = $effectiveImage
-    image_digest = $ImageDigest
-    pytorch_flavor = $PytorchFlavor
-    asset_manifest = "webapp/asset_manifest.v1.json"
-    compliance_files = @(
+    schema_version       = 1
+    track                = "agpl-yolo"
+    release_version      = $Version
+    release_statement    = "TowerScout-authored code may be Apache-2.0 where confirmed, but the YOLO-enabled package/image is distributed with AGPL-3.0 obligations."
+    generated_utc        = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+    image                = $effectiveImage
+    image_digest         = $ImageDigest
+    pytorch_flavor       = $PytorchFlavor
+    asset_manifest       = "webapp/asset_manifest.v1.json"
+    compliance_files     = @(
         "LICENSE",
         "NOTICE",
         "THIRD_PARTY_NOTICES.md",
@@ -476,25 +476,25 @@ $manifest = [ordered]@{
         "IMAGE.txt",
         "SHA256SUMS.txt"
     )
-    release_artifacts = [ordered]@{
-        control_zip = if ($NoZip) { "" } else { "$packageName.zip" }
-        control_zip_sha256 = ""
-        control_zip_sha256_sidecar = $controlZipSha256Sidecar
-        control_zip_sha256_reason = if ($NoZip) { "No control ZIP was generated because -NoZip was used." } else { "Published in the adjacent control ZIP .sha256 sidecar instead of embedded in the ZIP manifest." }
-        image = $effectiveImage
-        image_digest = $ImageDigest
-        pytorch_flavor = $PytorchFlavor
-        asset_manifest = "webapp/asset_manifest.v1.json"
-        asset_bundle = $assetBundleName
+    release_artifacts    = [ordered]@{
+        control_zip                  = if ($NoZip) { "" } else { "$packageName.zip" }
+        control_zip_sha256           = ""
+        control_zip_sha256_sidecar   = $controlZipSha256Sidecar
+        control_zip_sha256_reason    = if ($NoZip) { "No control ZIP was generated because -NoZip was used." } else { "Published in the adjacent control ZIP .sha256 sidecar instead of embedded in the ZIP manifest." }
+        image                        = $effectiveImage
+        image_digest                 = $ImageDigest
+        pytorch_flavor               = $PytorchFlavor
+        asset_manifest               = "webapp/asset_manifest.v1.json"
+        asset_bundle                 = $assetBundleName
         asset_bundle_release_version = $AssetBundleVersion
-        asset_bundle_sha256 = $AssetBundleSha256
-        asset_bundle_sha256_sidecar = $assetBundleSha256Sidecar
-        asset_bundle_sha256_reason = if ([string]::IsNullOrWhiteSpace($AssetBundleSha256)) { "Provide -AssetBundleSha256 from the Model & Data Package checksum sidecar during release assembly." } else { "" }
-        package_contents_sha256 = "SHA256SUMS.txt"
+        asset_bundle_sha256          = $AssetBundleSha256
+        asset_bundle_sha256_sidecar  = $assetBundleSha256Sidecar
+        asset_bundle_sha256_reason   = if ([string]::IsNullOrWhiteSpace($AssetBundleSha256)) { "Provide -AssetBundleSha256 from the Model & Data Package checksum sidecar during release assembly." } else { "" }
+        package_contents_sha256      = "SHA256SUMS.txt"
     }
     corresponding_source = [ordered]@{
-        source_ref = $sourceRef
-        source_offer = "See SOURCE.txt."
+        source_ref     = $sourceRef
+        source_offer   = "See SOURCE.txt."
         required_paths = @(
             "webapp/vendor/yolov5_local/",
             "webapp/ts_yolov5_local.py",
@@ -508,19 +508,19 @@ $manifest = [ordered]@{
             "package-lock.json"
         )
     }
-    runtime_components = [ordered]@{
+    runtime_components   = [ordered]@{
         yolo = [ordered]@{
-            name = "Ultralytics YOLOv5"
-            license = "AGPL-3.0"
-            vendored_path = "webapp/vendor/yolov5_local"
+            name                      = "Ultralytics YOLOv5"
+            license                   = "AGPL-3.0"
+            vendored_path             = "webapp/vendor/yolov5_local"
             validated_upstream_commit = "1d62daa3c6b8ec15fdb319c0a2e341d8b56ec86c"
         }
     }
-    sbom = [ordered]@{
+    sbom                 = [ordered]@{
         reference = "SBOM.txt"
-        status = "Automatic SBOM generation is not yet wired into the release pipeline. Attach a release-specific SBOM when available; otherwise treat SBOM.txt as a reference-only placeholder."
+        status    = "Automatic SBOM generation is not yet wired into the release pipeline. Attach a release-specific SBOM when available; otherwise treat SBOM.txt as a reference-only placeholder."
     }
-    revocation = [ordered]@{
+    revocation           = [ordered]@{
         notes = "Revoke and replace the release if the ZIP, image digest, model/data assets, source ref, SBOM, or notices are defective."
     }
 }
@@ -529,8 +529,8 @@ $manifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $stage
 $checksumPath = Join-Path $stagePath "SHA256SUMS.txt"
 $stageFullPath = [System.IO.Path]::GetFullPath($stagePath).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
 $filesToHash = Get-ChildItem -LiteralPath $stagePath -Recurse -File |
-    Where-Object { $_.FullName -ne $checksumPath } |
-    Sort-Object FullName
+Where-Object { $_.FullName -ne $checksumPath } |
+Sort-Object FullName
 
 $checksumLines = foreach ($file in $filesToHash) {
     $relative = [System.IO.Path]::GetFullPath($file.FullName).Substring($stageFullPath.Length).Replace("\", "/")

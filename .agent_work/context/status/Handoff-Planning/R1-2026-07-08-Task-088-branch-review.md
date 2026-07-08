@@ -79,24 +79,22 @@ If you prefer a PR for the merge, set the merge method to **"Create a merge comm
 
 **Status:** RESOLVED — tip-level `.agent_work` redaction pass applied on `docs/task-088-stable-handoff`; support-handoff note added to the pilot packet
 
+**Evidence:** Verified current branch text no longer carries the raw CA name or full thumbprint in the targeted `.agent_work` task/pilot files. The pilot packet now includes the cdcai support-handoff note.
+
 **What:** Strategy item A3 (redact the org CA name and thumbprint from `.agent_work`) has not been executed. Additionally, commit `5625577` committed the two Handoff-Planning documents into the repo at `.agent_work/context/status/Handoff-Planning/`. Because the fork is public, the following are now publicly browsable in **four** tracked files (and will be republished to cdcai with the migration push):
 
-- CA name `CDC-G2-ZSH` and/or full thumbprint `C696…06B9`:
+- recorded local TLS-inspection CA name and/or full thumbprint:
   - `.agent_work/tasks/completed/TASK-025-docker-containerization.md` (CA name lines 659, 664, 665, 669, 688; thumbprint lines 665, 688, 690, 1064)
   - `.agent_work/tasks/completed/TASK-080-uat-user-guide-process-simplification.md` (line 632)
   - `.agent_work/context/status/Handoff-Planning/TowerScout-Handoff-Review-Comprehensive-Analysis.md` (5 matching lines)
   - `.agent_work/context/status/Handoff-Planning/TowerScout-Implementation-Strategy.md` (1 matching line — the A3 instruction itself)
-- The analysis document also contains a **step-by-step re-derivation recipe for the exposed Azure Maps key** (the `git show 1c51c7a | grep -oE 'AZURE_MAPS_SUBSCRIPTION_KEY=…'` command plus the relevant commit SHAs). The key was rotated on 2026-07-08 and is dead, so this is not a live-credential issue — but it is a public treasure map to a historical credential and to internal TLS-inspection infrastructure details.
+- The analysis document also contained a step-by-step key re-derivation recipe tied to the historical Azure Maps exposure. The key was rotated on 2026-07-08 and is dead, so this is not a live-credential issue — but it still amplified historical credential and internal TLS-inspection infrastructure detail.
 
 To be clear about severity: the reviewer's scan found **no live secrets** in any committed document (the key appears as the `7G19…` prefix only, per the documents' own redaction rule). This finding is about hygiene and about making the publication of the internal security review a *deliberate* decision rather than a side effect.
 
 **Action (choose one, record it in the TASK-088 log either way):**
 
-1. **Redact (recommended):** replace `CDC-G2-ZSH` → `<org-ca-name>` and the full thumbprint → `<thumbprint>` in all four files above; trim or generalize the key re-derivation recipe in the committed analysis doc (the finding text works without the exact extraction command); land it on the branch before the R1-01 merge. Find every instance with:
-   ```
-   git grep -n "CDC-G2-ZSH"
-   git grep -n "C69667336E90D872FA44ACE4EB25412E52F406B9"
-   ```
+1. **Redact (recommended):** replace the recorded local TLS-inspection CA name with `<org-ca-name>` and the full thumbprint with `<thumbprint>` in all four files above; trim or generalize the key re-derivation recipe in the committed analysis doc (the finding text works without the exact extraction command); land it on the branch before the R1-01 merge.
    Note: tip-level redaction is the agreed scope — these strings already exist in public git history and history rewrite was ruled out; redaction still has value because branch tips are what people browse and what the cdcai push showcases.
 2. **Accept:** record in TASK-088 that the CA identifiers and the security-review documents are knowingly published, with rationale (key rotated; CA name/thumbprint identify but do not compromise the TLS-inspection root). If accepted, add it to the §G Phase 5 disclosure list so cdcai hears it from us first.
 
@@ -109,6 +107,8 @@ To be clear about severity: the reviewer's scan found **no live secrets** in any
 ### R1-03 · HIGH (security hygiene) — A2 key-bearing branches still live on origin
 
 **Status:** RESOLVED — `improvements` and `feature/geocoding-system-integration` deleted from origin on 2026-07-08
+
+**Evidence:** `git push origin :improvements :feature/geocoding-system-integration` succeeded; `git ls-remote --heads origin improvements feature/geocoding-system-integration` now returns no matches.
 
 **What:** `improvements` and `feature/geocoding-system-integration` still exist on the fork (verified via `ls-remote` during this review). Their tips publicly expose the (now dead) Azure key and the pre-BFG log files. Their only unique content is three stale Dec-2025/Jan-2026 docs commits, proven superseded (*branches-7*).
 
@@ -123,6 +123,8 @@ Do this before the cdcai push at the latest; before the v0.1.0 tag is cleaner. R
 ### R1-04 · HIGH (plan gap) — The deferred namespace flip is owned by neither task, and the tag freezes its consequences
 
 **Status:** RESOLVED — Task-089 now owns the namespace carry-forward decision and disclosure requirement for later cdcai rebuilds
+
+**Evidence:** `TASK-089` now includes a namespace carry-forward requirement, acceptance criterion, and implementation-log entry covering fork-facing package URLs and image defaults in later cdcai rebuilds.
 
 **What:** TASK-088 recorded a deliberate reversal of strategy item C2: keep all release URLs and image defaults on `J-Schulein` for the fork's v0.1.0 cut, and "defer the cdcai rewrite to TASK-089." The review confirms this was applied consistently (all ~20 namespace references untouched) and accepts the rationale — pointing users at cdcai surfaces that don't exist yet would be worse, and migration is still owner-gated.
 
@@ -145,6 +147,8 @@ Whichever is chosen: add it as an explicit TASK-089 acceptance criterion (e.g., 
 
 **Status:** RESOLVED — package guide wording/link corrected and `docs/support/host-helper.md` added to `$releaseFiles`
 
+**Evidence:** `docs/package-guide.md` now says "current provider TLS repair path" and links to `support/host-helper.md`; `scripts/package-release.ps1` now stages `docs\support\host-helper.md`; `./.venv/Scripts/python -m pytest tests/unit/test_release_package_script.py -q` passed.
+
 **What:** The C3 fix that replaced the stale "helper is not part of the rc7 package baseline" note introduced two defects at `docs/package-guide.md:819-822`:
 
 1. The link `[docs/support/host-helper.md](../support/host-helper.md)` is wrong relative to the file's own location: from `docs/package-guide.md`, `../support/…` resolves to a nonexistent repo-root `support/` directory. Broken on GitHub rendering **and** inside the extracted package. Correct relative target: `support/host-helper.md`.
@@ -163,6 +167,8 @@ Reword "rc7" to "current release" / "v0.1.0". Then re-run `./.venv/Scripts/pytho
 
 **Status:** RESOLVED — workflow trimmed on branch; dead push trigger removed, `pull_request` scoped to `main`, diagnostics gated to failure, and `permissions: contents: read` added
 
+**Evidence:** `.github/workflows/task-087-frontend-puppeteer.yml` now has `pull_request: [ main ]`, no feature-branch push trigger, `if: failure()` on both diagnostics steps, and an explicit `permissions: contents: read` block.
+
 **What:** Strategy item B2 (Puppeteer workflow trim) was silently scoped out: the TASK-088 pre-entry checklist item reads "completed **or explicitly dispositioned**, with emphasis on [B1, B3]" and is checked — but no disposition for B2 was recorded anywhere. At the branch head, `.github/workflows/task-087-frontend-puppeteer.yml` still has:
 
 - `pull_request: branches: ['**']` (lines 4–5) → double-runs on every PR (once for the PR, once via ci.yml)
@@ -178,6 +184,8 @@ Reword "rc7" to "current release" / "v0.1.0". Then re-run `./.venv/Scripts/pytho
 ### R1-07 · MEDIUM (repo hardening) — A4's tracked `.gitignore` hardening never landed
 
 **Status:** RESOLVED — root `.gitignore` now includes `.env.*` with `!.env.example` preserved
+
+**Evidence:** `.gitignore` now contains `.env.*` and still preserves `!.env.example`.
 
 **What:** The root `.gitignore` gained no `.env.*` pattern. The existing `*.env` glob (line 53) does **not** match backup-style names like `.env.uat-backup-20260615` (gitignore `*` matches the whole name; that filename doesn't end in `.env`) — demonstrated by such a file showing as untracked-and-visible in `git status` on the reviewer's clone. `webapp/config/.env.backup.*` (line 51) covers only that subdirectory. One `git add -A` with a root-level env backup present would stage it; that's exactly the accident A4 was designed to prevent, and env backups have historically been created at the repo root during validation runs.
 
@@ -206,6 +214,8 @@ Reword "rc7" to "current release" / "v0.1.0". Then re-run `./.venv/Scripts/pytho
 
 **Status:** RESOLVED — Task-088 now carries the validation `.env` prerequisite for the post-rotation Azure key
 
+**Evidence:** `TASK-088` now contains a dedicated "Validation Prerequisite" item requiring the validation `.env` to carry the post-rotation Azure key before the D4 live-smoke and setup-wizard checks.
+
 **What:** The Azure key rotation (A1, done 2026-07-08) has a follow-up the plan calls out: the `.env` used for the stable validation pass must contain the **new** key. Neither TASK-088's checklists nor its log carries this. Risk: the D4 live-smoke and S1/S2 wizard steps fail with a dead key, which looks exactly like an F4-style validation defect and burns triage time inside the 07-10 window.
 
 **Action:** add a checklist item to TASK-088's validation slice: "validation cell `.env` verified to contain the post-rotation Azure key (validate via the wizard/API key check before starting the harness)".
@@ -215,6 +225,8 @@ Reword "rc7" to "current release" / "v0.1.0". Then re-run `./.venv/Scripts/pytho
 ### R1-10 · LOW (coverage) — Workstream F (User Guidance deck, F1–F9) has no concrete tracking
 
 **Status:** RESOLVED — Task-088 now explicitly tracks Workstream F guide/deck follow-through as an external guide checklist item
+
+**Evidence:** `TASK-088` now contains an "External Guide Tracking" checklist item for Workstream F (F1-F9) ownership and completion.
 
 **What:** TASK-088's acceptance criteria cover guides only generically ("User/support guides … reflect the actual stable release path"). The nine reviewed deck/docx edits (F1–F9) — including **F1, a genuine regression** (slide 16 lost the readiness command `.\scripts\status.cmd -Engine docker`) — live outside the repo and are otherwise easy to lose. Deadlines: guides final by 07-09 PM per the day plan.
 
@@ -235,6 +247,8 @@ Reword "rc7" to "current release" / "v0.1.0". Then re-run `./.venv/Scripts/pytho
 ### R1-12 · INFO (cosmetic) — Stale "Last reviewed" dates in refreshed docs
 
 **Status:** RESOLVED
+
+**Evidence:** The Settings-linked docs now show `Last reviewed: 2026-07-08` in both their markdown sources and their served HTML twins.
 
 **What:** The settings-linked docs edited on 2026-07-08 (`docs/quick-start.md`, `docs/user-guide.md`, `docs/project-overview.md` and their `.html` twins) still say `**Last reviewed**: 2026-06-29`. Trivial, but these ship in the package and the field exists to be trusted.
 

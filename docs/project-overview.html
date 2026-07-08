@@ -1,16 +1,19 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TowerScout Project Overview</title>
   <link rel="stylesheet" href="/docs/towerscout-docs.css">
 </head>
+
 <body>
   <header class="page-header">
     <p class="eyebrow">TowerScout release package</p>
     <h1>Project Overview</h1>
-    <p class="lead">TowerScout is a local web application for identifying likely cooling towers from satellite and aerial imagery during investigation and registry-building workflows.</p>
+    <p class="lead">TowerScout is a local web application for identifying likely cooling towers from satellite and
+      aerial imagery during investigation and registry-building workflows.</p>
   </header>
   <div class="doc-frame">
     <nav class="doc-nav" aria-label="Project overview sections">
@@ -26,28 +29,45 @@
     <main class="doc-main">
       <section class="doc-section" id="metadata">
         <h2>Document Metadata</h2>
-        <p><strong>Applies to:</strong> Current V1 package path through the stable v0.1.0 closeout, unless release notes say otherwise.</p>
+        <p><strong>Applies to:</strong> Current V1 package path through the stable v0.1.0 closeout, unless release notes
+          say otherwise.</p>
         <p><strong>Last reviewed:</strong> 2026-07-08.</p>
         <p><strong>Audience:</strong> Pilot users, support leads, and release reviewers.</p>
-        <p><strong>Runtime scope:</strong> The CPU Application Package is the primary path; the CUDA 12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are support-assigned paths after workstation-specific engine, Compose-provider, and NVIDIA validation.</p>
+        <p><strong>Runtime scope:</strong> The CPU Application Package is the primary path; the CUDA 12.1 Application
+          Package, Podman CPU, Docker GPU, and Podman GPU are support-assigned paths after workstation-specific engine,
+          Compose-provider, and NVIDIA validation.</p>
       </section>
       <section class="doc-section" id="package">
         <h2>What The Package Provides</h2>
-        <p>The package provides a Windows-first local pilot path with a CPU Application Package ZIP for normal users, a CUDA 12.1 Application Package ZIP for support-validated NVIDIA GPU workstations, one shared Model &amp; Data Package ZIP, pinned GHCR image digests, Docker Desktop primary pilot runtime configuration, CPU-safe default launch, optional Docker and Podman GPU controls, setup and support helper scripts, package-local docs, and release notices.</p>
-        <p>The normal pilot path is package-based. Source checkout, Python virtual environment, and Conda setup guides are legacy support material.</p>
+        <p>The package provides a Windows-first local pilot path with a CPU Application Package ZIP for normal users, a
+          CUDA 12.1 Application Package ZIP for support-validated NVIDIA GPU workstations, one shared Model &amp; Data
+          Package ZIP, pinned GHCR image digests, Docker Desktop primary pilot runtime configuration, CPU-safe default
+          launch, optional Docker and Podman GPU controls, setup and support helper scripts, package-local docs, and
+          release notices.</p>
+        <p>The normal pilot path is package-based. Source checkout, Python virtual environment, and Conda setup guides
+          are legacy support material.</p>
       </section>
       <section class="doc-section" id="prerequisites">
         <h2>What Users Need Installed</h2>
-        <p>Pilot users need Windows 11 AMD64, PowerShell, a modern browser, normal outbound internet access, WSL 2 and hardware virtualization support for Docker Desktop, and Docker Desktop installed, approved, and running as the primary pilot engine.</p>
-        <p>Plan for at least <code>15 GB</code> of free disk space for the CPU package; <code>25 GB</code> is a better first-setup target for CUDA validation.</p>
-        <p>Podman is a qualified support path only when support tells the user to use it and the workstation already has a running Podman machine plus an approved Compose provider. Users also need one site/user-owned restricted Google Maps or Azure Maps provider key.</p>
+        <p>Pilot users need Windows 11 AMD64, PowerShell, a modern browser, normal outbound internet access, WSL 2 and
+          hardware virtualization support for Docker Desktop, and Docker Desktop installed, approved, and running as the
+          primary pilot engine.</p>
+        <p>Plan for at least <code>15 GB</code> of free disk space for the CPU package; <code>25 GB</code> is a better
+          first-setup target for CUDA validation.</p>
+        <p>Podman is a qualified support path only when support tells the user to use it and the workstation already has
+          a running Podman machine plus an approved Compose provider. Users also need one site/user-owned restricted
+          Google Maps or Azure Maps provider key.</p>
         <p>The package path does not require Git, Python, Conda, Node.js, VS Code, or a source-code checkout.</p>
       </section>
       <section class="doc-section" id="workflow">
         <h2>Main Workflow</h2>
         <ol>
-          <li>Open the TowerScout GitHub Releases page, select the exact release support provided, and download the assigned Application Package variant, the shared Model &amp; Data Package, and matching checksum files from the release <code>Assets</code> section.</li>
-          <li>Extract only the Application Package ZIP, leave the Model &amp; Data Package ZIP beside the extracted folder, and run <code>setup-towerscout.cmd</code> for first setup, prerequisite checks, checksum verification, asset import, and launch.</li>
+          <li>Open the TowerScout GitHub Releases page, select the exact release support provided, and download the
+            assigned Application Package variant, the shared Model &amp; Data Package, and matching checksum files from
+            the release <code>Assets</code> section.</li>
+          <li>Extract only the Application Package ZIP, leave the Model &amp; Data Package ZIP beside the extracted
+            folder, and run <code>setup-towerscout.cmd</code> for first setup, prerequisite checks, checksum
+            verification, asset import, and launch.</li>
           <li>Use <code>start.bat -Engine docker -Gpu off</code> for later direct launches.</li>
           <li>Configure Google Maps or Azure Maps.</li>
           <li>Define a search area and estimate tiles.</li>
@@ -56,19 +76,29 @@
       </section>
       <section class="doc-section" id="boundary">
         <h2>Release Boundary</h2>
-        <p>The current package path targets Windows 11 AMD64, single-user local use, CPU baseline operation, normal outbound internet access, the CPU Application Package on Docker Desktop as the primary controlled runtime, qualified Podman package-runtime support only where explicitly approved, and one site/user-owned restricted provider key.</p>
-        <p>GPU launch is optional and support-assigned. The default launch remains CPU-safe. The CPU package rejects <code>-Gpu on</code>; Docker GPU and Podman GPU use the CUDA package only after support validates the selected engine's NVIDIA container path and readiness reports <code>selected_device=cuda</code>.</p>
+        <p>The current package path targets Windows 11 AMD64, single-user local use, CPU baseline operation, normal
+          outbound internet access, the CPU Application Package on Docker Desktop as the primary controlled runtime,
+          qualified Podman package-runtime support only where explicitly approved, and one site/user-owned restricted
+          provider key.</p>
+        <p>GPU launch is optional and support-assigned. The default launch remains CPU-safe. The CPU package rejects
+          <code>-Gpu on</code>; Docker GPU and Podman GPU use the CUDA package only after support validates the selected
+          engine's NVIDIA container path and readiness reports <code>selected_device=cuda</code>.</p>
       </section>
       <section class="doc-section" id="keys">
         <h2>Provider Keys</h2>
-        <p>Browser map SDK keys are visible to someone with access to the running browser app. The package expects site/user-owned restricted keys and does not support unrestricted shared TowerScout project keys.</p>
+        <p>Browser map SDK keys are visible to someone with access to the running browser app. The package expects
+          site/user-owned restricted keys and does not support unrestricted shared TowerScout project keys.</p>
       </section>
       <section class="doc-section" id="license">
         <h2>License And Source</h2>
-        <p>The YOLO-enabled package/image is not Apache-2.0-only. It is distributed with AGPL-3.0 obligations because it includes Ultralytics YOLOv5 runtime source and YOLO-derived detector weights.</p>
-        <p>Source and license notices are available from Settings. The formatted browser page is available at <a href="/license">/license</a>, and plain-text combined notices are available at <a href="/license.txt">/license.txt</a>.</p>
+        <p>The YOLO-enabled package/image is not Apache-2.0-only. It is distributed with AGPL-3.0 obligations because it
+          includes Ultralytics YOLOv5 runtime source and YOLO-derived detector weights.</p>
+        <p>Source and license notices are available from Settings. The formatted browser page is available at <a
+            href="/license">/license</a>, and plain-text combined notices are available at <a
+            href="/license.txt">/license.txt</a>.</p>
       </section>
     </main>
   </div>
 </body>
+
 </html>
