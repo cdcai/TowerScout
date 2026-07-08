@@ -21,6 +21,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot\lib\TowerScoutCompose.ps1"
+. "$PSScriptRoot\lib\TowerScoutCertificateStore.ps1"
 
 $repoRoot = Get-TowerScoutRepoRoot
 Initialize-TowerScoutEnvFile -RootPath $repoRoot
@@ -49,39 +50,6 @@ function Convert-CertificateToPem {
     return $builder.ToString()
 }
 
-function Get-CertificateFromStore {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string] $CertificateThumbprint
-    )
-
-    $normalizedThumbprint = ($CertificateThumbprint -replace "[^A-Fa-f0-9]", "").ToUpperInvariant()
-    if ($normalizedThumbprint.Length -eq 0) {
-        throw "Certificate thumbprint is empty after normalization."
-    }
-
-    $storePaths = @(
-        "Cert:\CurrentUser\Root",
-        "Cert:\CurrentUser\CA",
-        "Cert:\LocalMachine\Root",
-        "Cert:\LocalMachine\CA"
-    )
-
-    $matches = foreach ($storePath in $storePaths) {
-        Get-ChildItem -Path $storePath -ErrorAction SilentlyContinue |
-            Where-Object { ($_.Thumbprint -replace "[^A-Fa-f0-9]", "").ToUpperInvariant() -eq $normalizedThumbprint }
-    }
-
-    if ($null -eq $matches -or @($matches).Count -eq 0) {
-        throw "No Windows certificate store entry found for thumbprint $CertificateThumbprint."
-    }
-    if (@($matches).Count -gt 1) {
-        Write-Host "Multiple matching certificates found; using the first match."
-    }
-
-    return @($matches)[0]
-}
-
 function Get-PemFromFile {
     param(
         [Parameter(Mandatory = $true)]
@@ -105,7 +73,7 @@ function Get-PemFromFile {
 $pemText = ""
 $sourceDescription = ""
 if (-not [string]::IsNullOrWhiteSpace($Thumbprint)) {
-    $certificate = Get-CertificateFromStore -CertificateThumbprint $Thumbprint
+    $certificate = Get-TowerScoutCertificateFromStore -CertificateThumbprint $Thumbprint
     $chain = [System.Security.Cryptography.X509Certificates.X509Chain]::new()
     $chain.ChainPolicy.RevocationMode = [System.Security.Cryptography.X509Certificates.X509RevocationMode]::NoCheck
     [void] $chain.Build($certificate)

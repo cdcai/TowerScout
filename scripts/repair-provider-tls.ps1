@@ -18,6 +18,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. "$PSScriptRoot\lib\TowerScoutCertificateStore.ps1"
 
 function Get-TowerScoutProviderTlsHost {
     param(
@@ -30,11 +31,6 @@ function Get-TowerScoutProviderTlsHost {
         return "atlas.microsoft.com"
     }
     return "maps.googleapis.com"
-}
-
-function Normalize-TowerScoutThumbprint {
-    param([string] $Value)
-    return (($Value -replace "[^A-Fa-f0-9]", "").ToUpperInvariant())
 }
 
 function Test-TowerScoutCertificateIsCa {
@@ -65,32 +61,6 @@ function Test-TowerScoutCertificateCanSign {
         }
     }
     return $true
-}
-
-function Get-TowerScoutCertificateStoreMatches {
-    param(
-        [Parameter(Mandatory = $true)]
-        [System.Security.Cryptography.X509Certificates.X509Certificate2] $Certificate
-    )
-
-    $thumbprint = Normalize-TowerScoutThumbprint $Certificate.Thumbprint
-    $storePaths = @(
-        "Cert:\LocalMachine\Root",
-        "Cert:\CurrentUser\Root",
-        "Cert:\LocalMachine\CA",
-        "Cert:\CurrentUser\CA"
-    )
-
-    foreach ($storePath in $storePaths) {
-        Get-ChildItem -Path $storePath -ErrorAction SilentlyContinue |
-            Where-Object { (Normalize-TowerScoutThumbprint $_.Thumbprint) -eq $thumbprint } |
-            ForEach-Object {
-                [PSCustomObject]@{
-                    StorePath = $storePath
-                    Certificate = $_
-                }
-            }
-    }
 }
 
 function Get-TowerScoutStoreScore {

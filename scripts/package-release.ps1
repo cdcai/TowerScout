@@ -263,6 +263,7 @@ $releaseFiles = @(
     "webapp\asset_manifest.v1.json",
     "scripts\podman-compose-providers.v1.json",
     "scripts\lib\TowerScoutBootstrap.ps1",
+    "scripts\lib\TowerScoutCertificateStore.ps1",
     "scripts\lib\TowerScoutCompose.ps1",
     "scripts\lib\TowerScoutHostHelper.ps1",
     "scripts\lib\TowerScoutPodmanComposeProvider.ps1",

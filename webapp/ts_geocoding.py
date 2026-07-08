@@ -30,7 +30,13 @@ from flask import has_request_context, session
 
 from ts_errors import TowerScoutError, ConfigurationError, NetworkError
 from ts_logging import get_api_logger
-from ts_provider_http import PROVIDER_HTTP_ERROR, provider_get, response_redacted_url
+from ts_provider_http import (
+    PROVIDER_HTTP_ERROR,
+    TLS_REPAIR_CATEGORIES,
+    provider_display_name,
+    provider_get,
+    response_redacted_url,
+)
 from ts_tls import INSECURE_TLS_ENV_VAR, tls_verification_enabled
 
 
@@ -49,6 +55,10 @@ class GeocodingResult:
     coordinates: Tuple[float, float]  # (lat, lng)
     success: bool
     error_message: Optional[str] = None
+    error_category: Optional[str] = None
+    warning_message: Optional[str] = None
+    warning_category: Optional[str] = None
+    warning_provider: Optional[str] = None
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -61,7 +71,11 @@ class GeocodingResult:
                 'lng': self.coordinates[1]
             },
             'success': self.success,
-            'error_message': self.error_message
+            'error_message': self.error_message,
+            'error_category': self.error_category,
+            'warning_message': self.warning_message,
+            'warning_category': self.warning_category,
+            'warning_provider': self.warning_provider,
         }
 
 
@@ -158,6 +172,8 @@ class GeocodingService:
             self.logger.info("Google Maps geocoding enabled")
         
         self.logger.info(f"Geocoding service initialized with {len(self.providers)} provider(s)")
+        self._tls_unhealthy_providers: Dict[GeocodingProvider, Dict[str, Any]] = {}
+        self._tls_unhealthy_ttl_seconds = 60.0
         if not self.verify_tls:
             self.logger.warning(
                 "Geocoding requests are running with TLS verification disabled because "
@@ -165,8 +181,48 @@ class GeocodingService:
                 INSECURE_TLS_ENV_VAR,
             )
 
+    def _provider_http_name(self, provider: GeocodingProvider) -> str:
+        return "azure" if provider == GeocodingProvider.AZURE_MAPS else "google"
+
+    def _provider_display_name(self, provider: GeocodingProvider) -> str:
+        return provider_display_name(self._provider_http_name(provider))
+
+    def _get_cached_tls_failure(self, provider: GeocodingProvider) -> Optional[Dict[str, Any]]:
+        cached = self._tls_unhealthy_providers.get(provider)
+        if not cached:
+            return None
+        if cached.get('expires_at', 0.0) <= time.time():
+            self._tls_unhealthy_providers.pop(provider, None)
+            return None
+        return cached
+
+    def _remember_tls_failure(
+        self,
+        provider: GeocodingProvider,
+        category: str,
+        message: str,
+    ) -> Dict[str, Any]:
+        failure = {
+            'provider': self._provider_http_name(provider),
+            'display_name': self._provider_display_name(provider),
+            'category': category,
+            'message': message,
+            'expires_at': time.time() + self._tls_unhealthy_ttl_seconds,
+        }
+        self._tls_unhealthy_providers[provider] = failure
+        return failure
+
+    def _apply_tls_warning(self, result: GeocodingResult, tls_failure: Dict[str, Any]) -> GeocodingResult:
+        result.warning_message = (
+            f"{tls_failure['display_name']} reported a TLS trust failure earlier in this run. "
+            f"{tls_failure['message']}"
+        )
+        result.warning_category = tls_failure['category']
+        result.warning_provider = tls_failure['provider']
+        return result
+
     def _request(self, provider: GeocodingProvider, url: str, params: Dict[str, Any]) -> requests.Response:
-        provider_name = "azure" if provider == GeocodingProvider.AZURE_MAPS else "google"
+        provider_name = self._provider_http_name(provider)
         return provider_get(
             provider_name,
             url,
@@ -447,9 +503,21 @@ class GeocodingService:
         # Determine provider order based on preference
         provider_order = self._get_provider_order(effective_preference)
         last_error_message = None
+        last_tls_failure = None
         
         # Try each provider in order
         for provider in provider_order:
+            cached_tls_failure = self._get_cached_tls_failure(provider)
+            if cached_tls_failure:
+                last_tls_failure = cached_tls_failure
+                last_error_message = cached_tls_failure['message']
+                self.logger.debug(
+                    "Skipping provider %s because a TLS failure was recorded earlier in this run. category=%s",
+                    provider.value,
+                    cached_tls_failure['category'],
+                )
+                continue
+
             try:
                 if provider == GeocodingProvider.AZURE_MAPS:
                     result = self._geocode_azure_maps(lat, lng)
@@ -463,6 +531,14 @@ class GeocodingService:
                 
                 # Return if successful
                 if result.success and result.address:
+                    if last_tls_failure:
+                        result = self._apply_tls_warning(result, last_tls_failure)
+                        self.logger.warning(
+                            "Geocoding recovered via %s after a TLS failure from %s. category=%s",
+                            provider.value,
+                            last_tls_failure['provider'],
+                            last_tls_failure['category'],
+                        )
                     self.logger.info(f"Geocoding successful via {provider.value}: {result.address}")
                     return result
                 else:
@@ -477,15 +553,11 @@ class GeocodingService:
                     e.details.get("category"),
                 )
                 last_error_message = e.user_message or str(e)
-                if e.details.get("category") in {"tls_bundle_missing", "tls_bundle_unusable", "tls_ca_untrusted"}:
-                    return GeocodingResult(
-                        address="",
-                        provider=provider,
-                        confidence=0.0,
-                        coordinates=(lat, lng),
-                        success=False,
-                        error_message=last_error_message,
-                    )
+                category = e.details.get("category")
+                if category in TLS_REPAIR_CATEGORIES:
+                    self._update_session_usage(provider, False)
+                    last_tls_failure = self._remember_tls_failure(provider, category, last_error_message)
+                    continue
                 self._update_session_usage(provider, False)
                 continue
             except GeocodingError as e:
@@ -496,6 +568,16 @@ class GeocodingService:
         
         # All providers failed - return failure result
         self.logger.error(f"All geocoding providers failed for coordinates: {lat}, {lng}")
+        if last_tls_failure:
+            return GeocodingResult(
+                address="",
+                provider=fallback_provider,
+                confidence=0.0,
+                coordinates=(lat, lng),
+                success=False,
+                error_message=last_tls_failure['message'],
+                error_category=last_tls_failure['category'],
+            )
         return GeocodingResult(
             address="",
             provider=fallback_provider,

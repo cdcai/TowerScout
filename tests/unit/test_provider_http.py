@@ -3,6 +3,7 @@ from unittest.mock import Mock
 
 import ts_config
 import ts_maps
+from ts_errors import NetworkError
 from ts_provider_http import (
     INVALID_PROVIDER_KEY,
     TLS_OK,
@@ -116,6 +117,31 @@ def test_check_provider_tls_status_treats_keyless_azure_400_as_reachable(monkeyp
     assert result["status_code"] == 400
     assert captured["provider"] == "azure"
     assert "subscription-key" not in captured["params"]
+
+
+def test_check_provider_tls_status_preserves_tls_repair_metadata(monkeypatch):
+    def fake_get(provider, url, *, params, timeout, purpose):
+        raise NetworkError(
+            "tls failed",
+            details={
+                "provider": provider,
+                "category": "tls_ca_untrusted",
+                "repairable": True,
+                "helper_available": False,
+                "repair_command": ".\\scripts\\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off",
+            },
+            user_message="TLS validation failed.",
+        )
+
+    monkeypatch.setattr(ts_config, "provider_get", fake_get)
+
+    result = ts_config.check_provider_tls_status("google")
+
+    assert result["reachable"] is False
+    assert result["category"] == "tls_ca_untrusted"
+    assert result["repairable"] is True
+    assert result["helper_available"] is False
+    assert result["details"]["repair_command"].startswith(".\\scripts\\repair-provider-tls.cmd")
 
 
 def test_ts_maps_build_connector_uses_shared_provider_ssl_context(monkeypatch):

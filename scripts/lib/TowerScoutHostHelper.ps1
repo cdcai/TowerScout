@@ -10,10 +10,14 @@ $script:TowerScoutHostHelperProviderTlsRepairConfirmation = "repair_tls_and_rest
 $script:TowerScoutHostHelperOperationTimeoutSeconds = 900
 $script:TowerScoutHostHelperOperationAuthorizationPattern = "^[A-Za-z0-9_-]{32,128}$"
 $script:TowerScoutHostHelperExecutionEnabledByDefault = $false
+$script:TowerScoutHostHelperLaunchReadinessTimeoutSeconds = 180
+$script:TowerScoutHostHelperStartTimeoutHeadroomSeconds = 60
+$script:TowerScoutHostHelperProcessTreeCleanupTimeoutMs = 10000
+$script:TowerScoutHostHelperProcessOutputDrainTimeoutMs = 5000
 $script:TowerScoutHostHelperOperationStepTimeoutSeconds = @{
     repair = 300
     stop = 120
-    start = 180
+    start = ($script:TowerScoutHostHelperLaunchReadinessTimeoutSeconds + $script:TowerScoutHostHelperStartTimeoutHeadroomSeconds)
 }
 $script:TowerScoutHostHelperOperationCommandScripts = @{
     repair = "scripts\repair-provider-tls.cmd"
@@ -572,7 +576,8 @@ function ConvertTo-TowerScoutHostHelperOperationStatusFromLock {
 
     [int] $appPort = 0
     [int]::TryParse((Get-TowerScoutHostHelperObjectValue -InputObject $Lock -Name "app_port"), [ref] $appPort) | Out-Null
-    $operationState = if ([string]::IsNullOrWhiteSpace($State)) {
+    $stateOverrideProvided = -not [string]::IsNullOrWhiteSpace($State)
+    $operationState = if (-not $stateOverrideProvided) {
         Get-TowerScoutHostHelperObjectValue -InputObject $Lock -Name "state"
     }
     else {
@@ -584,6 +589,12 @@ function ConvertTo-TowerScoutHostHelperOperationStatusFromLock {
     $terminalText = Get-TowerScoutHostHelperObjectValue -InputObject $Lock -Name "terminal"
     [bool] $terminal = $false
     [bool]::TryParse($terminalText, [ref] $terminal) | Out-Null
+    if ($stateOverrideProvided) {
+        $overridePolicy = Get-TowerScoutHostHelperOperationStatePolicy -State $operationState
+        $classification = [string] $overridePolicy.Classification
+        $nextAction = [string] $overridePolicy.NextAction
+        $terminal = [bool] $overridePolicy.Terminal
+    }
     $executionEnabledText = Get-TowerScoutHostHelperObjectValue -InputObject $Lock -Name "execution_enabled"
     [bool] $executionEnabled = $false
     [bool]::TryParse($executionEnabledText, [ref] $executionEnabled) | Out-Null
@@ -1021,6 +1032,20 @@ function Get-TowerScoutHostHelperBatchInterpreterPath {
     return (Resolve-Path -LiteralPath $cmdPath).Path
 }
 
+function Get-TowerScoutHostHelperTaskkillPath {
+    $systemDirectory = [string] [System.Environment]::SystemDirectory
+    if ([string]::IsNullOrWhiteSpace($systemDirectory)) {
+        throw "Windows system directory could not be resolved for helper process-tree cleanup."
+    }
+
+    $taskkillPath = Join-Path $systemDirectory "taskkill.exe"
+    if (-not (Test-Path -LiteralPath $taskkillPath -PathType Leaf)) {
+        throw "The fixed Windows taskkill utility was not found."
+    }
+
+    return (Resolve-Path -LiteralPath $taskkillPath).Path
+}
+
 function ConvertTo-TowerScoutHostHelperCmdArgument {
     param(
         [string] $Value = ""
@@ -1222,6 +1247,69 @@ function Test-TowerScoutHostHelperRealWrapperContract {
     }
 }
 
+function Stop-TowerScoutHostHelperProcessTree {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Diagnostics.Process] $Process,
+
+        [int] $CleanupTimeoutMs = $script:TowerScoutHostHelperProcessTreeCleanupTimeoutMs
+    )
+
+    if ($Process.HasExited) {
+        return
+    }
+
+    try {
+        if ($env:OS -eq "Windows_NT") {
+            $taskkillPath = Get-TowerScoutHostHelperTaskkillPath
+            & $taskkillPath /PID $Process.Id /T /F 2>$null | Out-Null
+        }
+        else {
+            try {
+                $Process.Kill($true)
+            }
+            catch {
+                $Process.Kill()
+            }
+        }
+    }
+    catch {
+        try {
+            $Process.Kill()
+        }
+        catch {
+            # Best effort cleanup; public state remains operation_timeout.
+        }
+    }
+
+    try {
+        $Process.WaitForExit($CleanupTimeoutMs) | Out-Null
+    }
+    catch {
+        # Best effort cleanup; public state remains operation_timeout.
+    }
+}
+
+function Wait-TowerScoutHostHelperOutputTask {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Threading.Tasks.Task] $Task,
+
+        [int] $TimeoutMs = $script:TowerScoutHostHelperProcessOutputDrainTimeoutMs
+    )
+
+    try {
+        if ($Task.Wait($TimeoutMs)) {
+            return [string] $Task.Result
+        }
+    }
+    catch {
+        return ""
+    }
+
+    return ""
+}
+
 function Invoke-TowerScoutHostHelperProcessCommand {
     param(
         [Parameter(Mandatory = $true)]
@@ -1262,21 +1350,14 @@ function Invoke-TowerScoutHostHelperProcessCommand {
     $stderrTask = $process.StandardError.ReadToEndAsync()
     $timedOut = -not $process.WaitForExit(([int] $Command.TimeoutSeconds) * 1000)
     if ($timedOut) {
-        try {
-            $process.Kill()
-        }
-        catch {
-            # Best effort cleanup; public state remains operation_timeout.
-        }
+        Stop-TowerScoutHostHelperProcessTree -Process $process
     }
     else {
         $process.WaitForExit()
     }
 
-    $stdout = ""
-    $stderr = ""
-    try { $stdout = [string] $stdoutTask.Result } catch { $stdout = "" }
-    try { $stderr = [string] $stderrTask.Result } catch { $stderr = "" }
+    $stdout = Wait-TowerScoutHostHelperOutputTask -Task $stdoutTask
+    $stderr = Wait-TowerScoutHostHelperOutputTask -Task $stderrTask
     $exitCode = if ($timedOut) { 1 } else { [int] $process.ExitCode }
     $process.Dispose()
 

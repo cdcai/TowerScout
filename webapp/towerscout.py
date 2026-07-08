@@ -27,6 +27,7 @@ import html
 import time
 import os
 import math
+import re
 import secrets
 from ts_validation import (
     TowerScoutValidator, ValidationError, rate_limiter,
@@ -1949,7 +1950,12 @@ def save_api_keys():
     data = request.get_json(silent=True) or {}
     google_input = TowerScoutValidator.sanitize_string(str(data.get('google_api_key', '')).strip(), max_length=512)
     azure_input = TowerScoutValidator.sanitize_string(str(data.get('azure_maps_subscription_key', '')).strip(), max_length=512)
-    default_provider_input = str(data.get('default_map_provider') or os.getenv('DEFAULT_MAP_PROVIDER', 'azure')).strip().lower()
+    requested_default_provider = data.get('default_map_provider')
+    default_provider_was_provided = requested_default_provider is not None and str(requested_default_provider).strip() != ''
+    fallback_default_provider = str(os.getenv('DEFAULT_MAP_PROVIDER', 'azure')).strip().lower()
+    default_provider_input = str(
+        requested_default_provider if default_provider_was_provided else fallback_default_provider
+    ).strip().lower()
     default_provider = TowerScoutValidator.validate_provider(default_provider_input)
 
     merged_google = google_input or os.getenv('GOOGLE_API_KEY', '')
@@ -1993,12 +1999,27 @@ def save_api_keys():
             'validation_results': validation_results,
         }), 400
 
-    if default_provider not in valid_providers:
+    derived_default_provider = False
+    if default_provider_was_provided:
+        if default_provider not in valid_providers:
+            return jsonify({
+                'success': False,
+                'message': (
+                    f"The requested default_map_provider ({default_provider}) did not validate. "
+                    "Select a provider that validates successfully before saving."
+                ),
+                'default_map_provider': default_provider,
+                'validation_results': validation_results,
+            }), 400
+    elif len(valid_providers) == 1:
+        default_provider = next(iter(valid_providers))
+        derived_default_provider = True
+    elif default_provider not in valid_providers:
         return jsonify({
             'success': False,
             'message': (
-                f"The selected default provider ({default_provider}) did not validate. "
-                "Select a provider that validates successfully before saving."
+                f"default_map_provider was not provided and the fallback default ('{default_provider}') "
+                "did not validate. Select or configure a provider that validates successfully before saving."
             ),
             'default_map_provider': default_provider,
             'validation_results': validation_results,
@@ -2020,7 +2041,8 @@ def save_api_keys():
         'success': True,
         'message': 'Configuration updated successfully.',
         'needs_setup': needs_setup,
-        'default_map_provider': os.getenv('DEFAULT_MAP_PROVIDER', 'azure'),
+        'default_map_provider': default_provider,
+        'default_map_provider_derived': derived_default_provider,
         'persisted_providers': sorted(valid_providers),
         'validation_results': validation_results,
     })

@@ -775,6 +775,37 @@ input:checked+.knob:before {
     font-size: 13px;
 }
 
+.wizard-repair-panel {
+    margin: 16px 0 4px;
+    padding: 14px 16px;
+    border-left: 4px solid #f3b44e;
+    background: rgba(243, 180, 78, 0.12);
+}
+
+.wizard-repair-panel h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+}
+
+.wizard-command-fallback {
+    font-family: Consolas, "Courier New", monospace;
+    overflow-wrap: anywhere;
+}
+
+.wizard-repair-confirmation {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin-top: 12px;
+    color: rgba(255, 255, 255, 0.86);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.wizard-repair-actions {
+    margin-top: 12px;
+}
+
 .wizard-actions {
     display: flex;
     gap: 12px;

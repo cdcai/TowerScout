@@ -1,0 +1,184 @@
+name: Task-087 Frontend Puppeteer Templates
+
+on:
+  pull_request:
+    branches: ['**']
+  push:
+    branches:
+      - feature/task-087-gate3-product-integration
+      - main
+  workflow_dispatch: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  puppeteer-templates:
+    name: Run Puppeteer templates (Task-087)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Puppeteer system dependencies
+        run: |
+          sudo apt-get update
+          PKGS="ca-certificates fonts-liberation libasound2 libatk1.0-0 libatk-bridge2.0-0 libcups2 libgtk-3-0 libnss3 libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libxss1"
+          echo "Checking available installable packages before install"
+          AVAILABLE=""
+          for p in $PKGS; do
+            # Use apt-cache policy to verify an installable candidate (not virtual-only)
+            CAND=$(apt-cache policy "$p" 2>/dev/null | awk '/Candidate:/ {print $2}') || CAND=""
+            if [ -n "$CAND" ] && [ "$CAND" != "(none)" ]; then
+              AVAILABLE="$AVAILABLE $p"
+            else
+              echo "Package not installable: $p (skipping)"
+            fi
+          done
+          if [ -n "$AVAILABLE" ]; then
+            sudo apt-get install -y --no-install-recommends $AVAILABLE
+          else
+            echo "No installable packages found; continuing"
+          fi
+
+      - name: Install Node dependencies (lockfile)
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'false'
+        run: npm ci --no-audit --no-fund
+
+      - name: Install Playwright Chromium (for Puppeteer fallback)
+        run: |
+          # Install Playwright and download Chromium with deps; this provides a reliable browser binary for CI
+          npx -y playwright@latest install --with-deps chromium
+          # Find the downloaded chromium binary and expose it to later steps for Puppeteer
+          CHROME_PATH=$(find $HOME/.cache/ms-playwright -type f -name "chrome*" -executable 2>/dev/null | head -n1 || true)
+          if [ -n "$CHROME_PATH" ]; then echo "PUPPETEER_EXECUTABLE_PATH=$CHROME_PATH" >> $GITHUB_ENV; fi
+
+      - name: Install lightweight test utilities
+        run: npm install --no-audit --no-fund --no-save http-server wait-on
+
+      - name: Prepare artifacts dir
+        run: mkdir -p test-artifacts
+
+      - name: Start static web server for tests
+        # Use a lightweight static server to avoid starting the full Python app in CI
+        run: npx http-server ./webapp -p 5000 -c-1 > test-artifacts/webserver.log 2>&1 &
+
+      - name: Wait for web server
+        run: |
+          # give background servers a short moment to bind, then wait longer
+          sleep 1
+          npx wait-on http://127.0.0.1:5000 --timeout 60000
+
+      - name: Diagnostics - capture webserver status
+        if: always()
+        run: |
+          sleep 1
+          echo "-- process list (filtered) --"
+          ps aux | egrep 'http-server|node' | sed -n '1,200p' || true
+          echo "-- webserver.log head --"
+          test -f test-artifacts/webserver.log && head -n 200 test-artifacts/webserver.log || echo "(no webserver.log)"
+
+      - name: Run live POST/poll Puppeteer template
+        env:
+          CI: true
+        run: node tests/frontend/test_provider_tls_live_post_poll_template.js 2>&1 | tee test-artifacts/test_provider_tls_live_post_poll_template.log
+
+      - name: Run helper-unavailable Puppeteer template
+        env:
+          CI: true
+        run: node tests/frontend/test_provider_tls_helper_unavailable_template.js 2>&1 | tee test-artifacts/test_provider_tls_helper_unavailable_template.log
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: puppeteer-templates-logs
+          path: test-artifacts
+
+  puppeteer-e2e:
+    name: Run Puppeteer e2e (simulated helper)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Puppeteer system dependencies
+        run: |
+          sudo apt-get update
+          PKGS="ca-certificates fonts-liberation libasound2 libatk1.0-0 libatk-bridge2.0-0 libcups2 libgtk-3-0 libnss3 libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libxss1"
+          echo "Checking available installable packages before install"
+          AVAILABLE=""
+          for p in $PKGS; do
+            # Use apt-cache policy to verify an installable candidate (not virtual-only)
+            CAND=$(apt-cache policy "$p" 2>/dev/null | awk '/Candidate:/ {print $2}') || CAND=""
+            if [ -n "$CAND" ] && [ "$CAND" != "(none)" ]; then
+              AVAILABLE="$AVAILABLE $p"
+            else
+              echo "Package not installable: $p (skipping)"
+            fi
+          done
+          if [ -n "$AVAILABLE" ]; then
+            sudo apt-get install -y --no-install-recommends $AVAILABLE
+          else
+            echo "No installable packages found; continuing"
+          fi
+
+      - name: Install Node dependencies (lockfile)
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'false'
+        run: npm ci --no-audit --no-fund
+
+      - name: Install Playwright Chromium (for Puppeteer fallback)
+        run: |
+          npx -y playwright@latest install --with-deps chromium
+          CHROME_PATH=$(find $HOME/.cache/ms-playwright -type f -name "chrome*" -executable 2>/dev/null | head -n1 || true)
+          if [ -n "$CHROME_PATH" ]; then echo "PUPPETEER_EXECUTABLE_PATH=$CHROME_PATH" >> $GITHUB_ENV; fi
+
+      - name: Install lightweight test utilities
+        run: npm install --no-audit --no-fund --no-save http-server wait-on
+
+      - name: Prepare artifacts dir
+        run: mkdir -p test-artifacts
+
+      - name: Start services and wait (helper + webserver)
+        run: |
+          # Use repository script for robust startup checks (accept non-2xx HTTP responses)
+          bash ./scripts/ci_start_services.sh
+
+      - name: Diagnostics - capture helper and webserver status
+        if: always()
+        run: |
+          sleep 1
+          echo "-- process list (filtered) --"
+          ps aux | egrep 'simulated_helper|http-server|node' | sed -n '1,200p' || true
+          echo "-- simulated_helper.log head --"
+          test -f test-artifacts/simulated_helper.log && head -n 200 test-artifacts/simulated_helper.log || echo "(no simulated_helper.log)"
+          echo "-- webserver.log head --"
+          test -f test-artifacts/webserver.log && head -n 200 test-artifacts/webserver.log || echo "(no webserver.log)"
+
+      - name: Run live POST/poll Puppeteer e2e
+        env:
+          CI: true
+          TEST_HELPER_BASE_URL: http://localhost:5001
+          E2E_USE_SERVER: '1'
+        run: node tests/frontend/test_provider_tls_live_post_poll_template.js 2>&1 | tee test-artifacts/test_provider_tls_live_post_poll_template_e2e.log
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: puppeteer-e2e-logs
+          path: test-artifacts

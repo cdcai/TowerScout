@@ -456,10 +456,50 @@ def test_save_keys_rejects_invalid_selected_default_provider(client):
     assert response.status_code == 400
     payload = response.get_json()
     assert payload["success"] is False
-    assert "selected default provider" in payload["message"]
+    assert "default_map_provider" in payload["message"]
     assert payload["validation_results"]["google"]["details"]["category"] == "tls_ca_untrusted"
     assert payload["validation_results"]["azure"]["valid"] is True
     mock_update.assert_not_called()
+
+
+def test_save_keys_derives_default_provider_when_omitted_and_one_provider_validates(client, monkeypatch):
+    monkeypatch.setenv("DEFAULT_MAP_PROVIDER", "azure")
+    monkeypatch.delenv("AZURE_MAPS_SUBSCRIPTION_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+
+    def validate_provider(provider, _key):
+        if provider == "google":
+            return {"valid": True, "provider": "google", "category": "tls_ok"}
+        raise AssertionError(f"Unexpected provider validation: {provider}")
+
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch.object(
+        towerscout.ts_config,
+        "validate_api_key",
+        side_effect=validate_provider,
+    ), patch.object(towerscout.ts_config, "update_env_file") as mock_update, patch.object(
+        towerscout,
+        "refresh_runtime_config",
+        return_value=False,
+    ):
+        response = client.post(
+            "/api/config/save-keys",
+            json={
+                "google_api_key": "google-test-key",
+            },
+        )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["success"] is True
+    assert payload["default_map_provider"] == "google"
+    assert payload["default_map_provider_derived"] is True
+    assert payload["persisted_providers"] == ["google"]
+    mock_update.assert_called_once()
+    updates = mock_update.call_args.args[0]
+    assert updates == {
+        "DEFAULT_MAP_PROVIDER": "google",
+        "GOOGLE_API_KEY": "google-test-key",
+    }
 
 
 def test_provider_tls_status_route_uses_keyless_provider_probe(client):

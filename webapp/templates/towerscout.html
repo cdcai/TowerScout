@@ -262,6 +262,22 @@ MODEL_LICENSES.md, DATA_LICENSES.md, and PROVIDER_TERMS.md for details.
           <span class="validation-indicator" id="azure_key_status"></span>
         </div>
         <p id="wizard_validation_message" class="wizard-helper"></p>
+        <div id="wizard_provider_tls_repair_panel" class="wizard-repair-panel" style="display:none;">
+          <h3 id="wizard_provider_tls_repair_title"></h3>
+          <p id="wizard_provider_tls_repair_message" class="wizard-helper"></p>
+          <p id="wizard_provider_tls_repair_support" class="wizard-helper"></p>
+          <p id="wizard_provider_tls_repair_command" class="wizard-helper wizard-command-fallback"></p>
+          <label class="wizard-repair-confirmation">
+            <input type="checkbox" id="wizard_provider_tls_repair_confirm"
+              onchange="SetupWizard.updateProviderTlsRepairControls()">
+            I understand this repair may update container TLS trust and restart TowerScout.
+          </label>
+          <div class="wizard-actions wizard-repair-actions">
+            <button class="btn btn-primary" id="wizard_provider_tls_repair_button" type="button"
+              onclick="SetupWizard.startProviderTlsRepair()" disabled>Repair unavailable</button>
+          </div>
+          <p id="wizard_provider_tls_repair_status" class="wizard-helper"></p>
+        </div>
         <div class="wizard-actions">
           <button class="btn" onclick="SetupWizard.prevStep()">Back</button>
           <button class="btn btn-primary" id="wizard_validate_button" onclick="SetupWizard.validateAndNext()">Validate Keys</button>

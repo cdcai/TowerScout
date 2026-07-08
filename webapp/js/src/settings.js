@@ -7,45 +7,9 @@
     azure: '',
     defaultProvider: 'azure'
   };
-
-  async function fetchJson(url, options = {}) {
-    const response = await fetch(url, options);
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      const error = new Error(data.message || data.error || `Request failed with status ${response.status}`);
-      error.status = response.status;
-      error.payload = data;
-      error.details = data.details || {};
-      error.category = data.category || (data.details && data.details.category);
-      throw error;
-    }
-
-    return data;
-  }
-
-  function providerFailureMessage(displayName, payload) {
-    if (!payload) {
-      return '';
-    }
-
-    const details = payload.details || {};
-    const message = payload.message || payload.technical_message || payload.error || 'Validation failed.';
-    const category = payload.category || details.category;
-    const supportAction = payload.support_action || details.support_action;
-    const repairCommand = payload.repair_command || details.repair_command;
-    const parts = [`${displayName}: ${message}`];
-    if (category) {
-      parts.push(`Category: ${category}.`);
-    }
-    if (supportAction) {
-      parts.push(supportAction);
-    }
-    if (repairCommand && (!supportAction || !supportAction.includes(repairCommand))) {
-      parts.push(`Suggested command: ${repairCommand}`);
-    }
-    return parts.join(' ');
-  }
+  const fetchJson = window.TowerScoutConfigApi.fetchJson;
+  const providerFailureMessage = window.TowerScoutConfigApi.providerFailureMessage;
+  const saveFailureMessage = window.TowerScoutConfigApi.saveFailureMessage;
 
   function updateIndicatorsFromValidation(validationResults = {}) {
     if (validationResults.google) {
@@ -54,21 +18,6 @@
     if (validationResults.azure) {
       updateIndicator('settings_azure_status', validationResults.azure.valid === true);
     }
-  }
-
-  function saveFailureMessage(error) {
-    const payload = error.payload || {};
-    const validationResults = payload.validation_results || {};
-    const messages = [];
-
-    if (validationResults.google && validationResults.google.valid !== true) {
-      messages.push(providerFailureMessage('Google Maps', validationResults.google));
-    }
-    if (validationResults.azure && validationResults.azure.valid !== true) {
-      messages.push(providerFailureMessage('Azure Maps', validationResults.azure));
-    }
-
-    return [payload.message || error.message, ...messages].filter(Boolean).join(' ');
   }
 
   function getSettingsElement() {

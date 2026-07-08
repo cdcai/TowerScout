@@ -75,6 +75,16 @@ def test_host_helper_provider_tls_repair_plan_is_docker_only_and_allowlisted():
     assert "function Invoke-TowerScoutProviderTlsRepairControlledExecution" in script
     assert "function Test-TowerScoutHostHelperRealWrapperContract" in script
     assert "function Get-TowerScoutHostHelperBatchInterpreterPath" in script
+    assert "function Get-TowerScoutHostHelperTaskkillPath" in script
+    assert "$script:TowerScoutHostHelperLaunchReadinessTimeoutSeconds = 180" in script
+    assert "$script:TowerScoutHostHelperStartTimeoutHeadroomSeconds = 60" in script
+    assert "function Stop-TowerScoutHostHelperProcessTree" in script
+    assert "function Wait-TowerScoutHostHelperOutputTask" in script
+    assert '$taskkillPath = Get-TowerScoutHostHelperTaskkillPath' in script
+    assert '& $taskkillPath /PID $Process.Id /T /F' in script
+    assert "& taskkill.exe" not in script
+    assert "$Process.Kill($true)" in script
+    assert "Stop-TowerScoutHostHelperProcessTree -Process $process" in script
     assert 'Interpreter = "cmd.exe"' in script
     assert '"real_wrapper_contract_validated"' in script
     assert "executed = $false" in script
@@ -189,6 +199,9 @@ def test_host_helper_operation_request_api_direct_invocation_is_non_mutating():
                 same_existing = [bool] $same.Body.existing_operation
                 different_authorization = $busy.StatusCode
                 different_state = [string] $busy.Body.state
+                different_classification = [string] $busy.Body.classification
+                different_terminal = [bool] $busy.Body.terminal
+                different_next_action = [string] $busy.Body.next_action
                 unexpected_field = $unexpected.StatusCode
                 unexpected_state = [string] $unexpected.Body.state
                 execution_enabled_field = $executionEnabledRejected.StatusCode
@@ -219,6 +232,9 @@ def test_host_helper_operation_request_api_direct_invocation_is_non_mutating():
         "same_existing": True,
         "different_authorization": 409,
         "different_state": "operation_busy",
+        "different_classification": "active",
+        "different_terminal": False,
+        "different_next_action": "poll_existing_operation",
         "unexpected_field": 400,
         "unexpected_state": "rejected_unexpected_field",
         "execution_enabled_field": 400,
@@ -361,6 +377,9 @@ def test_host_helper_controlled_runner_is_gated_and_sanitized():
                 timeout_terminal = [bool] $timeout.terminal
                 timeout_poll_status = [int] $timeoutPoll.StatusCode
                 timeout_poll_state = [string] $timeoutPoll.Body.state
+                timeout_poll_classification = [string] $timeoutPoll.Body.classification
+                timeout_poll_terminal = [bool] $timeoutPoll.Body.terminal
+                timeout_poll_next_action = [string] $timeoutPoll.Body.next_action
                 public_status_safe = -not ($publicJson -match "SECRET_VALUE|private|repair-provider-tls|scripts\\\\|start\\.bat|stop\\.cmd|certificate|thumbprint|token|secret")
             }} | ConvertTo-Json -Depth 12 -Compress
         }}
@@ -406,7 +425,60 @@ def test_host_helper_controlled_runner_is_gated_and_sanitized():
     assert payload["timeout_terminal"] is True
     assert payload["timeout_poll_status"] == 410
     assert payload["timeout_poll_state"] == "operation_expired"
+    assert payload["timeout_poll_classification"] == "terminal_timeout"
+    assert payload["timeout_poll_terminal"] is True
+    assert payload["timeout_poll_next_action"] == "new_authorization_required"
     assert payload["public_status_safe"] is True
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell host helper is Windows-only")
+def test_host_helper_process_timeout_kills_wrapper_tree_before_output_read():
+    helper_path = str(HELPER_LIB).replace("'", "''")
+    script = textwrap.dedent(
+        f"""
+        $ProgressPreference = 'SilentlyContinue'
+        . '{helper_path}'
+        $root = Join-Path ([System.IO.Path]::GetTempPath()) ("towerscout-task087-timeout-{{0}}" -f (New-TowerScoutHostHelperSessionId))
+        New-Item -ItemType Directory -Path $root -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $root "sleep-child.ps1") -Encoding ASCII -Value "Start-Sleep -Seconds 20"
+        Set-Content -LiteralPath (Join-Path $root "timeout-wrapper.cmd") -Encoding ASCII -Value "@echo off`r`npowershell.exe -NoProfile -ExecutionPolicy Bypass -File ""%~dp0sleep-child.ps1""`r`nexit /b 0"
+        try {{
+            $command = [pscustomobject]@{{
+                Step = "timeout_probe"
+                Script = "timeout-wrapper.cmd"
+                ScriptPath = (Join-Path $root "timeout-wrapper.cmd")
+                Arguments = @()
+                Interpreter = "cmd.exe"
+                InterpreterPath = (Get-TowerScoutHostHelperBatchInterpreterPath)
+                InterpreterArguments = @("/d", "/s", "/c")
+                WorkingDirectory = $root
+                TimeoutSeconds = 1
+                EnvironmentVariables = @{{}}
+            }}
+            $watch = [System.Diagnostics.Stopwatch]::StartNew()
+            $result = Invoke-TowerScoutHostHelperProcessCommand -Command $command
+            $watch.Stop()
+            [pscustomobject]@{{
+                timed_out = [bool] $result.TimedOut
+                exit_code = [int] $result.ExitCode
+                elapsed_ms = [int] $watch.ElapsedMilliseconds
+            }} | ConvertTo-Json -Compress
+        }}
+        finally {{
+            if (Test-Path -LiteralPath $root) {{
+                Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue
+            }}
+        }}
+        """
+    )
+
+    result = _run_powershell_script(script)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(next(line for line in result.stdout.splitlines() if line))
+    assert payload["timed_out"] is True
+    assert payload["exit_code"] == 1
+    assert payload["elapsed_ms"] < 10000
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell host helper is Windows-only")
@@ -456,7 +528,7 @@ def test_host_helper_real_wrapper_contract_is_non_mutating_and_sanitized():
         "step_count": 3,
         "step_names": ["repair", "stop", "start"],
         "argument_counts": [7, 2, 9],
-        "timeout_seconds": [300, 120, 180],
+        "timeout_seconds": [300, 120, 240],
         "output_safe": True,
     }
 

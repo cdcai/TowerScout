@@ -36,11 +36,6 @@ from ts_provider_http import (
 
 # Initialize logger for this module
 maps_logger = get_maps_logger()
-TRUTHY_ENV_VALUES = {'1', 'true', 'yes', 'on'}
-
-
-def _allow_insecure_tls():
-    return os.getenv('TOWERSCOUT_ALLOW_INSECURE_TLS', '').strip().lower() in TRUTHY_ENV_VALUES
 
 
 def _provider_name_from_url(url):

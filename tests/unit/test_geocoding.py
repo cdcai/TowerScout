@@ -24,6 +24,7 @@ from ts_geocoding import (
     GeocodingService, GeocodingProvider, GeocodingResult, GeocodingError, 
     RateLimitError, create_geocoding_service
 )
+from ts_errors import NetworkError
 from ts_geocache import GeocodingCache, CacheEntry, create_geocoding_cache
 
 
@@ -254,6 +255,96 @@ class TestGeocodingService(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertEqual(result.address, "")
         self.assertIn("API Error", result.error_message)
+
+    def test_reverse_geocode_falls_back_after_tls_failure_and_carries_warning(self):
+        service = GeocodingService(azure_key=self.azure_key, google_key=self.google_key)
+        tls_error = NetworkError(
+            "Azure TLS failure",
+            user_message="TowerScout could not verify the Azure Maps TLS certificate.",
+            details={"provider": "azure", "category": "tls_ca_untrusted"},
+        )
+        fallback_result = GeocodingResult(
+            address="Fallback Address, Seattle, WA",
+            provider=GeocodingProvider.GOOGLE_MAPS,
+            confidence=0.85,
+            coordinates=(self.test_lat, self.test_lng),
+            success=True,
+        )
+
+        with patch('ts_geocoding.session', {}), \
+             patch.object(service, '_geocode_azure_maps', side_effect=tls_error), \
+             patch.object(service, '_geocode_google_maps', return_value=fallback_result):
+            result = service.reverse_geocode(self.test_lat, self.test_lng)
+
+        self.assertTrue(result.success)
+        self.assertEqual(result.provider, GeocodingProvider.GOOGLE_MAPS)
+        self.assertEqual(result.warning_category, 'tls_ca_untrusted')
+        self.assertEqual(result.warning_provider, 'azure')
+        self.assertIn('Azure Maps', result.warning_message)
+
+    def test_reverse_geocode_returns_tls_categorized_failure_when_all_providers_fail_tls(self):
+        service = GeocodingService(azure_key=self.azure_key, google_key=self.google_key)
+        azure_tls_error = NetworkError(
+            "Azure TLS failure",
+            user_message="TowerScout could not verify the Azure Maps TLS certificate.",
+            details={"provider": "azure", "category": "tls_ca_untrusted"},
+        )
+        google_tls_error = NetworkError(
+            "Google TLS failure",
+            user_message="TowerScout could not verify the Google Maps TLS certificate.",
+            details={"provider": "google", "category": "tls_ca_untrusted"},
+        )
+
+        with patch('ts_geocoding.session', {}), \
+             patch.object(service, '_geocode_azure_maps', side_effect=azure_tls_error), \
+             patch.object(service, '_geocode_google_maps', side_effect=google_tls_error):
+            result = service.reverse_geocode(self.test_lat, self.test_lng)
+
+        self.assertFalse(result.success)
+        self.assertEqual(result.error_category, 'tls_ca_untrusted')
+        self.assertIn('TLS certificate', result.error_message)
+
+    def test_reverse_geocode_single_provider_tls_failure_keeps_tls_guidance(self):
+        service = GeocodingService(azure_key=self.azure_key)
+        tls_error = NetworkError(
+            "Azure TLS failure",
+            user_message="TowerScout could not verify the Azure Maps TLS certificate.",
+            details={"provider": "azure", "category": "tls_ca_untrusted"},
+        )
+
+        with patch('ts_geocoding.session', {}), \
+             patch.object(service, '_geocode_azure_maps', side_effect=tls_error):
+            result = service.reverse_geocode(self.test_lat, self.test_lng)
+
+        self.assertFalse(result.success)
+        self.assertEqual(result.error_category, 'tls_ca_untrusted')
+        self.assertIn('Azure Maps TLS certificate', result.error_message)
+
+    def test_reverse_geocode_skips_tls_broken_provider_for_remainder_of_run(self):
+        service = GeocodingService(azure_key=self.azure_key, google_key=self.google_key)
+        tls_error = NetworkError(
+            "Azure TLS failure",
+            user_message="TowerScout could not verify the Azure Maps TLS certificate.",
+            details={"provider": "azure", "category": "tls_ca_untrusted"},
+        )
+        fallback_result = GeocodingResult(
+            address="Fallback Address, Seattle, WA",
+            provider=GeocodingProvider.GOOGLE_MAPS,
+            confidence=0.85,
+            coordinates=(self.test_lat, self.test_lng),
+            success=True,
+        )
+
+        with patch('ts_geocoding.session', {}), \
+             patch.object(service, '_geocode_azure_maps', side_effect=tls_error) as mock_azure, \
+             patch.object(service, '_geocode_google_maps', return_value=fallback_result) as mock_google:
+            first = service.reverse_geocode(self.test_lat, self.test_lng)
+            second = service.reverse_geocode(self.test_lat, self.test_lng)
+
+        self.assertTrue(first.success)
+        self.assertTrue(second.success)
+        self.assertEqual(mock_azure.call_count, 1)
+        self.assertEqual(mock_google.call_count, 2)
 
     def test_rate_limiting(self):
         """Test session-based rate limiting."""

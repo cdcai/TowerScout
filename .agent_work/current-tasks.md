@@ -1,9 +1,9 @@
 # Current Tasks - Active Sprint
 
 **Sprint Period**: Sprint 07 begins July 2, 2026
-**Last Updated**: July 2, 2026
-**Focus**: Implement the host-side TLS repair control plane as a support-safe follow-on to the validated RC7.1 command-based repair path.
-**Status**: Sprint 06 is closed. The release path is validated through `v0.1.0-rc7.1`, and completed Sprint 06 task files have moved to `.agent_work/tasks/completed/`. `TASK-087` is selected as the active Sprint 07 task.
+**Last Updated**: July 6, 2026
+**Focus**: Advance Task-087 from helper proof into product integration proof while keeping browser-triggered host repair disabled until review.
+**Status**: Sprint 06 is closed. The release path is validated through `v0.1.0-rc7.1`, and completed Sprint 06 task files have moved to `.agent_work/tasks/completed/`. PR #45 merged the Task-087 Gate 1 / Gate 2 helper proof; Gate 3 product integration proof is now in progress.
 
 ---
 
@@ -50,7 +50,7 @@ Sprint 07 starts with helper transport and security proof. Product UI integratio
 ## Active Sprint 07 Task
 
 ### **TASK-087: Host-Side TLS Repair Control Plane**
-**Status**: IN_PROGRESS - selected as Sprint 7 active work during Sprint 6 closeout
+**Status**: IN_PROGRESS - Gate 3 product integration proof started after PR #45 helper proof merge
 **Type**: B/C (Runtime Support / Setup UX / TLS Trust)
 **Priority**: MEDIUM-HIGH
 **Estimated Effort**: 4-7 days (32-56 hours), plus managed-network package validation
@@ -64,11 +64,11 @@ Sprint 07 starts with helper transport and security proof. Product UI integratio
 - RC7.1 tester-facing package validation has passed.
 - The helper must be package-local, loopback-only, token-protected, allowlisted, and support-safe before it reaches product UI.
 
-**Initial Sprint 07 Work Sequence**:
-1. Gate 1 helper transport proof: loopback binding, browser-origin/token checks, helper lifetime, and package-local script launch.
-2. Gate 2 security proof: reject arbitrary providers, engines, GPU modes, ports, script paths, command paths, and extra arguments; prove helper tokens and raw subprocess output do not leak.
-3. Gate 3 product integration proof: show repair UI only for repairable provider TLS categories and keep helper-unavailable as a normal fallback path.
-4. Gate 4 managed-network package validation: prove the guided path and command fallback from CPU/CUDA package contexts before user-facing package inclusion.
+**Current Sprint 07 Work Sequence**:
+1. Gate 1 / Gate 2 helper proof: merged in PR #45 with controlled Docker CPU/off live-wrapper evidence and helper security constraints.
+2. Gate 3 product integration proof: in progress, starting with structured provider-validation state retention and non-mutating repair-display predicates.
+3. Gate 3 follow-up: add visible fallback/repair UI only after reviewer accepts the state-retention contract and helper availability boundary.
+4. Gate 4 managed-network package validation: blocked until Gate 3 passes and the release owner approves user-facing package inclusion.
 
 **Evidence Handling**:
 Do not record provider keys, helper tokens, certificate subjects, raw thumbprints, raw provider responses, `.env` files, raw logs, browser network traces, screenshots, private AOIs, or local environment dumps in task evidence. Use sanitized operation states and public-safe summaries only.

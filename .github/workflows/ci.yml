@@ -33,6 +33,14 @@ jobs:
     - name: Rebuild frontend bundle
       run: node webapp/build.js
 
+    - name: Verify committed bundle matches source
+      run: |
+        node webapp/build.js
+        git diff --exit-code -I "Build Date" webapp/js/towerscout.js
+
+    - name: Run setup wizard validation contract
+      run: node tests/frontend/test_setup_wizard_validation_contract.js
+
     - name: Run ProviderStateManager regression test
       run: node tests/integration/test_task_064_provider_state_manager.js
 

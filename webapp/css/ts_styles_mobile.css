@@ -512,6 +512,10 @@ ul, #myUL {
     align-items: stretch;
 }
 
+.wizard-repair-confirmation {
+    align-items: flex-start;
+}
+
 .settings-content {
     padding: 16px 18px 20px;
 }

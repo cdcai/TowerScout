@@ -52,7 +52,24 @@ def test_validate_api_key_google(mock_get):
     assert result["valid"] is True
     assert result["provider"] == "google"
     assert result["category"] == "tls_ok"
+    assert result["repairable"] is False
+    assert result["helper_available"] is False
     assert "tested_at" in result
+
+
+@patch("ts_config.requests.get")
+def test_validate_api_key_google_rejects_empty_geocode_json(mock_get):
+    static_response = Mock(status_code=200)
+    geocode_response = Mock(status_code=200)
+    geocode_response.json.return_value = {}
+    mock_get.side_effect = [static_response, geocode_response]
+
+    result = ts_config.validate_api_key("google", "google-test-key")
+
+    assert result["valid"] is False
+    assert result["provider"] == "google"
+    assert result["category"] == "provider_http_error"
+    assert result["message"] == "Google Maps key is not authorized for the Geocoding API. Google returned status UNKNOWN."
 
 
 @patch("ts_config.requests.get")
@@ -64,6 +81,8 @@ def test_validate_api_key_azure(mock_get):
     assert result["valid"] is True
     assert result["provider"] == "azure"
     assert result["category"] == "tls_ok"
+    assert result["repairable"] is False
+    assert result["helper_available"] is False
     assert "tested_at" in result
 
 
@@ -77,6 +96,8 @@ def test_validate_api_key_network_error_returns_network_error(mock_get):
     assert "TowerScout could not reach Google Maps" in exc_info.value.user_message
     assert exc_info.value.details["provider"] == "google"
     assert exc_info.value.details["category"] == "provider_network_blocked"
+    assert exc_info.value.details["repairable"] is False
+    assert exc_info.value.details["helper_available"] is False
 
 
 @patch("ts_config.requests.get")
@@ -95,6 +116,8 @@ def test_validate_api_key_fails_closed_on_ssl_error_by_default(mock_get, monkeyp
     assert expected_command in exc_info.value.details["support_action"]
     assert exc_info.value.details["provider"] == "google"
     assert exc_info.value.details["category"] == "tls_ca_untrusted"
+    assert exc_info.value.details["repairable"] is True
+    assert exc_info.value.details["helper_available"] is False
     assert mock_get.call_count == 1
 
 
@@ -110,6 +133,8 @@ def test_validate_api_key_reports_missing_configured_tls_bundle(mock_get, monkey
 
     assert "TLS CA bundle was not found" in exc_info.value.user_message
     assert exc_info.value.details["category"] == "tls_bundle_missing"
+    assert exc_info.value.details["repairable"] is True
+    assert exc_info.value.details["helper_available"] is False
     assert exc_info.value.details["bundle_path"] == str(missing_bundle)
     mock_get.assert_not_called()
 
@@ -126,6 +151,8 @@ def test_validate_api_key_reports_missing_ssl_cert_file_bundle(mock_get, monkeyp
 
     assert "TLS CA bundle was not found" in exc_info.value.user_message
     assert exc_info.value.details["category"] == "tls_bundle_missing"
+    assert exc_info.value.details["repairable"] is True
+    assert exc_info.value.details["helper_available"] is False
     assert exc_info.value.details["bundle_path"] == str(missing_bundle)
     mock_get.assert_not_called()
 
@@ -144,6 +171,8 @@ def test_validate_api_key_reports_unusable_configured_tls_bundle(mock_get, monke
 
     assert "TLS CA bundle could not be used" in exc_info.value.user_message
     assert exc_info.value.details["category"] == "tls_bundle_unusable"
+    assert exc_info.value.details["repairable"] is True
+    assert exc_info.value.details["helper_available"] is False
     assert mock_get.call_count == 1
 
 

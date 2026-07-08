@@ -34,6 +34,8 @@ from ts_provider_http import (
     TLS_OK,
     classify_provider_response,
     provider_get,
+    provider_helper_available,
+    provider_repairable,
     provider_repair_command,
     provider_response_summary,
     provider_support_action,
@@ -241,6 +243,8 @@ def _validation_result(
         "valid": valid,
         "message": message,
         "category": category,
+        "repairable": provider_repairable(category),
+        "helper_available": provider_helper_available(provider, category),
         "status_code": response.status_code,
     }
     summary = provider_response_summary(response)
@@ -449,6 +453,8 @@ def check_provider_tls_status(provider: str) -> Dict[str, Any]:
             "provider": validated_provider,
             "reachable": category == TLS_OK,
             "category": category,
+            "repairable": provider_repairable(category),
+            "helper_available": provider_helper_available(validated_provider, category),
             "status_code": response.status_code,
             "tested_at": datetime.utcnow().isoformat() + "Z",
         }
@@ -459,12 +465,15 @@ def check_provider_tls_status(provider: str) -> Dict[str, Any]:
         return _apply_tls_warning(result, response)
     except NetworkError as error:
         payload = error.to_dict()
+        details = payload.get("details", {})
         return {
             "provider": validated_provider,
             "reachable": False,
-            "category": payload.get("details", {}).get("category"),
+            "category": details.get("category"),
+            "repairable": details.get("repairable", False),
+            "helper_available": details.get("helper_available", False),
             "message": payload.get("message"),
-            "details": payload.get("details", {}),
+            "details": details,
             "tested_at": datetime.utcnow().isoformat() + "Z",
         }
 

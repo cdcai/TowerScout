@@ -1,6 +1,6 @@
 # TASK-087: Host-Side TLS Repair Control Plane
 
-**Status**: IN_PROGRESS - selected as Sprint 7 active work during Sprint 6 closeout
+**Status**: IN_PROGRESS - Gate 3 product integration proof started after PR #45 helper proof merge
 **Type**: B/C (Runtime Support / Setup UX / TLS Trust)
 **Priority**: MEDIUM-HIGH
 **Estimated Effort**: 4-7 days (32-56 hours), plus package validation on a managed TLS-inspected network
@@ -1037,6 +1037,257 @@ Exit criteria:
   can expose local environment details if helper output is not sanitized.
 
 ## Implementation Log
+
+### 2026-07-06 - Gate 3 Browser Start Contract Defined
+
+**Objective**: Define the non-mutating browser-to-helper start contract before
+any live Setup Wizard helper request is enabled.
+
+**Context**: Reviewer feedback accepted the `12de100` authorization-edge slice
+and recommended one more Gate 3 checkpoint before wiring a live helper call:
+prove the browser contract sends only provider enum, fixed confirmation, and a
+scoped operation authorization; prove duplicate/reload/active-operation states
+do not launch another repair; and keep token/runtime/control fields redacted.
+
+**Decision**: Keep `PROVIDER_TLS_REPAIR_BROWSER_MUTATION_ENABLED = false` and
+do not add any live `fetch` path for provider TLS repair. Add a sanitized
+start-contract preview and active-operation status memory so tests can prove
+the allowed request shape and operation-busy behavior without mutating host
+state. Keep helper-owned runtime values such as engine, GPU mode, port,
+restart mode, script path, Podman provider fields, and durable helper tokens
+out of the allowed browser request body.
+
+**Execution**: Added Setup Wizard helpers for `POST
+/operations/provider-tls-repair` contract inspection, sanitized
+operation-status retention, active-operation blocking, and token-redacted
+public operation summaries. Extended frontend contract tests for helper
+unavailable states, expired/malformed authorization, duplicate clicks while the
+mutation gate is closed, active `operation_busy` status after a simulated
+reload/status restore, DOM/notification/console redaction, and forbidden
+runtime/control fields. Rebuilt the generated frontend bundle.
+
+**Validation**:
+
+- PASS: `node tests\frontend\test_setup_wizard_validation_contract.js`
+- PASS: `node tests\frontend\test_global_contract.js`
+- PASS: `node tests\frontend\test_debug_logging_contract.js`
+- PASS:
+  `.\.venv\Scripts\python.exe -m pytest tests\unit\test_frontend_provider_tls.py tests\unit\test_config.py tests\unit\test_provider_http.py -q -p no:cacheprovider`
+- PASS:
+  `python .agents\skills\towerscout-frontend-bundle-guard\scripts\check_bundle_source_consistency.py .`
+- PASS: `python .agent_work\scripts\validate_agent_work.py`
+- PASS:
+  `python .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .`
+- PASS: `git diff --check`
+
+**Next**: Push this start-contract checkpoint to PR #46 for reviewer feedback
+before enabling any browser-triggered helper mutation.
+
+### 2026-07-06 - Gate 3 Repair UI Authorization Gate Added
+
+**Objective**: Add the next Gate 3 Setup Wizard repair UI contract without
+enabling browser-triggered host mutation.
+
+**Context**: Reviewer feedback accepted the PR #46 process-tree cleanup
+hardening and recommended proceeding to the next visible repair UI /
+host-mutation design slice, while keeping `provider_tls_repair=true`, default
+browser-triggered repair, Podman remediation, and tester-facing package
+inclusion blocked.
+
+**Decision**: Render a Setup Wizard TLS repair review panel only when the
+retained provider validation failure is a repairable TLS trust category and
+helper availability is explicitly true. Keep the repair button disabled unless
+a future short-lived operation authorization is present and the explicit browser
+mutation gate is opened. Redact operation tokens from public validation-state
+accessors and rendered DOM text.
+
+**Execution**: Added the Setup Wizard repair view-model, confirmation checkbox,
+disabled repair button, command fallback text, and browser-mutation gate. Added
+contract tests proving invalid keys, unauthorized/quota/provider HTTP failures,
+generic network failures, helper-unavailable TLS failures, unsupported runtime,
+and Podman provider states do not render the host repair action. Added a
+short-lived authorization test proving the token is not exposed through the
+public state accessor or DOM text and no helper operation request is made while
+the browser-mutation gate is closed. Rebuilt the generated frontend bundle.
+
+**Validation**:
+
+- PASS: `node tests\frontend\test_setup_wizard_validation_contract.js`
+- PASS: `node tests\frontend\test_global_contract.js`
+- PASS: `node tests\frontend\test_debug_logging_contract.js`
+- PASS:
+  `.\.venv\Scripts\python.exe -m pytest tests\unit\test_frontend_provider_tls.py tests\unit\test_config.py tests\unit\test_provider_http.py -q -p no:cacheprovider`
+- PASS:
+  `python .agents\skills\towerscout-frontend-bundle-guard\scripts\check_bundle_source_consistency.py .`
+
+**Next**: Run final `.agent_work` and diff hygiene checks, then push this
+gated UI/authorization slice to PR #46 for reviewer feedback before adding any
+real browser-to-helper operation start.
+
+### 2026-07-06 - Gate 3 Review Wording And Authorization Edges
+
+**Objective**: Incorporate reviewer feedback on the gated Setup Wizard repair
+panel before continuing toward a real browser-to-helper operation start.
+
+**Context**: Reviewer feedback accepted the `1a304d8` gated UI/authorization
+slice and confirmed it is acceptable to continue Gate 3 proof work. The review
+called out one wording correction: the branch now contains a visible disabled
+repair panel/button, so PR/task wording should describe "no enabled/actionable
+repair button" rather than "no visible repair button." The review also named
+expired and malformed operation authorization handling as coverage needed
+before real mutation.
+
+**Decision**: Keep the current branch non-mutating. Treat the visible panel as a
+disabled review/fallback panel only, with no actionable repair button, no
+browser-triggered helper start, no `provider_tls_repair=true` capability flip,
+no Podman remediation, and no tester-facing package inclusion.
+
+**Execution**: Clarified the Gate 3 wording in this task log and extended the
+Setup Wizard contract tests for expired, malformed, wrong-type, and missing
+token operation authorization inputs. These inputs must leave the panel
+disabled, report authorization unavailable, avoid helper operation requests, and
+keep operation tokens out of public/DOM surfaces.
+
+**Validation**:
+
+- PASS: `node tests\frontend\test_setup_wizard_validation_contract.js`
+- PASS: `node tests\frontend\test_global_contract.js`
+- PASS: `node tests\frontend\test_debug_logging_contract.js`
+- PASS:
+  `.\.venv\Scripts\python.exe -m pytest tests\unit\test_frontend_provider_tls.py tests\unit\test_config.py tests\unit\test_provider_http.py -q -p no:cacheprovider`
+- PASS:
+  `python .agents\skills\towerscout-frontend-bundle-guard\scripts\check_bundle_source_consistency.py .`
+- PASS: `python .agent_work\scripts\validate_agent_work.py`
+
+**Next**: Push the wording and authorization-edge coverage to PR #46, then ask
+the Reviewer whether the branch is ready for the next focused start-contract
+design checkpoint.
+
+### 2026-07-06 - PR #46 Process-Tree Cleanup Path Hardened
+
+**Objective**: Address the reviewer follow-up that the timeout cleanup path
+should not resolve `taskkill.exe` through `PATH`.
+
+**Context**: The PR #45 bot follow-up added process-tree cleanup for controlled
+wrapper timeouts. Reviewer feedback on PR #46 correctly noted that invoking
+`taskkill.exe` by name leaves the helper dependent on `PATH` resolution during
+the cleanup path.
+
+**Decision**: Resolve the Windows system `taskkill.exe` from
+`[System.Environment]::SystemDirectory` before use, mirroring the fixed-system
+`cmd.exe` resolution already used for wrapper execution. Keep product UI
+exposure, `provider_tls_repair=true`, browser-triggered host mutation, Podman
+remediation, and tester-facing package inclusion blocked.
+
+**Execution**: Added a fixed-path `taskkill.exe` resolver to
+`scripts\lib\TowerScoutHostHelper.ps1` and updated timeout process-tree cleanup
+to call that resolved executable. Extended the Task-087 static contract test to
+assert the resolver is present and direct `PATH`-based `taskkill.exe`
+invocation is absent.
+
+**Validation**:
+
+- PASS: PowerShell parser checks for `scripts\lib\TowerScoutHostHelper.ps1`
+  and `scripts\host-helper.ps1`
+- PASS:
+  `.\.venv\Scripts\python.exe -m pytest tests\unit\test_task_087_host_helper.py -q -p no:cacheprovider`
+- PASS:
+  `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\host-helper.ps1 -SelfTest`
+
+**Next**: Run full hygiene checks, push the hardening update to PR #46, then
+request reviewer confirmation before visible host mutation/UI work.
+
+### 2026-07-06 - PR #45 Bot Follow-Up Hardening
+
+**Objective**: Address post-merge bot findings from PR #45 before requesting
+review of the Gate 3 product-integration branch.
+
+**Context**: The bot identified three P2 helper-control issues in the merged
+Gate 1 / Gate 2 implementation: wrapper timeouts killed only the `cmd.exe`
+parent process, the helper start-step timeout matched the launcher's readiness
+timeout without headroom, and synthetic public states such as `operation_busy`
+or `operation_expired` could inherit stale classification / terminal /
+next-action values from the stored operation lock.
+
+**Decision**: Treat these as helper safety fixes that should land before the
+Reviewer evaluates Gate 3 product integration. Keep product UI exposure,
+`provider_tls_repair=true`, browser-triggered host mutation, Podman remediation,
+and tester-facing package inclusion blocked.
+
+**Execution**: Added process-tree timeout cleanup for controlled wrapper
+execution, using Windows `taskkill.exe /T /F` and a cleanup wait before bounded
+stdout/stderr draining. Added 60 seconds of helper headroom over the launcher's
+180-second readiness timeout, so `start.bat` can return its own exit code 2 and
+map to `readiness_timeout`. Updated public operation-status conversion so
+synthetic override states recompute classification, terminal, and next action
+from the override state policy instead of copying stale lock values.
+
+**Validation**:
+
+- PASS:
+  `.\.venv\Scripts\python.exe -m pytest tests\unit\test_task_087_host_helper.py -q -p no:cacheprovider`
+- PASS: PowerShell parser checks for `scripts\lib\TowerScoutHostHelper.ps1`
+  and `scripts\host-helper.ps1`
+- PASS:
+  `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\host-helper.ps1 -SelfTest`
+- PASS: `node tests\frontend\test_setup_wizard_validation_contract.js`
+- PASS:
+  `.\.venv\Scripts\python.exe -m pytest tests\unit\test_config.py tests\unit\test_frontend_provider_tls.py tests\unit\test_provider_http.py tests\unit\test_flask_routes.py -q -p no:cacheprovider`
+- PASS: `node tests\frontend\test_global_contract.js`
+- PASS: `node tests\frontend\test_debug_logging_contract.js`
+- PASS:
+  `python .agents\skills\towerscout-frontend-bundle-guard\scripts\check_bundle_source_consistency.py .`
+- PASS: `python .agent_work\scripts\validate_agent_work.py`
+- PASS:
+  `python .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .`
+- PASS: `git diff --check`
+
+**Next**: Ask the Reviewer to review both the bot-follow-up helper hardening
+and the Gate 3 state-retention slice before adding visible repair UI.
+
+### 2026-07-06 - Gate 3 Product Integration Proof Started
+
+**Objective**: Start product integration proof without enabling a browser-side
+host repair action.
+
+**Context**: PR #45 merged the Gate 1 / Gate 2 helper transport, security, and
+internal Docker CPU/off live-wrapper proof. The reviewer accepted that as the
+helper proof baseline, but product UI exposure, `provider_tls_repair=true`,
+Podman remediation, browser-triggered default mutation, and tester-facing
+package inclusion remained blocked.
+
+**Decision**: Make the first Gate 3 slice non-mutating and test-led. Preserve
+structured provider validation details end-to-end and keep helper availability
+reported as unavailable until a later slice wires an approved helper
+availability check and repair-button renderer. Do not render a repair button
+or call the host helper from the browser in this slice.
+
+**Execution**: Added provider validation metadata for `repairable` and
+`helper_available`, with repairable limited to the existing TLS repair
+categories and helper availability defaulting to `false`. Updated Setup Wizard
+to retain the last structured validation result and failure per provider,
+including `provider`, `category`, `repairable`, `support_action`,
+`repair_command`, and `helper_available`. Added a repair-display predicate that
+requires both a repairable TLS failure and helper availability, but did not add
+visible UI or a mutating operation call. Rebuilt the generated frontend bundle.
+
+**Validation**:
+
+- PASS: `node tests\frontend\test_setup_wizard_validation_contract.js`
+- PASS:
+  `.\.venv\Scripts\python.exe -m pytest tests\unit\test_config.py tests\unit\test_frontend_provider_tls.py tests\unit\test_provider_http.py tests\unit\test_flask_routes.py -q -p no:cacheprovider`
+- PASS: `node tests\frontend\test_global_contract.js`
+- PASS: `node tests\frontend\test_debug_logging_contract.js`
+- PASS:
+  `python .agents\skills\towerscout-frontend-bundle-guard\scripts\check_bundle_source_consistency.py .`
+- PASS: `python .agent_work\scripts\validate_agent_work.py`
+- PASS:
+  `python .agents\skills\towerscout-agent-work-hygiene\scripts\check_agent_work_quick.py .`
+- PASS: `git diff --check`
+
+**Next**: Request reviewer feedback on whether this Gate 3 state-retention
+contract is sufficient before adding a visible helper-unavailable fallback or
+repair-button renderer.
 
 ### 2026-07-06 - Patched Live Wrapper Rerun Passed
 
