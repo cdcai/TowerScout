@@ -1,6 +1,6 @@
 # TowerScout AI Coding Guide
 
-This is the primary high-context guidance file for AI coding agents working in the TowerScout repository. It preserves project context, guardrails, and workflow guidance while reflecting the current repository state as of 2026-05-27.
+This is the primary high-context guidance file for AI coding agents working in the TowerScout repository. It preserves project context, guardrails, and workflow guidance while reflecting the current repository state as of 2026-07-08.
 
 ## Mission and Product Context
 
@@ -18,16 +18,18 @@ The project still carries public-health workflow expectations:
 
 ### Current State
 
-- Sprint 06 is the active planning and execution lane, focused on V1 RC1 / pilot-ready release readiness.
-- Sprint 04 and Sprint 05 implementation work is completed background context, not the current sprint objective.
+- Sprint 07 is the active planning and execution lane.
+- Sprint 04, Sprint 05, and Sprint 06 implementation work is completed background context, not the current sprint objective.
 - Setup Wizard and Settings are implemented in the repo.
 - Detection progress, estimate/detect separation, and cancel handling are implemented in the repo.
 - `TASK-025` Docker-compatible / OCI containerization is merged on `main`: the repo now has a `Dockerfile`, Compose configuration, health/readiness endpoints, persistent runtime volume contract, release-package helper scripts, GHCR publish workflow, asset/TLS import helpers, and OCI runtime documentation.
-- The current release direction is GitHub-first and engine-aware: GitHub Releases should be the normal user-facing release control plane, a release ZIP plus pinned GHCR image digest is the preferred package shape, and Docker Desktop is the primary controlled RC1 pilot runtime unless owner-approved support boundaries say otherwise.
-- `TASK-071`, `TASK-072`, and `TASK-079` are complete enough to feed the RC path. `TASK-075` has implemented the single GPU-capable package direction with CPU-safe default launch; broad GPU acceleration claims remain pending NVIDIA Docker Desktop WSL2 validation.
+- The current release direction remains GitHub-first and engine-aware: GitHub Releases are the normal user-facing release control plane, a release ZIP plus pinned GHCR image digest is the preferred package shape, and Docker Desktop remains the primary controlled runtime path for the fork-side stable release closeout unless owner-approved support boundaries say otherwise.
+- `TASK-071`, `TASK-072`, and `TASK-079` are complete enough to feed the stable-release closeout path. `TASK-075` has implemented the single GPU-capable package direction with CPU-safe default launch; broad GPU acceleration claims remain bounded by workstation-specific NVIDIA validation.
 - `TASK-066` has validated the digest-pinned Docker Desktop and Podman package runtime paths for CPU-default launch. Podman evidence is qualified: on the validation host, `podman compose` delegated to Docker Compose v5.1.3, and Podman source-build/base-image pulls from Docker Hub still fail TLS certificate verification inside the Podman VM.
 - `TASK-067` has closed the Flask route-test timeout/isolation gap with pytest timeout safeguards and isolated test runtime paths.
-- `TASK-073` is the next active Sprint 06 path for clean-machine pilot/UAT planning before asking external users to test.
+- PR #46 has merged on `main` as `d148727`, closing the non-mutating Task-087 Gate 3 proof while keeping the helper control plane dark.
+- `TASK-088` is now the active release-transition path: finish the pre-tag source pass, rebuild and validate the stable `v0.1.0` package set, and publish the fork-side stable release.
+- `TASK-089` is blocked until cdcai-side access, GHCR ownership, and issue-tracker prerequisites are confirmed.
 
 ### Completed Sprint 04 Summary
 
@@ -80,18 +82,15 @@ Sprint 04 materially changed what an agent should assume about the project. The 
 
 ### Immediate Path Forward
 
-The current path forward is centered on finishing Sprint 06 V1 RC1 / pilot-ready release readiness:
+The current path forward is centered on finishing the fork-side stable `v0.1.0` closeout and preparing the later cdcai migration:
 
-1. Close out `TASK-066` with the digest-pinned Docker/Podman validation evidence and bounded caveats.
-2. Use the merged `TASK-067` route-test isolation and timeout safeguards as the automated-review baseline before broad pilot prep.
-3. Complete `TASK-073` clean-machine pilot/UAT planning before asking external users to test.
-4. Limit GPU acceleration support language to the RC5 evidence: Docker
-   GPU and Podman GPU are support-assigned paths after workstation-specific
-   NVIDIA validation and fixed-fixture parity, while Docker Desktop CPU remains
-   the primary pilot path.
-5. Route deeper package-runtime preflight automation to `TASK-074` if pilot planning or tester feedback shows launch friction remains too high.
+1. Finish the Task-088 pre-tag source pass: upstream merge, required docs fixes, honest handoff/SBOM posture, and stale-tag cleanup.
+2. Build fresh `v0.1.0` CPU and CUDA images from the merged `main` baseline and generate new digest-pinned release packages.
+3. Re-run the stable validation protocol against the rebuilt packages using the replayable fixture baseline and targeted setup/manual smoke checks.
+4. Publish the fork-side stable release with package assets, release notes, and the explicit manual TLS-repair posture while helper enablement remains dark.
+5. Keep `TASK-087` helper availability, browser mutation enablement, and managed-network helper-package validation as later work unless release evidence makes one of those items immediately critical.
 
-`TASK-026` CPU optimization and `TASK-029` multi-provider fallback remain follow-on backlog work unless Sprint 06 evidence makes them release-critical.
+`TASK-026` CPU optimization and `TASK-029` multi-provider fallback remain follow-on backlog work unless release evidence makes them release-critical.
 
 ### Important Status Correction
 
@@ -520,7 +519,7 @@ Node 18 is now end-of-life. Treat migration of the frontend CI/runtime baseline 
 
 Current CI has per-job timeout limits and pytest timeout safeguards. Route-test imports are isolated from real local `.env`, logs, uploads, sessions, and cache paths through the test bootstrap. Full asset-backed package validation remains manual/advisory unless a later `TASK-067`/`TASK-074` ratchet promotes a bounded package smoke gate.
 
-Do not describe container release validation as fully automated CI coverage yet. CI can attempt to build the image on `main`, and the manual GHCR publish workflow can publish a digest-pinned image, but full asset-backed release validation remains Sprint 06 release-candidate follow-through. `TASK-066` validated the digest-pinned Docker Desktop and Podman package-runtime paths, but Podman support language must distinguish package runtime, Docker-Desktop-free Compose-provider coverage, and source-build/base-image TLS behavior.
+Do not describe container release validation as fully automated CI coverage yet. CI can attempt to build the image on `main`, and the manual GHCR publish workflow can publish a digest-pinned image, but full asset-backed release validation remains a manual Task-088 closeout step. `TASK-066` validated the digest-pinned Docker Desktop and Podman package-runtime paths, but Podman support language must distinguish package runtime, Docker-Desktop-free Compose-provider coverage, and source-build/base-image TLS behavior.
 
 ## Container And Deployment Strategy
 
@@ -532,7 +531,7 @@ The current product direction is:
 
 - use the merged OCI-compatible container contract rather than a Docker Desktop-specific product path
 - make GitHub Releases the default user-facing delivery control plane
-- treat Docker Desktop as the primary controlled RC1 pilot engine unless the pilot cohort requires a different runtime
+- treat Docker Desktop as the primary controlled runtime for the current fork-side stable release unless the support boundary explicitly approves a different engine
 - treat Podman as a qualified package-runtime option when a running Podman
   machine and approved non-Docker-Desktop Compose provider are available; RC5
   validation covers Docker-Desktop-free Podman CPU and Podman GPU CDI with a
@@ -710,13 +709,13 @@ The original guidance benefited from explicitly naming recent completed work. Th
 
 ## Current Path Forward
 
-### Sprint 06 Priority Sequence
+### Task-088 / Task-089 Priority Sequence
 
-1. Finish `TASK-066` release-candidate validation evidence with the Docker Desktop, qualified Podman, GPU, and remaining release-boundary caveats clearly recorded.
-2. Treat the `TASK-067` pytest timeout and route-test isolation baseline as merged.
-3. Complete `TASK-073` clean-machine pilot / UAT execution planning before asking external users to test.
-4. Pull in `TASK-074` runtime prerequisite preflight if pilot planning shows testers still need too much manual engine/asset/TLS diagnosis.
-5. Keep `TASK-026`, `TASK-029`, architecture work, and V2 feature work behind release-candidate readiness unless new evidence makes one release-critical.
+1. Finish the Task-088 pre-tag source pass from merged `main`, including the upstream README merge, release-home decision, documentation fixes, handoff notes, and stale-tag cleanup.
+2. Build and validate fresh `v0.1.0` CPU and CUDA release packages from the merged `main` baseline.
+3. Publish the fork-side stable release and keep the package/runtime language aligned with the validated Docker Desktop CPU-default baseline and the bounded Podman/GPU support language.
+4. Execute `TASK-089` only after cdcai-side write access, GHCR ownership, and issue-tracker prerequisites are confirmed.
+5. Keep Task-087 helper enablement, architecture work, and V2 feature work behind the stable-release closeout unless new evidence makes one immediately release-critical.
 
 ### Practical Agent Takeaway
 
@@ -724,13 +723,14 @@ An agent should leave with the following understanding:
 
 - the app is no longer missing setup/settings
 - the repo has a merged Docker-compatible / OCI container baseline and local launcher MVP
-- the release path now uses a digest-pinned GHCR image and package-local asset import flow
+- the release path uses a digest-pinned GHCR image and package-local asset import flow
 - CPU-default Docker Desktop and qualified Podman package-runtime validation have passed, while GPU and Docker-Desktop-free Podman claims remain bounded
 - local/CI pytest timeout safeguards and Flask route-test isolation are merged through `TASK-067`
+- the non-mutating Task-087 Gate 3 proof is merged on `main`, but the browser-triggered helper path remains deliberately dark
 - filesystem sessions and disk-backed config writes are real architectural constraints
 - Google and Azure workflows are both important
 - outbreak-investigation workflows are the highest-value legacy surface to preserve
-- the next path forward is Sprint 06 release-package, asset-bundle, documentation, clean-machine validation, and pilot/UAT readiness
+- the next path forward is Task-088 stable-release closeout on the fork, followed by Task-089 cdcai migration execution when owner-side prerequisites are available
 
 ## References
 

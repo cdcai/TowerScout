@@ -2,8 +2,8 @@
 
 **Sprint Period**: Sprint 07 begins July 2, 2026
 **Last Updated**: July 8, 2026
-**Focus**: Advance Task-087 from helper proof into product integration proof while executing the bounded stable-release and handoff closeout needed before project end.
-**Status**: Sprint 06 is closed. The release path is validated through `v0.1.0-rc7.1`, and completed Sprint 06 task files have moved to `.agent_work/tasks/completed/`. PR #45 merged the Task-087 Gate 1 / Gate 2 helper proof; Gate 3 product integration proof is now in progress.
+**Focus**: Execute the TASK-088 pre-tag stable-release closeout from merged `main` while keeping Task-087 helper enablement dark and explicitly deferred.
+**Status**: Sprint 06 is closed. The release path is validated through `v0.1.0-rc7.1`, completed Sprint 06 task files have moved to `.agent_work/tasks/completed/`, and PR #46 is now merged on `main` as the baseline for stable-release closeout.
 
 ---
 
@@ -52,7 +52,7 @@ Because the project end date is now close, Sprint 07 also carries a bounded rele
 ## Active Sprint 07 Tasks
 
 ### **TASK-087: Host-Side TLS Repair Control Plane**
-**Status**: IN_PROGRESS - Gate 3 product integration proof started after PR #45 helper proof merge
+**Status**: IN_PROGRESS - Gate 3 non-mutating proof merged on `main`; later helper enablement and managed-network validation remain deferred
 **Type**: B/C (Runtime Support / Setup UX / TLS Trust)
 **Priority**: MEDIUM-HIGH
 **Estimated Effort**: 4-7 days (32-56 hours), plus managed-network package validation
@@ -68,15 +68,15 @@ Because the project end date is now close, Sprint 07 also carries a bounded rele
 
 **Current Sprint 07 Work Sequence**:
 1. Gate 1 / Gate 2 helper proof: merged in PR #45 with controlled Docker CPU/off live-wrapper evidence and helper security constraints.
-2. Gate 3 product integration proof: in progress, starting with structured provider-validation state retention and non-mutating repair-display predicates.
-3. Gate 3 follow-up: add visible fallback/repair UI only after reviewer accepts the state-retention contract and helper availability boundary.
-4. Gate 4 managed-network package validation: blocked until Gate 3 passes and the release owner approves user-facing package inclusion.
+2. Gate 3 non-mutating proof: merged through PR #46 on `main`, including the reviewed CI/gate hardening.
+3. Gate 3 follow-up: add visible fallback/repair UI only after release work allows the later helper-availability and browser-mutation enablement slice to begin.
+4. Gate 4 managed-network package validation: blocked until the later helper enablement slice passes and the release owner approves user-facing package inclusion.
 
 **Evidence Handling**:
 Do not record provider keys, helper tokens, certificate subjects, raw thumbprints, raw provider responses, `.env` files, raw logs, browser network traces, screenshots, private AOIs, or local environment dumps in task evidence. Use sanitized operation states and public-safe summaries only.
 
 ### **TASK-088: Stable v0.1.0 Release And Handoff Closeout**
-**Status**: IN_PROGRESS - formal release and handoff execution tracking created from the reviewed handoff plan
+**Status**: IN_PROGRESS - PR #46 merged; pre-merge gate closed; pre-tag source pass now active
 **Type**: C (Release Engineering / Documentation / Handoff)
 **Priority**: HIGH
 **Estimated Effort**: 2-4 days (16-32 hours), excluding owner-gated migration follow-through
@@ -87,7 +87,7 @@ Do not record provider keys, helper tokens, certificate subjects, raw thumbprint
 
 **Current Scope**:
 1. Formalize the reviewed handoff plan into task-tracked execution rather than leaving it only in status analysis.
-2. Land the pre-merge and pre-tag cleanup required for a trustworthy stable release.
+2. Record the merged PR #46 baseline and execute the pre-tag source pass required for a trustworthy stable release.
 3. Validate the rebuilt stable package set and publish the fork-side stable release.
 4. Finalize the handoff notes, guides, and operator-facing documentation needed before migration execution begins.
 

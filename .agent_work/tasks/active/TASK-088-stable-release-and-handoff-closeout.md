@@ -7,7 +7,7 @@
 **Target Sprint**: Sprint 07
 **Created**: 2026-07-08
 **Owner**: TowerScout release owner / active agent support
-**Depends On**: `TASK-087` release-boundary decisions; PR #46 merge readiness; stable package validation assets; release-owner disposition on fallback naming and download-home sequencing
+**Depends On**: `TASK-087` release-boundary decisions; merged `main` baseline at `d148727`; stable package validation assets; release-owner disposition on fallback naming and download-home sequencing
 
 ## Objective
 
@@ -62,7 +62,7 @@ what actually shipped.
 
 ## Dependencies
 
-- PR #46 must remain mergeable and its reviewed cleanup set must still apply.
+- Merged `main` at `d148727` is the baseline for fork-side stable release work.
 - The replayable fixture bundle and validation harness must remain available.
 - The stable release needs an explicit decision on fork-versus-cdcai download
   home sequencing before package docs are finalized.
@@ -77,15 +77,15 @@ execution begins. It is intentionally narrower than the full remaining
 
 ### Must be complete before active TASK-088 execution
 
-- [ ] PR #46 pre-merge cleanup from the handoff strategy is completed or
+- [x] PR #46 pre-merge cleanup from the handoff strategy is completed or
       explicitly dispositioned, with emphasis on:
       - removing the CI log-publishing residue from
         `task-087-frontend-puppeteer.yml`
       - landing the reviewed coverage-gap fixes that make the dark-gate checks
         meaningful for the served bundle and the setup-wizard contract test
-- [ ] PR #46 is merged to `main` and the relevant workflows are green at the
+- [x] PR #46 is merged to `main` and the relevant workflows are green at the
       merge SHA.
-- [ ] The release owner confirms the disposition of the optional
+- [x] The release owner confirms the disposition of the optional
       `TOWERSCOUT_SIMULATED_HELPER` cleanup: remove it before tagging, or carry
       it as an explicitly accepted residual risk.
 
@@ -108,12 +108,29 @@ execution begins. It is intentionally narrower than the full remaining
 
 1. Translate the reviewed handoff plan into formal task tracking and record any
    remaining strategic gaps discovered during final review.
-2. Execute or supervise the fork-side pre-merge and pre-tag cleanup required
-   for a trustworthy stable release.
+2. Execute the fork-side post-merge pre-tag source pass required for a
+  trustworthy stable release.
 3. Rebuild stable images/packages, validate them, and capture the evidence.
 4. Finalize release notes, guidance, and handoff-oriented repo docs.
 5. Hand off migration-dependent follow-through to `TASK-089` with the stable
    fork release as the source baseline.
+
+## Current Execution Slice
+
+The current Task-088 slice is the post-merge pre-tag source pass from the
+implementation strategy.
+
+### Immediate Checklist
+
+- [x] Merge upstream `cdcai/main` into the fork branch and resolve the README
+    conflict using the reviewed recipe.
+- [x] Decide the fork-side stable release download-home wording and keep it
+    self-consistent with the actual fork-published `v0.1.0` artifacts.
+- [ ] Complete the required documentation fixes for host-helper docs,
+    provenance, cross-references, and SBOM/HANDOFF posture.
+- [ ] Decide whether to take any of the optional dead-code deletions before the
+    stable tag.
+- [x] Remove the stale `v0.1.0` tag and prepare the fresh stable tag flow.
 
 ---
 
@@ -242,6 +259,106 @@ limited to `.agent_work/current-tasks.md` and `.agent_work/task-backlog.md`.
 **Next**: Treat the staged set as commit-ready for PR #46 merge prep and keep
 the `.agent_work` task/handoff work as a separate follow-on change set.
 
+### 2026-07-08 - Post-Merge Baseline Established
+**Objective**: Transition TASK-088 from pre-merge gating into the active
+post-merge release-closeout slice.
+**Context**: PR #46 has now merged to `main` as `d148727`, and the helper
+control-plane cleanup/hardening needed to start Task-088 is complete.
+**Decision**: Treat the pre-merge gate as closed and move Task-088 to the
+implementation strategy's Workstream C pre-tag source pass.
+**Execution**: Rebased the handoff-tracking work onto fresh `main` via the
+`docs/task-088-stable-handoff` branch and preserved the release/handoff task
+tracking there.
+**Output**: Task-088 now starts from merged `main` instead of the former
+Task-087 feature branch state.
+**Validation**: Local `main` fast-forwarded to `d148727`; fresh Task-088 branch
+created from that baseline; `.agent_work` validation passed on the new branch.
+**Next**: Execute the pre-tag source pass checklist, beginning with the
+upstream `cdcai/main` merge and the required documentation fixes.
+
+### 2026-07-08 - Upstream Merge And Documentation Slice Started
+**Objective**: Begin the post-merge pre-tag source pass with the two lowest-risk
+required items: the reviewed upstream merge and the first cluster of required
+documentation fixes.
+**Context**: Task-088 had transitioned onto fresh `main`, but the upstream
+`cdcai/main` merge and several required release docs still needed to be brought
+into the branch before tagging work could continue.
+**Decision**: Take the reviewed README-only upstream merge first, then land the
+host-helper/provenance/cross-reference documentation slice as the first Task-088
+content pass.
+**Execution**: Merged `upstream/main` into this branch with the reviewed README
+resolution; updated `README.md` provenance text; corrected the stale path in
+`DATA_LICENSES.md`; corrected the TASK-025 pointer in
+`docs/support/oci-runtime-contract.md`; updated the package guide's stale
+helper note; and created `docs/support/host-helper.md` documenting the shipped
+but disabled helper scaffolding.
+**Output**: The branch now includes the required upstream enterprise notice and
+the first set of pre-tag documentation fixes needed for the stable release.
+**Validation**: `git diff --check` over the touched docs passed; README,
+package-guide, runtime-contract, host-helper, and data-license files reported
+no editor diagnostics; `.agent_work` validation remained green after the task
+tracker update.
+**Next**: Continue the documentation cluster with the remaining required items,
+especially `HANDOFF.md`, the stale `.github/copilot-instructions.md` decision,
+and the SBOM posture decision.
+
+### 2026-07-08 - HANDOFF And SBOM Posture Slice
+**Objective**: Land the handoff-facing release documentation and correct the
+repo's self-described SBOM posture before package assembly begins.
+**Context**: The first documentation slice covered host-helper status and path
+fixes, but Task-088 still needed the explicit handoff guide and an honest SBOM
+story in both the checked-in files and the package-generation script.
+**Decision**: Create `HANDOFF.md` now and soften the SBOM language to an honest
+deferred posture rather than falsely claiming automatic release-candidate SBOM
+generation.
+**Execution**: Added `HANDOFF.md`; updated `SBOM.txt`,
+`release-manifest.v1.json`, and `scripts/package-release.ps1`; and preserved
+the package-guide/runtime-contract/README/data-license fixes from the current
+documentation slice.
+**Output**: The handoff notes now document CI gates, automated-vs-manual
+verification boundaries, asset-bundle custody, accepted risks, and migration
+limits, and the release metadata no longer over-claims automatic SBOM
+generation.
+**Validation**: `git diff --check` over `HANDOFF.md`, `SBOM.txt`,
+`release-manifest.v1.json`, and `scripts/package-release.ps1` passed; those
+files reported no editor diagnostics; `./.venv/Scripts/python -m pytest tests/unit/test_release_package_script.py -q` passed.
+**Next**: Decide the remaining release-home wording and whether to refresh or
+remove `.github/copilot-instructions.md` before starting package assembly.
+
+### 2026-07-08 - Stale `v0.1.0` Tag Removed
+**Objective**: Free the stable `v0.1.0` tag name for the real Task-088 release
+cut.
+**Context**: The old `v0.1.0` tag still pointed at the historical `e78974d`
+milestone commit and would have blocked or confused the stable tag cut.
+**Decision**: Remove the stale tag locally and on `origin` now, before package
+assembly begins.
+**Execution**: Deleted local tag `v0.1.0` and pushed the matching tag deletion
+ to `origin`.
+**Output**: The stable tag name is now free for the real release cut.
+**Validation**: `git tag -l v0.1.0` returned nothing and `git ls-remote --tags origin refs/tags/v0.1.0 refs/tags/v0.1.0^{}` returned no matches.
+**Next**: Continue the remaining pre-tag documentation decisions, then move to
+image/package assembly from the cleaned tag namespace.
+
+### 2026-07-08 - Fork-Side Release-Home Decision Recorded
+**Objective**: Close the release-home wording decision for the fork-side stable
+release before package assembly begins.
+**Context**: The reviewed handoff plan requires the fork-published stable
+release to remain self-consistent and explicitly warns against repointing users
+at a cdcai release or GHCR namespace that does not yet exist.
+**Decision**: Keep the fork-side stable `v0.1.0` package-facing release URLs
+and image references on the fork/J-Schulein side for this release cut. Defer
+the `cdcai` rewrite to `TASK-089` when the cdcai rebuild/release actually
+exists.
+**Execution**: Verified that the current package-facing release URLs and image
+defaults still consistently point at the fork-side release/registry surfaces.
+**Output**: The fork-side stable release wording is now an explicit Task-088
+decision rather than an implicit holdover.
+**Validation**: Verified current release URLs still point to
+`https://github.com/J-Schulein/TowerScout/releases`, and current package-facing
+image defaults still point to `ghcr.io/j-schulein/towerscout`.
+**Next**: Finish the remaining documentation decisions, especially the stale
+`.github/copilot-instructions.md` disposition, before package assembly begins.
+
 ---
 
 ## Validation Results
@@ -254,6 +371,7 @@ the `.agent_work` task/handoff work as a separate follow-on change set.
 ### Acceptance Criteria Validation
 - [x] **Task tracking created**: Completed 2026-07-08
 - [x] **Pre-merge cleanup dispositioned**: Completed 2026-07-08
+- [x] **Task-088 entered from merged main baseline**: Completed 2026-07-08
 - [ ] **Pre-tag cleanup completed**: Pending
 - [ ] **Stable package validation recorded**: Pending
 - [ ] **Guidance and handoff docs finalized**: Pending

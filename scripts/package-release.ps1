@@ -443,10 +443,12 @@ Image: $effectiveImage
 PyTorch flavor: $PytorchFlavor
 Generated UTC: $((Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"))
 
-Attach or publish an SBOM for the exact release package and container image.
-At minimum, the SBOM should cover Python packages from webapp/requirements.txt,
-frontend packages from package-lock.json, OS packages in the image, and the
-vendored YOLOv5 source snapshot.
+TowerScout does not currently generate an SBOM automatically as part of the
+release packaging flow. Attach or publish an SBOM for the exact release
+package and container image when one is available. At minimum, the SBOM should
+cover Python packages from webapp/requirements.txt, frontend packages from
+package-lock.json, OS packages in the image, and the vendored YOLOv5 source
+snapshot.
 
 This file is a release-package reference, not the generated SBOM itself.
 "@ | Set-Content -LiteralPath (Join-Path $stagePath "SBOM.txt") -Encoding ASCII
@@ -515,7 +517,7 @@ $manifest = [ordered]@{
     }
     sbom = [ordered]@{
         reference = "SBOM.txt"
-        status = "Release SBOM must be generated or attached for each release candidate."
+        status = "Automatic SBOM generation is not yet wired into the release pipeline. Attach a release-specific SBOM when available; otherwise treat SBOM.txt as a reference-only placeholder."
     }
     revocation = [ordered]@{
         notes = "Revoke and replace the release if the ZIP, image digest, model/data assets, source ref, SBOM, or notices are defective."

@@ -37,6 +37,13 @@ approved Compose provider, and NVIDIA validation for the selected runtime. You
 do not need Git, Python, Conda, Node.js, VS Code, or a source checkout for the
 normal package workflow.
 
+## Provenance
+
+This repository is a fork of `cdcai/TowerScout`, which itself carries forward
+the original `TowerScout/TowerScout` project history. The 2026 `v0.1.0`
+package, validation, and handoff work was developed on this fork before the
+reviewed migration path returns the maintained release line to `cdcai`.
+
 ## About TowerScout
 
 The [Centers for Disease Control and Prevention](https://cdc.gov) have [procedures](https://www.cdc.gov/legionella/health-depts/environmental-inv-resources/id-cooling-towers.html) for identifying cooling towers during investigation of an outbreak of Legionnaires' disease, which can be significantly sped up by using TowerScout.  TowerScout has been used in more than 12 investigations of outbreaks of Legionnaires' disease across 8 states since 2021.  In 2021, TowerScout was the [Hal Varian Award Winner](https://www.ischool.berkeley.edu/programs/mids/capstone/varianaward) for the [Master of Information and Data Science Program (MIDS)](https://www.ischool.berkeley.edu/programs/mids) in the [School of Information](https://ischool.berkeley.edu) at [UC Berkeley](https://berkeley.edu).

@@ -8,7 +8,8 @@
 support-assigned paths after workstation-specific engine, Compose-provider,
 and NVIDIA validation.
 
-This document summarizes the v1 container runtime contract. The detailed task evidence lives under `.agent_work/tasks/active/TASK-025/`.
+This document summarizes the v1 container runtime contract. The detailed task
+evidence lives in `.agent_work/tasks/completed/TASK-025-docker-containerization.md`.
 
 ## Runtime Shape
 
