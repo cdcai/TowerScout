@@ -1115,15 +1115,23 @@ function Get-TowerScoutRunningImageIdentity {
     $previousErrorActionPreference = $ErrorActionPreference
     try {
         $ErrorActionPreference = "Continue"
-        $imageId = (& $effectiveEngine inspect --type container --format "{{.Image}}" $containerId 2>$null | Select-Object -First 1)
-        $configImage = (& $effectiveEngine inspect --type container --format "{{.Config.Image}}" $containerId 2>$null | Select-Object -First 1)
-        if ($LASTEXITCODE -ne 0) {
+        $imageIdResult = & $effectiveEngine inspect --type container --format "{{.Image}}" $containerId 2>$null
+        $imageInspectExitCode = $LASTEXITCODE
+        $imageId = @($imageIdResult | Select-Object -First 1)
+        if ($imageInspectExitCode -ne 0) {
             return $null
         }
 
+        $configImageResult = & $effectiveEngine inspect --type container --format "{{.Config.Image}}" $containerId 2>$null
+        $configInspectExitCode = $LASTEXITCODE
+        $configImage = @($configImageResult | Select-Object -First 1)
+        if ($configInspectExitCode -ne 0) {
+            $configImage = @("")
+        }
+
         $repoDigestsJson = "[]"
-        if (-not [string]::IsNullOrWhiteSpace([string] $imageId)) {
-            $repoDigestsResult = & $effectiveEngine inspect --type image --format "{{json .RepoDigests}}" ([string] $imageId).Trim() 2>$null
+        if (-not [string]::IsNullOrWhiteSpace([string] $imageId[0])) {
+            $repoDigestsResult = & $effectiveEngine inspect --type image --format "{{json .RepoDigests}}" ([string] $imageId[0]).Trim() 2>$null
             if ($LASTEXITCODE -eq 0 -and $null -ne $repoDigestsResult) {
                 $repoDigestsJson = [string] ($repoDigestsResult | Select-Object -First 1)
             }
@@ -1163,8 +1171,8 @@ function Get-TowerScoutRunningImageIdentity {
     return [pscustomobject]@{
         EngineName = $effectiveEngine
         ContainerId = [string] $containerId
-        ConfigImage = ([string] $configImage).Trim()
-        ImageId = ([string] $imageId).Trim()
+        ConfigImage = ([string] $configImage[0]).Trim()
+        ImageId = ([string] $imageId[0]).Trim()
         RepoDigests = $repoDigests
         ActualDigest = $actualDigest
     }

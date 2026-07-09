@@ -357,6 +357,74 @@ def test_running_image_identity_check_matches_pinned_digest_from_engine_inspect(
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
+def test_get_running_image_identity_uses_engine_inspect_successfully():
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task088-engine-inspect-{uuid.uuid4().hex}"
+    temp_root.mkdir(parents=True)
+    digest = "sha256:" + ("5" * 64)
+    expected_image = f"ghcr.io/j-schulein/towerscout:v0.1.2-cpu@{digest}"
+    (temp_root / "release-manifest.v1.json").write_text(
+        json.dumps({"release_version": "v0.1.2-cpu", "pytorch_flavor": "cpu"}),
+        encoding="utf-8",
+    )
+    (temp_root / ".env").write_text(
+        "\n".join(
+            [
+                f"TOWERSCOUT_IMAGE={expected_image}",
+                f"TOWERSCOUT_IMAGE_DIGEST={digest}",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    shim_dir = temp_root / "bin"
+    shim_dir.mkdir(parents=True)
+    docker_cmd = shim_dir / "docker.cmd"
+    docker_cmd.write_text(
+        "@echo off\r\n"
+        "if \"%1\"==\"compose\" (\r\n"
+        "  if \"%2\"==\"ps\" echo container-123&& exit /b 0\r\n"
+        ")\r\n"
+        "if \"%1\"==\"inspect\" (\r\n"
+        "  if \"%5\"==\"{{.Image}}\" echo sha256:imageid123&& exit /b 0\r\n"
+        f"  if \"%5\"==\"{{.Config.Image}}\" echo {expected_image}&& exit /b 0\r\n"
+        f"  if \"%5\"==\"{{json .RepoDigests}}\" echo [\"ghcr.io/j-schulein/towerscout@{digest}\"]&& exit /b 0\r\n"
+        ")\r\n"
+        "exit /b 1\r\n",
+        encoding="utf-8",
+    )
+
+    try:
+        command = f"""
+        $ErrorActionPreference = "Stop"
+        $env:PATH = "{shim_dir};$env:PATH"
+        . "{COMPOSE_LIB}"
+
+        function Get-TowerScoutRepoRoot {{
+            return "{temp_root}"
+        }}
+
+        function Get-TowerScoutComposeServiceContainerIds {{
+            param([string] $Engine, [string] $ServiceName)
+            return @("container-123")
+        }}
+
+        $identity = Get-TowerScoutRunningImageIdentity -Engine docker -ServiceName "towerscout"
+        if ($null -eq $identity) {{
+            throw "Expected engine inspect to produce a running image identity."
+        }}
+        if ($identity.ImageId -ne "sha256:imageid123") {{
+            throw "Expected image identity helper to preserve the inspected image ID."
+        }}
+        "ok"
+        """
+        result = _run_powershell(command)
+
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
 def test_podman_copy_uses_direct_podman_cp_without_provider_cp_noise():
     temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task084-podman-copy-{uuid.uuid4().hex}"
     temp_root.mkdir(parents=True)
