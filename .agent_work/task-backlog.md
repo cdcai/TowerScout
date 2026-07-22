@@ -1,7 +1,7 @@
 # Task Backlog - Remaining Work
 
-**Last Updated**: July 8, 2026
-**Planning State**: Sprint 06 is closed through the validated `v0.1.0-rc7.1` tester-facing package set. `TASK-087`, `TASK-088`, and `TASK-089` are now tracked in `current-tasks.md`, not in the ordered backlog.
+**Last Updated**: July 22, 2026
+**Planning State**: The fork-side `v0.1.2` pilot has been distributed, the project is extended through 2026-10-31, and `cdcai/TowerScout` remains unchanged until the owner reviews feedback and approves an adoption baseline. This Phase 1 closeout does not select new backlog work. `TASK-087`, completed `TASK-088`, and owner-gated `TASK-089` remain tracked in `current-tasks.md`, not in the ordered backlog.
 **Ordering Method**: Remaining work is ordered by release/pilot risk first, then post-release architecture and maintenance value.
 
 ---
@@ -11,7 +11,7 @@
 - Removed completed Sprint 06 release-readiness entries from the ordered backlog: `TASK-065`, `TASK-066`, `TASK-067`, `TASK-069`, `TASK-071`, `TASK-072`, `TASK-073`, `TASK-074`, `TASK-075`, `TASK-079`, `TASK-080`, `TASK-081`, `TASK-082`, `TASK-083`, `TASK-084`, `TASK-085`, and `TASK-086`.
 - Selected `TASK-087` as active Sprint 07 work.
 - Selected `TASK-088` as the active stable-release and handoff closeout lane.
-- Selected `TASK-089` as the blocked cdcai migration execution lane pending owner-side prerequisites.
+- Reframed `TASK-089` as an owner-gated adoption-preparation lane. Migration execution is intentionally deferred until pilot feedback is reviewed, even if technical access becomes available earlier.
 - Kept follow-on release support, policy, restricted-network, architecture, and performance tasks visible for future selection.
 - Kept parked field-use and technical-debt items separate from ordered release/pilot work.
 
@@ -28,7 +28,7 @@
 | 5 | `TASK-078` Permissive Apache-Only Runtime Migration | NOT_STARTED | C (ML Runtime / Release Policy) | TBD after PoC | `TASK-069`; current YOLO validation baseline | Later public-release track. Evaluate ONNX or another non-Ultralytics runtime, remove AGPL YOLO from the default package/image, and validate detector behavior before claiming an Apache-compatible package. |
 | 6 | `TASK-058` Background Detection Jobs And Durable Run State | NOT_STARTED | C (Architecture / Reliability) | 3-5 days (24-40h) | Release baseline stable; current progress/cancel contract understood | Highest-value post-release architecture work once pilot blockers are handled. Long-running detection should eventually move away from request/thread-local assumptions. |
 | 7 | `TASK-059` Backend Layer Decomposition And Logging Consolidation | NOT_STARTED | C (Architecture / Maintainability) | 3-5 days (24-40h) | `TASK-058` preferred first | Keep after durable job/state ownership is clear. Route/service boundaries should follow the actual job and state model rather than be guessed first. |
-| 8 | `TASK-027` Enhanced Error Handling | NOT_STARTED | A/B (Reliability / UX) | 1-2 days (8-16h) | Existing logging, setup, provider, and support diagnostics | Keep as a release-support improvement. Fold still-relevant Sprint 04 deferred error-handler quick wins into this task. |
+| 8 | `TASK-027` Enhanced Error Handling | NOT_STARTED | A/B (Reliability / UX) | 1-2 days (8-16h) | Existing logging, setup, provider, and support diagnostics; v0.1.2 full-matrix non-blocking findings | Keep as a release-support improvement. Fold still-relevant Sprint 04 deferred error-handler quick wins into this task, and include the v0.1.2 Google no-draw finding: Google mode currently shows a generic network error if "Find towers" is run before the user defines a search area or drawn boundary. |
 | 9 | `TASK-026` CPU Optimization | NOT_STARTED | C (Performance) | 2-3 days (16-24h) | Stable package/runtime baseline; representative CPU benchmarks | Keep after pilot feedback unless CPU performance becomes a confirmed tester blocker. Optimization should start from the validated package path, not source-only assumptions. |
 | 10 | `TASK-029` Multi-Provider Fallback | NOT_STARTED | B (Reliability) | 2-3 days (16-24h) | Provider abstraction; improved error classification preferred | Keep, but do not pull before policy/error-handling clarity. Automatic fallback must preserve provider provenance and avoid masking unsafe/no-key or quota conditions. |
 | 11 | `TASK-060` Frontend Build Modernization | NOT_STARTED | B (Frontend Infrastructure) | 1-2 days (8-16h) | Stable release branch or explicit modernization window | Keep as maintenance. Manual ordered concatenation is a risk, but changing the build pipeline is not necessary for the immediate pilot path. |
@@ -39,9 +39,9 @@
 
 | Task | Active Location | Notes |
 |---|---|---|
-| `TASK-087` Host-Side TLS Repair Control Plane | `.agent_work/current-tasks.md`; `.agent_work/tasks/active/TASK-087-host-side-tls-repair-control-plane.md` | Selected as Sprint 07 active work. Starts with helper transport and security proof before product UI integration. |
-| `TASK-088` Stable v0.1.0 Release And Handoff Closeout | `.agent_work/current-tasks.md`; `.agent_work/tasks/active/TASK-088-stable-release-and-handoff-closeout.md` | Selected as active release-transition work. Owns the bounded pre-handoff cleanup, stable release validation, guide finalization, and fork-side release publication. |
-| `TASK-089` cdcai Migration Execution And Ownership Transfer | `.agent_work/current-tasks.md`; `.agent_work/tasks/active/TASK-089-cdcai-migration-execution.md` | Selected as blocked release-transition work. Starts only after owner-side access, GHCR publish ownership, and backlog-destination prerequisites are confirmed. |
+| `TASK-087` Host-Side TLS Repair Control Plane | `.agent_work/current-tasks.md`; `.agent_work/tasks/active/TASK-087-host-side-tls-repair-control-plane.md` | Paused after the merged non-mutating proof. Later enablement requires a future planning decision. |
+| `TASK-088` Stable Release And Handoff Closeout | `.agent_work/current-tasks.md`; `.agent_work/tasks/active/TASK-088-stable-release-and-handoff-closeout.md` | Completed for pilot distribution, support coverage, and durable release/evidence custody; retained in `tasks/active/` until Sprint 07 closeout. |
+| `TASK-089` cdcai Adoption Preparation And Deferred Ownership Transfer | `.agent_work/current-tasks.md`; `.agent_work/tasks/active/TASK-089-cdcai-migration-execution.md` | Prepare the handoff now, but keep cdcai unchanged until pilot feedback is reviewed and the owner approves the adoption baseline. Technical access alone does not authorize execution. |
 
 ---
 

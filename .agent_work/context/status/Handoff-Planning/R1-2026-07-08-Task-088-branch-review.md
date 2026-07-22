@@ -1,5 +1,9 @@
 # TowerScout External Review — R1
 
+> **HISTORICAL REVIEW COPY**: Preserved for evidence. Current action is governed
+> by `PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`; the maintained review series
+> is grouped under `Reviews/`.
+
 | | |
 |---|---|
 | **Review round** | R1 (first of a recurring series; findings are numbered `R1-nn` and future rounds will continue as `R2-nn`, …) |

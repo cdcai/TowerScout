@@ -1,5 +1,18 @@
 # TowerScout v0.1.0 Stable Release & cdcai Migration — Implementation Strategy
 
+> **HISTORICAL EXECUTION PLAN — NOT THE CURRENT MIGRATION SCHEDULE**
+>
+> This document records the reviewed release strategy prepared on 2026-07-07.
+> Its fork-side release work evolved through `v0.1.0` and `v0.1.1` into the
+> validated, published `v0.1.2` baseline. On 2026-07-10 the cdcai owner chose
+> to keep `cdcai/TowerScout` unchanged until pilot feedback is reviewed.
+> Current timing, repository roles, the confirmed extension through
+> 2026-10-31, and
+> adoption gates are defined in
+> `PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`. Do not execute Workstreams G/H,
+> the old day-by-day migration schedule, or the `v0.1.0` migration commands
+> from this file without a new owner approval.
+
 | | |
 |---|---|
 | **Audience** | The Developer executing the release + handoff work |
@@ -9,8 +22,9 @@
 | **Starting state** | Branch `pr-46` @ `533e18b` = head of open **draft PR #46** into `main`; CI genuinely green; `main` @ `229f59f` |
 | **Companion doc** | `TowerScout-Handoff-Review-Comprehensive-Analysis.md` (same folder) — every finding ID referenced below (e.g. *secrets-1*, *p2-runbook-4*) is fully evidenced there. Read a finding's entry before deviating from an instruction. |
 
-Execution tracking for this plan now lives in `TASK-088` (fork-side stable
-release and handoff closeout) and `TASK-089` (cdcai migration execution).
+Historical release execution tracking lives in `TASK-088`. Current pilot
+closeout and deferred adoption tracking live in `TASK-088`, `TASK-089`, and
+`PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`.
 
 Every command in this document was validated against the actual scripts, workflows, and live GitHub state — most in a scratch-clone dry run. Where a command depends on a value produced earlier (a digest, a SHA), it is written as `<placeholder>`.
 
@@ -20,11 +34,20 @@ Every command in this document was validated against the actual scripts, workflo
 
 **Stable v0.1.0 is cut from `main` after merging PR #46 — not by promoting rc7.1, and without attempting to finish Task-087.**
 
+This was the release-cut decision at the time. The final accepted fork-side
+release became `v0.1.2`. The current ownership decision is different: distribute
+the exact `v0.1.2` assets as a validated pilot, keep cdcai unchanged during the
+feedback hold, and migrate only the later owner-approved adoption baseline.
+
 Why (each verified): the rc7.1 tag contains two real bugs fixed on PR #46 — F4 (Google key validation accepts an empty 2xx body → invalid key saved as valid, `ts_provider_http.py:336` at rc7.1) and F5 (geocoding fail-fasts on TLS errors with no fallback to the second provider, `ts_geocoding.py:480` at rc7.1). PR #46's new control plane ships **dark** behind two hardcoded gates (`provider_helper_available()` → `False` at `ts_provider_http.py:120`; `PROVIDER_TLS_REPAIR_BROWSER_MUTATION_ENABLED = false` at `setup-wizard.js:17` and bundle line 7852) — no env/config can flip them, and tests pin them. Finishing Task-087 (rest of Gate 3 + Gate 4 managed-network package validation on CPU and CUDA) is not achievable by the deadline **and wouldn't remove the manual TLS commands from the User Guidance anyway** — so the guides document the manual `repair-provider-tls.cmd` flow regardless (they already do; see §F).
 
 ---
 
-## 1 · Critical-path dependencies — raise on 07-08, they gate everything in §G
+## 1 · Historical critical-path dependencies
+
+The access/package items below remain relevant preparation inputs, but they no
+longer authorize immediate migration. Pilot feedback review and explicit
+cdcai-owner adoption approval now come before all Workstream G execution.
 
 Send these asks to the cdcai owner (Chris Edens) **on 07-08**, because a dry run proved they are not currently satisfied:
 
@@ -335,7 +358,13 @@ The near-final deck (`Setup Guide_Updated_2026.07.07.pptx`, 21 slides) is struct
 
 ---
 
-## G · Workstream G — Migration to cdcai (07-10 → 07-13; commands dry-run-validated)
+## G · Workstream G — Migration to cdcai — DEFERRED
+
+Do not execute this workstream during the pilot feedback hold. The commands
+below are retained as historical, dry-run-validated mechanics only. Before
+execution, replace `v0.1.0` with the owner-approved baseline (`v0.1.2` or a
+later validated successor), reconcile all namespace/package assumptions, and
+obtain explicit owner approval under the current pilot/adoption plan.
 
 ### Phase 0 — already done by workstreams A–E
 Fork main = merged PR #46 + cdcai merge + namespace/docs pass; v0.1.0 tagged and released on the fork.
@@ -389,7 +418,12 @@ gh release create v0.1.0 --repo cdcai/TowerScout --title "TowerScout v0.1.0" --n
 
 ---
 
-## H · Workstream H — Backlog export & knowledge transfer (07-11 → 07-13, after Issues enabled or alternate destination approved)
+## H · Workstream H — Backlog export & knowledge transfer — DEFERRED
+
+Do not create cdcai Issues or otherwise change the official repository during
+the feedback hold. Preserve the backlog in `.agent_work` and provide an
+owner-controlled feedback/support destination outside cdcai until adoption is
+approved.
 
 File as GitHub Issues **on cdcai** (not the fork — fork issues would not migrate), each linking back to its `.agent_work/task-backlog.md` entry:
 
@@ -408,7 +442,11 @@ issue-creation source.
 
 ---
 
-## Day-by-day schedule
+## Historical day-by-day schedule
+
+This schedule was superseded on 2026-07-10. The current sequence is pilot
+distribution, feedback review, owner adoption decision, then optional cdcai
+migration. See `PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`.
 
 | Date | Work | Output |
 |---|---|---|
@@ -424,7 +462,11 @@ If validation fails past 07-10 EOD → execute the D5 fallback (rc7.1 promotion)
 
 ---
 
-## Definition of done
+## Historical definition of done
+
+This checklist is retained to explain the original plan and is not the current
+Task-088/089 closeout checklist. Current acceptance criteria live in the task
+files and the pilot/adoption plan.
 
 - [x] Azure Maps key rotated (2026-07-08)
 - [ ] `improvements` + `feature/geocoding-system-integration` deleted from origin; local `.env` updated with the new key

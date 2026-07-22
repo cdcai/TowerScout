@@ -1,6 +1,6 @@
 # TASK-087: Host-Side TLS Repair Control Plane
 
-**Status**: IN_PROGRESS - Gate 3 product integration proof started after PR #45 helper proof merge
+**Status**: PAUSED / DEFERRED - Gate 3 non-mutating proof is merged; later enablement and managed-network validation require a future planning decision
 **Type**: B/C (Runtime Support / Setup UX / TLS Trust)
 **Priority**: MEDIUM-HIGH
 **Estimated Effort**: 4-7 days (32-56 hours), plus package validation on a managed TLS-inspected network
@@ -11,10 +11,10 @@
 
 ## Canonical Source Note
 
-This Sprint 7 task file on the active PR branch supersedes the older Task-087
-copy that may still be visible on the GitHub default branch until the Sprint 6
-closeout PR is merged. Review and implementation should use this file as the
-canonical plan unless the team explicitly replaces it with a newer revision.
+This file preserves the canonical gated Task-087 design and evidence. The
+non-mutating proof is merged, but later helper availability, browser mutation,
+and managed-network package validation are not currently selected work. Resume
+only after a future planning decision.
 
 ## Objective
 

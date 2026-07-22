@@ -6,6 +6,15 @@ TowerScout Enterprise, a new program re-designed from the ground up to make bett
 
 ## Install The Release Package
 
+### July 2026 Pilot Notice
+
+The validated `v0.1.2` package is being distributed from this fork as a pilot
+while user feedback is collected. The existing `cdcai/TowerScout` repository
+remains unchanged and continues to represent the application currently adopted
+there; it is not the download source for this pilot. Use the exact `v0.1.2`
+release link supplied by the pilot team. Future cdcai adoption will occur only
+after the cdcai owner reviews feedback and approves the version to adopt.
+
 Most pilot users should not start by cloning this repository. If you received a
 TowerScout release package, start here instead:
 
@@ -40,9 +49,10 @@ normal package workflow.
 ## Provenance
 
 This repository is a fork of `cdcai/TowerScout`, which itself carries forward
-the original `TowerScout/TowerScout` project history. The 2026 `v0.1.0`
-package, validation, and handoff work was developed on this fork before the
-reviewed migration path returns the maintained release line to `cdcai`.
+the original `TowerScout/TowerScout` project history. The validated 2026
+`v0.1.2` pilot package, validation, and handoff work were developed on this
+fork. The cdcai owner will decide whether and when to adopt `v0.1.2` or a later
+validated successor after reviewing pilot feedback.
 
 ## About TowerScout
 

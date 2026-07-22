@@ -143,6 +143,10 @@ or exported datasets unless your site has an approved handling procedure.
 
 ## 1. Get The Release Files From GitHub Releases
 
+For the July 2026 pilot, use the exact validated `v0.1.2` release from the
+development fork. The existing `cdcai/TowerScout` repository remains unchanged
+while feedback is collected and is not the pilot download source.
+
 In your browser, open the TowerScout GitHub repository release page:
 
 ```text

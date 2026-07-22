@@ -1,5 +1,8 @@
 # TowerScout External Review — R2 (pre-tag verification)
 
+> **HISTORICAL REVIEW**: Preserve as evidence; `v0.1.2` is the final validated
+> pilot baseline. See `../PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`.
+
 | | |
 |---|---|
 | **Review round** | R2 (follows R1, 2026-07-08; next round will be R3) |

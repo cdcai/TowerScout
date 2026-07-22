@@ -1,36 +1,42 @@
-# TASK-088: Stable v0.1.0 Release And Handoff Closeout
+# TASK-088: Stable Release And Handoff Closeout
 
-**Status**: IN_PROGRESS
+**Status**: COMPLETED - pilot sent, support coverage confirmed, and durable release/evidence custody recorded
 **Priority**: HIGH
 **Type**: C
 **Estimated Effort**: 2-4 days
 **Target Sprint**: Sprint 07
 **Created**: 2026-07-08
 **Owner**: TowerScout release owner / active agent support
-**Depends On**: `TASK-087` release-boundary decisions; merged `main` baseline at `d148727`; stable package validation assets; release-owner disposition on fallback naming and download-home sequencing
+**Depends On**: validated `v0.1.2` package assets; completed pilot communication; confirmed support coverage; durable evidence custody; clean fork-side handoff state
 
 ## Objective
 
-Execute the bounded work required to cut stable `v0.1.0` from the fork,
-validate the rebuilt package set, finalize the user/support handoff material,
-and leave a clean release record that can be migrated to `cdcai/TowerScout`
-without relying on oral context.
+Close out the validated fork-side `v0.1.2` release as the frozen pilot baseline,
+record the completed pilot distribution/support state, and leave a clean
+handoff record for the hard 2026-10-31 project end date. Keep
+`cdcai/TowerScout` unchanged until its
+owner reviews pilot feedback and approves an adoption baseline. `v0.1.0` and
+`v0.1.1` remain historical tag/image identities with no final GitHub Release
+assets.
 
 ## Canonical Planning Sources
 
-- `.agent_work/context/status/Handoff-Planning/TowerScout-Implementation-Strategy.md`
-- `.agent_work/context/status/Handoff-Planning/TowerScout-Handoff-Review-Comprehensive-Analysis.md`
+- `.agent_work/context/status/Handoff-Planning/PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`
+- `.agent_work/context/status/Handoff-Planning/TowerScout-Implementation-Strategy.md` (historical release execution plan)
+- `.agent_work/context/status/Handoff-Planning/TowerScout-Handoff-Review-Comprehensive-Analysis.md` (historical evidence base)
 
-These planning documents remain the detailed evidence base. This task file is
-the execution tracker and should record final decisions, scope changes, and
-what actually shipped.
+The pilot/adoption plan is the current decision source. The older planning
+documents remain evidence for how the release was built and reviewed, but their
+immediate-migration dates and version-specific commands are not current
+instructions. This task file tracks what actually shipped and what remains for
+pilot readiness.
 
 ## Requirements (EARS Notation)
 
 - WHEN the reviewed handoff work begins, THE SYSTEM SHALL track release and
   handoff execution in formal Sprint 07 task files rather than only in status
   analysis documents.
-- WHEN stable `v0.1.0` is cut from the fork, THE SYSTEM SHALL keep the tagged
+- WHEN a stable release identity is cut from the fork, THE SYSTEM SHALL keep the tagged
   source tree, packaged docs, release assets, and published release notes
   internally consistent about the actual download home and runtime image
   namespace used by that fork release.
@@ -45,29 +51,52 @@ what actually shipped.
   silently relabeling RC artifacts.
 - WHEN handoff guidance is finalized, THE SYSTEM SHALL capture operator-facing
   release, support, validation, and residual-risk notes in durable repo docs.
+- WHEN the `v0.1.2` pilot is distributed, THE SYSTEM SHALL identify the fork as
+  the pilot download, distinguish the unchanged official cdcai repository, and
+  name an organization-controlled feedback/support destination.
+- WHILE pilot feedback is pending, THE SYSTEM SHALL NOT modify, repoint, or
+  publish pilot artifacts through `cdcai/TowerScout` without explicit owner
+  approval.
+- IF pilot feedback requires a package change, THEN THE SYSTEM SHALL use a new
+  version identity and proportionate validation rather than replacing the
+  validated `v0.1.2` assets.
+- WHEN the project ends on 2026-10-31, THE SYSTEM SHALL leave the cdcai owner
+  a durable release, evidence, feedback, backlog, and migration-preparation
+  handoff that does not depend on the current developer remaining available.
 
 ## Acceptance Criteria
 
-- [ ] `TASK-088` is reflected in `current-tasks.md` and `task-backlog.md`.
-- [ ] The pre-merge cleanup for PR #46 is either completed or explicitly
+- [x] `TASK-088` is reflected in `current-tasks.md` and `task-backlog.md`.
+- [x] The pre-merge cleanup for PR #46 is either completed or explicitly
       dispositioned with evidence.
-- [ ] The pre-tag cleanup set is completed and the stable tag/release plan is
+- [x] The pre-tag cleanup set is completed and the stable tag/release plan is
       self-consistent for the fork release.
-- [ ] Stable `v0.1.0` package validation is recorded with fixture parity,
+- [x] Stable `v0.1.2` package validation is recorded with fixture parity,
       readiness, and targeted setup/manual smoke evidence.
-- [ ] User/support guides and handoff docs reflect the actual stable release
+- [x] User/support guides and handoff docs reflect the actual stable release
       path, including explicit handling of fallback naming if fallback is used.
-- [ ] Residual decisions from the handoff review are closed or explicitly
+- [x] Residual decisions from the handoff review are closed or explicitly
       carried forward into `TASK-089` or backlog items.
+- [x] The `v0.1.2` GitHub Release is promoted/published as the final fork-side
+      stable release with the validated six-asset set and final notes.
+- [x] Pilot-facing communication identifies the fork-side `v0.1.2` download,
+      the unchanged official cdcai repository, and the selected feedback path.
+- [x] The external Word-document feedback method and primary/backup support
+      coverage are confirmed, with appropriate access.
+- [x] Release assets, checksums, validation summary, known findings, and
+      troubleshooting material have durable owner-accessible custody.
+- [x] The cdcai repository is intentionally unchanged pending feedback review
+      and explicit adoption approval.
 
 ## Dependencies
 
-- Merged `main` at `d148727` is the baseline for fork-side stable release work.
+- The validated fork baseline is `v0.1.2` at
+  `718a56485a59182f060a537e8f11d4ce71a1f0d4`.
 - The replayable fixture bundle and validation harness must remain available.
-- The stable release needs an explicit decision on fork-versus-cdcai download
-  home sequencing before package docs are finalized.
-- If fallback is needed, the release owner must approve how RC7.1 identity is
-  represented to users.
+- Pilot feedback is maintained by the project lead in a fillable Word document
+  outside the repository; intake and tracking are not duplicated here.
+- Primary and backup support contacts are confirmed with appropriate access.
+- The existing `v0.1.2` assets remain immutable; fixes require a new version.
 
 ## Pre-TASK-088 Entry Checklist
 
@@ -96,14 +125,17 @@ execution begins. It is intentionally narrower than the full remaining
 
 ### Validation Prerequisite
 
-- [ ] The validation cell `.env` is confirmed to carry the post-rotation Azure
-  key before the D4 live-smoke and setup-wizard checks begin.
+- [x] The validation cell used the post-rotation Azure key for the D4
+  live-smoke and setup-wizard checks; the local secret file was deleted at run
+  end and no key value was recorded in evidence.
 
-### External Guide Tracking
+### Pilot Guide And Support Tracking
 
-- [ ] Workstream F guide edits (F1-F9 in the implementation strategy) are
-  explicitly tracked to completion, including ownership of the out-of-repo
-  deck/docx/html updates.
+- [x] The July 13 pilot email/setup guide uses the current pilot/adoption wording
+  and does not direct users to the unchanged cdcai repository for the pilot.
+- [x] The sent pilot material was checked against
+  the `v0.1.2` filenames, commands, download location, and feedback destination.
+- [x] A backup support owner has access to the final guide and support material.
 
 ### Explicitly not a TASK-088 start gate
 
@@ -122,26 +154,30 @@ execution begins. It is intentionally narrower than the full remaining
 2. Execute the fork-side post-merge pre-tag source pass required for a
   trustworthy stable release.
 3. Rebuild stable images/packages, validate them, and capture the evidence.
-4. Finalize release notes, guidance, and handoff-oriented repo docs.
-5. Hand off migration-dependent follow-through to `TASK-089` with the stable
-   fork release as the source baseline.
+4. Finalize release notes, pilot guidance, feedback routing, and handoff docs.
+5. Preserve owner-accessible release/evidence custody and a no-extension
+   closeout package.
+6. Hand migration preparation to `TASK-089`, with execution deferred until
+   feedback review and explicit cdcai-owner adoption approval.
 
 ## Current Execution Slice
 
-The current Task-088 slice is the post-merge pre-tag source pass from the
-implementation strategy.
+The Task-088 slice is complete. Release build, validation, publication, pilot
+distribution, support coverage, and durable custody are recorded. The project
+is extended through 2026-10-31; later implementation work is outside this task.
 
 ### Immediate Checklist
 
-- [x] Merge upstream `cdcai/main` into the fork branch and resolve the README
-    conflict using the reviewed recipe.
-- [x] Decide the fork-side stable release download-home wording and keep it
-    self-consistent with the actual fork-published `v0.1.0` artifacts.
-- [x] Complete the required documentation fixes for host-helper docs,
-    provenance, cross-references, and SBOM/HANDOFF posture.
-- [x] Decide whether to take any of the optional dead-code deletions before the
-  stable tag.
-- [x] Remove the stale `v0.1.0` tag and prepare the fresh stable tag flow.
+- [x] Freeze the existing six-asset `v0.1.2` release as the validated pilot
+  baseline.
+- [x] Finalize the pilot email/setup-guide wording and external feedback method.
+- [x] Confirm backup support ownership and owner-accessible artifact/evidence
+  custody.
+- [x] Reconcile the final Task-088/089 and handoff records on a clean
+  `origin/main@718a564` branch without reverting PR #48 runtime/test changes.
+- [x] Keep `cdcai/TowerScout` unchanged during the feedback hold.
+- [x] Prepare a send-ready pilot message, pre-send gate, structured feedback
+  intake/triage template, and owner-custody checklist.
 
 ---
 
@@ -645,40 +681,307 @@ R5 asked to see before PR #47 is undrafted and merged.
 **Validation**: `./.venv/Scripts/python -m pytest tests/unit/test_task_074_bootstrap.py tests/unit/test_task_081_runtime_hardening.py tests/unit/test_import_assets_script.py tests/unit/test_release_package_script.py -q -p no:cacheprovider` -> `49 passed`; `python .agent_work/scripts/validate_agent_work.py` -> passed; `git diff --check` -> passed.
 **Next**: Undraft PR #47 once CI remains green, and merge it with **Squash and merge** so the previously committed artifact debris never lands in `main` history.
 
+### 2026-07-08 - PR #47 Squash Merged And main Freeze Started
+**Objective**: Capture the post-merge baseline that the follow-on stable
+release must use and explicitly freeze `main` before the `v0.1.1` tag/build
+sequence begins.
+**Context**: PR #47 (`fix(task-088): harden release package launcher env`) was
+reviewed through R5, CI was green, and the branch was squash-merged into
+`main`. The merged tip on origin is now `d0ddb49`.
+**Decision**: Treat `origin/main@d0ddb49` as the only valid source baseline
+for the follow-on stable release path and freeze `main` until the `v0.1.1`
+tag is created and pushed.
+**Execution**: Verified `origin/main` advanced from `dfe9e6b` to `d0ddb49`
+after the squash merge and recorded the no-more-pushes freeze rule for the
+tag/build lane.
+**Output**: The fork-side stable release path now has a single post-fix merge
+baseline for tag, image build, package rebuild, D4 validation, and release
+publication.
+**Validation**: `git fetch origin --prune` showed `origin/main=d0ddb49` and no
+later `main` drift.
+**Next**: Execute the `v0.1.1` post-merge checklist from the frozen
+`origin/main@d0ddb49` baseline.
+
+### 2026-07-08 - PR #48 Squash Merged And v0.1.2 Path Started
+**Objective**: Capture the second frozen main baseline after the Docker
+image-identity fix and re-anchor the stable publication path to `v0.1.2`.
+**Context**: The local `v0.1.1` package/runtime validation exposed a real
+Docker image-identity helper defect, PR #48 fixed it, and that fix was
+reviewed, merged, and frozen before any GitHub Release assets were published.
+**Decision**: Treat `origin/main@718a564` as the only valid source baseline
+for the final follow-on stable publication path, keep `v0.1.1` as a
+historical tag with published images but no release assets, and move the active
+stable identity to `v0.1.2`.
+**Execution**: Squash-merged PR #48, froze `main` again, created and pushed tag
+`v0.1.2`, dispatched CPU and CUDA image builds, captured published digests
+`sha256:86c54bd723ff970f70f0883397a1f2f804db796507a461a5718aeab57258afe8`
+and `sha256:bab2eda26fa6cf0483780cfcdb0a10008fb67fe058ba99a28ebdd6212fda2214`,
+rebuilt CPU and CUDA control packages from a clean `v0.1.2` worktree, and
+staged the shared asset ZIP under the `v0.1.2` release filename.
+**Output**: `v0.1.2` now has a coherent source tag, published GHCR image pair,
+rebuilt control packages, and a validated package/runtime baseline to carry
+into the remaining D4 and release-publication work.
+**Validation**: CPU and CUDA package ZIP sidecars verified; package summary and
+manifest validation passed for both packages.
+**Next**: Complete the remaining D4 fixture/live-smoke validation and then
+publish the final GitHub Release assets for `v0.1.2`.
+
+### 2026-07-08 - v0.1.2 Package Runtime Smokes Passed On Final Artifacts
+**Objective**: Validate the final rebuilt `v0.1.2` package artifacts on the
+real package/runtime paths before entering the heavier D4 fixture/live-smoke
+sequence.
+**Context**: The R6 follow-up required the release flow to stop burning tags by
+adding a real pre-tag packaged Docker smoke. After `v0.1.2` was tagged and its
+images/packages were rebuilt, the same package/runtime surfaces needed to be
+rerun against the final artifacts, not just the local pre-tag placeholders.
+**Decision**: Treat the final package runtime validation as passed only if the
+rebuilt `v0.1.2` package set reaches healthy `setup_required` readiness on the
+validated CPU-safe lanes and prints the engine-level running image identity
+lines for the final published digests.
+**Execution**: Ran the final `v0.1.2` CPU package on Docker and Podman, and ran
+the final `v0.1.2` CUDA package on Docker in CPU-safe mode (`-Gpu off`). The
+Podman package first required `scripts\install-podman-compose-provider.ps1
+-Apply -Force` from the extracted package to restore the approved package-local
+provider selection on this host.
+**Output**: The final `v0.1.2` package set now has validated CPU-safe runtime
+evidence on Docker CPU, Podman CPU, and Docker CUDA-package CPU-safe launch.
+**Validation**:
+- `v0.1.2-cpu` on Docker (`Port 5027`): `asset_status=ok`,
+  `container_engine=docker`, `device_policy=cpu`, `selected_device=cpu`,
+  `pytorch_flavor=cpu`, `version.app=v0.1.2`, running image digest
+  `sha256:86c54bd723ff970f70f0883397a1f2f804db796507a461a5718aeab57258afe8`.
+- `v0.1.2-cpu` on Podman (`Port 5028`): `asset_status=ok`,
+  `container_engine=podman`, `device_policy=cpu`, `selected_device=cpu`,
+  `pytorch_flavor=cpu`, `version.app=v0.1.2`, running image digest
+  `sha256:86c54bd723ff970f70f0883397a1f2f804db796507a461a5718aeab57258afe8`.
+- `v0.1.2-cuda121` on Docker with `-Gpu off` (`Port 5029`):
+  `asset_status=ok`, `container_engine=docker`, `device_policy=cpu`,
+  `selected_device=cpu`, `pytorch_flavor=cuda121`,
+  `torch_cuda_build=12.1`, `version.app=v0.1.2`, running image digest
+  `sha256:bab2eda26fa6cf0483780cfcdb0a10008fb67fe058ba99a28ebdd6212fda2214`.
+**Next**: Move into the remaining D4 fixture/live-smoke validation with the
+final `v0.1.2` package set and carry the resulting evidence into final release
+publication.
+
+### 2026-07-08 - v0.1.2 Validation Prerelease Published
+**Objective**: Publish the exact final `v0.1.2` asset set under a clearly
+non-final GitHub prerelease title so the reviewer can run D4 against the real
+release artifacts without burning another stable release name.
+**Context**: `v0.1.2` source, images, packages, and package/runtime smokes are
+in place, but D4 fixture/live-smoke evidence is still pending. The agreed path
+was to validate against the real `v0.1.2` assets through a prerelease rather
+than introduce another validation-only tag.
+**Decision**: Publish a prerelease on tag `v0.1.2` with title
+`Validation v0.1.2-1`, upload the six final assets, and keep the release in
+prerelease state until D4 passes.
+**Execution**: Created the GitHub prerelease from tag `v0.1.2` with notes file
+`2026-07-08-v0.1.2-validation-prerelease-notes.md` and uploaded:
+`towerscout-v0.1.2-cpu.zip`, `towerscout-v0.1.2-cpu.zip.sha256`,
+`towerscout-v0.1.2-cuda121.zip`, `towerscout-v0.1.2-cuda121.zip.sha256`,
+`towerscout-v0.1.2-assets-towerscout-v1-assets-2026-05-05.zip`, and
+`towerscout-v0.1.2-assets-towerscout-v1-assets-2026-05-05.zip.sha256`.
+**Output**: A public validation prerelease now exists at the `v0.1.2` tag with
+the exact six assets that should be used for the remaining D4 validation.
+**Validation**: `gh release view v0.1.2 --repo J-Schulein/TowerScout` showed
+title `Validation v0.1.2-1`, prerelease status, and all six uploaded assets.
+**Next**: Hand the prerelease assets to the reviewer for D4 execution, then
+promote the release in place only if the remaining D4 gate passes.
+
+### 2026-07-09 - v0.1.2 Full Matrix Validation Passed
+**Objective**: Record the completed D4/full-matrix validation evidence against
+the exact assets published in the `Validation v0.1.2-1` prerelease.
+**Context**: The validation prerelease existed specifically so the final
+six-asset `v0.1.2` set could be validated before stable publication. The
+reviewer ran the expanded four-cell matrix on a Windows validation workstation
+with Docker 29.6.1, Podman 5.8.x, and an NVIDIA T1000 8GB GPU.
+**Decision**: Treat the D4/full-matrix release gate as passed and keep final
+publication as the remaining Task-088 action. Non-blocking product findings
+are recorded for release notes and backlog follow-up rather than blocking the
+stable release.
+**Execution**: Reviewed the evidence copied into
+`.agent_work/context/status/Handoff-Planning/v0.1.2-Validation-Evidence/`,
+including `RUNLOG.md`,
+`V012-FULL-MATRIX-QA-2026-07-09.md`, and
+`V012-Validation-Methodology-and-Reproduction-Guide.md`.
+**Output**: All four cells passed: Docker CPU, Docker CUDA, Podman CPU, and
+Podman CUDA. Each cell passed package integrity, setup, readiness identity,
+engine-level anti-spoof status, fixture parity, live provider smokes,
+Google/Azure detection-to-export workflows, and required stopped-status
+contracts. Six-way per-tile fixture parity matched the rc7.1 baseline exactly:
+`0,0,13,8,0,4,6,11,2,4,5,0` for `53` total detections in every run.
+**Validation**: Evidence verdict is PASS. CPU image digest
+`sha256:86c54bd723ff970f70f0883397a1f2f804db796507a461a5718aeab57258afe8`
+and CUDA image digest
+`sha256:bab2eda26fa6cf0483780cfcdb0a10008fb67fe058ba99a28ebdd6212fda2214`
+matched package pins and engine inspection. Wizard S1-S7 passed in the deep
+Docker CPU cell. Provider keys were deleted from the validation secret file at
+run end and were not printed in evidence.
+**Next**: Promote the existing `v0.1.2` validation prerelease in place with the
+final title/notes, mark it latest, and preserve the validation evidence as the
+release archive.
+
+### 2026-07-09 - v0.1.2 Stable Release Published
+**Objective**: Promote the validated `v0.1.2` prerelease in place as the final
+fork-side stable GitHub Release.
+**Context**: The exact six prerelease assets passed the full validation matrix,
+so creating a second release record or re-uploading assets would add ambiguity
+without improving traceability.
+**Decision**: Promote the existing `v0.1.2` release in place by retitling it,
+replacing the notes with the final release notes, clearing prerelease status,
+and marking it latest.
+**Execution**: Ran `gh release edit v0.1.2 --repo J-Schulein/TowerScout
+--title "TowerScout v0.1.2" --notes-file
+.agent_work\context\status\Handoff-Planning\2026-07-08-v0.1.2-release-notes-draft.md
+--prerelease=false --latest`.
+**Output**: GitHub release URL:
+`https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.2`.
+**Validation**: `gh release view v0.1.2 --repo J-Schulein/TowerScout --json
+tagName,name,isDraft,isPrerelease,url,assets,publishedAt` returned
+`name=TowerScout v0.1.2`, `isDraft=false`, `isPrerelease=false`, tag
+`v0.1.2`, and the six validated assets. `gh release list --repo
+J-Schulein/TowerScout --limit 5` listed `TowerScout v0.1.2` as `Latest`.
+**Next**: Preserve the final URL/checksums in TASK-089 and carry the remaining
+owner-gated migration work there.
+
+### 2026-07-10 - Pilot-First Closeout And Feedback Hold Adopted
+**Objective**: Reconcile Task-088 with the cdcai owner's decision to keep the
+official repository unchanged until user feedback is reviewed.
+**Context**: The validated `v0.1.2` package is scheduled for pilot distribution
+on Monday, the project may end on 2026-07-15 or receive a three-month extension,
+and immediate cdcai migration would change an official repository before the
+owner knows whether the pilot baseline needs fixes.
+**Decision**: Freeze `v0.1.2` as the fork-side validated pilot release. Keep
+`cdcai/TowerScout` unchanged during the feedback hold. Finish Task-088 by
+making the pilot download, guide wording, organization-controlled feedback
+channel, backup support ownership, evidence custody, and no-extension handoff
+explicit. Any package fix receives a new version identity.
+**Execution**: Added the canonical pilot/adoption plan and revised the current
+sprint, backlog, Task-088, Task-089, HANDOFF, and agent context to use the same
+feedback-gated decision.
+**Output**: Release publication remains complete, but Task-088 now tracks the
+real remaining pilot-readiness and continuity work instead of implying that
+immediate cdcai migration is next.
+**Validation**: On `docs/task-088-pilot-feedback-handoff` from
+`origin/main@718a564`, `.agent_work` validation passed, `git diff --check`
+passed, the runtime/test diff remained clean, and
+`tests/unit/test_flask_routes.py` passed (`57 passed`).
+**Next**: Select and record the feedback/support destination, confirm the backup
+owner and evidence custody, then land the final documentation safely from the
+`v0.1.2` main baseline.
+
+### 2026-07-12 - Pilot Operations Packet Prepared
+**Objective**: Complete the pilot work that does not depend on the pending
+feedback/support-channel decision.
+**Context**: The validated release and guides are ready, but Monday execution
+still needed one concise operational packet that another owner can use without
+reconstructing the handoff history.
+**Decision**: Prepare the outbound wording, pre-send checks, feedback schema,
+severity rules, daily register, and custody checklist now. Leave only the
+organization-controlled destination, backup owner, coordinator, and response
+window as explicit human-confirmed fields.
+**Execution**: Added
+`PILOT-OPERATIONS-PACKET.md` and linked it from the Handoff-Planning index. The
+packet pins the fork release URL, source ref, six filenames, normal CPU/Docker
+path, sensitive-evidence restrictions, and feedback-gated cdcai adoption rule.
+**Output**: Monday's pilot materials can be finalized by inserting the approved
+support details; no cdcai or release-asset change is required.
+**Validation**: The agent-work hygiene quick check passed;
+`python .agent_work/scripts/validate_agent_work.py` passed; and
+`git diff --check` passed.
+**Next**: On 2026-07-13, insert and verify the owner-controlled feedback
+destination and backup owner, check the final outbound material, and then send
+the pilot.
+
+### 2026-07-22 - Pilot Launch And Task Closeout Confirmed
+**Objective**: Reconcile Task-088 with the completed pilot launch and confirmed
+project extension.
+**Context**: The pilot email was sent on 2026-07-13. The project lead maintains
+feedback in a fillable Word document outside the repository, and the primary
+and backup support contacts are confirmed with appropriate access. The project
+now has a hard 2026-10-31 end date.
+**Decision**: Close Task-088. Treat the public release, repository handoff docs,
+and validation evidence as durable custody. Do not duplicate feedback intake or
+tracking in `.agent_work`, and do not select subsequent implementation work as
+part of this closeout.
+**Execution**: Updated the canonical plan, pilot record, current-task state,
+backlog state, handoff guide, and agent context. Converted the pilot operations
+packet from a pre-send template into a completed launch and custody record.
+**Output**: All Task-088 acceptance criteria are satisfied; Task-089 remains
+owner-gated and cdcai remains unchanged.
+**Validation**: Agent-work quick check passed;
+`python .agent_work/scripts/validate_agent_work.py` passed; `git diff --check`
+passed; no runtime or test files changed; and the Flask docs/route contract
+suite passed (`57 passed`).
+**Next**: Merge the documentation branch through review, then begin a separate
+planning iteration without presuming which backlog work will be selected.
+
 ---
 
 ## Validation Results
 
 ### Test Summary
-**Test Date**: 2026-07-08
-**Test Environment**: GitHub Actions image publish runs plus local Windows
-tagged-worktree package assembly, package-focused validation, and local Podman
-and Docker CPU package smoke, plus release-package launcher hardening tests
-**Test Status**: PARTIAL
+**Test Date**: 2026-07-08 through 2026-07-09
+**Test Environment**: GitHub Actions image publish runs, local Windows
+tagged-worktree package assembly, package-focused validation, final `v0.1.2`
+package runtime validation, and full validation workstation matrix over Docker
+29.6.1, Podman 5.8.x, and NVIDIA T1000 8GB.
+**Test Status**: PASS for stable package validation and fork-side stable
+publication.
 
 ### Acceptance Criteria Validation
 - [x] **Task tracking created**: Completed 2026-07-08
 - [x] **Pre-merge cleanup dispositioned**: Completed 2026-07-08
 - [x] **Task-088 entered from merged main baseline**: Completed 2026-07-08
 - [x] **Pre-tag cleanup completed**: Completed 2026-07-08
-- [ ] **Stable package validation recorded**: Pending
-- [ ] **Guidance and handoff docs finalized**: Pending
-- [ ] **Residual decisions closed or delegated**: Pending
+- [x] **Stable package validation recorded**: Completed 2026-07-09 with
+      full-matrix PASS evidence under
+      `.agent_work/context/status/Handoff-Planning/v0.1.2-Validation-Evidence/`
+- [x] **Release-path guidance finalized**: Completed 2026-07-08 for the
+      fork-side release and package path
+- [x] **Pilot-facing guidance finalized**: Pilot email sent 2026-07-13; external
+      Word feedback method and primary/backup support coverage confirmed
+- [x] **Residual decisions closed or delegated**: Historical `v0.1.0` /
+      `v0.1.1` disposition delegated to TASK-089, and non-blocking v0.1.2
+      findings recorded for release notes/backlog follow-up
+- [x] **Final fork-side publication**: Completed 2026-07-09 at
+      `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.2`
+- [x] **Durable evidence and support custody**: Public release assets and
+      repository validation/handoff records are durable; confirmed support
+      contacts have appropriate access
+- [x] **cdcai feedback hold**: The official cdcai repository remains unchanged
+      until feedback review and explicit owner adoption approval
 
 ### Issues Identified
 
-- Full D4 fixture-parity/live-smoke validation is still blocked on this
-  machine because the archived `ts-detect-harness.ps1` plus
-  `fixtures-20260707` bundle referenced by the handoff docs is not present
-  locally.
-- The current `v0.1.0` tag and already-published GHCR image tags predate the
-  release-package launcher hardening. The agreed path is a follow-on stable
-  release (`v0.1.1` preferred), but that new identity still needs a real fix
-  commit, review, merge, rebuild, and final validation before publication.
+- Full D4/full-matrix validation is no longer blocked; the validation
+  workstation completed it against the exact `Validation v0.1.2-1` assets.
+- The current `v0.1.0` and `v0.1.1` tags remain historical identities with
+  published images but no GitHub Release assets. The active publication line is
+  `v0.1.2`.
+- Product finding, non-blocking: Google-mode "Find towers" without a drawn or
+  search-defined boundary sends a degenerate bounds sentinel and is rejected by
+  server-side validation with a generic client error. Normal documented
+  detection/export flows with an explicit AOI passed; Azure's no-boundary
+  fallback also passed. Track under TASK-027 for clearer client handling and a
+  small bounds-scope fix.
+- Product finding, non-blocking: `/favicon.ico` returns 404 because no favicon
+  is packaged.
+- Product finding, non-blocking: export/status notifications use blocking
+  `alert()` dialogs. Human workflows pass, but automation must dismiss them.
+- Product finding, non-blocking: shared per-IP rate limiting can 429 rapid
+  automated save/config sequences; user-paced interaction is unaffected.
 - Local `test_config.py` runs can fail if the shell carries TLS-bundle
   environment state; unsetting `REQUESTS_CA_BUNDLE` and `SSL_CERT_FILE` before
   that slice restores the expected local baseline.
+- Pilot distribution, external feedback handling, and backup support coverage
+  are complete. Contact details and the fillable Word document remain outside
+  this public repository.
+- The documentation closeout branch is based on the `v0.1.2`
+  `origin/main@718a564` baseline and is prepared for normal PR review.
 
 ### Sign-off
 
-Pending full D4 validation and release publication.
+Stable package validation is signed off by the 2026-07-09 full-matrix PASS, the
+fork-side `v0.1.2` stable release is published as latest, and the pilot was sent
+on 2026-07-13. Support coverage and durable custody are confirmed. Task-088 is
+complete pending normal review and merge of this documentation record.

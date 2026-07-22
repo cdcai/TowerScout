@@ -135,6 +135,10 @@ procedure.
 
 ## Release Artifacts
 
+For the July 2026 pilot, the validated `v0.1.2` assets remain on the development
+fork. `cdcai/TowerScout` remains unchanged during feedback collection and must
+not be presented as the source of the pilot package.
+
 A normal release-candidate handoff has two artifact groups. Open the
 TowerScout releases page and use the exact release that support selected:
 

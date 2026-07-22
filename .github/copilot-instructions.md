@@ -1,6 +1,6 @@
 # TowerScout AI Coding Guide
 
-This is the primary high-context guidance file for AI coding agents working in the TowerScout repository. It preserves project context, guardrails, and workflow guidance while reflecting the current repository state as of 2026-07-08.
+This is the primary high-context guidance file for AI coding agents working in the TowerScout repository. It preserves project context, guardrails, and workflow guidance while reflecting the current repository state as of 2026-07-10.
 
 ## Mission and Product Context
 
@@ -28,8 +28,10 @@ The project still carries public-health workflow expectations:
 - `TASK-066` has validated the digest-pinned Docker Desktop and Podman package runtime paths for CPU-default launch. Podman evidence is qualified: on the validation host, `podman compose` delegated to Docker Compose v5.1.3, and Podman source-build/base-image pulls from Docker Hub still fail TLS certificate verification inside the Podman VM.
 - `TASK-067` has closed the Flask route-test timeout/isolation gap with pytest timeout safeguards and isolated test runtime paths.
 - PR #46 has merged on `main` as `d148727`, closing the non-mutating Task-087 Gate 3 proof while keeping the helper control plane dark.
-- `TASK-088` is now the active release-transition path: finish the pre-tag source pass, rebuild and validate the stable `v0.1.0` package set, and publish the fork-side stable release.
-- `TASK-089` is blocked until cdcai-side access, GHCR ownership, and issue-tracker prerequisites are confirmed.
+- The fork-side `v0.1.2` release is published and passed the full Docker/Podman CPU/CUDA validation matrix with both Google and Azure providers. It is the frozen validated pilot baseline.
+- `TASK-088` is complete: the pilot was distributed, support coverage was confirmed, and release/evidence custody was recorded.
+- `TASK-089` is intentionally deferred: prepare the handoff, but do not change `cdcai/TowerScout` until pilot feedback is reviewed and the owner explicitly approves an adoption baseline. Technical access alone does not authorize migration.
+- The project is extended through 2026-10-31, with 2026-10-30 as the operational closeout date. Pilot feedback is maintained by the project lead in a fillable Word document outside the repository. No new implementation task has been selected by the Phase 1 closeout update.
 
 ### Completed Sprint 04 Summary
 
@@ -82,13 +84,15 @@ Sprint 04 materially changed what an agent should assume about the project. The 
 
 ### Immediate Path Forward
 
-The current path forward is centered on finishing the fork-side stable `v0.1.0` closeout and preparing the later cdcai migration:
+The current path is pilot distribution and feedback-gated adoption:
 
-1. Finish the Task-088 pre-tag source pass: upstream merge, required docs fixes, honest handoff/SBOM posture, and stale-tag cleanup.
-2. Build fresh `v0.1.0` CPU and CUDA images from the merged `main` baseline and generate new digest-pinned release packages.
-3. Re-run the stable validation protocol against the rebuilt packages using the replayable fixture baseline and targeted setup/manual smoke checks.
-4. Publish the fork-side stable release with package assets, release notes, and the explicit manual TLS-repair posture while helper enablement remains dark.
-5. Keep `TASK-087` helper availability, browser mutation enablement, and managed-network helper-package validation as later work unless release evidence makes one of those items immediately critical.
+1. Keep the six distributed `v0.1.2` release assets immutable and retain the fork release as the pilot download.
+2. Treat the pilot email, external Word feedback method, and primary/backup support coverage as completed Task-088 facts.
+3. Keep `cdcai/TowerScout` unchanged until feedback review and explicit owner adoption approval.
+4. Keep Task-089 preparation reversible; do not push source/tags, create releases/issues, publish images, or change banners in cdcai before approval.
+5. If feedback requires a fix, use a new fork-side version and validate it before adoption.
+6. Do not infer the next implementation priority from the extension; select it in a later planning iteration.
+7. Keep `TASK-087` helper availability, browser mutation enablement, and managed-network helper-package validation deferred unless separately selected.
 
 `TASK-026` CPU optimization and `TASK-029` multi-provider fallback remain follow-on backlog work unless release evidence makes them release-critical.
 
@@ -711,11 +715,12 @@ The original guidance benefited from explicitly naming recent completed work. Th
 
 ### Task-088 / Task-089 Priority Sequence
 
-1. Finish the Task-088 pre-tag source pass from merged `main`, including the upstream README merge, release-home decision, documentation fixes, handoff notes, and stale-tag cleanup.
-2. Build and validate fresh `v0.1.0` CPU and CUDA release packages from the merged `main` baseline.
-3. Publish the fork-side stable release and keep the package/runtime language aligned with the validated Docker Desktop CPU-default baseline and the bounded Podman/GPU support language.
-4. Execute `TASK-089` only after cdcai-side write access, GHCR ownership, and issue-tracker prerequisites are confirmed.
-5. Keep Task-087 helper enablement, architecture work, and V2 feature work behind the stable-release closeout unless new evidence makes one immediately release-critical.
+1. Complete Task-088 pilot-facing guide/support wording, feedback routing, evidence custody, and safe documentation landing.
+2. Distribute the exact validated fork-side `v0.1.2` pilot; do not rebuild or replace its assets.
+3. Collect and triage user feedback without changing `cdcai/TowerScout`.
+4. Prepare Task-089 migration inputs and a no-extension handoff, but wait for explicit cdcai-owner adoption approval after feedback.
+5. If approved, execute the non-destructive cdcai source/tag/image/release migration and revalidate the resulting package path. If feedback requires fixes first, validate a new fork-side version and use that owner-approved baseline instead.
+6. Keep Task-087 helper enablement, architecture work, and V2 feature work behind pilot findings and release-support priorities.
 
 ### Practical Agent Takeaway
 
@@ -730,7 +735,7 @@ An agent should leave with the following understanding:
 - filesystem sessions and disk-backed config writes are real architectural constraints
 - Google and Azure workflows are both important
 - outbreak-investigation workflows are the highest-value legacy surface to preserve
-- the next path forward is Task-088 stable-release closeout on the fork, followed by Task-089 cdcai migration execution when owner-side prerequisites are available
+- the next path is Task-088 pilot/handoff closeout on the fork, user-feedback review, and Task-089 execution only after explicit cdcai-owner adoption approval
 
 ## References
 

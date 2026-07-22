@@ -1,5 +1,17 @@
 # TowerScout Handoff Review — Comprehensive Analysis
 
+> **HISTORICAL REVIEW EVIDENCE**
+>
+> This analysis preserves the 2026-07-07/08 findings that informed the release
+> and migration runbook. It is not the current migration schedule. The final
+> validated fork release is `v0.1.2`, and the 2026-07-10 owner decision keeps
+> `cdcai/TowerScout` unchanged until pilot feedback is reviewed and an adoption
+> baseline is explicitly approved. Use
+> `PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md` plus `TASK-088`/`TASK-089` for
+> current action. The project is now extended through 2026-10-31. Treat
+> immediate-migration dates, `v0.1.0` commands, and cdcai
+> Issue-creation recommendations below as historical unless re-approved.
+
 | | |
 |---|---|
 | **Date** | 2026-07-07 (second verification pass 2026-07-07/08) |

@@ -1,7 +1,32 @@
 # TowerScout Handoff Guide
 
-This file is the short operational handoff for the maintained `v0.1.0` release
-line and the associated `.agent_work/` history.
+This file is the short operational handoff for the validated `v0.1.2` pilot
+release and the associated `.agent_work/` history. `v0.1.0` and `v0.1.1`
+remain historical fork-side tag/image identities with no final GitHub Release
+assets. The fork-side pilot release is published at
+`https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.2`.
+
+## Current Pilot And Adoption Decision
+
+The `cdcai/TowerScout` owner has requested that the existing official
+repository remain unchanged until pilot users provide feedback. Therefore:
+
+- `J-Schulein/TowerScout` is the temporary pilot download, development, and
+  validation surface.
+- `cdcai/TowerScout` continues to represent the currently adopted application
+  and must not be presented as the source of the `v0.1.2` pilot.
+- The six validated `v0.1.2` release assets are frozen. Any fix uses a new
+  version identity.
+- Migration preparation may continue, but source, tags, releases, images,
+  issues, and repository banners must not be changed in cdcai until the owner
+  reviews feedback and approves an adoption baseline.
+- Pilot feedback is maintained by the project lead in a fillable Word document
+  outside the repository. The confirmed primary and backup support contacts
+  have appropriate access.
+
+The canonical plan for the confirmed extension through 2026-10-31 is:
+
+- `.agent_work/context/status/Handoff-Planning/PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`
 
 ## Reading `.agent_work`
 
@@ -18,6 +43,10 @@ Current release-transition work is tracked in:
 
 - `.agent_work/tasks/active/TASK-088-stable-release-and-handoff-closeout.md`
 - `.agent_work/tasks/active/TASK-089-cdcai-migration-execution.md`
+
+Earlier Handoff-Planning strategies, checklists, and external reviews document
+how the release was produced and validated. Their immediate-migration dates and
+`v0.1.0`/`v0.1.1` commands are historical, not current execution instructions.
 
 ## CI Gates
 
@@ -61,7 +90,9 @@ The following still rely on human-validated evidence rather than CI:
 - end-to-end release-package readiness
 
 The release package itself is certified by the manual RC validation evidence,
-not by CI alone.
+not by CI alone. For the current fork-side stable line, the authoritative
+validation record is the `v0.1.2` full-matrix evidence under
+`.agent_work/context/status/Handoff-Planning/v0.1.2-Validation-Evidence/`.
 
 ## Asset Bundle Custody
 
@@ -91,11 +122,19 @@ history.
 - The repository license posture remains composite and GitHub reports
   `NOASSERTION`; `TASK-069` carries the open Apache-2.0 relicensing authority
   question.
+- Google-mode detection without a defined search area or drawn boundary fails
+  with a generic client error. Server-side bounds validation contains the bad
+  request, documented workflows with an explicit AOI pass, and the issue is
+  tracked as a non-blocking post-release UX/error-handling follow-up.
+- `/favicon.ico` is not packaged, and export/status notifications still use
+  blocking browser alerts. Both are cosmetic/UX follow-ups, not release
+  blockers.
 
-## What Did Not Migrate Automatically
+## Deferred cdcai Adoption
 
-The following do not move with a git push and should be treated as explicit
-handoff items:
+Nothing should migrate into cdcai during the owner-approved feedback hold. When
+adoption is later approved, the following still require explicit transfer or
+recreation rather than a normal git push:
 
 - GitHub Actions run history and logs
 - pull request discussion history
@@ -105,5 +144,11 @@ handoff items:
 - collaborators and permissions
 - package visibility settings in GHCR
 
-Keep the fork available until the recreated cdcai release path and package
-runtime validation are confirmed.
+The project ends 2026-10-31, with 2026-10-30 used as the operational closeout
+date. Before closeout, give the owner the release assets/checksums, validation
+summary, known findings, backlog, and prepared migration runbook. The external
+feedback document remains under the project lead's custody. Do not change cdcai
+without the owner's adoption approval.
+
+Keep the fork available as the pilot/provenance archive even after a later
+cdcai release path and package runtime are confirmed.

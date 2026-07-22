@@ -4,6 +4,17 @@
 
 `.github/instructions/spec-driven-approach.instructions.md` is the authoritative source for the organization rules in this folder. This README is the local navigator for humans and agents.
 
+## Current Release-Transition Plan
+
+For the July 2026 pilot, confirmed extension through 2026-10-31, and
+feedback-gated cdcai adoption decision, read:
+
+- `.agent_work/context/status/Handoff-Planning/PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`
+- `.agent_work/context/status/Handoff-Planning/README.md`
+
+Older Handoff-Planning strategy/checklist/review documents are historical
+evidence unless the navigation README identifies them as current.
+
 ## Layout
 
 ```text
