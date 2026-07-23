@@ -1,20 +1,41 @@
 # TASK-087: Host-Side TLS Repair Control Plane
 
-**Status**: PAUSED / DEFERRED - Gate 3 non-mutating proof is merged; later enablement and managed-network validation require a future planning decision
+**Status**: PLANNED / RESELECTED - Gate 3 non-mutating proof is merged; resume
+after the Tasks 090/098 security gate
 **Type**: B/C (Runtime Support / Setup UX / TLS Trust)
 **Priority**: MEDIUM-HIGH
 **Estimated Effort**: 4-7 days (32-56 hours), plus package validation on a managed TLS-inspected network
-**Target Sprint**: Sprint 07
+**Target Sprint**: Sprint 08 start, with managed-network completion scheduled by
+the canonical October roadmap
 **Created**: 2026-06-29
 **Owner**: TowerScout release owner / active agent support
-**Depends On**: `TASK-086`; package launcher/runtime profile; provider setup error classification; Docker CPU/CUDA package paths; existing Podman Compose provider installer and approved-provider catalog if Podman remediation is included
+**Depends On**: `TASK-086`; `TASK-090` investigation; approved `TASK-098`
+dependency remediation/disposition; package launcher/runtime profile; provider setup error
+classification; Docker and Podman CPU/GPU package paths
 
 ## Canonical Source Note
 
 This file preserves the canonical gated Task-087 design and evidence. The
-non-mutating proof is merged, but later helper availability, browser mutation,
-and managed-network package validation are not currently selected work. Resume
-only after a future planning decision.
+non-mutating proof is merged. The July 23 fix-first roadmap authorizes
+resumption after the Tasks 090/098 security gate. The command-based Task-086
+path remains the fallback until all Task-087 gates pass.
+
+## July 23, 2026 Rebaseline Override
+
+This override controls wherever older planning language below conflicts:
+
+- The guided repair must support both Google Maps and Azure Maps.
+- Application-provider TLS repair must work with Docker and Podman.
+- Managed-network validation is available on the current CDC-connected device
+  and is required before candidate inclusion.
+- The existing helper security model, manual fallback, and gated rollout stay
+  in force.
+- Podman Compose-provider installation remains a separate operation and will
+  not be silently coupled to TLS repair.
+- Podman-machine image-pull and source-build TLS belong to Task-097, not this
+  task.
+- The frozen `v0.1.2` Pilot Package is unchanged; this work targets a new
+  `v0.1.3-rc.N` candidate.
 
 ## Objective
 
@@ -35,8 +56,9 @@ while preserving the manual command path as the fallback and audited baseline.
 
 ## Problem Statement
 
-`TASK-086` proved that TowerScout can repair the Google Maps managed-network TLS
-trust failure by importing the organization/root TLS inspection CA into the
+`TASK-086` proved that TowerScout can repair the observed Google Maps
+managed-network TLS trust failure by importing the organization/root TLS
+inspection CA into the
 container trust bundle and persisting `REQUESTS_CA_BUNDLE` / `SSL_CERT_FILE`.
 However, the validated repair still requires users or support staff to leave the
 browser, run package-local scripts, stop the runtime, and restart with the same

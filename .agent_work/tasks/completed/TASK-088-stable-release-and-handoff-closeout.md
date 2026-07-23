@@ -22,8 +22,8 @@ assets.
 ## Canonical Planning Sources
 
 - `.agent_work/context/status/Handoff-Planning/PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`
-- `.agent_work/context/status/Handoff-Planning/TowerScout-Implementation-Strategy.md` (historical release execution plan)
-- `.agent_work/context/status/Handoff-Planning/TowerScout-Handoff-Review-Comprehensive-Analysis.md` (historical evidence base)
+- `.agent_work/context/archive/2026-07/Handoff-Planning/TowerScout-Implementation-Strategy.md` (historical release execution plan)
+- `.agent_work/context/archive/2026-07/Handoff-Planning/TowerScout-Handoff-Review-Comprehensive-Analysis.md` (historical evidence base)
 
 The pilot/adoption plan is the current decision source. The older planning
 documents remain evidence for how the release was built and reviewed, but their

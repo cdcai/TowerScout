@@ -1,80 +1,114 @@
-# Task Backlog - Remaining Work
+# Task Backlog - October 2026 Roadmap
 
-**Last Updated**: July 22, 2026
-**Planning State**: The fork-side `v0.1.2` pilot has been distributed, the project is extended through 2026-10-31, and `cdcai/TowerScout` remains unchanged until the owner reviews feedback and approves an adoption baseline. This Phase 1 closeout does not select new backlog work. `TASK-087`, completed `TASK-088`, and owner-gated `TASK-089` remain tracked in `current-tasks.md`, not in the ordered backlog.
-**Ordering Method**: Remaining work is ordered by release/pilot risk first, then post-release architecture and maintenance value.
-
----
-
-## Cleanup Notes
-
-- Removed completed Sprint 06 release-readiness entries from the ordered backlog: `TASK-065`, `TASK-066`, `TASK-067`, `TASK-069`, `TASK-071`, `TASK-072`, `TASK-073`, `TASK-074`, `TASK-075`, `TASK-079`, `TASK-080`, `TASK-081`, `TASK-082`, `TASK-083`, `TASK-084`, `TASK-085`, and `TASK-086`.
-- Selected `TASK-087` as active Sprint 07 work.
-- Selected `TASK-088` as the active stable-release and handoff closeout lane.
-- Reframed `TASK-089` as an owner-gated adoption-preparation lane. Migration execution is intentionally deferred until pilot feedback is reviewed, even if technical access becomes available earlier.
-- Kept follow-on release support, policy, restricted-network, architecture, and performance tasks visible for future selection.
-- Kept parked field-use and technical-debt items separate from ordered release/pilot work.
+**Last Updated**: July 23, 2026
+**Planning State**: Fix first while the immutable `v0.1.2` pilot remains in
+use. Required release and handoff work takes priority over Task-058/059 stretch
+work.
+**Hard End**: October 31, 2026; operational closeout October 30
 
 ---
 
-## Ordered Remaining Backlog
+## Required Roadmap Work
 
-| Order | Task | Status | Type | Estimated Effort | Key Dependencies | Recommended Disposition And Rationale |
-|---:|---|---|---|---|---|---|
-| 1 | `TASK-076` Provider API Key Exposure And Restriction Policy | NOT_STARTED | C (Security / Release Policy) | 0.5-1.5 days (4-12h) | Current setup/settings and provider-loading behavior; release-owner policy input | Pull forward before broader distribution if provider-key ownership, restriction, quota, and support expectations remain informal. Browser map SDK keys are client-visible by design, so the release needs clear provider-side restrictions and user/support guidance. |
-| 2 | `TASK-068` Windows Test Portability And Script Validation | NOT_STARTED | B/C (Testing / Developer Experience) | 0.5-1 day (4-8h) | Current Windows launcher/import/TLS helper scripts; `TASK-087` helper proof findings | Pull forward if Sprint 07 exposes helper or PowerShell behavior that should be covered by repeatable Windows-first validation rather than manual evidence only. |
-| 3 | `TASK-077` Public Release Manifest And Asset Import Hardening | PARTIAL_FOLLOW_UP | C (Release Engineering / Compliance) | 1-3 days depending on scope | Current package manifest/checksum flow; asset import helper; release evidence | Keep as a follow-up for staged/allowlist-only asset activation or additional manifest hardening if pilot feedback shows import risk. The narrow compliance payload was substantially addressed during Sprint 06 package work. |
-| 4 | `TASK-070` Restricted-Network Package Enhancements | NOT_STARTED | B/C (Release Engineering / Offline Support) | 1-3 days (8-24h) | Normal connected package path validated; pilot restricted-network requirements | Pull forward only if restricted-network or offline preload support becomes a launch requirement. RC7.1 remains a connected package path with support-managed exceptions. |
-| 5 | `TASK-078` Permissive Apache-Only Runtime Migration | NOT_STARTED | C (ML Runtime / Release Policy) | TBD after PoC | `TASK-069`; current YOLO validation baseline | Later public-release track. Evaluate ONNX or another non-Ultralytics runtime, remove AGPL YOLO from the default package/image, and validate detector behavior before claiming an Apache-compatible package. |
-| 6 | `TASK-058` Background Detection Jobs And Durable Run State | NOT_STARTED | C (Architecture / Reliability) | 3-5 days (24-40h) | Release baseline stable; current progress/cancel contract understood | Highest-value post-release architecture work once pilot blockers are handled. Long-running detection should eventually move away from request/thread-local assumptions. |
-| 7 | `TASK-059` Backend Layer Decomposition And Logging Consolidation | NOT_STARTED | C (Architecture / Maintainability) | 3-5 days (24-40h) | `TASK-058` preferred first | Keep after durable job/state ownership is clear. Route/service boundaries should follow the actual job and state model rather than be guessed first. |
-| 8 | `TASK-027` Enhanced Error Handling | NOT_STARTED | A/B (Reliability / UX) | 1-2 days (8-16h) | Existing logging, setup, provider, and support diagnostics; v0.1.2 full-matrix non-blocking findings | Keep as a release-support improvement. Fold still-relevant Sprint 04 deferred error-handler quick wins into this task, and include the v0.1.2 Google no-draw finding: Google mode currently shows a generic network error if "Find towers" is run before the user defines a search area or drawn boundary. |
-| 9 | `TASK-026` CPU Optimization | NOT_STARTED | C (Performance) | 2-3 days (16-24h) | Stable package/runtime baseline; representative CPU benchmarks | Keep after pilot feedback unless CPU performance becomes a confirmed tester blocker. Optimization should start from the validated package path, not source-only assumptions. |
-| 10 | `TASK-029` Multi-Provider Fallback | NOT_STARTED | B (Reliability) | 2-3 days (16-24h) | Provider abstraction; improved error classification preferred | Keep, but do not pull before policy/error-handling clarity. Automatic fallback must preserve provider provenance and avoid masking unsafe/no-key or quota conditions. |
-| 11 | `TASK-060` Frontend Build Modernization | NOT_STARTED | B (Frontend Infrastructure) | 1-2 days (8-16h) | Stable release branch or explicit modernization window | Keep as maintenance. Manual ordered concatenation is a risk, but changing the build pipeline is not necessary for the immediate pilot path. |
+| Order | Task | Status | Estimate | Dependencies | Required outcome |
+| ---: | --- | --- | --- | --- | --- |
+| 1 | `TASK-098` Dependency Security Remediation And Release Gate | PENDING_TASK_090 | Estimate after Task-090; provisional patch slice plus coordinated ML/geospatial decision | Task-090 classifications and owner approval | Patchable mandatory findings pass regression/package validation; no unresolved release-blocking critical/high alert |
+| 2 | `TASK-096` User-Initiated Exit And Container Stop | NOT_STARTED | 2-4 days | Task-087 helper/security pattern; current stop scripts | Confirmed Exit/Stop works on Docker and Podman without deleting named volumes |
+| 3 | `TASK-097` Podman CPU/GPU Final Path Qualification | NOT_STARTED | 3-5 days plus environment validation | Tasks 090, 098, 087, and 096 | Podman CPU and GPU/CDI pass final-package qualification without Docker Desktop |
+| 4 | `TASK-091` Owner-Runnable Release Qualification | NOT_STARTED | 3-6 days | Candidate scope stable; fixture/harness custody | cdcai owner can execute or supervise the minimum release gate |
+| 5 | `TASK-092` Documentation Currentness And Information Architecture | NOT_STARTED | Stage A 1-2 days; Stage B as approved | Candidate behavior and package shape | Repo docs, user docs, release notes, external Setup Guide, and demo video agree |
+| 6 | `TASK-093` Persistent Data Lifecycle And Recovery Rehearsal | NOT_STARTED | 1-2 days minimum | Runtime profiles and package lifecycle stable | Safe owner-run upgrade, rollback, cleanup, and recovery procedure |
+| 7 | `TASK-094` Evidence-Gated Support Snapshot | EVIDENCE_GATED | 1-3 days if selected | Pilot/support evidence | Implement only if real feedback shows a support-diagnostics gap |
+
+### Task-098 Boundary
+
+- Do not patch dependency pins ad hoc before Task-090 establishes reachability,
+  compatible target versions, and required regression scope.
+- Treat Pillow, Waitress, and the client-relevant aiohttp findings as the first
+  patch-oriented slice.
+- Treat PyTorch/torchvision/CUDA and Fiona/GeoPandas as coordinated
+  compatibility decisions, not isolated pin edits.
+- Require written owner acceptance for any residual critical/high risk.
+- Ratchet CI for new critical/high findings only after the existing baseline is
+  classified and the approved remediation lands.
+
+### Task-096 Boundary
+
+- Use a secured host helper or equally constrained host mechanism.
+- Support Docker and Podman.
+- Require confirmation.
+- Preserve named volumes.
+- Do not expose runtime sockets or arbitrary commands to the browser.
+
+### Task-097 Boundary
+
+- Qualify Podman CPU and Podman GPU as supported final paths.
+- Cover the approved Compose-provider installer and manual fallback.
+- Cover setup, start, readiness, providers, detection, assets, persistence,
+  status, logs, TLS repair, Exit/Stop, and cleanup.
+- Investigate Podman-machine image-pull and source-build TLS separately from
+  Task-087.
+- Fix packaged-runtime blockers. Document a source-build-only limitation only
+  through an explicit owner decision.
+
+---
+
+## Conditional Architecture Work
+
+| Order | Task | Status | Estimate | Start gate |
+| ---: | --- | --- | --- | --- |
+| 8 | `TASK-058` Background Detection Jobs And Durable Run State | CONDITIONAL | 3-5 days | Tasks 090, 098, 087, 096, and 097 pass; no pilot blocker; September 18 remains credible |
+| 9 | `TASK-059` Backend Layer Decomposition And Logging Consolidation | CONDITIONAL | 3-5 days | Task-058 accepted and remaining schedule margin is still safe |
+
+August 28 is the latest responsible Task-058 capacity checkpoint, not an
+earliest start date. Task-058 may begin earlier when all gates pass.
+
+---
+
+## Existing Follow-On Backlog
+
+| Priority | Task | Status | Recommended disposition |
+| ---: | --- | --- | --- |
+| 1 | `TASK-076` Provider API Key Exposure And Restriction Policy | NOT_STARTED | Reassess before final documentation/freeze; include provider-side restriction and ownership guidance |
+| 2 | `TASK-068` Windows Test Portability And Script Validation | NOT_STARTED | Pull forward if Tasks 087, 096, or 097 expose repeatable script gaps |
+| 3 | `TASK-077` Public Release Manifest And Asset Import Hardening | PARTIAL_FOLLOW_UP | Select only for a demonstrated manifest/import release gap |
+| 4 | `TASK-070` Restricted-Network Package Enhancements | NOT_STARTED | Select only if final-package requirements expand beyond managed connected networks |
+| 5 | `TASK-027` Enhanced Error Handling | NOT_STARTED | Use for confirmed user-facing error gaps that do not belong to required tasks |
+| 6 | `TASK-026` CPU Optimization | NOT_STARTED | Defer unless measured final-candidate CPU performance becomes blocking |
+| 7 | `TASK-029` Multi-Provider Fallback | NOT_STARTED | Defer until provider policy and error classification are stable |
+| 8 | `TASK-060` Frontend Build Modernization | NOT_STARTED | Maintenance after final release unless current build becomes blocking |
+| 9 | `TASK-078` Permissive Apache-Only Runtime Migration | NOT_STARTED | Future release track; not part of October closeout |
+
+Parking lot:
+
+- `TASK-028` Mobile Responsiveness
+- `TASK-061` Coordinated NumPy 2 Runtime Migration
+- Advanced filtering
+- Performance dashboard
+- Additional user preferences
 
 ---
 
 ## Active Elsewhere
 
-| Task | Active Location | Notes |
-|---|---|---|
-| `TASK-087` Host-Side TLS Repair Control Plane | `.agent_work/current-tasks.md`; `.agent_work/tasks/active/TASK-087-host-side-tls-repair-control-plane.md` | Paused after the merged non-mutating proof. Later enablement requires a future planning decision. |
-| `TASK-088` Stable Release And Handoff Closeout | `.agent_work/current-tasks.md`; `.agent_work/tasks/active/TASK-088-stable-release-and-handoff-closeout.md` | Completed for pilot distribution, support coverage, and durable release/evidence custody; retained in `tasks/active/` until Sprint 07 closeout. |
-| `TASK-089` cdcai Adoption Preparation And Deferred Ownership Transfer | `.agent_work/current-tasks.md`; `.agent_work/tasks/active/TASK-089-cdcai-migration-execution.md` | Prepare the handoff now, but keep cdcai unchanged until pilot feedback is reviewed and the owner approves the adoption baseline. Technical access alone does not authorize execution. |
+| Task | Current state |
+| --- | --- |
+| `TASK-095` Governance And AI-Ready Handoff Foundation | Active in Sprint 08; Phase A complete, Phase B continues |
+| `TASK-090` Runtime, Custom-Image, And Dependency Security Investigation | READY / NEXT in Sprint 08; includes all 62 open Trivy alerts |
+| `TASK-087` Host-Side TLS Repair Control Plane | Reselected in Sprint 08 after the Tasks 090/098 security gate |
+| `TASK-089` cdcai Adoption And Ownership Transfer | Owner-gated; preparation only until final qualification and approval |
 
 ---
 
-## Parking Lot / Technical-Debt Register
+## Milestone Controls
 
-These items should not compete with Sprint 07 unless tester feedback changes their priority.
-
-| Item | Status | Recommended Handling | Rationale |
-|---|---|---|---|
-| `TASK-028` Mobile Responsiveness | PARKED | Move to later field-use backlog | The v1 supported target remains Windows 11 AMD64 local desktop use. |
-| `TASK-061` Coordinated NumPy 2 Runtime Migration | TECH_DEBT | Track in dependency maintenance | Important eventually, but the current release baseline intentionally holds a NumPy 1.x stack. |
-| Sprint 04 Deferred Quick Wins | MERGE | Fold into `TASK-027` or close if stale | Browser refresh warning and error-handler standardization should not survive as standalone backlog items. |
-| Advanced Filtering | PARKED | Revisit after pilot feedback | Valuable only if larger-result-set review becomes a confirmed user bottleneck. |
-| Performance Dashboard | PARKED / RESHAPE | Reconsider as lightweight support diagnostics if needed | Current release support needs actionable status/log/preflight output more than an in-app dashboard. |
-| User Preferences | PARKED | Revisit after repeated-user workflow evidence | Setup and Settings already cover part of this value. Add preference surfaces only when pilot feedback shows real need. |
-
----
-
-## Historical Performance Snapshot
-
-| Sprint | Duration | Outcome | Notes |
-|---|---:|---|---|
-| Sprint 01 | February 4-18, 2026 | Complete | Foundation, memory, and UX work |
-| Sprint 02 | February-March 2026 | Complete | Architecture work |
-| Sprint 03 | March 11-18, 2026 | Complete | Legacy feature restoration and Google Maps API migration |
-| Sprint 04 | March 19-April 6, 2026 | Complete | Setup/settings, performance investigation, cleanup, detection stabilization |
-| Sprint 05 | April 7-May 8, 2026 | Complete | Runtime determinism, local YOLO ownership, smoke baseline, release hardening, OCI packaging, launcher MVP |
-| Sprint 06 | May 11-July 2, 2026 | Complete | V1 RC package path validated through RC7.1; `TASK-087` selected for Sprint 07 |
-
----
-
-## Related Documentation
-
-- [Current Tasks](./current-tasks.md)
-- [Completed Tasks](./completed-tasks.md)
-- [Sprint 06 Retrospective Analysis](./context/analysis/SPRINT-06-RETROSPECTIVE-ANALYSIS-2026-07-02.md)
+| Date | Control |
+| --- | --- |
+| August 28 | Required scope and Task-058 capacity checkpoint |
+| September 18 | Code complete |
+| September 25 | Feature/package/documentation complete |
+| October 9 | Final-candidate freeze |
+| October 16 | Acceptance complete |
+| October 23 | Owner-operated handoff rehearsal complete |
+| October 30 | Operational closeout |
+| October 31 | Hard project end |

@@ -1,6 +1,9 @@
 # TowerScout AI Coding Guide
 
-This is the primary high-context guidance file for AI coding agents working in the TowerScout repository. It preserves project context, guardrails, and workflow guidance while reflecting the current repository state as of 2026-07-10.
+This is the primary high-context guidance file for AI coding agents working in
+the TowerScout repository. It preserves project context, guardrails, and
+workflow guidance while reflecting the current repository state as of
+2026-07-23.
 
 ## Mission and Product Context
 
@@ -18,20 +21,34 @@ The project still carries public-health workflow expectations:
 
 ### Current State
 
-- Sprint 07 is the active planning and execution lane.
-- Sprint 04, Sprint 05, and Sprint 06 implementation work is completed background context, not the current sprint objective.
+- Sprint 08 is the active planning and execution lane.
+- Sprint 04 through Sprint 07 are completed background context.
 - Setup Wizard and Settings are implemented in the repo.
 - Detection progress, estimate/detect separation, and cancel handling are implemented in the repo.
 - `TASK-025` Docker-compatible / OCI containerization is merged on `main`: the repo now has a `Dockerfile`, Compose configuration, health/readiness endpoints, persistent runtime volume contract, release-package helper scripts, GHCR publish workflow, asset/TLS import helpers, and OCI runtime documentation.
-- The current release direction remains GitHub-first and engine-aware: GitHub Releases are the normal user-facing release control plane, a release ZIP plus pinned GHCR image digest is the preferred package shape, and Docker Desktop remains the primary controlled runtime path for the fork-side stable release closeout unless owner-approved support boundaries say otherwise.
+- The current release direction remains GitHub-first and engine-aware: GitHub
+  Releases are the normal user-facing release control plane, and a release ZIP
+  plus pinned GHCR image digest is the preferred package shape.
 - `TASK-071`, `TASK-072`, and `TASK-079` are complete enough to feed the stable-release closeout path. `TASK-075` has implemented the single GPU-capable package direction with CPU-safe default launch; broad GPU acceleration claims remain bounded by workstation-specific NVIDIA validation.
 - `TASK-066` has validated the digest-pinned Docker Desktop and Podman package runtime paths for CPU-default launch. Podman evidence is qualified: on the validation host, `podman compose` delegated to Docker Compose v5.1.3, and Podman source-build/base-image pulls from Docker Hub still fail TLS certificate verification inside the Podman VM.
 - `TASK-067` has closed the Flask route-test timeout/isolation gap with pytest timeout safeguards and isolated test runtime paths.
 - PR #46 has merged on `main` as `d148727`, closing the non-mutating Task-087 Gate 3 proof while keeping the helper control plane dark.
 - The fork-side `v0.1.2` release is published and passed the full Docker/Podman CPU/CUDA validation matrix with both Google and Azure providers. It is the frozen validated pilot baseline.
 - `TASK-088` is complete: the pilot was distributed, support coverage was confirmed, and release/evidence custody was recorded.
-- `TASK-089` is intentionally deferred: prepare the handoff, but do not change `cdcai/TowerScout` until pilot feedback is reviewed and the owner explicitly approves an adoption baseline. Technical access alone does not authorize migration.
-- The project is extended through 2026-10-31, with 2026-10-30 as the operational closeout date. Pilot feedback is maintained by the project lead in a fillable Word document outside the repository. No new implementation task has been selected by the Phase 1 closeout update.
+- The cdcai owner selected a fix-first path. Keep `v0.1.2` immutable while the
+  fork develops `v0.1.3-rc.N` candidates.
+- `TASK-095` Phase A rebaselined the roadmap and `.agent_work`; Phase B
+  governance continues through handoff.
+- `TASK-090` is the next selected investigation and includes the 62 open Trivy
+  dependency alerts reported on `main` July 23. `TASK-098` holds approved
+  dependency remediation. `TASK-087` resumes only after their security gate.
+- `TASK-096` adds user-confirmed Exit/Stop. `TASK-097` qualifies Podman CPU/GPU.
+- Docker CPU, Docker GPU, Podman CPU, and Podman GPU are required final-package
+  profiles, subject to their documented prerequisites.
+- `TASK-089` remains owner-gated. Do not change `cdcai/TowerScout` until the
+  final candidate is qualified and the owner explicitly approves adoption.
+- The project ends 2026-10-31, with operational closeout on 2026-10-30. Pilot
+  feedback remains in the project lead's external fillable Word document.
 
 ### Completed Sprint 04 Summary
 
@@ -84,15 +101,24 @@ Sprint 04 materially changed what an agent should assume about the project. The 
 
 ### Immediate Path Forward
 
-The current path is pilot distribution and feedback-gated adoption:
+The current path is fix-first candidate development with feedback-gated cdcai
+adoption:
 
-1. Keep the six distributed `v0.1.2` release assets immutable and retain the fork release as the pilot download.
-2. Treat the pilot email, external Word feedback method, and primary/backup support coverage as completed Task-088 facts.
-3. Keep `cdcai/TowerScout` unchanged until feedback review and explicit owner adoption approval.
-4. Keep Task-089 preparation reversible; do not push source/tags, create releases/issues, publish images, or change banners in cdcai before approval.
-5. If feedback requires a fix, use a new fork-side version and validate it before adoption.
-6. Do not infer the next implementation priority from the extension; select it in a later planning iteration.
-7. Keep `TASK-087` helper availability, browser mutation enablement, and managed-network helper-package validation deferred unless separately selected.
+1. Keep the six distributed `v0.1.2` release assets immutable.
+2. Task-095 Phase A is complete; start Task-090.
+3. Classify every open code-scanning alert and scope Task-098 separately.
+4. Complete mandatory Task-098 remediation and explicitly disposition any
+   residual risk.
+5. Resume Task-087 for guided Google/Azure provider TLS repair on Docker and
+   Podman; preserve the command fallback.
+6. Complete Task-096 Exit/Stop and Task-097 Podman CPU/GPU qualification.
+7. Qualify Docker CPU, Docker GPU, Podman CPU, and Podman GPU before freeze.
+8. Use `v0.1.3-rc.N` for immutable fork-side candidates; do not publish
+   `v0.1.3` final automatically.
+9. Keep Task-089 preparation reversible and cdcai unchanged.
+10. Select the official cdcai tag/title before the official build and execute
+   adoption only after owner qualification and approval.
+11. Treat Task-058/059 as conditional stretch work behind all required gates.
 
 `TASK-026` CPU optimization and `TASK-029` multi-provider fallback remain follow-on backlog work unless release evidence makes them release-critical.
 
@@ -535,19 +561,19 @@ The current product direction is:
 
 - use the merged OCI-compatible container contract rather than a Docker Desktop-specific product path
 - make GitHub Releases the default user-facing delivery control plane
-- treat Docker Desktop as the primary controlled runtime for the current fork-side stable release unless the support boundary explicitly approves a different engine
-- treat Podman as a qualified package-runtime option when a running Podman
-  machine and approved non-Docker-Desktop Compose provider are available; RC5
-  validation covers Docker-Desktop-free Podman CPU and Podman GPU CDI with a
-  standalone Compose provider selected through `PODMAN_COMPOSE_PROVIDER`
-- preserve Docker compatibility for development/support fallback where licensing and endpoint policy allow
+- preserve the frozen `v0.1.2` Pilot Package's narrower historical support
+  wording
+- qualify Docker CPU, Docker GPU, Podman CPU, and Podman GPU as equally
+  supported final-candidate profiles when documented prerequisites pass
+- require Podman to work without Docker Desktop through an approved standalone
+  Compose provider selected through `PODMAN_COMPOSE_PROVIDER`
+- preserve Docker compatibility where licensing and endpoint policy allow
 - keep local source clone/build as a developer/support path, not the preferred normal-user install path
 - package normal users through a GitHub Release ZIP with `compose.yaml`, `.env` template, scripts, docs, manifest/checksums, and a pinned GHCR image digest; reserve OCI image archives for restricted-network fallback
 - manage large model/data assets through the release asset bundle contract, extracted package-local `assets/` layout, import helper, readiness checks, and manifest hash verification
 - preserve the single GPU-capable package direction with CPU-safe default
-  launch; optional Docker GPU and Podman GPU launch are support-assigned only
-  after selected-engine NVIDIA validation and readiness shows
-  `selected_device=cuda`
+  launch; GPU profiles still require selected-engine NVIDIA validation and
+  readiness `selected_device=cuda`
 - clarify TowerScout's application license suitability separately from runtime-tooling choice
 
 ### Post-TASK-025 Guardrails
@@ -635,6 +661,12 @@ Current preferred project artifacts:
 - do not describe setup/settings as future work
 - do not ignore filesystem-session implications in deployment work
 - do not treat config persistence as only a documentation concern; it is an active runtime requirement
+- before runtime-dependent work, tell the user whether Docker Desktop, Podman,
+  or both are required and ask them to start the runtime
+- wait for confirmation before runtime validation because Docker Desktop may
+  require a workstation restart
+- planning, documentation, and static source review do not require runtime
+  startup
 
 ### Legacy Feature Preservation
 
@@ -713,14 +745,21 @@ The original guidance benefited from explicitly naming recent completed work. Th
 
 ## Current Path Forward
 
-### Task-088 / Task-089 Priority Sequence
+### Fix-First Priority Sequence
 
-1. Complete Task-088 pilot-facing guide/support wording, feedback routing, evidence custody, and safe documentation landing.
-2. Distribute the exact validated fork-side `v0.1.2` pilot; do not rebuild or replace its assets.
-3. Collect and triage user feedback without changing `cdcai/TowerScout`.
-4. Prepare Task-089 migration inputs and a no-extension handoff, but wait for explicit cdcai-owner adoption approval after feedback.
-5. If approved, execute the non-destructive cdcai source/tag/image/release migration and revalidate the resulting package path. If feedback requires fixes first, validate a new fork-side version and use that owner-approved baseline instead.
-6. Keep Task-087 helper enablement, architecture work, and V2 feature work behind pilot findings and release-support priorities.
+1. Keep `v0.1.2` immutable as the Pilot Package.
+2. With Task-095 Phase A complete, run Task-090 and classify the 62-alert
+   dependency baseline.
+3. Complete Task-098 mandatory remediation and residual-risk disposition.
+4. Resume Task-087 after the Tasks 090/098 security gate passes.
+5. Complete Task-096 Exit/Stop and Task-097 Podman CPU/GPU qualification.
+6. Qualify Docker CPU/GPU and Podman CPU/GPU.
+7. Start Task-058 early only when all required gates pass; keep Task-059 behind
+   Task-058 acceptance and schedule margin.
+8. Complete owner-runnable qualification, documentation, recovery, governance,
+   and handoff work.
+9. Select the official cdcai identity, build it consistently, and execute
+   Task-089 only after owner approval.
 
 ### Practical Agent Takeaway
 
@@ -729,13 +768,17 @@ An agent should leave with the following understanding:
 - the app is no longer missing setup/settings
 - the repo has a merged Docker-compatible / OCI container baseline and local launcher MVP
 - the release path uses a digest-pinned GHCR image and package-local asset import flow
-- CPU-default Docker Desktop and qualified Podman package-runtime validation have passed, while GPU and Docker-Desktop-free Podman claims remain bounded
+- `v0.1.2` remains immutable while new work uses `v0.1.3-rc.N` candidates
+- Docker CPU/GPU and Podman CPU/GPU are required final-candidate profiles
 - local/CI pytest timeout safeguards and Flask route-test isolation are merged through `TASK-067`
-- the non-mutating Task-087 Gate 3 proof is merged on `main`, but the browser-triggered helper path remains deliberately dark
+- the non-mutating Task-087 Gate 3 proof is merged; the authorized candidate
+  path resumes only after the Tasks 090/098 security gate
 - filesystem sessions and disk-backed config writes are real architectural constraints
 - Google and Azure workflows are both important
 - outbreak-investigation workflows are the highest-value legacy surface to preserve
-- the next path is Task-088 pilot/handoff closeout on the fork, user-feedback review, and Task-089 execution only after explicit cdcai-owner adoption approval
+- the next path is Task-090, Task-098 as scoped, then Task-087
+- Task-089 execution remains blocked until final qualification and explicit
+  cdcai-owner adoption approval
 
 ## References
 

@@ -1,5 +1,9 @@
 # User Testing Workspace
 
+> **ARCHIVED JULY 23, 2026**: This is the superseded RC1 intake workflow.
+> Current `v0.1.2` Pilot feedback is collected by the project lead in an
+> external fillable Word document. Do not restart this repository intake flow.
+
 This folder keeps user-testing setup and runtime reports organized without mixing raw tester evidence into sprint task files.
 
 ## What Lives Here
@@ -52,6 +56,6 @@ This folder keeps user-testing setup and runtime reports organized without mixin
 - [Instructions](./instructions/README.md)
 - [RC1 Pilot / UAT Handoff Packet](./instructions/RC1-PILOT-HANDOFF-PACKET.md)
 - [RC1 Pilot / UAT Checklist](./instructions/RC1-PILOT-UAT-CHECKLIST.md)
-- [TowerScout User Testing Guide](../context/guides/TowerScout_User_Testing_Guide.txt)
-- [TowerScout User Testing Guide - Windows Miniconda](../context/guides/TowerScout_User_Testing_Guide_Windows_Miniconda.txt)
-- [TowerScout Development Setup Guide](../context/guides/TowerScout_Development_Setup_Guide.txt)
+- [TowerScout User Testing Guide](../guides/TowerScout_User_Testing_Guide.txt)
+- [TowerScout User Testing Guide - Windows Miniconda](../guides/TowerScout_User_Testing_Guide_Windows_Miniconda.txt)
+- [TowerScout Development Setup Guide](../guides/TowerScout_Development_Setup_Guide.txt)

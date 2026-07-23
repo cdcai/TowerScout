@@ -1,154 +1,121 @@
 # TowerScout Handoff Guide
 
-This file is the short operational handoff for the validated `v0.1.2` pilot
-release and the associated `.agent_work/` history. `v0.1.0` and `v0.1.1`
-remain historical fork-side tag/image identities with no final GitHub Release
-assets. The fork-side pilot release is published at
-`https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.2`.
+**Last Updated**: July 23, 2026
+**Operational Closeout**: October 30, 2026
+**Hard Project End**: October 31, 2026
 
-## Current Pilot And Adoption Decision
+## Current State
 
-The `cdcai/TowerScout` owner has requested that the existing official
-repository remain unchanged until pilot users provide feedback. Therefore:
+The validated fork-side `v0.1.2` release is the immutable Pilot Package:
 
-- `J-Schulein/TowerScout` is the temporary pilot download, development, and
-  validation surface.
-- `cdcai/TowerScout` continues to represent the currently adopted application
-  and must not be presented as the source of the `v0.1.2` pilot.
-- The six validated `v0.1.2` release assets are frozen. Any fix uses a new
-  version identity.
-- Migration preparation may continue, but source, tags, releases, images,
-  issues, and repository banners must not be changed in cdcai until the owner
-  reviews feedback and approves an adoption baseline.
-- Pilot feedback is maintained by the project lead in a fillable Word document
-  outside the repository. The confirmed primary and backup support contacts
-  have appropriate access.
+`https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.2`
 
-The canonical plan for the confirmed extension through 2026-10-31 is:
+The cdcai owner selected a fix-first path:
+
+- Keep pilot users on unchanged `v0.1.2`.
+- Develop and qualify new candidates in `J-Schulein/TowerScout`.
+- Name fork candidates `v0.1.3-rc.N`.
+- Keep `cdcai/TowerScout` unchanged until owner qualification and explicit
+  adoption approval.
+- Select the official cdcai tag and display title before the official build.
+
+The canonical forward plan is:
+
+- `.agent_work/context/status/Handoff-Planning/2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md`
+
+The current Pilot/cdcai hold is:
 
 - `.agent_work/context/status/Handoff-Planning/PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`
 
+## Required Final Scope
+
+- Task-090 runtime/custom-image/dependency security investigation
+- Task-098 approved dependency remediation and release-risk disposition
+- Task-087 Google/Azure guided provider TLS repair on Docker/Podman
+- Task-096 user-confirmed Exit/Stop on Docker/Podman
+- Task-097 Podman CPU/GPU final-path qualification
+- Docker CPU, Docker GPU, Podman CPU, and Podman GPU qualification
+- owner-runnable qualification, documentation, recovery, governance, backlog,
+  and handoff work
+- external Setup Guide and demo video refresh
+
+Task-058/059 are conditional stretch work and cannot displace required scope.
+
 ## Reading `.agent_work`
 
-Use this order:
-
 1. `.agent_work/current-tasks.md`
-2. `.agent_work/task-backlog.md`
-3. `.agent_work/completed-tasks.md`
-4. `.agent_work/tasks/active/` and `.agent_work/tasks/completed/`
-5. `.agent_work/decisions/`
-6. `.agent_work/context/status/`, `.agent_work/context/analysis/`, and `.agent_work/context/guides/`
+2. canonical roadmap linked above
+3. Pilot/cdcai plan linked above
+4. `.agent_work/task-backlog.md`
+5. `.agent_work/requirements.md`
+6. `.agent_work/design.md`
+7. `.agent_work/completed-tasks.md`
+8. `.agent_work/tasks/active/` and `.agent_work/tasks/completed/`
+9. `.agent_work/decisions/`
 
-Current release-transition work is tracked in:
+Superseded handoff strategies, July roadmap iterations, release checklists, and
+external reviews are under
+`.agent_work/context/archive/2026-07/Handoff-Planning/`.
 
-- `.agent_work/tasks/active/TASK-088-stable-release-and-handoff-closeout.md`
-- `.agent_work/tasks/active/TASK-089-cdcai-migration-execution.md`
+The July 23 code-scanning baseline and current security gate are recorded in
+`.agent_work/context/analysis/GITHUB-CODE-SCANNING-READINESS-ASSESSMENT-2026-07-23.md`.
 
-Earlier Handoff-Planning strategies, checklists, and external reviews document
-how the release was produced and validated. Their immediate-migration dates and
-`v0.1.0`/`v0.1.1` commands are historical, not current execution instructions.
+## Runtime And Package Model
 
-## CI Gates
+Normal release delivery uses:
 
-CI green does not mean every check is merge-blocking.
+- GitHub Release control package
+- digest-pinned GHCR image
+- checksummed shared Model & Data Package
+- Docker- and Podman-compatible Compose paths
 
-Merge-relevant automated checks currently include:
+The final support matrix requires:
 
-- `flake8` syntax/undefined-name gate
-- `pytest tests/unit/`
-- frontend bundle rebuild and regression checks
-- the Task-087 frontend contract workflow
+- Docker CPU
+- Docker GPU
+- Podman CPU
+- Podman GPU/CDI
 
-Advisory CI steps currently include:
-
-- `black --check`
-- `mypy`
-- `bandit`
-- `pytest tests/integration/`
-- Codecov upload
-- Docker image build job
-- Trivy filesystem scan
-- SARIF upload
-
-Treat those advisory results as useful signals, not as proof that the release
-package is production-ready.
-
-## Automated Vs Manual Validation
-
-Automated coverage currently proves the Python webapp core, route/config and
-provider-contract behavior, selected frontend contract shapes, and source-text
-contracts over the PowerShell/release surfaces.
-
-The following still rely on human-validated evidence rather than CI:
-
-- Windows PowerShell behavioral tests
-- package generation and package smoke validation
-- asset-bundle import and checksum workflow in real package context
-- Docker/Desktop and Podman runtime validation
-- GPU validation
-- live-provider browser smoke with real keys
-- end-to-end release-package readiness
-
-The release package itself is certified by the manual RC validation evidence,
-not by CI alone. For the current fork-side stable line, the authoritative
-validation record is the `v0.1.2` full-matrix evidence under
+The existing Pilot validation record remains under
 `.agent_work/context/status/Handoff-Planning/v0.1.2-Validation-Evidence/`.
+Future candidates require new evidence.
 
-## Asset Bundle Custody
+## Runtime Startup Coordination
 
-The shared Model & Data Package ZIP is not reproducible from this repository
-alone. The exact released asset bundle is distributed through release assets and
-is pinned by SHA-256 `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+Before runtime-dependent work, the active agent must:
 
-The authoritative per-file asset contract lives in:
+1. Tell the user whether Docker Desktop, Podman, or both are required.
+2. Ask the user to start the required runtime.
+3. Wait for confirmation before validation.
+4. Allow time for a computer restart when Docker Desktop requires it.
 
-- `webapp/asset_manifest.v1.json`
-- `docs/release/release-asset-bundle-contract.md`
+Static review, planning, and documentation work do not require runtime startup.
 
-Do not assume the model/data bundle can be rebuilt locally from source-only
-history.
+## Safety And Custody
 
-## Known Accepted Risks
+- Do not replace released `v0.1.2` assets.
+- Do not publish `v0.1.3` final prematurely.
+- Do not modify cdcai without explicit owner authorization.
+- Do not mount Docker/Podman sockets into the application container.
+- Do not delete named volumes during normal stop or upgrade.
+- Do not store provider keys, helper tokens, certificate details, private AOIs,
+  raw traces, or unsanitized logs in repository evidence.
 
-- `torch==2.2.1` remains in the validated release baseline even though
-  `CVE-2025-32434` affects the `torch.load` boundary. Current mitigation is the
-  release asset-bundle SHA-256 contract and fixed trusted asset path. A torch
-  bump is a follow-up item because it would invalidate the validated CPU/GPU
-  parity evidence.
-- The YOLO vendor path still uses a `weights_only=False` load path, so a torch
-  upgrade alone does not fully change the trust model.
-- The Dockerfile frontend build stage still uses `node:18`; the next maintained
-  update target is `node:22`, not `node:20`.
-- The repository license posture remains composite and GitHub reports
-  `NOASSERTION`; `TASK-069` carries the open Apache-2.0 relicensing authority
-  question.
-- Google-mode detection without a defined search area or drawn boundary fails
-  with a generic client error. Server-side bounds validation contains the bad
-  request, documented workflows with an explicit AOI pass, and the issue is
-  tracked as a non-blocking post-release UX/error-handling follow-up.
-- `/favicon.ico` is not packaged, and export/status notifications still use
-  blocking browser alerts. Both are cosmetic/UX follow-ups, not release
-  blockers.
+The Model & Data Package cannot be reconstructed from source alone. Preserve
+release assets, SHA-256 sidecars, `webapp/asset_manifest.v1.json`, and
+`docs/release/release-asset-bundle-contract.md`.
 
-## Deferred cdcai Adoption
+## Final Handoff Gate
 
-Nothing should migrate into cdcai during the owner-approved feedback hold. When
-adoption is later approved, the following still require explicit transfer or
-recreation rather than a normal git push:
+Before October 30:
 
-- GitHub Actions run history and logs
-- pull request discussion history
-- GitHub Releases and release assets
-- Issues, unless recreated separately
-- repository settings such as homepage metadata and branch protection
-- collaborators and permissions
-- package visibility settings in GHCR
-
-The project ends 2026-10-31, with 2026-10-30 used as the operational closeout
-date. Before closeout, give the owner the release assets/checksums, validation
-summary, known findings, backlog, and prepared migration runbook. The external
-feedback document remains under the project lead's custody. Do not change cdcai
-without the owner's adoption approval.
-
-Keep the fork available as the pilot/provenance archive even after a later
-cdcai release path and package runtime are confirmed.
+- final candidate is qualified and accepted
+- official cdcai identity is selected and built consistently
+- release, rollback/reject, recovery, and cleanup are rehearsed by the owner
+- repository, Actions, package, documentation, video, and backlog custody are
+  confirmed
+- tool-neutral maintenance guidance is complete
+- remaining tasks and risks are explicitly dispositioned
+- every code-scanning alert is dispositioned and no release-blocking
+  critical/high dependency risk remains unresolved
+- no planned work depends on the outgoing developer after October 31

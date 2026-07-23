@@ -1,74 +1,94 @@
 # `.agent_work` Workspace Guide
 
-`.agent_work/` is the working documentation area for active planning, sprint tracking, design context, decisions, and validation evidence.
+`.agent_work/` is TowerScout's repository-native planning, task, decision, and
+handoff workspace. The organization contract is
+`.github/instructions/spec-driven-approach.instructions.md`.
 
-`.github/instructions/spec-driven-approach.instructions.md` is the authoritative source for the organization rules in this folder. This README is the local navigator for humans and agents.
+## Current Sources
 
-## Current Release-Transition Plan
+Read in this order:
 
-For the July 2026 pilot, confirmed extension through 2026-10-31, and
-feedback-gated cdcai adoption decision, read:
+1. [`current-tasks.md`](./current-tasks.md)
+2. [`context/status/Handoff-Planning/2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md`](./context/status/Handoff-Planning/2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md)
+3. [`context/status/Handoff-Planning/PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`](./context/status/Handoff-Planning/PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md)
+4. [`task-backlog.md`](./task-backlog.md)
+5. [`requirements.md`](./requirements.md)
+6. [`design.md`](./design.md)
+7. [`completed-tasks.md`](./completed-tasks.md)
 
-- `.agent_work/context/status/Handoff-Planning/PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`
-- `.agent_work/context/status/Handoff-Planning/README.md`
-
-Older Handoff-Planning strategy/checklist/review documents are historical
-evidence unless the navigation README identifies them as current.
+The roadmap controls forward development. The Pilot plan controls the immutable
+`v0.1.2` package and cdcai hold.
 
 ## Layout
 
 ```text
 .agent_work/
-├── current-tasks.md                  # Current sprint source of truth
-├── task-backlog.md                   # Future work queue
-├── completed-tasks.md                # Historical completion summary
-├── requirements.md                   # Structured requirements
-├── design.md                         # Current technical design
-├── decisions/                        # Project-wide ADRs only (numeric filenames)
-├── context/
-│   ├── guides/                       # Evergreen how-to and reference docs
-│   ├── analysis/                     # Cross-task narrative analysis only
-│   ├── status/                       # Active/current sprint status docs
-│   └── archive/YYYY-MM/              # Superseded docs and historical snapshots
-├── tasks/
-│   ├── active/                       # Current sprint task files
-│   └── completed/                    # Prior-sprint task files
-├── scripts/                          # Reusable workspace utilities
-├── tmp/                              # Scratch space, never documentation
-└── pytest-temp/                      # Scratch pytest temp area, never documentation
+|-- current-tasks.md
+|-- task-backlog.md
+|-- completed-tasks.md
+|-- requirements.md
+|-- design.md
+|-- decisions/                 # project-wide numeric ADRs
+|-- context/
+|   |-- guides/                # small, current evergreen reference set
+|   |-- analysis/              # cross-task analysis and retrospectives
+|   |-- status/                # current plans and live status
+|   `-- archive/YYYY-MM/       # superseded/historical material
+|-- tasks/
+|   |-- active/                # current sprint task files
+|   `-- completed/             # prior-sprint task files
+|-- scripts/
+|-- tmp/                       # scratch only
+`-- pytest-temp/               # scratch only
 ```
 
 ## Task Rules
 
-- Keep current sprint task files in `tasks/active/` until sprint closeout, even when their internal status is `COMPLETED`.
-- Move finished sprint task files from `tasks/active/` to `tasks/completed/` during sprint closeout.
-- Do not leave loose task markdown files at `tasks/` root.
-- Keep task-local proof docs, decision memos, scripts, and evidence with the owning task.
-- Use same-ID support folders when a task needs extra material, for example `tasks/active/TASK-057/` plus `tasks/active/TASK-057-...md`.
-
-## Decision Rules
-
-- Keep `decisions/` for cross-task or project-wide ADRs only.
-- Use numeric ADR filenames such as `014-provider-lock-after-detection.md`.
-- Keep task-local decisions out of `decisions/`; store them with the owning task instead.
+- `current-tasks.md` is the active sprint source.
+- `task-backlog.md` is the future-work source.
+- `completed-tasks.md` is the recent completion source.
+- Create Type B/C task files when work begins.
+- Keep current sprint files in `tasks/active/`.
+- Move completed files to `tasks/completed/` at sprint closeout.
+- Do not leave task files in the `tasks/` root.
+- Do not reuse a task number.
 
 ## Context Rules
 
-- `context/guides/` is for evergreen user or developer guidance.
-- `context/analysis/` is for cross-task analysis and reality checks, not task-owned proof artifacts.
-- `context/status/` is for active/current sprint plans, retrospectives, live status, and current metrics.
-- Archive superseded point-in-time material under `context/archive/YYYY-MM/`.
+- Keep active plans in `context/status/`.
+- Keep cross-task analysis and retrospectives in `context/analysis/`.
+- Keep only current, evergreen references in `context/guides/`; end-user and
+  package instructions live under repository-root `docs/`.
+- Move superseded drafts, reviews, and snapshots to
+  `context/archive/YYYY-MM/`.
+- Keep task-local proof and evidence with its task.
+- Do not store provider keys, helper tokens, certificate details, private AOIs,
+  raw network traces, screenshots, or unsanitized support logs.
 
-## Scratch Rules
+Historical RC1 intake material and stale Sprint/source-install guides were
+archived under [`context/archive/2026-07/`](./context/archive/2026-07/). Pilot
+feedback is maintained externally by the project lead rather than in a live
+repository intake workflow.
 
-- `tmp/` and `pytest-temp/` are scratch surfaces only.
-- Do not treat scratch folders as durable documentation.
-- Remove or refresh scratch contents as needed; they are intentionally ignored from the tracked workflow.
+## Runtime Coordination
 
-## Maintenance Checklist
+Before Docker- or Podman-dependent work, tell the user which runtime is needed
+and ask them to start Docker Desktop and/or Podman. Wait for confirmation
+before runtime validation because Docker Desktop may require a workstation
+restart.
 
-1. Move current sprint task docs into `tasks/active/` when sprint planning starts.
-2. Re-home task-local memos, proofs, scripts, and raw evidence with the owning task.
-3. Archive stale status docs and superseded drafts into `context/archive/YYYY-MM/`.
-4. Update this README when the structure changes.
-5. Run `python .agent_work/scripts/validate_agent_work.py`.
+## Maintenance
+
+At sprint closeout or material roadmap changes:
+
+1. Reconcile active, backlog, and completed task state.
+2. Move completed task files.
+3. Archive superseded status material.
+4. Update requirements, design, navigation, and handoff sources.
+5. Run:
+
+```powershell
+python .agents/skills/towerscout-agent-work-hygiene/scripts/check_agent_work_quick.py .
+python .agent_work/scripts/validate_agent_work.py
+git diff --check
+```

@@ -6,18 +6,21 @@ import xml.etree.ElementTree as ET
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-UAT_GUIDE = (
+ARCHIVED_USER_TESTING = (
     REPO_ROOT
     / ".agent_work"
-    / "user-testing"
+    / "context"
+    / "archive"
+    / "2026-07"
+    / "user-testing-rc1"
     / "instructions"
+)
+UAT_GUIDE = (
+    ARCHIVED_USER_TESTING
     / "TowerScout_V1_RC1_UAT_User_Guide.docx"
 )
 ISSUE_FORM = (
-    REPO_ROOT
-    / ".agent_work"
-    / "user-testing"
-    / "instructions"
+    ARCHIVED_USER_TESTING
     / "TESTER-ISSUE-REPORT-CHECKLIST.txt"
 )
 QUICK_START = REPO_ROOT / "docs" / "quick-start.md"

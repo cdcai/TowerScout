@@ -1,132 +1,112 @@
 # TowerScout Pilot Feedback And cdcai Adoption Plan
 
-**Decision Date**: 2026-07-10; updated 2026-07-22
-**Status**: CURRENT - canonical release-transition and ownership plan
-**Decision Owner**: TowerScout project lead with the `cdcai/TowerScout` owner
-**Pilot Baseline**: validated fork-side `v0.1.2` release
-**Pilot Distribution**: completed Monday, 2026-07-13
-**Project End**: 2026-10-31 (hard end date; operational closeout 2026-10-30)
+**Decision Date**: July 10, 2026; rebaselined July 23, 2026
+**Status**: CURRENT for the Pilot Package and cdcai hold
+**Forward Development Plan**:
+[`2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md`](./2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md)
+**Pilot Baseline**: validated fork-side `v0.1.2`
+**Pilot Distribution**: completed July 13, 2026
+**Operational Closeout**: October 30, 2026
+**Hard Project End**: October 31, 2026
 
-## Decision
+## Pilot Decision
 
-Keep `cdcai/TowerScout` unchanged while the `v0.1.2` pilot is distributed and
-user feedback is collected. The existing cdcai repository remains the official
-repository for the currently adopted application. It must not be overwritten,
-repointed, or presented as the source of the pilot package before the cdcai
-owner reviews the pilot results and approves an adoption baseline.
+Keep `cdcai/TowerScout` unchanged while users test the `v0.1.2` Pilot Package
+and while the fork develops and qualifies a fix-first successor.
 
-Use the exact validated fork-side release as the pilot distribution:
+Pilot identity:
 
-- pilot download: `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.2`
-- source ref: `718a56485a59182f060a537e8f11d4ce71a1f0d4`
-- release assets: the existing six checksum-verified `v0.1.2` assets
-- pilot description: **TowerScout v0.1.2 validated pilot release**
+- Download:
+  `https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.2`
+- Source ref: `718a56485a59182f060a537e8f11d4ce71a1f0d4`
+- Assets: existing six checksum-verified `v0.1.2` release assets
+- Description: **TowerScout v0.1.2 validated pilot release**
 
-Do not rebuild, rename, replace, or silently modify the `v0.1.2` release assets
-for the pilot. Any accepted fix must use a new version identity.
+Do not rebuild, rename, replace, or silently modify these assets.
 
-## Repository Roles During The Pilot
-
-### `cdcai/TowerScout`
-
-- Remains unchanged until the owner approves adoption after reviewing feedback.
-- Continues to represent the application version currently adopted by cdcai.
-- Must not be used as the pilot download location.
-- Receives no source, tags, releases, images, backlog issues, or repository
-  banner changes during the feedback hold unless the owner explicitly changes
-  this decision.
+## Repository Roles
 
 ### `J-Schulein/TowerScout`
 
-- Hosts the exact validated `v0.1.2` pilot package and validation record.
-- Remains the pilot development and fix-validation surface during the hold.
-- Must be retained as a release/provenance archive even after later adoption.
-- May produce a new pilot patch only when feedback justifies a change and the
-  change receives proportionate package validation.
+- Hosts the immutable Pilot Package.
+- Hosts new development and `v0.1.3-rc.N` candidates.
+- Retains pilot and source-provenance history after handoff.
 
-### Feedback And Support Channel
+### `cdcai/TowerScout`
 
-- Pilot feedback is captured by the project lead in a fillable Word document
-  outside this repository.
-- Feedback intake and tracking are not duplicated in `.agent_work`.
-- The primary pilot support owner and backup contact are confirmed and have
-  appropriate access.
-- Their identities and contact details remain in the sent pilot communication
-  and access-controlled project records, not in this public repository.
+- Continues to represent the currently adopted application.
+- Is not the `v0.1.2` pilot download.
+- Receives no new source, tags, releases, images, issues, or banner changes
+  during the hold without explicit owner authorization.
+- Will host the official final release after qualification and adoption.
 
-Do not enable cdcai Issues merely to satisfy the earlier migration plan while
-the owner wants the official repository unchanged. Issues may be enabled later
-as part of the adoption decision.
+## Feedback And Support
 
-## Pilot Distribution Completion
+- The project lead maintains feedback in a fillable Word document outside the
+  repository and will notify the development team of actionable findings.
+- `.agent_work` does not duplicate intake or tracking.
+- Primary and backup support owners are confirmed with appropriate access.
+- Their contact details remain in the sent communication and access-controlled
+  records, not this public repository.
 
-1. The existing `v0.1.2` release and six-asset checksum record are frozen.
-2. The pilot email was sent to the user group on 2026-07-13 and identifies the
-   fork-side validated pilot rather than the unchanged cdcai repository.
-3. The primary and backup support owners are confirmed with appropriate access.
-4. Release assets, checksums, validation summaries, known findings, and
-   troubleshooting material have durable custody through the public release
-   and repository documentation.
-5. `TASK-088` is complete. `TASK-089` remains preparation-only until feedback
-   review and explicit owner adoption approval.
+## Fix-First Development During The Pilot
 
-## During The Feedback Hold
+The cdcai owner selected the fix-first path:
 
-- The project lead maintains feedback in the external fillable Word document
-  and will notify the development team of actionable findings.
-- Keep the cdcai repository unchanged.
-- Do not enable the dark Task-087 browser-to-host repair flow as part of pilot
-  support.
-- If a fix is necessary, implement and validate it in the fork under a new
-  version such as `v0.1.3`; never replace the existing `v0.1.2` bytes.
+1. Preserve `v0.1.2`.
+2. Complete required security, TLS, Exit/Stop, Podman, qualification,
+   documentation, and handoff work in the fork.
+3. Publish immutable candidates as `v0.1.3-rc.N`.
+4. Continue to accept pilot feedback; blocker feedback takes priority.
+5. Freeze a final candidate only after required gates pass.
+6. Have the project lead and cdcai owner qualify the candidate.
+7. Select the final cdcai tag and display title before the official build.
+8. Execute Task-089 only after explicit owner adoption approval.
 
-## Adoption Decision After Feedback
+Task-087 may resume for the new candidate only after the Tasks 090/098 security
+gate passes. This does not change the Pilot Package and does not authorize
+enabling unvalidated behavior for pilot users.
 
-The cdcai owner selects one of these outcomes.
+## Release Naming Boundary
 
-### Outcome A - Adopt The Validated Baseline
+- `v0.1.3-rc.N` is the fork candidate convention.
+- No `v0.1.3` final release is implied or authorized by that convention.
+- The final cdcai tag and display title are decided before the official build.
+- The official image, package, manifests, checksums, filenames, and docs must
+  be rebuilt consistently; candidate ZIPs are not simply renamed.
 
-If feedback finds no adoption-blocking issue, approve `v0.1.2` or a reviewed
-successor as the cdcai migration baseline, then execute `TASK-089`.
+## Adoption Gate
 
-### Outcome B - Fix Before Adoption
+Task-089 remains blocked until:
 
-If feedback identifies important defects, keep cdcai unchanged, fix and
-validate a new fork-side pilot version, and adopt only the corrected baseline.
+1. Pilot feedback and candidate findings are reviewed.
+2. Required four-profile qualification passes.
+3. The project lead and cdcai owner qualify the final candidate.
+4. The owner explicitly approves adoption.
+5. Repository, Actions, package, release, and backlog ownership are ready.
+6. The official identity and rebuild/verification plan are approved.
 
-### Outcome C - Do Not Adopt Yet
-
-If the pilot is not ready, preserve the fork, evidence, feedback, and prepared
-handoff material. The owner can resume adoption work later without changing the
-current cdcai repository.
-
-## Confirmed Extension And Closeout Boundary
-
-The project is extended through 2026-10-31. Use 2026-10-30 as the operational
-closeout date because October 31 falls on a Saturday. This update does not
-select the next implementation work.
-
-- Continue to use new release identities for every changed package set.
-- Keep the fork as the pilot and fix-validation surface until the owner
-  approves an adoption baseline.
-- Move official development and releases to cdcai only after approved adoption
-  and migration validation.
-- Complete final release, evidence, backlog, and operational ownership handoff
-  before the operational closeout date.
+If the final candidate is not ready, preserve the fork, evidence, feedback,
+backlog, and migration-ready handoff without changing cdcai.
 
 ## Task Ownership
 
-- `TASK-088` owns pilot distribution readiness, guide/support wording,
-  evidence custody, and fork-side closeout.
-- `TASK-089` owns migration preparation now and migration execution only after
-  pilot feedback plus explicit cdcai-owner adoption approval.
-- `TASK-087` remains dark and deferred unless separately selected after the
-  pilot/release transition.
+- Task-087: guided Google/Azure application-provider TLS repair on Docker and
+  Podman.
+- Task-088: completed Pilot Package distribution and custody.
+- Task-089: owner-gated cdcai adoption and ownership transfer.
+- Task-090: bounded runtime/custom-image/dependency security investigation,
+  including the 62-alert Trivy baseline.
+- Tasks 091-095: qualification, docs, recovery, evidence-gated support, and
+  governance/handoff.
+- Task-096: user-confirmed Exit/Stop.
+- Task-097: Podman CPU/GPU final-path qualification.
+- Task-098: approved dependency remediation, compatibility validation, and
+  release-risk disposition.
 
 ## Superseded Instructions
 
-This plan supersedes any earlier instruction to migrate immediately after
-release publication or as soon as repository/package permissions become
-available. Earlier strategy, decision, checklist, and review documents remain
-valuable historical evidence, but their migration dates and `v0.1.0`/
-`v0.1.1` execution commands are not current instructions.
+This plan supersedes earlier immediate-migration instructions, the earlier
+"wait before selecting implementation" state, and any plan to use `v0.1.2` as
+the automatic cdcai baseline. Older documents remain archived as historical
+evidence.

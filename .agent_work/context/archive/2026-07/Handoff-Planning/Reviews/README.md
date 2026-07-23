@@ -6,5 +6,7 @@ decisions.
 
 Their forward-looking `v0.1.0`/`v0.1.1` commands, expected R7 follow-up, and
 immediate cdcai migration language are superseded by
-`../PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`. Current action lives in
-`TASK-088`, `TASK-089`, and the Handoff-Planning `README.md`.
+[`PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`](../../../../status/Handoff-Planning/PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md).
+Current action lives in Task-095 Phase B, Task-090, the owner-gated Task-089
+lane, and the current
+[Handoff-Planning README](../../../../status/Handoff-Planning/README.md).

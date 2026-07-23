@@ -1,27 +1,48 @@
 # TASK-089: cdcai Adoption Preparation And Deferred Ownership Transfer
 
-**Status**: DEFERRED / OWNER-GATED - do not change cdcai until pilot feedback is reviewed and the owner approves an adoption baseline
+**Status**: BLOCKED / OWNER-GATED - prepare for the final qualified candidate,
+but do not change cdcai until explicit owner adoption approval
 **Priority**: HIGH
 **Type**: C
 **Estimated Effort**: 0.5-1 day preparation now; 1-2 days execution after adoption approval
-**Target Sprint**: Sprint 07
+**Target Sprint**: Standing handoff lane through October 30, 2026
 **Created**: 2026-07-08
 **Owner**: TowerScout release owner / active agent support with cdcai maintainer participation
-**Depends On**: completed `TASK-088` pilot closeout; pilot feedback review; explicit cdcai-owner adoption approval; cdcai write/package permissions at execution time; approved durable backlog destination
+**Depends On**: completed `TASK-088`; Tasks 090, 098, 087, 096, and 097; final
+candidate qualification; pilot feedback review; official cdcai tag/title
+selection; explicit cdcai-owner adoption approval; execution-time repository
+and package permissions; approved durable backlog destination
 
 ## Objective
 
 Prepare a safe, reviewable adoption package without changing
-`cdcai/TowerScout` during the pilot feedback hold. After feedback is reviewed
-and the cdcai owner explicitly approves the version to adopt, transfer the
-selected history, tags, image ownership, release assets, and durable context
-without breaking source provenance or digest-pinned package behavior.
+`cdcai/TowerScout` during pilot and candidate qualification. After the project
+lead and cdcai owner qualify the final candidate, select the official cdcai tag
+and display title, build the official image/package consistently, and execute
+the transfer only after explicit adoption approval.
+
+## July 23, 2026 Rebaseline Override
+
+This override controls wherever older historical entries below conflict:
+
+- `v0.1.2` remains the immutable Pilot Package, not the automatic migration
+  baseline.
+- Fork candidates use `v0.1.3-rc.N`; those names do not reserve the final
+  cdcai tag.
+- The final cdcai tag and display title are selected before the official build.
+- Candidate ZIPs are not simply renamed; official images, packages, manifests,
+  checksums, filenames, source refs, and documentation must agree.
+- Task-089 execution waits for required final-candidate qualification and
+  explicit owner adoption approval.
+- The Markdown backlog is the current transfer format. GitHub Issues may be
+  added later by owner decision.
 
 ## Canonical Planning Sources
 
+- `.agent_work/context/status/Handoff-Planning/2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md`
 - `.agent_work/context/status/Handoff-Planning/PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`
-- `.agent_work/context/status/Handoff-Planning/TowerScout-Implementation-Strategy.md` (historical release/migration runbook)
-- `.agent_work/context/status/Handoff-Planning/TowerScout-Handoff-Review-Comprehensive-Analysis.md` (historical evidence base)
+- `.agent_work/context/archive/2026-07/Handoff-Planning/TowerScout-Implementation-Strategy.md` (historical release/migration runbook)
+- `.agent_work/context/archive/2026-07/Handoff-Planning/TowerScout-Handoff-Review-Comprehensive-Analysis.md` (historical evidence base)
 
 The pilot/adoption plan controls timing and authorization. The historical
 runbook still supplies technical migration guardrails, but its July dates,

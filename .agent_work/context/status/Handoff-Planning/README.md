@@ -1,49 +1,45 @@
 # Handoff Planning - Current Navigation
 
-## Current Decision Sources
+## Read First
 
-Read these first and use them for current action:
+1. [`2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md`](./2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md)
+   - canonical forward-development, qualification, release, and handoff plan
+2. [`PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`](./PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md)
+   - current rules for the unchanged `v0.1.2` pilot and cdcai feedback hold
+3. [`PILOT-OPERATIONS-PACKET.md`](./PILOT-OPERATIONS-PACKET.md)
+   - completed July 13 pilot distribution, support, and custody record
+4. [`GITHUB-CODE-SCANNING-READINESS-ASSESSMENT-2026-07-23.md`](../../analysis/GITHUB-CODE-SCANNING-READINESS-ASSESSMENT-2026-07-23.md)
+   - 62-alert dependency inventory, applicability, and Tasks 090/098 gate
+5. [`.agent_work/current-tasks.md`](../../../current-tasks.md)
+6. [`HANDOFF.md`](../../../../HANDOFF.md)
 
-1. `PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`
-2. `.agent_work/current-tasks.md`
-3. `.agent_work/tasks/active/TASK-088-stable-release-and-handoff-closeout.md`
-4. `.agent_work/tasks/active/TASK-089-cdcai-migration-execution.md`
-5. `HANDOFF.md`
+## Current Decision
 
-`PILOT-OPERATIONS-PACKET.md` is now the completed July 13 pilot-launch and
-custody record. Feedback is maintained by the project lead in a fillable Word
-document outside this repository; `.agent_work` does not duplicate intake or
-tracking.
+- Keep the six `v0.1.2` pilot assets immutable.
+- Develop owner-requested fixes in the fork under `v0.1.3-rc.N`.
+- Do not publish `v0.1.3` final prematurely.
+- Keep `cdcai/TowerScout` unchanged until the owner-qualified final candidate
+  receives explicit adoption approval.
+- Qualify Docker CPU, Docker GPU, Podman CPU, and Podman GPU.
+- Complete Task-090 alert classification and Task-098 mandatory remediation
+  before Task-087 resumes.
+- Complete operational closeout by October 30, 2026.
 
-Current decision: distribute the exact validated fork-side `v0.1.2` package as
-the pilot, keep `cdcai/TowerScout` unchanged while feedback is collected, and
-execute adoption only after the owner reviews feedback and approves the
-baseline. The project is extended through 2026-10-31, with 2026-10-30 used as
-the operational closeout date. No next implementation task is selected by this
-Phase 1 update.
+## Active Validation Record
 
-## Current Release And Validation Records
+The frozen Pilot Package remains active while feedback is collected. Its
+sanitized validation record remains under:
 
-- `2026-07-08-v0.1.2-release-notes-draft.md` - notes source used for the
-  published `v0.1.2` release
-- `2026-07-08-v0.1.2-remaining-validation-and-publication-checklist.md` -
-  completed publication and pilot/handoff closeout record
-- `v0.1.2-Validation-Evidence/` - sanitized validation narrative and QA summary
+- [`v0.1.2-Validation-Evidence/`](./v0.1.2-Validation-Evidence/)
 
-## Historical Evidence - Do Not Execute As Current Plans
+This evidence proves the Pilot Package; it does not certify a future candidate.
 
-The following preserve release history and review rationale but are superseded
-for current timing and migration authorization:
+## Archived Planning And Release History
 
-- `TowerScout-Implementation-Strategy.md`
-- `TowerScout-Handoff-Review-Comprehensive-Analysis.md`
-- `2026-07-08-v0.1.0-publication-decision-memo.md`
-- `2026-07-08-v0.1.1-post-merge-checklist.md`
-- `2026-07-08-v0.1.2-d4-execution-packet.md`
-- `2026-07-08-v0.1.2-validation-prerelease-notes.md`
-- `R1-2026-07-08-Task-088-branch-review.md`
-- `Reviews/`
+Superseded strategies, July 22 roadmap iterations, external reviews, and
+v0.1.0-v0.1.2 publication checklists moved to:
 
-Historical `v0.1.0`/`v0.1.1` commands, July 10-13 migration dates, immediate
-cdcai Issue creation, and migration-on-access language do not authorize current
-execution.
+- [`context/archive/2026-07/Handoff-Planning/`](../../archive/2026-07/Handoff-Planning/)
+
+They are historical evidence only. Their dates, commands, and adoption
+recommendations do not authorize current execution.

@@ -1,149 +1,159 @@
-# Current Tasks - Active Sprint
+# Current Tasks - Sprint 08
 
-**Sprint Period**: Sprint 07 begins July 2, 2026
-**Last Updated**: July 22, 2026
-**Focus**: Close the completed `v0.1.2` pilot-launch lane, preserve the feedback-gated cdcai adoption boundary, and rebaseline the handoff schedule to the hard 2026-10-31 project end date without selecting the next implementation work yet.
-**Status**: The validated fork-side `v0.1.2` pilot email has been sent. Feedback is captured by the project lead in a fillable Word document outside the repository, and the confirmed primary and backup support owners have appropriate access. `TASK-088` is complete. `cdcai/TowerScout` remains intentionally unchanged until feedback review and explicit owner approval under `TASK-089`.
+**Sprint Period**: July 23-August 7, 2026
+**Last Updated**: July 23, 2026
+**Focus**: Start the bounded runtime, custom-image, and dependency-security
+investigation; define any required remediation; and prepare the authorized
+universal provider TLS repair without changing the frozen pilot or cdcai.
 
----
+**Current Release State**:
 
-## Sprint 06 Closeout Summary
-
-Sprint 06 produced the V1 RC / pilot-ready Windows package path and carried it from RC1 package validation through RC7.1 tester-facing release validation. Final V1 completion is still separate: it depends on pilot/UAT feedback, blocker triage, and explicit disposition of remaining support or V1 patch work.
-
-Completed Sprint 06 task artifacts moved from `.agent_work/tasks/active/` to `.agent_work/tasks/completed/`:
-
-- `TASK-065`: release packaging and runtime support follow-through
-- `TASK-066`: release candidate validation gate
-- `TASK-067`: CI release gate tightening
-- `TASK-069`: license and release policy review
-- `TASK-071`: end-user release package documentation
-- `TASK-072`: release asset bundle contract
-- `TASK-073`: clean-machine pilot / UAT execution plan
-- `TASK-074`: runtime prerequisite preflight
-- `TASK-075`: single GPU-capable package implementation
-- `TASK-079`: RC1 reliability fixes and performance instrumentation
-- `TASK-080`: UAT user guide and setup process simplification
-- `TASK-081`: RC3 runtime hardening and Podman independence
-- `TASK-082`: RC4 documentation and package organization
-- `TASK-083`: RC5 Podman independence, GPU CDI, and release validation
-- `TASK-084`: GA packaging hardening and Podman provider onboarding
-- `TASK-085`: dataset ZIP restore path traversal hardening
-- `TASK-086`: provider TLS auto-repair and setup triage
-
-Sprint 06 closeout records:
-
-- Retrospective: [SPRINT-06-RETROSPECTIVE-ANALYSIS-2026-07-02.md](./context/analysis/SPRINT-06-RETROSPECTIVE-ANALYSIS-2026-07-02.md)
-- Archived Sprint 06 plan: [SPRINT-06-PLAN.md](./context/archive/2026-07/status/SPRINT-06-PLAN.md)
-- Completed task record: [completed-tasks.md](./completed-tasks.md)
+- Fork-side `v0.1.2` is the immutable pilot package.
+- New development uses immutable `v0.1.3-rc.N` candidate identities.
+- `cdcai/TowerScout` remains unchanged until final owner qualification and
+  explicit adoption approval.
+- October 30 is operational closeout; October 31 is the hard project end.
 
 ---
 
-## Sprint 07 Transition State
+## Sprint 07 Closeout
 
-The pilot-transition lane is complete through distribution. The project is
-extended through 2026-10-31, with 2026-10-30 treated as the operational
-closeout date because October 31 falls on a Saturday.
+Sprint 07 completed Task-088 pilot distribution and custody. Task-088 moved to
+`tasks/completed/`. Task-087 carries forward under the owner-approved fix-first
+plan. Task-089 remains a standing owner-gated handoff lane.
 
-This Phase 1 update intentionally does not select the next implementation
-tasks. `TASK-087` retains its merged non-mutating proof but later enablement is
-paused pending a future planning decision. `TASK-089` remains owner-gated until
-pilot feedback is reviewed and an adoption baseline is explicitly approved.
+Retrospective:
+[`SPRINT-07-RETROSPECTIVE-ANALYSIS-2026-07-23.md`](./context/analysis/SPRINT-07-RETROSPECTIVE-ANALYSIS-2026-07-23.md)
 
 ---
 
-## Sprint 07 Task State
+## Sprint 08 Task State
+
+### **TASK-095: Governance And AI-Ready Handoff Foundation**
+
+**Status**: IN_PROGRESS - Phase A roadmap/workspace rebaseline is complete;
+Phase B governance and final handoff maintenance continue through closeout
+**Type**: C (Governance / Documentation / Handoff)
+**Priority**: HIGH
+**Estimated Effort**: Phase A 1-2 days; Phase B 2-4 distributed days
+**Task File**:
+`.agent_work/tasks/active/TASK-095-governance-ai-ready-handoff.md`
+
+**Phase A Outcome**:
+
+- One canonical fix-first roadmap controls forward execution.
+- Tasks 090-097 have unique, stable rebaseline definitions; Task-098 is the
+  unique follow-on security-remediation lane added by the July 23 live alert
+  review.
+- Sprint, backlog, requirements, design, pilot, handoff, and agent guidance are
+  aligned.
+- Superseded planning/review material is archived rather than left in active
+  status.
+- Completed PR status packets, the superseded RC1 intake workflow, stale
+  Sprint/source-install guides, and one exact duplicate archive file were
+  removed from the current information surface.
+
+**Remaining Scope**: Keep task disposition, navigation, tool-neutral
+maintenance instructions, backlog, release evidence, and owner handoff current
+through October 30.
+
+### **TASK-090: Runtime, Custom-Image, And Dependency Security Investigation**
+
+**Status**: READY / NEXT - Task-095 Phase A is complete
+**Type**: C (Security Investigation)
+**Priority**: HIGH
+**Estimated Effort**: 1-3 days for investigation and classification only
+**Task File**: Create in `tasks/active/` when implementation begins
+
+**Objective**: Determine whether local-only runtime reachability and
+custom-image behavior create an actionable release risk, and classify all 62
+open Trivy dependency alerts currently reported on `main`. Separate evidence,
+classification, and remediation estimates; do not hide remediation inside the
+investigation.
+
+**Exit Gate**:
+
+- Every code-scanning alert has a package/call-path disposition and is
+  classified as release-blocking, required hardening, accepted risk, not
+  reachable, or scanner/version false positive.
+- Any remediation receives a separate Task-098 scope, estimate, and approval.
+- No release-blocking critical/high finding remains unresolved; any residual
+  critical/high risk requires written project-lead/cdcai-owner acceptance.
+- No later runtime work begins with an unresolved mandatory finding.
+
+**Assessment**:
+[`GITHUB-CODE-SCANNING-READINESS-ASSESSMENT-2026-07-23.md`](./context/analysis/GITHUB-CODE-SCANNING-READINESS-ASSESSMENT-2026-07-23.md)
 
 ### **TASK-087: Host-Side TLS Repair Control Plane**
-**Status**: PAUSED / DEFERRED - Gate 3 non-mutating proof merged on `main`; later helper enablement and managed-network validation require a future planning decision
+
+**Status**: PLANNED / RESELECTED - resume after Tasks 090/098 and the mandatory
+security gate
 **Type**: B/C (Runtime Support / Setup UX / TLS Trust)
-**Priority**: MEDIUM-HIGH
-**Estimated Effort**: 4-7 days (32-56 hours), plus managed-network package validation
-**Target Sprint**: Sprint 07
-**Task File**: `.agent_work/tasks/active/TASK-087-host-side-tls-repair-control-plane.md`
-
-**Objective**: Design and implement a support-safe host-side repair control plane that lets TowerScout present a guided "repair TLS trust and restart" action when provider setup detects a managed-network TLS certificate trust failure, while reusing the validated `TASK-086` repair flow.
-
-**Sprint 07 Entry Conditions**:
-- `TASK-086` remains the validated command-based repair baseline and fallback.
-- RC7.1 tester-facing package validation has passed.
-- The helper must be package-local, loopback-only, token-protected, allowlisted, and support-safe before it reaches product UI.
-
-**Current Sprint 07 Work Sequence**:
-1. Gate 1 / Gate 2 helper proof: merged in PR #45 with controlled Docker CPU/off live-wrapper evidence and helper security constraints.
-2. Gate 3 non-mutating proof: merged through PR #46 on `main`, including the reviewed CI/gate hardening.
-3. Gate 3 follow-up: add visible fallback/repair UI only after release work allows the later helper-availability and browser-mutation enablement slice to begin.
-4. Gate 4 managed-network package validation: blocked until the later helper enablement slice passes and the release owner approves user-facing package inclusion.
-
-**Evidence Handling**:
-Do not record provider keys, helper tokens, certificate subjects, raw thumbprints, raw provider responses, `.env` files, raw logs, browser network traces, screenshots, private AOIs, or local environment dumps in task evidence. Use sanitized operation states and public-safe summaries only.
-
-### **TASK-088: Stable Release And Handoff Closeout**
-**Status**: COMPLETED - pilot distributed, support coverage confirmed, and release/evidence custody recorded
-**Type**: C (Release Engineering / Documentation / Handoff)
 **Priority**: HIGH
-**Estimated Effort**: 2-4 days (16-32 hours), excluding owner-gated migration follow-through
-**Target Sprint**: Sprint 07
-**Task File**: `.agent_work/tasks/active/TASK-088-stable-release-and-handoff-closeout.md`
+**Estimated Effort**: 4-7 days plus managed-network package validation
+**Task File**:
+`.agent_work/tasks/active/TASK-087-host-side-tls-repair-control-plane.md`
 
-**Objective**: Close out the validated fork-side pilot release and leave a durable handoff record for the confirmed project extension through October 31.
+**Rebased Scope**:
 
-**Completed Scope**:
-1. Formalized the reviewed handoff plan into task-tracked execution.
-2. Recorded the merged PR #46 baseline and completed the pre-tag source pass.
-3. Validated and published the stable `v0.1.2` package set.
-4. Sent pilot-facing guidance that distinguishes the fork download from the
-   unchanged official cdcai repository.
-5. Confirmed the external Word feedback method, support coverage, and durable
-   release/evidence custody without changing cdcai.
-
-**Important Boundaries**:
-- Keep the fork release self-consistent even if cdcai release recreation happens later.
-- Resolve the namespace/download-home sequencing explicitly before the first public stable package is published.
-- Do not publish final GitHub Release assets under the current `v0.1.0` or `v0.1.1` identities; the active path is the `v0.1.2` release line built from the post-PR-48 frozen main baseline.
-- Treat any `rc7.1` promotion fallback as an explicit release-identity decision, not as an implicit rename.
-- Do not rebuild or replace the validated `v0.1.2` pilot assets; fixes require a new version.
-- Do not present `cdcai/TowerScout` as the pilot download or modify it during the owner-approved feedback hold.
+- Finish the existing gated helper rather than restart the design.
+- Support Google Maps and Azure Maps.
+- Support Docker and Podman application-provider TLS repair.
+- Keep Podman Compose-provider installation and Podman-machine trust separate.
+- Pass managed-network validation before candidate inclusion.
 
 ### **TASK-089: cdcai Adoption Preparation And Deferred Ownership Transfer**
-**Status**: DEFERRED / OWNER-GATED - prepare the handoff now, but do not change cdcai until pilot feedback is reviewed and the owner approves an adoption baseline
+
+**Status**: BLOCKED / OWNER-GATED - preparation only; no cdcai mutation
 **Type**: C (Repository Migration / Release Ownership / Handoff)
 **Priority**: HIGH
-**Estimated Effort**: 1-2 days (8-16 hours) once prerequisites are satisfied
-**Target Sprint**: Sprint 07
-**Task File**: `.agent_work/tasks/active/TASK-089-cdcai-migration-execution.md`
+**Estimated Effort**: 1-2 days after qualification and authorization
+**Task File**:
+`.agent_work/tasks/active/TASK-089-cdcai-migration-execution.md`
 
-**Objective**: Prepare a safe, reviewable cdcai adoption package while keeping the official repository unchanged during the pilot, then transfer the owner-approved baseline only after feedback review.
+**Current Boundary**:
 
-**Execution Gates**:
-1. Pilot feedback is collected and triaged.
-2. The cdcai owner explicitly approves the version to adopt.
-3. cdcai collaborator write, Actions, and package-publish ownership are confirmed.
-4. A durable backlog/feedback destination is approved; it need not be cdcai Issues during the hold.
-5. The image-copy-versus-rebuild and validation path is approved for the selected baseline.
+- The final cdcai tag and release title are selected before the official build.
+- `v0.1.3-rc.N` candidate names do not dictate the final cdcai identity.
+- Execution waits for owner qualification, explicit adoption approval, and an
+  approved release/package/backlog transfer plan.
 
 ---
 
-## Backlog Selection Hold
+## Sprint 08 Sequence
 
-No new backlog task is selected by this Phase 1 update. The ordered inventory
-remains in `task-backlog.md` for the next planning iteration.
+1. Task-095 Phase A rebaseline and readiness cleanup: complete.
+2. Start Task-090 with the 62-alert inventory as a required workstream.
+3. Scope and approve Task-098 for mandatory dependency remediation.
+4. Resolve release-blocking findings and explicitly disposition the remainder.
+5. Resume Task-087 only after the Tasks 090/098 security gate passes.
+6. Re-plan the next sprint using actual security and Task-087 outcomes.
 
----
-
-## Sprint 07 Guardrails
-
-- Do not weaken the manual `repair-provider-tls.cmd` fallback while building the guided helper.
-- Do not mount Docker or Podman control sockets into the container for this feature.
-- Do not let browser input become shell command text.
-- Do not expose helper tokens or raw certificate/provider details through readiness, status, logs, DOM attributes, console output, task files, or support evidence.
-- Do not start unrelated V2 architecture work while the host-side TLS repair proof is active unless the team intentionally pauses Sprint 07.
+Task-096 and Task-097 are mandatory roadmap work but are not pulled into this
+sprint yet. Task-098 enters this sprint only to the extent Task-090 identifies
+mandatory remediation. Task-058 and Task-059 remain conditional stretch work.
 
 ---
 
-## Related Documentation
+## Runtime Coordination
 
-- [Current Pilot And Adoption Plan](./context/status/Handoff-Planning/PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md)
+Before any Docker- or Podman-dependent work:
+
+1. Tell the user which runtime profile is required.
+2. Ask the user to start Docker Desktop and/or the Podman machine.
+3. Wait for confirmation before beginning runtime-dependent validation.
+4. Allow time for a workstation restart when Docker Desktop requires it.
+
+Planning, documentation, and static source review do not require a runtime
+startup request.
+
+---
+
+## Related Sources
+
+- [Canonical October Fix-First Roadmap](./context/status/Handoff-Planning/2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md)
+- [Pilot And Adoption Track](./context/status/Handoff-Planning/PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md)
 - [Task Backlog](./task-backlog.md)
+- [Requirements](./requirements.md)
+- [Design](./design.md)
 - [Completed Tasks](./completed-tasks.md)
-- [Sprint 06 Retrospective](./context/analysis/SPRINT-06-RETROSPECTIVE-ANALYSIS-2026-07-02.md)

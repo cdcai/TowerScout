@@ -4,7 +4,7 @@
 
 **Pilot sent**: 2026-07-13
 
-**Record updated**: 2026-07-22
+**Record updated**: 2026-07-23
 
 **Baseline**: `v0.1.2` at `718a56485a59182f060a537e8f11d4ce71a1f0d4`
 
@@ -61,6 +61,7 @@ access-controlled project records.
   document when development action is needed.
 - Any changed package receives a new version identity. Never replace the
   published `v0.1.2` bytes.
-- `cdcai/TowerScout` remains unchanged until feedback review and explicit owner
-  approval of an adoption baseline.
-- Task-089 moves from preparation to execution only after that approval.
+- `cdcai/TowerScout` remains unchanged through feedback, fix-first candidate
+  qualification, and explicit owner approval of the final adoption baseline.
+- Task-089 moves from preparation to execution only after final qualification
+  and that approval.
