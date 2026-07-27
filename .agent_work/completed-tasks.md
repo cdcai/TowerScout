@@ -1,13 +1,55 @@
 # Completed Tasks
 
-**Last Updated**: July 23, 2026
-**Current Retention Window**: Sprint 06 and Sprint 07 closeout summaries
+**Last Updated**: July 27, 2026
+**Current Retention Window**: Sprint 06 through current Sprint 08 completions
 **Historical Snapshot**:
 [`2026-07-23-pre-rebaseline-completed-tasks.md`](./context/archive/2026-07/2026-07-23-pre-rebaseline-completed-tasks.md)
 
 This file is the concise completion source for recent work. Older detailed task
 files remain under `tasks/completed/`, and older summaries are preserved under
 `context/archive/`.
+
+---
+
+## Sprint 08 Completed Tasks (July 23-August 7, 2026)
+
+### TASK-090: Runtime, Custom-Image, And Dependency Security Investigation
+
+**Status**: COMPLETED
+**Completed**: July 23, 2026
+**Task File**:
+[`TASK-090-runtime-custom-image-dependency-security.md`](./tasks/active/TASK-090-runtime-custom-image-dependency-security.md)
+
+Key outcomes:
+
+- Reconciled and classified the 62-alert Trivy baseline by package,
+  reachability, supported-runtime impact, and remediation direction.
+- Identified five release-blocking alerts, one required-hardening alert, and
+  the loopback-publication control.
+- Produced and obtained approval for the separately governed Task-098 scope.
+
+### TASK-098: Dependency Security Remediation And Release Gate
+
+**Status**: COMPLETED
+**Completed**: July 27, 2026
+**Task File**:
+[`TASK-098-dependency-security-remediation.md`](./tasks/active/TASK-098-dependency-security-remediation.md)
+
+Key outcomes:
+
+- Merged the qualified dependency, local-input, model-trust, and CI-ratchet
+  changes through PR #51 as `e499b50`.
+- Passed Docker CPU/GPU compatibility, live Google/Azure workflows, model
+  output/performance comparison, PR review remediation, and post-merge CI.
+- Reconciled Dependabot to eight open torch advisories—three medium and five
+  low—with no open release-blocking critical/high alert and no manual
+  dismissal.
+- Closed incompatible standalone torch PR #60; future torch upgrades must move
+  with torchvision and repeat the coordinated ML qualification cycle.
+- Cleared the security dependency for Task-087 to resume.
+
+Current-sprint task files remain under `tasks/active/` until Sprint 08
+closeout.
 
 ---
 

@@ -58,16 +58,18 @@ runtime, documentation, or handoff work.
 ### Phase 1 - Rebaseline And Investigate
 
 **Target**: July 23-August 14; reforecast after Task-090 classification
+**Status**: COMPLETE - Task-090 and Task-098 closed July 27
 
 1. Task-095 Phase A roadmap/workspace rebaseline and readiness cleanup:
    complete July 23.
-2. Complete Task-090 as a bounded runtime, custom-image, and dependency
-   security investigation.
-3. Classify all 62 Trivy alerts open on `main` and obtain approval for the
-   separate Task-098 remediation scope.
-4. Complete Task-098 patching, compatibility decisions, regression, and
-   residual-risk disposition.
-5. Resolve release-blocking findings before runtime feature work.
+2. Task-090 bounded runtime, custom-image, and dependency security
+   investigation: complete.
+3. The 62-alert baseline was classified and the separate Task-098 scope was
+   approved.
+4. Task-098 patching, compatibility decisions, regression, and residual
+   disposition: complete through PR #51 / `e499b50`.
+5. Release-blocking findings are resolved; eight non-blocking medium/low torch
+   advisories remain visible for future coordinated ML requalification.
 
 Exit:
 
@@ -176,7 +178,7 @@ Exit:
 | `TASK-087` | Universal guided Google/Azure provider TLS repair on Docker/Podman | Required |
 | `TASK-088` | Immutable `v0.1.2` pilot distribution and custody | Complete |
 | `TASK-089` | Owner-gated cdcai release/adoption and ownership transfer | Required after qualification |
-| `TASK-090` | Runtime, custom-image, and dependency-security investigation, including the 62-alert Trivy baseline | Required; investigation first |
+| `TASK-090` | Runtime, custom-image, and dependency-security investigation, including the 62-alert Trivy baseline | Complete July 23 |
 | `TASK-091` | Minimum owner-runnable release qualification | Required |
 | `TASK-092` | Documentation currentness and information architecture | Required minimum; broader redesign bounded |
 | `TASK-093` | Persistent-data lifecycle and recovery rehearsal | Required minimum |
@@ -184,7 +186,7 @@ Exit:
 | `TASK-095` | Governance and tool-neutral maintenance/handoff foundation | Required; Phase A complete, Phase B through closeout |
 | `TASK-096` | User-confirmed Exit/Stop TowerScout | Required |
 | `TASK-097` | Podman CPU/GPU final-path hardening and qualification | Required |
-| `TASK-098` | Dependency-security remediation, compatibility validation, and release disposition | Required as scoped by Task-090 |
+| `TASK-098` | Dependency-security remediation, compatibility validation, and release disposition | Complete July 27 |
 | `TASK-058` | Background jobs and durable run state | Conditional stretch |
 | `TASK-059` | Backend decomposition and logging consolidation | Conditional stretch after Task-058 |
 
@@ -192,12 +194,10 @@ No canonical task file existed for Tasks 090-095 before this rebaseline; their
 earlier mentions were provisional planning references. Tasks 096 and 097 were
 new unique identifiers at rebaseline. Task-098 was added on July 23 after the
 live 62-alert code-scanning inventory established a separate remediation need.
-A current-sprint planning record may preserve Task-090's proposed scope before
-approval, but Task-098 must not be marked `IN_PROGRESS` or change dependencies,
-runtime behavior, alert state, release assets, or external repositories until
-the project lead approves the implementation scope. cdcai-owner approval is
-reserved for residual critical/high acceptance, changes to `cdcai/TowerScout`,
-and official adoption.
+Task-098's project-lead approval gate was satisfied July 23 and the task
+completed July 27. cdcai-owner approval remains reserved for residual
+critical/high acceptance, changes to `cdcai/TowerScout`, and official
+adoption.
 
 ## Stop Rules
 

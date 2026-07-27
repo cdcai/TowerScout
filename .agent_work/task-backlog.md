@@ -12,30 +12,12 @@ work.
 
 | Order | Task | Status | Estimate | Dependencies | Required outcome |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `TASK-098` Dependency Security Remediation And Release Gate | IN_PROGRESS / PROJECT_LEAD_CHECKOUT_PENDING | Mandatory slices 4-8 days; full coordinated hardening 6-11 days, plus GPU/runtime host availability | Implementation, dependency qualification, Docker CPU/GPU and live Google/Azure smokes, branch security reconciliation, and PR #51 review remediation complete; awaits checkout/sign-off | Patchable mandatory findings pass regression/package validation with no unapproved feature, workflow, output, or performance regression; no unresolved release-blocking critical/high alert |
-| 2 | `TASK-096` User-Initiated Exit And Container Stop | NOT_STARTED | 2-4 days | Task-087 helper/security pattern; current stop scripts | Confirmed Exit/Stop works on Docker and Podman without deleting named volumes |
-| 3 | `TASK-097` Podman CPU/GPU Final Path Qualification | NOT_STARTED | 3-5 days plus environment validation | Tasks 090, 098, 087, and 096 | Podman CPU and GPU/CDI pass final-package qualification without Docker Desktop |
-| 4 | `TASK-091` Owner-Runnable Release Qualification | NOT_STARTED | 3-6 days | Candidate scope stable; fixture/harness custody | cdcai owner can execute or supervise the minimum release gate |
-| 5 | `TASK-092` Documentation Currentness And Information Architecture | NOT_STARTED | Stage A 1-2 days; Stage B as approved | Candidate behavior and package shape | Repo docs, user docs, release notes, external Setup Guide, and demo video agree |
-| 6 | `TASK-093` Persistent Data Lifecycle And Recovery Rehearsal | NOT_STARTED | 1-2 days minimum | Runtime profiles and package lifecycle stable | Safe owner-run upgrade, rollback, cleanup, and recovery procedure |
-| 7 | `TASK-094` Evidence-Gated Support Snapshot | EVIDENCE_GATED | 1-3 days if selected | Pilot/support evidence | Implement only if real feedback shows a support-diagnostics gap |
-
-### Task-098 Boundary
-
-- Task-090 identified five release-blocking alerts, one required-hardening
-  alert, and an all-interface Compose port publication that contradicts the
-  local-only runtime boundary.
-- Do not patch dependency pins ad hoc before Task-090 establishes reachability,
-  compatible target versions, and required regression scope.
-- Treat Pillow, Waitress, and the client-relevant aiohttp findings as the first
-  patch-oriented slice.
-- Treat PyTorch/torchvision/CUDA and Fiona/GeoPandas as coordinated
-  compatibility decisions, not isolated pin edits.
-- Require written owner acceptance for any residual critical/high risk.
-- Ratchet CI for new critical/high findings only after the existing baseline is
-  classified and the approved remediation lands.
-- Proposed scope:
-  [`TASK-090/remediation-scope.md`](./tasks/active/TASK-090/remediation-scope.md).
+| 1 | `TASK-096` User-Initiated Exit And Container Stop | NOT_STARTED | 2-4 days | Task-087 helper/security pattern; current stop scripts | Confirmed Exit/Stop works on Docker and Podman without deleting named volumes |
+| 2 | `TASK-097` Podman CPU/GPU Final Path Qualification | NOT_STARTED | 3-5 days plus environment validation | Tasks 090, 098, 087, and 096 | Podman CPU and GPU/CDI pass final-package qualification without Docker Desktop |
+| 3 | `TASK-091` Owner-Runnable Release Qualification | NOT_STARTED | 3-6 days | Candidate scope stable; fixture/harness custody | cdcai owner can execute or supervise the minimum release gate |
+| 4 | `TASK-092` Documentation Currentness And Information Architecture | NOT_STARTED | Stage A 1-2 days; Stage B as approved | Candidate behavior and package shape | Repo docs, user docs, release notes, external Setup Guide, and demo video agree |
+| 5 | `TASK-093` Persistent Data Lifecycle And Recovery Rehearsal | NOT_STARTED | 1-2 days minimum | Runtime profiles and package lifecycle stable | Safe owner-run upgrade, rollback, cleanup, and recovery procedure |
+| 6 | `TASK-094` Evidence-Gated Support Snapshot | EVIDENCE_GATED | 1-3 days if selected | Pilot/support evidence | Implement only if real feedback shows a support-diagnostics gap |
 
 ### Task-096 Boundary
 
@@ -76,8 +58,8 @@ work.
 
 | Order | Task | Status | Estimate | Start gate |
 | ---: | --- | --- | --- | --- |
-| 8 | `TASK-058` Background Detection Jobs And Durable Run State | CONDITIONAL | 3-5 days | Tasks 090, 098, 087, 096, and 097 pass; no pilot blocker; September 18 remains credible |
-| 9 | `TASK-059` Backend Layer Decomposition And Logging Consolidation | CONDITIONAL | 3-5 days | Task-058 accepted and remaining schedule margin is still safe |
+| 7 | `TASK-058` Background Detection Jobs And Durable Run State | CONDITIONAL | 3-5 days | Tasks 090, 098, 087, 096, and 097 pass; no pilot blocker; September 18 remains credible |
+| 8 | `TASK-059` Backend Layer Decomposition And Logging Consolidation | CONDITIONAL | 3-5 days | Task-058 accepted and remaining schedule margin is still safe |
 
 August 28 is the latest responsible Task-058 capacity checkpoint, not an
 earliest start date. Task-058 may begin earlier when all gates pass.
@@ -114,8 +96,8 @@ Parking lot:
 | --- | --- |
 | `TASK-095` Governance And AI-Ready Handoff Foundation | Active in Sprint 08; Phase A complete, Phase B continues |
 | `TASK-090` Runtime, Custom-Image, And Dependency Security Investigation | Completed; Task-098 scope approved |
-| `TASK-098` Dependency Security Remediation And Release Gate | In progress; mandatory A-D/G implementation, Docker CPU/GPU compatibility, and live Google/Azure smokes passed; branch security-ratchet closeout pending |
-| `TASK-087` Host-Side TLS Repair Control Plane | Reselected in Sprint 08 after the Tasks 090/098 security gate |
+| `TASK-098` Dependency Security Remediation And Release Gate | Completed July 27; PR #51 merged, main CI passed, and Dependabot reconciled to eight documented non-blocking torch advisories |
+| `TASK-087` Host-Side TLS Repair Control Plane | Ready to resume in Sprint 08 after the completed Tasks 090/098 security gate |
 | `TASK-089` cdcai Adoption And Ownership Transfer | Owner-gated; preparation only until final qualification and approval |
 
 ---

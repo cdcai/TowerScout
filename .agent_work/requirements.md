@@ -1,6 +1,6 @@
 # TowerScout Requirements
 
-**Last Updated**: July 23, 2026
+**Last Updated**: July 27, 2026
 **Current Planning Horizon**: October 31, 2026 hard project end
 **Operational Closeout**: October 30, 2026
 **Canonical Roadmap**:
@@ -156,6 +156,17 @@ Acceptance:
   ambiguous, and no-fix findings require evidence-backed disposition.
 - After the baseline is remediated, CI prevents new critical/high findings or
   requires an explicit time-bounded exception.
+
+Current result:
+
+- Task-090 classified the 62-alert baseline and Task-098 implemented the
+  approved remediation through PR #51 / merge commit `e499b50`.
+- Main CI blocks new or reintroduced critical/high dependency findings while
+  retaining all-severity reporting.
+- Dependabot reports eight open torch advisories—three medium and five low—
+  that are non-reachable on the supported paths and require a future
+  coordinated torch/torchvision CPU/CUDA qualification cycle.
+- No release-blocking critical/high finding remains; Task-087 may resume.
 
 ## Qualification And Handoff Requirements
 

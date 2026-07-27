@@ -1,6 +1,6 @@
 # TowerScout Current Technical Design
 
-**Last Updated**: July 23, 2026
+**Last Updated**: July 27, 2026
 **Scope**: Fix-first candidate development, four-profile runtime qualification,
 and cdcai handoff through October 2026
 **Archived Pre-Rebaseline Design**:
@@ -109,24 +109,25 @@ or modify Podman-machine trust.
 
 ## Dependency Security Boundary
 
-Task-090 owns evidence and classification for the 62-alert Trivy baseline.
-Task-098 owns approved dependency changes and their regression/qualification
-cost.
+Task-090 and Task-098 completed the 62-alert Trivy baseline classification,
+approved remediation, and affected-runtime qualification. PR #51 merged as
+`e499b50`.
 
-The implementation order is:
+The current security boundary is:
 
-1. Patch-oriented upgrades with direct live use (`Pillow`, `waitress`, and the
-   client-relevant `aiohttp` path).
-2. Coordinated compatibility decisions for PyTorch/torchvision/CPU/CUDA and
-   Fiona/GeoPandas/GDAL.
-3. Unit/integration/provider/model-loading validation.
-4. Rebuilt-image and four-profile regression when runtime dependencies change.
-5. Owner-approved residual-risk documentation when a critical/high alert
-   cannot be safely removed.
-
-CI may remain advisory while the known baseline is classified. After Task-098,
-new critical/high findings must fail or receive an explicit time-bounded
-exception.
+1. Loopback publication and content-sniffed custom-image validation protect
+   the normal local runtime.
+2. Release-model hashes are enforced by default; model upload remains disabled
+   by default and requires both an administrator key and approved SHA-256 hash
+   when enabled.
+3. The selected `torch==2.6.0` / `torchvision==0.21.0` pair is qualified for
+   the Task-098 CPU/CUDA boundary.
+4. Eight medium/low torch advisories remain visible and non-reachable on
+   supported paths. A future upgrade must move torch and torchvision together
+   and repeat CPU/CUDA, model-load, output-parity, and performance validation.
+5. All-severity SARIF reporting remains advisory, while new or reintroduced
+   critical/high dependency findings are blocking unless covered by a narrow,
+   unexpired exception.
 
 ## Task Dependency Flow
 
@@ -134,13 +135,13 @@ exception.
 TASK-095 Phase A rebaseline
         |
         v
-TASK-090 bounded security investigation
+TASK-090 bounded security investigation [COMPLETE]
         |
         v
-TASK-098 dependency-security remediation/disposition gate
+TASK-098 dependency-security remediation/disposition gate [COMPLETE]
         |
         v
-TASK-087 universal provider TLS repair
+TASK-087 universal provider TLS repair [READY TO RESUME]
         |
         v
 TASK-096 user Exit/Stop

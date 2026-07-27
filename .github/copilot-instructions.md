@@ -3,7 +3,7 @@
 This is the primary high-context guidance file for AI coding agents working in
 the TowerScout repository. It preserves project context, guardrails, and
 workflow guidance while reflecting the current repository state as of
-2026-07-23.
+2026-07-27.
 
 ## Mission and Product Context
 
@@ -39,9 +39,10 @@ The project still carries public-health workflow expectations:
   fork develops `v0.1.3-rc.N` candidates.
 - `TASK-095` Phase A rebaselined the roadmap and `.agent_work`; Phase B
   governance continues through handoff.
-- `TASK-090` is the next selected investigation and includes the 62 open Trivy
-  dependency alerts reported on `main` July 23. `TASK-098` holds approved
-  dependency remediation. `TASK-087` resumes only after their security gate.
+- `TASK-090` and `TASK-098` are complete. PR #51 merged the qualified
+  dependency remediation as `e499b50`, post-merge CI passed, and Dependabot
+  reconciled to eight documented non-blocking torch advisories. `TASK-087` is
+  the next selected implementation lane.
 - `TASK-096` adds user-confirmed Exit/Stop. `TASK-097` qualifies Podman CPU/GPU.
 - Docker CPU, Docker GPU, Podman CPU, and Podman GPU are required final-package
   profiles, subject to their documented prerequisites.
@@ -105,10 +106,10 @@ The current path is fix-first candidate development with feedback-gated cdcai
 adoption:
 
 1. Keep the six distributed `v0.1.2` release assets immutable.
-2. Task-095 Phase A is complete; start Task-090.
-3. Classify every open code-scanning alert and scope Task-098 separately.
-4. Complete mandatory Task-098 remediation and explicitly disposition any
-   residual risk.
+2. Task-095 Phase A is complete.
+3. Task-090 alert classification and Task-098 remediation are complete.
+4. Preserve the eight documented torch residuals for a future coordinated
+   torch/torchvision ML qualification cycle.
 5. Resume Task-087 for guided Google/Azure provider TLS repair on Docker and
    Podman; preserve the command fallback.
 6. Complete Task-096 Exit/Stop and Task-097 Podman CPU/GPU qualification.
@@ -748,10 +749,10 @@ The original guidance benefited from explicitly naming recent completed work. Th
 ### Fix-First Priority Sequence
 
 1. Keep `v0.1.2` immutable as the Pilot Package.
-2. With Task-095 Phase A complete, run Task-090 and classify the 62-alert
-   dependency baseline.
-3. Complete Task-098 mandatory remediation and residual-risk disposition.
-4. Resume Task-087 after the Tasks 090/098 security gate passes.
+2. Task-095 Phase A, Task-090, and Task-098 are complete.
+3. Preserve the completed dependency-security gate and the eight documented
+   non-blocking torch residuals.
+4. Resume Task-087 from current `main`.
 5. Complete Task-096 Exit/Stop and Task-097 Podman CPU/GPU qualification.
 6. Qualify Docker CPU/GPU and Podman CPU/GPU.
 7. Start Task-058 early only when all required gates pass; keep Task-059 behind
@@ -771,12 +772,12 @@ An agent should leave with the following understanding:
 - `v0.1.2` remains immutable while new work uses `v0.1.3-rc.N` candidates
 - Docker CPU/GPU and Podman CPU/GPU are required final-candidate profiles
 - local/CI pytest timeout safeguards and Flask route-test isolation are merged through `TASK-067`
-- the non-mutating Task-087 Gate 3 proof is merged; the authorized candidate
-  path resumes only after the Tasks 090/098 security gate
+- the non-mutating Task-087 Gate 3 proof is merged and the Tasks 090/098
+  security gate has passed, so Task-087 is ready to resume
 - filesystem sessions and disk-backed config writes are real architectural constraints
 - Google and Azure workflows are both important
 - outbreak-investigation workflows are the highest-value legacy surface to preserve
-- the next path is Task-090, Task-098 as scoped, then Task-087
+- Task-090 and Task-098 are complete; the next path is Task-087
 - Task-089 execution remains blocked until final qualification and explicit
   cdcai-owner adoption approval
 

@@ -1,8 +1,7 @@
 # TASK-098: Dependency Security Remediation And Release Gate
 
-**Status**: IN_PROGRESS / IMPLEMENTATION, QUALIFICATION, BRANCH SECURITY
-RECONCILIATION, AND PR #51 REVIEW REMEDIATION COMPLETE; PR #51 AWAITS
-PROJECT-LEAD CHECKOUT AND SIGN-OFF
+**Status**: COMPLETED - PR #51 MERGED AS `e499b50`; POST-MERGE CI PASSED;
+DEPENDABOT RECONCILED TO EIGHT DOCUMENTED NON-BLOCKING TORCH ADVISORIES
 **Priority**: HIGH
 **Type**: C (Security Remediation / Runtime Qualification)
 **Estimated Effort**: Mandatory slices 4-8 days; full coordinated hardening
@@ -330,8 +329,11 @@ Validate the exact pinned action behavior before making the new gate blocking.
   count alone as proof of safety.
 - [x] The approved CI ratchet fails new critical/high findings unless covered
   by a narrow, unexpired exception.
-- [ ] Requirements, design, task status, release notes, dependency notices,
-  package manifests, and owner-maintenance guidance reflect the final result.
+- [x] Task-098-specific requirements, design, task status, dependency notices,
+  package manifests, and owner-maintenance guidance reflect the merged result.
+  Task-098 produced no release artifact; final-candidate release notes and the
+  detailed administrator Model Upload Key instructions remain assigned to
+  Task-092 and `DOC-001`.
 - [x] Task-087 remains paused until this release gate is signed off.
 
 ## Dependencies
@@ -1186,9 +1188,10 @@ current-runtime assertion.
 **Documentation follow-up**: Detailed operator guidance is assigned to
 Task-092 and DOC-001. It must explain secure key generation, private storage,
 rotation, enable/disable behavior, approved-hash onboarding for a new model,
-normal-user impact, and troubleshooting without exposing a real key. The
-broad final-documentation acceptance item remains open until that work and the
-final release-note/owner-maintenance pass are complete.
+normal-user impact, and troubleshooting without exposing a real key.
+Task-098 closes with its security-specific documentation current; the
+candidate release-note and administrator-instruction work remains a distinct
+Task-092 final-documentation gate.
 
 **Post-push CI correction**: PR #51 run `30278197559` passed the main
 frontend, Python 3.11, Python 3.12, security, and Trivy jobs, but both Task-087
@@ -1208,11 +1211,54 @@ the authoritative Node 22 browser-install and job-execution proof.
 
 ---
 
+### 2026-07-27 - Merge, Dependabot Reconciliation, And Task Sign-Off
+
+**Objective**: Close Task-098 only after the reviewed implementation lands on
+`main`, the post-merge workflow passes, and GitHub's dependency graph reports
+the intended residual-alert state.
+
+**Context**: The project lead confirmed the PR was ready, squash-merged PR #51,
+deleted its remote branch, and refreshed Dependabot after the first
+post-merge graph still contained both retired and replacement dependency
+versions.
+
+**Decision**: Treat the refreshed eight-alert torch inventory as the
+authoritative residual. Preserve those alerts as visible, evidence-backed
+future ML work; do not dismiss them or merge an uncoordinated standalone torch
+upgrade.
+
+**Execution**:
+
+- PR #51 was squash-merged as commit
+  `e499b50d285b775047fb6efadcec512f7753c859`.
+- Main workflow run `30284846056` completed successfully: frontend, Python
+  3.11, Python 3.12, security, and Docker image-build jobs all passed.
+- The refreshed Dependabot inventory contains exactly alerts `17`, `18`, `44`,
+  `45`, `46`, `47`, `48`, and `58`, all for torch: three medium and five low,
+  with no open critical or high alert.
+- Dependabot PR #60 was closed rather than merged because it changed torch to
+  2.13.0 while leaving torchvision 0.21.0, which requires torch 2.6.0. Its
+  disposition requires a future compatible pair and a repeated CPU/CUDA,
+  trusted-model, output-parity, and performance qualification cycle.
+
+**Output**: Task-098's release-blocking security gate is closed. No alert was
+manually dismissed, the frozen `v0.1.2` release and `cdcai/TowerScout` remain
+unchanged, and Task-087 is ready to resume after this documentation-only
+closeout merges.
+
+**Validation**: Live GitHub PR, Actions, and Dependabot API state were checked
+after the refresh. The repository-native hygiene validators and Markdown link
+checks are rerun on this closeout branch below.
+
+**Next**: Merge this documentation-only closeout, then resume Task-087 from
+current `main`.
+
+---
+
 ## Validation Results
 
-**Execution Status**: IN_PROGRESS; IMPLEMENTATION, QUALIFICATION, BRANCH
-SECURITY RECONCILIATION, AND PR #51 REVIEW REMEDIATION COMPLETE; PR #51 AWAITS
-PROJECT-LEAD CHECKOUT AND TASK SIGN-OFF
+**Execution Status**: PASS / COMPLETED; PR #51 MERGED, MAIN CI PASSED,
+DEPENDABOT RECONCILED, AND PROJECT-LEAD SIGN-OFF RECORDED
 
 **Closeout Confidence**: The alert inventory, reachability decisions, selected
 versions, regression obligations, CPU/GPU evidence boundaries, live-provider
@@ -1262,5 +1308,7 @@ Slice B Pillow/Waitress pins, Slice C aiohttp pin, Slice D/G ML runtime pins
 and safety boundaries, qualified Slice E geospatial pins/backend selection,
 qualified Slice F Flask/python-dotenv pins, npm transitive lockfile fixes, the
 CI security ratchet, corrected model-hash documentation, and maintained
-regression/evidence records. No release asset, GitHub alert state, repository
-security setting, or external repository has been changed.
+regression/evidence records. No release asset, repository security setting, or
+external repository was changed. GitHub's post-merge refresh marked the
+remediation-covered Dependabot alerts fixed without any manual dismissal and
+left the eight documented torch residuals open.

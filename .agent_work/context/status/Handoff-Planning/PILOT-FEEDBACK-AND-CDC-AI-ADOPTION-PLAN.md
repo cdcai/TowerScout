@@ -95,14 +95,14 @@ backlog, and migration-ready handoff without changing cdcai.
   Podman.
 - Task-088: completed Pilot Package distribution and custody.
 - Task-089: owner-gated cdcai adoption and ownership transfer.
-- Task-090: bounded runtime/custom-image/dependency security investigation,
-  including the 62-alert Trivy baseline.
+- Task-090: completed bounded runtime/custom-image/dependency security
+  investigation, including the 62-alert Trivy baseline.
 - Tasks 091-095: qualification, docs, recovery, evidence-gated support, and
   governance/handoff.
 - Task-096: user-confirmed Exit/Stop.
 - Task-097: Podman CPU/GPU final-path qualification.
-- Task-098: approved dependency remediation, compatibility validation, and
-  release-risk disposition.
+- Task-098: completed dependency remediation, compatibility validation, and
+  release-risk disposition through PR #51 / `e499b50`.
 
 ## Superseded Instructions
 

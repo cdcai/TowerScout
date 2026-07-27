@@ -1,24 +1,38 @@
 # TASK-087: Host-Side TLS Repair Control Plane
 
-**Status**: PLANNED / RESELECTED - Gate 3 non-mutating proof is merged; resume
-after the Tasks 090/098 security gate
+**Status**: READY TO RESUME - Gate 3 non-mutating proof is merged and the
+Tasks 090/098 security gate passed
 **Type**: B/C (Runtime Support / Setup UX / TLS Trust)
-**Priority**: MEDIUM-HIGH
+**Priority**: HIGH
 **Estimated Effort**: 4-7 days (32-56 hours), plus package validation on a managed TLS-inspected network
 **Target Sprint**: Sprint 08 start, with managed-network completion scheduled by
 the canonical October roadmap
 **Created**: 2026-06-29
 **Owner**: TowerScout release owner / active agent support
-**Depends On**: `TASK-086`; `TASK-090` investigation; approved `TASK-098`
-dependency remediation/disposition; package launcher/runtime profile; provider setup error
-classification; Docker and Podman CPU/GPU package paths
+**Depends On**: `TASK-086`; completed `TASK-090` investigation and `TASK-098`
+dependency remediation/disposition; package launcher/runtime profile; provider
+setup error classification; Docker and Podman CPU/GPU package paths
 
 ## Canonical Source Note
 
 This file preserves the canonical gated Task-087 design and evidence. The
-non-mutating proof is merged. The July 23 fix-first roadmap authorizes
-resumption after the Tasks 090/098 security gate. The command-based Task-086
-path remains the fallback until all Task-087 gates pass.
+non-mutating proof is merged and the Tasks 090/098 security gate passed on
+July 27. Task-087 is ready to resume from current `main` after the Task-098
+closeout merges. The command-based Task-086 path remains the fallback until
+all Task-087 gates pass.
+
+## July 27, 2026 Activation Update
+
+This update controls current execution status wherever older planning
+language below still describes Task-087 as gated:
+
+- Tasks 090 and 098 are complete; their dependency-security gate no longer
+  blocks Task-087.
+- Task-087 is the next selected HIGH-priority implementation lane.
+- Begin from current `main` after the documentation-only Task-098 closeout
+  merges.
+- Preserve the existing helper security model, command fallback, and remaining
+  product, browser, package, and managed-network validation gates.
 
 ## July 23, 2026 Rebaseline Override
 
