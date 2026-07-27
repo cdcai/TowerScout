@@ -8,7 +8,7 @@ provider TLS repair baseline, unless release notes say otherwise
 **Last reviewed**: 2026-06-29
 **Audience**: First-line support, release validation, and pilot testers
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
-12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are
+12.6 Application Package, Podman CPU, Docker GPU, and Podman GPU are
 support-assigned paths after workstation-specific engine, Compose-provider,
 and NVIDIA validation.
 
@@ -25,7 +25,7 @@ The current release-candidate package supports:
 - CPU baseline.
 - Two digest-pinned Application Package variants:
   - `cpu` for normal and non-GPU users.
-  - `cuda121` only for support-validated NVIDIA GPU workstations.
+  - `cuda126` only for support-validated NVIDIA GPU workstations.
 - One shared Model & Data Package ZIP for both Application Package variants.
 - Normal outbound internet access for GHCR image pulls and map providers.
 - Docker Desktop as the primary controlled pilot engine.
@@ -156,9 +156,9 @@ Application Package, choose exactly one variant:
 - CPU package for normal/non-GPU users:
   - `towerscout-<release-version>-cpu.zip`
   - `towerscout-<release-version>-cpu.zip.sha256`
-- CUDA 12.1 package for support-validated NVIDIA GPU workstations:
-  - `towerscout-<release-version>-cuda121.zip`
-  - `towerscout-<release-version>-cuda121.zip.sha256`
+- CUDA 12.6 package for support-validated NVIDIA GPU workstations:
+  - `towerscout-<release-version>-cuda126.zip`
+  - `towerscout-<release-version>-cuda126.zip.sha256`
 
 Do not put both Application Package variants in a normal tester handoff folder
 unless support is intentionally comparing CPU and CUDA behavior.
@@ -193,7 +193,7 @@ C:\Users\<you>\Documents\TowerScoutUAT
 
 The release version in the Application Package and Model & Data Package
 filenames must match. The Application Package will include `-cpu` or
-`-cuda121`; the shared Model & Data Package filename does not include an image
+`-cuda126`; the shared Model & Data Package filename does not include an image
 flavor.
 
 The Application Package contains launch scripts, Compose files, docs,
@@ -293,7 +293,7 @@ ghcr.io/j-schulein/towerscout:<release-version>-cpu@sha256:<digest>
 ```
 
 `IMAGE.txt`, `.env.example`, and `release-manifest.v1.json` record the selected
-PyTorch flavor, either `cpu` or `cuda121`.
+PyTorch flavor, either `cpu` or `cuda126`.
 The CPU package rejects `-Gpu on`. The CUDA package still requires GPU
 readiness evidence before it is treated as a valid GPU launch.
 

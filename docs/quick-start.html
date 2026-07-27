@@ -42,7 +42,7 @@
           say otherwise.</p>
         <p><strong>Last reviewed:</strong> 2026-07-08.</p>
         <p><strong>Audience:</strong> Pilot users and first-line support.</p>
-        <p><strong>Runtime scope:</strong> The CPU Application Package is the normal path. The CUDA 12.1 Application
+        <p><strong>Runtime scope:</strong> The CPU Application Package is the normal path. The CUDA 12.6 Application
           Package, Podman CPU, Docker GPU, and Podman GPU are support-assigned paths after workstation-specific engine,
           Compose-provider, and NVIDIA validation.</p>
       </section>
@@ -52,7 +52,7 @@
           <code>15 GB</code> free disk space for the CPU package, and one valid site/user-owned provider key.
           <code>25 GB</code> free is a better target for CUDA validation.</p>
         <p><strong>Application Package</strong> means the smaller app/control ZIP with scripts, docs, Compose files, and
-          release metadata. There are two variants: <code>cpu</code> for normal/non-GPU use and <code>cuda121</code> for
+          release metadata. There are two variants: <code>cpu</code> for normal/non-GPU use and <code>cuda126</code> for
           support-validated NVIDIA GPU workstations. <strong>Model &amp; Data Package</strong> means the larger asset
           ZIP, also called the asset bundle, with model weights and ZIP-code data. Both Application Package variants use
           the same Model &amp; Data Package for this release path.</p>
@@ -116,7 +116,7 @@ docker compose version</code></pre>
         <p>Normal users download the CPU Application Package ZIP
           (<code>towerscout-&lt;release-version&gt;-cpu.zip</code>), its checksum, the shared Model &amp; Data Package
           ZIP, and the asset checksum from the same release. Use the CUDA Application Package
-          (<code>towerscout-&lt;release-version&gt;-cuda121.zip</code>) only when support assigns GPU validation. Keep
+          (<code>towerscout-&lt;release-version&gt;-cuda126.zip</code>) only when support assigns GPU validation. Keep
           the four files together in <code>TowerScoutUAT</code>. For the normal setup path, extract only the Application
           Package ZIP and leave the Model &amp; Data Package ZIP plus both <code>.sha256</code> files beside the
           extracted folder.</p>
@@ -130,7 +130,7 @@ docker compose version</code></pre>
         <p>Before extracting anything, confirm the folder contains exactly one Application Package ZIP and checksum,
           plus the shared Model &amp; Data Package ZIP and checksum from the same release. The Application Package is
           usually the <code>-cpu</code> variant. If support assigned GPU validation, replace it with the matching
-          <code>-cuda121</code> variant. Do not keep both variants in the same UAT folder unless support asks you to
+          <code>-cuda126</code> variant. Do not keep both variants in the same UAT folder unless support asks you to
           compare them.</p>
         <p>Setup verifies the checksum sidecars during first run. If support asks for manual checksum evidence, use the
           package guide for the detailed <code>Get-FileHash</code> or <code>certutil</code> commands.</p>

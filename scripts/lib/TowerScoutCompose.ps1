@@ -1,7 +1,7 @@
 Set-StrictMode -Version Latest
 $script:TowerScoutComposeExitCode = 0
 $script:TowerScoutCpuPytorchIndexUrl = "https://download.pytorch.org/whl/cpu"
-$script:TowerScoutCudaPytorchIndexUrl = "https://download.pytorch.org/whl/cu121"
+$script:TowerScoutCudaPytorchIndexUrl = "https://download.pytorch.org/whl/cu126"
 $script:TowerScoutDefaultPodmanMachineName = "podman-machine-default"
 . "$PSScriptRoot\TowerScoutPodmanComposeProvider.ps1"
 
@@ -287,7 +287,7 @@ function Assert-TowerScoutPackageGpuCompatibility {
 
     $packageFlavor = Get-TowerScoutPackagePytorchFlavor -RootPath $rootPath
     if ($packageFlavor -eq "cpu") {
-        throw "This CPU TowerScout package does not support -Gpu on. Use the CUDA 12.1 package for GPU validation, or launch this CPU package with -Gpu off."
+        throw "This CPU TowerScout package does not support -Gpu on. Use the CUDA 12.6 package for GPU validation, or launch this CPU package with -Gpu off."
     }
 }
 
@@ -467,17 +467,20 @@ function Get-TowerScoutPackageManagedEnvironmentNames {
         "TOWERSCOUT_ALLOW_INSECURE_TLS",
         "TOWERSCOUT_CONTAINER_ENGINE",
         "TOWERSCOUT_DEVICE",
+        "TOWERSCOUT_ENABLE_MODEL_UPLOAD",
         "TOWERSCOUT_GPU_AUTO_OVERLAY",
         "TOWERSCOUT_GPU_CONCURRENCY",
         "TOWERSCOUT_GPU_MODE",
         "TOWERSCOUT_IMAGE",
         "TOWERSCOUT_IMAGE_DIGEST",
         "TOWERSCOUT_MAX_REQUEST_BODY_BYTES",
+        "TOWERSCOUT_MODEL_UPLOAD_KEY",
         "TOWERSCOUT_PILOT_MAX_TILES",
         "TOWERSCOUT_PODMAN_GPU_OVERLAY",
         "TOWERSCOUT_PODMAN_MACHINE",
         "TOWERSCOUT_PORT",
         "TOWERSCOUT_PYTORCH_FLAVOR",
+        "TOWERSCOUT_TRUSTED_MODEL_SHA256",
         "TOWERSCOUT_VERIFY_ASSET_HASHES",
         "YOLO_CONFIG_DIR"
     )
@@ -608,7 +611,7 @@ function Set-TowerScoutGpuEnvironment {
 
     if ($Build) {
         if ($env:PYTORCH_INDEX_URL -eq $script:TowerScoutCudaPytorchIndexUrl) {
-            $env:TOWERSCOUT_PYTORCH_FLAVOR = "cuda121"
+            $env:TOWERSCOUT_PYTORCH_FLAVOR = "cuda126"
         }
         elseif ($env:PYTORCH_INDEX_URL -eq $script:TowerScoutCpuPytorchIndexUrl) {
             $env:TOWERSCOUT_PYTORCH_FLAVOR = "cpu"

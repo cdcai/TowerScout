@@ -45,6 +45,7 @@ from ts_performance import PerformanceMetrics
 import ts_config
 import ts_device
 import ts_runtime
+from ts_assets import AssetManifestError, verify_trusted_model
 from ts_provider_http import (
     classify_provider_response,
     provider_get,
@@ -1474,6 +1475,17 @@ def _get_max_request_body_size() -> int:
 MAX_REQUEST_BODY_SIZE = _get_max_request_body_size()
 TowerScoutValidator.MAX_FILE_SIZE = MAX_REQUEST_BODY_SIZE
 MODEL_UPLOAD_ENABLED = os.getenv('TOWERSCOUT_ENABLE_MODEL_UPLOAD', '').strip().lower() in {'1', 'true', 'yes', 'on'}
+MODEL_UPLOAD_KEY_ENV_VAR = 'TOWERSCOUT_MODEL_UPLOAD_KEY'
+MODEL_UPLOAD_KEY_HEADER = 'X-TowerScout-Model-Upload-Key'
+MODEL_UPLOAD_KEY_MIN_LENGTH = 32
+MODEL_UPLOAD_KEY_MAX_LENGTH = 512
+
+
+def _get_configured_model_upload_key():
+    configured_key = os.getenv(MODEL_UPLOAD_KEY_ENV_VAR, '').strip()
+    if MODEL_UPLOAD_KEY_MIN_LENGTH <= len(configured_key) <= MODEL_UPLOAD_KEY_MAX_LENGTH:
+        return configured_key
+    return None
 
 # Configure Flask from environment variables
 if os.getenv('FLASK_ENV', 'development').lower() == 'testing':
@@ -2746,11 +2758,32 @@ def upload_model():
         return jsonify({
             'error': 'Model upload is disabled for this release. Install trusted model files through the configured model volume or enable the local-admin upload override.'
         }), 403
+
+    configured_key = _get_configured_model_upload_key()
+    if configured_key is None:
+        api_logger.warning(
+            "Model upload rejected because TOWERSCOUT_MODEL_UPLOAD_KEY is not securely configured"
+        )
+        return jsonify({
+            'error': 'Model upload is enabled but no valid Model Upload Key is configured.'
+        }), 503
     
     # Rate limiting (stricter for model uploads)
-    client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ['REMOTE_ADDR'])
+    client_ip = request.remote_addr or "unknown"
     if not rate_limiter.is_allowed(client_ip, max_requests=5, window_seconds=300):
         return jsonify({'error': 'Rate limit exceeded for model uploads'}), 429
+
+    provided_key = request.headers.get(MODEL_UPLOAD_KEY_HEADER, '')
+    key_matches = (
+        len(provided_key) <= MODEL_UPLOAD_KEY_MAX_LENGTH
+        and secrets.compare_digest(
+            provided_key.encode('utf-8'),
+            configured_key.encode('utf-8'),
+        )
+    )
+    if not key_matches:
+        api_logger.warning("Model upload rejected because authorization failed")
+        return jsonify({'error': 'Model upload authorization failed.'}), 403
     
     # Input validation
     try:
@@ -2777,8 +2810,20 @@ def upload_model():
     # filename = secure_filename(file.filename)
     filename = file.filename
     target_dir = EN_MODEL_DIR if filename.startswith("b5") else YOLO_MODEL_DIR
-    file.save(str(target_dir / filename))
-    api_logger.info("Uploaded model file to %s", target_dir / filename)
+    target_path = target_dir / filename
+    pending_path = target_dir / f".{filename}.{secrets.token_hex(8)}.pending"
+    try:
+        file.save(str(pending_path))
+        verify_trusted_model(pending_path)
+        pending_path.replace(target_path)
+    except AssetManifestError as e:
+        pending_path.unlink(missing_ok=True)
+        api_logger.warning("Model upload rejected by trusted-file verification: %s", e)
+        return jsonify({'error': f'Model trust validation error: {e}'}), 400
+    except Exception:
+        pending_path.unlink(missing_ok=True)
+        raise
+    api_logger.info("Uploaded trusted model file to %s", target_path)
 
     add_model(filename)
 

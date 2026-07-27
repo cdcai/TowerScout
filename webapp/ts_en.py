@@ -28,6 +28,7 @@ from ts_errors import ModelLoadError, ProcessingError
 from ts_logging import get_ml_logger
 from ts_device import DevicePolicyError, gpu_guard, select_model_device
 from ts_paths import get_en_model_dir, get_upload_dir
+from ts_assets import AssetManifestError, verify_trusted_model
 
 logger = get_ml_logger()
 
@@ -67,6 +68,17 @@ class EN_Classifier:
                     f"EfficientNet model file not found: {path_best}",
                     model_name="EfficientNet-B5",
                     model_path=str(path_best)
+                )
+
+            try:
+                verify_trusted_model(path_best)
+                logger.info("EfficientNet model checksum verified")
+            except AssetManifestError as e:
+                raise ModelLoadError(
+                    f"EfficientNet model trust verification failed: {str(e)}",
+                    model_name="EfficientNet-B5",
+                    model_path=str(path_best),
+                    cause=e,
                 )
             
             try:

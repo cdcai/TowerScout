@@ -74,8 +74,8 @@ if ([string]::IsNullOrWhiteSpace($PytorchFlavor)) {
 }
 if ([string]::IsNullOrWhiteSpace($PytorchFlavor)) {
     $imageWithoutDigest = $Image -replace "@$digestPattern$", ""
-    if ($imageWithoutDigest -match "[-:]cuda121$") {
-        $PytorchFlavor = "cuda121"
+    if ($imageWithoutDigest -match "[-:]cuda126$") {
+        $PytorchFlavor = "cuda126"
     }
     elseif ($imageWithoutDigest -match "[-:]cpu$") {
         $PytorchFlavor = "cpu"
@@ -85,8 +85,8 @@ if ([string]::IsNullOrWhiteSpace($PytorchFlavor)) {
     }
 }
 $PytorchFlavor = $PytorchFlavor.Trim().ToLowerInvariant()
-if ($PytorchFlavor -notin @("cpu", "cuda121")) {
-    throw "PytorchFlavor must be one of: cpu, cuda121."
+if ($PytorchFlavor -notin @("cpu", "cuda126")) {
+    throw "PytorchFlavor must be one of: cpu, cuda126."
 }
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
@@ -152,7 +152,7 @@ function Get-TowerScoutDefaultAssetBundleVersion {
     )
 
     $candidate = ([string] $PackageVersion).Trim()
-    foreach ($suffix in @("-cuda121", "-cpu")) {
+    foreach ($suffix in @("-cuda126", "-cpu")) {
         if ($candidate.EndsWith($suffix, [System.StringComparison]::OrdinalIgnoreCase)) {
             return $candidate.Substring(0, $candidate.Length - $suffix.Length)
         }

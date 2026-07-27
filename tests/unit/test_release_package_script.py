@@ -99,13 +99,13 @@ def test_package_release_stages_digest_pinned_image():
             "-OutputDir",
             str(output_dir),
             "-Image",
-            "ghcr.io/j-schulein/towerscout:pytest-digest-cuda121",
+            "ghcr.io/j-schulein/towerscout:pytest-digest-cuda126",
             "-ImageDigest",
             digest,
             "-AssetBundleSha256",
             asset_bundle_sha256,
             "-PytorchFlavor",
-            "cuda121",
+            "cuda126",
             "-AllowDirtySource",
             "-NoZip",
             "-Force",
@@ -120,16 +120,16 @@ def test_package_release_stages_digest_pinned_image():
             (stage_path / "release-manifest.v1.json").read_text(encoding="utf-8")
         )
         assert_manifest_schema(release_manifest)
-        assert f"TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout:pytest-digest-cuda121@{digest}" in env_example
+        assert f"TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout:pytest-digest-cuda126@{digest}" in env_example
         assert f"TOWERSCOUT_IMAGE_DIGEST={digest}" in env_example
-        assert "TOWERSCOUT_PYTORCH_FLAVOR=cuda121" in env_example
-        assert f"Image: ghcr.io/j-schulein/towerscout:pytest-digest-cuda121@{digest}" in image_txt
-        assert "PyTorch flavor: cuda121" in image_txt
+        assert "TOWERSCOUT_PYTORCH_FLAVOR=cuda126" in env_example
+        assert f"Image: ghcr.io/j-schulein/towerscout:pytest-digest-cuda126@{digest}" in image_txt
+        assert "PyTorch flavor: cuda126" in image_txt
         assert release_manifest["track"] == "agpl-yolo"
         assert release_manifest["image_digest"] == digest
-        assert release_manifest["pytorch_flavor"] == "cuda121"
+        assert release_manifest["pytorch_flavor"] == "cuda126"
         assert release_manifest["release_artifacts"]["image_digest"] == digest
-        assert release_manifest["release_artifacts"]["pytorch_flavor"] == "cuda121"
+        assert release_manifest["release_artifacts"]["pytorch_flavor"] == "cuda126"
         assert release_manifest["release_artifacts"]["control_zip"] == ""
         assert release_manifest["release_artifacts"]["control_zip_sha256"] == ""
         assert release_manifest["release_artifacts"]["control_zip_sha256_sidecar"] == ""
@@ -212,7 +212,7 @@ def test_package_release_variants_share_asset_bundle_identity():
     try:
         for suffix, digest, flavor in [
             ("cpu", cpu_digest, "cpu"),
-            ("cuda121", cuda_digest, "cuda121"),
+            ("cuda126", cuda_digest, "cuda126"),
         ]:
             result = _run_package_release(
                 "-Version",
@@ -243,7 +243,7 @@ def test_package_release_variants_share_asset_bundle_identity():
         cuda_manifest = json.loads(
             (
                 output_path
-                / f"towerscout-{base_id}-cuda121"
+                / f"towerscout-{base_id}-cuda126"
                 / "release-manifest.v1.json"
             ).read_text(encoding="utf-8")
         )
@@ -257,7 +257,7 @@ def test_package_release_variants_share_asset_bundle_identity():
         assert cpu_artifacts["asset_bundle_sha256"] == asset_bundle_sha256
         assert cuda_artifacts["asset_bundle_sha256"] == asset_bundle_sha256
         assert cpu_manifest["pytorch_flavor"] == "cpu"
-        assert cuda_manifest["pytorch_flavor"] == "cuda121"
+        assert cuda_manifest["pytorch_flavor"] == "cuda126"
     finally:
         shutil.rmtree(output_path, ignore_errors=True)
 
@@ -285,7 +285,7 @@ def test_package_release_rejects_unknown_pytorch_flavor():
         )
 
         assert result.returncode != 0
-        assert "PytorchFlavor must be one of: cpu, cuda121" in (
+        assert "PytorchFlavor must be one of: cpu, cuda126" in (
             result.stderr + result.stdout
         )
     finally:

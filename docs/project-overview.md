@@ -5,7 +5,7 @@ unless release notes say otherwise
 **Last reviewed**: 2026-07-08
 **Audience**: Pilot users, support leads, and release reviewers
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
-12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are
+12.6 Application Package, Podman CPU, Docker GPU, and Podman GPU are
 support-assigned paths after workstation-specific engine, Compose-provider,
 and NVIDIA validation.
 
@@ -21,7 +21,7 @@ app Resource Links section.
 The package provides a Windows-first local pilot path:
 
 - A GitHub Release CPU Application Package ZIP for normal users.
-- A GitHub Release CUDA 12.1 Application Package ZIP for support-validated
+- A GitHub Release CUDA 12.6 Application Package ZIP for support-validated
   NVIDIA GPU workstations.
 - A shared GitHub Release Model & Data Package ZIP used by both package
   variants.

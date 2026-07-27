@@ -22,6 +22,8 @@ def test_yolov5_detector_uses_local_loader_not_torch_hub():
     recovered_model = Mock()
 
     with patch("ts_yolov5.os.path.exists", return_value=True), \
+         patch("ts_yolov5._validate_runtime_dependencies"), \
+         patch("ts_yolov5.verify_trusted_model"), \
          patch("ts_yolov5._load_local_yolov5_model", return_value=recovered_model) as mock_local_load, \
          patch("ts_yolov5.torch.hub.load") as mock_hub_load, \
          patch("ts_yolov5.torch.cuda.is_available", return_value=False), \
@@ -37,6 +39,8 @@ def test_yolov5_detector_reports_missing_local_snapshot():
     error_message = "TowerScout local YOLOv5 source snapshot is missing."
 
     with patch("ts_yolov5.os.path.exists", return_value=True), \
+         patch("ts_yolov5._validate_runtime_dependencies"), \
+         patch("ts_yolov5.verify_trusted_model"), \
          patch("ts_yolov5._load_local_yolov5_model", side_effect=RuntimeError(error_message)), \
          patch("ts_yolov5.torch.cuda.is_available", return_value=False), \
          patch("ts_yolov5.torch.get_num_threads", return_value=4):
@@ -71,7 +75,7 @@ def test_validate_runtime_dependencies_reports_missing_required_local_loader_imp
 
         versions = {
             "numpy": "1.26.4",
-            "pillow": "12.2.0",
+            "pillow": "12.3.0",
             "requests": "2.33.1",
             "packaging": "25.0",
             "pandas": "2.3.3",

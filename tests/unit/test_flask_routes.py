@@ -19,6 +19,8 @@ from ts_errors import NetworkError
 import towerscout
 from towerscout import SESSION_ID_KEY, app
 
+MODEL_UPLOAD_KEY = "route-test-model-upload-key-1234567890"
+
 
 def _ensure_engine_catalog_loaded():
     if towerscout.engines:
@@ -136,7 +138,7 @@ def test_docs_routes_expose_package_local_docs(client):
     assert package_guide_response.status_code == 200
     assert b"TowerScout Package Guide" in package_guide_response.data
     assert b"CPU Application Package is the primary path" in package_guide_response.data
-    assert b"12.1 Application Package" in package_guide_response.data
+    assert b"12.6 Application Package" in package_guide_response.data
     assert b"support-assigned paths" in package_guide_response.data
 
     assert css_response.status_code == 200
@@ -658,21 +660,28 @@ def test_uploadmodel_saves_valid_model_into_runtime_directory(client, monkeypatc
     monkeypatch.setattr(towerscout, "YOLO_MODEL_DIR", model_dir)
     monkeypatch.setattr(towerscout, "EN_MODEL_DIR", model_dir)
     monkeypatch.setattr(towerscout, "MODEL_UPLOAD_ENABLED", True)
+    monkeypatch.setenv("TOWERSCOUT_MODEL_UPLOAD_KEY", MODEL_UPLOAD_KEY)
+    monkeypatch.setattr(towerscout.secrets, "token_hex", lambda _length: "uploadtoken")
 
     with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch.object(
         towerscout.TowerScoutValidator,
         "validate_model_file",
         return_value=validated_file,
+    ), patch("towerscout.verify_trusted_model"), patch(
+        "pathlib.Path.replace"
     ), patch("towerscout.add_model") as mock_add_model:
         response = client.post(
             "/uploadmodel",
             data={"model": (io.BytesIO(b"fake-model-weights"), "upload.pt")},
             content_type="multipart/form-data",
+            headers={"X-TowerScout-Model-Upload-Key": MODEL_UPLOAD_KEY},
         )
 
     assert response.status_code == 200
     assert response.data == b"ok"
-    validated_file.save.assert_called_once_with(str(model_dir / "custom-model.pt"))
+    validated_file.save.assert_called_once_with(
+        str(model_dir / ".custom-model.pt.uploadtoken.pending")
+    )
     mock_add_model.assert_called_once_with("custom-model.pt")
 
 

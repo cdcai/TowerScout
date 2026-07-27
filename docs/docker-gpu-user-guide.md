@@ -4,7 +4,7 @@
 provider TLS repair baseline, unless release notes say otherwise
 **Last reviewed**: 2026-06-29
 **Audience**: Windows users assigned Docker Desktop NVIDIA GPU validation
-**Runtime scope**: Docker Desktop, CUDA 12.1 Application Package, GPU launch
+**Runtime scope**: Docker Desktop, CUDA 12.6 Application Package, GPU launch
 mode
 
 Use this guide only when support assigns a workstation to the Docker GPU path.
@@ -77,8 +77,8 @@ With `-Gpu on`, TowerScout fails closed unless readiness reports
    TowerScout folder:
 
    ```text
-   towerscout-<release-version>-cuda121.zip
-   towerscout-<release-version>-cuda121.zip.sha256
+   towerscout-<release-version>-cuda126.zip
+   towerscout-<release-version>-cuda126.zip.sha256
    towerscout-<release-version>-assets-<asset-version>.zip
    towerscout-<release-version>-assets-<asset-version>.zip.sha256
    ```
@@ -86,10 +86,10 @@ With `-Gpu on`, TowerScout fails closed unless readiness reports
    Do not use the CPU Application Package for this guide. The CPU package
    rejects `-Gpu on`.
 
-4. Extract only the CUDA 12.1 Application Package ZIP:
+4. Extract only the CUDA 12.6 Application Package ZIP:
 
    ```text
-   towerscout-<release-version>-cuda121.zip
+   towerscout-<release-version>-cuda126.zip
    ```
 
    Leave the Model & Data Package ZIP and both `.sha256` files beside the
@@ -180,7 +180,7 @@ use separate storage.
 ## Troubleshooting
 
 If setup says the CPU package does not support `-Gpu on`, you extracted the
-wrong Application Package. Stop and use the `-cuda121` ZIP from the same
+wrong Application Package. Stop and use the `-cuda126` ZIP from the same
 release as the Model & Data Package.
 
 If GPU mode is on but readiness does not report `selected_device=cuda`, stop

@@ -28,7 +28,7 @@ def test_gpu_launcher_helpers_use_cpu_safe_auto_and_build_indexes():
     $ErrorActionPreference = "Stop"
     . "{helper_path}"
 
-    $env:PYTORCH_INDEX_URL = "https://download.pytorch.org/whl/cu121"
+    $env:PYTORCH_INDEX_URL = "https://download.pytorch.org/whl/cu126"
     Set-TowerScoutGpuEnvironment -Gpu off -Build
     if ($env:TOWERSCOUT_DEVICE -ne "cpu") {{
         throw "Expected -Gpu off to force TOWERSCOUT_DEVICE=cpu."
@@ -59,11 +59,11 @@ def test_gpu_launcher_helpers_use_cpu_safe_auto_and_build_indexes():
     if ($env:TOWERSCOUT_DEVICE -ne "auto") {{
         throw "Expected -Gpu auto to set TOWERSCOUT_DEVICE=auto."
     }}
-    if ($env:PYTORCH_INDEX_URL -ne "https://download.pytorch.org/whl/cu121") {{
+    if ($env:PYTORCH_INDEX_URL -ne "https://download.pytorch.org/whl/cu126") {{
         throw "Expected -Gpu auto -Build to select the CUDA PyTorch index."
     }}
-    if ($env:TOWERSCOUT_PYTORCH_FLAVOR -ne "cuda121") {{
-        throw "Expected -Gpu auto -Build to set TOWERSCOUT_PYTORCH_FLAVOR=cuda121."
+    if ($env:TOWERSCOUT_PYTORCH_FLAVOR -ne "cuda126") {{
+        throw "Expected -Gpu auto -Build to set TOWERSCOUT_PYTORCH_FLAVOR=cuda126."
     }}
 
     "ok"
@@ -115,7 +115,7 @@ def test_cpu_release_package_rejects_gpu_on_without_blocking_build_or_cuda_packa
             throw "CPU release package accepted -Gpu on."
         }}
         catch {{
-            if ($_.Exception.Message -notmatch "CPU TowerScout package" -or $_.Exception.Message -notmatch "CUDA 12.1 package") {{
+            if ($_.Exception.Message -notmatch "CPU TowerScout package" -or $_.Exception.Message -notmatch "CUDA 12.6 package") {{
                 throw
             }}
         }}
@@ -125,7 +125,7 @@ def test_cpu_release_package_rejects_gpu_on_without_blocking_build_or_cuda_packa
             throw "Build path should still be able to request CUDA."
         }}
 
-        Set-Content -LiteralPath "{manifest_path}" -Encoding ASCII -Value '{{"release_version":"v0.1.0-ga-cuda121","pytorch_flavor":"cuda121"}}'
+        Set-Content -LiteralPath "{manifest_path}" -Encoding ASCII -Value '{{"release_version":"v0.1.0-ga-cuda126","pytorch_flavor":"cuda126"}}'
         Set-TowerScoutGpuEnvironment -Gpu on
         if ($env:TOWERSCOUT_DEVICE -ne "cuda") {{
             throw "CUDA release package should allow -Gpu on."

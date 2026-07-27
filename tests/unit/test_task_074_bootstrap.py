@@ -223,7 +223,7 @@ def test_compose_helper_initializes_env_from_package_template_without_overwrite(
     env_example = temp_root / ".env.example"
     env_path = temp_root / ".env"
     env_example.write_text(
-        "TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121\n",
+        "TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda126\n",
         encoding="utf-8",
     )
 
@@ -345,7 +345,7 @@ def test_package_env_image_mismatch_fails_closed_without_overwrite():
     (temp_root / ".env").write_text(
         "\n".join(
             [
-                "TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout:old-cuda121",
+                "TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout:old-cuda126",
                 "TOWERSCOUT_IMAGE_DIGEST=sha256:9999999999999999999999999999999999999999999999999999999999999999",
                 "PODMAN_COMPOSE_PROVIDER=C:\\Tools\\podman-compose.exe",
             ]
@@ -372,7 +372,7 @@ def test_package_env_image_mismatch_fails_closed_without_overwrite():
         }}
 
         $envText = Get-Content -LiteralPath "{temp_root / '.env'}" -Raw
-        if ($envText -notmatch "old-cuda121" -or $envText -notmatch "PODMAN_COMPOSE_PROVIDER") {{
+        if ($envText -notmatch "old-cuda126" -or $envText -notmatch "PODMAN_COMPOSE_PROVIDER") {{
             throw "Existing .env was overwritten instead of failing closed."
         }}
 
@@ -810,7 +810,7 @@ def test_bootstrap_image_reference_uses_digest_pin_from_env_example():
     (temp_root / ".env.example").write_text(
         "\n".join(
             [
-                "TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121",
+                "TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda126",
                 f"TOWERSCOUT_IMAGE_DIGEST={digest}",
             ]
         ),
@@ -822,7 +822,7 @@ def test_bootstrap_image_reference_uses_digest_pin_from_env_example():
         $ErrorActionPreference = "Stop"
         . "{BOOTSTRAP_LIB}"
         $image = Get-TowerScoutBootstrapImageReference -RootPath "{temp_root}"
-        if ($image -ne "ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda121@{digest}") {{
+        if ($image -ne "ghcr.io/j-schulein/towerscout:v0.1.0-rc1-cuda126@{digest}") {{
             throw "Image digest was not appended correctly: $image"
         }}
         "ok"

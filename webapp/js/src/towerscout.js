@@ -3942,7 +3942,45 @@ async function fillProviders() {
       let modelBox = document.getElementById("upload_model");
       if (modelBox) {
         eventManager.addEventListener(modelBox, 'change', () => {
-          uploadModel();
+          const dialog = document.getElementById("model_upload_dialog");
+          const keyInput = document.getElementById("model_upload_key");
+          if (!modelBox.files.length) {
+            return;
+          }
+          if (!dialog || typeof dialog.showModal !== 'function') {
+            window.TowerScoutLogger.error("This browser cannot open the secure model-upload authorization dialog.");
+            modelBox.value = "";
+            return;
+          }
+          dialog.showModal();
+          if (keyInput) {
+            keyInput.focus();
+          }
+        });
+        const dialog = document.getElementById("model_upload_dialog");
+        if (dialog) {
+          eventManager.addEventListener(dialog, 'close', () => {
+            modelBox.value = "";
+            const keyInput = document.getElementById("model_upload_key");
+            if (keyInput) {
+              keyInput.value = "";
+            }
+          });
+        }
+      }
+
+      let modelAuthorizationForm = document.getElementById("model_upload_authorization");
+      if (modelAuthorizationForm) {
+        eventManager.addEventListener(modelAuthorizationForm, 'submit', async (event) => {
+          event.preventDefault();
+          await uploadModel();
+        });
+      }
+
+      let modelCancelButton = document.getElementById("model_upload_cancel");
+      if (modelCancelButton) {
+        eventManager.addEventListener(modelCancelButton, 'click', () => {
+          closeModelUploadDialog();
         });
       }
 
@@ -4346,22 +4384,70 @@ function download_kml() {
 // model upload functionality
 // 
 
-function uploadModel() {
-  let model = document.getElementById("upload_model").files[0];
+function closeModelUploadDialog() {
+  const modelInput = document.getElementById("upload_model");
+  const keyInput = document.getElementById("model_upload_key");
+  const dialog = document.getElementById("model_upload_dialog");
+
+  if (modelInput) {
+    modelInput.value = "";
+  }
+  if (keyInput) {
+    keyInput.value = "";
+  }
+  if (dialog && dialog.open) {
+    dialog.close();
+  }
+}
+
+async function uploadModel() {
+  const modelInput = document.getElementById("upload_model");
+  const keyInput = document.getElementById("model_upload_key");
+  const model = modelInput && modelInput.files[0];
+  const modelUploadKey = keyInput ? keyInput.value.trim() : "";
+
+  if (!model) {
+    window.TowerScoutLogger.warn("Select an approved model file before uploading.");
+    closeModelUploadDialog();
+    return;
+  }
+  if (modelUploadKey.length < 32) {
+    window.TowerScoutLogger.warn("Enter the administrator-provided Model Upload Key.");
+    return;
+  }
+
   let formData = new FormData();
-
-  Detection.resetAll();
-  window.TowerScoutLogger.debug("Model upload request in progress ...")
-
   formData.append("model", model);
-  fetch('/uploadmodel', { method: "POST", body: formData })
-    .then(response => {
-      window.TowerScoutLogger.debug("installed model " + model);
-      fillEngines();
-    })
-    .catch(error => {
-      window.TowerScoutLogger.debug(error);
+
+  window.TowerScoutLogger.info("Approved model upload is in progress.");
+  try {
+    const response = await fetch('/uploadmodel', {
+      method: "POST",
+      headers: {
+        "X-TowerScout-Model-Upload-Key": modelUploadKey
+      },
+      body: formData
     });
+    const responseBody = await response.text();
+    if (!response.ok) {
+      let errorMessage = "Model upload was rejected.";
+      try {
+        const payload = JSON.parse(responseBody);
+        errorMessage = payload.error || errorMessage;
+      } catch (_error) {
+        // Keep the generic message when the response is not JSON.
+      }
+      throw new Error(errorMessage);
+    }
+
+    Detection.resetAll();
+    fillEngines();
+    window.TowerScoutLogger.info("Approved model uploaded successfully.");
+  } catch (error) {
+    window.TowerScoutLogger.error("Model upload failed: " + error.message);
+  } finally {
+    closeModelUploadDialog();
+  }
 }
 
 

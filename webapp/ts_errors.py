@@ -32,6 +32,12 @@ def _sanitize_error_detail(value: Any) -> Any:
         flags=re.IGNORECASE,
     )
     value = re.sub(r'Authorization:\s*[^\s]+', 'Authorization: ***REDACTED***', value, flags=re.IGNORECASE)
+    value = re.sub(
+        r'((?:X-TowerScout-Model-Upload-Key|TOWERSCOUT_MODEL_UPLOAD_KEY)\s*[:=]\s*)[^\s,;]+',
+        r'\1***REDACTED***',
+        value,
+        flags=re.IGNORECASE,
+    )
     return value
 
 

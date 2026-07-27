@@ -148,6 +148,7 @@ def test_efficientnet_init_falls_back_to_cpu_when_cuda_setup_fails(monkeypatch):
         from_pretrained = Mock(side_effect=AssertionError("from_pretrained should not run during RC package load"))
         monkeypatch.setattr(ts_en.EfficientNet, "from_name", from_name)
         monkeypatch.setattr(ts_en.EfficientNet, "from_pretrained", from_pretrained)
+        monkeypatch.setattr(ts_en, "verify_trusted_model", Mock())
         monkeypatch.setattr(ts_en.torch.cuda, "is_available", Mock(return_value=True))
         monkeypatch.setattr(ts_en.torch.cuda, "get_device_name", Mock(return_value="NVIDIA Test GPU"))
         monkeypatch.setattr(ts_en.torch, "zeros", Mock(return_value=_FakeCudaProbe()))

@@ -17,7 +17,7 @@ def test_zipcode_provider_uses_app_anchored_data_path(monkeypatch):
     with patch("ts_zipcode.gpd.read_file") as mock_read_file:
         Zipcode_Provider()
 
-    mock_read_file.assert_called_once_with(expected_path)
+    mock_read_file.assert_called_once_with(expected_path, engine="fiona")
 
 
 def test_runtime_path_helpers_honor_test_overrides(monkeypatch):

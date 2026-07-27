@@ -1,6 +1,6 @@
 # Task Backlog - October 2026 Roadmap
 
-**Last Updated**: July 23, 2026
+**Last Updated**: July 27, 2026
 **Planning State**: Fix first while the immutable `v0.1.2` pilot remains in
 use. Required release and handoff work takes priority over Task-058/059 stretch
 work.
@@ -12,7 +12,7 @@ work.
 
 | Order | Task | Status | Estimate | Dependencies | Required outcome |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | `TASK-098` Dependency Security Remediation And Release Gate | PENDING_TASK_090 | Estimate after Task-090; provisional patch slice plus coordinated ML/geospatial decision | Task-090 classifications and owner approval | Patchable mandatory findings pass regression/package validation; no unresolved release-blocking critical/high alert |
+| 1 | `TASK-098` Dependency Security Remediation And Release Gate | IN_PROGRESS / PROJECT_LEAD_CHECKOUT_PENDING | Mandatory slices 4-8 days; full coordinated hardening 6-11 days, plus GPU/runtime host availability | Implementation, dependency qualification, Docker CPU/GPU and live Google/Azure smokes, branch security reconciliation, and PR #51 review remediation complete; awaits checkout/sign-off | Patchable mandatory findings pass regression/package validation with no unapproved feature, workflow, output, or performance regression; no unresolved release-blocking critical/high alert |
 | 2 | `TASK-096` User-Initiated Exit And Container Stop | NOT_STARTED | 2-4 days | Task-087 helper/security pattern; current stop scripts | Confirmed Exit/Stop works on Docker and Podman without deleting named volumes |
 | 3 | `TASK-097` Podman CPU/GPU Final Path Qualification | NOT_STARTED | 3-5 days plus environment validation | Tasks 090, 098, 087, and 096 | Podman CPU and GPU/CDI pass final-package qualification without Docker Desktop |
 | 4 | `TASK-091` Owner-Runnable Release Qualification | NOT_STARTED | 3-6 days | Candidate scope stable; fixture/harness custody | cdcai owner can execute or supervise the minimum release gate |
@@ -22,6 +22,9 @@ work.
 
 ### Task-098 Boundary
 
+- Task-090 identified five release-blocking alerts, one required-hardening
+  alert, and an all-interface Compose port publication that contradicts the
+  local-only runtime boundary.
 - Do not patch dependency pins ad hoc before Task-090 establishes reachability,
   compatible target versions, and required regression scope.
 - Treat Pillow, Waitress, and the client-relevant aiohttp findings as the first
@@ -31,6 +34,8 @@ work.
 - Require written owner acceptance for any residual critical/high risk.
 - Ratchet CI for new critical/high findings only after the existing baseline is
   classified and the approved remediation lands.
+- Proposed scope:
+  [`TASK-090/remediation-scope.md`](./tasks/active/TASK-090/remediation-scope.md).
 
 ### Task-096 Boundary
 
@@ -50,6 +55,20 @@ work.
   Task-087.
 - Fix packaged-runtime blockers. Document a source-build-only limitation only
   through an explicit owner decision.
+
+### Task-092 Boundary
+
+- Add administrator instructions for the opt-in Model Upload Key before the
+  final documentation freeze.
+- Cover secure key generation, private storage, enable/disable behavior,
+  rotation, the approved SHA-256 allowlist, adding a new approved model, and
+  troubleshooting rejected uploads.
+- Make clear that normal users do not need the key, the upload feature remains
+  disabled by default, and the key must never be committed, logged, placed in
+  screenshots, or included in support artifacts.
+- Explain that loopback publication blocks other physical devices by default,
+  while another locally controlled Docker Desktop container can reach the host
+  proxy and is still denied without the key.
 
 ---
 
@@ -94,7 +113,8 @@ Parking lot:
 | Task | Current state |
 | --- | --- |
 | `TASK-095` Governance And AI-Ready Handoff Foundation | Active in Sprint 08; Phase A complete, Phase B continues |
-| `TASK-090` Runtime, Custom-Image, And Dependency Security Investigation | READY / NEXT in Sprint 08; includes all 62 open Trivy alerts |
+| `TASK-090` Runtime, Custom-Image, And Dependency Security Investigation | Completed; Task-098 scope approved |
+| `TASK-098` Dependency Security Remediation And Release Gate | In progress; mandatory A-D/G implementation, Docker CPU/GPU compatibility, and live Google/Azure smokes passed; branch security-ratchet closeout pending |
 | `TASK-087` Host-Side TLS Repair Control Plane | Reselected in Sprint 08 after the Tasks 090/098 security gate |
 | `TASK-089` cdcai Adoption And Ownership Transfer | Owner-gated; preparation only until final qualification and approval |
 

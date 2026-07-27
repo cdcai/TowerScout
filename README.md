@@ -39,7 +39,7 @@ The normal package path assumes Windows 11 AMD64, Docker Desktop with the WSL 2
 backend as the primary pilot engine, normal outbound internet access, and one
 valid Google Maps or Azure Maps key. Current package planning uses two
 Application Package variants: the CPU package for normal/non-GPU users and the
-CUDA 12.1 package only for support-validated NVIDIA GPU workstations. Both use
+CUDA 12.6 package only for support-validated NVIDIA GPU workstations. Both use
 the same Model & Data Package ZIP. Podman CPU, Docker GPU, and Podman GPU are
 support-assigned paths only when the workstation has the required engine,
 approved Compose provider, and NVIDIA validation for the selected runtime. You

@@ -4,7 +4,7 @@
 **Last reviewed**: 2026-06-16
 **Audience**: Release engineering, support, and release reviewers
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
-12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are
+12.6 Application Package, Podman CPU, Docker GPU, and Podman GPU are
 support-assigned paths after workstation-specific engine, Compose-provider,
 and NVIDIA validation.
 
@@ -39,14 +39,14 @@ For a release version such as `<release-version>`, the expected artifacts are:
 | --- | --- | --- |
 | CPU control ZIP | `towerscout-<release-version>-cpu.zip` | Default user-facing package with launcher, Compose, scripts, docs, manifest, and pinned CPU image metadata. |
 | CPU control ZIP checksum | `towerscout-<release-version>-cpu.zip.sha256` | SHA-256 checksum for the full CPU control ZIP. |
-| CUDA control ZIP | `towerscout-<release-version>-cuda121.zip` | Support-assigned NVIDIA GPU package with launcher, Compose, scripts, docs, manifest, and pinned CUDA 12.1 image metadata. |
-| CUDA control ZIP checksum | `towerscout-<release-version>-cuda121.zip.sha256` | SHA-256 checksum for the full CUDA control ZIP. |
+| CUDA control ZIP | `towerscout-<release-version>-cuda126.zip` | Support-assigned NVIDIA GPU package with launcher, Compose, scripts, docs, manifest, and pinned CUDA 12.6 image metadata. |
+| CUDA control ZIP checksum | `towerscout-<release-version>-cuda126.zip.sha256` | SHA-256 checksum for the full CUDA control ZIP. |
 | GHCR image digest | `ghcr.io/j-schulein/towerscout@sha256:<digest>` | Immutable Linux/AMD64 runtime image referenced by each control ZIP. |
 | Asset ZIP | `towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip` | Restricted-pilot or support-supplied local bundle containing model weights, ZIP-code data, and the asset manifest copy. |
 | Asset ZIP checksum | `towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip.sha256` | SHA-256 checksum for the full asset ZIP. |
 
 The release version in the control ZIP and asset ZIP names must match. The
-control ZIP adds an image flavor suffix (`-cpu` or `-cuda121`); the shared
+control ZIP adds an image flavor suffix (`-cpu` or `-cuda126`); the shared
 asset ZIP does not. The manifest version in the asset ZIP name must match the
 `manifest_version` in `webapp/asset_manifest.v1.json`. CPU and CUDA control
 package manifests should identify the same asset ZIP filename and SHA-256
@@ -112,7 +112,19 @@ Release/support validation must compare:
 - Control manifest `manifest_version` and asset ZIP manifest `manifest_version`.
 - Control manifest file hash and asset ZIP manifest file hash.
 
-Current import automation verifies required asset presence and byte sizes, and verifies asset SHA-256 hashes when requested. `setup-towerscout.cmd` discovers the local Model & Data Package ZIP in the extracted package folder or parent UAT folder, verifies the asset ZIP checksum sidecar, rejects unsafe or nested ZIP layouts, enforces the expected asset ZIP filename from `release_artifacts.asset_bundle` when package release metadata is available, and rejects control/asset manifest file-hash mismatches before calling `scripts/import-assets.cmd -VerifyHashes`. `bootstrap.cmd -AssetZip <asset-zip>` remains the explicit-path support helper behind that setup flow. Direct `scripts/import-assets.cmd` use still expects an already-staged source directory and does not enforce release filename matching by itself.
+Current import automation verifies required asset presence and byte sizes, and
+verifies every asset SHA-256 hash when requested. Runtime readiness always
+verifies manifest-listed model hashes, and model loading repeats that
+verification immediately before deserialization. `setup-towerscout.cmd`
+discovers the local Model & Data Package ZIP in the extracted package folder
+or parent UAT folder, verifies the asset ZIP checksum sidecar, rejects unsafe
+or nested ZIP layouts, enforces the expected asset ZIP filename from
+`release_artifacts.asset_bundle` when package release metadata is available,
+and rejects control/asset manifest file-hash mismatches before calling
+`scripts/import-assets.cmd -VerifyHashes`. `bootstrap.cmd -AssetZip
+<asset-zip>` remains the explicit-path support helper behind that setup flow.
+Direct `scripts/import-assets.cmd` use still expects an already-staged source
+directory and does not enforce release filename matching by itself.
 
 ## Required Assets
 
@@ -170,14 +182,18 @@ Release-candidate and support validation import:
 .\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180
 ```
 
-Runtime/readiness hash verification is validation/support-only:
+Runtime/readiness always verifies manifest-listed model hashes. For
+release-candidate or support validation, extend readiness verification to all
+manifest assets:
 
 ```powershell
 $env:TOWERSCOUT_VERIFY_ASSET_HASHES = "1"
 .\scripts\status.cmd -Engine docker
 ```
 
-Routine first run and launcher polling should not enable runtime hash verification because the ZIP-code geometry file is large.
+Routine first run and launcher polling should not enable full-asset hash
+verification because the ZIP-code geometry file is large. Model hash
+verification remains enabled.
 
 ## Failure Contract
 
@@ -185,7 +201,8 @@ Routine first run and launcher polling should not enable runtime hash verificati
 | --- | --- | --- |
 | Required file missing | Import/readiness reports missing asset and non-ok asset status. | User imports the correct asset bundle and restarts/checks status. |
 | Required file byte size mismatch | Import/readiness reports corrupt asset and non-ok asset status. | Treat as wrong, incomplete, or damaged asset bundle. |
-| Required file SHA-256 mismatch with hash verification enabled | Import/readiness reports corrupt asset and non-ok asset status. | Treat as wrong or damaged asset bundle; do not continue validation. |
+| Required model SHA-256 mismatch | Readiness reports a corrupt asset, and model loading rejects it before deserialization. | Treat as an untrusted or damaged model; do not continue. |
+| Required non-model SHA-256 mismatch with full-asset hash verification enabled | Import/readiness reports corrupt asset and non-ok asset status. | Treat as wrong or damaged asset bundle; do not continue validation. |
 | Optional file missing | Import/readiness reports `optional_missing`. | Does not block when required assets pass. |
 | Asset ZIP release version does not match control ZIP release version | Not directly enforced by importer. | Release/support validation failure. |
 | Asset ZIP manifest version does not match control manifest version | Not directly enforced by importer. | Release/support validation failure. |

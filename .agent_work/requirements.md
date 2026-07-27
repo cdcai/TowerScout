@@ -176,6 +176,17 @@ WHEN the final candidate is prepared, THE PROJECT SHALL update repository
 documentation, release notes, the external Setup Guide, and the demo video to
 match the actual package.
 
+Acceptance:
+
+- Administrator documentation explains the opt-in Model Upload Key, including
+  secure generation, private storage, rotation, enable/disable behavior, and
+  troubleshooting without exposing a real key.
+- Approved-model onboarding explains both required controls: the administrator
+  key and the model file's approved SHA-256 hash.
+- End-user documentation makes clear that normal users do not need the key and
+  that model upload remains disabled unless an administrator explicitly
+  enables it.
+
 ### HANDOFF-001: Tool-Neutral Maintenance Foundation
 
 WHEN ownership transfers, THE PROJECT SHALL provide repository-native,

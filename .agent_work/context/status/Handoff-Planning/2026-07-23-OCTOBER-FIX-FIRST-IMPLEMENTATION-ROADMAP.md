@@ -192,8 +192,12 @@ No canonical task file existed for Tasks 090-095 before this rebaseline; their
 earlier mentions were provisional planning references. Tasks 096 and 097 were
 new unique identifiers at rebaseline. Task-098 was added on July 23 after the
 live 62-alert code-scanning inventory established a separate remediation need.
-Create its active task file only after Task-090 defines and the owners approve
-the implementation scope.
+A current-sprint planning record may preserve Task-090's proposed scope before
+approval, but Task-098 must not be marked `IN_PROGRESS` or change dependencies,
+runtime behavior, alert state, release assets, or external repositories until
+the project lead approves the implementation scope. cdcai-owner approval is
+reserved for residual critical/high acceptance, changes to `cdcai/TowerScout`,
+and official adoption.
 
 ## Stop Rules
 

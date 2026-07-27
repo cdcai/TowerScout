@@ -12,6 +12,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from shapely.geometry import Polygon
 from shapely.geometry.polygon import LinearRing
 from shapely.validation import explain_validity
+from PIL import Image, UnidentifiedImageError
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 from ts_paths import get_yolov5_model_dir
@@ -34,6 +35,13 @@ class TowerScoutValidator:
     MAX_COORDINATE_PRECISION = 15  # decimal places
     MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
     ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'tiff', 'tif'}
+    IMAGE_EXTENSION_FORMATS = {
+        'jpg': 'JPEG',
+        'jpeg': 'JPEG',
+        'png': 'PNG',
+        'tif': 'TIFF',
+        'tiff': 'TIFF',
+    }
     ALLOWED_DATASET_EXTENSIONS = {'zip'}
     ALLOWED_MODEL_EXTENSIONS = {'pt', 'pth'}
     
@@ -363,12 +371,62 @@ class TowerScoutValidator:
     
     @staticmethod
     def validate_image_file(file: FileStorage) -> FileStorage:
-        """Validate image file upload"""
-        return TowerScoutValidator.validate_file_upload(
+        """Validate image size, extension, content signature, and structure."""
+        validated_file = TowerScoutValidator.validate_file_upload(
             file, 
             TowerScoutValidator.ALLOWED_IMAGE_EXTENSIONS,
             TowerScoutValidator.MAX_FILE_SIZE
         )
+
+        extension = validated_file.filename.rsplit('.', 1)[1].lower()
+
+        try:
+            validated_file.seek(0)
+            header = validated_file.read(16)
+            detected_format = TowerScoutValidator._detect_image_format(header)
+
+            if detected_format is None:
+                raise ValidationError(
+                    "Invalid image content. Allowed formats: JPEG, PNG, or TIFF"
+                )
+
+            expected_format = TowerScoutValidator.IMAGE_EXTENSION_FORMATS[extension]
+            if detected_format != expected_format:
+                raise ValidationError(
+                    f"Image content ({detected_format}) does not match "
+                    f".{extension} extension ({expected_format})"
+                )
+
+            validated_file.seek(0)
+            try:
+                with Image.open(validated_file.stream) as image:
+                    if image.format != detected_format:
+                        raise ValidationError(
+                            f"Image decoder format ({image.format}) does not match "
+                            f"validated content ({detected_format})"
+                        )
+                    image.verify()
+            except ValidationError:
+                raise
+            except (OSError, SyntaxError, UnidentifiedImageError, ValueError):
+                raise ValidationError(
+                    f"Malformed {detected_format} image content"
+                )
+        finally:
+            validated_file.seek(0)
+
+        return validated_file
+
+    @staticmethod
+    def _detect_image_format(header: bytes) -> Optional[str]:
+        """Identify only the image formats approved for custom detection."""
+        if header.startswith(b'\xff\xd8\xff'):
+            return 'JPEG'
+        if header.startswith(b'\x89PNG\r\n\x1a\n'):
+            return 'PNG'
+        if header.startswith((b'II*\x00', b'MM\x00*', b'II+\x00', b'MM\x00+')):
+            return 'TIFF'
+        return None
     
     @staticmethod
     def validate_dataset_file(file: FileStorage) -> FileStorage:

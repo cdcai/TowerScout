@@ -27,7 +27,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
 
       - name: Install Puppeteer system dependencies
         run: |
@@ -58,7 +58,7 @@ jobs:
       - name: Install Playwright Chromium (for Puppeteer fallback)
         run: |
           # Install Playwright and download Chromium with deps; this provides a reliable browser binary for CI
-          npx -y playwright@latest install --with-deps chromium
+          npx -y playwright@1.62.0 install --with-deps chromium
           # Find the downloaded chromium binary and expose it to later steps for Puppeteer
           CHROME_PATH=$(find $HOME/.cache/ms-playwright -type f -name "chrome*" -executable 2>/dev/null | head -n1 || true)
           if [ -n "$CHROME_PATH" ]; then echo "PUPPETEER_EXECUTABLE_PATH=$CHROME_PATH" >> $GITHUB_ENV; fi
@@ -116,7 +116,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
 
       - name: Install Puppeteer system dependencies
         run: |
@@ -146,7 +146,7 @@ jobs:
 
       - name: Install Playwright Chromium (for Puppeteer fallback)
         run: |
-          npx -y playwright@latest install --with-deps chromium
+          npx -y playwright@1.62.0 install --with-deps chromium
           CHROME_PATH=$(find $HOME/.cache/ms-playwright -type f -name "chrome*" -executable 2>/dev/null | head -n1 || true)
           if [ -n "$CHROME_PATH" ]; then echo "PUPPETEER_EXECUTABLE_PATH=$CHROME_PATH" >> $GITHUB_ENV; fi
 

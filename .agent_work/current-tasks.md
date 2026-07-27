@@ -1,7 +1,7 @@
 # Current Tasks - Sprint 08
 
 **Sprint Period**: July 23-August 7, 2026
-**Last Updated**: July 23, 2026
+**Last Updated**: July 24, 2026
 **Focus**: Start the bounded runtime, custom-image, and dependency-security
 investigation; define any required remediation; and prepare the authorized
 universal provider TLS repair without changing the frozen pilot or cdcai.
@@ -59,11 +59,12 @@ through October 30.
 
 ### **TASK-090: Runtime, Custom-Image, And Dependency Security Investigation**
 
-**Status**: READY / NEXT - Task-095 Phase A is complete
+**Status**: COMPLETED - investigation and approved Task-098 scope complete
 **Type**: C (Security Investigation)
 **Priority**: HIGH
 **Estimated Effort**: 1-3 days for investigation and classification only
-**Task File**: Create in `tasks/active/` when implementation begins
+**Task File**:
+`.agent_work/tasks/active/TASK-090-runtime-custom-image-dependency-security.md`
 
 **Objective**: Determine whether local-only runtime reachability and
 custom-image behavior create an actionable release risk, and classify all 62
@@ -83,6 +84,63 @@ investigation.
 
 **Assessment**:
 [`GITHUB-CODE-SCANNING-READINESS-ASSESSMENT-2026-07-23.md`](./context/analysis/GITHUB-CODE-SCANNING-READINESS-ASSESSMENT-2026-07-23.md)
+
+**Investigation Outcome**:
+
+- The live GitHub inventory reconciles exactly to 62 alerts with no missing or
+  extra alert numbers.
+- Five alerts are release-blocking, one requires hardening, and 56 are not
+  reachable on the supported call paths.
+- The normal Compose port is currently published on all host interfaces,
+  contradicting the local-only assumption and making loopback binding a
+  mandatory Task-098 control.
+- The proposed Task-098 scope is 4-8 days for mandatory slices, or 6-11 days
+  for the full coordinated dependency hardening, plus required GPU/runtime
+  host availability.
+- No dependency pin, alert state, runtime, release asset, or external
+  repository was changed.
+
+### **TASK-098: Dependency Security Remediation And Release Gate**
+
+**Status**: IN_PROGRESS - implementation, dependency qualification, Docker
+CPU/GPU and live Google/Azure qualification, branch security reconciliation,
+and PR #51 review remediation complete; PR #51 awaits project-lead checkout
+and sign-off
+**Type**: C (Security Remediation / Runtime Qualification)
+**Priority**: HIGH
+**Estimated Effort**: Mandatory slices 4-8 days; full coordinated hardening
+6-11 days, plus required GPU/runtime host availability
+**Task File**:
+`.agent_work/tasks/active/TASK-098-dependency-security-remediation.md`
+
+**Objective**: Implement only the approved Task-090 remediation slices,
+qualify the affected dependency and runtime paths, and close the security
+release gate before Task-087 resumes.
+
+**Current Closeout Boundary**:
+
+- The external Docker CUDA qualification passed on exact source commit
+  `675bd8fabc27765522906957524d2027d931f6a1`.
+- Live Google/Azure estimate, detect, cancel, and recovery smokes passed
+  against the Task-098 candidate image.
+- Task-098 branch alert/CI-ratchet reconciliation and PR review remediation are
+  complete; the remaining gate is project-lead checkout and sign-off on PR
+  #51.
+- Task-097/Task-091 retain Podman CPU/GPU and the final four-profile
+  operational package matrix.
+
+**Start Gate**:
+
+- The Task-090 classification and target matrix are final.
+- Project-lead approval and its non-regression caveat are recorded. No
+  cdcai-owner confirmation is required for fork-side remediation.
+- Fixed patch targets, the ML candidate set and selection criteria, regression
+  scope, and any residual-risk decision path are agreed. The final ML pair and
+  wheel flavors are selected during the approved compatibility spike.
+- A reproducible pre-change functional, detection-output, and performance
+  baseline is captured before the first dependency or runtime change.
+- No dependency pin, alert state, release asset, or external repository change
+  occurs before this gate passes.
 
 ### **TASK-087: Host-Side TLS Repair Control Plane**
 
@@ -130,8 +188,9 @@ security gate
 6. Re-plan the next sprint using actual security and Task-087 outcomes.
 
 Task-096 and Task-097 are mandatory roadmap work but are not pulled into this
-sprint yet. Task-098 enters this sprint only to the extent Task-090 identifies
-mandatory remediation. Task-058 and Task-059 remain conditional stretch work.
+sprint yet. Task-098 now has a current-sprint planning record because Task-090
+identified mandatory remediation and is approved to begin under its
+non-regression contract. Task-058 and Task-059 remain conditional stretch work.
 
 ---
 

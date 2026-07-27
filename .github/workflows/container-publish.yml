@@ -19,7 +19,7 @@ on:
         type: choice
         options:
           - cpu
-          - cuda121
+          - cuda126
 
 permissions:
   contents: read
@@ -52,8 +52,8 @@ jobs:
             cpu)
               pytorch_index_url="https://download.pytorch.org/whl/cpu"
               ;;
-            cuda121)
-              pytorch_index_url="https://download.pytorch.org/whl/cu121"
+            cuda126)
+              pytorch_index_url="https://download.pytorch.org/whl/cu126"
               ;;
             *)
               echo "Unsupported PyTorch flavor: $pytorch_flavor" >&2
@@ -62,7 +62,7 @@ jobs:
           esac
 
           case "$tag" in
-            *-cpu|*-cuda121)
+            *-cpu|*-cuda126)
               if [[ "$tag" != *-"$pytorch_flavor" ]]; then
                 echo "Tag $tag already ends with a different PyTorch flavor than $pytorch_flavor." >&2
                 exit 1
@@ -83,6 +83,8 @@ jobs:
             --platform linux/amd64 \
             --build-arg PYTORCH_INDEX_URL="$pytorch_index_url" \
             --build-arg TOWERSCOUT_PYTORCH_FLAVOR="$pytorch_flavor" \
+            --build-arg TOWERSCOUT_TORCH_VERSION="2.6.0" \
+            --build-arg TOWERSCOUT_TORCHVISION_VERSION="0.21.0" \
             --build-arg TOWERSCOUT_RELEASE_VERSION="$tag" \
             --build-arg TOWERSCOUT_SOURCE_REF="$GITHUB_SHA" \
             "${tags[@]}" \

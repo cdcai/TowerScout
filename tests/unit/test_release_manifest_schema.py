@@ -33,7 +33,7 @@ def test_release_manifest_checker_accepts_v1_snake_case_schema(tmp_path):
     )
     digest = "sha256:" + ("a" * 64)
     manifest["release_version"] = "v0.1.0-rc5-test"
-    manifest["image"] = f"ghcr.io/j-schulein/towerscout:v0.1.0-rc5-test-cuda121@{digest}"
+    manifest["image"] = f"ghcr.io/j-schulein/towerscout:v0.1.0-rc5-test-cuda126@{digest}"
     manifest["image_digest"] = digest
     manifest["corresponding_source"]["source_ref"] = "b" * 40
     manifest["release_artifacts"]["image"] = manifest["image"]

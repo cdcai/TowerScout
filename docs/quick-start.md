@@ -5,7 +5,7 @@ unless release notes say otherwise
 **Last reviewed**: 2026-07-08
 **Audience**: Pilot users and first-line support
 **Runtime scope**: The CPU Application Package is the normal path. The CUDA
-12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are
+12.6 Application Package, Podman CPU, Docker GPU, and Podman GPU are
 support-assigned paths after workstation-specific engine, Compose-provider,
 and NVIDIA validation.
 
@@ -20,7 +20,7 @@ Terms used in this guide:
 
 - **Application Package**: the smaller TowerScout app/control ZIP that contains
   scripts, docs, Compose files, and release metadata. There are two variants:
-  `cpu` for normal/non-GPU use and `cuda121` for support-validated NVIDIA GPU
+  `cpu` for normal/non-GPU use and `cuda126` for support-validated NVIDIA GPU
   workstations.
 - **Model & Data Package**: the larger asset ZIP, also called the asset bundle,
   that contains model weights and ZIP-code data. The CPU and CUDA Application
@@ -184,9 +184,9 @@ Download these files from the same release:
 Use the CUDA package only when support assigns GPU validation:
 
 - CUDA Application Package ZIP:
-  `towerscout-<release-version>-cuda121.zip`
+  `towerscout-<release-version>-cuda126.zip`
 - CUDA Application Package checksum:
-  `towerscout-<release-version>-cuda121.zip.sha256`
+  `towerscout-<release-version>-cuda126.zip.sha256`
 
 Keep these four files together in the `TowerScoutUAT` working folder. Only the
 Application Package ZIP is extracted in the normal setup path. Leave the Model
@@ -209,7 +209,7 @@ the same release:
 - `towerscout-<release-version>-assets-<asset-version>.zip.sha256`
 
 If support assigned GPU validation, replace the `-cpu` Application Package and
-checksum with the matching `-cuda121` files. Do not keep both CPU and CUDA
+checksum with the matching `-cuda126` files. Do not keep both CPU and CUDA
 Application Package ZIPs in the same UAT working folder unless support asks you
 to compare them.
 

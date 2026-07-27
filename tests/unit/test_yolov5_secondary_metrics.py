@@ -191,6 +191,7 @@ def test_detector_uses_configured_cpu_batch_size(monkeypatch):
 
     try:
         with patch("ts_yolov5._validate_runtime_dependencies"), \
+             patch("ts_yolov5.verify_trusted_model"), \
              patch("ts_yolov5._load_local_yolov5_model", return_value=Mock()), \
              patch("ts_yolov5.torch.cuda.is_available", return_value=False):
             detector = YOLOv5_Detector(str(model_path))
@@ -211,6 +212,7 @@ def test_detector_device_policy_cpu_skips_cuda_transfer(monkeypatch):
 
     try:
         with patch("ts_yolov5._validate_runtime_dependencies"), \
+             patch("ts_yolov5.verify_trusted_model"), \
              patch("ts_yolov5._load_local_yolov5_model", return_value=fake_model), \
              patch("ts_device.torch.cuda.is_available", return_value=True), \
              patch("ts_device.torch.cuda.get_device_name", return_value="NVIDIA Test GPU"):
@@ -233,6 +235,7 @@ def test_detector_device_policy_cuda_required_fails_when_unavailable(monkeypatch
 
     try:
         with patch("ts_yolov5._validate_runtime_dependencies"), \
+             patch("ts_yolov5.verify_trusted_model"), \
              patch("ts_yolov5._load_local_yolov5_model", return_value=Mock()), \
              patch("ts_device.torch.cuda.is_available", return_value=False):
             try:

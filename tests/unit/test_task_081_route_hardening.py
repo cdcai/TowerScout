@@ -1,5 +1,6 @@
 """Task-081 Flask route hardening coverage."""
 
+import hashlib
 import io
 import json
 import shutil
@@ -12,6 +13,8 @@ from PIL import Image
 
 import towerscout
 from towerscout import app
+
+MODEL_UPLOAD_KEY = "route-hardening-model-upload-key-12345"
 
 
 @pytest.fixture
@@ -73,6 +76,11 @@ def test_model_upload_uses_sanitized_filename(client, monkeypatch):
     monkeypatch.setattr(towerscout, "YOLO_MODEL_DIR", model_dir)
     monkeypatch.setattr(towerscout, "EN_MODEL_DIR", model_dir)
     monkeypatch.setattr(towerscout, "MODEL_UPLOAD_ENABLED", True)
+    monkeypatch.setenv("TOWERSCOUT_MODEL_UPLOAD_KEY", MODEL_UPLOAD_KEY)
+    monkeypatch.setenv(
+        "TOWERSCOUT_TRUSTED_MODEL_SHA256",
+        hashlib.sha256(b"fake-model-weights").hexdigest(),
+    )
 
     try:
         with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch(
@@ -82,6 +90,7 @@ def test_model_upload_uses_sanitized_filename(client, monkeypatch):
                 "/uploadmodel",
                 data={"model": (io.BytesIO(b"fake-model-weights"), "../../custom model.pt")},
                 content_type="multipart/form-data",
+                headers={"X-TowerScout-Model-Upload-Key": MODEL_UPLOAD_KEY},
             )
 
         assert response.status_code == 200

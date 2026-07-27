@@ -8,6 +8,12 @@
 **Scope**: All alerts that GitHub reported as open on `refs/heads/main`
 **Alert Commit**: `bce9dab585e839f9adead32b9aee38410d046ae7`
 
+**Task-090 Follow-Up**: The authenticated 62-record reconciliation,
+function-level dispositions, and proposed Task-098 scope are now recorded in:
+
+- [`alert-disposition.md`](../../tasks/active/TASK-090/alert-disposition.md)
+- [`remediation-scope.md`](../../tasks/active/TASK-090/remediation-scope.md)
+
 ## Decision Summary
 
 The 62 open records are real dependency alerts, not 62 independent TowerScout

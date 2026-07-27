@@ -18,7 +18,10 @@ from ts_paths import get_base_dir
 class Zipcode_Provider:
     def __init__(self):
         zipcode_path = get_base_dir() / 'data' / 'tl_2025_us_zcta520' / 'tl_2025_us_zcta520.shp'
-        self.gdf = gpd.read_file(zipcode_path)
+        # GeoPandas 1.0+ prefers Pyogrio when it is installed. Keep the
+        # qualified Fiona reader explicit so the Task-098 security upgrade
+        # does not silently change TowerScout's packaged ZCTA I/O backend.
+        self.gdf = gpd.read_file(zipcode_path, engine='fiona')
 
     def zipcode_polygon(self, zipcode):
         zp = self.gdf[self.gdf['ZCTA5CE20']==zipcode]

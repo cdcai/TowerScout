@@ -14,6 +14,8 @@ FROM python:3.11-slim-bookworm AS runtime
 
 ARG PYTORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
 ARG TOWERSCOUT_PYTORCH_FLAVOR=cpu
+ARG TOWERSCOUT_TORCH_VERSION=2.6.0
+ARG TOWERSCOUT_TORCHVISION_VERSION=0.21.0
 ARG TOWERSCOUT_RELEASE_VERSION=container-local
 ARG TOWERSCOUT_SOURCE_REF=unknown
 
@@ -46,8 +48,8 @@ RUN apt-get update \
 COPY webapp/requirements.txt webapp/requirements.txt
 RUN python -m pip install --upgrade pip \
     && python -m pip install --no-cache-dir \
-        torch==2.2.1 \
-        torchvision==0.17.1 \
+        "torch==${TOWERSCOUT_TORCH_VERSION}" \
+        "torchvision==${TOWERSCOUT_TORCHVISION_VERSION}" \
         --index-url "${PYTORCH_INDEX_URL}" \
     && grep -Ev '^(torch|torchvision)==' webapp/requirements.txt > /tmp/requirements-runtime.txt \
     && python -m pip install --no-cache-dir -r /tmp/requirements-runtime.txt \

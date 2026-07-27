@@ -21,7 +21,7 @@ def assert_manifest_schema(manifest):
     assert isinstance(manifest["release_version"], str)
     assert isinstance(manifest["release_statement"], str)
     assert manifest["asset_manifest"] == "webapp/asset_manifest.v1.json"
-    assert manifest["pytorch_flavor"] in {"cpu", "cuda121"}
+    assert manifest["pytorch_flavor"] in {"cpu", "cuda126"}
     assert REQUIRED_COMPLIANCE_FILES.issubset(set(manifest["compliance_files"]))
 
     release_artifacts = manifest["release_artifacts"]

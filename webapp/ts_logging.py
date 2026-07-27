@@ -49,6 +49,15 @@ def sanitize_sensitive_data(message: str) -> str:
     
     # Redact Authorization headers
     message = re.sub(r'Authorization:\s*[^\s]+', 'Authorization: ***REDACTED***', message, flags=re.IGNORECASE)
+
+    # Redact the dedicated model-administration credential in either its HTTP
+    # header or environment-variable representation.
+    message = re.sub(
+        r'((?:X-TowerScout-Model-Upload-Key|TOWERSCOUT_MODEL_UPLOAD_KEY)\s*[:=]\s*)[^\s,;]+',
+        r'\1***REDACTED***',
+        message,
+        flags=re.IGNORECASE,
+    )
     
     return message
 

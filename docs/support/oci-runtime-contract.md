@@ -4,7 +4,7 @@
 **Last reviewed**: 2026-06-16
 **Audience**: Release/support users and runtime maintainers
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
-12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are
+12.6 Application Package, Podman CPU, Docker GPU, and Podman GPU are
 support-assigned paths after workstation-specific engine, Compose-provider,
 and NVIDIA validation.
 
@@ -90,7 +90,11 @@ Readiness checks:
 - required asset files exist
 - expected byte sizes match
 
-SHA-256 verification is available with `TOWERSCOUT_VERIFY_ASSET_HASHES=1` for release validation and support diagnostics.
+Manifest-listed model assets are always SHA-256 verified during readiness and
+again immediately before deserialization. Set
+`TOWERSCOUT_VERIFY_ASSET_HASHES=1` to extend readiness verification to every
+manifest asset, including the large ZIP-code geometry files, for release
+validation and support diagnostics.
 
 For release-candidate or support validation, prefer `setup-towerscout.cmd` for first setup so the package can discover the local Model & Data Package ZIP, verify checksum sidecars, reject unsafe layouts, import assets with hash verification, and launch. Manual validation can still run `scripts/import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180` during import unless support explicitly selected another engine.
 
@@ -142,10 +146,10 @@ The YOLO-enabled release track is `agpl-yolo`. TowerScout-authored code may be A
 Image publication is handled by the manual GitHub Actions workflow `.github/workflows/container-publish.yml`. The workflow requires `packages: write`, pushes a Linux/AMD64 image, uploads `image-metadata.json`, and reports the digest reference in the workflow summary.
 
 The publish workflow requires an explicit PyTorch wheel flavor selection. `cpu`
-uses the CPU PyTorch wheel index. `cuda121` uses the CUDA 12.1 PyTorch wheel
+uses the CPU PyTorch wheel index. `cuda126` uses the CUDA 12.6 PyTorch wheel
 index and labels the image with `org.towerscout.pytorch.flavor`. The workflow
 publishes flavor-specific tags such as `<release-version>-cpu` and
-`<release-version>-cuda121` to avoid CPU/CUDA tag collisions. Release evidence
+`<release-version>-cuda126` to avoid CPU/CUDA tag collisions. Release evidence
 and each control package must record which flavor produced the pinned digest.
 The CPU and CUDA control packages should point to the same Model & Data Package
 filename and SHA-256 unless a release note explicitly says assets differ.
@@ -175,7 +179,7 @@ Readiness diagnostics verify CUDA with a lightweight CUDA tensor probe when `TOW
 
 ## Upload Limit
 
-`TOWERSCOUT_MAX_REQUEST_BODY_BYTES` remains the single request-body/upload-size knob. Model upload remains disabled unless `TOWERSCOUT_ENABLE_MODEL_UPLOAD` is explicitly truthy.
+`TOWERSCOUT_MAX_REQUEST_BODY_BYTES` remains the single request-body/upload-size knob. Model upload remains disabled unless `TOWERSCOUT_ENABLE_MODEL_UPLOAD` is explicitly truthy. An enabled upload also requires a dedicated `TOWERSCOUT_MODEL_UPLOAD_KEY` of at least 32 characters, supplied through the upload dialog, plus an approved digest in `TOWERSCOUT_TRUSTED_MODEL_SHA256`. The normal Compose package remains bound to `127.0.0.1`; the key is an additional administrator capability and is never sent in a URL.
 
 `TOWERSCOUT_PILOT_MAX_TILES` is a separate UAT guard. When set, detection stops
 before imagery download or model inference if the retained tile count exceeds

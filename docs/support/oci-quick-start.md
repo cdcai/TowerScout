@@ -4,7 +4,7 @@
 **Last reviewed**: 2026-06-16
 **Audience**: Release/support users who need engine-level detail
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
-12.1 Application Package, Podman CPU, Docker GPU, and Podman GPU are
+12.6 Application Package, Podman CPU, Docker GPU, and Podman GPU are
 support-assigned paths after workstation-specific engine, Compose-provider,
 and NVIDIA validation.
 
@@ -13,7 +13,7 @@ release/support users who need engine-level detail. External pilot users
 should start with `docs/quick-start.md` instead.
 
 The primary pilot path is the CPU Application Package on Docker Desktop with
-the WSL 2 backend, launched with CPU-safe `-Gpu off`. The CUDA 12.1 Application
+the WSL 2 backend, launched with CPU-safe `-Gpu off`. The CUDA 12.6 Application
 Package is for support-validated NVIDIA GPU workstations. Podman remains a
 qualified support-directed package runtime path only when the workstation has a
 running Podman machine and an approved non-Docker-Desktop Compose provider.
@@ -24,7 +24,7 @@ running Podman machine and an approved non-Docker-Desktop Compose provider.
 - Single-user local use
 - CPU baseline
 - Two digest-pinned Application Package variants: `cpu` for normal users and
-  `cuda121` for support-validated NVIDIA GPU workstations
+  `cuda126` for support-validated NVIDIA GPU workstations
 - One shared Model & Data Package ZIP for both Application Package variants
 - Normal outbound internet access for GHCR image pulls and map providers
 - Docker Desktop with WSL 2 backend for the primary pilot path, or a
@@ -115,7 +115,7 @@ Release maintainers can assemble the control package from a source checkout:
 
 ```powershell
 .\scripts\package-release.cmd -Version <release-version>-cpu -Image ghcr.io/j-schulein/towerscout:<release-version>-cpu -ImageDigest sha256:<cpu-digest> -PytorchFlavor cpu -AssetBundleVersion <release-version> -AssetBundleSha256 <asset-zip-sha256>
-.\scripts\package-release.cmd -Version <release-version>-cuda121 -Image ghcr.io/j-schulein/towerscout:<release-version>-cuda121 -ImageDigest sha256:<cuda121-digest> -PytorchFlavor cuda121 -AssetBundleVersion <release-version> -AssetBundleSha256 <asset-zip-sha256>
+.\scripts\package-release.cmd -Version <release-version>-cuda126 -Image ghcr.io/j-schulein/towerscout:<release-version>-cuda126 -ImageDigest sha256:<cuda126-digest> -PytorchFlavor cuda126 -AssetBundleVersion <release-version> -AssetBundleSha256 <asset-zip-sha256>
 ```
 
 This creates separate CPU and CUDA control package folders, ZIPs, and checksum
@@ -123,7 +123,7 @@ sidecars. Both generated manifests should point to the same shared Model & Data
 Package filename and SHA-256. Each package includes `IMAGE.txt` for the
 release image reference and `SHA256SUMS.txt` for the files inside the package.
 
-Release package generation requires `-ImageDigest` with an immutable `sha256:<digest>` reference, a git source ref, a clean working tree, and an explicit or inferred PyTorch flavor (`cpu` or `cuda121`). For developer-only local validation with a mutable image tag, pass `-AllowMutableImage` explicitly. For local validation packages only, `-AllowMissingSourceRef` and `-AllowDirtySource` can bypass source-ref and clean-tree enforcement.
+Release package generation requires `-ImageDigest` with an immutable `sha256:<digest>` reference, a git source ref, a clean working tree, and an explicit or inferred PyTorch flavor (`cpu` or `cuda126`). For developer-only local validation with a mutable image tag, pass `-AllowMutableImage` explicitly. For local validation packages only, `-AllowMissingSourceRef` and `-AllowDirtySource` can bypass source-ref and clean-tree enforcement.
 
 ## Publishing The GHCR Image
 
@@ -144,10 +144,10 @@ Use that digest reference when generating the release package.
 The publish workflow has an explicit PyTorch wheel flavor input:
 
 - `cpu`: publishes the smaller CPU-wheel image.
-- `cuda121`: publishes the CUDA 12.1 PyTorch image for the support-assigned GPU
+- `cuda126`: publishes the CUDA 12.6 PyTorch image for the support-assigned GPU
   package path.
 
-The workflow publishes flavor-specific tags. For example, a workflow tag input of `<release-version>` with `cuda121` publishes `<release-version>-cuda121`; `push_latest` publishes `latest-cpu` or `latest-cuda121`, not an ambiguous `latest`.
+The workflow publishes flavor-specific tags. For example, a workflow tag input of `<release-version>` with `cuda126` publishes `<release-version>-cuda126`; `push_latest` publishes `latest-cpu` or `latest-cuda126`, not an ambiguous `latest`.
 
 Source-checkout and local-validation defaults use `latest-cpu` when no package
 digest is present. Release packages should still pin `TOWERSCOUT_IMAGE` to the
@@ -213,7 +213,7 @@ For developer/support validation of the CUDA-capable image path:
 .\start.bat -Engine docker -Build -Gpu auto
 ```
 
-The GPU build path switches `PYTORCH_INDEX_URL` to the CUDA 12.1 PyTorch wheel index for `-Gpu auto` or `-Gpu on`. `-Gpu off -Build` always uses the CPU PyTorch wheel index so local support builds do not accidentally inherit a CUDA index from the shell.
+The GPU build path switches `PYTORCH_INDEX_URL` to the CUDA 12.6 PyTorch wheel index for `-Gpu auto` or `-Gpu on`. `-Gpu off -Build` always uses the CPU PyTorch wheel index so local support builds do not accidentally inherit a CUDA index from the shell.
 
 ## Optional GPU Launch
 
@@ -462,14 +462,17 @@ For Podman, asset import first uses the selected Compose provider's `cp`
 support. If that provider cannot copy files, the helper falls back to direct
 `podman cp` against the running TowerScout service container.
 
-Release-candidate validation should enable SHA-256 checks:
+Manifest-listed model files are always SHA-256 verified during readiness and
+again before model deserialization. Release-candidate validation should extend
+readiness verification to every manifest asset:
 
 ```powershell
 $env:TOWERSCOUT_VERIFY_ASSET_HASHES = "1"
 .\scripts\status.cmd -Engine docker
 ```
 
-Routine CI and first-run setup should not hash large assets on every readiness poll.
+Routine CI and first-run setup should not hash the large ZIP-code assets on
+every readiness poll. Model hash verification remains enabled.
 
 ## Restricted Networks
 
