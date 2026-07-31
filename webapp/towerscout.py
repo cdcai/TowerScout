@@ -44,6 +44,7 @@ from ts_logging import (
 from ts_performance import PerformanceMetrics
 import ts_config
 import ts_device
+import ts_host_helper
 import ts_runtime
 from ts_assets import AssetManifestError, verify_trusted_model
 from ts_provider_http import (
@@ -860,7 +861,7 @@ def _run_detection_request():
         return jsonify({'error': 'Tile limit for this session exceeded. Please close browser to continue.'}), 400
 
     start = time.time()
-    client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ['REMOTE_ADDR'])
+    client_ip = _get_client_ip()
     if not rate_limiter.is_allowed(client_ip, max_requests=30, window_seconds=60):
         return jsonify({'error': 'Rate limit exceeded. Please try again later.'}), 429
 
@@ -1523,7 +1524,15 @@ Session(app)
 def handle_towerscout_error(error):
     """Handle all TowerScout custom exceptions with structured responses."""
     api_logger.error(f"TowerScout error: {error.message}", exc_info=True)
-    response = jsonify(error.to_dict())
+    payload = error.to_dict()
+    if isinstance(error, NetworkError):
+        payload = ts_host_helper.enrich_provider_tls_repair_payload(
+            payload,
+            include_start_authorization=(
+                request.endpoint == 'validate_api_key_endpoint'
+            ),
+        )
+    response = jsonify(payload)
     if isinstance(error, ValidationError):
         response.status_code = 400
     elif isinstance(error, NetworkError):
@@ -1912,7 +1921,10 @@ def get_providers():
 
 
 def _get_client_ip():
-    return request.environ.get('HTTP_X_FORWARDED_FOR', request.environ.get('REMOTE_ADDR', '127.0.0.1'))
+    # TowerScout is published directly on loopback and has no trusted reverse
+    # proxy in its supported runtime contract. Do not trust caller-controlled
+    # forwarding headers for security or rate-limiting decisions.
+    return request.remote_addr or '127.0.0.1'
 
 
 def _mask_key_preview(key: str) -> str:
@@ -1978,21 +1990,27 @@ def save_api_keys():
         try:
             validation_results['google'] = ts_config.validate_api_key('google', merged_google)
         except NetworkError as error:
-            validation_results['google'] = {
-                **error.to_dict(),
-                'valid': False,
-                'provider': 'google',
-            }
+            validation_results['google'] = ts_host_helper.enrich_provider_tls_repair_payload(
+                {
+                    **error.to_dict(),
+                    'valid': False,
+                    'provider': 'google',
+                },
+                include_start_authorization=True,
+            )
 
     if merged_azure and not ts_config.is_placeholder(merged_azure):
         try:
             validation_results['azure'] = ts_config.validate_api_key('azure', merged_azure)
         except NetworkError as error:
-            validation_results['azure'] = {
-                **error.to_dict(),
-                'valid': False,
-                'provider': 'azure',
-            }
+            validation_results['azure'] = ts_host_helper.enrich_provider_tls_repair_payload(
+                {
+                    **error.to_dict(),
+                    'valid': False,
+                    'provider': 'azure',
+                },
+                include_start_authorization=True,
+            )
 
     if not validation_results:
         return jsonify({
@@ -2076,12 +2094,85 @@ def get_provider_tls_status():
     requested_provider = request.args.get('provider')
     if requested_provider:
         provider = TowerScoutValidator.validate_provider(requested_provider)
-        return jsonify(ts_config.check_provider_tls_status(provider))
+        payload = ts_config.check_provider_tls_status(provider)
+        response = jsonify(ts_host_helper.enrich_provider_tls_repair_payload(payload))
+        response.headers['Cache-Control'] = 'no-store, private'
+        response.headers['Pragma'] = 'no-cache'
+        return response
 
-    return jsonify({
-        'google': ts_config.check_provider_tls_status('google'),
-        'azure': ts_config.check_provider_tls_status('azure'),
+    response = jsonify({
+        'google': ts_host_helper.enrich_provider_tls_repair_payload(
+            ts_config.check_provider_tls_status('google')
+        ),
+        'azure': ts_host_helper.enrich_provider_tls_repair_payload(
+            ts_config.check_provider_tls_status('azure')
+        ),
     })
+    response.headers['Cache-Control'] = 'no-store, private'
+    response.headers['Pragma'] = 'no-cache'
+    return response
+
+
+@app.route('/api/config/provider-tls-repair-status-authorization', methods=['POST'])
+def get_provider_tls_repair_status_authorization():
+    """Issue a short-lived, operation-bound helper polling credential."""
+    client_ip = _get_client_ip()
+    if not rate_limiter.is_allowed(
+        f"provider-tls-repair-status-authorization:{client_ip}",
+        max_requests=30,
+        window_seconds=300,
+    ):
+        response = jsonify({
+            'state': 'rate_limited',
+            'message': 'Wait before refreshing host repair status.',
+        })
+        response.status_code = 429
+        response.headers['Cache-Control'] = 'no-store, private'
+        response.headers['Pragma'] = 'no-cache'
+        return response
+
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        response = jsonify({
+            'state': 'rejected_bad_request',
+            'message': 'A JSON object is required.',
+        })
+        response.status_code = 400
+        response.headers['Cache-Control'] = 'no-store, private'
+        response.headers['Pragma'] = 'no-cache'
+        return response
+    provider = TowerScoutValidator.validate_provider(data.get('provider'))
+    operation_id = TowerScoutValidator.sanitize_string(
+        data.get('operation_id', ''),
+        max_length=32,
+    ).strip().lower()
+    if not re.fullmatch(r'[a-f0-9]{32}', operation_id):
+        response = jsonify({
+            'state': 'rejected_unknown_operation',
+            'message': 'The host repair operation id was invalid.',
+        })
+        response.status_code = 400
+        response.headers['Cache-Control'] = 'no-store, private'
+        response.headers['Pragma'] = 'no-cache'
+        return response
+
+    bridge = ts_host_helper.build_operation_status_bridge(
+        provider,
+        operation_id,
+    )
+    if bridge is None:
+        response = jsonify({
+            'state': 'helper_unavailable',
+            'message': 'Host repair status authorization is unavailable.',
+        })
+        response.status_code = 404
+        response.headers['Cache-Control'] = 'no-store, private'
+        response.headers['Pragma'] = 'no-cache'
+        return response
+    response = jsonify(bridge)
+    response.headers['Cache-Control'] = 'no-store, private'
+    response.headers['Pragma'] = 'no-cache'
+    return response
 
 
 @app.route('/api/config/reset-session', methods=['POST'])
@@ -2111,7 +2202,7 @@ def forward_geocode():
     """Convert address to coordinates using available providers"""
     try:
         # Rate limiting check
-        client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ.get('REMOTE_ADDR', '127.0.0.1'))
+        client_ip = _get_client_ip()
         if not rate_limiter.is_allowed(client_ip, max_requests=30, window_seconds=600):  # 10 minutes
             return jsonify({'error': 'Rate limit exceeded. Please wait before trying again.'}), 429
             
@@ -2161,7 +2252,7 @@ def reverse_geocode():
     """Convert coordinates to address using available providers"""
     try:
         # Rate limiting check
-        client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ.get('REMOTE_ADDR', '127.0.0.1'))
+        client_ip = _get_client_ip()
         if not rate_limiter.is_allowed(client_ip, max_requests=30, window_seconds=600):  # 10 minutes
             return jsonify({'error': 'Rate limit exceeded. Please wait before trying again.'}), 429
             
@@ -2269,7 +2360,7 @@ def map_proxy(provider, service):
         config = MAP_PROXY_CONFIG[provider][service]
         
         # Rate limiting check with service-specific limits
-        client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ.get('REMOTE_ADDR', '127.0.0.1'))
+        client_ip = _get_client_ip()
         max_requests, window_seconds = config['rate_limit']
         if not rate_limiter.is_allowed(client_ip, max_requests=max_requests, window_seconds=window_seconds):
             return jsonify({'error': f'Rate limit exceeded for {provider}/{service}. Please wait before trying again.'}), 429
@@ -2536,7 +2627,7 @@ def estimate_detection_tiles():
             'estimatedSeconds': 0.0
         })
 
-    client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ['REMOTE_ADDR'])
+    client_ip = _get_client_ip()
     if not rate_limiter.is_allowed(client_ip, max_requests=30, window_seconds=60):
         return jsonify({'error': 'Rate limit exceeded. Please try again later.'}), 429
 
@@ -2673,7 +2764,7 @@ def get_objects_custom():
     session_id = _get_session_run_id()
     
     # Rate limiting
-    client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ['REMOTE_ADDR'])
+    client_ip = _get_client_ip()
     if not rate_limiter.is_allowed(client_ip, max_requests=10, window_seconds=60):
         return jsonify({'error': 'Rate limit exceeded for image uploads'}), 429
     
@@ -3360,7 +3451,7 @@ def upload_dataset():
     
     # Rate limiting (more lenient for local development/testing)
     # TASK-033 Phase 3: Increased limit for manual verification testing
-    client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ['REMOTE_ADDR'])
+    client_ip = _get_client_ip()
     if not rate_limiter.is_allowed(client_ip, max_requests=10, window_seconds=60):
         return jsonify({'error': 'Rate limit exceeded for dataset uploads'}), 429
     

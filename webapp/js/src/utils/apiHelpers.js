@@ -23,19 +23,72 @@
   };
 
   async function fetchJson(url, options = {}) {
-    const response = await fetch(url, options);
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      const error = new Error(data.message || data.error || `Request failed with status ${response.status}`);
-      error.status = response.status;
-      error.payload = data;
-      error.details = data.details || {};
-      error.category = data.category || (data.details && data.details.category);
-      throw error;
+    const requestOptions = { ...options };
+    const timeoutMs = Number(requestOptions.timeoutMs || 0);
+    delete requestOptions.timeoutMs;
+    let timeoutId = null;
+    let controller = null;
+    let timeoutTriggered = false;
+    let callerSignal = requestOptions.signal || null;
+    let callerAbortHandler = null;
+    if (
+      timeoutMs > 0 &&
+      typeof AbortController === 'function'
+    ) {
+      controller = new AbortController();
+      requestOptions.signal = controller.signal;
+      if (callerSignal) {
+        callerAbortHandler = () => controller.abort(callerSignal.reason);
+        if (callerSignal.aborted) {
+          callerAbortHandler();
+        } else {
+          callerSignal.addEventListener('abort', callerAbortHandler, { once: true });
+        }
+      }
+      timeoutId = window.setTimeout(() => {
+        timeoutTriggered = true;
+        controller.abort();
+      }, timeoutMs);
     }
 
-    return data;
+    try {
+      const response = await fetch(url, requestOptions);
+      let data;
+      try {
+        data = await response.json();
+      } catch (error) {
+        if (controller && controller.signal.aborted) {
+          throw error;
+        }
+        data = {};
+      }
+
+      if (!response.ok) {
+        const error = new Error(data.message || data.error || `Request failed with status ${response.status}`);
+        error.status = response.status;
+        error.payload = data;
+        error.details = data.details || {};
+        error.category = data.category || (data.details && data.details.category);
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      if (timeoutTriggered) {
+        const timeoutError = new Error(`Request timed out after ${timeoutMs} ms`);
+        timeoutError.status = 0;
+        timeoutError.category = 'request_timeout';
+        throw timeoutError;
+      }
+      throw error;
+    } finally {
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+      if (callerSignal && callerAbortHandler) {
+        callerSignal.removeEventListener('abort', callerAbortHandler);
+      }
+    }
   }
 
   function providerFailureMessage(displayName, payload) {

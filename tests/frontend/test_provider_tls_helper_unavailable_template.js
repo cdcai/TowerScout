@@ -1,24 +1,35 @@
+#!/usr/bin/env node
 /**
- * Frontend Integration Test Template - Provider TLS helper-unavailable fallback
- *
- * Purpose: Template test that simulates the host helper being unavailable
- * (network or 5xx response) during the start attempt and asserts the
- * frontend falls back to the command guidance and does not enter retry loops.
- *
- * IMPORTANT: This is a template scaffold. The real assertions may need to be
- * adapted to the UI markup and notification helpers present in the app.
- *
- * Usage:
- *  node tests/frontend/test_provider_tls_helper_unavailable_template.js
+ * Puppeteer coverage for the production SetupWizard helper-unavailable path.
  */
 
+const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 const puppeteer = require('puppeteer');
 
-const CONFIG = { baseUrl: 'http://localhost:5000', headless: true, timeout: 60000 };
+const ROOT = path.join(__dirname, '../..');
+const API_HELPERS = fs.readFileSync(
+  path.join(ROOT, 'webapp/js/src/utils/apiHelpers.js'),
+  'utf8'
+);
+const SETUP_WIZARD = fs.readFileSync(
+  path.join(ROOT, 'webapp/js/src/setup-wizard.js'),
+  'utf8'
+).replace(
+  'const PROVIDER_TLS_REPAIR_BROWSER_MUTATION_ENABLED = false;',
+  'const PROVIDER_TLS_REPAIR_BROWSER_MUTATION_ENABLED = true;'
+);
+const HELPER_BASE_URL = 'http://127.0.0.1:5001';
+const WEB_URL = (
+  process.env.TEST_WEB_URL || 'http://localhost:5000'
+).replace(/\/+$/, '');
 
 async function run() {
-  const launchOptions = { headless: CONFIG.headless, args: ['--no-sandbox', '--disable-setuid-sandbox'] };
-  // Prefer a provided executable path (Playwright-installed Chromium) in CI
+  const launchOptions = {
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  };
   if (process.env.PUPPETEER_EXECUTABLE_PATH) {
     launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
   } else if (process.env.TEST_BROWSER_EXECUTABLE) {
@@ -26,154 +37,161 @@ async function run() {
   }
   const browser = await puppeteer.launch(launchOptions);
   const page = await browser.newPage();
-
   try {
-    const USE_REAL_HELPER = (process.env.E2E_USE_SERVER === '1' || process.env.E2E_USE_SERVER === 'true' || process.env.USE_REAL_HELPER === '1');
-
-    // Expose helper base URL to the page when running e2e
-    await page.evaluateOnNewDocument((hb, real) => {
-      try { window.__TEST_HELPER_BASE_URL = hb || ''; window.__E2E_USE_REAL_HELPER = !!real; } catch(e) {}
-    }, process.env.TEST_HELPER_BASE_URL || '', USE_REAL_HELPER);
-
-    await page.goto(CONFIG.baseUrl, { waitUntil: 'networkidle2', timeout: CONFIG.timeout });
-    await page.evaluate((hb, real) => {
-      window.__TEST_HELPER_BASE_URL = hb || '';
-      window.__E2E_USE_REAL_HELPER = !!real;
-    }, process.env.TEST_HELPER_BASE_URL || '', USE_REAL_HELPER);
-
-    // Mirror page console to node for easier diagnostics in CI
-    page.on('console', msg => {
-      try { console.log('PAGE:', msg.text()); } catch (e) { console.log('PAGE: (console unreadable)'); }
+    await page.goto(WEB_URL, {
+      waitUntil: 'networkidle2',
+      timeout: 60000
     });
-
-    // Inject a repairable validation result as in the other template
-    const future = new Date(Date.now() + 30 * 60 * 1000).toISOString();
-    await page.evaluate((future) => {
-      const payload = {
-        provider: 'google',
-        repairable: true,
-        helper_available: true,
-        category: 'tls_ca_untrusted',
-        operation_authorization: {
-          operation_type: 'provider_tls_repair',
-          expires_at: future,
-          operation_token: 'TEST_TOKEN_' + 'Y'.repeat(32)
+    await page.setContent(`
+      <div id="setup_wizard_div">
+        <div class="wizard-progress">
+          ${[1, 2, 3, 4, 5].map(step => `<span class="step" data-step="${step}"></span>`).join('')}
+        </div>
+        ${[1, 2, 3, 4, 5].map(step => `<section class="wizard-step" data-step="${step}"></section>`).join('')}
+      </div>
+      <input id="wizard_google_key" value="google-key">
+      <input id="wizard_azure_key" value="azure-key">
+      <span id="google_key_status"></span>
+      <span id="azure_key_status"></span>
+      <div id="wizard_validation_message"></div>
+      <button id="wizard_validate_button"></button>
+      <button id="wizard_save_button"></button>
+      <div id="wizard_performance_stats"></div>
+      <label id="wizard_google_provider_option"><input name="default_provider" value="google"></label>
+      <label id="wizard_azure_provider_option"><input name="default_provider" value="azure"></label>
+      <div id="wizard_provider_tls_repair_panel">
+        <div id="wizard_provider_tls_repair_title"></div>
+        <div id="wizard_provider_tls_repair_message"></div>
+        <div id="wizard_provider_tls_repair_support"></div>
+        <div id="wizard_provider_tls_repair_command"></div>
+        <div id="wizard_provider_tls_repair_confirmation"></div>
+        <input id="wizard_provider_tls_repair_confirm" type="checkbox">
+        <button id="wizard_provider_tls_repair_button"></button>
+        <div id="wizard_provider_tls_repair_status"></div>
+      </div>
+    `);
+    await page.evaluate(helperBaseUrl => {
+      const response = (ok, status, payload) => ({
+        ok,
+        status,
+        async json() {
+          return payload;
         }
-      };
-      if (typeof rememberProviderValidationResult === 'function') {
-        rememberProviderValidationResult('google', payload);
-      } else {
-        window.__TEST_provider_validation = payload;
-      }
-    }, future);
-
-    // Install fetch wrapper to record calls and provide controlled shim behavior
-    await page.evaluate((useReal) => {
-      const orig = window.fetch;
+      });
+      window.needsSetup = true;
       window.__fetchCalls = [];
-
-      window.fetch = async function(url, options) {
-        window.__fetchCalls.push(String(url));
-        const recorded = { url: String(url), method: options && options.method ? options.method : 'GET' };
-
-        if (!useReal) {
-          if (recorded.url.endsWith('/operations/provider-tls-repair')) {
-            console.log('[TEST-SHIM] Simulate 503 for', recorded.url);
-            return { ok: false, status: 503, json: async () => ({ message: 'helper_unavailable' }) };
-          }
-          return orig.apply(this, arguments);
-        }
-
-        // In real mode, forward the request but still record a small snippet
-        try {
-          const resp = await orig.apply(this, arguments);
-          let txt = null;
-          try { txt = await resp.clone().text(); if (txt && txt.length>1000) txt = txt.slice(0,1000)+'...'; } catch(e){ txt = '<non-text>'; }
-          window.__fetchCalls.push(Object.assign({}, recorded, { status: resp.status, bodySnippet: txt }));
-          console.log('[FETCH] ', recorded.method, recorded.url, '->', resp.status);
-          return resp;
-        } catch (e) {
-          window.__fetchCalls.push(Object.assign({}, recorded, { error: String(e) }));
-          console.log('[FETCH-ERROR]', recorded.method, recorded.url, e && e.message ? e.message : e);
-          throw e;
+      window.__notifications = [];
+      window.TowerScoutLogger = { info() {}, debug() {} };
+      window.TowerScoutErrorHandler = {
+        showUserNotification(message, type) {
+          window.__notifications.push({ message, type });
         }
       };
-    }, USE_REAL_HELPER);
-
-    // Use the builder to create POST body and then attempt a start via a small
-    // injected helper so we can observe UI reaction.
-    const outcome = await page.evaluate(async () => {
-      let built = typeof buildProviderTlsRepairStartRequest === 'function' ? buildProviderTlsRepairStartRequest('google') : null;
-      if (!built && window.__TEST_provider_validation) {
-        const pv = window.__TEST_provider_validation;
-        const helperBase = (window.__TEST_HELPER_BASE_URL || '').replace(/\/+$/, '');
-        built = {
-          endpoint: (helperBase ? helperBase : '') + '/operations/provider-tls-repair',
-          options: {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              provider: pv.provider,
-              confirmation: 'repair_tls_and_restart',
-              operation_authorization: pv.operation_authorization && pv.operation_authorization.operation_token
-            })
+      window.fetch = async (url, options = {}) => {
+        const target = String(url);
+        window.__fetchCalls.push({
+          url: target,
+          method: options.method || 'GET'
+        });
+        if (target === '/api/config/validate-key') {
+          const body = JSON.parse(options.body);
+          if (body.provider === 'azure') {
+            return response(true, 200, {
+              valid: true,
+              provider: 'azure',
+              category: 'tls_ok',
+              repairable: false
+            });
           }
-        };
-      }
-
-      if (window.__E2E_USE_REAL_HELPER || (window.__TEST_HELPER_BASE_URL && window.__TEST_HELPER_BASE_URL.length)) {
-        if (!built || !String(built.endpoint).match(/^https?:\/\//i)) {
-          console.log('[E2E-ERROR] Helper base URL not configured or builder returned a relative endpoint:', built && built.endpoint);
-          return { error: 'missing_helper_base_url', builtEndpoint: built && built.endpoint };
+          return response(false, 502, {
+            error: true,
+            message: 'Google Maps TLS verification failed.',
+            details: {
+              provider: 'google',
+              category: 'tls_ca_untrusted',
+              repairable: true,
+              helper_available: false,
+              support_action: 'Use the command fallback while the helper is unavailable.',
+              repair_command: '.\\scripts\\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off',
+              helper_bridge: {
+                base_url: helperBaseUrl,
+                probe: {
+                  path: '/health',
+                  scope: 'helper_probe',
+                  expires_at: '2999-01-01T00:00:00Z',
+                  authorization: 'unavailable-probe-authorization'
+                },
+                operation_authorization: {
+                  operation_type: 'provider_tls_repair',
+                  expires_at: '2999-01-01T00:00:00Z',
+                  operation_token: 'unavailable-operation-authorization'
+                },
+                provider_tls_repair_capability: true,
+                expected_runtime: {
+                  engine: 'docker',
+                  gpu: 'off',
+                  app_port: 5000
+                }
+              }
+            }
+          });
         }
+        if (target === `${helperBaseUrl}/health`) {
+          return response(false, 503, { state: 'helper_unavailable' });
+        }
+        if (target === '/api/config/performance') {
+          return response(true, 200, { session_count: 0 });
+        }
+        throw new Error(`Unexpected fetch target: ${target}`);
+      };
+    }, HELPER_BASE_URL);
+
+    await page.addScriptTag({ content: API_HELPERS });
+    await page.addScriptTag({ content: SETUP_WIZARD });
+    const result = await page.evaluate(async () => {
+      if (!window.SetupWizard) {
+        throw new Error('Production SetupWizard controller was not loaded.');
       }
-      if (!built) {
-        return { error: 'no_builder' };
-      }
-
-      // Perform a single POST attempt
-      const resp = await fetch(built.endpoint, built.options);
-      const body = await (resp.json ? resp.json() : {});
-
-      // Wait a short while to detect any retry loops
-      await new Promise(r => setTimeout(r, 200));
-
+      window.SetupWizard.showStep(2);
+      await window.SetupWizard.validateAndNext();
+      document.getElementById('wizard_provider_tls_repair_confirm').checked = true;
+      window.SetupWizard.updateProviderTlsRepairControls();
+      const startResult = window.SetupWizard.startProviderTlsRepair();
       return {
-        status: resp.status,
-        bodyText: body && body.message,
-        fetchCalls: (window.__fetchCalls || []).slice()
+        viewModel: window.SetupWizard.getProviderTlsRepairViewModel('google'),
+        startResult,
+        fetchCalls: window.__fetchCalls,
+        notifications: window.__notifications,
+        command: document.getElementById('wizard_provider_tls_repair_command').textContent,
+        status: document.getElementById('wizard_provider_tls_repair_status').textContent
       };
     });
 
-    if (outcome.error) {
-      console.error('Builder not available in page context; adapt test to current frontend build.');
-      process.exitCode = 2;
-      return;
-    }
-
-    if (outcome.status !== 503) {
-      console.error('Expected helper POST to return 503 in this simulation, got', outcome.status);
-      process.exitCode = 2;
-      return;
-    }
-
-    // Assert only one POST attempt occurred and that the UI should have fallback guidance
-    const postCalls = outcome.fetchCalls.filter(u => u.endsWith('/operations/provider-tls-repair'));
-    if (postCalls.length !== 1) {
-      console.error('Expected a single POST attempt, saw', postCalls.length);
-      process.exitCode = 2;
-      return;
-    }
-
-    console.log('Helper-unavailable template: single POST observed, status=503');
-    console.log('Body message:', outcome.bodyText);
-
-    // TODO: Add DOM assertions here to validate that the UI shows the command
-    // fallback text or an appropriate user notification instead of retry loops.
-
+    assert.strictEqual(result.viewModel.visible, true);
+    assert.strictEqual(result.viewModel.helper_available, false);
+    assert.strictEqual(result.viewModel.enabled, false);
+    assert.strictEqual(result.viewModel.blocked_reason, 'helper_unavailable');
+    assert.strictEqual(result.startResult, false);
+    assert.ok(result.command.includes('repair-provider-tls.cmd'));
+    assert.ok(result.status.includes('helper is unavailable'));
+    assert.strictEqual(
+      result.fetchCalls.some(
+        call => call.url === `${HELPER_BASE_URL}/operations/provider-tls-repair`
+      ),
+      false
+    );
+    assert.strictEqual(
+      JSON.stringify({ notifications: result.notifications, status: result.status })
+        .includes('unavailable-operation-authorization'),
+      false
+    );
+    console.log('Production SetupWizard helper-unavailable Puppeteer test PASSED');
   } finally {
     await browser.close();
   }
 }
 
-run().catch(err => { console.error(err); process.exitCode = 1; });
+run().catch(error => {
+  console.error(error);
+  process.exitCode = 1;
+});

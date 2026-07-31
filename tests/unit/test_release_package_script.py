@@ -164,6 +164,8 @@ def test_package_release_stages_digest_pinned_image():
         assert (stage_path / "scripts" / "enable-podman-gpu.ps1").is_file()
         assert (stage_path / "scripts" / "lib" / "TowerScoutPodmanGpu.ps1").is_file()
         assert (stage_path / "scripts" / "lib" / "TowerScoutCertificateStore.ps1").is_file()
+        assert (stage_path / "scripts" / "lib" / "TowerScoutHostHelperState.ps1").is_file()
+        assert (stage_path / "scripts" / "host-helper-worker.ps1").is_file()
         assert (stage_path / "scripts" / "repair-provider-tls.cmd").is_file()
         assert (stage_path / "scripts" / "repair-provider-tls.ps1").is_file()
         for relative_path in [

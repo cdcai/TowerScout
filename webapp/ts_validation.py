@@ -8,6 +8,8 @@ to TowerScout. Prevents injection attacks and ensures data integrity.
 import json
 import re
 import os
+import threading
+import time
 from typing import List, Dict, Any, Optional, Tuple
 from shapely.geometry import Polygon
 from shapely.geometry.polygon import LinearRing
@@ -461,29 +463,39 @@ class TowerScoutValidator:
 class RateLimiter:
     """Simple in-memory rate limiter for API endpoints"""
     
-    def __init__(self):
+    def __init__(self, max_keys: int = 2048):
+        if max_keys < 1:
+            raise ValueError("max_keys must be at least 1")
         self.requests = {}  # {ip: [timestamp1, timestamp2, ...]}
+        self.max_keys = max_keys
+        self._lock = threading.Lock()
     
     def is_allowed(self, ip: str, max_requests: int = 60, window_seconds: int = 60) -> bool:
         """Check if request from IP is within rate limits"""
-        import time
-        
         current_time = time.time()
         window_start = current_time - window_seconds
-        
-        # Clean old requests
-        if ip in self.requests:
-            self.requests[ip] = [t for t in self.requests[ip] if t > window_start]
-        else:
-            self.requests[ip] = []
-        
-        # Check if under limit
-        if len(self.requests[ip]) >= max_requests:
-            return False
-        
-        # Add current request
-        self.requests[ip].append(current_time)
-        return True
+
+        with self._lock:
+            if ip not in self.requests and len(self.requests) >= self.max_keys:
+                oldest_key = min(
+                    self.requests,
+                    key=lambda key: (
+                        self.requests[key][-1] if self.requests[key] else 0
+                    ),
+                )
+                del self.requests[oldest_key]
+
+            recent_requests = [
+                timestamp
+                for timestamp in self.requests.get(ip, [])
+                if timestamp > window_start
+            ]
+            self.requests[ip] = recent_requests
+            if len(recent_requests) >= max_requests:
+                return False
+
+            recent_requests.append(current_time)
+            return True
 
 
 # Global rate limiter instance

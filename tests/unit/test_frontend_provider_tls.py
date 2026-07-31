@@ -31,6 +31,11 @@ def test_setup_and_settings_preserve_provider_tls_error_details():
     assert "shouldShowProviderTlsRepair" in setup_source
     assert "getProviderTlsRepairViewModel" in setup_source
     assert "getProviderTlsRepairStartContract" in setup_source
+    assert "refreshProviderTlsRepairHelperAvailability" in setup_source
+    assert "requestProviderTlsRepairStatusAuthorization" in setup_source
+    assert "pollProviderTlsRepairOperation" in setup_source
+    assert "PROVIDER_TLS_REPAIR_ACTIVE_OPERATION_STORAGE_KEY" in setup_source
+    assert "X-TowerScout-Operation-Authorization" in setup_source
     assert "rememberProviderTlsRepairOperationStatus" in setup_source
     assert "PROVIDER_TLS_REPAIR_BROWSER_MUTATION_ENABLED = false" in setup_source
     assert "PROVIDER_TLS_REPAIR_BROWSER_MUTATION_ENABLED = false" in setup_bundle
@@ -40,6 +45,10 @@ def test_setup_and_settings_preserve_provider_tls_error_details():
     assert "TLS_REPAIR_CATEGORIES" in setup_source
     assert "repair_command" in setup_source
     assert "operation_authorization: authorization.operation_token" in setup_source
+    assert "helper_base_url: helperBaseUrl" in setup_source
+    assert "helper_available: helperAvailable" in setup_source
+    assert "capability_enabled: capabilityEnabled" in setup_source
+    assert "helper_capability_disabled" in setup_source
     assert "body: JSON.stringify({" in setup_source
     for rejected_field in (
         "engine",

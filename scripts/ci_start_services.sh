@@ -38,7 +38,8 @@ check_helper_health() {
   local url=$1
   local tmpbody="$ART_DIR/helper_health.json"
   local status
-  status=$(curl -sS -w '%{http_code}' -o "$tmpbody" --connect-timeout 2 --max-time 3 "$url" || echo "000")
+  local probe_token="PROBE_YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY"
+  status=$(curl -sS -H "X-TowerScout-Operation-Authorization: $probe_token" -w '%{http_code}' -o "$tmpbody" --connect-timeout 2 --max-time 3 "$url" || echo "000")
   if [ "$status" = "200" ] && grep -q '"state":"ready"' "$tmpbody"; then
     return 0
   fi

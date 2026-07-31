@@ -114,7 +114,7 @@ def test_launch_gpu_on_requires_cuda_readiness():
     launch = LAUNCH_SCRIPT.read_text(encoding="utf-8")
 
     assert "function Test-TowerScoutCudaSelected" in launch
-    assert '$Gpu -eq "on" -and -not (Test-TowerScoutCudaSelected -Readiness $readiness)' in launch
+    assert '$GpuMode -eq "on" -and -not (Test-TowerScoutCudaSelected -Readiness $readiness)' in launch
     assert "selected_device=cuda" in launch
     assert "Runtime: engine={0} device_policy={1} selected_device={2} pytorch_flavor={3}" in launch
 
