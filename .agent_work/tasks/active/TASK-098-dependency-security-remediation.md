@@ -8,6 +8,14 @@ DEPENDABOT RECONCILED TO EIGHT DOCUMENTED NON-BLOCKING TORCH ADVISORIES
 6-11 days, plus required GPU/runtime host availability
 **Selected For Planning**: July 23, 2026
 
+**Post-Closeout Follow-Up**: This task's eight-alert/no-high result is the
+exact July 27 closeout state and remains complete. GitHub disclosed alerts
+`#72-#75` on August 4-5; the separately governed
+[Task-099 follow-up](./TASK-099-august-dependency-advisory-follow-up.md) owns
+their narrow remediation and current release gate. Task-099 blocks signing and
+candidate inclusion, not ongoing Task-087 non-release work. Do not reopen or
+rewrite Task-098's checked acceptance evidence for those later disclosures.
+
 ## Objective
 
 Implement and qualify the dependency, local-runtime, custom-image, and model

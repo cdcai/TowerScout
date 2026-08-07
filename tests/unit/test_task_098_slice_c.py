@@ -1,4 +1,4 @@
-"""Task-098 Slice C aiohttp provider-client compatibility contracts."""
+"""Task-098/099 aiohttp provider-client compatibility contracts."""
 
 from __future__ import annotations
 
@@ -119,10 +119,10 @@ def _run_fetch(url, directory, filename, *, max_retries=0):
     asyncio.run(run())
 
 
-def test_slice_c_aiohttp_pin_is_exact():
+def test_aiohttp_security_pin_is_exact():
     requirements = REQUIREMENTS_FILE.read_text(encoding="utf-8").splitlines()
 
-    assert "aiohttp==3.14.2" in requirements
+    assert "aiohttp==3.14.3" in requirements
 
 
 @pytest.mark.parametrize("provider", ["google", "azure"])

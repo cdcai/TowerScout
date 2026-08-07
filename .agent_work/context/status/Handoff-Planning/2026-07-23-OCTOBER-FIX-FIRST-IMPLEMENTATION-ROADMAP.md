@@ -2,6 +2,7 @@
 
 **Status**: CURRENT - canonical forward execution roadmap
 **Approved**: July 23, 2026
+**Last Reconciled**: August 6, 2026
 **Decision Owners**: Project lead and cdcai owner
 **Pilot Baseline**: Immutable fork-side `v0.1.2`
 **Candidate Convention**: `v0.1.3-rc.N`
@@ -60,6 +61,12 @@ runtime, documentation, or handoff work.
 **Target**: July 23-August 14; reforecast after Task-090 classification
 **Status**: COMPLETE - Task-090 and Task-098 closed July 27
 
+**August 6 Post-Closeout Amendment**: The July Phase 1 result remains complete
+and historical. Four advisories disclosed August 4-5 are owned by the new
+Task-099 follow-up rather than reopening Tasks 090/098. Task-099 blocks signing
+and candidate inclusion until its critical/high gate and default-branch alert
+reconciliation pass; it does not pause ongoing Task-087 non-release work.
+
 1. Task-095 Phase A roadmap/workspace rebaseline and readiness cleanup:
    complete July 23.
 2. Task-090 bounded runtime, custom-image, and dependency security
@@ -68,10 +75,11 @@ runtime, documentation, or handoff work.
    approved.
 4. Task-098 patching, compatibility decisions, regression, and residual
    disposition: complete through PR #51 / `e499b50`.
-5. Release-blocking findings are resolved; eight non-blocking medium/low torch
-   advisories remain visible for future coordinated ML requalification.
+5. At the July 27 closeout, release-blocking findings were resolved and eight
+   non-blocking medium/low torch advisories remained visible for future
+   coordinated ML requalification.
 
-Exit:
+July 27 exit evidence:
 
 - One canonical roadmap is active.
 - Task state and context navigation are consistent.
@@ -119,6 +127,7 @@ Exit:
 Task-058 may begin immediately when all of the following are true:
 
 - Tasks 090 and 098 are complete.
+- Task-099 passes its August dependency-security follow-up gate.
 - Task-087 passes managed-network validation.
 - Task-096 passes Docker and Podman acceptance.
 - Task-097 passes required final-path qualification.
@@ -187,6 +196,7 @@ Exit:
 | `TASK-096` | User-confirmed Exit/Stop TowerScout | Required |
 | `TASK-097` | Podman CPU/GPU final-path hardening and qualification | Required |
 | `TASK-098` | Dependency-security remediation, compatibility validation, and release disposition | Complete July 27 |
+| `TASK-099` | August dependency-advisory remediation and release-gate reconciliation | Required; in progress |
 | `TASK-058` | Background jobs and durable run state | Conditional stretch |
 | `TASK-059` | Backend decomposition and logging consolidation | Conditional stretch after Task-058 |
 
@@ -198,6 +208,12 @@ Task-098's project-lead approval gate was satisfied July 23 and the task
 completed July 27. cdcai-owner approval remains reserved for residual
 critical/high acceptance, changes to `cdcai/TowerScout`, and official
 adoption.
+
+Task-099 was added August 6 for alerts `#72-#75`, which GitHub disclosed after
+the Task-098 closeout. While it remained active, the August 7 npm audit added
+`GHSA-5p4m-2wfm-xmqj`. Its narrow `aiohttp`, transitive `ip-address`, and
+transitive `js-yaml` remediation is a required signing/candidate gate and does
+not reopen Task-098 or block parallel Task-087 non-release work.
 
 ## Stop Rules
 

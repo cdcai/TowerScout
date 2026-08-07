@@ -1,6 +1,7 @@
 # TowerScout Pilot Feedback And cdcai Adoption Plan
 
 **Decision Date**: July 10, 2026; rebaselined July 23, 2026
+**Last Reconciled**: August 6, 2026
 **Status**: CURRENT for the Pilot Package and cdcai hold
 **Forward Development Plan**:
 [`2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md`](./2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md)
@@ -67,6 +68,14 @@ Task-087 may resume for the new candidate only after the Tasks 090/098 security
 gate passes. This does not change the Pilot Package and does not authorize
 enabling unvalidated behavior for pilot users.
 
+Tasks 090/098 passed on July 27 and remain completed historical records.
+GitHub disclosed four additional Dependabot advisories on August 4-5, and the
+blocking npm audit added `GHSA-5p4m-2wfm-xmqj` on August 7 while Task-099 was
+still active. Task-099 owns that follow-up. Task-087 non-release implementation
+and validation may continue in parallel, but signing and candidate inclusion
+remain blocked until Task-099 passes its critical/high gate and default-branch
+inventory reconciliation.
+
 ## Release Naming Boundary
 
 - `v0.1.3-rc.N` is the fork candidate convention.
@@ -101,8 +110,11 @@ backlog, and migration-ready handoff without changing cdcai.
   governance/handoff.
 - Task-096: user-confirmed Exit/Stop.
 - Task-097: Podman CPU/GPU final-path qualification.
-- Task-098: completed dependency remediation, compatibility validation, and
-  release-risk disposition through PR #51 / `e499b50`.
+- Task-098: completed July 27 dependency remediation, compatibility
+  validation, and release-risk disposition through PR #51 / `e499b50`.
+- Task-099: active narrow follow-up for alerts `#72-#75` plus npm finding
+  `GHSA-5p4m-2wfm-xmqj`; required before signing or candidate inclusion,
+  without reopening Task-098.
 
 ## Superseded Instructions
 

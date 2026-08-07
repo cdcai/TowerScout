@@ -1,6 +1,6 @@
 # Completed Tasks
 
-**Last Updated**: July 27, 2026
+**Last Updated**: August 6, 2026
 **Current Retention Window**: Sprint 06 through current Sprint 08 completions
 **Historical Snapshot**:
 [`2026-07-23-pre-rebaseline-completed-tasks.md`](./context/archive/2026-07/2026-07-23-pre-rebaseline-completed-tasks.md)
@@ -41,12 +41,19 @@ Key outcomes:
   changes through PR #51 as `e499b50`.
 - Passed Docker CPU/GPU compatibility, live Google/Azure workflows, model
   output/performance comparison, PR review remediation, and post-merge CI.
-- Reconciled Dependabot to eight open torch advisories—three medium and five
-  low—with no open release-blocking critical/high alert and no manual
-  dismissal.
+- At the July 27 closeout, reconciled Dependabot to eight open torch
+  advisories—three medium and five low—with no open release-blocking
+  critical/high alert and no manual dismissal at that checkpoint.
 - Closed incompatible standalone torch PR #60; future torch upgrades must move
   with torchvision and repeat the coordinated ML qualification cycle.
 - Cleared the security dependency for Task-087 to resume.
+
+Post-closeout note: GitHub disclosed alerts `#72-#75` on August 4-5. They do
+not reopen Task-098 or change its July evidence; the active
+[`TASK-099` follow-up](./tasks/active/TASK-099-august-dependency-advisory-follow-up.md)
+owns their remediation together with npm audit finding
+`GHSA-5p4m-2wfm-xmqj`, detected while Task-099 remained active. Task-099 blocks
+signing and candidate inclusion, not ongoing Task-087 non-release work.
 
 Current-sprint task files remain under `tasks/active/` until Sprint 08
 closeout.

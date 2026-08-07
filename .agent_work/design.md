@@ -1,6 +1,6 @@
 # TowerScout Current Technical Design
 
-**Last Updated**: July 27, 2026
+**Last Updated**: August 6, 2026
 **Scope**: Fix-first candidate development, four-profile runtime qualification,
 and cdcai handoff through October 2026
 **Archived Pre-Rebaseline Design**:
@@ -111,7 +111,12 @@ or modify Podman-machine trust.
 
 Task-090 and Task-098 completed the 62-alert Trivy baseline classification,
 approved remediation, and affected-runtime qualification. PR #51 merged as
-`e499b50`.
+`e499b50`. That July 27 closeout remains historical and complete.
+
+GitHub disclosed four additional Dependabot advisories on August 4-5, followed
+by reviewed npm advisory `GHSA-5p4m-2wfm-xmqj` entering the blocking audit on
+August 7. Task-099 is the separate, narrow release-gate follow-up; it does not
+reopen Task-098 or expand into the qualified ML runtime.
 
 The current security boundary is:
 
@@ -122,12 +127,24 @@ The current security boundary is:
    when enabled.
 3. The selected `torch==2.6.0` / `torchvision==0.21.0` pair is qualified for
    the Task-098 CPU/CUDA boundary.
-4. Eight medium/low torch advisories remain visible and non-reachable on
-   supported paths. A future upgrade must move torch and torchvision together
-   and repeat CPU/CUDA, model-load, output-parity, and performance validation.
-5. All-severity SARIF reporting remains advisory, while new or reintroduced
+4. The July 27 closeout left eight medium/low torch advisories visible and
+   non-reachable on supported paths. A future upgrade must move torch and
+   torchvision together and repeat CPU/CUDA, model-load, output-parity, and
+   performance validation.
+5. Task-099 updates runtime `aiohttp` from `3.14.2` to `3.14.3` for alert
+   `#74` and development-only transitive `ip-address` from `10.2.0` to
+   `10.3.1` for alerts `#72`, `#73`, and `#75`.
+6. Task-099 also updates development-only transitive `js-yaml` from `4.3.0`
+   to `4.3.1` for `GHSA-5p4m-2wfm-xmqj`; the repository inventory had not
+   assigned that new audit finding an alert number at the August 7 check.
+7. The four numbered alerts leave the repository inventory at two high, five
+   medium, and five low until main refreshes. Task-087 implementation may
+   continue, but signing and candidate inclusion remain blocked until the
+   Task-099 gate passes.
+8. All-severity SARIF reporting remains advisory, while new or reintroduced
    critical/high dependency findings are blocking unless covered by a narrow,
-   unexpired exception.
+   unexpired exception. The Task-099 discovery confirms that ratchet is
+   operating as designed.
 
 ## Task Dependency Flow
 
@@ -140,11 +157,16 @@ TASK-090 bounded security investigation [COMPLETE]
         v
 TASK-098 dependency-security remediation/disposition gate [COMPLETE]
         |
-        v
-TASK-087 universal provider TLS repair [READY TO RESUME]
-        |
-        v
-TASK-096 user Exit/Stop
+        +---------------------------+
+        |                           |
+        v                           v
+TASK-087 universal provider   TASK-099 August advisory
+TLS repair [IN PROGRESS]      follow-up [IN PROGRESS]
+        |                           |
+        v                           |
+TASK-096 user Exit/Stop             |
+        |                           |
+        +---------------------------+
         |
         v
 TASK-097 Podman CPU/GPU qualification
@@ -165,7 +187,9 @@ Final candidate freeze -> owner qualification -> TASK-089 adoption/handoff
 Task-095 Phase B spans the remaining work to keep governance, backlog, and
 handoff material current. Task-098 is separately scoped from Task-090 so the
 investigation cannot hide dependency upgrades, CPU/CUDA compatibility work, or
-four-profile regression effort.
+four-profile regression effort. Task-099 preserves the same governance
+principle for post-closeout disclosures: its narrow dependency gate runs in
+parallel with Task-087 but must pass before signed or candidate qualification.
 
 ## Validation Strategy
 

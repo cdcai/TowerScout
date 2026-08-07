@@ -1,4 +1,4 @@
-"""Task-098 frontend transitive dependency remediation contracts."""
+"""Task-098/099 frontend transitive dependency remediation contracts."""
 
 import json
 from pathlib import Path
@@ -23,8 +23,8 @@ def test_dependabot_transitive_fixes_are_locked_as_development_dependencies() ->
     packages = _read_json(PACKAGE_LOCK)["packages"]
     expected_versions = {
         "node_modules/basic-ftp": "5.3.1",
-        "node_modules/ip-address": "10.2.0",
-        "node_modules/js-yaml": "4.3.0",
+        "node_modules/ip-address": "10.3.1",
+        "node_modules/js-yaml": "4.3.1",
         "node_modules/ws": "8.21.1",
     }
 

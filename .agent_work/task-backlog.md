@@ -1,9 +1,9 @@
 # Task Backlog - October 2026 Roadmap
 
-**Last Updated**: July 27, 2026
+**Last Updated**: August 7, 2026
 **Planning State**: Fix first while the immutable `v0.1.2` pilot remains in
-use. Required release and handoff work takes priority over Task-058/059 stretch
-work.
+use. The narrow Task-099 August advisory gate is active. Required security,
+release, and handoff work takes priority over Task-058/059 stretch work.
 **Hard End**: October 31, 2026; operational closeout October 30
 
 ---
@@ -13,7 +13,7 @@ work.
 | Order | Task | Status | Estimate | Dependencies | Required outcome |
 | ---: | --- | --- | --- | --- | --- |
 | 1 | `TASK-096` User-Initiated Exit And Container Stop | NOT_STARTED | 2-4 days | Task-087 helper/security pattern; current stop scripts | Confirmed Exit/Stop works on Docker and Podman without deleting named volumes |
-| 2 | `TASK-097` Podman CPU/GPU Final Path Qualification | NOT_STARTED | 3-5 days plus environment validation | Tasks 090, 098, 087, and 096 | Podman CPU and GPU/CDI pass final-package qualification without Docker Desktop |
+| 2 | `TASK-097` Podman CPU/GPU Final Path Qualification | NOT_STARTED | 3-5 days plus environment validation | Tasks 090, 098, 099, 087, and 096 | Podman CPU and GPU/CDI pass final-package qualification without Docker Desktop |
 | 3 | `TASK-091` Owner-Runnable Release Qualification | NOT_STARTED | 3-6 days | Candidate scope stable; fixture/harness custody | cdcai owner can execute or supervise the minimum release gate |
 | 4 | `TASK-092` Documentation Currentness And Information Architecture | NOT_STARTED | Stage A 1-2 days; Stage B as approved | Candidate behavior and package shape | Repo docs, user docs, release notes, external Setup Guide, and demo video agree |
 | 5 | `TASK-093` Persistent Data Lifecycle And Recovery Rehearsal | NOT_STARTED | 1-2 days minimum | Runtime profiles and package lifecycle stable | Safe owner-run upgrade, rollback, cleanup, and recovery procedure |
@@ -58,7 +58,7 @@ work.
 
 | Order | Task | Status | Estimate | Start gate |
 | ---: | --- | --- | --- | --- |
-| 7 | `TASK-058` Background Detection Jobs And Durable Run State | CONDITIONAL | 3-5 days | Tasks 090, 098, 087, 096, and 097 pass; no pilot blocker; September 18 remains credible |
+| 7 | `TASK-058` Background Detection Jobs And Durable Run State | CONDITIONAL | 3-5 days | Tasks 090, 098, 099, 087, 096, and 097 pass; no pilot blocker; September 18 remains credible |
 | 8 | `TASK-059` Backend Layer Decomposition And Logging Consolidation | CONDITIONAL | 3-5 days | Task-058 accepted and remaining schedule margin is still safe |
 
 August 28 is the latest responsible Task-058 capacity checkpoint, not an
@@ -96,8 +96,9 @@ Parking lot:
 | --- | --- |
 | `TASK-095` Governance And AI-Ready Handoff Foundation | Active in Sprint 08; Phase A complete, Phase B continues |
 | `TASK-090` Runtime, Custom-Image, And Dependency Security Investigation | Completed; Task-098 scope approved |
-| `TASK-098` Dependency Security Remediation And Release Gate | Completed July 27; PR #51 merged, main CI passed, and Dependabot reconciled to eight documented non-blocking torch advisories |
-| `TASK-087` Host-Side TLS Repair Control Plane | Ready to resume in Sprint 08 after the completed Tasks 090/098 security gate |
+| `TASK-098` Dependency Security Remediation And Release Gate | Completed July 27; PR #51 merged, main CI passed, and Dependabot reconciled at closeout to eight documented non-blocking torch advisories |
+| `TASK-099` August Dependency Advisory Follow-Up | In progress; PR #68 implementation and exact-head CI pass, with review, merge, and default-branch inventory reconciliation still required before signing or candidate inclusion |
+| `TASK-087` Host-Side TLS Repair Control Plane | In progress after the completed Tasks 090/098 gate; non-release work may continue while Task-099 blocks signing and candidate inclusion |
 | `TASK-089` cdcai Adoption And Ownership Transfer | Owner-gated; preparation only until final qualification and approval |
 
 ---

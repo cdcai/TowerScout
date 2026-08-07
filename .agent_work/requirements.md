@@ -1,6 +1,6 @@
 # TowerScout Requirements
 
-**Last Updated**: July 27, 2026
+**Last Updated**: August 6, 2026
 **Current Planning Horizon**: October 31, 2026 hard project end
 **Operational Closeout**: October 30, 2026
 **Canonical Roadmap**:
@@ -149,6 +149,9 @@ Acceptance:
 - Task-090 records a disposition for all 62 Trivy alerts open on `main` as of
   July 23, 2026.
 - Approved dependency changes are implemented and validated under Task-098.
+- Newly disclosed findings after the completed Task-098 baseline receive a
+  unique follow-up task, fixed-version and supported-path classification, and
+  proportionate regression evidence before candidate inclusion.
 - No release-blocking critical/high finding remains unresolved.
 - A residual critical/high finding requires written project-lead/cdcai-owner
   acceptance, compensating controls, and a follow-up disposition.
@@ -163,10 +166,22 @@ Current result:
   approved remediation through PR #51 / merge commit `e499b50`.
 - Main CI blocks new or reintroduced critical/high dependency findings while
   retaining all-severity reporting.
-- Dependabot reports eight open torch advisories—three medium and five low—
-  that are non-reachable on the supported paths and require a future
-  coordinated torch/torchvision CPU/CUDA qualification cycle.
-- No release-blocking critical/high finding remains; Task-087 may resume.
+- At the July 27 Task-098 closeout, Dependabot reported eight open torch
+  advisories—three medium and five low—that are non-reachable on supported
+  paths and require a future coordinated torch/torchvision CPU/CUDA
+  qualification cycle.
+- Four advisories disclosed August 4-5 raised the current inventory to 12:
+  two high, five medium, and five low. Task-099 owns runtime `aiohttp` alert
+  `#74` and development-only transitive `ip-address` alerts `#72`, `#73`, and
+  `#75`.
+- The August 7 blocking npm audit additionally reports high-severity
+  `js-yaml` advisory `GHSA-5p4m-2wfm-xmqj`, fixed in `4.3.1`. The live
+  repository Dependabot inventory has not yet assigned it an alert number, so
+  Task-099 tracks it by GHSA identity without changing the 12-alert count.
+- The blocking Python and frontend audit gates correctly detected the new
+  high findings. Task-087 implementation may continue, but signing, candidate
+  inclusion, and final-release qualification remain blocked until Task-099
+  passes and the default-branch inventory is reconciled.
 
 ## Qualification And Handoff Requirements
 
@@ -222,6 +237,6 @@ outgoing developer after October 31.
 - October 23 is the owner-operated handoff rehearsal target.
 - October 30 is operational closeout.
 
-Task-058 may start early only after Tasks 090, 098, 087, 096, and 097 have
+Task-058 may start early only after Tasks 090, 098, 099, 087, 096, and 097 have
 passed their gates. Task-059 remains optional and may start only after Task-058
 acceptance without threatening required milestones.

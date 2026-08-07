@@ -1,9 +1,9 @@
 # Current Tasks - Sprint 08
 
 **Sprint Period**: July 23-August 7, 2026
-**Last Updated**: July 31, 2026
-**Focus**: Preserve the completed dependency-security gate and resume the
-authorized universal provider TLS repair without changing the frozen pilot or
+**Last Updated**: August 6, 2026
+**Focus**: Close the newly disclosed August dependency-security gate while
+continuing authorized Task-087 work without changing the frozen pilot or
 cdcai.
 
 **Current Release State**:
@@ -45,6 +45,8 @@ Phase B governance and final handoff maintenance continue through closeout
 - Tasks 090-097 have unique, stable rebaseline definitions; Task-098 is the
   unique follow-on security-remediation lane added by the July 23 live alert
   review.
+- Task-099 is the separately governed follow-up for dependency advisories
+  disclosed after the July 27 Task-098 closeout and before Task-099 closes.
 - Sprint, backlog, requirements, design, pilot, handoff, and agent guidance are
   aligned.
 - Superseded planning/review material is archived rather than left in active
@@ -103,7 +105,7 @@ inside the investigation.
 ### **TASK-098: Dependency Security Remediation And Release Gate**
 
 **Status**: COMPLETED - PR #51 merged as `e499b50`; main CI passed; Dependabot
-reconciled to eight documented non-blocking torch advisories
+reconciled on July 27 to eight documented non-blocking torch advisories
 **Type**: C (Security Remediation / Runtime Qualification)
 **Priority**: HIGH
 **Estimated Effort**: Mandatory slices 4-8 days; full coordinated hardening
@@ -123,12 +125,17 @@ release gate before Task-087 resumes.
   against the Task-098 candidate image.
 - PR #51 was squash-merged as `e499b50d285b775047fb6efadcec512f7753c859`,
   and post-merge workflow run `30284846056` passed every job.
-- Dependabot reconciled to eight open torch alerts: three medium and five low.
-  No critical/high alert remains, and no alert was manually dismissed.
+- At the July 27 closeout, Dependabot reconciled to eight open torch alerts:
+  three medium and five low. No critical/high alert remained at that
+  checkpoint, and no alert was manually dismissed.
 - Incompatible standalone torch PR #60 was closed with a future coordinated
   torch/torchvision requalification disposition.
 - Task-097/Task-091 retain Podman CPU/GPU and the final four-profile
   operational package matrix.
+
+**Post-Closeout Boundary**: Task-098 remains complete. Four advisories
+disclosed August 4-5 are tracked under Task-099 rather than being retroactively
+added to this completed July baseline.
 
 **Start Gate**:
 
@@ -142,6 +149,34 @@ release gate before Task-087 resumes.
   baseline is captured before the first dependency or runtime change.
 - No dependency pin, alert state, release asset, or external repository change
   occurs before this gate passes.
+
+### **TASK-099: August Dependency Advisory Follow-Up**
+
+**Status**: IN_PROGRESS - the narrow remediation and exact-head CI are green
+on PR #68. Review, merge, and post-merge inventory reconciliation remain
+release-blocking
+**Type**: C (Security Remediation / Release Gate)
+**Priority**: HIGH
+**Estimated Effort**: 0.5-1.5 days plus CI and Dependabot reconciliation
+**Task File**:
+`.agent_work/tasks/active/TASK-099-august-dependency-advisory-follow-up.md`
+
+**Objective**: Remediate Dependabot alerts `#72-#75` without reopening
+Task-098 or changing the qualified ML runtime:
+
+- update runtime `aiohttp` from `3.14.2` to `3.14.3` for alert `#74`
+- update transitive development-only `ip-address` from `10.2.0` to `10.3.1`
+  for alerts `#72`, `#73`, and `#75`
+- update transitive development-only `js-yaml` from `4.3.0` to `4.3.1` for
+  `GHSA-5p4m-2wfm-xmqj`; a repository Dependabot alert ID is not yet assigned
+- preserve the eight documented medium/low torch residuals and the selected
+  torch/torchvision pair
+- restore green Python and frontend critical/high gates, then reconcile the
+  refreshed default-branch Dependabot inventory without manual dismissal
+
+**Release Boundary**: Task-087 implementation and non-release validation may
+continue in parallel. Signing, candidate inclusion, and final-release
+qualification remain blocked until Task-099 passes.
 
 ### **TASK-087: Host-Side TLS Repair Control Plane**
 
@@ -192,13 +227,17 @@ inclusion gates remain closed
 3. Task-098 approved remediation and qualification: complete.
 4. Release-blocking findings resolved and residual torch alerts explicitly
    dispositioned: complete.
-5. Resume Task-087 from current `main` after the Task-098 closeout merges.
-6. Re-plan the next sprint using actual security and Task-087 outcomes.
+5. Task-087 resumed from the completed Tasks 090/098 gate: in progress.
+6. Task-099 August advisory follow-up: implementation and exact-head CI pass;
+   signing and candidate inclusion remain blocked through review, merge, and
+   post-merge inventory reconciliation.
+7. Continue non-release Task-087 work in parallel and re-plan the next sprint
+   using the actual security and Task-087 outcomes.
 
 Task-096 and Task-097 are mandatory roadmap work but are not pulled into this
-sprint yet. Task-098 remains in the current-sprint record as a completed task
-until Sprint 08 closeout. Task-058 and Task-059 remain conditional stretch
-work.
+sprint yet. Task-098 remains in the current-sprint record as a completed task,
+and Task-099 remains active until its post-merge alert reconciliation, through
+Sprint 08 closeout. Task-058 and Task-059 remain conditional stretch work.
 
 ---
 
