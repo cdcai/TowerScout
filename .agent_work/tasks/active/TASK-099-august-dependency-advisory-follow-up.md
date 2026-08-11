@@ -1,11 +1,12 @@
 # TASK-099: August Dependency Advisory Follow-Up
 
-**Status**: IN_PROGRESS
+**Status**: COMPLETED
 **Priority**: HIGH
 **Type**: C (Security Remediation / Release Gate)
 **Estimated Effort**: 0.5-1.5 days plus CI and Dependabot reconciliation
 **Authorized**: August 6, 2026
 **Started**: August 6, 2026
+**Completed**: August 11, 2026
 
 ## Objective
 
@@ -15,9 +16,9 @@ validate the affected Python provider-client and frontend-development paths,
 and restore the critical/high dependency release gate without reopening or
 rewriting the completed Task-090 and Task-098 evidence.
 
-Task-087 implementation and non-release validation may continue in parallel.
-Signed-build, candidate-inclusion, and final-release qualification remain
-blocked until this task passes.
+Task-087 implementation and non-release validation continued in parallel.
+Signed-build, candidate-inclusion, and final-release qualification remained
+blocked until this task passed on August 11.
 
 ## Trigger And Current Baseline
 
@@ -101,7 +102,7 @@ Excluded:
   frontend contracts pass.
 - [x] Required Python, frontend, and security CI jobs pass at the reviewed
   Task-099 head.
-- [ ] After the default-branch dependency graph refreshes, alerts `#72-#75`
+- [x] After the default-branch dependency graph refreshes, alerts `#72-#75`
   and `GHSA-5p4m-2wfm-xmqj` are fixed, no critical/high alert remains, and the
   open inventory returns to the eight documented torch residuals without
   manual dismissal.
@@ -334,11 +335,49 @@ without dismissal, and only the eight documented torch residuals remain.
 
 ---
 
+### 2026-08-11 - Root Snapshot Refreshed And Release Gate Closed
+
+**Objective**: Complete Task-099 only after the default-branch graph, alert
+inventory, SBOM, and post-merge CI all confirm the intended fixed state.
+
+**Context**: PR #69 passed exact-head CI at `d8908fb` and was squash-merged to
+`main` as `0133b5020394837fd0be0221886f4fa169b5dce8` at 16:04:38 UTC.
+
+**Execution**: GitHub automatically ran root dependency submission
+`31510493332` against the squash commit. The submission completed successfully
+and replaced the stale root snapshot without a custom detector or alert
+dismissal.
+
+**Output**:
+
+- Alert `#74` changed to `fixed` at 16:05:45 UTC with `dismissed_at=null` and
+  `dismissed_reason=null`.
+- The repository SBOM contains one `aiohttp` entry, version `3.14.3`.
+- The open Dependabot inventory contains exactly eight `torch` alerts:
+  `#17`, `#18`, `#44`, `#45`, `#46`, `#47`, `#48`, and `#58`--three medium
+  and five low.
+- No critical or high Dependabot alert remains open.
+
+**Validation**:
+
+- Root dependency-graph run `31510493332`: passed.
+- Main CI/CD run `31510488121`: frontend, security, Python 3.11, Python 3.12,
+  and the advisory container build passed.
+- Task-087 compatibility run `31510488179`: passed.
+- No dependency version, application behavior, ML pair, pilot artifact,
+  release, or `cdcai/TowerScout` state changed during the graph refresh.
+
+**Next**: Keep the eight torch advisories visible for a future coordinated
+torch/torchvision qualification cycle and continue Task-087 under its own
+remaining package, signing, and representative managed-endpoint gates.
+
+---
+
 ## Validation Results
 
-**Status**: REMEDIATION MERGED AND POST-MERGE CI PASS / ROOT GRAPH REFRESH AND
-ALERT RECONCILIATION PENDING
+**Status**: PASS / TASK COMPLETED AUGUST 11, 2026
 
-Task-099 remains `IN_PROGRESS` until the focused root-manifest refresh lands
-on `main` and the refreshed dependency graph confirms that only the eight
-previously documented torch residuals remain open.
+PRs #68 and #69 are merged, the default-branch dependency graph contains only
+the patched `aiohttp` version, all Task-099 critical/high findings are fixed,
+and the open inventory is the preserved eight-alert torch residual baseline.
+No alert was manually dismissed.

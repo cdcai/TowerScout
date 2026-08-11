@@ -2,7 +2,7 @@
 
 **Status**: CURRENT - canonical forward execution roadmap
 **Approved**: July 23, 2026
-**Last Reconciled**: August 6, 2026
+**Last Reconciled**: August 11, 2026
 **Decision Owners**: Project lead and cdcai owner
 **Pilot Baseline**: Immutable fork-side `v0.1.2`
 **Candidate Convention**: `v0.1.3-rc.N`
@@ -63,9 +63,10 @@ runtime, documentation, or handoff work.
 
 **August 6 Post-Closeout Amendment**: The July Phase 1 result remains complete
 and historical. Four advisories disclosed August 4-5 are owned by the new
-Task-099 follow-up rather than reopening Tasks 090/098. Task-099 blocks signing
-and candidate inclusion until its critical/high gate and default-branch alert
-reconciliation pass; it does not pause ongoing Task-087 non-release work.
+Task-099 follow-up rather than reopening Tasks 090/098. Task-099 cleared its
+critical/high and default-branch alert-reconciliation gates on August 11
+through PRs #68/#69. Task-087 continues under its own remaining qualification
+gates.
 
 1. Task-095 Phase A roadmap/workspace rebaseline and readiness cleanup:
    complete July 23.
@@ -196,7 +197,7 @@ Exit:
 | `TASK-096` | User-confirmed Exit/Stop TowerScout | Required |
 | `TASK-097` | Podman CPU/GPU final-path hardening and qualification | Required |
 | `TASK-098` | Dependency-security remediation, compatibility validation, and release disposition | Complete July 27 |
-| `TASK-099` | August dependency-advisory remediation and release-gate reconciliation | Required; in progress |
+| `TASK-099` | August dependency-advisory remediation and release-gate reconciliation | Complete August 11 |
 | `TASK-058` | Background jobs and durable run state | Conditional stretch |
 | `TASK-059` | Backend decomposition and logging consolidation | Conditional stretch after Task-058 |
 
@@ -212,8 +213,10 @@ adoption.
 Task-099 was added August 6 for alerts `#72-#75`, which GitHub disclosed after
 the Task-098 closeout. While it remained active, the August 7 npm audit added
 `GHSA-5p4m-2wfm-xmqj`. Its narrow `aiohttp`, transitive `ip-address`, and
-transitive `js-yaml` remediation is a required signing/candidate gate and does
-not reopen Task-098 or block parallel Task-087 non-release work.
+transitive `js-yaml` remediation plus stale root-graph refresh completed
+August 11. Alert `#74` closed without dismissal, the inventory returned to the
+eight documented torch residuals, and Task-099 no longer blocks signing or
+candidate inclusion; Task-087's own gates still apply.
 
 ## Stop Rules
 

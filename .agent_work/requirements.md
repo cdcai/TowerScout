@@ -1,6 +1,6 @@
 # TowerScout Requirements
 
-**Last Updated**: August 6, 2026
+**Last Updated**: August 11, 2026
 **Current Planning Horizon**: October 31, 2026 hard project end
 **Operational Closeout**: October 30, 2026
 **Canonical Roadmap**:
@@ -170,18 +170,20 @@ Current result:
   advisories—three medium and five low—that are non-reachable on supported
   paths and require a future coordinated torch/torchvision CPU/CUDA
   qualification cycle.
-- Four advisories disclosed August 4-5 raised the current inventory to 12:
-  two high, five medium, and five low. Task-099 owns runtime `aiohttp` alert
-  `#74` and development-only transitive `ip-address` alerts `#72`, `#73`, and
-  `#75`.
-- The August 7 blocking npm audit additionally reports high-severity
-  `js-yaml` advisory `GHSA-5p4m-2wfm-xmqj`, fixed in `4.3.1`. The live
-  repository Dependabot inventory has not yet assigned it an alert number, so
-  Task-099 tracks it by GHSA identity without changing the 12-alert count.
-- The blocking Python and frontend audit gates correctly detected the new
-  high findings. Task-087 implementation may continue, but signing, candidate
-  inclusion, and final-release qualification remain blocked until Task-099
-  passes and the default-branch inventory is reconciled.
+- Four advisories disclosed August 4-5 temporarily raised the inventory to 12:
+  two high, five medium, and five low. The August 7 blocking npm audit also
+  detected high-severity `js-yaml` advisory `GHSA-5p4m-2wfm-xmqj` before the
+  repository inventory assigned it an alert number.
+- Task-099 merged the narrow `aiohttp`, transitive `ip-address`, and transitive
+  `js-yaml` fixes through PR #68 / `f460445`, then refreshed GitHub's stale
+  root dependency snapshot through PR #69 / `0133b50`.
+- Root graph run `31510493332` and main CI run `31510488121` passed. Alert
+  `#74` closed without dismissal, the SBOM contains only `aiohttp==3.14.3`,
+  and the open inventory is exactly the eight documented torch residuals.
+- Task-099 is complete and its dependency-security release gate is clear.
+  Task-087 signing, candidate inclusion, and final-release qualification
+  remain subject to Task-087's own package, signing, and managed-endpoint
+  gates.
 
 ## Qualification And Handoff Requirements
 

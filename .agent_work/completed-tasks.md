@@ -1,6 +1,6 @@
 # Completed Tasks
 
-**Last Updated**: August 6, 2026
+**Last Updated**: August 11, 2026
 **Current Retention Window**: Sprint 06 through current Sprint 08 completions
 **Historical Snapshot**:
 [`2026-07-23-pre-rebaseline-completed-tasks.md`](./context/archive/2026-07/2026-07-23-pre-rebaseline-completed-tasks.md)
@@ -49,11 +49,33 @@ Key outcomes:
 - Cleared the security dependency for Task-087 to resume.
 
 Post-closeout note: GitHub disclosed alerts `#72-#75` on August 4-5. They do
-not reopen Task-098 or change its July evidence; the active
+not reopen Task-098 or change its July evidence; the separately governed
 [`TASK-099` follow-up](./tasks/active/TASK-099-august-dependency-advisory-follow-up.md)
-owns their remediation together with npm audit finding
-`GHSA-5p4m-2wfm-xmqj`, detected while Task-099 remained active. Task-099 blocks
-signing and candidate inclusion, not ongoing Task-087 non-release work.
+owned their remediation together with npm audit finding
+`GHSA-5p4m-2wfm-xmqj`, detected while Task-099 remained active. During its
+execution Task-099 blocked signing and candidate inclusion, not ongoing
+Task-087 non-release work.
+
+### TASK-099: August Dependency Advisory Follow-Up
+
+**Status**: COMPLETED
+**Completed**: August 11, 2026
+**Task File**:
+[`TASK-099-august-dependency-advisory-follow-up.md`](./tasks/active/TASK-099-august-dependency-advisory-follow-up.md)
+
+Key outcomes:
+
+- Merged the narrow `aiohttp`, transitive `ip-address`, and transitive
+  `js-yaml` remediation through PR #68 as `f460445`.
+- Merged the comment-only root-manifest refresh through PR #69 as `0133b50`,
+  allowing GitHub's native root graph submission to replace its stale
+  `aiohttp==3.14.2` snapshot.
+- Passed post-merge main CI, Task-087 compatibility, and dependency-graph run
+  `31510493332`.
+- Closed alert `#74` without dismissal and restored the inventory to the eight
+  documented non-blocking torch advisories--three medium and five low.
+- Cleared the Task-099 signing/candidate dependency gate without changing the
+  qualified ML pair, application behavior, frozen pilot, or cdcai.
 
 Current-sprint task files remain under `tasks/active/` until Sprint 08
 closeout.

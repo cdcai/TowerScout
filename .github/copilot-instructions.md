@@ -3,7 +3,7 @@
 This is the primary high-context guidance file for AI coding agents working in
 the TowerScout repository. It preserves project context, guardrails, and
 workflow guidance while reflecting the current repository state as of
-2026-08-06.
+2026-08-11.
 
 ## Mission and Product Context
 
@@ -42,14 +42,13 @@ The project still carries public-health workflow expectations:
 - `TASK-090` and `TASK-098` are complete. PR #51 merged the qualified
   dependency remediation as `e499b50`, post-merge CI passed, and Dependabot
   reconciled on July 27 to eight documented non-blocking torch advisories.
-- `TASK-099` is active for Dependabot alerts `#72-#75` disclosed August 4-5
-  plus npm audit finding `GHSA-5p4m-2wfm-xmqj`, detected August 7 before the
-  repository inventory assigned it an alert number. The current numbered
-  inventory is two high, five medium, and five low. PR #68 implementation and
-  exact-head CI pass; review, merge, and default-branch reconciliation remain.
-- `TASK-087` work may continue, but signing and candidate inclusion remain
-  blocked until Task-099 restores the critical/high dependency gate and the
-  default-branch inventory is reconciled.
+- `TASK-099` is complete for Dependabot alerts `#72-#75` and npm audit finding
+  `GHSA-5p4m-2wfm-xmqj`. PRs #68/#69 merged as `f460445`/`0133b50`; main CI
+  and root graph refresh passed, alert `#74` closed without dismissal, and
+  only the eight documented torch residuals remain.
+- `TASK-087` work continues with the dependency-security gate clear; signing
+  and candidate inclusion remain subject to Task-087's own package, provider,
+  signing, and representative managed-endpoint gates.
 - `TASK-096` adds user-confirmed Exit/Stop. `TASK-097` qualifies Podman CPU/GPU.
 - Docker CPU, Docker GPU, Podman CPU, and Podman GPU are required final-package
   profiles, subject to their documented prerequisites.
@@ -116,12 +115,12 @@ adoption:
 2. Task-095 Phase A is complete.
 3. Preserve the completed July Task-090/098 record and the eight documented
    torch residuals for a future coordinated ML qualification cycle.
-4. Complete Task-099's narrow `aiohttp==3.14.3`, transitive
-   `ip-address==10.3.1`, and transitive `js-yaml==4.3.1` remediation, required
-   CI, and post-merge dependency-inventory reconciliation.
+4. Preserve Task-099's completed `aiohttp==3.14.3`, transitive
+   `ip-address==10.3.1`, and transitive `js-yaml==4.3.1` remediation plus its
+   eight-alert torch residual baseline.
 5. Continue Task-087 guided Google/Azure provider TLS work on Docker and
-   Podman; preserve the command fallback and do not sign or include a
-   candidate before Task-099 passes.
+   Podman; preserve the command fallback and satisfy Task-087's remaining
+   qualification gates before signing or candidate inclusion.
 6. Complete Task-096 Exit/Stop and Task-097 Podman CPU/GPU qualification.
 7. Qualify Docker CPU, Docker GPU, Podman CPU, and Podman GPU before freeze.
 8. Use `v0.1.3-rc.N` for immutable fork-side candidates; do not publish
@@ -760,11 +759,11 @@ The original guidance benefited from explicitly naming recent completed work. Th
 
 1. Keep `v0.1.2` immutable as the Pilot Package.
 2. Task-095 Phase A, Task-090, and Task-098 are complete.
-3. Complete Task-099 for the August Dependabot alerts and later js-yaml npm
-   audit finding while preserving the eight documented non-blocking torch
-   residuals and qualified ML pair.
-4. Continue Task-087 non-release implementation and validation in parallel;
-   keep signing and candidate inclusion blocked until Task-099 passes.
+3. Preserve completed Task-099 evidence for the August Dependabot alerts and
+   later js-yaml npm audit finding, including the eight documented
+   non-blocking torch residuals and qualified ML pair.
+4. Continue Task-087 implementation and validation; keep signing and candidate
+   inclusion behind Task-087's remaining qualification gates.
 5. Complete Task-096 Exit/Stop and Task-097 Podman CPU/GPU qualification.
 6. Qualify Docker CPU/GPU and Podman CPU/GPU.
 7. Start Task-058 early only when all required gates, including Task-099,
@@ -785,15 +784,14 @@ An agent should leave with the following understanding:
 - `v0.1.2` remains immutable while new work uses `v0.1.3-rc.N` candidates
 - Docker CPU/GPU and Podman CPU/GPU are required final-candidate profiles
 - local/CI pytest timeout safeguards and Flask route-test isolation are merged through `TASK-067`
-- the non-mutating Task-087 Gate 3 proof is merged and the July Tasks 090/098
-  gate passed; Task-087 work may continue while the new Task-099 release gate
-  is active
+- the non-mutating Task-087 Gate 3 proof is merged and the Tasks 090/098/099
+  dependency-security gates passed; Task-087 work may continue under its own
+  remaining gates
 - filesystem sessions and disk-backed config writes are real architectural constraints
 - Google and Azure workflows are both important
 - outbreak-investigation workflows are the highest-value legacy surface to preserve
-- Task-090 and Task-098 remain complete; Task-099 owns the August dependency
-  disclosures detected while it remains active without reopening their
-  historical evidence
+- Tasks 090, 098, and 099 remain complete; Task-099 owns the August dependency
+  disclosure evidence without reopening the earlier historical records
 - Task-089 execution remains blocked until final qualification and explicit
   cdcai-owner adoption approval
 

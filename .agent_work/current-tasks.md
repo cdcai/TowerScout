@@ -1,10 +1,10 @@
 # Current Tasks - Sprint 08
 
 **Sprint Period**: July 23-August 7, 2026
-**Last Updated**: August 6, 2026
-**Focus**: Close the newly disclosed August dependency-security gate while
-continuing authorized Task-087 work without changing the frozen pilot or
-cdcai.
+**Last Updated**: August 11, 2026
+**Focus**: Advance the time-boxed Task-087 launcher proof through exact-source
+validation after Task-099 cleared the dependency-security release gate,
+without changing the frozen pilot or cdcai.
 
 **Current Release State**:
 
@@ -152,11 +152,11 @@ added to this completed July baseline.
 
 ### **TASK-099: August Dependency Advisory Follow-Up**
 
-**Status**: IN_PROGRESS - PR #68 merged as `f460445` and post-merge CI is
-green. Alert `#74` remains open because GitHub's stale root dependency-graph
-snapshot still records `aiohttp==3.14.2` alongside the patched `3.14.3`;
-focused root-manifest refresh and post-refresh reconciliation remain
-release-blocking
+**Status**: COMPLETED - PR #68 merged the narrow dependency fixes as
+`f460445`; PR #69 merged the root-manifest refresh as `0133b50`. Dynamic graph
+run `31510493332` replaced the stale snapshot, alert `#74` closed without
+dismissal, the SBOM contains only `aiohttp==3.14.3`, and the open inventory is
+exactly the eight documented torch residuals
 **Type**: C (Security Remediation / Release Gate)
 **Priority**: HIGH
 **Estimated Effort**: 0.5-1.5 days plus CI and Dependabot reconciliation
@@ -176,9 +176,10 @@ Task-098 or changing the qualified ML runtime:
 - restore green Python and frontend critical/high gates, then reconcile the
   refreshed default-branch Dependabot inventory without manual dismissal
 
-**Release Boundary**: Task-087 implementation and non-release validation may
-continue in parallel. Signing, candidate inclusion, and final-release
-qualification remain blocked until Task-099 passes.
+**Release Boundary**: Task-099 cleared the dependency-security release gate on
+August 11. Task-087 signing, candidate inclusion, and final-release
+qualification remain subject to Task-087's own package, signing, and
+managed-endpoint gates.
 
 ### **TASK-087: Host-Side TLS Repair Control Plane**
 
@@ -230,16 +231,15 @@ inclusion gates remain closed
 4. Release-blocking findings resolved and residual torch alerts explicitly
    dispositioned: complete.
 5. Task-087 resumed from the completed Tasks 090/098 gate: in progress.
-6. Task-099 August advisory follow-up: implementation and exact-head CI pass;
-   signing and candidate inclusion remain blocked through review, merge, and
-   post-merge inventory reconciliation.
+6. Task-099 dependency fixes, root-graph refresh, post-merge CI, and alert
+   reconciliation: complete; only the eight documented torch residuals remain.
 7. Continue non-release Task-087 work in parallel and re-plan the next sprint
    using the actual security and Task-087 outcomes.
 
 Task-096 and Task-097 are mandatory roadmap work but are not pulled into this
-sprint yet. Task-098 remains in the current-sprint record as a completed task,
-and Task-099 remains active until its post-merge alert reconciliation, through
-Sprint 08 closeout. Task-058 and Task-059 remain conditional stretch work.
+sprint yet. Tasks 098 and 099 remain in the current-sprint record as completed
+tasks until Sprint 08 closeout. Task-058 and Task-059 remain conditional
+stretch work.
 
 ---
 
