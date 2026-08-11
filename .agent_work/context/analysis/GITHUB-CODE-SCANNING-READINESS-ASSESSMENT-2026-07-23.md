@@ -11,8 +11,8 @@
 **Task-090 Follow-Up**: The authenticated 62-record reconciliation,
 function-level dispositions, and proposed Task-098 scope are now recorded in:
 
-- [`alert-disposition.md`](../../tasks/active/TASK-090/alert-disposition.md)
-- [`remediation-scope.md`](../../tasks/active/TASK-090/remediation-scope.md)
+- [`alert-disposition.md`](../../tasks/completed/TASK-090/alert-disposition.md)
+- [`remediation-scope.md`](../../tasks/completed/TASK-090/remediation-scope.md)
 
 ## Decision Summary
 

@@ -1,10 +1,10 @@
-# Current Tasks - Sprint 08
+# Current Tasks - Sprint 09
 
-**Sprint Period**: July 23-August 7, 2026
+**Sprint Period**: August 8-August 21, 2026
 **Last Updated**: August 11, 2026
-**Focus**: Advance the time-boxed Task-087 launcher proof through exact-source
-validation after Task-099 cleared the dependency-security release gate,
-without changing the frozen pilot or cdcai.
+**Focus**: Reconcile the Task-087 launcher prototype with current `main`,
+complete its exact-source package and managed-endpoint decision gates, and keep
+the frozen pilot and cdcai boundaries unchanged.
 
 **Current Release State**:
 
@@ -16,18 +16,19 @@ without changing the frozen pilot or cdcai.
 
 ---
 
-## Sprint 07 Closeout
+## Sprint 08 Closeout
 
-Sprint 07 completed Task-088 pilot distribution and custody. Task-088 moved to
-`tasks/completed/`. Task-087 carries forward under the owner-approved fix-first
-plan. Task-089 remains a standing owner-gated handoff lane.
+Sprint 08 completed Tasks 090 and 098 within the July 23-August 7 period and
+cleared the original dependency-security gate. Task-099 began during Sprint 08
+but completed on August 11 after the declared period, so its completion belongs
+to Sprint 09. Tasks 087, 089, and 095 carry forward.
 
 Retrospective:
-[`SPRINT-07-RETROSPECTIVE-ANALYSIS-2026-07-23.md`](./context/analysis/SPRINT-07-RETROSPECTIVE-ANALYSIS-2026-07-23.md)
+[`SPRINT-08-RETROSPECTIVE-ANALYSIS-2026-08-11.md`](./context/analysis/SPRINT-08-RETROSPECTIVE-ANALYSIS-2026-08-11.md)
 
 ---
 
-## Sprint 08 Task State
+## Sprint 09 Task State
 
 ### **TASK-095: Governance And AI-Ready Handoff Foundation**
 
@@ -39,116 +40,13 @@ Phase B governance and final handoff maintenance continue through closeout
 **Task File**:
 `.agent_work/tasks/active/TASK-095-governance-ai-ready-handoff.md`
 
-**Phase A Outcome**:
+**Current Scope**:
 
-- One canonical fix-first roadmap controls forward execution.
-- Tasks 090-097 have unique, stable rebaseline definitions; Task-098 is the
-  unique follow-on security-remediation lane added by the July 23 live alert
-  review.
-- Task-099 is the separately governed follow-up for dependency advisories
-  disclosed after the July 27 Task-098 closeout and before Task-099 closes.
-- Sprint, backlog, requirements, design, pilot, handoff, and agent guidance are
-  aligned.
-- Superseded planning/review material is archived rather than left in active
-  status.
-- Completed PR status packets, the superseded RC1 intake workflow, stale
-  Sprint/source-install guides, and one exact duplicate archive file were
-  removed from the current information surface.
-
-**Remaining Scope**: Keep task disposition, navigation, tool-neutral
-maintenance instructions, backlog, release evidence, and owner handoff current
-through October 30.
-
-### **TASK-090: Runtime, Custom-Image, And Dependency Security Investigation**
-
-**Status**: COMPLETED - investigation and approved Task-098 scope complete
-**Type**: C (Security Investigation)
-**Priority**: HIGH
-**Estimated Effort**: 1-3 days for investigation and classification only
-**Task File**:
-`.agent_work/tasks/active/TASK-090-runtime-custom-image-dependency-security.md`
-
-**Historical Objective**: Determine whether local-only runtime reachability
-and custom-image behavior created an actionable release risk, and classify the
-62-alert Trivy dependency baseline reported on `main` on July 23. Separate
-evidence, classification, and remediation estimates; do not hide remediation
-inside the investigation.
-
-**Exit Gate**:
-
-- Every code-scanning alert has a package/call-path disposition and is
-  classified as release-blocking, required hardening, accepted risk, not
-  reachable, or scanner/version false positive.
-- Any remediation receives a separate Task-098 scope, estimate, and approval.
-- No release-blocking critical/high finding remains unresolved; any residual
-  critical/high risk requires written project-lead/cdcai-owner acceptance.
-- No later runtime work begins with an unresolved mandatory finding.
-
-**Assessment**:
-[`GITHUB-CODE-SCANNING-READINESS-ASSESSMENT-2026-07-23.md`](./context/analysis/GITHUB-CODE-SCANNING-READINESS-ASSESSMENT-2026-07-23.md)
-
-**Investigation Outcome**:
-
-- The July 23 live GitHub inventory reconciled exactly to 62 alerts with no
-  missing or extra alert numbers.
-- Five alerts are release-blocking, one requires hardening, and 56 are not
-  reachable on the supported call paths.
-- At investigation time, the normal Compose port was published on all host
-  interfaces, contradicting the local-only assumption and making loopback
-  binding a mandatory Task-098 control.
-- The Task-090 proposal estimated Task-098 at 4-8 days for mandatory slices,
-  or 6-11 days for the full coordinated dependency hardening, plus required
-  GPU/runtime host availability.
-- No dependency pin, alert state, runtime, release asset, or external
-  repository was changed.
-
-### **TASK-098: Dependency Security Remediation And Release Gate**
-
-**Status**: COMPLETED - PR #51 merged as `e499b50`; main CI passed; Dependabot
-reconciled on July 27 to eight documented non-blocking torch advisories
-**Type**: C (Security Remediation / Runtime Qualification)
-**Priority**: HIGH
-**Estimated Effort**: Mandatory slices 4-8 days; full coordinated hardening
-6-11 days, plus required GPU/runtime host availability
-**Task File**:
-`.agent_work/tasks/active/TASK-098-dependency-security-remediation.md`
-
-**Objective**: Implement only the approved Task-090 remediation slices,
-qualify the affected dependency and runtime paths, and close the security
-release gate before Task-087 resumes.
-
-**Closeout Outcome**:
-
-- The external Docker CUDA qualification passed on exact source commit
-  `675bd8fabc27765522906957524d2027d931f6a1`.
-- Live Google/Azure estimate, detect, cancel, and recovery smokes passed
-  against the Task-098 candidate image.
-- PR #51 was squash-merged as `e499b50d285b775047fb6efadcec512f7753c859`,
-  and post-merge workflow run `30284846056` passed every job.
-- At the July 27 closeout, Dependabot reconciled to eight open torch alerts:
-  three medium and five low. No critical/high alert remained at that
-  checkpoint, and no alert was manually dismissed.
-- Incompatible standalone torch PR #60 was closed with a future coordinated
-  torch/torchvision requalification disposition.
-- Task-097/Task-091 retain Podman CPU/GPU and the final four-profile
-  operational package matrix.
-
-**Post-Closeout Boundary**: Task-098 remains complete. Four advisories
-disclosed August 4-5 are tracked under Task-099 rather than being retroactively
-added to this completed July baseline.
-
-**Start Gate**:
-
-- The Task-090 classification and target matrix are final.
-- Project-lead approval and its non-regression caveat are recorded. No
-  cdcai-owner confirmation is required for fork-side remediation.
-- Fixed patch targets, the ML candidate set and selection criteria, regression
-  scope, and any residual-risk decision path are agreed. The final ML pair and
-  wheel flavors are selected during the approved compatibility spike.
-- A reproducible pre-change functional, detection-output, and performance
-  baseline is captured before the first dependency or runtime change.
-- No dependency pin, alert state, release asset, or external repository change
-  occurs before this gate passes.
+- Keep task disposition, navigation, backlog, release evidence, and owner
+  handoff sources current through October 30.
+- Preserve one canonical fix-first roadmap and the immutable pilot/adoption
+  boundary.
+- Close sprint and task-state drift when live evidence changes the plan.
 
 ### **TASK-099: August Dependency Advisory Follow-Up**
 
@@ -157,53 +55,46 @@ added to this completed July baseline.
 run `31510493332` replaced the stale snapshot, alert `#74` closed without
 dismissal, the SBOM contains only `aiohttp==3.14.3`, and the open inventory is
 exactly the eight documented torch residuals
+**Completed**: August 11, 2026
 **Type**: C (Security Remediation / Release Gate)
 **Priority**: HIGH
-**Estimated Effort**: 0.5-1.5 days plus CI and Dependabot reconciliation
 **Task File**:
 `.agent_work/tasks/active/TASK-099-august-dependency-advisory-follow-up.md`
 
-**Objective**: Remediate Dependabot alerts `#72-#75` without reopening
-Task-098 or changing the qualified ML runtime:
-
-- update runtime `aiohttp` from `3.14.2` to `3.14.3` for alert `#74`
-- update transitive development-only `ip-address` from `10.2.0` to `10.3.1`
-  for alerts `#72`, `#73`, and `#75`
-- update transitive development-only `js-yaml` from `4.3.0` to `4.3.1` for
-  `GHSA-5p4m-2wfm-xmqj`; a repository Dependabot alert ID is not yet assigned
-- preserve the eight documented medium/low torch residuals and the selected
-  torch/torchvision pair
-- restore green Python and frontend critical/high gates, then reconcile the
-  refreshed default-branch Dependabot inventory without manual dismissal
-
-**Release Boundary**: Task-099 cleared the dependency-security release gate on
-August 11. Task-087 signing, candidate inclusion, and final-release
-qualification remain subject to Task-087's own package, signing, and
-managed-endpoint gates.
+**Release Boundary**: Task-099 cleared the dependency-security release gate.
+Task-087 signing, candidate inclusion, and final-release qualification remain
+subject to Task-087's own package, signing, and managed-endpoint gates.
 
 ### **TASK-087: Host-Side TLS Repair Control Plane**
 
-**Status**: IN_PROGRESS - PR #63 dormant checkpoint implementation and review
-remediation are complete locally, including the ready-for-review custom host
-port correction. Merge readiness remains contingent on green required checks
-at the new head, resolution of the current review conversation, and an
-explicit project-lead merge decision.
-Release-facing TLS mutation, UAC/certificate, Chrome/Firefox, live
-release-package, Podman/GPU, sleep/resume, managed-network, and candidate
-inclusion gates remain closed
+**Status**: IN_PROGRESS - Draft PR #67 contains the current visible Windows
+launcher and controlled TLS-repair prototype. Its prior exact-head checks are
+green, but the PR now conflicts with current `main` after the Task-099 graph and
+tracking follow-ups. Reconciliation with current `main` is required before a
+new exact-source package or merge decision.
 **Type**: B/C (Runtime Support / Setup UX / TLS Trust)
 **Priority**: HIGH
-**Estimated Effort**: 4-7 days plus managed-network package validation
+**Estimated Effort**: Prototype through August 14; proceed, revise, or stop at
+that decision gate
 **Task File**:
 `.agent_work/tasks/active/TASK-087-host-side-tls-repair-control-plane.md`
 
-**Rebased Scope**:
+**Current Scope And Gates**:
 
-- Finish the existing gated helper rather than restart the design.
-- Support Google Maps and Azure Maps.
-- Support Docker and Podman application-provider TLS repair.
-- Keep Podman Compose-provider installation and Podman-machine trust separate.
-- Pass managed-network validation before candidate inclusion.
+- Preserve the visible Python/Tkinter launcher and bounded native transaction
+  while reconciling the branch with current security and tracking history.
+- Generate the full-runnable validation package from the accepted
+  post-reconciliation commit in an approved environment; local PowerShell
+  policy blocks the normal base-package generator on this workstation.
+- Run UI-driven Docker Google Maps, Azure Maps, and controlled
+  recovery/rollback validation while preserving named volumes.
+- Configure an approved non-Docker-Desktop Podman Compose provider separately
+  before any Podman mutation; do not silently install or select a provider.
+- Keep signing, representative managed-endpoint validation, candidate
+  inclusion, and merge as separate later gates.
+- Record proceed, conditional, or stop by August 14 under ADR-018.
+- Keep Task-086 as the supported command-based fallback until every Task-087
+  gate passes.
 
 ### **TASK-089: cdcai Adoption Preparation And Deferred Ownership Transfer**
 
@@ -223,23 +114,25 @@ inclusion gates remain closed
 
 ---
 
-## Sprint 08 Sequence
+## Sprint 09 Sequence
 
-1. Task-095 Phase A rebaseline and readiness cleanup: complete.
-2. Task-090 62-alert investigation and disposition: complete.
-3. Task-098 approved remediation and qualification: complete.
-4. Release-blocking findings resolved and residual torch alerts explicitly
-   dispositioned: complete.
-5. Task-087 resumed from the completed Tasks 090/098 gate: in progress.
-6. Task-099 dependency fixes, root-graph refresh, post-merge CI, and alert
-   reconciliation: complete; only the eight documented torch residuals remain.
-7. Continue non-release Task-087 work in parallel and re-plan the next sprint
-   using the actual security and Task-087 outcomes.
+1. Close Sprint 08 and attribute the August 11 Task-099 completion to Sprint
+   09: complete through this tracking follow-up.
+2. Reconcile Draft PR #67 with current `main` while retaining both the Task-099
+   closeout and the final Task-087 implementation state.
+3. Require green checks at the new exact head.
+4. Generate and verify the exact-source full-runnable Task-087 package in an
+   approved environment.
+5. Complete the Docker Google/Azure and controlled recovery validation, then
+   the approved-provider Podman coverage.
+6. Complete technical/security review, signing-path coordination, and
+   representative managed-endpoint validation as applicable.
+7. Record the August 14 Task-087 proceed/conditional/stop decision.
+8. If Task-087 proceeds, select Task-096 next, followed by Task-097. Keep Tasks
+   091-093 behind the stable candidate/runtime boundary.
 
-Task-096 and Task-097 are mandatory roadmap work but are not pulled into this
-sprint yet. Tasks 098 and 099 remain in the current-sprint record as completed
-tasks until Sprint 08 closeout. Task-058 and Task-059 remain conditional
-stretch work.
+Task-058 and Task-059 remain conditional stretch work. Task-094 remains
+evidence-gated. Task-099 stays in `tasks/active/` until Sprint 09 closeout.
 
 ---
 
@@ -252,8 +145,8 @@ Before any Docker- or Podman-dependent work:
 3. Wait for confirmation before beginning runtime-dependent validation.
 4. Allow time for a workstation restart when Docker Desktop requires it.
 
-Planning, documentation, and static source review do not require a runtime
-startup request.
+Planning, documentation, static source review, and branch reconciliation do
+not require a runtime startup request.
 
 ---
 

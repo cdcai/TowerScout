@@ -94,10 +94,10 @@ Parking lot:
 
 | Task | Current state |
 | --- | --- |
-| `TASK-095` Governance And AI-Ready Handoff Foundation | Active in Sprint 08; Phase A complete, Phase B continues |
+| `TASK-095` Governance And AI-Ready Handoff Foundation | Active in Sprint 09; Phase A complete, Phase B continues |
 | `TASK-090` Runtime, Custom-Image, And Dependency Security Investigation | Completed; Task-098 scope approved |
 | `TASK-098` Dependency Security Remediation And Release Gate | Completed July 27; PR #51 merged, main CI passed, and Dependabot reconciled at closeout to eight documented non-blocking torch advisories |
-| `TASK-099` August Dependency Advisory Follow-Up | Completed August 11; PRs #68/#69 merged as `f460445`/`0133b50`, main CI and root graph refresh passed, alert `#74` closed without dismissal, and only the eight documented torch residuals remain |
+| `TASK-099` August Dependency Advisory Follow-Up | Completed in Sprint 09 on August 11; PRs #68/#69 merged as `f460445`/`0133b50`, main CI and root graph refresh passed, alert `#74` closed without dismissal, and only the eight documented torch residuals remain |
 | `TASK-087` Host-Side TLS Repair Control Plane | In progress with the dependency-security gate clear; package, signing, provider/recovery, approved Podman-provider, and representative managed-endpoint gates remain |
 | `TASK-089` cdcai Adoption And Ownership Transfer | Owner-gated; preparation only until final qualification and approval |
 

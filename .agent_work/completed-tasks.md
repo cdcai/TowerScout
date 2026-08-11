@@ -1,7 +1,7 @@
 # Completed Tasks
 
 **Last Updated**: August 11, 2026
-**Current Retention Window**: Sprint 06 through current Sprint 08 completions
+**Current Retention Window**: Sprint 06 through current Sprint 09 completions
 **Historical Snapshot**:
 [`2026-07-23-pre-rebaseline-completed-tasks.md`](./context/archive/2026-07/2026-07-23-pre-rebaseline-completed-tasks.md)
 
@@ -11,50 +11,7 @@ files remain under `tasks/completed/`, and older summaries are preserved under
 
 ---
 
-## Sprint 08 Completed Tasks (July 23-August 7, 2026)
-
-### TASK-090: Runtime, Custom-Image, And Dependency Security Investigation
-
-**Status**: COMPLETED
-**Completed**: July 23, 2026
-**Task File**:
-[`TASK-090-runtime-custom-image-dependency-security.md`](./tasks/active/TASK-090-runtime-custom-image-dependency-security.md)
-
-Key outcomes:
-
-- Reconciled and classified the 62-alert Trivy baseline by package,
-  reachability, supported-runtime impact, and remediation direction.
-- Identified five release-blocking alerts, one required-hardening alert, and
-  the loopback-publication control.
-- Produced and obtained approval for the separately governed Task-098 scope.
-
-### TASK-098: Dependency Security Remediation And Release Gate
-
-**Status**: COMPLETED
-**Completed**: July 27, 2026
-**Task File**:
-[`TASK-098-dependency-security-remediation.md`](./tasks/active/TASK-098-dependency-security-remediation.md)
-
-Key outcomes:
-
-- Merged the qualified dependency, local-input, model-trust, and CI-ratchet
-  changes through PR #51 as `e499b50`.
-- Passed Docker CPU/GPU compatibility, live Google/Azure workflows, model
-  output/performance comparison, PR review remediation, and post-merge CI.
-- At the July 27 closeout, reconciled Dependabot to eight open torch
-  advisories—three medium and five low—with no open release-blocking
-  critical/high alert and no manual dismissal at that checkpoint.
-- Closed incompatible standalone torch PR #60; future torch upgrades must move
-  with torchvision and repeat the coordinated ML qualification cycle.
-- Cleared the security dependency for Task-087 to resume.
-
-Post-closeout note: GitHub disclosed alerts `#72-#75` on August 4-5. They do
-not reopen Task-098 or change its July evidence; the separately governed
-[`TASK-099` follow-up](./tasks/active/TASK-099-august-dependency-advisory-follow-up.md)
-owned their remediation together with npm audit finding
-`GHSA-5p4m-2wfm-xmqj`, detected while Task-099 remained active. During its
-execution Task-099 blocked signing and candidate inclusion, not ongoing
-Task-087 non-release work.
+## Sprint 09 Completed Tasks (August 8-August 21, 2026)
 
 ### TASK-099: August Dependency Advisory Follow-Up
 
@@ -77,8 +34,62 @@ Key outcomes:
 - Cleared the Task-099 signing/candidate dependency gate without changing the
   qualified ML pair, application behavior, frozen pilot, or cdcai.
 
-Current-sprint task files remain under `tasks/active/` until Sprint 08
-closeout.
+The Task-099 file remains under `tasks/active/` until Sprint 09 closeout.
+
+---
+
+## Sprint 08 Completed Tasks (July 23-August 7, 2026)
+
+**Sprint Outcome**: Classified and remediated the original dependency-security
+baseline, cleared that release gate for Task-087, and advanced the controlled
+launcher proof without changing the frozen pilot or cdcai. Task-099 completed
+after the sprint boundary and is recorded under Sprint 09.
+
+### TASK-090: Runtime, Custom-Image, And Dependency Security Investigation
+
+**Status**: COMPLETED
+**Completed**: July 23, 2026
+**Task File**:
+[`TASK-090-runtime-custom-image-dependency-security.md`](./tasks/completed/TASK-090-runtime-custom-image-dependency-security.md)
+
+Key outcomes:
+
+- Reconciled and classified the 62-alert Trivy baseline by package,
+  reachability, supported-runtime impact, and remediation direction.
+- Identified five release-blocking alerts, one required-hardening alert, and
+  the loopback-publication control.
+- Produced and obtained approval for the separately governed Task-098 scope.
+
+### TASK-098: Dependency Security Remediation And Release Gate
+
+**Status**: COMPLETED
+**Completed**: July 27, 2026
+**Task File**:
+[`TASK-098-dependency-security-remediation.md`](./tasks/completed/TASK-098-dependency-security-remediation.md)
+
+Key outcomes:
+
+- Merged the qualified dependency, local-input, model-trust, and CI-ratchet
+  changes through PR #51 as `e499b50`.
+- Passed Docker CPU/GPU compatibility, live Google/Azure workflows, model
+  output/performance comparison, PR review remediation, and post-merge CI.
+- At the July 27 closeout, reconciled Dependabot to eight open torch
+  advisories—three medium and five low—with no open release-blocking
+  critical/high alert and no manual dismissal at that checkpoint.
+- Closed incompatible standalone torch PR #60; future torch upgrades must move
+  with torchvision and repeat the coordinated ML qualification cycle.
+- Cleared the security dependency for Task-087 to resume.
+
+Post-closeout note: GitHub disclosed alerts `#72-#75` on August 4-5. They do
+not reopen Task-098 or change its July evidence; the separately governed
+[`TASK-099` follow-up](./tasks/active/TASK-099-august-dependency-advisory-follow-up.md)
+owned their remediation together with npm audit finding
+`GHSA-5p4m-2wfm-xmqj`, detected while Task-099 remained active. During its
+execution Task-099 blocked signing and candidate inclusion, not ongoing
+Task-087 non-release work.
+
+Retrospective:
+[`SPRINT-08-RETROSPECTIVE-ANALYSIS-2026-08-11.md`](./context/analysis/SPRINT-08-RETROSPECTIVE-ANALYSIS-2026-08-11.md)
 
 ---
 
