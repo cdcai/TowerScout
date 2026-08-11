@@ -292,11 +292,53 @@ review, merge only with a green final head, and reconcile Dependabot on
 
 ---
 
+### 2026-08-11 - Stale Root Dependency Snapshot Isolated
+
+**Objective**: Reconcile alert `#74` without dismissal or dependency churn
+after the patched Task-099 change merged to `main`.
+
+**Context**: PR #68 merged as `f460445`, and the latest `webapp` dependency
+submission records `aiohttp==3.14.3`. Alert `#74` nevertheless remains open
+and undismissed because the repository SBOM also retains `aiohttp==3.14.2`
+from an older root scan. Run `30285836402` submitted root correlator
+`dependabot-pip` after scanning both `/requirements-dev.txt` and
+`/webapp/requirements.txt`; the successful August 7 dynamic run
+`31200874742` refreshed only correlator `dependabot-pip-webapp` with the
+patched runtime version.
+
+**Decision**: Make a comment-only update to the root development manifest so
+a merge to the default branch triggers GitHub's native root dependency-graph
+submission and replaces the stale `dependabot-pip` snapshot. Do not create a
+custom higher-priority detector, dismiss the alert, or change dependency
+versions, application code, ML assets, pilot packages, release state, or
+`cdcai/TowerScout`.
+
+**Execution**: GitHub rejected rerunning the dynamic workflow because dynamic
+runs are not retryable, and the workflow has no `workflow_dispatch` trigger.
+A corrective manual submission using the reserved `dependabot` detector name
+was also rejected before any graph state changed. The root manifest now
+clarifies that runtime dependencies remain in `webapp/requirements.txt`.
+
+**Validation**:
+
+- Focused aiohttp/provider/TLS/sanitized-error contracts: 7 passed on Python
+  3.12.
+- Both agent-work validators, CI workflow summary, and `git diff --check`:
+  passed.
+- The diff changes no dependency specifier, lockfile, workflow, application
+  code, ML asset, provider behavior, or release artifact.
+
+**Next**: Require green PR checks, merge the focused manifest refresh, then
+verify the root graph no longer reports `aiohttp==3.14.2`, alert `#74` closes
+without dismissal, and only the eight documented torch residuals remain.
+
+---
+
 ## Validation Results
 
-**Status**: LOCAL AND EXACT-HEAD CI PASS / REVIEW, MERGE, AND POST-MERGE
-RECONCILIATION PENDING
+**Status**: REMEDIATION MERGED AND POST-MERGE CI PASS / ROOT GRAPH REFRESH AND
+ALERT RECONCILIATION PENDING
 
-Task-099 remains `IN_PROGRESS` until the reviewed changes land on `main` and
-the refreshed dependency graph confirms that only the eight previously
-documented torch residuals remain open.
+Task-099 remains `IN_PROGRESS` until the focused root-manifest refresh lands
+on `main` and the refreshed dependency graph confirms that only the eight
+previously documented torch residuals remain open.

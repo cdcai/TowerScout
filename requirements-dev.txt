@@ -1,4 +1,5 @@
 # Development dependencies for TowerScout testing and code quality
+# Keep this root manifest in dependency-graph refreshes; runtime dependencies remain in webapp/requirements.txt.
 
 # Testing framework
 pytest>=7.0.0

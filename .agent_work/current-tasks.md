@@ -152,8 +152,10 @@ added to this completed July baseline.
 
 ### **TASK-099: August Dependency Advisory Follow-Up**
 
-**Status**: IN_PROGRESS - the narrow remediation and exact-head CI are green
-on PR #68. Review, merge, and post-merge inventory reconciliation remain
+**Status**: IN_PROGRESS - PR #68 merged as `f460445` and post-merge CI is
+green. Alert `#74` remains open because GitHub's stale root dependency-graph
+snapshot still records `aiohttp==3.14.2` alongside the patched `3.14.3`;
+focused root-manifest refresh and post-refresh reconciliation remain
 release-blocking
 **Type**: C (Security Remediation / Release Gate)
 **Priority**: HIGH
