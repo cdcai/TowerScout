@@ -1,6 +1,6 @@
 # TowerScout Handoff Guide
 
-**Last Updated**: August 11, 2026
+**Last Updated**: August 19, 2026
 **Operational Closeout**: October 30, 2026
 **Hard Project End**: October 31, 2026
 
@@ -34,9 +34,13 @@ The current Pilot/cdcai hold is:
   complete through PR #51 / `e499b50` with its exact July 27 closeout state
 - Task-099 August dependency-advisory follow-up: complete through PRs #68/#69
   and `f460445`/`0133b50`; main CI and the root dependency graph passed,
-  alert `#74` closed without dismissal, and only the eight documented torch
-  residuals remain
-- Task-087 Google/Azure guided provider TLS repair on Docker/Podman
+  alert `#74` closed without dismissal, and its August 11 closeout inventory
+  contained the eight documented torch residuals
+- Task-101 high-severity development-transitive `extract-zip` remediation and
+  release-gate disposition: PR #72 implementation-head checks pass; final PR,
+  default-branch alert, and PR #67 gates remain active before Task-087 resumes
+- Task-087 Google/Azure guided provider TLS repair on Docker/Podman: paused on
+  Task-101 while Draft PR #67 remains open for reviewer input
 - Task-096 user-confirmed Exit/Stop on Docker/Podman
 - Task-097 Podman CPU/GPU final-path qualification
 - Docker CPU, Docker GPU, Podman CPU, and Podman GPU qualification
@@ -70,8 +74,13 @@ are recorded in
 Task-099 records the completed post-closeout advisory remediation, including
 the later js-yaml npm audit finding and root graph reconciliation, in
 `.agent_work/tasks/active/TASK-099-august-dependency-advisory-follow-up.md`.
-Task-087 continues under its own package, signing, provider/recovery, Podman,
-and representative managed-endpoint gates.
+Alert `#76` opened after that closeout and is owned by active Task-101 in
+`.agent_work/tasks/active/TASK-101-extract-zip-advisory-release-gate.md`.
+Task-087 remains preserved and reviewable in PR #67, but new implementation,
+merge, and candidate publication wait for PR #72 merge, alert `#76` closure
+without dismissal, semantic integration into PR #67, and green checks at that
+branch's new exact head. Its other package, signing, provider/recovery, Podman,
+and representative managed-endpoint gates remain closed.
 
 ## Runtime And Package Model
 

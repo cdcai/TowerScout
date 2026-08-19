@@ -1,23 +1,26 @@
 # TASK-087: Host-Side TLS Repair Control Plane
 
-**Status**: IN_PROGRESS - PR #63 dormant checkpoint implementation and review
-remediation are complete locally, including the ready-for-review custom host
-port correction. Merge readiness remains contingent on green required checks
-at the new head, resolution of the current review conversation, and an
-explicit project-lead merge decision.
-Release-facing TLS mutation, UAC/certificate, Chrome/Firefox, live
-release-package, Podman/GPU, sleep/resume, managed-network, and candidate
-inclusion gates remain closed
+**Status**: PAUSED / DEPENDENCY-GATED - Draft PR #67 and the Task-087 evidence
+recorded on that branch remain preserved and reviewable. No new launcher or
+package implementation, merge, or publication proceeds until active Task-101
+restores the blocking frontend dependency gate. After PR #72 merges and alert
+`#76` closes without dismissal, bring the accepted change into PR #67, require
+green checks at its new exact head, and only then resume from the preserved
+checkpoint.
+Release-facing TLS mutation, UAC/certificate, Chrome/Firefox, live package,
+Podman/GPU, sleep/resume, managed-network, and candidate-inclusion gates remain
+closed
 **Type**: B/C (Runtime Support / Setup UX / TLS Trust)
 **Priority**: HIGH
 **Estimated Effort**: 4-7 days (32-56 hours), plus package validation on a managed TLS-inspected network
-**Target Sprint**: Sprint 08 start, with managed-network completion scheduled by
-the canonical October roadmap
+**Target Sprint**: Sprint 09 continuation after the Task-101 gate, with managed-
+network completion scheduled by the canonical October roadmap
 **Created**: 2026-06-29
 **Owner**: TowerScout release owner / active agent support
 **Depends On**: `TASK-086`; completed `TASK-090` investigation and `TASK-098`
-dependency remediation/disposition; package launcher/runtime profile; provider
-setup error classification; Docker and Podman CPU/GPU package paths
+dependency remediation/disposition; active `TASK-101` dependency-security
+gate; package launcher/runtime profile; provider setup error classification;
+Docker and Podman CPU/GPU package paths
 
 ## Canonical Source Note
 
@@ -27,6 +30,30 @@ July 27. Task-087 resumed in draft PR #63; its first review found lifecycle,
 asynchronous execution, recovery, and terminal-flow gaps that are now addressed
 in the draft branch. The command-based Task-086 path remains the fallback until
 all Task-087 gates pass.
+
+## August 19, 2026 Task-101 Pause Override
+
+This override controls the immediate execution order while high-severity
+development-transitive `extract-zip` alert `#76` keeps the Task-101 release
+gate open. PR #72's implementation-head audit and compatibility jobs pass,
+while final PR/default-branch and PR #67 gates remain:
+
+- Preserve Draft PR #67, the current Task-087 implementation, and its recorded
+  evidence. The dependency finding does not invalidate artifact-specific
+  results already captured on that branch.
+- Keep PR #67 open for reviewer feedback and read-only technical/security
+  review. Clarification and documentation feedback may be recorded, while
+  implementation-producing changes queue until Task-087 resumes.
+- Pause new launcher implementation, normal-package integration, merge, and
+  candidate publication until active Task-101 passes its clean-install, audit,
+  graph, frontend, browser, Windows-helper, and Docker-build gates.
+- Task-101 remains a development/build-tool remediation. Full TowerScout
+  Docker/Podman runtime and package requalification remain Task-087 work after
+  the task resumes rather than expanding Task-101.
+- After the focused Task-101 change merges from current `main` and GitHub alert
+  reconciliation passes without dismissal, bring that accepted change into PR
+  #67. Require its new exact-head matrix to pass before resuming from the
+  preserved Task-087 checkpoint.
 
 ## July 28, 2026 Phase 1 Live Validation Override
 
@@ -1151,6 +1178,41 @@ Exit criteria:
   can expose local environment details if helper output is not sanitized.
 
 ## Implementation Log
+
+### 2026-08-19 - Paused On Active Task-101 Security Gate
+
+**Objective**: Preserve Task-087's current implementation state while the
+newly selected dependency-security work restores PR #67's blocking frontend
+gate.
+
+**Context**: The current PR's frontend job fails before bundle and contract
+tests because npm audit detects high-severity development-only transitive
+`extract-zip==2.0.1`. The dependency is not included in the product runtime
+image or Windows release ZIP, but a maintained browser-install path can execute
+it. The existing Task-087 evidence remains valid for the bytes it evaluated.
+
+**Decision**: Pause new Task-087 implementation, package integration, merge,
+and publication. Keep PR #67 open for reviewer input and read-only review.
+Resume only after Task-101's focused remediation merges, alert reconciliation
+completes without dismissal, the accepted change is integrated into PR #67,
+and that branch's new exact-head matrix passes.
+
+**Execution**: Updated the Task-087 status, dependency list, and current
+execution override. No Task-087 source, workflow, package, runtime, release, or
+accepted evidence changed.
+
+**Output**: Task-087 is preserved rather than abandoned or restarted.
+Task-101 is the immediate implementation lane.
+
+**Validation**: PASS for the lifecycle transition on August 19, 2026. The
+TowerScout quick workspace checker and canonical `.agent_work` validator
+passed, and `git diff --check` found no whitespace errors. No Task-087 runtime
+or package validation was rerun or required for this documentation-only pause.
+
+**Next**: Accept reviewer context without beginning new implementation. After
+PR #72 merges and alert `#76` closes without dismissal, bring the accepted
+Task-101 result into PR #67, require green exact-head checks, and only then
+resume from the current checkpoint.
 
 ### 2026-07-31 - Ready-For-Review Custom Host Port Correction
 

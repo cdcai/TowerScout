@@ -4,6 +4,9 @@
 **Date**: 2026-04-29
 **Task**: `TASK-063: Pre-Docker Release Hardening And CI Reproducibility Gate`
 **Scope**: Release engineering, dependency repeatability, CI security, upload policy, support boundary, and pre-Docker operational contracts
+**Partial Supersession**: [ADR-020](./020-task-101-node-puppeteer-security-baseline.md)
+supersedes Decision 2's Node `>=18.0.0` minimum with Node `>=22.12.0`. The
+tracked-lockfile and `npm ci` decisions remain in force.
 
 ## Context
 

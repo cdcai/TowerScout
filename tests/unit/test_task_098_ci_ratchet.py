@@ -1,12 +1,19 @@
-"""Task-098 CI security-ratchet contracts."""
+"""Task-098/101 CI security-ratchet contracts."""
 
 from pathlib import Path
+
+import yaml
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 TASK_087_PUPPETEER_WORKFLOW = (
     REPO_ROOT / ".github" / "workflows" / "task-087-frontend-puppeteer.yml"
+)
+DOCKERFILE = REPO_ROOT / "Dockerfile"
+CHECKOUT_ACTION = (
+    "actions/checkout@"
+    "93cb6efe18208431cddfb8368fd83d5badbf9bfd"
 )
 TRIVY_ACTION = (
     "aquasecurity/trivy-action@"
@@ -20,6 +27,10 @@ def _workflow() -> str:
 
 def _task_087_puppeteer_workflow() -> str:
     return TASK_087_PUPPETEER_WORKFLOW.read_text(encoding="utf-8")
+
+
+def _dockerfile() -> str:
+    return DOCKERFILE.read_text(encoding="utf-8")
 
 
 def test_trivy_action_and_binary_are_pinned() -> None:
@@ -72,12 +83,62 @@ def test_frontend_high_severity_audit_is_blocking() -> None:
     assert "continue-on-error" not in audit
 
 
+def test_task_101_main_ci_uses_node_22_and_commonjs_smoke() -> None:
+    workflow = _workflow()
+
+    assert "node-version: '22'" in workflow
+    assert "node-version: '18'" not in workflow
+    assert "Verify CommonJS Puppeteer compatibility" in workflow
+    assert "require('puppeteer')" in workflow
+    assert "typeof puppeteer.launch !== 'function'" in workflow
+
+
+def test_task_101_docker_frontend_uses_node_22() -> None:
+    dockerfile = _dockerfile()
+
+    assert "FROM node:22-bookworm-slim AS frontend" in dockerfile
+    assert "FROM node:18" not in dockerfile
+
+
+def test_task_101_pr_ci_builds_docker_frontend_stage_as_blocking_job() -> None:
+    workflow = yaml.safe_load(_workflow())
+    triggers = workflow.get("on", workflow.get(True))
+    assert triggers["pull_request"]["branches"] == ["main"]
+
+    job = workflow["jobs"]["frontend-container-build"]
+
+    assert job["name"] == "Docker frontend stage"
+    assert job["runs-on"] == "ubuntu-latest"
+    assert job["timeout-minutes"] == 15
+    assert "if" not in job
+    assert "continue-on-error" not in job
+
+    action_steps = [step for step in job["steps"] if "uses" in step]
+    assert action_steps == [{"uses": CHECKOUT_ACTION}]
+
+    build_steps = [
+        step
+        for step in job["steps"]
+        if step.get("name") == "Build Docker frontend stage"
+    ]
+    assert len(build_steps) == 1
+    build_step = build_steps[0]
+    assert (
+        build_step["run"]
+        == "docker build --target frontend --tag towerscout-frontend:test ."
+    )
+    assert "if" not in build_step
+    assert "continue-on-error" not in build_step
+
+
 def test_task_087_puppeteer_uses_supported_node_and_pinned_playwright() -> None:
     workflow = _task_087_puppeteer_workflow()
 
     assert workflow.count("node-version: '22'") == 2
+    assert workflow.count("PUPPETEER_SKIP_DOWNLOAD: 'true'") == 2
     assert workflow.count(
         "npx -y playwright@1.62.0 install --with-deps chromium"
     ) == 2
     assert "node-version: '18'" not in workflow
+    assert "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD" not in workflow
     assert "playwright@latest" not in workflow

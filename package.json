@@ -12,10 +12,10 @@
         "test:browser:detect:azure": "node tests/frontend/test_detection_workflow_smoke.js --provider=azure"
     },
     "devDependencies": {
-        "puppeteer": "24.19.0"
+        "puppeteer": "25.8.0"
     },
     "engines": {
-        "node": ">=18.0.0"
+        "node": ">=22.12.0"
     },
     "keywords": [
         "towerscout",

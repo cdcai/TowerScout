@@ -1,9 +1,13 @@
 # Task Backlog - October 2026 Roadmap
 
-**Last Updated**: August 11, 2026
+**Last Updated**: August 19, 2026
 **Planning State**: Fix first while the immutable `v0.1.2` pilot remains in
-use. The Task-099 August advisory gate passed on August 11. Remaining required
-release and handoff work takes priority over Task-058/059 stretch work.
+use. Task-099's scoped August advisory gate passed on August 11. Active
+Task-101 now owns the newly disclosed high-severity development dependency
+gate. Task-087 resumes only after PR #72 merge/default-branch reconciliation,
+PR #67 semantic integration, and green checks at that branch's new exact head.
+Remaining required release and handoff work takes priority over Task-058/059
+stretch work.
 **Hard End**: October 31, 2026; operational closeout October 30
 
 ---
@@ -13,7 +17,7 @@ release and handoff work takes priority over Task-058/059 stretch work.
 | Order | Task | Status | Estimate | Dependencies | Required outcome |
 | ---: | --- | --- | --- | --- | --- |
 | 1 | `TASK-096` User-Initiated Exit And Container Stop | NOT_STARTED | 2-4 days | Task-087 helper/security pattern; current stop scripts | Confirmed Exit/Stop works on Docker and Podman without deleting named volumes |
-| 2 | `TASK-097` Podman CPU/GPU Final Path Qualification | NOT_STARTED | 3-5 days plus environment validation | Tasks 090, 098, 099, 087, and 096 | Podman CPU and GPU/CDI pass final-package qualification without Docker Desktop |
+| 2 | `TASK-097` Podman CPU/GPU Final Path Qualification | NOT_STARTED | 3-5 days plus environment validation | Tasks 090, 098, 099, 101, 087, and 096 | Podman CPU and GPU/CDI pass final-package qualification without Docker Desktop |
 | 3 | `TASK-091` Owner-Runnable Release Qualification | NOT_STARTED | 3-6 days | Candidate scope stable; fixture/harness custody | cdcai owner can execute or supervise the minimum release gate |
 | 4 | `TASK-092` Documentation Currentness And Information Architecture | NOT_STARTED | Stage A 1-2 days; Stage B as approved | Candidate behavior and package shape | Repo docs, user docs, release notes, external Setup Guide, and demo video agree |
 | 5 | `TASK-093` Persistent Data Lifecycle And Recovery Rehearsal | NOT_STARTED | 1-2 days minimum | Runtime profiles and package lifecycle stable | Safe owner-run upgrade, rollback, cleanup, and recovery procedure |
@@ -58,7 +62,7 @@ release and handoff work takes priority over Task-058/059 stretch work.
 
 | Order | Task | Status | Estimate | Start gate |
 | ---: | --- | --- | --- | --- |
-| 7 | `TASK-058` Background Detection Jobs And Durable Run State | CONDITIONAL | 3-5 days | Tasks 090, 098, 099, 087, 096, and 097 pass; no pilot blocker; September 18 remains credible |
+| 7 | `TASK-058` Background Detection Jobs And Durable Run State | CONDITIONAL | 3-5 days | Tasks 090, 098, 099, 101, 087, 096, and 097 pass; no pilot blocker; September 18 remains credible |
 | 8 | `TASK-059` Backend Layer Decomposition And Logging Consolidation | CONDITIONAL | 3-5 days | Task-058 accepted and remaining schedule margin is still safe |
 
 August 28 is the latest responsible Task-058 capacity checkpoint, not an
@@ -97,8 +101,9 @@ Parking lot:
 | `TASK-095` Governance And AI-Ready Handoff Foundation | Active in Sprint 09; Phase A complete, Phase B continues |
 | `TASK-090` Runtime, Custom-Image, And Dependency Security Investigation | Completed; Task-098 scope approved |
 | `TASK-098` Dependency Security Remediation And Release Gate | Completed July 27; PR #51 merged, main CI passed, and Dependabot reconciled at closeout to eight documented non-blocking torch advisories |
-| `TASK-099` August Dependency Advisory Follow-Up | Completed in Sprint 09 on August 11; PRs #68/#69 merged as `f460445`/`0133b50`, main CI and root graph refresh passed, alert `#74` closed without dismissal, and only the eight documented torch residuals remain |
-| `TASK-087` Host-Side TLS Repair Control Plane | In progress with the dependency-security gate clear; package, signing, provider/recovery, approved Podman-provider, and representative managed-endpoint gates remain |
+| `TASK-099` August Dependency Advisory Follow-Up | Completed in Sprint 09 on August 11; PRs #68/#69 merged as `f460445`/`0133b50`, main CI and root graph refresh passed, alert `#74` closed without dismissal, and its closeout inventory contained the eight documented torch residuals |
+| `TASK-101` extract-zip Advisory Assessment And Release-Gate Disposition | Active immediate gate for high-severity alert `#76`; local remediation plus CI/CD run `32300398378` and Task-087 run `32300398377` pass at PR #72 implementation head `a87ab53`, while final PR/default-branch and PR #67 gates remain open |
+| `TASK-087` Host-Side TLS Repair Control Plane | Paused on active Task-101; PR #67 remains open for reviewer input, while new implementation, merge, and candidate-package work wait for PR #72 merge/alert closure, semantic integration, and green PR #67 exact-head checks |
 | `TASK-089` cdcai Adoption And Ownership Transfer | Owner-gated; preparation only until final qualification and approval |
 
 ---
@@ -107,6 +112,7 @@ Parking lot:
 
 | Date | Control |
 | --- | --- |
+| August 19 | Task-101 selected as the active high-severity alert `#76` gate; Task-087 implementation/package work paused while PR #67 remains reviewable |
 | August 28 | Required scope and Task-058 capacity checkpoint |
 | September 18 | Code complete |
 | September 25 | Feature/package/documentation complete |

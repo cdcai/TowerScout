@@ -52,7 +52,7 @@ jobs:
 
       - name: Install Node dependencies (lockfile)
         env:
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'false'
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
         run: npm ci --no-audit --no-fund
 
       - name: Install Playwright Chromium for Puppeteer
@@ -145,7 +145,7 @@ jobs:
 
       - name: Install Node dependencies (lockfile)
         env:
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'false'
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
         run: npm ci --no-audit --no-fund
 
       - name: Install Playwright Chromium for Puppeteer

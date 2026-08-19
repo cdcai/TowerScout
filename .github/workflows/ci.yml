@@ -19,11 +19,11 @@ jobs:
     steps:
     - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
-    # TODO: Migrate to a supported Node LTS after validating the current build and Puppeteer smoke paths.
-    - name: Set up Node 18
+    # TASK-101: Puppeteer 25 requires the maintained Node 22.12+ baseline.
+    - name: Set up Node 22
       uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       with:
-        node-version: '18'
+        node-version: '22'
         cache: 'npm'
         cache-dependency-path: package-lock.json
 
@@ -34,6 +34,9 @@ jobs:
 
     - name: Audit frontend dependencies for high severity vulnerabilities
       run: npm audit --audit-level=high
+
+    - name: Verify CommonJS Puppeteer compatibility
+      run: node -e "const puppeteer = require('puppeteer'); if (typeof puppeteer.launch !== 'function') process.exit(1); console.log('CommonJS Puppeteer load OK')"
 
     - name: Rebuild frontend bundle
       run: node webapp/build.js
@@ -48,6 +51,19 @@ jobs:
 
     - name: Run ProviderStateManager regression test
       run: node tests/integration/test_task_064_provider_state_manager.js
+
+  frontend-container-build:
+    name: Docker frontend stage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+    # TASK-101: keep the maintained Node/Puppeteer builder contract blocking
+    # on pull requests without expanding this check to the full runtime image.
+    - name: Build Docker frontend stage
+      run: docker build --target frontend --tag towerscout-frontend:test .
 
   test:
     runs-on: ubuntu-latest

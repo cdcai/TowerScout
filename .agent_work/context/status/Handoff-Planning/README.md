@@ -25,9 +25,16 @@
   complete as of their July 27 closeout.
 - Task-099 completed alerts `#72-#75` plus npm finding
   `GHSA-5p4m-2wfm-xmqj` through PRs #68/#69. Alert `#74` closed without
-  dismissal, and only the eight documented torch residuals remain.
-- Task-087 continues under its own package, signing, provider/recovery,
-  Podman, and representative managed-endpoint gates.
+  dismissal, and its August 11 closeout contained the eight documented torch
+  residuals.
+- High-severity development-transitive `extract-zip` alert `#76` opened after
+  that closeout. Task-101's focused Node/Puppeteer remediation and PR #72
+  implementation-head compatibility validation pass; its final PR/default-
+  branch and downstream integration gates remain active.
+- Task-087 is paused on Task-101. PR #67 remains open for reviewer input, but
+  new implementation, merge, and candidate publication wait for PR #72 merge
+  and alert closure, PR #67 semantic integration, and green checks at that
+  branch's new exact head.
 - Complete operational closeout by October 30, 2026.
 
 ## Active Validation Record

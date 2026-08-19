@@ -1,6 +1,6 @@
 # TowerScout Requirements
 
-**Last Updated**: August 11, 2026
+**Last Updated**: August 19, 2026
 **Current Planning Horizon**: October 31, 2026 hard project end
 **Operational Closeout**: October 30, 2026
 **Canonical Roadmap**:
@@ -179,11 +179,23 @@ Current result:
   root dependency snapshot through PR #69 / `0133b50`.
 - Root graph run `31510493332` and main CI run `31510488121` passed. Alert
   `#74` closed without dismissal, the SBOM contains only `aiohttp==3.14.3`,
-  and the open inventory is exactly the eight documented torch residuals.
-- Task-099 is complete and its dependency-security release gate is clear.
-  Task-087 signing, candidate inclusion, and final-release qualification
-  remain subject to Task-087's own package, signing, and managed-endpoint
-  gates.
+  and its August 11 closeout inventory contained exactly the eight documented
+  torch residuals.
+- Dependabot alert `#76` opened after that closeout for high-severity
+  development-transitive `extract-zip==2.0.1` through
+  `puppeteer@24.19.0 -> @puppeteer/browsers@2.10.8 -> extract-zip`.
+- Task-101 is the active unique follow-up. Its locally and implementation-head
+  validated remediation uses Node `>=22.12.0` and exact `puppeteer@25.8.0` /
+  `@puppeteer/browsers@3.2.1`, removes `extract-zip` from the lock and installed
+  graphs, and restores a clean blocking frontend audit. The vulnerable path was
+  absent from the shipped Python runtime image and normal-user Windows package.
+  PR #72 CI/CD run `32300398378` and Task-087 compatibility run `32300398377`
+  passed at implementation head `a87ab53`.
+- Task-087 review may continue, but new implementation, merge, and candidate
+  publication remain paused until PR #72's final head passes, PR #72 merges,
+  alert `#76` closes on the default branch without dismissal, the accepted
+  change is reconciled into PR #67, and that branch's required exact-head
+  matrix passes.
 
 ## Qualification And Handoff Requirements
 
@@ -239,6 +251,6 @@ outgoing developer after October 31.
 - October 23 is the owner-operated handoff rehearsal target.
 - October 30 is operational closeout.
 
-Task-058 may start early only after Tasks 090, 098, 099, 087, 096, and 097 have
-passed their gates. Task-059 remains optional and may start only after Task-058
-acceptance without threatening required milestones.
+Task-058 may start early only after Tasks 090, 098, 099, 101, 087, 096, and 097
+have passed their gates. Task-059 remains optional and may start only after
+Task-058 acceptance without threatening required milestones.

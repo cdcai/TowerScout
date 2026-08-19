@@ -1,6 +1,6 @@
 # TowerScout Current Technical Design
 
-**Last Updated**: August 11, 2026
+**Last Updated**: August 19, 2026
 **Scope**: Fix-first candidate development, four-profile runtime qualification,
 and cdcai handoff through October 2026
 **Archived Pre-Rebaseline Design**:
@@ -140,12 +140,25 @@ The current security boundary is:
 7. PR #68 merged the narrow fixes as `f460445`; PR #69 merged the root graph
    refresh as `0133b50`. Graph run `31510493332` removed stale
    `aiohttp==3.14.2`, alert `#74` closed without dismissal, and the repository
-   returned to the eight documented medium/low torch residuals with no open
-   critical/high alert.
+   returned at its August 11 closeout to the eight documented medium/low torch
+   residuals with no open critical/high alert.
 8. All-severity SARIF reporting remains advisory, while new or reintroduced
    critical/high dependency findings are blocking unless covered by a narrow,
    unexpired exception. The Task-099 discovery confirms that ratchet is
    operating as designed.
+9. Dependabot alert `#76` opened after Task-099 for high-severity
+   development-transitive `extract-zip==2.0.1` through
+   `puppeteer@24.19.0 -> @puppeteer/browsers@2.10.8 -> extract-zip`.
+   It is not present in the shipped Python runtime image or normal-user Windows
+   package, but the maintained browser-install path can execute it.
+10. Active Task-101 has locally validated Node `>=22.12.0`, exact
+    `puppeteer@25.8.0`, and `@puppeteer/browsers@3.2.1`. The resulting lock
+    and installed graphs contain no `extract-zip`, and the blocking audit is
+    clean. PR #72 CI/CD run `32300398378` and Task-087 compatibility run
+    `32300398377` pass at implementation head `a87ab53`. Any later PR #72 head
+    still requires final checks before merge. Default-branch alert
+    reconciliation and PR #67 integration/exact-head validation remain open;
+    Task-087 stays preserved and paused until those gates pass.
 
 ## Task Dependency Flow
 
@@ -158,16 +171,17 @@ TASK-090 bounded security investigation [COMPLETE]
         v
 TASK-098 dependency-security remediation/disposition gate [COMPLETE]
         |
-        +---------------------------+
-        |                           |
-        v                           v
-TASK-087 universal provider   TASK-099 August advisory
-TLS repair [IN PROGRESS]      follow-up [COMPLETE]
-        |                           |
-        v                           |
-TASK-096 user Exit/Stop             |
-        |                           |
-        +---------------------------+
+        v
+TASK-099 August advisory follow-up [COMPLETE]
+        |
+        v
+TASK-101 extract-zip advisory gate [IN PROGRESS]
+        |
+        v
+TASK-087 universal provider TLS repair [PAUSED]
+        |
+        v
+TASK-096 user Exit/Stop
         |
         v
 TASK-097 Podman CPU/GPU qualification
@@ -189,9 +203,9 @@ Task-095 Phase B spans the remaining work to keep governance, backlog, and
 handoff material current. Task-098 is separately scoped from Task-090 so the
 investigation cannot hide dependency upgrades, CPU/CUDA compatibility work, or
 four-profile regression effort. Task-099 preserved the same governance
-principle for post-closeout disclosures and cleared its dependency-security
-gate on August 11. Task-087 continues under its own remaining qualification
-gates.
+principle for post-closeout disclosures and cleared its scoped dependency-
+security gate on August 11. Task-101 now owns alert `#76`; Task-087 remains
+reviewable but paused until Task-101 restores the blocking frontend gate.
 
 ## Validation Strategy
 

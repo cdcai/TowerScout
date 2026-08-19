@@ -2,7 +2,7 @@
 
 **Status**: CURRENT - canonical forward execution roadmap
 **Approved**: July 23, 2026
-**Last Reconciled**: August 11, 2026
+**Last Reconciled**: August 19, 2026
 **Decision Owners**: Project lead and cdcai owner
 **Pilot Baseline**: Immutable fork-side `v0.1.2`
 **Candidate Convention**: `v0.1.3-rc.N`
@@ -65,8 +65,9 @@ runtime, documentation, or handoff work.
 and historical. Four advisories disclosed August 4-5 are owned by the new
 Task-099 follow-up rather than reopening Tasks 090/098. Task-099 cleared its
 critical/high and default-branch alert-reconciliation gates on August 11
-through PRs #68/#69. Task-087 continues under its own remaining qualification
-gates.
+through PRs #68/#69. High-severity development-transitive `extract-zip` alert
+`#76` opened afterward and is owned by active Task-101. Task-087 is preserved
+but paused until Task-101 restores the blocking frontend dependency gate.
 
 1. Task-095 Phase A roadmap/workspace rebaseline and readiness cleanup:
    complete July 23.
@@ -94,11 +95,19 @@ July 27 exit evidence:
 
 **Target**: Begin as soon as Phase 1 passes
 
-1. Resume Task-087.
-2. Support guided repair for Google and Azure.
-3. Support application-provider TLS repair on Docker and Podman.
-4. Validate on the available managed CDC network.
-5. Complete Task-096 Exit/Stop TowerScout for Docker and Podman.
+1. Complete active Task-101's focused Node/Puppeteer remediation and required
+   compatibility matrix.
+2. Keep Draft PR #67 open for reviewer input while new Task-087 implementation
+   is paused.
+3. After PR #72's final exact-head checks pass, merge it and confirm alert
+   `#76` closes on the default branch without dismissal, then bring the
+   accepted change into PR #67.
+4. Require PR #67's new exact-head matrix to pass, then explicitly resume
+   Task-087 from its preserved checkpoint.
+5. Support guided repair for Google and Azure.
+6. Support application-provider TLS repair on Docker and Podman.
+7. Validate on the available managed CDC network.
+8. Complete Task-096 Exit/Stop TowerScout for Docker and Podman.
 
 Exit:
 
@@ -129,6 +138,7 @@ Task-058 may begin immediately when all of the following are true:
 
 - Tasks 090 and 098 are complete.
 - Task-099 passes its August dependency-security follow-up gate.
+- Task-101 passes its `extract-zip` dependency-security gate.
 - Task-087 passes managed-network validation.
 - Task-096 passes Docker and Podman acceptance.
 - Task-097 passes required final-path qualification.
@@ -198,6 +208,7 @@ Exit:
 | `TASK-097` | Podman CPU/GPU final-path hardening and qualification | Required |
 | `TASK-098` | Dependency-security remediation, compatibility validation, and release disposition | Complete July 27 |
 | `TASK-099` | August dependency-advisory remediation and release-gate reconciliation | Complete August 11 |
+| `TASK-101` | `extract-zip` advisory remediation and current dependency release-gate disposition | Active immediate gate before Task-087 resumes, PR #67 merges, or candidate publication |
 | `TASK-058` | Background jobs and durable run state | Conditional stretch |
 | `TASK-059` | Backend decomposition and logging consolidation | Conditional stretch after Task-058 |
 
@@ -217,6 +228,17 @@ transitive `js-yaml` remediation plus stale root-graph refresh completed
 August 11. Alert `#74` closed without dismissal, the inventory returned to the
 eight documented torch residuals, and Task-099 no longer blocks signing or
 candidate inclusion; Task-087's own gates still apply.
+
+Task-101 was created and selected August 19 for Dependabot alert `#76` /
+`GHSA-jmr9-qjv8-65gv` in development-transitive `extract-zip==2.0.1`. Its
+preferred remediation is a tested Node 22.12+/Puppeteer 25.x dependency
+ratchet that removes the vulnerable path; no exception is approved. CI/CD run
+`32300398378` and Task-087 compatibility run `32300398377` pass at PR #72
+implementation head `a87ab53`; any later PR #72 head still requires final
+checks before merge. Task-087 is paused without invalidating its recorded
+evidence and resumes only after PR #72 merges, alert reconciliation completes,
+the accepted change is integrated into PR #67, and that branch's new exact-
+head matrix passes.
 
 ## Stop Rules
 

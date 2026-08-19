@@ -1,7 +1,7 @@
 # TowerScout Pilot Feedback And cdcai Adoption Plan
 
 **Decision Date**: July 10, 2026; rebaselined July 23, 2026
-**Last Reconciled**: August 11, 2026
+**Last Reconciled**: August 19, 2026
 **Status**: CURRENT for the Pilot Package and cdcai hold
 **Forward Development Plan**:
 [`2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md`](./2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md)
@@ -64,17 +64,24 @@ The cdcai owner selected the fix-first path:
 7. Select the final cdcai tag and display title before the official build.
 8. Execute Task-089 only after explicit owner adoption approval.
 
-Task-087 may resume for the new candidate only after the Tasks 090/098 security
-gate passes. This does not change the Pilot Package and does not authorize
-enabling unvalidated behavior for pilot users.
+The original July Task-087 resume gate required Tasks 090/098 to pass. This
+does not change the Pilot Package and does not authorize enabling unvalidated
+behavior for pilot users; the later Task-101 pause below controls current work.
 
 Tasks 090/098 passed on July 27 and remain completed historical records.
 GitHub disclosed four additional Dependabot advisories on August 4-5, and the
 blocking npm audit added `GHSA-5p4m-2wfm-xmqj` on August 7 while Task-099 was
 still active. Task-099 completed that follow-up on August 11 through PRs
 #68/#69, successful main CI and root graph refresh, and alert closure without
-dismissal. The inventory is back to the eight documented torch residuals.
-Task-087 continues under its own remaining qualification gates.
+dismissal. Its August 11 closeout inventory contained the eight documented
+torch residuals. GitHub opened high-severity development-transitive
+`extract-zip` alert `#76` afterward; active Task-101 owns that separate focused
+remediation and release-gate disposition. Task-087's evidence remains valid and
+reviewer input may continue, but new implementation, PR #67 merge, and
+candidate publication remain paused. The PR #72 implementation-head audit and
+compatibility jobs pass; final PR #72 checks, merge/default-branch alert
+closure, PR #67 integration, and green PR #67 exact-head checks still precede
+Task-087 resumption.
 
 ## Release Naming Boundary
 
@@ -115,6 +122,8 @@ backlog, and migration-ready handoff without changing cdcai.
 - Task-099: completed August 11 for alerts `#72-#75` plus npm finding
   `GHSA-5p4m-2wfm-xmqj`; the critical/high gate and default-branch inventory
   reconciliation passed without reopening Task-098.
+- Task-101: active focused remediation and release-gate disposition for high-
+  severity development-transitive `extract-zip` alert `#76`.
 
 ## Superseded Instructions
 
