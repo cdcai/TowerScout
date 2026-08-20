@@ -1,24 +1,22 @@
 # TASK-087: Host-Side TLS Repair Control Plane
 
-**Status**: PAUSED / DEPENDENCY-GATED - Draft PR #67 and the Task-087 evidence
-recorded on that branch remain preserved and reviewable. No new launcher or
-package implementation, merge, or publication proceeds until active Task-101
-restores the blocking frontend dependency gate. After PR #72 merges and alert
-`#76` closes without dismissal, bring the accepted change into PR #67, require
-green checks at its new exact head, and only then resume from the preserved
-checkpoint.
+**Status**: PAUSED / RECONCILIATION-GATED - PR #72 and alert `#76` default-branch
+reconciliation passed. Draft PR #67 and the Task-087 evidence recorded there
+remain preserved and reviewable. No new launcher or package
+implementation, merge, or publication proceeds until current `main` is
+semantically integrated into PR #67 and its required exact-head matrix passes.
 Release-facing TLS mutation, UAC/certificate, Chrome/Firefox, live package,
 Podman/GPU, sleep/resume, managed-network, and candidate-inclusion gates remain
 closed
 **Type**: B/C (Runtime Support / Setup UX / TLS Trust)
 **Priority**: HIGH
 **Estimated Effort**: 4-7 days (32-56 hours), plus package validation on a managed TLS-inspected network
-**Target Sprint**: Sprint 09 continuation after the Task-101 gate, with managed-
-network completion scheduled by the canonical October roadmap
+**Target Sprint**: Sprint 09 continuation after the PR #67 reconciliation gate,
+with managed-network completion scheduled by the canonical October roadmap
 **Created**: 2026-06-29
 **Owner**: TowerScout release owner / active agent support
 **Depends On**: `TASK-086`; completed `TASK-090` investigation and `TASK-098`
-dependency remediation/disposition; active `TASK-101` dependency-security
+dependency remediation/disposition; active `TASK-101` PR #67 reconciliation
 gate; package launcher/runtime profile; provider setup error classification;
 Docker and Podman CPU/GPU package paths
 
@@ -30,6 +28,25 @@ July 27. Task-087 resumed in draft PR #63; its first review found lifecycle,
 asynchronous execution, recovery, and terminal-flow gaps that are now addressed
 in the draft branch. The command-based Task-086 path remains the fallback until
 all Task-087 gates pass.
+
+## August 20, 2026 Post-Merge Reconciliation Override
+
+This override supersedes the August 19 pause override for current execution
+order while preserving that entry as dated history:
+
+- PR #72 passed its final exact-head matrix at `820b649` and squash-merged as
+  exact-main commit `0cc189c`.
+- Exact-main CI/CD run `32310281115` and Task-087 run `32310281051` passed.
+  Dependabot alert `#76` closed as fixed through dependency reconciliation;
+  every dismissal field is null.
+- Preserve Draft PR #67, ADR-019, the current Task-087 implementation, and its
+  recorded evidence while current `main` is merged into the branch and shared
+  files are resolved semantically.
+- Keep Task-087 paused through the reconciled branch's required exact-head
+  matrix. Only after that matrix passes may the tracker and this task file be
+  changed explicitly to resumed.
+- Full TowerScout Docker/Podman runtime, package, signing, provider/recovery,
+  and managed-network qualification remain later Task-087 gates.
 
 ## August 19, 2026 Task-101 Pause Override
 
@@ -1178,6 +1195,31 @@ Exit criteria:
   can expose local environment details if helper output is not sanitized.
 
 ## Implementation Log
+
+### 2026-08-20 - PR #72 Security Gate Passed; PR #67 Reconciliation Pending
+
+**Objective**: Advance the Task-087 pause boundary to the remaining downstream
+branch gate after the accepted dependency remediation reached `main`.
+
+**Context**: PR #72 final head `820b649` and exact-main squash commit `0cc189c`
+passed their CI/CD and Task-087 workflows. Alert `#76` is fixed without
+dismissal. Draft PR #67 remains open and conflicted at `c095389` until current
+`main` is integrated.
+
+**Decision**: Keep Task-087 paused / reconciliation-gated. The completed PR #72
+and alert gates do not authorize new launcher work, package publication, or
+resumption before PR #67's new exact head passes.
+
+**Execution**: Updated only current lifecycle and dependency language. No
+Task-087 source, workflow, runtime, package, release artifact, or accepted
+historical evidence changed.
+
+**Validation**: Exact-main CI/CD run `32310281115` and Task-087 run
+`32310281051` passed at `0cc189c`; the alert's dismissal metadata is empty.
+
+**Next**: Merge current `main` normally into PR #67, preserve ADR-019 and the
+branch's evidence during semantic conflict resolution, and validate its new
+exact head before explicitly resuming Task-087.
 
 ### 2026-08-19 - Paused On Active Task-101 Security Gate
 

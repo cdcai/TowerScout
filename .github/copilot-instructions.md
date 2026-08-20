@@ -3,7 +3,7 @@
 This is the primary high-context guidance file for AI coding agents working in
 the TowerScout repository. It preserves project context, guardrails, and
 workflow guidance while reflecting the current repository state as of
-2026-08-19.
+2026-08-20.
 
 ## Mission and Product Context
 
@@ -47,16 +47,15 @@ The project still carries public-health workflow expectations:
   and root graph refresh passed, alert `#74` closed without dismissal, and
   its August 11 closeout inventory contained the eight documented torch
   residuals.
-- `TASK-101` has implemented and locally validated the Node 22 / Puppeteer
-  25.8.0 remediation for high-severity development-transitive `extract-zip`
-  alert `#76`. The finding is not shipped in the product runtime. PR #72 CI/CD
-  run `32300398378` and Task-087 run `32300398377` pass at implementation head
-  `a87ab53`; any later PR #72 head still requires final checks before merge.
-  Default-branch alert reconciliation and PR #67 integration/exact-head
-  validation remain open.
-- `TASK-087` is paused on Task-101. Draft PR #67 remains open for reviewer
-  input; new implementation, merge, and candidate publication wait for
-  Task-101 acceptance.
+- `TASK-101` delivered the Node 22 / Puppeteer 25.8.0 remediation for
+  high-severity development-transitive `extract-zip` alert `#76`. The finding
+  is not shipped in the product runtime. PR #72 passed final-head checks,
+  squash-merged as `0cc189c`, passed exact-main CI and Task-087 workflows, and
+  closed alert `#76` as fixed without dismissal. PR #67 integration/exact-head
+  validation remains open.
+- `TASK-087` is paused / reconciliation-gated. Draft PR #67 remains open for
+  reviewer input; new implementation, merge, and candidate publication wait
+  for semantic integration of current `main` and green exact-head checks.
 - `TASK-096` adds user-confirmed Exit/Stop. `TASK-097` qualifies Podman CPU/GPU.
 - Docker CPU, Docker GPU, Podman CPU, and Podman GPU are required final-package
   profiles, subject to their documented prerequisites.
@@ -126,11 +125,10 @@ adoption:
 4. Preserve Task-099's completed `aiohttp==3.14.3`, transitive
    `ip-address==10.3.1`, and transitive `js-yaml==4.3.1` remediation plus its
    eight-alert torch residual baseline.
-5. Require final exact-head checks after any later PR #72 commit, merge the
-   accepted Node/Puppeteer remediation, and confirm alert `#76` closes on the
-   default branch without dismissal.
-6. Keep Draft PR #67 reviewable; after that reconciliation, bring the accepted
-   change into the branch and require its new exact-head matrix to pass.
+5. Preserve the passed PR #72/default-branch security result: squash commit
+   `0cc189c`, green exact-main checks, and alert `#76` fixed without dismissal.
+6. Keep Draft PR #67 reviewable; merge current `main` into that branch, resolve
+   shared files semantically, and require its new exact-head matrix to pass.
 7. Resume Task-087 from its preserved checkpoint only after step 6 passes,
    then complete guided Google/Azure provider TLS work on Docker and
    Podman; preserve the command fallback and satisfy its remaining gates.
@@ -785,11 +783,10 @@ The original guidance benefited from explicitly naming recent completed work. Th
 3. Preserve completed Task-099 evidence for the August Dependabot alerts and
    later js-yaml npm audit finding, including the eight documented
    non-blocking torch residuals and qualified ML pair.
-4. Require final exact-head checks after any later PR #72 commit, merge the
-   accepted Node/Puppeteer remediation, and confirm alert `#76` closes without
-   dismissal.
-5. Keep PR #67 open for reviewer input, then bring the accepted Task-101 change
-   into it and require green checks at the new exact head.
+4. Preserve the passed PR #72/default-branch security result at `0cc189c`,
+   including alert `#76` fixed without dismissal.
+5. Keep PR #67 open for reviewer input, merge current `main` into its feature
+   branch, resolve semantically, and require green checks at the new exact head.
 6. Resume Task-087 only after step 5 passes, then complete its implementation
    and validation; keep signing and candidate
    inclusion behind Task-087's remaining qualification gates.
@@ -814,15 +811,17 @@ An agent should leave with the following understanding:
 - Docker CPU/GPU and Podman CPU/GPU are required final-candidate profiles
 - local/CI pytest timeout safeguards and Flask route-test isolation are merged through `TASK-067`
 - the non-mutating Task-087 Gate 3 proof is merged and the Tasks 090/098/099
-  scoped dependency-security gates passed, but newly disclosed alert `#76` is
-  owned by active Task-101 and pauses Task-087 implementation/merge/publication
-- PR #67 remains open for reviewer input while Task-101 is active
+  scoped dependency-security gates passed; Task-101's PR #72/default-branch
+  security gate also passed and alert `#76` is fixed without dismissal
+- PR #67 remains open for reviewer input and must receive current `main` plus
+  green exact-head validation before Task-087 resumes
 - filesystem sessions and disk-backed config writes are real architectural constraints
 - Google and Azure workflows are both important
 - outbreak-investigation workflows are the highest-value legacy surface to preserve
 - Tasks 090, 098, and 099 remain complete; Task-099 owns the August dependency
   disclosure evidence without reopening the earlier historical records
-- Task-101 uniquely owns alert `#76`; do not rewrite Task-099's dated closeout
+- Task-101 uniquely owns alert `#76` and its downstream PR #67 reconciliation;
+  do not rewrite Task-099's dated closeout
 - Task-089 execution remains blocked until final qualification and explicit
   cdcai-owner adoption approval
 

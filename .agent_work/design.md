@@ -1,6 +1,6 @@
 # TowerScout Current Technical Design
 
-**Last Updated**: August 19, 2026
+**Last Updated**: August 20, 2026
 **Scope**: Fix-first candidate development, four-profile runtime qualification,
 and cdcai handoff through October 2026
 **Archived Pre-Rebaseline Design**:
@@ -151,14 +151,14 @@ The current security boundary is:
    `puppeteer@24.19.0 -> @puppeteer/browsers@2.10.8 -> extract-zip`.
    It is not present in the shipped Python runtime image or normal-user Windows
    package, but the maintained browser-install path can execute it.
-10. Active Task-101 has locally validated Node `>=22.12.0`, exact
+10. Active Task-101 established Node `>=22.12.0`, exact
     `puppeteer@25.8.0`, and `@puppeteer/browsers@3.2.1`. The resulting lock
     and installed graphs contain no `extract-zip`, and the blocking audit is
-    clean. PR #72 CI/CD run `32300398378` and Task-087 compatibility run
-    `32300398377` pass at implementation head `a87ab53`. Any later PR #72 head
-    still requires final checks before merge. Default-branch alert
-    reconciliation and PR #67 integration/exact-head validation remain open;
-    Task-087 stays preserved and paused until those gates pass.
+    clean. Final PR #72 CI/CD run `32308971393` and Task-087 run `32308971392`
+    passed at `820b649`; PR #72 squash-merged as `0cc189c`. Exact-main CI/CD
+    run `32310281115` and Task-087 run `32310281051` passed, and alert `#76`
+    closed as fixed without dismissal. PR #67 integration/exact-head validation
+    remains open; Task-087 stays preserved and paused until that gate passes.
 
 ## Task Dependency Flow
 
@@ -175,10 +175,10 @@ TASK-098 dependency-security remediation/disposition gate [COMPLETE]
 TASK-099 August advisory follow-up [COMPLETE]
         |
         v
-TASK-101 extract-zip advisory gate [IN PROGRESS]
+TASK-101 extract-zip advisory gate [IN PROGRESS: PR #67 RECONCILIATION]
         |
         v
-TASK-087 universal provider TLS repair [PAUSED]
+TASK-087 universal provider TLS repair [PAUSED / RECONCILIATION-GATED]
         |
         v
 TASK-096 user Exit/Stop
@@ -204,8 +204,10 @@ handoff material current. Task-098 is separately scoped from Task-090 so the
 investigation cannot hide dependency upgrades, CPU/CUDA compatibility work, or
 four-profile regression effort. Task-099 preserved the same governance
 principle for post-closeout disclosures and cleared its scoped dependency-
-security gate on August 11. Task-101 now owns alert `#76`; Task-087 remains
-reviewable but paused until Task-101 restores the blocking frontend gate.
+security gate on August 11. Task-101 closed alert `#76` through the accepted
+default-branch graph and now owns only downstream PR #67 reconciliation;
+Task-087 remains reviewable but paused until that branch's exact-head gate
+passes.
 
 ## Validation Strategy
 

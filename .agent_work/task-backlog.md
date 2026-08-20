@@ -1,11 +1,12 @@
 # Task Backlog - October 2026 Roadmap
 
-**Last Updated**: August 19, 2026
+**Last Updated**: August 20, 2026
 **Planning State**: Fix first while the immutable `v0.1.2` pilot remains in
 use. Task-099's scoped August advisory gate passed on August 11. Active
-Task-101 now owns the newly disclosed high-severity development dependency
-gate. Task-087 resumes only after PR #72 merge/default-branch reconciliation,
-PR #67 semantic integration, and green checks at that branch's new exact head.
+Task-101 owns the newly disclosed high-severity development dependency gate.
+PR #72 merge/default-branch reconciliation passed August 19. Task-087 resumes
+only after PR #67 semantic integration and green checks at that branch's new
+exact head.
 Remaining required release and handoff work takes priority over Task-058/059
 stretch work.
 **Hard End**: October 31, 2026; operational closeout October 30
@@ -102,8 +103,8 @@ Parking lot:
 | `TASK-090` Runtime, Custom-Image, And Dependency Security Investigation | Completed; Task-098 scope approved |
 | `TASK-098` Dependency Security Remediation And Release Gate | Completed July 27; PR #51 merged, main CI passed, and Dependabot reconciled at closeout to eight documented non-blocking torch advisories |
 | `TASK-099` August Dependency Advisory Follow-Up | Completed in Sprint 09 on August 11; PRs #68/#69 merged as `f460445`/`0133b50`, main CI and root graph refresh passed, alert `#74` closed without dismissal, and its closeout inventory contained the eight documented torch residuals |
-| `TASK-101` extract-zip Advisory Assessment And Release-Gate Disposition | Active immediate gate for high-severity alert `#76`; local remediation plus CI/CD run `32300398378` and Task-087 run `32300398377` pass at PR #72 implementation head `a87ab53`, while final PR/default-branch and PR #67 gates remain open |
-| `TASK-087` Host-Side TLS Repair Control Plane | Paused on active Task-101; PR #67 remains open for reviewer input, while new implementation, merge, and candidate-package work wait for PR #72 merge/alert closure, semantic integration, and green PR #67 exact-head checks |
+| `TASK-101` extract-zip Advisory Assessment And Release-Gate Disposition | Active downstream reconciliation gate; PR #72 squash-merged as `0cc189c`, alert `#76` closed as fixed without dismissal, and exact-main CI/Task-087 runs passed; PR #67 semantic integration and exact-head validation remain |
+| `TASK-087` Host-Side TLS Repair Control Plane | Paused / reconciliation-gated; PR #67 remains open for reviewer input, while new implementation, merge, and candidate-package work wait for semantic integration of current `main` and green PR #67 exact-head checks |
 | `TASK-089` cdcai Adoption And Ownership Transfer | Owner-gated; preparation only until final qualification and approval |
 
 ---
@@ -112,6 +113,7 @@ Parking lot:
 
 | Date | Control |
 | --- | --- |
+| August 20 | PR #72/default-branch security gates recorded as passed; PR #67 semantic reconciliation is the next Task-101 gate and Task-087 remains paused |
 | August 19 | Task-101 selected as the active high-severity alert `#76` gate; Task-087 implementation/package work paused while PR #67 remains reviewable |
 | August 28 | Required scope and Task-058 capacity checkpoint |
 | September 18 | Code complete |

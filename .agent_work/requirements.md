@@ -1,6 +1,6 @@
 # TowerScout Requirements
 
-**Last Updated**: August 19, 2026
+**Last Updated**: August 20, 2026
 **Current Planning Horizon**: October 31, 2026 hard project end
 **Operational Closeout**: October 30, 2026
 **Canonical Roadmap**:
@@ -184,18 +184,18 @@ Current result:
 - Dependabot alert `#76` opened after that closeout for high-severity
   development-transitive `extract-zip==2.0.1` through
   `puppeteer@24.19.0 -> @puppeteer/browsers@2.10.8 -> extract-zip`.
-- Task-101 is the active unique follow-up. Its locally and implementation-head
-  validated remediation uses Node `>=22.12.0` and exact `puppeteer@25.8.0` /
+- Task-101 is the active unique follow-up. Its validated remediation uses Node
+  `>=22.12.0` and exact `puppeteer@25.8.0` /
   `@puppeteer/browsers@3.2.1`, removes `extract-zip` from the lock and installed
   graphs, and restores a clean blocking frontend audit. The vulnerable path was
   absent from the shipped Python runtime image and normal-user Windows package.
-  PR #72 CI/CD run `32300398378` and Task-087 compatibility run `32300398377`
-  passed at implementation head `a87ab53`.
+  Final PR #72 CI/CD run `32308971393` and Task-087 run `32308971392` passed at
+  `820b649`. PR #72 squash-merged as `0cc189c`; exact-main CI/CD run
+  `32310281115` and Task-087 run `32310281051` passed, and alert `#76` closed as
+  fixed without dismissal.
 - Task-087 review may continue, but new implementation, merge, and candidate
-  publication remain paused until PR #72's final head passes, PR #72 merges,
-  alert `#76` closes on the default branch without dismissal, the accepted
-  change is reconciled into PR #67, and that branch's required exact-head
-  matrix passes.
+  publication remain paused until the accepted change is reconciled into PR
+  #67 and that branch's required exact-head matrix passes.
 
 ## Qualification And Handoff Requirements
 

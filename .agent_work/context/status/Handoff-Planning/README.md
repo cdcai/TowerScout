@@ -28,13 +28,13 @@
   dismissal, and its August 11 closeout contained the eight documented torch
   residuals.
 - High-severity development-transitive `extract-zip` alert `#76` opened after
-  that closeout. Task-101's focused Node/Puppeteer remediation and PR #72
-  implementation-head compatibility validation pass; its final PR/default-
-  branch and downstream integration gates remain active.
-- Task-087 is paused on Task-101. PR #67 remains open for reviewer input, but
-  new implementation, merge, and candidate publication wait for PR #72 merge
-  and alert closure, PR #67 semantic integration, and green checks at that
-  branch's new exact head.
+  that closeout. Task-101's focused Node/Puppeteer remediation passed final PR
+  and exact-main validation, PR #72 squash-merged as `0cc189c`, and the alert
+  closed as fixed without dismissal.
+- Task-087 is paused / reconciliation-gated. PR #67 remains open for reviewer
+  input, but new implementation, merge, and candidate publication wait for
+  semantic integration of current `main` and green checks at that branch's new
+  exact head.
 - Complete operational closeout by October 30, 2026.
 
 ## Active Validation Record

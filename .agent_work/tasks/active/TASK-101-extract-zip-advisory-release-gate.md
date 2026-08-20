@@ -1,9 +1,8 @@
 # TASK-101: extract-zip Advisory Assessment And Release-Gate Disposition
 
-**Status**: IN_PROGRESS - implementation, local validation, and PR #72
-implementation-head CI completed August 19, 2026; any later PR #72 head still
-requires final checks before merge, while default-branch alert reconciliation
-and PR #67 integration/exact-head validation remain open
+**Status**: IN_PROGRESS - PR #72 squash-merged as `0cc189c`, alert `#76` closed
+as fixed without dismissal, and exact-main CI passed August 19, 2026; PR #67
+semantic integration and exact-head validation remain open
 **Priority**: HIGH
 **Type**: C (Security Remediation / CI And Release Gate)
 **Estimated Effort**: 1-2 days plus CI rerun timing
@@ -78,13 +77,12 @@ Task-087 implementation, PR #67 merge, and candidate-package work to resume.
   PR #72 implementation head `a87ab53`.
 - [x] The Docker frontend stage builds successfully with the selected Node
   baseline and still produces the expected committed bundle.
-- [ ] GitHub alert `#76` closes through dependency reconciliation without
-  dismissal, or any residual-high exception receives the explicit approvals,
-  compensating controls, and expiry required by SEC-001.
+- [x] GitHub alert `#76` closed as fixed through default-branch dependency
+  reconciliation after squash commit `0cc189c`, with no dismissal or
+  residual-high exception.
 - [ ] Task-087's tracker and task file are changed from paused to resumed only
-  after PR #72 merges, alert `#76` closes without dismissal, the accepted
-  change is semantically integrated into PR #67, and that branch's required
-  exact-head matrix passes.
+  after the accepted change is semantically integrated into PR #67 and that
+  branch's required exact-head matrix passes.
 
 ## Dependencies
 
@@ -115,6 +113,33 @@ Task-087 implementation, PR #67 merge, and candidate-package work to resume.
 ---
 
 ## Implementation Log
+
+### 2026-08-20 - PR #72 Merge And Default-Branch Reconciliation
+
+**Objective**: Record the stable default-branch security result and narrow the
+remaining Task-101 gate without prematurely resuming Task-087.
+
+**Context**: Final PR #72 head `820b649` passed CI/CD run `32308971393` and
+Task-087 run `32308971392`. GitHub squash-merged the PR as `0cc189c` at
+`2026-08-19T22:45:32Z`.
+
+**Decision**: Accept the PR #72 and default-branch gates as complete. Keep
+Task-101 active and Task-087 paused until current `main` is semantically
+integrated into Draft PR #67, the branch preserves ADR-019 and its recorded
+evidence, and its required exact-head matrix passes.
+
+**Execution**: Confirmed exact-main CI/CD run `32310281115` and Task-087 run
+`32310281051` passed at `0cc189c`. Dependabot alert `#76` changed to `fixed` at
+`2026-08-19T22:45:36Z`; all dismissal fields are null.
+
+**Validation**: PASS for PR #72 merge and default-branch reconciliation. The
+final PR and post-merge workflows cover the blocking frontend audit, Docker
+frontend stage, Python matrix, security job, full main image build, production
+controller, simulated helper, and Windows host-helper contracts.
+
+**Next**: Merge current `main` normally into PR #67, resolve shared governance
+files semantically, and require the reconciled branch's exact-head matrix before
+closing Task-101 or resuming Task-087.
 
 ### 2026-08-19 - Selected As Immediate Security Gate
 
@@ -289,7 +314,20 @@ default-branch and PR #67 gates remain open
   semantic workflow contract passes, and an uncached local execution succeeds.
 - [x] Main CI run `32300398378` and all three jobs in Task-087 run
   `32300398377` pass at PR #72 implementation head `a87ab53`.
-- [ ] Alert `#76` closes through default-branch reconciliation without
-  dismissal.
+- [x] Alert `#76` closed as fixed through default-branch reconciliation without
+  dismissal after PR #72 squash commit `0cc189c`.
 - [ ] The accepted change is semantically reconciled into PR #67 and validated
   at its new exact head before Task-087 resumes.
+
+### Post-Merge Gate - August 20, 2026
+
+**Test Status**: PASS for PR #72 and default-branch reconciliation; PR #67 gate
+remains open
+
+- [x] Final PR #72 CI/CD run `32308971393` and Task-087 run `32308971392`
+  passed at exact head `820b649`.
+- [x] PR #72 squash-merged as exact-main commit `0cc189c`.
+- [x] Exact-main CI/CD run `32310281115` and Task-087 run `32310281051` passed.
+- [x] Alert `#76` is fixed and every dismissal field is null.
+- [ ] PR #67 contains the semantically reconciled accepted change and passes
+  its required exact-head matrix before Task-087 resumes.

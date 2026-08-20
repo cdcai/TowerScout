@@ -2,7 +2,7 @@
 
 **Status**: CURRENT - canonical forward execution roadmap
 **Approved**: July 23, 2026
-**Last Reconciled**: August 19, 2026
+**Last Reconciled**: August 20, 2026
 **Decision Owners**: Project lead and cdcai owner
 **Pilot Baseline**: Immutable fork-side `v0.1.2`
 **Candidate Convention**: `v0.1.3-rc.N`
@@ -66,8 +66,10 @@ and historical. Four advisories disclosed August 4-5 are owned by the new
 Task-099 follow-up rather than reopening Tasks 090/098. Task-099 cleared its
 critical/high and default-branch alert-reconciliation gates on August 11
 through PRs #68/#69. High-severity development-transitive `extract-zip` alert
-`#76` opened afterward and is owned by active Task-101. Task-087 is preserved
-but paused until Task-101 restores the blocking frontend dependency gate.
+`#76` opened afterward and is owned by active Task-101. PR #72 restored the
+blocking frontend dependency gate, exact-main validation passed, and alert
+`#76` closed as fixed without dismissal. Task-087 is preserved but paused
+through Task-101's downstream PR #67 reconciliation gate.
 
 1. Task-095 Phase A roadmap/workspace rebaseline and readiness cleanup:
    complete July 23.
@@ -95,19 +97,20 @@ July 27 exit evidence:
 
 **Target**: Begin as soon as Phase 1 passes
 
-1. Complete active Task-101's focused Node/Puppeteer remediation and required
+1. [x] Complete Task-101's focused Node/Puppeteer remediation and required
    compatibility matrix.
-2. Keep Draft PR #67 open for reviewer input while new Task-087 implementation
-   is paused.
-3. After PR #72's final exact-head checks pass, merge it and confirm alert
-   `#76` closes on the default branch without dismissal, then bring the
-   accepted change into PR #67.
-4. Require PR #67's new exact-head matrix to pass, then explicitly resume
-   Task-087 from its preserved checkpoint.
-5. Support guided repair for Google and Azure.
-6. Support application-provider TLS repair on Docker and Podman.
-7. Validate on the available managed CDC network.
-8. Complete Task-096 Exit/Stop TowerScout for Docker and Podman.
+2. [x] Pass PR #72's final exact-head checks and squash-merge it as `0cc189c`.
+3. [x] Pass exact-main checks and confirm alert `#76` closes as fixed on the
+   default branch without dismissal.
+4. [ ] Merge current `main` normally into Draft PR #67 and preserve ADR-019 plus
+   the branch's recorded evidence during semantic reconciliation.
+5. [ ] Require PR #67's new exact-head matrix to pass.
+6. [ ] Explicitly resume Task-087 from its preserved checkpoint only after
+   steps 4-5 pass.
+7. [ ] Support guided repair for Google and Azure.
+8. [ ] Support application-provider TLS repair on Docker and Podman.
+9. [ ] Validate on the available managed CDC network.
+10. [ ] Complete Task-096 Exit/Stop TowerScout for Docker and Podman.
 
 Exit:
 
@@ -208,7 +211,7 @@ Exit:
 | `TASK-097` | Podman CPU/GPU final-path hardening and qualification | Required |
 | `TASK-098` | Dependency-security remediation, compatibility validation, and release disposition | Complete July 27 |
 | `TASK-099` | August dependency-advisory remediation and release-gate reconciliation | Complete August 11 |
-| `TASK-101` | `extract-zip` advisory remediation and current dependency release-gate disposition | Active immediate gate before Task-087 resumes, PR #67 merges, or candidate publication |
+| `TASK-101` | `extract-zip` advisory remediation and current dependency release-gate disposition | Active downstream PR #67 reconciliation/exact-head gate before Task-087 resumes, PR #67 merges, or candidate publication |
 | `TASK-058` | Background jobs and durable run state | Conditional stretch |
 | `TASK-059` | Backend decomposition and logging consolidation | Conditional stretch after Task-058 |
 
@@ -230,15 +233,15 @@ eight documented torch residuals, and Task-099 no longer blocks signing or
 candidate inclusion; Task-087's own gates still apply.
 
 Task-101 was created and selected August 19 for Dependabot alert `#76` /
-`GHSA-jmr9-qjv8-65gv` in development-transitive `extract-zip==2.0.1`. Its
-preferred remediation is a tested Node 22.12+/Puppeteer 25.x dependency
-ratchet that removes the vulnerable path; no exception is approved. CI/CD run
-`32300398378` and Task-087 compatibility run `32300398377` pass at PR #72
-implementation head `a87ab53`; any later PR #72 head still requires final
-checks before merge. Task-087 is paused without invalidating its recorded
-evidence and resumes only after PR #72 merges, alert reconciliation completes,
-the accepted change is integrated into PR #67, and that branch's new exact-
-head matrix passes.
+`GHSA-jmr9-qjv8-65gv` in development-transitive `extract-zip==2.0.1`. Its Node
+22.12+/Puppeteer 25.8.0 dependency ratchet removes the vulnerable path; no
+exception was approved. Final PR #72 CI/CD run `32308971393` and Task-087 run
+`32308971392` passed at `820b649`, and the PR squash-merged as `0cc189c`.
+Exact-main CI/CD run `32310281115` and Task-087 run `32310281051` passed; alert
+`#76` closed as fixed without dismissal. Task-087 remains paused without
+invalidating its recorded evidence and resumes only after current `main` is
+semantically integrated into PR #67 and that branch's new exact-head matrix
+passes.
 
 ## Stop Rules
 

@@ -76,6 +76,34 @@ optional AI-assisted development.
 
 ## Implementation Log
 
+### 2026-08-20 - Task-101 Post-Merge Governance Checkpoint
+
+**Objective**: Reconcile the current control-plane sources after the accepted
+Task-101 remediation reached the default branch.
+
+**Context**: PR #72 final head `820b649` passed CI/CD run `32308971393` and
+Task-087 run `32308971392`, then squash-merged as `0cc189c`. Exact-main CI/CD
+run `32310281115` and Task-087 run `32310281051` passed. Alert `#76` is fixed
+through dependency reconciliation and has no dismissal metadata.
+
+**Decision**: Mark the PR #72 and default-branch alert gates complete without
+marking Task-101 complete or resuming Task-087. Task-101 remains active for PR
+#67 semantic integration and exact-head validation; Task-087 remains paused /
+reconciliation-gated through that checkpoint.
+
+**Execution**: Updated the current task, backlog, requirement, design, roadmap,
+pilot, handoff, task, decision, and agent-guidance sources. Historical task
+logs, completed-task records, pilot assets, and the cdcai hold remain unchanged.
+
+**Validation**: PASS. The quick workspace checker, canonical `.agent_work`
+validator, and `git diff --check` passed on August 20. The checkpoint records
+only sanitized GitHub identifiers and state.
+
+**Next**: Merge current `main` normally into Draft PR #67, resolve the shared
+governance sources semantically while preserving ADR-019 and branch evidence,
+and require the reconciled exact-head matrix before closing Task-101 or
+resuming Task-087.
+
 ### 2026-08-19 - Task-101 Activated And Task-087 Paused
 
 **Objective**: Reflect the project lead's decision to resolve the blocking

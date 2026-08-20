@@ -1,7 +1,7 @@
 # TowerScout Pilot Feedback And cdcai Adoption Plan
 
 **Decision Date**: July 10, 2026; rebaselined July 23, 2026
-**Last Reconciled**: August 19, 2026
+**Last Reconciled**: August 20, 2026
 **Status**: CURRENT for the Pilot Package and cdcai hold
 **Forward Development Plan**:
 [`2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md`](./2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md)
@@ -76,12 +76,12 @@ still active. Task-099 completed that follow-up on August 11 through PRs
 dismissal. Its August 11 closeout inventory contained the eight documented
 torch residuals. GitHub opened high-severity development-transitive
 `extract-zip` alert `#76` afterward; active Task-101 owns that separate focused
-remediation and release-gate disposition. Task-087's evidence remains valid and
-reviewer input may continue, but new implementation, PR #67 merge, and
-candidate publication remain paused. The PR #72 implementation-head audit and
-compatibility jobs pass; final PR #72 checks, merge/default-branch alert
-closure, PR #67 integration, and green PR #67 exact-head checks still precede
-Task-087 resumption.
+remediation and release-gate disposition. PR #72 passed its final exact-head
+matrix and squash-merged as `0cc189c`; alert `#76` then closed as fixed without
+dismissal, and the exact-main checks passed separately. Task-087's evidence
+remains valid and reviewer input may continue, but new implementation, PR #67
+merge, and candidate publication remain paused until current `main` is
+semantically integrated into PR #67 and that branch's exact-head checks pass.
 
 ## Release Naming Boundary
 
@@ -122,8 +122,9 @@ backlog, and migration-ready handoff without changing cdcai.
 - Task-099: completed August 11 for alerts `#72-#75` plus npm finding
   `GHSA-5p4m-2wfm-xmqj`; the critical/high gate and default-branch inventory
   reconciliation passed without reopening Task-098.
-- Task-101: active focused remediation and release-gate disposition for high-
-  severity development-transitive `extract-zip` alert `#76`.
+- Task-101: active downstream PR #67 reconciliation/exact-head gate after the
+  focused remediation merged and high-severity development-transitive
+  `extract-zip` alert `#76` closed as fixed without dismissal.
 
 ## Superseded Instructions
 

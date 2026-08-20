@@ -1,20 +1,21 @@
 # Current Tasks - Sprint 09
 
 **Sprint Period**: August 8-August 21, 2026
-**Last Updated**: August 19, 2026
-**Focus**: Land the validated Task-101 dependency-security change through its
-final PR and default-branch gates while new Task-087 implementation and package
-work are paused. Preserve Draft PR #67 for reviewer input, then integrate and
-validate the accepted change there before Task-087 resumes.
+**Last Updated**: August 20, 2026
+**Focus**: Reconcile the accepted Task-101 dependency-security change into
+Draft PR #67 and validate that branch's new exact head before Task-087 resumes.
+PR #72 and the default-branch alert gate have passed; new Task-087
+implementation and package work remain paused through the downstream branch
+gate.
 
 **Current Release State**:
 
 - Fork-side `v0.1.2` is the immutable pilot package.
 - New development uses immutable `v0.1.3-rc.N` candidate identities.
-- Dependabot alert `#76` is an open high-severity development-only transitive
-  `extract-zip==2.0.1` finding. Task-101 is active; PR #67 review may continue,
-  but new Task-087 implementation, merge, and candidate publication wait for
-  Task-101 acceptance.
+- Dependabot alert `#76` closed as fixed, without dismissal, after PR #72
+  squash-merged as `0cc189c`. Task-101 remains active only for PR #67 semantic
+  integration and exact-head validation; Task-087 remains paused through that
+  downstream gate.
 - `cdcai/TowerScout` remains unchanged until final owner qualification and
   explicit adoption approval.
 - October 30 is operational closeout; October 31 is the hard project end.
@@ -68,16 +69,16 @@ inventory was exactly the eight documented torch residuals
 
 **Release Boundary**: Task-099 cleared its scoped dependency-security gate on
 August 11. Alert `#76` opened afterward and belongs to separately activated
-Task-101 rather than rewriting Task-099. The blocking frontend gate prevents
-Task-087 resumption, PR #67 merge, and candidate publication until Task-101
-passes; reviewer input may continue.
+Task-101 rather than rewriting Task-099. PR #72 restored the blocking frontend
+gate and alert `#76` closed as fixed; Task-087 resumption, PR #67 merge, and
+candidate publication remain paused through Task-101's downstream
+reconciliation gate. Reviewer input may continue.
 
 ### **TASK-101: extract-zip Advisory Assessment And Release-Gate Disposition**
 
-**Status**: IN_PROGRESS - implementation, local validation, and PR #72
-implementation-head CI completed August 19; any later PR #72 head still
-requires final checks before merge, while default-branch alert reconciliation
-and PR #67 integration/exact-head validation remain open
+**Status**: IN_PROGRESS - PR #72 squash-merged as `0cc189c`, alert `#76` closed
+as fixed without dismissal, and exact-main CI passed August 19; PR #67 semantic
+integration and exact-head validation remain open
 **Type**: C (Security Remediation / CI And Release Gate)
 **Priority**: HIGH
 **Estimated Effort**: 1-2 days plus CI rerun timing
@@ -95,8 +96,11 @@ and PR #67 integration/exact-head validation remain open
 - Preserve the locally validated Node `>=22.12.0` / Puppeteer `25.8.0` path,
   whose locked browser tooling removes vulnerable `extract-zip`; do not use
   `npm audit fix --force`, weaken the high-severity gate, or dismiss the alert.
-- Preserve the green PR #72 implementation-head evidence: CI/CD run
-  `32300398378` and Task-087 run `32300398377` passed at `a87ab53`.
+- Preserve the green final PR #72 evidence at `820b649`: CI/CD run
+  `32308971393` and Task-087 run `32308971392`. Preserve the exact-main
+  post-merge evidence at squash commit `0cc189c`: CI/CD run `32310281115` and
+  Task-087 run `32310281051` passed, and alert `#76` closed as fixed without
+  dismissal.
 - Align the maintained Node baseline across CI, `package.json`, and the Docker
   frontend stage, and remove the redundant Puppeteer browser-download path
   from Task-087 workflows that already install a pinned browser separately.
@@ -107,21 +111,21 @@ and PR #67 integration/exact-head validation remain open
   they do not resume broader Task-087 implementation.
 - Require clean install/audit/lock-graph, frontend bundle/contracts, Task-087
   browser/Windows-helper, and Docker build validation before acceptance.
-- Keep PR #67 open for reviewer input. New Task-087 implementation, merge, and
-  candidate-package work remain paused until Task-101 passes.
+- Bring current `main` into PR #67 through semantic reconciliation while
+  preserving ADR-019 and the branch's review evidence. New Task-087
+  implementation, merge, and candidate-package work remain paused until the
+  reconciled branch's required exact-head matrix passes.
 
 ### **TASK-087: Host-Side TLS Repair Control Plane**
 
-**Status**: PAUSED / DEPENDENCY-GATED - Draft PR #67 and its recorded Task-087
-implementation evidence remain preserved and reviewable. No new launcher or
-package implementation, merge, or publication proceeds until active Task-101
-restores the blocking frontend dependency gate. After PR #72 merges and alert
-`#76` closes without dismissal, bring the accepted change into PR #67, require
-green checks at that branch's new exact head, and only then resume from the
-preserved checkpoint.
+**Status**: PAUSED / RECONCILIATION-GATED - PR #72 and alert `#76` default-branch
+reconciliation passed. Draft PR #67 and its recorded Task-087 evidence remain
+preserved and reviewable; no new launcher or package implementation,
+merge, or publication proceeds until current `main` is semantically integrated
+there and the branch's required exact-head matrix passes.
 **Type**: B/C (Runtime Support / Setup UX / TLS Trust)
 **Priority**: HIGH
-**Remaining Estimate**: 1-2 days after Task-101 reconciliation from the
+**Remaining Estimate**: 1-2 days after PR #67 reconciliation from the
 preserved PR #67 checkpoint
 **Task File**:
 `.agent_work/tasks/active/TASK-087-host-side-tls-repair-control-plane.md`
@@ -129,7 +133,8 @@ preserved PR #67 checkpoint
 **Current Scope And Gates**:
 
 - Preserve the visible Python/Tkinter launcher, bounded native transaction,
-  existing evidence, and reviewer context while Task-101 is active.
+  existing evidence, and reviewer context through the PR #67 reconciliation
+  gate.
 - Queue implementation-producing review changes until Task-087 resumes;
   clarification and documentation review may continue.
 - Generate the full-runnable validation package from the accepted
@@ -166,30 +171,30 @@ preserved PR #67 checkpoint
 
 ## Sprint 09 Sequence
 
-1. Preserve the completed Task-099 evidence and activate Task-101 for the
+1. [x] Preserve the completed Task-099 evidence and activate Task-101 for the
    newly disclosed alert `#76`.
-2. Complete Task-101's supported Node/Puppeteer remediation and required
+2. [x] Complete Task-101's supported Node/Puppeteer remediation and required
    clean-install, audit, lock-graph, frontend, browser, Windows-helper, and
    Docker-build validation.
-3. Merge PR #72 after its final exact-head checks pass, then confirm alert
+3. [x] Merge PR #72 after its final exact-head checks pass, then confirm alert
    `#76` closes without dismissal on the default branch.
-4. Bring the accepted Task-101 change into Draft PR #67 and preserve its
+4. [ ] Bring the accepted Task-101 change into Draft PR #67 and preserve its
    recorded ADR-019 proceed disposition during semantic reconciliation.
-5. Require green checks at the new exact PR #67 head.
-6. Explicitly resume Task-087 only after steps 3-5 pass.
-7. Generate and verify the exact-source full-runnable Task-087 package in an
+5. [ ] Require green checks at the new exact PR #67 head.
+6. [ ] Explicitly resume Task-087 only after steps 4-5 pass.
+7. [ ] Generate and verify the exact-source full-runnable Task-087 package in an
    approved environment.
-8. Complete the Docker Google/Azure and controlled recovery validation, then
+8. [ ] Complete the Docker Google/Azure and controlled recovery validation, then
    the approved-provider Podman coverage.
-9. Complete technical/security review, signing-path coordination, and
+9. [ ] Complete technical/security review, signing-path coordination, and
    representative managed-endpoint validation as applicable.
-10. If Task-087 proceeds, select Task-096 next, followed by Task-097. Keep Tasks
+10. [ ] If Task-087 proceeds, select Task-096 next, followed by Task-097. Keep Tasks
    091-093 behind the stable candidate/runtime boundary.
 
 Task-058 and Task-059 remain conditional stretch work. Task-094 remains
-evidence-gated. Task-101 is active with its Type C task file; Task-087 remains
-active in tracking but paused on that gate. Task-099 stays in `tasks/active/`
-until Sprint 09 closeout.
+evidence-gated. Task-101 is active for downstream PR #67 reconciliation;
+Task-087 remains active in tracking but paused on that gate. Task-099 stays in
+`tasks/active/` until Sprint 09 closeout.
 
 ---
 

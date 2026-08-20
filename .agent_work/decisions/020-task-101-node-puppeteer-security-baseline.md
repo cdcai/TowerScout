@@ -63,11 +63,10 @@ downloads and makes the Task-087 jobs' executable source explicit.
 - The Docker frontend stage now resolves a maintained Node 22 image.
 - CommonJS Puppeteer consumers remain supported and are covered by an explicit
   CI smoke assertion.
-- Task-087 remains paused. This decision does not close alert `#76`, merge PR
-  #72, or resume Task-087. Resumption requires final PR #72 exact-head checks,
-  PR #72 merge, default-branch dependency reconciliation without dismissal,
-  semantic integration into PR #67, and green checks at that branch's new
-  exact head, in that order.
+- Task-087 remains paused. PR #72 and default-branch dependency reconciliation
+  later passed; this decision still does not resume Task-087. Resumption
+  requires semantic integration into PR #67 and green checks at that branch's
+  new exact head, in that order.
 - ADR-016 Decision 2 is superseded only for its Node minimum. Its tracked
   `package-lock.json` and `npm ci` reproducibility policy remains authoritative.
 
@@ -78,10 +77,11 @@ install, zero high-severity npm audit findings, the exact selected graph,
 global `extract-zip` absence, CommonJS loading, focused regression contracts,
 frontend bundle equivalence, and successful Docker frontend/full builds.
 PR #72 CI/CD run `32300398378` and Task-087 compatibility run `32300398377`
-passed at implementation head `a87ab53`. Any later PR commit still requires
-final exact-head checks before merge; default-branch alert reconciliation and
-PR #67 integration/validation remain separate acceptance gates recorded in
-Task-101.
+passed at implementation head `a87ab53`. Final-head runs `32308971393` and
+`32308971392` then passed at `820b649`, and PR #72 squash-merged as `0cc189c`.
+Exact-main runs `32310281115` and `32310281051` passed; alert `#76` closed as
+fixed with no dismissal metadata. PR #67 integration/validation remains the
+separate acceptance gate recorded in Task-101.
 
 Review this decision when Puppeteer raises its Node minimum, TowerScout changes
 browser acquisition tooling, Node 22 leaves maintenance, or a new critical/high
