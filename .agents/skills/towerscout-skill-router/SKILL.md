@@ -7,6 +7,10 @@ description: Use first when a TowerScout task spans multiple skill areas or you 
 
 # TowerScout Skill Router
 
+Current delivery direction is summarized in root `AGENTS.md`; the September 21
+v2 main-based plan supersedes PR #67/launcher sequencing for this delivery
+window.
+
 Use this skill first when a TowerScout task spans several domains, when Codex appears likely to load several release-adjacent skills, or when you want a primary-skill recommendation before work starts.
 
 ## Goal
@@ -20,6 +24,8 @@ Pick one primary TowerScout skill and at most a small number of optional seconda
 3. Add secondary skills only for concrete risk surfaces that are actually touched.
 4. If the task is a release candidate validation, use `towerscout-release-candidate-gate` as primary and treat docs, compliance, container runtime, secret safety, and agent-work hygiene as optional focused secondary checks.
 5. If the task is a normal feature or bug fix, avoid release skills unless release packaging, manifests, user docs, runtime scripts, or compliance artifacts changed.
+6. Reading a skill during an instruction audit does not activate all of its
+   commands. Execute only the workflow selected for the current task.
 
 ## Routing matrix
 

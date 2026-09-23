@@ -3,7 +3,7 @@
 This is the primary high-context guidance file for AI coding agents working in
 the TowerScout repository. It preserves project context, guardrails, and
 workflow guidance while reflecting the current repository state as of
-2026-08-20.
+2026-09-22.
 
 ## Mission and Product Context
 
@@ -21,7 +21,8 @@ The project still carries public-health workflow expectations:
 
 ### Current State
 
-- Sprint 09 is the active planning and execution lane.
+- The September 22-28 Windows deployment delivery week is the active planning
+  and execution lane.
 - Sprint 04 through Sprint 07 are completed background context.
 - Setup Wizard and Settings are implemented in the repo.
 - Detection progress, estimate/detect separation, and cancel handling are implemented in the repo.
@@ -29,7 +30,7 @@ The project still carries public-health workflow expectations:
 - The current release direction remains GitHub-first and engine-aware: GitHub
   Releases are the normal user-facing release control plane, and a release ZIP
   plus pinned GHCR image digest is the preferred package shape.
-- `TASK-071`, `TASK-072`, and `TASK-079` are complete enough to feed the stable-release closeout path. `TASK-075` has implemented the single GPU-capable package direction with CPU-safe default launch; broad GPU acceleration claims remain bounded by workstation-specific NVIDIA validation.
+- `TASK-071`, `TASK-072`, and `TASK-079` are complete enough to feed the stable-release closeout path. The current release contract uses distinct CPU and CUDA 12.6 image/package identities; both remain bounded by profile-specific Windows validation.
 - `TASK-066` has validated the digest-pinned Docker Desktop and Podman package runtime paths for CPU-default launch. Podman evidence is qualified: on the validation host, `podman compose` delegated to Docker Compose v5.1.3, and Podman source-build/base-image pulls from Docker Hub still fail TLS certificate verification inside the Podman VM.
 - `TASK-067` has closed the Flask route-test timeout/isolation gap with pytest timeout safeguards and isolated test runtime paths.
 - PR #46 has merged on `main` as `d148727`, closing the non-mutating Task-087 Gate 3 proof while keeping the helper control plane dark.
@@ -51,12 +52,14 @@ The project still carries public-health workflow expectations:
   high-severity development-transitive `extract-zip` alert `#76`. The finding
   is not shipped in the product runtime. PR #72 passed final-head checks,
   squash-merged as `0cc189c`, passed exact-main CI and Task-087 workflows, and
-  closed alert `#76` as fixed without dismissal. PR #67 integration/exact-head
-  validation remains open.
-- `TASK-087` is paused / reconciliation-gated. Draft PR #67 remains open for
-  reviewer input; new implementation, merge, and candidate publication wait
-  for semantic integration of current `main` and green exact-head checks.
-- `TASK-096` adds user-confirmed Exit/Stop. `TASK-097` qualifies Podman CPU/GPU.
+  closed alert `#76` as fixed without dismissal. That security task is
+  complete on accepted `main`; its former downstream PR #67 gate is
+  superseded, not passed.
+- ADR-021 selects accepted `main` at `9276084d...` for the September 21 v2
+  Windows deployment effort. PR #67 and Task-087 launcher work are preserved
+  but deferred and are not release gates.
+- `TASK-096` browser Exit/helper work is deferred. `TASK-097` qualifies Podman
+  CPU/GPU through the existing command-based package path.
 - Docker CPU, Docker GPU, Podman CPU, and Podman GPU are required final-package
   profiles, subject to their documented prerequisites.
 - `TASK-089` remains owner-gated. Do not change `cdcai/TowerScout` until the
@@ -127,19 +130,18 @@ adoption:
    eight-alert torch residual baseline.
 5. Preserve the passed PR #72/default-branch security result: squash commit
    `0cc189c`, green exact-main checks, and alert `#76` fixed without dismissal.
-6. Keep Draft PR #67 reviewable; merge current `main` into that branch, resolve
-   shared files semantically, and require its new exact-head matrix to pass.
-7. Resume Task-087 from its preserved checkpoint only after step 6 passes,
-   then complete guided Google/Azure provider TLS work on Docker and
-   Podman; preserve the command fallback and satisfy its remaining gates.
-8. Complete Task-096 Exit/Stop and Task-097 Podman CPU/GPU qualification.
-9. Qualify Docker CPU, Docker GPU, Podman CPU, and Podman GPU before freeze.
-10. Use `v0.1.3-rc.N` for immutable fork-side candidates; do not publish
+6. Preserve PR #67 and Task-087 history without merging, reconciling,
+   extending, resuming, or repeatedly reviewing that work this week.
+7. Execute W00-W10 in the September 21 v2 plan through the existing
+   PowerShell/Compose package path.
+8. Qualify Docker CPU, Docker NVIDIA, Podman CPU, and Podman NVIDIA before
+   making a full support claim; require both models on the selected device.
+9. Use `v0.1.3-rc.N` for immutable fork-side candidates; do not publish
    `v0.1.3` final automatically.
-11. Keep Task-089 preparation reversible and cdcai unchanged.
-12. Select the official cdcai tag/title before the official build and execute
+10. Keep Task-089 preparation reversible and cdcai unchanged.
+11. Select the official cdcai tag/title before the official build and execute
    adoption only after owner qualification and approval.
-13. Treat Task-058/059 as conditional stretch work behind all required gates.
+12. Treat Task-058/059 and Task-096 as deferred work behind all required gates.
 
 `TASK-026` CPU optimization and `TASK-029` multi-provider fallback remain follow-on backlog work unless release evidence makes them release-critical.
 
@@ -578,9 +580,9 @@ maintained Node 22 line in CI and the Docker frontend stage. Preserve that
 alignment and repeat the build, CommonJS Puppeteer, browser-workflow, and
 container checks when changing Node or Puppeteer.
 
-Current CI has per-job timeout limits and pytest timeout safeguards. Route-test imports are isolated from real local `.env`, logs, uploads, sessions, and cache paths through the test bootstrap. Full asset-backed package validation remains manual/advisory unless a later `TASK-067`/`TASK-074` ratchet promotes a bounded package smoke gate.
+Current CI has per-job timeout limits and pytest timeout safeguards. Route-test imports are isolated from real local `.env`, logs, uploads, sessions, and cache paths through the test bootstrap. Full asset-backed package validation remains a W09/W10 Windows qualification responsibility unless a later bounded CI ratchet is explicitly selected.
 
-Do not describe container release validation as fully automated CI coverage yet. CI can attempt to build the image on `main`, and the manual GHCR publish workflow can publish a digest-pinned image, but full asset-backed release validation remains a manual Task-088 closeout step. `TASK-066` validated the digest-pinned Docker Desktop and Podman package-runtime paths, but Podman support language must distinguish package runtime, Docker-Desktop-free Compose-provider coverage, and source-build/base-image TLS behavior.
+Do not describe container release validation as fully automated CI coverage yet. CI can attempt to build the image on `main`, and the manual GHCR publish workflow can publish a digest-pinned image, but full asset-backed release validation remains a manual Task-091 W09/W10 qualification responsibility. `TASK-066` validated the digest-pinned Docker Desktop and Podman package-runtime paths, but Podman support language must distinguish package runtime, Docker-Desktop-free Compose-provider coverage, and source-build/base-image TLS behavior.
 
 ## Container And Deployment Strategy
 
@@ -602,9 +604,8 @@ The current product direction is:
 - keep local source clone/build as a developer/support path, not the preferred normal-user install path
 - package normal users through a GitHub Release ZIP with `compose.yaml`, `.env` template, scripts, docs, manifest/checksums, and a pinned GHCR image digest; reserve OCI image archives for restricted-network fallback
 - manage large model/data assets through the release asset bundle contract, extracted package-local `assets/` layout, import helper, readiness checks, and manifest hash verification
-- preserve the single GPU-capable package direction with CPU-safe default
-  launch; GPU profiles still require selected-engine NVIDIA validation and
-  readiness `selected_device=cuda`
+- preserve distinct CPU and CUDA 12.6 package/image identities; GPU profiles
+  require actual YOLO and EfficientNet CUDA work, not only a readiness label
 - clarify TowerScout's application license suitability separately from runtime-tooling choice
 
 ### Post-TASK-025 Guardrails
@@ -692,10 +693,11 @@ Current preferred project artifacts:
 - do not describe setup/settings as future work
 - do not ignore filesystem-session implications in deployment work
 - do not treat config persistence as only a documentation concern; it is an active runtime requirement
-- before runtime-dependent work, tell the user whether Docker Desktop, Podman,
-  or both are required and ask them to start the runtime
-- wait for confirmation before runtime validation because Docker Desktop may
-  require a workstation restart
+- before runtime-dependent work, state the selected engine/profile and verify
+  its observed availability
+- honor an execution plan authorized in the current session without asking
+  again for every routine validation command; record unavailable
+  runtimes/restarts as blockers
 - planning, documentation, and static source review do not require runtime
   startup
 
@@ -713,7 +715,9 @@ The original document contained useful Git guidance. The following remains a rea
 
 - use feature/fix/docs/refactor style branch names when preparing reviewable work
 - `main` is the only long-lived integration branch
-- start new work from the latest `main`
+- use the accepted baseline recorded for the current delivery; future work
+  normally starts from the latest `main` unless qualification has frozen a
+  source revision
 - open PRs against `main` by default
 - use stacked PRs only when a child branch has a real dependency on unmerged parent work
 - see `.github/instructions/github-repo-management.instructions.md` for the standing repo workflow policy
@@ -785,19 +789,18 @@ The original guidance benefited from explicitly naming recent completed work. Th
    non-blocking torch residuals and qualified ML pair.
 4. Preserve the passed PR #72/default-branch security result at `0cc189c`,
    including alert `#76` fixed without dismissal.
-5. Keep PR #67 open for reviewer input, merge current `main` into its feature
-   branch, resolve semantically, and require green checks at the new exact head.
-6. Resume Task-087 only after step 5 passes, then complete its implementation
-   and validation; keep signing and candidate
-   inclusion behind Task-087's remaining qualification gates.
-7. Complete Task-096 Exit/Stop and Task-097 Podman CPU/GPU qualification.
-8. Qualify Docker CPU/GPU and Podman CPU/GPU.
-9. Start Task-058 early only when all required gates, including Task-101,
+5. Preserve PR #67 and Task-087 evidence while keeping their launcher work
+   deferred outside this delivery window.
+6. Execute the v2 W00-W10 main-based plan, beginning with an early real package
+   attempt and evidence-selected bounded fixes.
+7. Qualify Docker CPU/NVIDIA and Podman CPU/NVIDIA with actual model execution
+   and independent-host reproduction.
+8. Start Task-058 only through a future scope decision after required gates
    pass; keep Task-059 behind
    Task-058 acceptance and schedule margin.
-10. Complete owner-runnable qualification, documentation, recovery, governance,
+9. Complete owner-runnable qualification, documentation, recovery, governance,
    and handoff work.
-11. Select the official cdcai identity, build it consistently, and execute
+10. Select the official cdcai identity, build it consistently, and execute
    Task-089 only after owner approval.
 
 ### Practical Agent Takeaway
@@ -805,7 +808,8 @@ The original guidance benefited from explicitly naming recent completed work. Th
 An agent should leave with the following understanding:
 
 - the app is no longer missing setup/settings
-- the repo has a merged Docker-compatible / OCI container baseline and local launcher MVP
+- the repo has a merged Docker-compatible / OCI container baseline and an
+  existing PowerShell/Compose release path
 - the release path uses a digest-pinned GHCR image and package-local asset import flow
 - `v0.1.2` remains immutable while new work uses `v0.1.3-rc.N` candidates
 - Docker CPU/GPU and Podman CPU/GPU are required final-candidate profiles
@@ -813,15 +817,15 @@ An agent should leave with the following understanding:
 - the non-mutating Task-087 Gate 3 proof is merged and the Tasks 090/098/099
   scoped dependency-security gates passed; Task-101's PR #72/default-branch
   security gate also passed and alert `#76` is fixed without dismissal
-- PR #67 remains open for reviewer input and must receive current `main` plus
-  green exact-head validation before Task-087 resumes
+- PR #67 and Task-087 launcher work are preserved but deferred and are not
+  release prerequisites
 - filesystem sessions and disk-backed config writes are real architectural constraints
 - Google and Azure workflows are both important
 - outbreak-investigation workflows are the highest-value legacy surface to preserve
 - Tasks 090, 098, and 099 remain complete; Task-099 owns the August dependency
   disclosure evidence without reopening the earlier historical records
-- Task-101 uniquely owns alert `#76` and its downstream PR #67 reconciliation;
-  do not rewrite Task-099's dated closeout
+- Task-101 completed alert `#76` remediation on accepted `main`; its former PR
+  #67 gate is superseded without rewriting Task-099's dated closeout
 - Task-089 execution remains blocked until final qualification and explicit
   cdcai-owner adoption approval
 
@@ -832,4 +836,5 @@ An agent should leave with the following understanding:
 - `.agent_work/current-tasks.md`
 - `.agent_work/task-backlog.md`
 - `.agent_work/completed-tasks.md`
-- Legacy split guidance under `AGENTS.md/` was removed after current-value context was consolidated here and in `.github/instructions/`.
+- Root `AGENTS.md` is the short current-direction pointer; detailed context is
+  maintained here and in `.github/instructions/`.

@@ -37,6 +37,11 @@ Use exactly one TowerScout skill as the primary skill for a task. Add secondary 
 5. Check `torch.load` trust boundaries and whether `weights_only=True` is viable for any touched load path.
 6. Confirm debug-image capture remains opt-in.
 7. Confirm export/restore/manual tower semantics are not affected.
+8. Inspect `tests/conftest.py`: pytest patches model loading, so mocked unit or
+   integration success is not real-model evidence.
+9. Historical `/getobjectscustom` fixture parity is YOLO-only. A release claim
+   requires external production-loader execution with positive EfficientNet
+   candidates/batches and observed YOLO/EN devices, plus the live app workflow.
 
 ## Inspect commands (read-only)
 
@@ -59,3 +64,6 @@ python -m pytest tests/integration/test_end_to_end.py -q -p no:cacheprovider
 ## Output format
 
 Return ML files changed, behavior-sensitive findings, model/asset path findings, CPU/GPU compatibility notes, tests run, and validation gaps.
+
+Do not report a CPU/GPU profile as qualified from configured/readiness labels,
+mocked tests, or the historical custom-image count alone.

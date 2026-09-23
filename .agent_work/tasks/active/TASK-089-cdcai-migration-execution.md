@@ -8,10 +8,11 @@ but do not change cdcai until explicit owner adoption approval
 **Target Sprint**: Standing handoff lane through October 30, 2026
 **Created**: 2026-07-08
 **Owner**: TowerScout release owner / active agent support with cdcai maintainer participation
-**Depends On**: completed `TASK-088`; Tasks 090, 098, 087, 096, and 097; final
-candidate qualification; pilot feedback review; official cdcai tag/title
-selection; explicit cdcai-owner adoption approval; execution-time repository
-and package permissions; approved durable backlog destination
+**Depends On**: completed Tasks 088, 090, 098, 099, and 101; active Tasks 091,
+092, 093, 095, and 097; final-candidate qualification; pilot feedback review;
+official cdcai tag/title selection; explicit cdcai-owner adoption approval;
+execution-time repository and package permissions; approved durable backlog
+destination
 
 ## Objective
 
@@ -39,15 +40,21 @@ This override controls wherever older historical entries below conflict:
 
 ## Canonical Planning Sources
 
-- `.agent_work/context/status/Handoff-Planning/2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md`
+- `.agent_work/current-tasks.md`
+- `.agent_work/decisions/021-main-based-windows-deployment-deadline.md`
+- `.agent_work/context/status/Reprioritization Effort/2026-09-21-windows-deployment-prioritization-v2.md`
+- `.agent_work/context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2.md`
 - `.agent_work/context/status/Handoff-Planning/PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`
+- `.agent_work/context/status/Handoff-Planning/2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md` (dated background)
 - `.agent_work/context/archive/2026-07/Handoff-Planning/TowerScout-Implementation-Strategy.md` (historical release/migration runbook)
 - `.agent_work/context/archive/2026-07/Handoff-Planning/TowerScout-Handoff-Review-Comprehensive-Analysis.md` (historical evidence base)
 
-The pilot/adoption plan controls timing and authorization. The historical
-runbook still supplies technical migration guardrails, but its July dates,
-immediate-execution sequence, and `v0.1.0` commands are superseded. `TASK-089`
-tracks preparation now and owner-approved execution later.
+The active board, ADR-021, and v2 documents control delivery dependencies. The
+pilot/adoption plan controls adoption timing and authorization. The dated
+roadmap and historical runbook still supply background and migration guardrails,
+but their earlier dependency sequence, July dates, immediate-execution steps,
+and `v0.1.0` commands are superseded. `TASK-089` tracks preparation now and
+owner-approved execution later.
 
 ## Requirements (EARS Notation)
 

@@ -35,7 +35,11 @@ Use this as the primary skill for JavaScript source/build/bundle changes. If the
 2. Treat `webapp/js/towerscout.js` as generated build output.
 3. If frontend source changes, rebuild the bundle intentionally and review the generated diff.
 4. If `webapp/build.js` or `MODULE_ORDER` changes, treat it as load-order sensitive.
-5. If `Detection_detections` or `Tile_tiles` changes, run Stage 0 validation.
+5. If `Detection_detections` or `Tile_tiles` changes, run the maintained focused
+   frontend contracts. The legacy Stage 0 Bash mutation-count wrapper is not a
+   current passing gate unless separately repaired and revalidated.
+6. `node webapp/build.js` regenerates JavaScript; it does not regenerate the
+   manually maintained documentation HTML.
 
 ## Inspect commands (read-only)
 
@@ -61,11 +65,13 @@ git diff -- webapp/js/towerscout.js
 ## Validation commands
 
 ```bash
-npm run test:stage-0
 node tests/integration/test_task_064_provider_state_manager.js
 node tests/frontend/test_global_contract.js
 node tests/frontend/test_debug_logging_contract.js
 ```
+
+Run shell-specific checks in their actual supported shell; do not infer a pass
+from executing a different shell.
 
 ## Output format
 

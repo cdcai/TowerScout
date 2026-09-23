@@ -2,21 +2,36 @@
 
 This repository uses a `main`-only integration workflow with short-lived task branches.
 
+The current delivery effort is defined by the September 21 v2 Windows
+deployment [prioritization](.agent_work/context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-prioritization-v2.md)
+and [work plan](.agent_work/context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md).
+PR #67 and the launcher redesign are preserved but deferred and are not release
+prerequisites.
+
 ## Quick Start
 
-1. Start from the latest `main`.
+1. Start from the accepted `main` revision selected for the task; freeze that
+   revision during release-candidate qualification.
 2. Create a focused task branch.
 3. Make bounded changes for one task or one task phase.
 4. Commit intentional checkpoints as stable slices land.
 5. Open a PR against `main`.
 6. Squash merge after validation and approval.
 
-Example:
+For normal task work, update `main` before branching:
 
 ```bash
-git checkout main
-git pull origin main
-git checkout -b feature/task-025-docker-baseline
+git switch main
+git pull --ff-only origin main
+git switch -c feature/task-XXX-short-name
+```
+
+For release qualification, branch from the accepted SHA recorded by the task
+instead of advancing the frozen baseline:
+
+```bash
+git fetch origin
+git switch -c chore/task-XXX-qualification <accepted-main-sha>
 ```
 
 ## Branch Naming

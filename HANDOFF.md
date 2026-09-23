@@ -1,6 +1,6 @@
 # TowerScout Handoff Guide
 
-**Last Updated**: August 20, 2026
+**Last Updated**: September 22, 2026
 **Operational Closeout**: October 30, 2026
 **Hard Project End**: October 31, 2026
 
@@ -19,7 +19,26 @@ The cdcai owner selected a fix-first path:
   adoption approval.
 - Select the official cdcai tag and display title before the official build.
 
-The canonical forward plan is:
+## Immediate Delivery Direction
+
+Qualify a new Windows 11 release from accepted `main` at
+`9276084d91807906c53e00060670692b27e38483` using the existing
+PowerShell/Compose package path. PR #67 and the Task-087 launcher redesign are
+preserved but deferred: do not merge, reconcile, extend, or repeatedly review
+them as prerequisites for deployment.
+
+Read in this order:
+
+1. `.agent_work/context/status/Reprioritization Effort/2026-09-21-windows-deployment-prioritization-v2.md`
+2. `.agent_work/context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2.md`
+3. `.agent_work/context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2-verification.md`
+4. `.agent_work/context/status/Reprioritization Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md`
+
+Task status comes from `.agent_work/current-tasks.md`. Full acceptance requires
+real YOLO and EfficientNet inference on Docker CPU, Docker NVIDIA, Podman CPU,
+and Podman NVIDIA, repeated on independent suitable Windows computers.
+
+The earlier October roadmap is retained as dated context:
 
 - `.agent_work/context/status/Handoff-Planning/2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md`
 
@@ -37,12 +56,11 @@ The current Pilot/cdcai hold is:
   alert `#74` closed without dismissal, and its August 11 closeout inventory
   contained the eight documented torch residuals
 - Task-101 high-severity development-transitive `extract-zip` remediation and
-  release-gate disposition: PR #72 squash-merged as `0cc189c`, exact-main checks
-  passed, and alert `#76` closed as fixed without dismissal; PR #67 semantic
-  integration and exact-head validation remain before Task-087 resumes
-- Task-087 Google/Azure guided provider TLS repair on Docker/Podman: paused /
-  reconciliation-gated while Draft PR #67 remains open for reviewer input
-- Task-096 user-confirmed Exit/Stop on Docker/Podman
+  release-gate disposition: complete on accepted `main`; its former PR #67
+  integration gate is superseded, not passed
+- Task-087 / PR #67 launcher and guided-repair redesign: preserved and deferred
+- Task-096 browser Exit/helper redesign: deferred; use tested command-based
+  lifecycle controls
 - Task-097 Podman CPU/GPU final-path qualification
 - Docker CPU, Docker GPU, Podman CPU, and Podman GPU qualification
 - owner-runnable qualification, documentation, recovery, governance, backlog,
@@ -54,7 +72,7 @@ Task-058/059 are conditional stretch work and cannot displace required scope.
 ## Reading `.agent_work`
 
 1. `.agent_work/current-tasks.md`
-2. canonical roadmap linked above
+2. the four v2 records under `.agent_work/context/status/Reprioritization Effort/`
 3. Pilot/cdcai plan linked above
 4. `.agent_work/task-backlog.md`
 5. `.agent_work/requirements.md`
@@ -71,25 +89,23 @@ The July 23 code-scanning baseline is recorded in
 `.agent_work/context/analysis/GITHUB-CODE-SCANNING-READINESS-ASSESSMENT-2026-07-23.md`.
 Task-098's merged closeout and the eight documented medium/low torch residuals
 are recorded in
-`.agent_work/tasks/active/TASK-098-dependency-security-remediation.md`.
+`.agent_work/tasks/completed/TASK-098-dependency-security-remediation.md`.
 Task-099 records the completed post-closeout advisory remediation, including
 the later js-yaml npm audit finding and root graph reconciliation, in
 `.agent_work/tasks/active/TASK-099-august-dependency-advisory-follow-up.md`.
-Alert `#76` opened after that closeout and is owned by active Task-101 in
+Alert `#76` opened after that closeout and its completed remediation record is
 `.agent_work/tasks/active/TASK-101-extract-zip-advisory-release-gate.md`.
-Task-087 remains preserved and reviewable in PR #67, but new implementation,
-merge, and candidate publication wait for semantic integration of current
-`main` into PR #67 and green checks at that branch's new exact head. PR #72 and
-alert `#76` default-branch reconciliation already passed. Its other package,
-signing, provider/recovery, Podman, and representative managed-endpoint gates
-remain closed.
+Task-087 and PR #67 remain preserved historical work. They receive no new
+implementation, reconciliation, merge, or review work in the current delivery
+window. Package, signing, provider/recovery, Podman, and managed-endpoint gates
+are evaluated against the main-based candidate instead.
 
 ## Runtime And Package Model
 
 Normal release delivery uses:
 
 - GitHub Release control package
-- digest-pinned GHCR image
+- distinct digest-pinned CPU and CUDA 12.6 GHCR images
 - checksummed shared Model & Data Package
 - Docker- and Podman-compatible Compose paths
 
@@ -106,14 +122,11 @@ Future candidates require new evidence.
 
 ## Runtime Startup Coordination
 
-Before runtime-dependent work, the active agent must:
-
-1. Tell the user whether Docker Desktop, Podman, or both are required.
-2. Ask the user to start the required runtime.
-3. Wait for confirmation before validation.
-4. Allow time for a computer restart when Docker Desktop requires it.
-
-Static review, planning, and documentation work do not require runtime startup.
+Before runtime-dependent work, state the engine/profile and verify its observed
+availability. When the current session grants W00-W10 implementation scope,
+routine validation may continue without repeated confirmation for each command.
+An unavailable runtime or required restart is recorded as a blocker while safe
+static/planning work continues.
 
 ## Safety And Custody
 

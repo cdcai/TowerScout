@@ -42,7 +42,7 @@ Read files that exist among:
 - `SOURCE.txt`
 - `SBOM.txt`
 - `release-manifest.v1.json`
-- `docs/release-asset-bundle-contract.md`
+- `docs/release/release-asset-bundle-contract.md`
 - `.github/workflows/container-publish.yml`
 
 ## Review checklist

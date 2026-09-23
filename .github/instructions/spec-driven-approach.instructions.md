@@ -52,7 +52,7 @@ Use only for concise artifacts such as changelogs and pull request descriptions.
 **Context**: [Current state, requirements, and reference to prior steps]
 **Decision**: [Approach chosen and rationale, referencing the Decision Record if applicable]
 **Execution**: [Steps taken with parameters and commands used. For code, include file paths.]
-**Output**: [Complete and unabridged results, logs, command outputs, and metrics]
+**Output**: [Sanitized results, bounded command excerpts, and relevant metrics; keep sensitive/raw evidence in its approved private location]
 **Validation**: [Success verification method and results. If failed, include a remediation plan.]
 **Next**: [Automatic continuation plan to the next specific action]
 ```
@@ -160,7 +160,7 @@ For use in pull request summaries or executive summaries.
 **Critical Constraint:**
 
 - **Do not proceed to implementation until design and plan are complete and validated.**
-- **Always ask for approval before moving to the IMPLEMENT phase for each task.**
+- **Honor the current session's authorized plan and scope when moving to the IMPLEMENT phase. Ask only when a material scope expansion, destructive action, publication, account change, or other separately controlled action requires new authority.**
 
 
 ### **Phase 3: IMPLEMENT**

@@ -48,6 +48,8 @@ Prefer small, reversible ratchets:
 6. `continue-on-error` is justified for unstable or historical-drift checks.
 7. Release-critical checks are candidates for blocking status.
 8. Artifact upload does not include secrets, raw provider outputs, or excessive generated files.
+9. Do not install unrelated tooling, promote unstable legacy suites, or run
+   every TowerScout skill as a prerequisite for a focused CI change.
 
 ## Inspect commands (read-only)
 

@@ -7,6 +7,9 @@ description: 'Primary skill for TowerScout .agent_work and task-tracking hygiene
 
 # TowerScout Agent Work Hygiene
 
+Use root `AGENTS.md` and `.agent_work/current-tasks.md` for the current
+main-based delivery direction.
+
 Use this skill when touching `.agent_work`, task files, sprint plans, backlog/current/completed task docs, context analysis/status/guides/archive, decisions, or PR evidence summaries.
 
 ## Goal
@@ -40,6 +43,10 @@ Use this as the primary skill for `.agent_work` or planning changes. Use it as a
 4. Do not put raw logs, screenshots, JSON, TXT, or PNG evidence directly in `context/status/`.
 5. Archive superseded status/analysis/guides under `context/archive/` with date scope.
 6. Redact provider keys, local AOIs, raw browser-network data, screenshots, and support logs unless explicitly approved.
+7. Deferred work remains deferred; do not move it to completed merely to make
+   a structural checker pass.
+8. The quick wrapper is advisory. Require and report the actual exit/result of
+   `python .agent_work/scripts/validate_agent_work.py`.
 
 ## Inspect commands (read-only)
 

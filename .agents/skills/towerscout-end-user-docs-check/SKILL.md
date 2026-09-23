@@ -29,7 +29,7 @@ Read relevant files that exist among:
 - `README.md`
 - `docs/`
 - release package quick start and user guide files
-- `docs/release-asset-bundle-contract.md`
+- `docs/release/release-asset-bundle-contract.md`
 - `scripts/launch.ps1`
 - `scripts/*.cmd`
 - `compose.yaml`
@@ -54,6 +54,10 @@ git diff -- README.md docs scripts compose.yaml .env.example
 python .agents/skills/towerscout-end-user-docs-check/scripts/check_doc_commands.py . docs README.md
 ```
 
+This checker is advisory and does not prove that links, flags, or a downloaded
+package work. Inspect findings and validate changed commands in their real
+shell/runtime.
+
 ## Build/update generated files (mutating)
 
 No standard mutating command. Do not regenerate release packages while doing a docs-only review unless the task explicitly requires validating docs against a fresh package.
@@ -61,6 +65,10 @@ No standard mutating command. Do not regenerate release packages while doing a d
 ## Validation commands
 
 When docs are being validated against a runtime, choose only the relevant checks.
+
+`status.cmd` may initialize package configuration; it is not a pure read-only
+inspection. Runtime probes may also write logs/state, so use an owned test
+installation.
 
 ```bash
 scripts\status.cmd -Engine podman -Port 5000

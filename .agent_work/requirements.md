@@ -1,10 +1,10 @@
 # TowerScout Requirements
 
-**Last Updated**: August 20, 2026
+**Last Updated**: September 22, 2026
 **Current Planning Horizon**: October 31, 2026 hard project end
 **Operational Closeout**: October 30, 2026
-**Canonical Roadmap**:
-[`2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md`](./context/status/Handoff-Planning/2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md)
+**Current Delivery Requirements**:
+[`2026-09-21-windows-deployment-prioritization-v2.md`](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-prioritization-v2.md)
 
 This document records the current product, release, and handoff requirements.
 The broader prototype-era requirements were archived at
@@ -74,35 +74,37 @@ Acceptance:
 
 ## Required Fix And Runtime Requirements
 
-### TLS-001: Guided Provider TLS Repair
+### TLS-001: Provider TLS Repair
 
-WHEN Google Maps or Azure Maps validation encounters a repairable managed-network
-certificate trust failure, THE SYSTEM SHALL offer a support-safe guided repair
-while retaining the command-based fallback.
+WHEN Google Maps or Azure Maps validation encounters a repairable
+managed-network certificate trust failure, THE SYSTEM SHALL provide a
+support-safe command-based repair that preserves previously working trust.
 
 Acceptance:
 
 - Google and Azure are supported.
 - Docker and Podman are supported.
-- The helper remains loopback-only, token-protected, allowlisted, and free of
-  arbitrary command execution.
+- A candidate bundle is verified before active configuration promotion.
+- Failed or concurrent repair does not destroy the previously working bundle
+  or unrelated environment configuration.
 - Provider keys, helper credentials, certificate details, and raw responses are
   not exposed in logs, UI, or evidence.
 - Managed-network validation passes before candidate inclusion.
 
 ### UX-EXIT-001: User-Initiated Stop
 
-WHEN a user selects Exit/Stop TowerScout and confirms the action, THE SYSTEM
-SHALL stop and remove the TowerScout application container without deleting
-named volumes.
+WHEN a user runs the documented stop command for the selected engine, THE
+SYSTEM SHALL stop and remove the TowerScout application container without
+deleting named volumes.
 
 Acceptance:
 
 - Docker and Podman are supported.
-- The UI does not receive unrestricted runtime control.
 - Clear success, failure, and manual fallback guidance is provided.
 - Persistent configuration, assets, logs, sessions, and user data follow the
   documented lifecycle contract.
+- A browser Exit/helper redesign remains deferred outside the current delivery
+  window.
 
 ### RUNTIME-001: Final Runtime Matrix
 
@@ -121,7 +123,8 @@ Acceptance:
   profile.
 - Podman validation uses an approved non-Docker-Desktop Compose provider.
 - Podman GPU validates WSL2/NVIDIA CDI prerequisites and CUDA readiness.
-- Provider TLS repair and Exit/Stop behavior are exercised on both engines.
+- Command-based provider TLS repair and stop/relaunch behavior are exercised on
+  both engines where relevant to the claimed environment.
 - Any remaining limitation is documented and explicitly accepted before
   freeze.
 
@@ -184,7 +187,7 @@ Current result:
 - Dependabot alert `#76` opened after that closeout for high-severity
   development-transitive `extract-zip==2.0.1` through
   `puppeteer@24.19.0 -> @puppeteer/browsers@2.10.8 -> extract-zip`.
-- Task-101 is the active unique follow-up. Its validated remediation uses Node
+- Task-101 is the completed unique follow-up. Its validated remediation uses Node
   `>=22.12.0` and exact `puppeteer@25.8.0` /
   `@puppeteer/browsers@3.2.1`, removes `extract-zip` from the lock and installed
   graphs, and restores a clean blocking frontend audit. The vulnerable path was
@@ -193,9 +196,9 @@ Current result:
   `820b649`. PR #72 squash-merged as `0cc189c`; exact-main CI/CD run
   `32310281115` and Task-087 run `32310281051` passed, and alert `#76` closed as
   fixed without dismissal.
-- Task-087 review may continue, but new implementation, merge, and candidate
-  publication remain paused until the accepted change is reconciled into PR
-  #67 and that branch's required exact-head matrix passes.
+- Task-101's security remediation is complete on accepted `main`. ADR-021
+  supersedes its former downstream PR #67 integration gate; the gate did not
+  pass and is not required for the main-based delivery.
 
 ## Qualification And Handoff Requirements
 
@@ -242,15 +245,23 @@ outgoing developer after October 31.
 
 ## Schedule And Scope Controls
 
-- August 28 is the latest responsible Task-058 capacity checkpoint, not an
-  earliest start date.
-- September 18 is the internal code-complete target.
-- September 25 is the feature/package/documentation-complete target.
+- September 22-28 is the immediate conditional delivery window for W00-W10.
+- PR #67 and Task-087/096 launcher work remain preserved and deferred.
+- A missed runtime or independent-host gate changes the forecast or qualified
+  subset; it does not relax acceptance.
+- Day 1 completes W00 direction alignment, attempts W01 package installation,
+  starts W05 fixture/probe reuse, and records a go/at-risk/blocked forecast.
+- Day 3 requires a corrected Docker/Podman rehearsal plus real combined-model
+  evidence or a revised forecast.
+- Day 4 freezes exact source, images, ZIPs, assets, fixtures, and tools only if
+  the evidence permits; Days 5-7 are reserved for independent reproduction,
+  recovery, and final evidence review.
 - October 9 is the final-candidate freeze target.
 - October 16 is the acceptance target.
 - October 23 is the owner-operated handoff rehearsal target.
 - October 30 is operational closeout.
 
-Task-058 may start early only after Tasks 090, 098, 099, 101, 087, 096, and 097
-have passed their gates. Task-059 remains optional and may start only after
-Task-058 acceptance without threatening required milestones.
+Task-058/059 architecture work is deferred beyond the immediate delivery
+window. A future owner may select it only after the required deployment,
+qualification, recovery, documentation, and handoff gates are protected;
+Task-087/096 completion is not a prerequisite for the current release path.

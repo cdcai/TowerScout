@@ -63,7 +63,6 @@ node webapp/build.js
 node tests/integration/test_task_064_provider_state_manager.js
 node tests/frontend/test_global_contract.js
 node tests/frontend/test_debug_logging_contract.js
-npm run test:stage-0
 ```
 
 Browser validation, when needed:
@@ -72,6 +71,10 @@ Browser validation, when needed:
 npm run test:browser:detect:google
 npm run test:browser:detect:azure
 ```
+
+Limit validation to changed provider/state behavior and relevant
+cancellation/first-use cases. This release is not a general provider-state
+redesign.
 
 ## Output format
 

@@ -52,6 +52,10 @@ git diff -- Dockerfile compose.yaml compose.build.yaml .dockerignore .env.exampl
 python .agents/skills/towerscout-ci-quality-ratchet/scripts/summarize_ci_workflow.py .github/workflows/container-publish.yml
 ```
 
+Developer source/Compose checks do not qualify a downloaded control ZIP. For
+release evidence, execute the extracted package with its pinned image and
+verified asset ZIP.
+
 ## Build/update generated files (mutating)
 
 Run only when building or testing runtime images is part of the task.
@@ -63,23 +67,27 @@ docker build -t towerscout:test .
 ## Validation commands
 
 ```bash
-docker compose -f compose.yaml -f compose.build.yaml up -d --build
+docker compose -f compose.yaml -f compose.build.yaml -p <test-owned-project> up -d --build
 curl -f http://localhost:5000/api/health
 curl -f http://localhost:5000/api/readiness
-docker compose -f compose.yaml -f compose.build.yaml down
+docker compose -f compose.yaml -f compose.build.yaml -p <test-owned-project> down
 python -m pytest tests/unit/test_flask_routes.py tests/unit/test_config.py tests/unit/test_container_publish_workflow.py -q -p no:cacheprovider
 ```
 
-If any Compose validation command fails, still run the `docker compose ... down` cleanup command before ending the task.
+Clean up only a test-owned, verified Compose project. Never run unconditional
+`down` against an ambiguous target, and never use `down -v` here.
 
 Windows validation host commands:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch.ps1 -Engine podman -Port 5000 -NoBrowser -TimeoutSeconds 180
+.\start.bat -Engine podman -Port 5000 -NoBrowser -TimeoutSeconds 180
 scripts\status.cmd -Engine podman -Port 5000
 scripts\logs.cmd -Engine podman -Tail 200
-scripts\stop.cmd -Engine podman -Port 5000
+scripts\stop.cmd -Engine podman
 ```
+
+An execution-policy bypass may diagnose a permissive development host, but it
+does not qualify a managed endpoint's actual policy/signing path.
 
 ## Output format
 

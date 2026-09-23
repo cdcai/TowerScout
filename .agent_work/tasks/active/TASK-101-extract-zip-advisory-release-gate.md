@@ -1,12 +1,13 @@
 # TASK-101: extract-zip Advisory Assessment And Release-Gate Disposition
 
-**Status**: IN_PROGRESS - PR #72 squash-merged as `0cc189c`, alert `#76` closed
-as fixed without dismissal, and exact-main CI passed August 19, 2026; PR #67
-semantic integration and exact-head validation remain open
+**Status**: COMPLETED - PR #72 squash-merged as `0cc189c`, alert `#76` closed
+as fixed without dismissal, and exact-main CI passed August 19, 2026. ADR-021
+supersedes the former downstream PR #67 integration gate; that gate did not
+pass and is not required for the main-based delivery.
 **Priority**: HIGH
 **Type**: C (Security Remediation / CI And Release Gate)
 **Estimated Effort**: 1-2 days plus CI rerun timing
-**Target Sprint**: Sprint 09 immediate gate before Task-087 resumes
+**Target Sprint**: Completed security gate; retained until sprint closeout
 **Owner**: TowerScout release owner / active agent support
 **Created**: August 19, 2026
 **Selected**: August 19, 2026
@@ -14,9 +15,9 @@ semantic integration and exact-head validation remain open
 ## Objective
 
 Remove or otherwise safely disposition the high-severity development-only
-`extract-zip==2.0.1` path, restore TowerScout's deliberately blocking frontend
-dependency-security gate, and provide the compatibility evidence required for
-Task-087 implementation, PR #67 merge, and candidate-package work to resume.
+`extract-zip==2.0.1` path and restore TowerScout's deliberately blocking
+frontend dependency-security gate. This objective was completed on accepted
+`main`; PR #67 integration is preserved as superseded historical scope.
 
 ## Triggering Baseline And Boundary
 
@@ -36,9 +37,10 @@ Task-087 implementation, PR #67 merge, and candidate-package work to resume.
   their historical `PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=false` setting with the
   supported skip-download configuration so browser acquisition is explicit
   and non-redundant.
-- PR #67 review may continue. New Task-087 implementation, package integration,
-  merge, and candidate publication wait for this task. No evidence indicates
-  exploitation, and no end-user runtime vulnerability is claimed.
+- The former downstream PR #67 integration condition is superseded by
+  ADR-021. It was not completed and is retained below only as historical task
+  context. No evidence indicates exploitation, and no end-user runtime
+  vulnerability is claimed.
 
 ## Requirements (EARS Notation)
 
@@ -51,9 +53,9 @@ Task-087 implementation, PR #67 merge, and candidate-package work to resume.
   regression validation.
 - WHEN TowerScout supplies a browser executable separately, THE CI WORKFLOW
   SHALL avoid an unnecessary second Puppeteer-managed browser download.
-- WHEN Task-101 passes its acceptance gates, THE PROJECT SHALL record the
-  evidence and explicitly resume Task-087 without rewriting Task-099's dated
-  completion history.
+- The original requirement to resume Task-087 after downstream PR #67
+  integration is superseded, not satisfied. Task-099's dated completion
+  history remains unchanged.
 
 ## Acceptance Criteria
 
@@ -80,9 +82,9 @@ Task-087 implementation, PR #67 merge, and candidate-package work to resume.
 - [x] GitHub alert `#76` closed as fixed through default-branch dependency
   reconciliation after squash commit `0cc189c`, with no dismissal or
   residual-high exception.
-- [ ] Task-087's tracker and task file are changed from paused to resumed only
-  after the accepted change is semantically integrated into PR #67 and that
-  branch's required exact-head matrix passes.
+- [ ] **SUPERSEDED, NOT PASSED:** Task-087's tracker and task file would have
+  changed from paused to resumed only after PR #67 integration and exact-head
+  validation. ADR-021 removed this condition from the current release path.
 
 ## Dependencies
 
@@ -91,7 +93,8 @@ Task-087 implementation, PR #67 merge, and candidate-package work to resume.
 - A supported Puppeteer 25.x release using `@puppeteer/browsers` 3.x, whose
   upstream implementation no longer depends on vulnerable `extract-zip`
 - A Node 22.12+ maintained baseline across CI and the Docker build stage
-- PR #67 and Task-087 browser-contract workflows for regression validation
+- Historical PR #67 and Task-087 browser-contract workflows used for the
+  completed remediation's regression validation
 
 ## Implementation Plan
 
@@ -107,8 +110,8 @@ Task-087 implementation, PR #67 merge, and candidate-package work to resume.
    Windows helper, and Docker build validation matrix.
 5. Land the remediation as a focused Task-101 change from current `main`,
    pass its exact-head checks, merge it, and reconcile the GitHub alert without
-   dismissal. Then bring the accepted change into PR #67, pass that branch's
-   required exact-head matrix, and only then resume Task-087.
+   dismissal. This completed. The former next step to integrate PR #67 and
+   resume Task-087 was superseded by ADR-021 and was not performed.
 
 ---
 

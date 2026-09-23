@@ -1,7 +1,8 @@
 # TASK-095: Governance And AI-Ready Handoff Foundation
 
-**Status**: IN_PROGRESS - Phase A complete; Phase B continues through handoff
-**Priority**: HIGH
+**Status**: IN_PROGRESS - W00 main-based direction aligned; prior Phase A
+remains complete and Phase B continues through handoff
+**Priority**: CRITICAL
 **Type**: C (Governance / Documentation / Handoff)
 **Estimated Effort**: Phase A 1-2 days; Phase B 2-4 distributed days
 **Target**: Phase A July 23, 2026; Phase B complete by October 30, 2026
@@ -24,8 +25,11 @@ optional AI-assisted development.
   tool-neutral maintenance instructions and backlog context.
 - WHEN old context remains useful only as history, THE PROJECT SHALL archive it
   rather than leave it in active status.
-- BEFORE runtime-dependent validation, THE ACTIVE AGENT SHALL ask the user to
-  start the required Docker Desktop and/or Podman runtime.
+- BEFORE runtime-dependent validation, THE ACTIVE AGENT SHALL state the needed
+  engine/profile and verify observed availability. An unavailable runtime or
+  required restart is recorded as a blocker while safe work continues; an
+  execution plan authorized in the current session does not require repeated
+  confirmation for routine validation.
 
 ## Phase A - Roadmap And Workspace Rebaseline
 
@@ -69,12 +73,68 @@ optional AI-assisted development.
 ## Dependencies
 
 - Project lead and cdcai owner roadmap decisions
-- Tasks 087 and 089
-- Tasks 090-097 as formalized by Phase A, Task-098 added by the July 23
-  code-scanning readiness review, and active Task-101
+- Owner-gated Task-089
+- Active delivery Tasks 091/092/093/097 and completed Tasks 090/098/099/101
+- Preserved, deferred Tasks 087/096 as historical inputs rather than release
+  dependencies
 - Final candidate and handoff evidence
 
 ## Implementation Log
+
+### 2026-09-22 - Main-Based Windows Delivery Direction
+
+**Objective**: Replace the active PR #67 resume gate with the authorized v2
+main-based Windows deployment direction while preserving launcher history.
+
+**Decision**: ADR-021 selects accepted `main` at `9276084d...` for W00-W10.
+PR #67 and Task-087/096 launcher work are deferred and are not release gates.
+
+**Execution**: Added the root direction pointer and decision record; activated
+Tasks 091/092/093/097 for the bounded release work; began reconciling the
+board, backlog, requirements, design, handoff, agent instructions, and
+release-critical repository skills.
+
+**Validation**: PASS. The strict agent-work validator and `git diff --check`
+returned exit 0. All 12 repository skills passed the skill-creator validator
+using the existing project Python environment. The remaining active PR #67 and
+Task-087 references state preservation/deferment rather than an execution gate.
+No PR, branch history, runtime volume, package, or external repository was
+modified by this tracking step.
+
+**Next**: Complete W00 validation and immediately attempt W01 baseline package
+setup using verified real artifacts, or record the exact prerequisite blocker.
+
+### 2026-09-22 - Authoritative V2 Documentation Reconciliation
+
+**Objective**: Verify every document in `Reprioritization Effort` against the
+current agent, task, requirement, design, handoff, and Pilot entrypoints, then
+state the actual Day-1 outcome without treating static review as runtime proof.
+
+**Decision**: Keep the four plan documents authoritative and substantively
+unchanged. Repair only their relocated relative links. Treat today as Day 1:
+finish W00, continue W01 through a real control-package attempt, start W05
+fixture/probe preparation, and retain an `at_risk` forecast until package,
+inference, provider, policy, Podman, and independent-host evidence exists.
+
+**Execution**: Read the prioritization, implementation plan, verification
+record, and post-Day-7 guide in order. Reconciled current navigation, the W01
+CPU-image result, expired September milestones, the former Task-101/PR #67
+gate, Task-058/059 deferral, Pilot-plan task ownership, handoff task links, and
+runtime-confirmation language. Preserved the dated July roadmap and historical
+task logs as history rather than rewriting them.
+
+**Validation**: PASS. The authoritative source and delivery copies have
+matching SHA-256 hashes. Selected current Markdown links resolve. The targeted
+current-entrypoint conflict search returned no matches. The quick workspace
+check, strict `validate_agent_work.py`, and `git diff --check` all returned
+exit 0. No provider key, certificate, private AOI, raw runtime trace, or other
+sensitive evidence was added.
+
+**Next**: Build a strict real control ZIP from the accepted baseline and local
+CPU image, verify the existing asset ZIP contract, and attempt ordinary-account
+Docker CPU setup from an extracted path containing spaces. In parallel, locate
+or obtain permitted W05 fixtures that exercise positive EfficientNet work and
+assign the remaining host/account/policy owners.
 
 ### 2026-08-20 - Task-101 Post-Merge Governance Checkpoint
 

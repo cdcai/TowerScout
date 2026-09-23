@@ -9,14 +9,19 @@ handoff workspace. The organization contract is
 Read in this order:
 
 1. [`current-tasks.md`](./current-tasks.md)
-2. [`context/status/Handoff-Planning/2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md`](./context/status/Handoff-Planning/2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md)
-3. [`context/status/Handoff-Planning/PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`](./context/status/Handoff-Planning/PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md)
-4. [`task-backlog.md`](./task-backlog.md)
-5. [`requirements.md`](./requirements.md)
-6. [`design.md`](./design.md)
-7. [`completed-tasks.md`](./completed-tasks.md)
+2. [`context/status/Reprioritization Effort/2026-09-21-windows-deployment-prioritization-v2.md`](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-prioritization-v2.md)
+3. [`context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2.md`](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md)
+4. [`context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2-verification.md`](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2-verification.md)
+5. [`context/status/Reprioritization Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md`](./context/status/Reprioritization%20Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md)
+6. [`task-backlog.md`](./task-backlog.md)
+7. [`requirements.md`](./requirements.md)
+8. [`design.md`](./design.md)
+9. [`completed-tasks.md`](./completed-tasks.md)
 
-The roadmap controls forward development. The Pilot plan controls the immutable
+The September 21 v2 prioritization and work plan control immediate development
+and acceptance. The verification record states the static-review boundary, and
+the post-Day-7 guide is future planning rather than today's task list. The older
+roadmap remains dated context. The Pilot plan still controls the immutable
 `v0.1.2` package and cdcai hold.
 
 ## Layout
@@ -72,10 +77,11 @@ repository intake workflow.
 
 ## Runtime Coordination
 
-Before Docker- or Podman-dependent work, tell the user which runtime is needed
-and ask them to start Docker Desktop and/or Podman. Wait for confirmation
-before runtime validation because Docker Desktop may require a workstation
-restart.
+Before Docker- or Podman-dependent work, state which runtime/profile will be
+used and verify its observed availability. Honor an execution request
+authorized in the current session without asking again for each routine
+validation step. If a runtime is unavailable or requires a workstation restart,
+record that blocker and continue with safe non-runtime work.
 
 ## Maintenance
 

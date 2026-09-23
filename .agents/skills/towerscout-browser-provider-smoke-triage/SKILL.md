@@ -25,7 +25,8 @@ Use this as the primary skill for live smoke execution or smoke artifact triage.
 
 - `tests/frontend/test_detection_workflow_smoke.js`
 - `tests/frontend/detection-workflow.example.json`
-- `tests/frontend/detection-workflow.local.json` if present
+- an explicitly authorized local/private fixture, when needed; do not print
+  its contents or commit it to the repository
 - `webapp/js/src/providers/*`
 - `webapp/js/src/managers/ProviderStateManager.js`
 - `.agent_work/context/analysis/browser-runs/` summaries, if relevant
@@ -52,15 +53,15 @@ Choose the smallest set that matches the task.
 ```bash
 npm run test:browser:detect:google
 npm run test:browser:detect:azure
-node tests/frontend/test_detection_workflow_smoke.js --provider=azure --cancel-smoke
-node tests/frontend/test_detection_workflow_smoke.js --provider=google --headed
+node tests/frontend/test_detection_workflow_smoke.js --provider=azure --fixture=<authorized-path> --base-url=http://localhost:5000 --cancel-smoke
+node tests/frontend/test_detection_workflow_smoke.js --provider=google --fixture=<authorized-path> --base-url=http://localhost:5000 --headed
 ```
 
 Useful environment variables:
 
 ```bash
 TOWERSCOUT_BASE_URL=http://localhost:5000
-TOWERSCOUT_AOI_FILE=tests/frontend/detection-workflow.local.json
+TOWERSCOUT_AOI_FILE=/approved/private/fixture.json
 TOWERSCOUT_EXECUTABLE_PATH=/path/to/chrome-or-edge
 ```
 
@@ -74,6 +75,8 @@ TOWERSCOUT_EXECUTABLE_PATH=/path/to/chrome-or-edge
 6. Confirm `/api/detection/estimate` returns numeric tile count.
 7. Confirm `/getobjects`, `Detection_detections`, list entries, selected count, and map-visible count meet fixture minimums.
 8. Do not commit raw screenshots, network payloads, or local AOI coordinates unless explicitly approved.
+9. Treat real 429/provider errors as observed behavior to classify; do not
+   automatically label them test flakiness or dump raw responses.
 
 ## Output format
 

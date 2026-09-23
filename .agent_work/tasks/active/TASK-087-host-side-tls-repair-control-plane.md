@@ -1,24 +1,22 @@
 # TASK-087: Host-Side TLS Repair Control Plane
 
-**Status**: PAUSED / RECONCILIATION-GATED - PR #72 and alert `#76` default-branch
-reconciliation passed. Draft PR #67 and the Task-087 evidence recorded there
-remain preserved and reviewable. No new launcher or package
-implementation, merge, or publication proceeds until current `main` is
-semantically integrated into PR #67 and its required exact-head matrix passes.
-Release-facing TLS mutation, UAC/certificate, Chrome/Firefox, live package,
-Podman/GPU, sleep/resume, managed-network, and candidate-inclusion gates remain
-closed
+> **Current disposition (September 22, 2026): DEFERRED.** ADR-021 and the
+> September 21 v2 deployment plan supersede this file's active resume/merge
+> gates. Preserve PR #67, this task, and their evidence; do not reconcile,
+> extend, review, merge, or resume launcher work during the current delivery
+> window. The existing command-based package path is the release path.
+
+**Status**: DEFERRED - PR #67 and its evidence remain preserved; ADR-021 removes
+their reconciliation, merge, and launcher completion from the current release
+path. Historical unpassed gates remain unpassed.
 **Type**: B/C (Runtime Support / Setup UX / TLS Trust)
 **Priority**: HIGH
 **Estimated Effort**: 4-7 days (32-56 hours), plus package validation on a managed TLS-inspected network
-**Target Sprint**: Sprint 09 continuation after the PR #67 reconciliation gate,
-with managed-network completion scheduled by the canonical October roadmap
+**Target Sprint**: None in the current delivery window; future owner decision
 **Created**: 2026-06-29
 **Owner**: TowerScout release owner / active agent support
-**Depends On**: `TASK-086`; completed `TASK-090` investigation and `TASK-098`
-dependency remediation/disposition; active `TASK-101` PR #67 reconciliation
-gate; package launcher/runtime profile; provider setup error classification;
-Docker and Podman CPU/GPU package paths
+**Depends On**: Deferred; no current release dependency. Preserve `TASK-086`
+command-based behavior and historical Task-087 evidence.
 
 ## Canonical Source Note
 

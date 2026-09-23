@@ -1,8 +1,8 @@
 # TowerScout Current Technical Design
 
-**Last Updated**: August 20, 2026
-**Scope**: Fix-first candidate development, four-profile runtime qualification,
-and cdcai handoff through October 2026
+**Last Updated**: September 22, 2026
+**Scope**: Main-based Windows deployment delivery, four-profile runtime
+qualification, and cdcai handoff through October 2026
 **Archived Pre-Rebaseline Design**:
 [`2026-07-23-pre-rebaseline-design.md`](./context/archive/2026-07/2026-07-23-pre-rebaseline-design.md)
 
@@ -59,39 +59,20 @@ wording of the frozen `v0.1.2` pilot.
 
 ## Provider TLS Design Boundary
 
-Task-087 owns guided repair for application-provider TLS:
-
-1. Setup/Settings classifies a repairable Google or Azure certificate trust
-   failure.
-2. The browser may request only an allowlisted repair operation.
-3. A package-local Windows helper binds to loopback and validates origin,
-   short-lived credentials, provider, engine, GPU mode, and confirmation.
-4. The helper calls TowerScout-owned scripts with fixed argument arrays.
-5. The selected engine's persistent config volume receives the combined CA
-   bundle.
-6. TowerScout restarts with the captured runtime profile.
-7. The command-based Task-086 repair remains available.
-
-Podman-machine image-pull/build TLS is outside this application-provider flow
-and belongs to Task-097.
+The current release uses the existing command-based provider TLS workflow.
+W04 may repair only reproduced transactional defects: capture scalar child
+status, build a unique candidate bundle, verify it before configuration
+promotion, preserve prior trust and unrelated environment bytes on failure,
+and exclude concurrent repair. The PR #67 launcher/helper design remains
+preserved and deferred. Podman-machine image-pull/build TLS remains a separate
+runtime/organization concern owned by Task-097 qualification.
 
 ## Exit/Stop Design Boundary
 
-Task-096 will reuse the secured host-control pattern without exposing Docker or
-Podman sockets to the application container.
-
-Expected sequence:
-
-1. User selects Exit/Stop TowerScout.
-2. UI explains that TowerScout will stop while saved data remains.
-3. User confirms.
-4. The host helper validates the request and captured runtime profile.
-5. The package-local stop path runs for Docker or Podman.
-6. The container is removed without deleting named volumes.
-7. The browser shows a final status or manual fallback when the helper cannot
-   complete.
-
-Exact endpoint and lifecycle details remain Task-096 design work.
+The current release uses the package's command-based stop/start/status/logs
+workflow for Docker and Podman. It must address the selected installation,
+preserve all named volumes, and report failure truthfully. Task-096's browser
+Exit/helper design remains deferred with no automatic restart date.
 
 ## Podman Qualification Boundary
 
@@ -151,14 +132,15 @@ The current security boundary is:
    `puppeteer@24.19.0 -> @puppeteer/browsers@2.10.8 -> extract-zip`.
    It is not present in the shipped Python runtime image or normal-user Windows
    package, but the maintained browser-install path can execute it.
-10. Active Task-101 established Node `>=22.12.0`, exact
+10. Task-101 established Node `>=22.12.0`, exact
     `puppeteer@25.8.0`, and `@puppeteer/browsers@3.2.1`. The resulting lock
     and installed graphs contain no `extract-zip`, and the blocking audit is
     clean. Final PR #72 CI/CD run `32308971393` and Task-087 run `32308971392`
     passed at `820b649`; PR #72 squash-merged as `0cc189c`. Exact-main CI/CD
-    run `32310281115` and Task-087 run `32310281051` passed, and alert `#76`
-    closed as fixed without dismissal. PR #67 integration/exact-head validation
-    remains open; Task-087 stays preserved and paused until that gate passes.
+   run `32310281115` and Task-087 run `32310281051` passed, and alert `#76`
+   closed as fixed without dismissal. ADR-021 supersedes the former downstream
+   PR #67 integration gate; no PR #67 reconciliation is required for the
+   main-based delivery, and Task-087 remains preserved and deferred.
 
 ## Task Dependency Flow
 
@@ -175,20 +157,15 @@ TASK-098 dependency-security remediation/disposition gate [COMPLETE]
 TASK-099 August advisory follow-up [COMPLETE]
         |
         v
-TASK-101 extract-zip advisory gate [IN PROGRESS: PR #67 RECONCILIATION]
+TASK-101 extract-zip advisory gate [COMPLETE ON ACCEPTED MAIN]
         |
         v
-TASK-087 universal provider TLS repair [PAUSED / RECONCILIATION-GATED]
+ADR-021 / W00 main-based direction
+        |
+        +--> TASK-087 / PR #67 and TASK-096 [PRESERVED, DEFERRED]
         |
         v
-TASK-096 user Exit/Stop
-        |
-        v
-TASK-097 Podman CPU/GPU qualification
-        |
-        +--> TASK-058 only if schedule and risk gates pass
-        |          |
-        |          +--> TASK-059 only if remaining margin is safe
+TASK-091 + TASK-097 early package and Podman qualification
         |
         v
 TASK-091/092/093 qualification, docs, and recovery
@@ -205,9 +182,10 @@ investigation cannot hide dependency upgrades, CPU/CUDA compatibility work, or
 four-profile regression effort. Task-099 preserved the same governance
 principle for post-closeout disclosures and cleared its scoped dependency-
 security gate on August 11. Task-101 closed alert `#76` through the accepted
-default-branch graph and now owns only downstream PR #67 reconciliation;
-Task-087 remains reviewable but paused until that branch's exact-head gate
-passes.
+default-branch graph and is complete. ADR-021 supersedes its former downstream
+PR #67 gate. Task-087 and PR #67 remain preserved historical work outside this
+delivery window. Task-058 and Task-059 are also deferred beyond W00-W10 and may
+enter a future dependency flow only under separately authorized owner planning.
 
 ## Validation Strategy
 
@@ -222,8 +200,11 @@ security checks where practical. Manual evidence remains required for:
 - asset-backed package smoke
 - owner-operated release and recovery rehearsal
 
-No runtime-dependent validation should begin until the user has been told which
-runtime is needed and has confirmed Docker Desktop and/or Podman is running.
+State the selected engine/profile before runtime-dependent validation and
+verify actual availability. When the current session grants W00-W10
+implementation scope, routine checks may continue without repeated approval;
+unavailable engines or restart requirements are recorded as blockers while safe
+non-runtime work continues.
 
 ## Safety Boundaries
 

@@ -1,14 +1,18 @@
 # TowerScout Pilot Feedback And cdcai Adoption Plan
 
 **Decision Date**: July 10, 2026; rebaselined July 23, 2026
-**Last Reconciled**: August 20, 2026
+**Last Reconciled**: September 22, 2026
 **Status**: CURRENT for the Pilot Package and cdcai hold
 **Forward Development Plan**:
-[`2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md`](./2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md)
+[`2026-09-21-windows-deployment-hardening-v2.md`](../Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md)
 **Pilot Baseline**: validated fork-side `v0.1.2`
 **Pilot Distribution**: completed July 13, 2026
 **Operational Closeout**: October 30, 2026
 **Hard Project End**: October 31, 2026
+
+The pilot and cdcai hold remain unchanged. For current development, PR #67 and
+Task-087/096 launcher work are preserved but deferred and are not dependencies
+of the main-based package qualification.
 
 ## Pilot Decision
 
@@ -55,8 +59,9 @@ Do not rebuild, rename, replace, or silently modify these assets.
 The cdcai owner selected the fix-first path:
 
 1. Preserve `v0.1.2`.
-2. Complete required security, TLS, Exit/Stop, Podman, qualification,
-   documentation, and handoff work in the fork.
+2. Execute the main-based W00-W10 deployment, qualification, documentation,
+   and handoff work through the existing command-based package path. PR #67
+   launcher/TLS-control and Task-096 browser Exit work remain deferred.
 3. Publish immutable candidates as `v0.1.3-rc.N`.
 4. Continue to accept pilot feedback; blocker feedback takes priority.
 5. Freeze a final candidate only after required gates pass.
@@ -64,24 +69,14 @@ The cdcai owner selected the fix-first path:
 7. Select the final cdcai tag and display title before the official build.
 8. Execute Task-089 only after explicit owner adoption approval.
 
-The original July Task-087 resume gate required Tasks 090/098 to pass. This
-does not change the Pilot Package and does not authorize enabling unvalidated
-behavior for pilot users; the later Task-101 pause below controls current work.
-
-Tasks 090/098 passed on July 27 and remain completed historical records.
-GitHub disclosed four additional Dependabot advisories on August 4-5, and the
-blocking npm audit added `GHSA-5p4m-2wfm-xmqj` on August 7 while Task-099 was
-still active. Task-099 completed that follow-up on August 11 through PRs
-#68/#69, successful main CI and root graph refresh, and alert closure without
-dismissal. Its August 11 closeout inventory contained the eight documented
-torch residuals. GitHub opened high-severity development-transitive
-`extract-zip` alert `#76` afterward; active Task-101 owns that separate focused
-remediation and release-gate disposition. PR #72 passed its final exact-head
-matrix and squash-merged as `0cc189c`; alert `#76` then closed as fixed without
-dismissal, and the exact-main checks passed separately. Task-087's evidence
-remains valid and reviewer input may continue, but new implementation, PR #67
-merge, and candidate publication remain paused until current `main` is
-semantically integrated into PR #67 and that branch's exact-head checks pass.
+The original July Task-087 resume sequence is preserved as history, not as the
+current release gate. Tasks 090/098 passed on July 27, Task-099 completed its
+post-closeout advisory follow-up on August 11, and Task-101's focused PR #72
+remediation later merged as `0cc189c`; alert `#76` closed as fixed without
+dismissal and exact-main checks passed. ADR-021 supersedes Task-101's former
+downstream PR #67 integration condition. Task-087/PR #67 evidence remains valid
+for the bytes it evaluated, but the launcher work receives no new merge,
+reconciliation, implementation, or review work during this delivery window.
 
 ## Release Naming Boundary
 
@@ -107,24 +102,24 @@ backlog, and migration-ready handoff without changing cdcai.
 
 ## Task Ownership
 
-- Task-087: guided Google/Azure application-provider TLS repair on Docker and
-  Podman.
+- Task-087: preserved and deferred launcher/guided-repair history; not a
+  current release dependency.
 - Task-088: completed Pilot Package distribution and custody.
 - Task-089: owner-gated cdcai adoption and ownership transfer.
 - Task-090: completed bounded runtime/custom-image/dependency security
   investigation, including the 62-alert Trivy baseline.
 - Tasks 091-095: qualification, docs, recovery, evidence-gated support, and
   governance/handoff.
-- Task-096: user-confirmed Exit/Stop.
+- Task-096: deferred browser Exit/helper design; use the tested command-based
+  stop/start lifecycle.
 - Task-097: Podman CPU/GPU final-path qualification.
 - Task-098: completed July 27 dependency remediation, compatibility
   validation, and release-risk disposition through PR #51 / `e499b50`.
 - Task-099: completed August 11 for alerts `#72-#75` plus npm finding
   `GHSA-5p4m-2wfm-xmqj`; the critical/high gate and default-branch inventory
   reconciliation passed without reopening Task-098.
-- Task-101: active downstream PR #67 reconciliation/exact-head gate after the
-  focused remediation merged and high-severity development-transitive
-  `extract-zip` alert `#76` closed as fixed without dismissal.
+- Task-101: completed focused remediation on accepted `main`; its former PR
+  #67 reconciliation/exact-head condition is superseded rather than passed.
 
 ## Superseded Instructions
 

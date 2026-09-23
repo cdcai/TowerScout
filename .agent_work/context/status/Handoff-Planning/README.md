@@ -2,16 +2,24 @@
 
 ## Read First
 
-1. [`2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md`](./2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md)
-   - canonical forward-development, qualification, release, and handoff plan
-2. [`PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`](./PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md)
+1. [`../Reprioritization Effort/2026-09-21-windows-deployment-prioritization-v2.md`](../Reprioritization%20Effort/2026-09-21-windows-deployment-prioritization-v2.md)
+   - current delivery objectives and acceptance requirements
+2. [`../Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2.md`](../Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md)
+   - current implementation sequence
+3. [`../Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2-verification.md`](../Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2-verification.md)
+   - static review scope and limits; not runtime evidence
+4. [`../Reprioritization Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md`](../Reprioritization%20Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md)
+   - suggested follow-on work after actual Day-7 results are reconciled
+5. [`2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md`](./2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md)
+   - dated historical roadmap; its PR #67 sequencing is superseded
+6. [`PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`](./PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md)
    - current rules for the unchanged `v0.1.2` pilot and cdcai feedback hold
-3. [`PILOT-OPERATIONS-PACKET.md`](./PILOT-OPERATIONS-PACKET.md)
+7. [`PILOT-OPERATIONS-PACKET.md`](./PILOT-OPERATIONS-PACKET.md)
    - completed July 13 pilot distribution, support, and custody record
-4. [`GITHUB-CODE-SCANNING-READINESS-ASSESSMENT-2026-07-23.md`](../../analysis/GITHUB-CODE-SCANNING-READINESS-ASSESSMENT-2026-07-23.md)
+8. [`GITHUB-CODE-SCANNING-READINESS-ASSESSMENT-2026-07-23.md`](../../analysis/GITHUB-CODE-SCANNING-READINESS-ASSESSMENT-2026-07-23.md)
    - 62-alert dependency inventory, applicability, and Tasks 090/098 gate
-5. [`.agent_work/current-tasks.md`](../../../current-tasks.md)
-6. [`HANDOFF.md`](../../../../HANDOFF.md)
+9. [`.agent_work/current-tasks.md`](../../../current-tasks.md)
+10. [`HANDOFF.md`](../../../../HANDOFF.md)
 
 ## Current Decision
 
@@ -31,10 +39,9 @@
   that closeout. Task-101's focused Node/Puppeteer remediation passed final PR
   and exact-main validation, PR #72 squash-merged as `0cc189c`, and the alert
   closed as fixed without dismissal.
-- Task-087 is paused / reconciliation-gated. PR #67 remains open for reviewer
-  input, but new implementation, merge, and candidate publication wait for
-  semantic integration of current `main` and green checks at that branch's new
-  exact head.
+- PR #67 and Task-087 launcher work are preserved and deferred outside the
+  immediate delivery window. They are not release gates and receive no new
+  reconciliation, implementation, or review work as a deployment prerequisite.
 - Complete operational closeout by October 30, 2026.
 
 ## Active Validation Record

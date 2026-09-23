@@ -24,7 +24,7 @@ Use this as the primary skill for secret/config/logging changes. Use it as a sec
 
 ## First read
 
-- `AGENTS.md/security.md`
+- root `AGENTS.md` current-direction pointer
 - `.github/copilot-instructions.md` security sections
 - `webapp/ts_config.py`
 - `webapp/ts_logging.py`
@@ -45,16 +45,24 @@ Use this as the primary skill for secret/config/logging changes. Use it as a sec
 ## Inspect commands (read-only)
 
 ```bash
-git diff --cached
-git diff
-python .agents/skills/towerscout-secret-and-provider-key-safety/scripts/scan_for_sensitive_terms.py
+git diff --name-only --cached
+git diff --name-only
 ```
+
+Do not print raw diffs or run the bundled term scanner over a live working
+directory into a shared transcript: it can read `.env` files, print matching
+line snippets, and return success even when matches exist. Use an approved
+redacting scan of an isolated transfer/package copy and keep sensitive findings
+private.
 
 The default source-tree scan skips generated package/build output such as `dist/` and `build/`. When reviewing a release artifact, pass the package directory or extracted ZIP root explicitly:
 
 ```bash
-python .agents/skills/towerscout-secret-and-provider-key-safety/scripts/scan_for_sensitive_terms.py dist/<package-dir-or-extracted-zip>
+python .agents/skills/towerscout-secret-and-provider-key-safety/scripts/scan_for_sensitive_terms.py <isolated-package-copy>
 ```
+
+Treat scanner output as candidate findings, not a clean/not-clean exit-code
+gate; review and redact it in the approved private evidence location.
 
 ## Build/update generated files (mutating)
 

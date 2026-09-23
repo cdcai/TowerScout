@@ -147,12 +147,17 @@ Optional later:
 
 Before starting work:
 
-1. update local `main`
-2. create a short-lived task branch from `main`
+1. select and record the accepted `main` revision once
+2. create a short-lived task branch from that revision
 3. keep the branch focused
 4. open a PR against `main`
 5. make commit checkpoints as the work reaches stable slices
 6. merge with squash after validation and approval
+
+For release qualification, freeze the selected source revision and do not pull
+or merge newer changes midway through artifact testing. Unmerged PR #67
+branches and their evidence are intentionally preserved during the current
+main-based delivery window; they are not routine post-merge deletion targets.
 
 If there is any ambiguity, prefer the simpler path:
 

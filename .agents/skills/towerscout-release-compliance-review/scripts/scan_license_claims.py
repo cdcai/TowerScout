@@ -32,7 +32,7 @@ CANDIDATES = [
     "SOURCE.txt",
     "SBOM.txt",
     "release-manifest.v1.json",
-    "docs/release-asset-bundle-contract.md",
+    "docs/release/release-asset-bundle-contract.md",
 ]
 
 

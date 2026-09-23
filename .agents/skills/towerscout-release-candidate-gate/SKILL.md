@@ -28,7 +28,7 @@ Read these files when they exist:
 
 - `.agent_work/current-tasks.md`
 - `.agent_work/task-backlog.md`
-- `docs/release-asset-bundle-contract.md`
+- `docs/release/release-asset-bundle-contract.md`
 - `Dockerfile`
 - `compose.yaml`
 - `compose.build.yaml`
@@ -57,13 +57,19 @@ python .agents/skills/towerscout-release-candidate-gate/scripts/summarize_releas
 python .agents/skills/towerscout-release-candidate-gate/scripts/check_release_manifest.py release-manifest.v1.json .
 ```
 
+Inspect each helper's exit status and findings; warning-only output is not a
+blocking gate unless the caller enforces it.
+
 ## Build/update generated files (mutating)
 
 Run only when the task is to assemble or refresh a release package.
 
 ```bash
-scripts/package-release.cmd -Version <version> -OutputDir dist -NoZip -Force
+scripts/package-release.cmd -Version <version> -OutputDir dist -Image <pinned-image-reference> -ImageDigest <sha256:digest> -PytorchFlavor <cpu|cuda126> -AssetBundleVersion <version> -AssetBundleSha256 <sha256>
 ```
+
+Final evidence requires a real ZIP from clean tracked source. `-NoZip`,
+`-Force`, or a source build does not qualify a downloadable release.
 
 ## Validation commands
 
@@ -79,22 +85,26 @@ Run only in an environment where Docker/Podman service startup is intended.
 
 ```bash
 docker build -t towerscout:test .
-docker compose -f compose.yaml -f compose.build.yaml up -d --build
+docker compose -f compose.yaml -f compose.build.yaml -p <test-owned-project> up -d --build
 curl -f http://localhost:5000/api/health
 curl -f http://localhost:5000/api/readiness
-docker compose -f compose.yaml -f compose.build.yaml down
+docker compose -f compose.yaml -f compose.build.yaml -p <test-owned-project> down
 ```
 
-If any Compose validation command fails, still run the `docker compose ... down` cleanup command before ending the task.
+Clean up only a verified test-owned project; never run unconditional `down` or
+volume deletion against an ambiguous installation.
 
 On Windows or a Windows validation host:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch.ps1 -Engine podman -Port 5000 -NoBrowser -TimeoutSeconds 180
+.\start.bat -Engine podman -Port 5000 -NoBrowser -TimeoutSeconds 180
 scripts\status.cmd -Engine podman -Port 5000
 scripts\logs.cmd -Engine podman -Tail 200
-scripts\stop.cmd -Engine podman -Port 5000
+scripts\stop.cmd -Engine podman
 ```
+
+Bypass-based execution does not prove compatibility with a managed endpoint's
+actual execution/signing policy.
 
 ## Output format
 

@@ -1,6 +1,7 @@
 # TowerScout October 2026 Fix-First Implementation Roadmap
 
-**Status**: CURRENT - canonical forward execution roadmap
+**Status**: HISTORICAL FOR IMMEDIATE EXECUTION - superseded by the September 21
+v2 main-based deployment plan; retained for October milestones and history
 **Approved**: July 23, 2026
 **Last Reconciled**: August 20, 2026
 **Decision Owners**: Project lead and cdcai owner
@@ -8,6 +9,11 @@
 **Candidate Convention**: `v0.1.3-rc.N`
 **Operational Closeout**: October 30, 2026
 **Hard Project End**: October 31, 2026
+
+> **Current-week override:** Execute
+> `../Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2.md`.
+> PR #67 and Task-087/096 launcher work are preserved and deferred; they are
+> not release gates and receive no reconciliation or implementation this week.
 
 ## Executive Decision
 
