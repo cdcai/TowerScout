@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "description": "TASK-103 pilot qualification gates. Declared before any stage A/B/C measurement; never widened after results are observed.",
+  "target_flavor": "cuda128",
+  "reference": {
+    "outputs_stage": "A",
+    "outputs_profile": "cpu",
+    "note": "Per-detection reference outputs come from the stage-A (accepted main, torch 2.6.0) CPU combined capture on H-T1."
+  },
+  "fixture": {
+    "historical_count_vector": [0, 0, 13, 8, 0, 4, 6, 11, 2, 4, 5, 0],
+    "historical_count_vector_note": "Recorded with the rc7.1/v0.1.2 runtime (pre torch 2.6.0). Stage A is checked against it as a finding; B and C are checked against stage A.",
+    "tiles": [
+      {"name": "tile_000.png", "sha256": "e3c972674f25ac25e2efd17b2d2fe2c41aefffad2c4747ee4ecfae8452e9e7fc"},
+      {"name": "tile_001.png", "sha256": "c7797de0f9309405beda700ad834beb5efdd60cb3215220133d0f783cb4c732d"},
+      {"name": "tile_002.png", "sha256": "10c624a7479865526dad3b06f990426467dfe42fce7eef3c7ce02e03cf3bd1ad"},
+      {"name": "tile_003.png", "sha256": "11ff18b77bcc79858950edae372e820be2bf64a3e85eafc09222cbadc442f96f"},
+      {"name": "tile_004.png", "sha256": "eba2ba2cca9fe9638eca5511d3d8f5605769d2a5982f8c55c8c51bc5db479af0"},
+      {"name": "tile_005.png", "sha256": "ba356d015e5976bd91531b4367e69ad36d0c7f09dd34861f22bbb432d1bd0b8f"},
+      {"name": "tile_006.png", "sha256": "ccfdba818379f5fba1bb243d42af9d42c36e3f0fc58046fc5c1ac3a5111e1ffa"},
+      {"name": "tile_007.png", "sha256": "94d4cfa5820d3819e5d7b64876443b173e7d208d7892c83626409494f949aaa8"},
+      {"name": "tile_008.png", "sha256": "20d2ea30376803e1084eb415a0fa8a04a6f9fc459d87d16e40211b77953741fe"},
+      {"name": "tile_009.png", "sha256": "0921aa8d8f4d1df13e1418712869da4ce83ce5a2f06b35d5aa29c04b5e5a8363"},
+      {"name": "tile_010.png", "sha256": "928df690bfa68daa487eaed6255d5111d1e3c55375a0153f1557efcf1f41f9e5"},
+      {"name": "tile_011.png", "sha256": "6ebf7c0abfd496e272882c0c01890c4eb78c3e407c83235f7e89f17774fc5aff"}
+    ]
+  },
+  "models": {
+    "yolo_sha256": "27315e156d8370d51d9c2a3c047c4bf5cc0c8ae1521036bdf800b7a8a81554e6",
+    "efficientnet_sha256": "645113badfcd17a1f9b451aabb54bf80e115a4faaceb65e0ce3fc8dbfb108a5d"
+  },
+  "tolerances": {
+    "iou_match": 0.90,
+    "box": 0.0001,
+    "conf": 0.0001,
+    "secondary": 0.0001,
+    "repeat_determinism": 0.0001,
+    "en_synthetic_expected": 0.8266443,
+    "en_synthetic_tolerance": 0.0001,
+    "cross_profile_en_synthetic_max_delta": 0.00001
+  },
+  "memory": {
+    "relative_max": 1.10,
+    "min_device_free_bytes": 1073741824
+  },
+  "performance": {
+    "relative_max": 1.10,
+    "warmup_discard": 1,
+    "measured_runs": 3,
+    "borderline_band": 0.03,
+    "borderline_extra_runs": 5
+  },
+  "precision": {
+    "conv": "ieee",
+    "matmul": "ieee",
+    "applies_to_stages": ["B", "C"]
+  },
+  "identity": {
+    "cuda_build_by_wheel_tag": {"cu126": "12.6", "cu128": "12.8", "cpu": null},
+    "target_arch_required": ["sm_75", "sm_120"]
+  },
+  "required_phases": ["identity", "startup", "synthetic", "combined", "memory", "inject"]
+}
