@@ -31,7 +31,10 @@ param(
     [ValidateSet("identity", "startup", "synthetic", "combined", "memory", "inject")]
     [string[]] $Phases = @("identity", "startup", "synthetic", "combined", "memory", "inject"),
 
-    [string] $RunLabel = ""
+    [string] $RunLabel = "",
+
+    # Combined phase runs YOLO only (palette-tile historical continuity check).
+    [switch] $NoSecondary
 )
 
 $ErrorActionPreference = "Stop"
@@ -230,6 +233,9 @@ if (-not [string]::IsNullOrWhiteSpace($FixtureManifest)) {
 elseif (-not [string]::IsNullOrWhiteSpace($FixtureDirectory)) {
     $fixtureMountSource = (Resolve-Path -LiteralPath $FixtureDirectory).Path
     $fixtureArgs = @("--fixture-dir", "/fixtures")
+}
+if ($NoSecondary) {
+    $fixtureArgs += @("--no-secondary")
 }
 $needsFixtures = @($Phases | Where-Object { $_ -in @("combined", "memory", "inject") }).Count -gt 0
 if ($needsFixtures -and [string]::IsNullOrWhiteSpace($fixtureMountSource)) {

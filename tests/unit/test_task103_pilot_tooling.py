@@ -11,7 +11,8 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PROBE_PATH = REPO_ROOT / "scripts" / "task103_pilot_probe.py"
 MANIFEST_PATH = REPO_ROOT / "scripts" / "task103_make_manifest.py"
-GATES_PATH = REPO_ROOT / "scripts" / "task103_gates.v1.json"
+GATES_V1_PATH = REPO_ROOT / "scripts" / "task103_gates.v1.json"
+GATES_PATH = REPO_ROOT / "scripts" / "task103_gates.v2.json"
 HARNESS_PATH = REPO_ROOT / "scripts" / "task098-qualify-ml.ps1"
 
 
@@ -197,6 +198,17 @@ def test_gates_file_declares_every_pilot_threshold():
     assert gates["performance"]["relative_max"] == 1.10
     assert gates["precision"] == {"conv": "ieee", "matmul": "ieee", "applies_to_stages": ["B", "C"]}
     assert set(gates["required_phases"]) == {"identity", "startup", "synthetic", "combined", "memory", "inject"}
+
+
+def test_gates_amendment_changes_only_the_fixture_definition():
+    v1 = json.loads(GATES_V1_PATH.read_text(encoding="utf-8"))
+    v2 = json.loads(GATES_PATH.read_text(encoding="utf-8"))
+    for key in ("tolerances", "memory", "performance", "precision", "identity", "models", "required_phases"):
+        assert v2[key] == v1[key], key
+    assert v2["amends"]["tolerances_changed"] is False
+    assert v2["fixture"]["set"] == "rgb-derived"
+    assert [t["source_sha256"] for t in v2["fixture"]["tiles"]] == [t["sha256"] for t in v1["fixture"]["tiles"]]
+    assert v2["fixture"]["palette_originals"] == v1["fixture"]["tiles"]
 
 
 def test_harness_pilot_mode_never_overwrites_and_keeps_legacy_contract():

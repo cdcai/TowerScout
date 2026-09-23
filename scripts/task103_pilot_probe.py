@@ -493,7 +493,9 @@ def phase_combined(args: argparse.Namespace) -> dict[str, Any]:
     try:
         for index in range(args.warmup + args.measured):
             counting = CountingClassifier(classifier)
-            results, performance, seconds = _run_detect(yolo, counting, tiles, f"task103-combined-{index}")
+            # --no-secondary runs YOLO only (historical palette-tile continuity check).
+            secondary = None if args.no_secondary else counting
+            results, performance, seconds = _run_detect(yolo, secondary, tiles, f"task103-combined-{index}")
             runs.append(
                 {
                     "index": index,
@@ -523,6 +525,7 @@ def phase_combined(args: argparse.Namespace) -> dict[str, Any]:
     measured = [run["seconds"] for run in runs if not run["warmup"]]
     report = {
         "mode": "compare" if manifest is not None else "capture",
+        "secondary_enabled": not args.no_secondary,
         "tiles": [{"name": name, "sha256": digest} for name, digest in hashes_before.items()],
         "tile_hashes_verified": hashes_before == hashes_after,
         "runs": runs,
@@ -537,16 +540,18 @@ def phase_combined(args: argparse.Namespace) -> dict[str, Any]:
         "process_rss_bytes": psutil.Process().memory_info().rss,
     }
     device_prefix = "cuda" if requested == "cuda" else "cpu"
+    observed_models = ["yolo"] if args.no_secondary else ["yolo", "efficientnet"]
     report["checks"] = {
         "tile_hashes_verified": report["tile_hashes_verified"],
         "en_errors_zero": all(not run["en"]["errors"] for run in runs),
-        "en_candidates_positive": runs[-1]["en"]["candidates"] > 0,
         "log_findings_zero": all(count == 0 for count in capture.counts.values()),
         "selected_devices_match": all(value == requested for value in selected_devices.values()),
-        "observed_devices_match": bool(observed["yolo"]) and bool(observed["efficientnet"]) and all(
-            value.startswith(device_prefix) for value in observed["yolo"] + observed["efficientnet"]
+        "observed_devices_match": all(bool(observed[name]) for name in observed_models) and all(
+            value.startswith(device_prefix) for name in observed_models for value in observed[name]
         ),
     }
+    if not args.no_secondary:
+        report["checks"]["en_candidates_positive"] = runs[-1]["en"]["candidates"] > 0
     if contract_report is not None:
         report["checks"]["contract_passed"] = bool(contract_report["passed"])
     return report
@@ -727,6 +732,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--memory-jobs", type=int, default=3)
     parser.add_argument("--memory-en-candidates", type=int, default=16)
     parser.add_argument("--inject-on-call", type=int, default=3)
+    parser.add_argument("--no-secondary", action="store_true", help="combined phase runs YOLO only")
     return parser.parse_args(argv)
 
 
