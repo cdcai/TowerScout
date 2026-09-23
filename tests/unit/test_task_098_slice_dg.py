@@ -3,8 +3,11 @@
 import hashlib
 import io
 import json
+import os
 import re
 import shutil
+import subprocess
+import textwrap
 import uuid
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -75,6 +78,7 @@ def test_selected_torch_pair_is_pinned_consistently():
 
 
 def test_cross_device_harness_is_commit_pinned_and_isolated():
+    dockerfile = (REPO_ROOT / "Dockerfile").read_text(encoding="utf-8")
     harness = (REPO_ROOT / "scripts" / "task098-qualify-ml.ps1").read_text(
         encoding="utf-8"
     )
@@ -88,9 +92,92 @@ def test_cross_device_harness_is_commit_pinned_and_isolated():
     assert "--rm" in harness
     assert "--read-only" in harness
     assert "--gpus" in harness
+    assert "BuildCaBundlePath" in harness
+    assert "id=towerscout_build_ca,src=$resolvedBuildCa" in harness
+    assert (
+        "--mount=type=secret,id=towerscout_build_ca,required=false" in dockerfile
+    )
+    assert "PIP_CERT=/run/secrets/towerscout_build_ca" in dockerfile
+    assert "--trusted-host" not in dockerfile
     assert "source_commit" in probe
     assert "output_matches_declared_tolerance" in probe
     assert "selected_devices_match_request" in probe
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell harness is Windows-only")
+def test_cross_device_harness_rejects_build_ca_inside_context(tmp_path):
+    powershell = shutil.which("powershell.exe") or shutil.which("pwsh")
+    if powershell is None:
+        pytest.skip("PowerShell executable not found")
+
+    sandbox = tmp_path / "TowerScout qualification sandbox"
+    scripts = sandbox / "scripts"
+    webapp = sandbox / "webapp"
+    fake_bin = tmp_path / "fake-bin"
+    scripts.mkdir(parents=True)
+    webapp.mkdir()
+    fake_bin.mkdir()
+    harness = scripts / "task098-qualify-ml.ps1"
+    shutil.copy2(REPO_ROOT / "scripts" / harness.name, harness)
+    ca_bundle = webapp / "managed-build-ca.pem"
+    ca_bundle.write_text("private managed CA", encoding="ascii")
+    build_marker = tmp_path / "docker-build-called.txt"
+
+    (fake_bin / "git.cmd").write_text(
+        textwrap.dedent(
+            """\
+            @echo off
+            if "%3"=="status" exit /b 0
+            if "%3"=="rev-parse" (
+              echo 0123456789abcdef0123456789abcdef01234567
+              exit /b 0
+            )
+            exit /b 2
+            """
+        ),
+        encoding="ascii",
+    )
+    (fake_bin / "docker.cmd").write_text(
+        textwrap.dedent(
+            f"""\
+            @echo off
+            if "%1"=="info" (
+              echo 29.7.2
+              exit /b 0
+            )
+            if "%1"=="build" (
+              echo called>"{build_marker}"
+              exit /b 0
+            )
+            exit /b 0
+            """
+        ),
+        encoding="ascii",
+    )
+    env = os.environ.copy()
+    env["PATH"] = f"{fake_bin}{os.pathsep}{env['PATH']}"
+
+    result = subprocess.run(
+        [
+            powershell,
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(harness),
+            "-BuildCaBundlePath",
+            str(ca_bundle),
+        ],
+        cwd=sandbox,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode != 0
+    assert "outside the Docker build context" in result.stdout + result.stderr
+    assert not build_marker.exists()
 
 
 def test_release_model_hash_is_verified_by_default(monkeypatch):

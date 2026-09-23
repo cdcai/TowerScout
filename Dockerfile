@@ -46,7 +46,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY webapp/requirements.txt webapp/requirements.txt
-RUN python -m pip install --upgrade pip \
+RUN --mount=type=secret,id=towerscout_build_ca,required=false \
+    if [ -f /run/secrets/towerscout_build_ca ]; then \
+        export PIP_CERT=/run/secrets/towerscout_build_ca; \
+    fi \
+    && python -m pip install --upgrade pip \
     && python -m pip install --no-cache-dir \
         "torch==${TOWERSCOUT_TORCH_VERSION}" \
         "torchvision==${TOWERSCOUT_TORCHVISION_VERSION}" \
