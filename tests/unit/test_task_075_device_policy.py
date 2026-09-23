@@ -15,6 +15,16 @@ class _FakeCudaProbe:
         return self
 
 
+def _stub_cuda_kernel_probe_and_precision(monkeypatch):
+    """Simulate a working CUDA kernel probe and an enforced IEEE FP32 policy."""
+    monkeypatch.setattr(ts_device, "_cuda_kernel_probe", lambda: None)
+    monkeypatch.setattr(
+        ts_device,
+        "cuda_precision_ok",
+        lambda: (True, {"api": "stub", "conv": "ieee", "matmul": "ieee", "config_error": None}),
+    )
+
+
 def test_runtime_diagnostics_cpu_policy_forces_cpu(monkeypatch):
     monkeypatch.setenv("TOWERSCOUT_DEVICE", "cpu")
     monkeypatch.setattr(ts_device.torch.cuda, "is_available", Mock(return_value=True))
@@ -35,6 +45,7 @@ def test_select_model_device_auto_falls_back_after_cuda_transfer_failure(monkeyp
     monkeypatch.setattr(ts_device.torch.cuda, "is_available", Mock(return_value=True))
     monkeypatch.setattr(ts_device.torch.cuda, "get_device_name", Mock(return_value="NVIDIA Test GPU"))
     monkeypatch.setattr(ts_device.torch, "zeros", Mock(return_value=_FakeCudaProbe()))
+    _stub_cuda_kernel_probe_and_precision(monkeypatch)
 
     move_to_cuda = Mock(side_effect=RuntimeError("cuda transfer failed"))
     move_to_cpu = Mock()

@@ -406,13 +406,23 @@ for existing_upload in UPLOAD_DIR.iterdir():
 
 ml_runtime = ts_device.build_runtime_diagnostics()
 ml_logger.info(
-    "ML runtime startup diagnostics: policy=%s selected_device=%s torch=%s cuda_build=%s cuda_available=%s fallback=%s",
+    "ML runtime startup diagnostics: policy=%s selected_device=%s torch=%s cuda_build=%s cuda_available=%s fallback=%s "
+    "gpu_capability=%s arch_supported=%s cudnn=%s fp32_conv=%s fp32_matmul=%s precision_ok=%s "
+    "kernel_probe_ok=%s probe_error=%s",
     ml_runtime.get("requested_policy"),
     ml_runtime.get("selected_device"),
     ml_runtime.get("torch_version"),
     ml_runtime.get("torch_cuda_build"),
     ml_runtime.get("torch_cuda_available"),
     ml_runtime.get("fallback_reason"),
+    ml_runtime.get("cuda_device_capability"),
+    ml_runtime.get("cuda_arch_supported"),
+    ml_runtime.get("cudnn_version"),
+    ml_runtime.get("cuda_fp32_conv"),
+    ml_runtime.get("cuda_fp32_matmul"),
+    ml_runtime.get("cuda_precision_ok"),
+    ml_runtime.get("cuda_kernel_probe_ok"),
+    ml_runtime.get("cuda_probe_error"),
 )
 
 

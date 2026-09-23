@@ -7,6 +7,7 @@ from unittest.mock import Mock
 
 import torch
 
+import ts_device
 import ts_en
 
 
@@ -152,6 +153,8 @@ def test_efficientnet_init_falls_back_to_cpu_when_cuda_setup_fails(monkeypatch):
         monkeypatch.setattr(ts_en.torch.cuda, "is_available", Mock(return_value=True))
         monkeypatch.setattr(ts_en.torch.cuda, "get_device_name", Mock(return_value="NVIDIA Test GPU"))
         monkeypatch.setattr(ts_en.torch, "zeros", Mock(return_value=_FakeCudaProbe()))
+        # The decisive conv/GEMM kernel probe cannot run on CPU-only torch; simulate it passing.
+        monkeypatch.setattr(ts_device, "_cuda_kernel_probe", lambda: None)
         monkeypatch.setattr(ts_en.torch, "load", torch_load)
 
         classifier = ts_en.EN_Classifier()
