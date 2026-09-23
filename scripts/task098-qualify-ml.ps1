@@ -228,7 +228,10 @@ $fixtureArgs = @()
 if (-not [string]::IsNullOrWhiteSpace($FixtureManifest)) {
     $resolvedManifest = (Resolve-Path -LiteralPath $FixtureManifest).Path
     $fixtureMountSource = Split-Path -Parent $resolvedManifest
-    $fixtureArgs = @("--fixture-manifest", "/fixtures/" + (Split-Path -Leaf $resolvedManifest))
+    # Build the container path first: inside @(...) the comma operator binds tighter than +,
+    # which would split "/fixtures/" and the file name into separate arguments.
+    $containerManifest = "/fixtures/" + (Split-Path -Leaf $resolvedManifest)
+    $fixtureArgs = @("--fixture-manifest", $containerManifest)
 }
 elseif (-not [string]::IsNullOrWhiteSpace($FixtureDirectory)) {
     $fixtureMountSource = (Resolve-Path -LiteralPath $FixtureDirectory).Path

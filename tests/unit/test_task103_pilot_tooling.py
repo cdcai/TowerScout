@@ -3,6 +3,10 @@
 import importlib.util
 import json
 import logging
+import os
+import shutil
+import subprocess
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -220,3 +224,103 @@ def test_harness_pilot_mode_never_overwrites_and_keeps_legacy_contract():
     assert '"cuda" + $CudaWheelTag.Substring(2)' in harness
     # the original Task-098 path is preserved for existing users
     assert "Task-098 $Profile qualification passed." in harness
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell harness is Windows-only")
+def test_harness_pilot_mode_passes_exact_probe_arguments_to_docker(tmp_path):
+    """Run pilot mode against fake git/docker and assert the exact docker run arguments."""
+    powershell = shutil.which("powershell.exe")
+    if powershell is None:
+        pytest.skip("Windows PowerShell not found")
+
+    sandbox = tmp_path / "TowerScout pilot sandbox"
+    scripts = sandbox / "scripts"
+    (sandbox / "webapp" / "model_params").mkdir(parents=True)
+    scripts.mkdir()
+    shutil.copy2(HARNESS_PATH, scripts / HARNESS_PATH.name)
+    for name in ("task103_pilot_probe.py", "task098_ml_qualification.py", "task091_combined_contract.py"):
+        (scripts / name).write_text("# stub\n", encoding="ascii")
+    fixture_dir = tmp_path / "fixture set with spaces"
+    fixture_dir.mkdir()
+    (fixture_dir / "fixture-manifest.json").write_text("{}", encoding="ascii")
+    evidence_root = tmp_path / "evidence root"
+    run_log = tmp_path / "docker-run-args.txt"
+    fake_bin = tmp_path / "fake-bin"
+    fake_bin.mkdir()
+    (fake_bin / "git.cmd").write_text(
+        textwrap.dedent(
+            """\
+            @echo off
+            if "%3"=="status" exit /b 0
+            if "%3"=="rev-parse" (
+              echo 0123456789abcdef0123456789abcdef01234567
+              exit /b 0
+            )
+            exit /b 2
+            """
+        ),
+        encoding="ascii",
+    )
+    image_json = (
+        '[{"Id":"sha256:feedface","Size":123,"Config":{"Labels":{'
+        '"org.opencontainers.image.revision":"0123456789abcdef0123456789abcdef01234567",'
+        '"org.towerscout.pytorch.flavor":"cuda128"}}}]'
+    )
+    (fake_bin / "docker.cmd").write_text(
+        textwrap.dedent(
+            f"""\
+            @echo off
+            if "%1"=="info" (
+              echo 29.8.0
+              exit /b 0
+            )
+            if "%1"=="version" (
+              echo 29.8.0
+              exit /b 0
+            )
+            if "%1"=="image" (
+              echo {image_json}
+              exit /b 0
+            )
+            if "%1"=="run" (
+              echo %*>>"{run_log}"
+              exit /b 0
+            )
+            exit /b 3
+            """
+        ),
+        encoding="ascii",
+    )
+    (fake_bin / "nvidia-smi.cmd").write_text("@echo off\necho Fake GPU, 999.99\n", encoding="ascii")
+    env = os.environ.copy()
+    env["PATH"] = f"{fake_bin}{os.pathsep}{env['PATH']}"
+
+    result = subprocess.run(
+        [
+            powershell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(scripts / HARNESS_PATH.name),
+            "-Image", "towerscout:fake-c", "-Profile", "cuda", "-CudaWheelTag", "cu128", "-Stage", "C",
+            "-TorchVersion", "2.10.0", "-TorchvisionVersion", "0.25.0",
+            "-EvidenceRoot", str(evidence_root),
+            "-FixtureManifest", str(fixture_dir / "fixture-manifest.json"),
+            "-Phases", "combined",
+        ],
+        cwd=sandbox,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    invocation = run_log.read_text(encoding="ascii")
+    assert "--fixture-manifest /fixtures/fixture-manifest.json" in invocation
+    assert "--phase combined --output /evidence/combined.json" in invocation
+    assert "--gpus all" in invocation
+    assert "TASK103_EXPECTED_CUDA_BUILD=12.8" in invocation
+    assert "TASK103_EXPECTED_WHEEL_TAG=cu128" in invocation
+    run_dirs = list((evidence_root / "runs").iterdir())
+    assert len(run_dirs) == 1 and "_C_cuda128_torch2-10-0_" in run_dirs[0].name
+    run = json.loads((run_dirs[0] / "run.json").read_text(encoding="utf-8-sig"))
+    assert run["flavor"] == "cuda128"
+    assert run["expected"]["cuda_build"] == "12.8"
+    assert run["phases"]["combined"]["exit_code"] == 0
