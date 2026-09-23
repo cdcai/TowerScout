@@ -4,7 +4,7 @@
 **Last reviewed**: 2026-06-16
 **Audience**: Release/support users and runtime maintainers
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
-12.6 Application Package, Podman CPU, Docker GPU, and Podman GPU are
+12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
 support-assigned paths after workstation-specific engine, Compose-provider,
 and NVIDIA validation.
 
@@ -146,11 +146,14 @@ The YOLO-enabled release track is `agpl-yolo`. TowerScout-authored code may be A
 Image publication is handled by the manual GitHub Actions workflow `.github/workflows/container-publish.yml`. The workflow requires `packages: write`, pushes a Linux/AMD64 image, uploads `image-metadata.json`, and reports the digest reference in the workflow summary.
 
 The publish workflow requires an explicit PyTorch wheel flavor selection. `cpu`
-uses the CPU PyTorch wheel index. `cuda126` uses the CUDA 12.6 PyTorch wheel
+uses the CPU PyTorch wheel index. `cuda128` uses the CUDA 12.8 PyTorch wheel
 index and labels the image with `org.towerscout.pytorch.flavor`. The workflow
 publishes flavor-specific tags such as `<release-version>-cpu` and
-`<release-version>-cuda126` to avoid CPU/CUDA tag collisions. Release evidence
+`<release-version>-cuda128` to avoid CPU/CUDA tag collisions. Release evidence
 and each control package must record which flavor produced the pinned digest.
+Package generation fails closed on any other flavor: an explicit or inferred
+flavor that is not `cpu` or `cuda128`, including an image tag that ends in an
+older `-cuda<digits>` suffix, is rejected instead of being packaged as `cpu`.
 The CPU and CUDA control packages should point to the same Model & Data Package
 filename and SHA-256 unless a release note explicitly says assets differ.
 

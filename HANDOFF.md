@@ -105,7 +105,7 @@ are evaluated against the main-based candidate instead.
 Normal release delivery uses:
 
 - GitHub Release control package
-- distinct digest-pinned CPU and CUDA 12.6 GHCR images
+- distinct digest-pinned CPU and CUDA 12.8 GHCR images
 - checksummed shared Model & Data Package
 - Docker- and Podman-compatible Compose paths
 

@@ -1,5 +1,6 @@
 """Task-098 Slice D/G dependency and model-trust contracts."""
 
+import fnmatch
 import hashlib
 import io
 import json
@@ -18,12 +19,13 @@ import towerscout
 import ts_assets
 import ts_en
 import ts_yolov5
+from ml_runtime_contract import TORCH as TORCH_VERSION
+from ml_runtime_contract import TORCHVISION as TORCHVISION_VERSION
+from ml_runtime_contract import tracked_files
 from ts_assets import AssetManifestError
 from towerscout import app
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-TORCH_VERSION = "2.6.0"
-TORCHVISION_VERSION = "0.21.0"
 MODEL_UPLOAD_KEY = "task098-model-upload-key-1234567890"
 RUNTIME_CONTRACT = REPO_ROOT / "docs" / "support" / "oci-runtime-contract.md"
 ASSET_CONTRACT = (
@@ -395,59 +397,195 @@ def test_model_upload_container_and_frontend_contracts_require_the_dedicated_key
     assert "installed model \" + model" not in frontend
 
 
-def test_current_runtime_and_release_contracts_have_no_cuda_121_reference():
-    text_suffixes = {
-        ".bat",
-        ".cmd",
-        ".example",
-        ".html",
-        ".js",
-        ".json",
-        ".md",
-        ".ps1",
-        ".py",
-        ".sh",
-        ".txt",
-        ".yaml",
-        ".yml",
-    }
-    scan_roots = (
-        REPO_ROOT / "Dockerfile",
-        REPO_ROOT / "compose.yaml",
-        REPO_ROOT / "compose.build.yaml",
-        REPO_ROOT / "compose.gpu.yaml",
-        REPO_ROOT / "compose.gpu.podman.yaml",
-        REPO_ROOT / ".env.example",
-        REPO_ROOT / "webapp",
-        REPO_ROOT / "scripts",
-        REPO_ROOT / "docs",
-        REPO_ROOT / "tests",
-    )
-    stale_pattern = re.compile(
-        r"\b(?:cuda(?:\s+|[-_])?12\.1|cuda121|cu121)\b",
-        flags=re.IGNORECASE,
+# Superseded CUDA names are built dynamically so the literal tokens stay out
+# of this file (it is also exempt from its own scan).
+_OLD_CUDA_TAG = "cu" + "126"
+
+STALE_CUDA_PATTERN = re.compile(
+    r"\b(?:cuda(?:\s+|[-_])?12\.[16]|cuda12[16]|cu12[16])\b",
+    flags=re.IGNORECASE,
+)
+# Explicit file roots are always scanned, whatever their suffix (Dockerfile has
+# none); directory roots are scanned for the text suffixes below.
+STALE_SCAN_ROOTS = (
+    "Dockerfile",
+    "compose.yaml",
+    "compose.build.yaml",
+    "compose.gpu.yaml",
+    "compose.gpu.podman.yaml",
+    ".env.example",
+    "README.md",
+    "HANDOFF.md",
+    "webapp",
+    "scripts",
+    "docs",
+    "tests",
+    ".github",
+    ".agents/skills",
+)
+STALE_SCAN_TEXT_SUFFIXES = {
+    ".bat",
+    ".cmd",
+    ".example",
+    ".html",
+    ".js",
+    ".json",
+    ".md",
+    ".ps1",
+    ".py",
+    ".sh",
+    ".txt",
+    ".yaml",
+    ".yml",
+}
+# Whole files that legitimately name the superseded baseline flavor because
+# they measure or compare against it (the TASK-103 pilot tooling). Keys are
+# repo-relative POSIX globs; values are the justification.
+STALE_CUDA_FILE_ALLOWLIST = {
+    "scripts/task103_compare.py": (
+        "TASK-103 comparator: judges candidate stage C against the stage A/B "
+        "baseline flavor."
+    ),
+    "scripts/task103_pilot_probe.py": (
+        "TASK-103 in-image probe: reports whichever wheel tag and arch list "
+        "the baseline or candidate image carries."
+    ),
+    "tests/unit/test_task103_*.py": (
+        "TASK-103 pilot tooling tests: fixtures model the stage A/B baseline "
+        "arch list, wheel tag and flavor."
+    ),
+}
+# Individual lines that keep a superseded CUDA name on purpose. Maps a
+# repo-relative path to {substring of the matched line: justification}; every
+# entry must still match something, so stale entries are pruned.
+STALE_CUDA_LINE_ALLOWLIST = {
+    "scripts/task103_gates.v1.json": {
+        f'"{_OLD_CUDA_TAG}": "12.6"': (
+            "Declared (frozen) TASK-103 gates map the stage A/B baseline wheel "
+            "tag to its CUDA build."
+        ),
+    },
+    "scripts/task103_gates.v2.json": {
+        f'"{_OLD_CUDA_TAG}": "12.6"': (
+            "Declared (frozen) TASK-103 gates v2 map the stage A/B baseline "
+            "wheel tag to its CUDA build."
+        ),
+    },
+}
+
+
+def _stale_scan_candidates():
+    """Yield (relative POSIX path, path) for every file the stale scan reads.
+
+    Uses ``git ls-files`` so untracked drafts never count; falls back to a
+    filesystem walk only when git metadata is unavailable.
+    """
+    file_roots = {root for root in STALE_SCAN_ROOTS if (REPO_ROOT / root).is_file()}
+    paths = tracked_files(*STALE_SCAN_ROOTS, root=REPO_ROOT)
+    if paths is None:
+        paths = []
+        for root in STALE_SCAN_ROOTS:
+            root_path = REPO_ROOT / root
+            if root_path.is_file():
+                paths.append(root_path)
+            elif root_path.is_dir():
+                paths.extend(path for path in root_path.rglob("*") if path.is_file())
+    this_file = Path(__file__).resolve().relative_to(REPO_ROOT).as_posix()
+    for path in sorted(set(paths)):
+        relative = path.relative_to(REPO_ROOT).as_posix()
+        if (
+            relative == this_file
+            or "legacy" in {part.lower() for part in relative.split("/")}
+            or (
+                relative not in file_roots
+                and path.suffix.lower() not in STALE_SCAN_TEXT_SUFFIXES
+            )
+        ):
+            continue
+        yield relative, path
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "CUDA 12" + ".6",
+        "CUDA\n12" + ".1 Application Package",
+        "cuda-12" + ".6",
+        "cuda_12" + ".1",
+        "cuda12" + ".6",
+        "cuda" + "126",
+        "CUDA" + "121",
+        "cu" + "126",
+        "whl/cu" + "121",
+    ],
+)
+def test_stale_cuda_pattern_matches_superseded_spellings(text):
+    assert STALE_CUDA_PATTERN.search(text)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "CUDA 12.8",
+        "cuda128",
+        "cu128",
+        "whl/cu128",
+        "12" + ".6 alone",
+        "cu" + "1260",
+        "sm_126",
+    ],
+)
+def test_stale_cuda_pattern_ignores_current_and_unrelated_tokens(text):
+    assert not STALE_CUDA_PATTERN.search(text)
+
+
+def test_current_contracts_have_no_stale_cuda_reference():
+    assert all(STALE_CUDA_FILE_ALLOWLIST.values())
+    assert all(
+        justification
+        for entries in STALE_CUDA_LINE_ALLOWLIST.values()
+        for justification in entries.values()
     )
     stale_references = []
+    used_line_entries = set()
 
-    for scan_root in scan_roots:
-        paths = (scan_root,) if scan_root.is_file() else scan_root.rglob("*")
-        for path in paths:
-            if (
-                not path.is_file()
-                or path == Path(__file__).resolve()
-                or path.suffix.lower() not in text_suffixes
-                or "legacy" in {part.lower() for part in path.parts}
-            ):
+    for relative, path in _stale_scan_candidates():
+        if any(
+            fnmatch.fnmatchcase(relative, pattern)
+            for pattern in STALE_CUDA_FILE_ALLOWLIST
+        ):
+            continue
+        content = path.read_text(encoding="utf-8", errors="replace")
+        line_entries = STALE_CUDA_LINE_ALLOWLIST.get(relative, {})
+        for match in STALE_CUDA_PATTERN.finditer(content):
+            line_start = content.rfind("\n", 0, match.start()) + 1
+            line_end = content.find("\n", match.end())
+            line_end = len(content) if line_end == -1 else line_end
+            matched_lines = content[line_start:line_end]
+            allowed = [
+                substring for substring in line_entries if substring in matched_lines
+            ]
+            if allowed:
+                used_line_entries.update((relative, substring) for substring in allowed)
                 continue
-            content = path.read_text(encoding="utf-8", errors="replace")
-            match = stale_pattern.search(content)
-            if match:
-                line_number = content.count("\n", 0, match.start()) + 1
-                stale_references.append(
-                    f"{path.relative_to(REPO_ROOT)}:{line_number}"
-                )
+            line_number = content.count("\n", 0, match.start()) + 1
+            stale_references.append(
+                f"{relative}:{line_number}: {match.group(0)!r}"
+            )
 
-    assert stale_references == []
+    unused_line_entries = [
+        f"{relative}: {substring!r}"
+        for relative, entries in STALE_CUDA_LINE_ALLOWLIST.items()
+        for substring in entries
+        if (relative, substring) not in used_line_entries
+    ]
+
+    assert stale_references == [], "Stale CUDA references:\n" + "\n".join(
+        stale_references
+    )
+    assert unused_line_entries == [], "Unused line allowlist entries:\n" + "\n".join(
+        unused_line_entries
+    )
 
 
 def test_runtime_docs_distinguish_always_on_model_hashes_from_full_asset_hashes():

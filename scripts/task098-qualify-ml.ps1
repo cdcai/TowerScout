@@ -2,9 +2,9 @@ param(
     [ValidateSet("cpu", "cuda")]
     [string] $Profile = "cpu",
 
-    [string] $TorchVersion = "2.6.0",
+    [string] $TorchVersion = "2.10.0",
 
-    [string] $TorchvisionVersion = "0.21.0",
+    [string] $TorchvisionVersion = "0.25.0",
 
     [string] $OutputDirectory = ".agent_work/tmp/task098-qualification",
 
@@ -12,7 +12,7 @@ param(
 
     # CUDA wheel index tag used for -Profile cuda (the flavor is derived as cuda<digits>).
     [ValidatePattern('^cu1[0-9]{2}$')]
-    [string] $CudaWheelTag = "cu126",
+    [string] $CudaWheelTag = "cu128",
 
     # TASK-103 pilot mode: run an existing image instead of building one.
     [string] $Image = "",

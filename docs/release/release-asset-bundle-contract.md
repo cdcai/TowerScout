@@ -4,7 +4,7 @@
 **Last reviewed**: 2026-06-16
 **Audience**: Release engineering, support, and release reviewers
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
-12.6 Application Package, Podman CPU, Docker GPU, and Podman GPU are
+12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
 support-assigned paths after workstation-specific engine, Compose-provider,
 and NVIDIA validation.
 
@@ -39,14 +39,14 @@ For a release version such as `<release-version>`, the expected artifacts are:
 | --- | --- | --- |
 | CPU control ZIP | `towerscout-<release-version>-cpu.zip` | Default user-facing package with launcher, Compose, scripts, docs, manifest, and pinned CPU image metadata. |
 | CPU control ZIP checksum | `towerscout-<release-version>-cpu.zip.sha256` | SHA-256 checksum for the full CPU control ZIP. |
-| CUDA control ZIP | `towerscout-<release-version>-cuda126.zip` | Support-assigned NVIDIA GPU package with launcher, Compose, scripts, docs, manifest, and pinned CUDA 12.6 image metadata. |
-| CUDA control ZIP checksum | `towerscout-<release-version>-cuda126.zip.sha256` | SHA-256 checksum for the full CUDA control ZIP. |
+| CUDA control ZIP | `towerscout-<release-version>-cuda128.zip` | Support-assigned NVIDIA GPU package with launcher, Compose, scripts, docs, manifest, and pinned CUDA 12.8 image metadata. |
+| CUDA control ZIP checksum | `towerscout-<release-version>-cuda128.zip.sha256` | SHA-256 checksum for the full CUDA control ZIP. |
 | GHCR image digest | `ghcr.io/j-schulein/towerscout@sha256:<digest>` | Immutable Linux/AMD64 runtime image referenced by each control ZIP. |
 | Asset ZIP | `towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip` | Restricted-pilot or support-supplied local bundle containing model weights, ZIP-code data, and the asset manifest copy. |
 | Asset ZIP checksum | `towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip.sha256` | SHA-256 checksum for the full asset ZIP. |
 
 The release version in the control ZIP and asset ZIP names must match. The
-control ZIP adds an image flavor suffix (`-cpu` or `-cuda126`); the shared
+control ZIP adds an image flavor suffix (`-cpu` or `-cuda128`); the shared
 asset ZIP does not. The manifest version in the asset ZIP name must match the
 `manifest_version` in `webapp/asset_manifest.v1.json`. CPU and CUDA control
 package manifests should identify the same asset ZIP filename and SHA-256

@@ -4,7 +4,7 @@
 provider TLS repair baseline, unless release notes say otherwise
 **Last reviewed**: 2026-06-29
 **Audience**: Windows users assigned Podman NVIDIA GPU validation
-**Runtime scope**: Podman, CUDA 12.6 Application Package, GPU launch mode
+**Runtime scope**: Podman, CUDA 12.8 Application Package, GPU launch mode
 
 Use this guide only when support assigns a workstation to the Podman GPU path.
 This path requires a running WSL2-backed Podman machine, an approved
@@ -47,6 +47,15 @@ Install or confirm these items before running TowerScout.
 - NVIDIA CDI registered inside the Podman machine.
   - CDI validation must show `nvidia.com/gpu=all`.
   - TowerScout readiness must report `selected_device=cuda` after launch.
+
+**Supported GPUs and drivers**: The CUDA 12.8 Application Package supports
+NVIDIA GPUs from Volta (compute capability 7.0) through Blackwell (compute
+capability 12.x), including Turing GPUs such as the NVIDIA T1000 and Blackwell
+RTX and RTX PRO GPUs. Maxwell and Pascal GPUs are not supported by the CUDA
+package; use the CPU Application Package or launch with `-Gpu off`. Use the
+current NVIDIA or OEM production Windows driver that lists your exact GPU;
+Blackwell GPUs require driver R570 or newer. Older drivers are untested. The
+qualified GPU, driver, and engine combinations are listed in the release notes.
 
 Podman must be installed, the Podman machine must be running, the Compose
 provider must be available, and NVIDIA CDI must be validated before entering
@@ -112,8 +121,8 @@ use the GPU through CDI.
    TowerScout folder:
 
    ```text
-   towerscout-<release-version>-cuda126.zip
-   towerscout-<release-version>-cuda126.zip.sha256
+   towerscout-<release-version>-cuda128.zip
+   towerscout-<release-version>-cuda128.zip.sha256
    towerscout-<release-version>-assets-<asset-version>.zip
    towerscout-<release-version>-assets-<asset-version>.zip.sha256
    ```
@@ -121,10 +130,10 @@ use the GPU through CDI.
    Do not use the CPU Application Package for this guide. The CPU package
    rejects `-Gpu on`.
 
-4. Extract only the CUDA 12.6 Application Package ZIP:
+4. Extract only the CUDA 12.8 Application Package ZIP:
 
    ```text
-   towerscout-<release-version>-cuda126.zip
+   towerscout-<release-version>-cuda128.zip
    ```
 
    Leave the Model & Data Package ZIP and both `.sha256` files beside the
@@ -228,7 +237,7 @@ Show recent logs if support asks:
 ## Troubleshooting
 
 If setup says the CPU package does not support `-Gpu on`, you extracted the
-wrong Application Package. Stop and use the `-cuda126` ZIP from the same
+wrong Application Package. Stop and use the `-cuda128` ZIP from the same
 release as the Model & Data Package.
 
 If setup says no approved Podman Compose provider was found, run the provider
