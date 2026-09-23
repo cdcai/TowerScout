@@ -791,3 +791,24 @@ def test_runtime_diagnostics_report_new_fields_for_working_cuda(monkeypatch):
     assert diagnostics["cuda_kernel_probe_ok"] is True
     assert diagnostics["cuda_probe_error"] is None
     json.dumps(diagnostics)
+
+
+def test_vendored_autoshape_synchronizes_cuda_before_nms_time_limit():
+    """TASK-103 local patch: the NMS wall-clock limit must not include pending forward work.
+
+    The upstream Profile() timers do not synchronize, so on slower GPUs the vendored
+    non_max_suppression time limit (0.5 + 0.05 * batch seconds) counted the asynchronous
+    forward pass and silently dropped detections. The sync must sit between the forward
+    call and non_max_suppression in AutoShape.forward.
+    """
+    from pathlib import Path
+
+    common = (
+        Path(__file__).resolve().parents[2] / "webapp" / "vendor" / "yolov5_local" / "models" / "common.py"
+    ).read_text(encoding="utf-8")
+    autoshape = common[common.index("class AutoShape"):]
+    forward = autoshape.index("y = self.model(x, augment=augment)")
+    sync = autoshape.index("torch.cuda.synchronize(p.device)")
+    nms = autoshape.index("y = non_max_suppression(")
+    assert forward < sync < nms
+    assert 'if p.device.type == "cuda":' in autoshape[forward:nms]
