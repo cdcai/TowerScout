@@ -262,6 +262,8 @@ function Invoke-TowerScoutLaunchRuntime {
 
         [switch] $Build,
 
+        [switch] $HostHelperReviewEnabled,
+
         [switch] $NoBrowser
     )
 
@@ -273,7 +275,7 @@ function Invoke-TowerScoutLaunchRuntime {
         [System.StringComparison]::Ordinal
     )
     try {
-        if (-not $helperControlledOperation) {
+        if ($HostHelperReviewEnabled -and -not $helperControlledOperation) {
             $hostHelperReviewSession = Initialize-TowerScoutHostHelperReviewSession `
                 -EngineName $EngineName `
                 -GpuMode $GpuMode `
@@ -378,10 +380,25 @@ if ($MyInvocation.InvocationName -eq ".") {
     return
 }
 
+$hostHelperReviewEnabled = (
+    ([string] $env:TOWERSCOUT_HOST_HELPER_REVIEW_ENABLED).Trim().ToLowerInvariant() -in
+    @("1", "true", "yes", "on")
+)
 . "$PSScriptRoot\lib\TowerScoutCompose.ps1"
-. "$PSScriptRoot\lib\TowerScoutHostHelper.ps1"
-
+. "$PSScriptRoot\lib\TowerScoutHostHelperState.ps1"
 $repoRoot = Get-TowerScoutRepoRoot
+if ($hostHelperReviewEnabled) {
+    . "$PSScriptRoot\lib\TowerScoutHostHelper.ps1"
+}
+else {
+    try {
+        Clear-TowerScoutHostHelperSession -RootPath $repoRoot | Out-Null
+    }
+    finally {
+        Clear-TowerScoutHostHelperBridgeEnvironment
+    }
+}
+
 $appUrl = "http://localhost:$Port"
 $readinessUrl = "$appUrl/api/readiness"
 
@@ -402,12 +419,14 @@ if ([string]::IsNullOrWhiteSpace($packageFlavor)) {
 }
 $env:TOWERSCOUT_CONTAINER_ENGINE = $effectiveEngine
 $env:TOWERSCOUT_PORT = "$Port"
-Save-TowerScoutHostHelperLaunchProfile `
-    -Engine $effectiveEngine `
-    -Gpu $Gpu `
-    -AppPort $Port `
-    -RootPath $repoRoot `
-    -PackageFlavor $packageFlavor | Out-Null
+if ($hostHelperReviewEnabled) {
+    Save-TowerScoutHostHelperLaunchProfile `
+        -Engine $effectiveEngine `
+        -Gpu $Gpu `
+        -AppPort $Port `
+        -RootPath $repoRoot `
+        -PackageFlavor $packageFlavor | Out-Null
+}
 
 Write-Host "Starting TowerScout with $effectiveEngine on $appUrl..."
 Write-TowerScoutComposeProviderSummary -Engine $effectiveEngine
@@ -426,5 +445,6 @@ $launchExitCode = Invoke-TowerScoutLaunchRuntime `
     -ReadinessTimeoutSeconds $TimeoutSeconds `
     -PodmanMachineName $PodmanMachineName `
     -Build:$Build `
+    -HostHelperReviewEnabled:$hostHelperReviewEnabled `
     -NoBrowser:$NoBrowser
 exit $launchExitCode

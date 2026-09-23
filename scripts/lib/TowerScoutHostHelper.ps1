@@ -358,27 +358,6 @@ function Set-TowerScoutHostHelperObjectValue {
     $InputObject | Add-Member -NotePropertyName $Name -NotePropertyValue $Value -Force
 }
 
-function New-TowerScoutHostHelperSessionId {
-    return [guid]::NewGuid().ToString("N")
-}
-
-function Resolve-TowerScoutHostHelperSessionId {
-    param(
-        [string] $SessionId = ""
-    )
-
-    if ([string]::IsNullOrWhiteSpace($SessionId)) {
-        return New-TowerScoutHostHelperSessionId
-    }
-
-    $normalized = $SessionId.Trim().ToLowerInvariant()
-    if ($normalized -notmatch "^[a-f0-9]{32}$") {
-        throw "HelperSessionId must be a 32-character hexadecimal value."
-    }
-
-    return $normalized
-}
-
 function Get-TowerScoutHostHelperPackageRootIdentity {
     param(
         [Parameter(Mandatory = $true)]
@@ -399,15 +378,6 @@ function Get-TowerScoutHostHelperPackageRootIdentity {
     }
 
     return (($hashBytes | ForEach-Object { $_.ToString("x2") }) -join "").Substring(0, 16)
-}
-
-function Get-TowerScoutHostHelperStateDirectory {
-    param(
-        [string] $RootPath = $(Resolve-Path (Join-Path $PSScriptRoot "..\.."))
-    )
-
-    $resolvedRoot = (Resolve-Path -LiteralPath $RootPath).Path
-    return (Join-Path $resolvedRoot ".towerscout-runtime\host-helper")
 }
 
 function Protect-TowerScoutHostHelperStatePath {
@@ -667,57 +637,9 @@ function Save-TowerScoutHostHelperSession {
     return $sessionPath
 }
 
-function Clear-TowerScoutHostHelperSession {
-    param(
-        [string] $RootPath = $(Resolve-Path (Join-Path $PSScriptRoot "..\..")),
-
-        [string] $SessionId = ""
-    )
-
-    $stateDirectory = Get-TowerScoutHostHelperStateDirectory -RootPath $RootPath
-    if (-not (Test-Path -LiteralPath $stateDirectory -PathType Container)) {
-        return [pscustomobject]@{
-            cleared = 0
-            state = "no_sessions"
-        }
-    }
-
-    $normalizedSessionId = if ([string]::IsNullOrWhiteSpace($SessionId)) { "" } else { Resolve-TowerScoutHostHelperSessionId -SessionId $SessionId }
-    $sessionFilter = if ([string]::IsNullOrWhiteSpace($normalizedSessionId)) { "session-*.json" } else { "session-$normalizedSessionId.json" }
-    $tokenFilter = if ([string]::IsNullOrWhiteSpace($normalizedSessionId)) { "token-*.secret" } else { "token-$normalizedSessionId.secret" }
-    $operationFilter = "operation-*.json"
-    $sessionFiles = @(Get-ChildItem -LiteralPath $stateDirectory -Filter $sessionFilter -File -ErrorAction SilentlyContinue)
-    $tokenFiles = @(Get-ChildItem -LiteralPath $stateDirectory -Filter $tokenFilter -File -ErrorAction SilentlyContinue)
-    $operationFiles = @(
-        if (
-            [string]::IsNullOrWhiteSpace($normalizedSessionId) -or
-            $sessionFiles.Count -gt 0
-        ) {
-            Get-ChildItem -LiteralPath $stateDirectory -Filter $operationFilter -File -ErrorAction SilentlyContinue
-        }
-    )
-    foreach ($file in @($sessionFiles + $tokenFiles + $operationFiles)) {
-        Remove-Item -LiteralPath $file.FullName -Force -ErrorAction SilentlyContinue
-    }
-
-    return [pscustomobject]@{
-        cleared = $sessionFiles.Count
-        token_files_cleared = $tokenFiles.Count
-        operation_files_cleared = $operationFiles.Count
-        state = "invalidated"
-    }
-}
-
 function Test-TowerScoutHostHelperReviewEnabled {
     $value = ([string] $env:TOWERSCOUT_HOST_HELPER_REVIEW_ENABLED).Trim().ToLowerInvariant()
     return $value -in @("1", "true", "yes", "on")
-}
-
-function Clear-TowerScoutHostHelperBridgeEnvironment {
-    $env:TOWERSCOUT_HOST_HELPER_ENABLED = "0"
-    Remove-Item Env:TOWERSCOUT_HOST_HELPER_PORT -ErrorAction SilentlyContinue
-    Remove-Item Env:TOWERSCOUT_HOST_HELPER_SESSION_ID -ErrorAction SilentlyContinue
-    Remove-Item Env:TOWERSCOUT_HOST_HELPER_SESSION_KEY -ErrorAction SilentlyContinue
 }
 
 function Get-TowerScoutHostHelperSessionMetadata {

@@ -60,8 +60,206 @@ def _run_powershell_script(script: str) -> subprocess.CompletedProcess[str]:
     )
 
 
+def _build_helperless_package(tmp_path: Path) -> tuple[Path, Path]:
+    package_root = tmp_path / "TowerScout helperless package"
+    scripts_dir = package_root / "scripts"
+    library_dir = scripts_dir / "lib"
+    fake_bin = tmp_path / "fake-bin"
+    library_dir.mkdir(parents=True)
+    fake_bin.mkdir()
+
+    for source, destination in (
+        (LAUNCH_SCRIPT, scripts_dir / "launch.ps1"),
+        (STOP_SCRIPT, scripts_dir / "stop.ps1"),
+        (HELPER_STATE_LIB, library_dir / "TowerScoutHostHelperState.ps1"),
+        (
+            REPO_ROOT / "scripts" / "lib" / "TowerScoutCompose.ps1",
+            library_dir / "TowerScoutCompose.ps1",
+        ),
+        (
+            REPO_ROOT
+            / "scripts"
+            / "lib"
+            / "TowerScoutPodmanComposeProvider.ps1",
+            library_dir / "TowerScoutPodmanComposeProvider.ps1",
+        ),
+        (COMPOSE_FILE, package_root / "compose.yaml"),
+        (ENV_EXAMPLE, package_root / ".env.example"),
+    ):
+        shutil.copy2(source, destination)
+
+    (fake_bin / "docker.cmd").write_text(
+        textwrap.dedent(
+            """\
+            @echo off
+            if "%1"=="info" exit /b 0
+            if "%1"=="compose" if "%2"=="version" (
+              echo Docker Compose version v2.39.4
+              exit /b 0
+            )
+            if "%1"=="compose" exit /b 7
+            if "%1"=="ps" exit /b 0
+            if "%1"=="inspect" exit /b 1
+            exit /b 0
+            """
+        ),
+        encoding="ascii",
+    )
+    return package_root, fake_bin
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher is Windows-only")
+def test_helper_disabled_launch_and_stop_clear_prior_bridge_state(tmp_path):
+    package_root, fake_bin = _build_helperless_package(tmp_path)
+    state_directory = package_root / ".towerscout-runtime" / "host-helper"
+    state_directory.mkdir(parents=True)
+    for name in (
+        "session-prior.json",
+        "token-prior.secret",
+        "operation-prior.json",
+    ):
+        (state_directory / name).write_text("stale", encoding="ascii")
+
+    script = textwrap.dedent(
+        f"""\
+        $env:PATH = '{fake_bin};' + $env:PATH
+        $env:TOWERSCOUT_HOST_HELPER_REVIEW_ENABLED = '0'
+        $env:TOWERSCOUT_HOST_HELPER_ENABLED = '1'
+        $env:TOWERSCOUT_HOST_HELPER_PORT = '49152'
+        $env:TOWERSCOUT_HOST_HELPER_SESSION_ID = 'prior'
+        $env:TOWERSCOUT_HOST_HELPER_SESSION_KEY = 'prior-secret'
+        & '{package_root / "scripts" / "launch.ps1"}' `
+            -Engine docker -Gpu off -TimeoutSeconds 5 -NoBrowser
+        if ($env:TOWERSCOUT_HOST_HELPER_ENABLED -ne '0') {{
+            throw 'Disabled launch retained the helper-enabled flag.'
+        }}
+        foreach ($name in @(
+            'TOWERSCOUT_HOST_HELPER_PORT',
+            'TOWERSCOUT_HOST_HELPER_SESSION_ID',
+            'TOWERSCOUT_HOST_HELPER_SESSION_KEY'
+        )) {{
+            if (Test-Path -LiteralPath "Env:$name") {{
+                throw "Disabled launch retained $name."
+            }}
+        }}
+        if (Get-ChildItem -LiteralPath '{state_directory}' -File) {{
+            throw 'Disabled launch retained prior helper session state.'
+        }}
+
+        $env:TOWERSCOUT_HOST_HELPER_CONTROLLED_OPERATION = '0'
+        & '{package_root / "scripts" / "stop.ps1"}' -Engine docker
+        if (Get-ChildItem -LiteralPath '{state_directory}' -File) {{
+            throw 'Ordinary stop retained prior helper session state.'
+        }}
+        exit 0
+        """
+    )
+    result = _run_powershell_script(script)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert not (
+        package_root / "scripts" / "lib" / "TowerScoutHostHelper.ps1"
+    ).exists()
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher is Windows-only")
+def test_helper_disabled_launch_and_stop_do_not_require_helper_module(tmp_path):
+    powershell = _powershell_executable()
+    if powershell is None:
+        pytest.skip("PowerShell executable not found")
+
+    package_root, fake_bin = _build_helperless_package(tmp_path)
+    env = os.environ.copy()
+    env["PATH"] = f"{fake_bin}{os.pathsep}{env['PATH']}"
+    env["TOWERSCOUT_HOST_HELPER_REVIEW_ENABLED"] = "0"
+    env.pop("TOWERSCOUT_HOST_HELPER_CONTROLLED_OPERATION", None)
+    helper_library = (
+        package_root / "scripts" / "lib" / "TowerScoutHostHelper.ps1"
+    )
+    assert not helper_library.exists()
+
+    empty_bin = tmp_path / "empty-bin"
+    empty_bin.mkdir()
+    preflight_env = env.copy()
+    preflight_env["PATH"] = str(empty_bin)
+    preflight = subprocess.run(
+        [
+            powershell,
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(package_root / "scripts" / "launch.ps1"),
+            "-Engine",
+            "auto",
+            "-Gpu",
+            "off",
+            "-TimeoutSeconds",
+            "5",
+            "-NoBrowser",
+        ],
+        cwd=package_root,
+        env=preflight_env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    launch = subprocess.run(
+        [
+            powershell,
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(package_root / "scripts" / "launch.ps1"),
+            "-Engine",
+            "docker",
+            "-Gpu",
+            "off",
+            "-TimeoutSeconds",
+            "5",
+            "-NoBrowser",
+        ],
+        cwd=package_root,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    env["TOWERSCOUT_HOST_HELPER_CONTROLLED_OPERATION"] = "1"
+    stop = subprocess.run(
+        [
+            powershell,
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(package_root / "scripts" / "stop.ps1"),
+            "-Engine",
+            "docker",
+        ],
+        cwd=package_root,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert preflight.returncode != 0
+    assert "No supported container engine found" in (
+        preflight.stdout + preflight.stderr
+    )
+    assert "TowerScoutHostHelper" not in preflight.stdout + preflight.stderr
+    assert launch.returncode == 7, launch.stdout + launch.stderr
+    assert stop.returncode == 7, stop.stdout + stop.stderr
+    assert "Deferred TowerScout host helper" not in stop.stdout + stop.stderr
+    assert not helper_library.exists()
+
+
 def test_host_helper_provider_tls_repair_plan_is_docker_only_and_allowlisted():
     script = HELPER_LIB.read_text(encoding="utf-8")
+    state_script = HELPER_STATE_LIB.read_text(encoding="utf-8")
     stop_script = STOP_SCRIPT.read_text(encoding="utf-8")
 
     assert (
@@ -85,8 +283,8 @@ def test_host_helper_provider_tls_repair_plan_is_docker_only_and_allowlisted():
     assert '"-NoBrowser"' in script
     assert "function New-TowerScoutHostHelperOperationLock" in script
     assert "nonce_fingerprint" in script
-    assert '"operation-*.json"' in script
-    assert "operation_files_cleared" in script
+    assert '"operation-*.json"' in state_script
+    assert "operation_files_cleared" in state_script
     assert "provider_tls_repair = $providerTlsRepairEnabled" in script
     assert 'State "capability_disabled"' in script
     assert "$script:TowerScoutHostHelperExecutionEnabledByDefault = $false" in script
@@ -155,7 +353,10 @@ def test_host_helper_review_bridge_is_explicit_and_does_not_persist_session_key(
     assert "TOWERSCOUT_HOST_HELPER_REVIEW_ENABLED" in helper_library
     assert "Initialize-TowerScoutHostHelperReviewSession" in launch_script
     assert "$helperControlledOperation" in launch_script
-    assert "if (-not $helperControlledOperation)" in launch_script
+    assert (
+        "if ($HostHelperReviewEnabled -and -not $helperControlledOperation)"
+        in launch_script
+    )
     assert (
         "function Test-TowerScoutHostHelperSessionMetadataMatchesProfile"
         in helper_library
@@ -777,6 +978,7 @@ def test_real_launcher_runtime_failure_matrix_cleans_only_failed_launches():
                     -AppUrl "http://localhost:5000" `
                     -ReadinessUrl "http://localhost:5000/api/readiness" `
                     -ReadinessTimeoutSeconds 1 `
+                    -HostHelperReviewEnabled `
                     -NoBrowser:$case.NoBrowser
             }}
             catch {{
