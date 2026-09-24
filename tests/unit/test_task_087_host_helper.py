@@ -18,6 +18,7 @@ HELPER_SCRIPT = REPO_ROOT / "scripts" / "host-helper.ps1"
 HELPER_WORKER_SCRIPT = REPO_ROOT / "scripts" / "host-helper-worker.ps1"
 STOP_SCRIPT = REPO_ROOT / "scripts" / "stop.ps1"
 LAUNCH_SCRIPT = REPO_ROOT / "scripts" / "launch.ps1"
+BOOTSTRAP_LIB = REPO_ROOT / "scripts" / "lib" / "TowerScoutBootstrap.ps1"
 COMPOSE_FILE = REPO_ROOT / "compose.yaml"
 ENV_EXAMPLE = REPO_ROOT / ".env.example"
 EDGE_RESTART_OBSERVER = (
@@ -76,6 +77,7 @@ def _build_helperless_package(tmp_path: Path) -> tuple[Path, Path]:
             REPO_ROOT / "scripts" / "lib" / "TowerScoutCompose.ps1",
             library_dir / "TowerScoutCompose.ps1",
         ),
+        (BOOTSTRAP_LIB, library_dir / "TowerScoutBootstrap.ps1"),
         (
             REPO_ROOT
             / "scripts"

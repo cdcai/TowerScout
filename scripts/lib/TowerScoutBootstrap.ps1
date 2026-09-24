@@ -52,22 +52,94 @@ function Test-TowerScoutBootstrapCommand {
     return $null -ne (Get-Command $Name -ErrorAction SilentlyContinue)
 }
 
+function ConvertTo-TowerScoutBootstrapArgument {
+    param(
+        [AllowEmptyString()]
+        [string] $Argument = ""
+    )
+
+    if ($Argument.Length -gt 0 -and $Argument -notmatch '[\s"]') {
+        return $Argument
+    }
+
+    $builder = New-Object System.Text.StringBuilder
+    [void] $builder.Append([char] 34)
+    $backslashCount = 0
+    foreach ($character in $Argument.ToCharArray()) {
+        if ($character -eq [char] 92) {
+            $backslashCount += 1
+            continue
+        }
+
+        if ($character -eq [char] 34) {
+            [void] $builder.Append(
+                (('\' * (($backslashCount * 2) + 1)) -join "")
+            )
+            [void] $builder.Append($character)
+            $backslashCount = 0
+            continue
+        }
+
+        if ($backslashCount -gt 0) {
+            [void] $builder.Append((('\' * $backslashCount) -join ""))
+            $backslashCount = 0
+        }
+        [void] $builder.Append($character)
+    }
+
+    if ($backslashCount -gt 0) {
+        [void] $builder.Append((('\' * ($backslashCount * 2)) -join ""))
+    }
+    [void] $builder.Append([char] 34)
+    return $builder.ToString()
+}
+
 function Join-TowerScoutBootstrapArguments {
     param(
         [string[]] $Arguments = @()
     )
 
     $quoted = foreach ($argument in $Arguments) {
-        $text = [string] $argument
-        if ($text -match '[\s"]') {
-            '"' + $text.Replace('"', '\"') + '"'
+        if ($null -eq $argument) {
+            ConvertTo-TowerScoutBootstrapArgument -Argument ""
         }
         else {
-            $text
+            ConvertTo-TowerScoutBootstrapArgument -Argument ([string] $argument)
         }
     }
 
     return ($quoted -join " ")
+}
+
+function Stop-TowerScoutBootstrapProcessTree {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Diagnostics.Process] $Process
+    )
+
+    if ($Process.HasExited) {
+        return
+    }
+
+    if ($env:OS -eq "Windows_NT") {
+        $taskkill = Join-Path $env:SystemRoot "System32\taskkill.exe"
+        if (Test-Path -LiteralPath $taskkill -PathType Leaf) {
+            & $taskkill /PID ([string] $Process.Id) /T /F 2>$null | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+                if (-not $Process.WaitForExit(3000)) {
+                    throw "Timed-out process tree did not exit after taskkill completed."
+                }
+                return
+            }
+        }
+    }
+
+    if (-not $Process.HasExited) {
+        $Process.Kill()
+    }
+    if (-not $Process.WaitForExit(2000)) {
+        throw "Timed-out process did not exit after direct termination."
+    }
 }
 
 function Invoke-TowerScoutBootstrapCommand {
@@ -90,28 +162,115 @@ function Invoke-TowerScoutBootstrapCommand {
 
     try {
         [void] $process.Start()
-        $completed = $process.WaitForExit($TimeoutSeconds * 1000)
-        if (-not $completed) {
+        $retainedCharacterLimit = 64 * 1024
+        $stdoutBuilder = New-Object System.Text.StringBuilder
+        $stderrBuilder = New-Object System.Text.StringBuilder
+        $stdoutBuffer = New-Object char[] 4096
+        $stderrBuffer = New-Object char[] 4096
+        $stdoutRead = $process.StandardOutput.ReadAsync($stdoutBuffer, 0, $stdoutBuffer.Length)
+        $stderrRead = $process.StandardError.ReadAsync($stderrBuffer, 0, $stderrBuffer.Length)
+        $stdoutComplete = $false
+        $stderrComplete = $false
+        $timedOut = $false
+        $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+        $drainDeadline = $null
+
+        while ($true) {
+            if ($null -ne $stdoutRead -and $stdoutRead.IsCompleted) {
+                $readCount = $stdoutRead.GetAwaiter().GetResult()
+                if ($readCount -eq 0) {
+                    $stdoutComplete = $true
+                    $stdoutRead = $null
+                }
+                else {
+                    $remaining = $retainedCharacterLimit - $stdoutBuilder.Length
+                    if ($remaining -gt 0) {
+                        [void] $stdoutBuilder.Append(
+                            $stdoutBuffer,
+                            0,
+                            [Math]::Min($remaining, $readCount)
+                        )
+                    }
+                    $stdoutRead = $process.StandardOutput.ReadAsync(
+                        $stdoutBuffer,
+                        0,
+                        $stdoutBuffer.Length
+                    )
+                }
+            }
+
+            if ($null -ne $stderrRead -and $stderrRead.IsCompleted) {
+                $readCount = $stderrRead.GetAwaiter().GetResult()
+                if ($readCount -eq 0) {
+                    $stderrComplete = $true
+                    $stderrRead = $null
+                }
+                else {
+                    $remaining = $retainedCharacterLimit - $stderrBuilder.Length
+                    if ($remaining -gt 0) {
+                        [void] $stderrBuilder.Append(
+                            $stderrBuffer,
+                            0,
+                            [Math]::Min($remaining, $readCount)
+                        )
+                    }
+                    $stderrRead = $process.StandardError.ReadAsync(
+                        $stderrBuffer,
+                        0,
+                        $stderrBuffer.Length
+                    )
+                }
+            }
+
+            if ($process.HasExited -and $stdoutComplete -and $stderrComplete) {
+                break
+            }
+
+            if (-not $timedOut -and [DateTime]::UtcNow -ge $deadline) {
+                $timedOut = $true
+                $drainDeadline = [DateTime]::UtcNow.AddSeconds(2)
+                try {
+                    Stop-TowerScoutBootstrapProcessTree -Process $process
+                }
+                catch {
+                    # Best effort cleanup after a timed-out prerequisite probe.
+                }
+            }
+
+            if ($timedOut -and [DateTime]::UtcNow -ge $drainDeadline) {
+                break
+            }
+
+            [Threading.Thread]::Sleep(10)
+        }
+
+        if ($timedOut) {
+            $stderr = $stderrBuilder.ToString()
+            if (-not [string]::IsNullOrWhiteSpace($stderr)) {
+                $stderr += [Environment]::NewLine
+            }
+            $stderr += "Command timed out after $TimeoutSeconds seconds."
+
             try {
-                $process.Kill()
+                $process.WaitForExit(2000) | Out-Null
             }
             catch {
-                # Best effort cleanup after a timed-out prerequisite probe.
+                # The timeout result remains authoritative if final cleanup stalls.
             }
 
             return [pscustomobject]@{
                 ExitCode = 124
                 TimedOut = $true
-                StdOut = ""
-                StdErr = "Command timed out after $TimeoutSeconds seconds."
+                StdOut = $stdoutBuilder.ToString()
+                StdErr = $stderr
             }
         }
 
         return [pscustomobject]@{
             ExitCode = $process.ExitCode
             TimedOut = $false
-            StdOut = $process.StandardOutput.ReadToEnd()
-            StdErr = $process.StandardError.ReadToEnd()
+            StdOut = $stdoutBuilder.ToString()
+            StdErr = $stderrBuilder.ToString()
         }
     }
     catch {

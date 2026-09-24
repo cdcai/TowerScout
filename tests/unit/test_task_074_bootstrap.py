@@ -846,7 +846,8 @@ def test_stale_container_guard_does_not_remove_named_volumes():
     compose_helper = COMPOSE_LIB.read_text(encoding="utf-8")
 
     assert "Invoke-TowerScoutStaleContainerGuard" in compose_helper
-    assert "container rm" in compose_helper
+    assert '@("container", "rm", $containerId)' in compose_helper
+    assert '@("container", "rm", "--force", $containerId)' in compose_helper
     assert "down -v" not in compose_helper
     assert "volume rm" not in compose_helper
     assert "docker volume" not in compose_helper

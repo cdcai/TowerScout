@@ -251,8 +251,11 @@ function Copy-TowerScoutFileIntoContainer {
         throw "Could not locate the running TowerScout Podman container for direct copy fallback."
     }
 
-    & podman cp $LocalPath "${containerId}:$ContainerPath"
-    $script:TowerScoutComposeExitCode = $LASTEXITCODE
+    $copyResult = Invoke-TowerScoutContainerEngineCommand `
+        -EngineName "podman" `
+        -Arguments @("cp", $LocalPath, "${containerId}:$ContainerPath") `
+        -TimeoutSeconds 120
+    $script:TowerScoutComposeExitCode = $copyResult.ExitCode
 }
 
 function Invoke-TowerScoutTlsProviderVerification {

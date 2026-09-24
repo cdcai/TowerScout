@@ -99,7 +99,8 @@ def test_import_assets_uses_shared_copy_fallback_and_sets_gpu_environment():
 
     assert "Set-TowerScoutGpuEnvironment -Gpu $Gpu -Build:$Build" in import_assets
     assert "Copy-TowerScoutContainerPath" in import_assets
-    assert "podman cp $LocalPath" in helper
+    assert "Invoke-TowerScoutContainerEngineCommand" in helper
+    assert '@("cp", $LocalPath, "${containerId}:$ContainerPath")' in helper
     assert "Get-TowerScoutPodmanServiceContainerId" in helper
     assert "io.podman.compose.project" in helper
     assert "com.docker.compose.project" in helper
@@ -211,12 +212,22 @@ def test_auto_engine_selection_prefers_reachable_podman_when_docker_is_down():
             return $EngineName -eq "podman"
         }}
 
+        function Invoke-TowerScoutPodmanCommand {{
+            param([string[]] $Arguments, [int] $TimeoutSeconds)
+            return [pscustomobject]@{{
+                ExitCode = 0
+                TimedOut = $false
+                StdOut = '[{{"Name":"podman-machine-default","URI":"ssh://user@127.0.0.1:51313/run/user/1000/podman/podman.sock","Default":false}}]'
+                StdErr = ''
+            }}
+        }}
+
         $command = Get-TowerScoutComposeCommand -Engine auto
         if ($command["Executable"] -ne "podman") {{
             throw "Expected automatic engine selection to choose reachable Podman."
         }}
-        if ($command["Arguments"][0] -ne "compose") {{
-            throw "Expected Podman compose arguments."
+        if ([string]::Join(" ", $command["Arguments"]) -ne "--connection podman-machine-default compose") {{
+            throw "Expected rootless Podman compose arguments."
         }}
         if ($env:PODMAN_COMPOSE_PROVIDER -ne "{provider}") {{
             throw "Expected provider auto-detection to set the approved provider."
@@ -460,8 +471,30 @@ def test_podman_copy_uses_direct_podman_cp_without_provider_cp_noise():
             }}
             return @{{
                 Executable = "podman"
-                Arguments = @("compose")
+                Arguments = @("--connection", "podman-machine-default", "compose")
             }}
+        }}
+        function Invoke-TowerScoutPodmanCommand {{
+            param([string[]] $Arguments, [int] $TimeoutSeconds)
+            return [pscustomobject]@{{
+                ExitCode = 0
+                TimedOut = $false
+                StdOut = '[{{"Name":"podman-machine-default","URI":"ssh://user@127.0.0.1:51313/run/user/1000/podman/podman.sock","Default":false}}]'
+                StdErr = ''
+            }}
+        }}
+        $script:BoundedCalls = @()
+        function Invoke-TowerScoutBootstrapCommand {{
+            param([string] $FileName, [string[]] $Arguments, [int] $TimeoutSeconds)
+            $text = [string]::Join(" ", $Arguments)
+            $script:BoundedCalls += $text
+            if ($text -match " compose .* ps -a -q towerscout") {{
+                return [pscustomobject]@{{ ExitCode = 0; TimedOut = $false; StdOut = "compose-provider-id"; StdErr = "" }}
+            }}
+            if ($text -match " cp .*compose-provider-id:/app/model_params/asset.txt") {{
+                return [pscustomobject]@{{ ExitCode = 0; TimedOut = $false; StdOut = ""; StdErr = "" }}
+            }}
+            return [pscustomobject]@{{ ExitCode = 1; TimedOut = $false; StdOut = ""; StdErr = "unexpected: $text" }}
         }}
         function Invoke-TowerScoutCompose {{
             throw "Podman copy should use direct podman cp, not compose cp."
@@ -476,14 +509,14 @@ def test_podman_copy_uses_direct_podman_cp_without_provider_cp_noise():
         if ($script:TowerScoutComposeExitCode -ne 0) {{
             throw "Expected direct podman cp exit 0, got $script:TowerScoutComposeExitCode"
         }}
-        $joinedCalls = Get-Content -LiteralPath $podmanCallsPath -Raw
-        if ($joinedCalls -notmatch "compose .* ps -a -q towerscout") {{
+        $joinedCalls = [string]::Join("`n", $script:BoundedCalls)
+        if ($joinedCalls -notmatch "--connection podman-machine-default compose .* ps -a -q towerscout") {{
             throw "Expected provider compose ps lookup, got $joinedCalls"
         }}
         if ($joinedCalls -match "ps .*io\\.podman\\.compose\\.project=task084-project") {{
             throw "Expected compose ps to avoid label fallback, got $joinedCalls"
         }}
-        if ($joinedCalls -notmatch "cp .*compose-provider-id:/app/model_params/asset.txt") {{
+        if ($joinedCalls -notmatch "--connection podman-machine-default cp .*compose-provider-id:/app/model_params/asset.txt") {{
             throw "Expected direct podman cp call, got $joinedCalls"
         }}
         "ok"

@@ -1,4 +1,5 @@
 Set-StrictMode -Version Latest
+. "$PSScriptRoot\TowerScoutBootstrap.ps1"
 
 function Get-TowerScoutPodmanGpuRepoRoot {
     return (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
@@ -159,28 +160,15 @@ function Invoke-TowerScoutPodmanGpuCommand {
         [int] $TimeoutSeconds = 60
     )
 
-    $previousErrorActionPreference = $ErrorActionPreference
-    $ErrorActionPreference = "Continue"
-    try {
-        $output = & $FileName @Arguments 2>&1
-        return [pscustomobject]@{
-            ExitCode = $LASTEXITCODE
-            StdOut = [string]::Join([Environment]::NewLine, @($output))
-            StdErr = ""
-            Command = "$FileName $([string]::Join(' ', $Arguments))"
-        }
-    }
-    catch {
-        return [pscustomobject]@{
-            ExitCode = 1
-            StdOut = ""
-            StdErr = $_.Exception.Message
-            Command = "$FileName $([string]::Join(' ', $Arguments))"
-        }
-    }
-    finally {
-        $ErrorActionPreference = $previousErrorActionPreference
-    }
+    $result = Invoke-TowerScoutBootstrapCommand `
+        -FileName $FileName `
+        -Arguments $Arguments `
+        -TimeoutSeconds $TimeoutSeconds
+    $result | Add-Member `
+        -NotePropertyName Command `
+        -NotePropertyValue "$FileName $([string]::Join(' ', $Arguments))" `
+        -Force
+    return $result
 }
 
 function New-TowerScoutPodmanGpuStepResult {

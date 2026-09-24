@@ -4,6 +4,13 @@ $script:TowerScoutCpuPytorchIndexUrl = "https://download.pytorch.org/whl/cpu"
 $script:TowerScoutCudaPytorchIndexUrl = "https://download.pytorch.org/whl/cu126"
 $script:TowerScoutDefaultPodmanMachineName = "podman-machine-default"
 . "$PSScriptRoot\TowerScoutPodmanComposeProvider.ps1"
+$bootstrapLibrary = Join-Path $PSScriptRoot "TowerScoutBootstrap.ps1"
+if (
+    $null -eq (Get-Command "Invoke-TowerScoutBootstrapCommand" -ErrorAction SilentlyContinue) -and
+    (Test-Path -LiteralPath $bootstrapLibrary -PathType Leaf)
+) {
+    . $bootstrapLibrary
+}
 
 function Get-TowerScoutRepoRoot {
     return (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
@@ -48,7 +55,11 @@ function Test-TowerScoutEngineReady {
 function Get-TowerScoutComposeCommand {
     param(
         [ValidateSet("auto", "docker", "podman")]
-        [string] $Engine = "auto"
+        [string] $Engine = "auto",
+
+        [string] $PodmanMachineName = "",
+
+        [string] $PodmanConnectionName = ""
     )
 
     if ($Engine -eq "auto") {
@@ -85,11 +96,18 @@ function Get-TowerScoutComposeCommand {
     if (-not (Test-TowerScoutCommand "podman")) {
         throw "Podman was selected but the podman command was not found."
     }
+    $resolvedConnectionName = Get-TowerScoutConfiguredPodmanConnectionName `
+        -ConnectionName $PodmanConnectionName `
+        -MachineName $PodmanMachineName
+    $connection = Assert-TowerScoutRootlessPodmanConnection `
+        -ConnectionName $resolvedConnectionName
+    $env:TOWERSCOUT_PODMAN_CONNECTION = $connection.Name
     Initialize-TowerScoutPodmanComposeProvider | Out-Null
 
     return @{
         Executable = "podman"
-        Arguments = @("compose")
+        Arguments = @("--connection", $connection.Name, "compose")
+        PodmanConnection = $connection
     }
 }
 
@@ -312,6 +330,108 @@ function Get-TowerScoutConfiguredPodmanMachineName {
     return $script:TowerScoutDefaultPodmanMachineName
 }
 
+function Get-TowerScoutConfiguredPodmanConnectionName {
+    param(
+        [string] $ConnectionName = "",
+
+        [string] $MachineName = ""
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($ConnectionName)) {
+        return $ConnectionName.Trim()
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace([string] $env:TOWERSCOUT_PODMAN_CONNECTION)) {
+        return ([string] $env:TOWERSCOUT_PODMAN_CONNECTION).Trim()
+    }
+
+    $envFileConnection = [string] (Get-TowerScoutEnvFileValue -Name "TOWERSCOUT_PODMAN_CONNECTION")
+    if (-not [string]::IsNullOrWhiteSpace($envFileConnection)) {
+        return $envFileConnection.Trim()
+    }
+
+    return Get-TowerScoutConfiguredPodmanMachineName -MachineName $MachineName
+}
+
+function Assert-TowerScoutRootlessPodmanConnection {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $ConnectionName
+    )
+
+    $result = Invoke-TowerScoutPodmanCommand `
+        -Arguments @("system", "connection", "list", "--format", "json") `
+        -TimeoutSeconds 10
+    if ($result.ExitCode -ne 0) {
+        $message = ($result.StdErr + $result.StdOut).Trim()
+        throw "Podman connection inventory failed before runtime mutation. $message"
+    }
+
+    try {
+        $parsedConnections = $result.StdOut | ConvertFrom-Json
+        $connections = @($parsedConnections | ForEach-Object { $_ })
+    }
+    catch {
+        throw "Podman connection inventory returned unreadable JSON before runtime mutation."
+    }
+
+    $matches = @($connections | Where-Object { ([string] $_.Name) -eq $ConnectionName })
+    if ($matches.Count -ne 1) {
+        throw "The selected Podman connection '$ConnectionName' was not found exactly once. No runtime mutation was attempted."
+    }
+
+    $connection = $matches[0]
+    $uri = ([string] $connection.URI).Trim()
+    $rootlessPattern = '^ssh://(?!root@)[^@/]+@.+/run/user/[0-9]+/podman/podman\.sock$'
+    if ($uri -notmatch $rootlessPattern) {
+        throw "The selected Podman connection '$ConnectionName' is not a verified rootless user connection. No runtime mutation was attempted."
+    }
+
+    return [pscustomobject]@{
+        Name = $ConnectionName
+        URI = $uri
+        Rootless = $true
+    }
+}
+
+function Invoke-TowerScoutContainerEngineCommand {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("docker", "podman")]
+        [string] $EngineName,
+
+        [string[]] $Arguments = @(),
+
+        [int] $TimeoutSeconds = 30,
+
+        [string] $PodmanConnectionName = ""
+    )
+
+    $executable = Resolve-TowerScoutCommandOrPath -Value $EngineName
+    if ([string]::IsNullOrWhiteSpace($executable)) {
+        return [pscustomobject]@{
+            ExitCode = 127
+            TimedOut = $false
+            StdOut = ""
+            StdErr = "$EngineName CLI was not found."
+        }
+    }
+
+    $effectiveArguments = @($Arguments)
+    if ($EngineName -eq "podman") {
+        $resolvedConnectionName = Get-TowerScoutConfiguredPodmanConnectionName `
+            -ConnectionName $PodmanConnectionName
+        $connection = Assert-TowerScoutRootlessPodmanConnection `
+            -ConnectionName $resolvedConnectionName
+        $effectiveArguments = @("--connection", $connection.Name) + $effectiveArguments
+    }
+
+    return Invoke-TowerScoutBootstrapCommand `
+        -FileName $executable `
+        -Arguments $effectiveArguments `
+        -TimeoutSeconds $TimeoutSeconds
+}
+
 function Resolve-TowerScoutCommandOrPath {
     param(
         [Parameter(Mandatory = $true)]
@@ -405,17 +525,21 @@ function Initialize-TowerScoutPodmanComposeProvider {
 }
 
 function Get-TowerScoutPodmanComposeVersionResult {
-    $previousErrorActionPreference = $ErrorActionPreference
-    $ErrorActionPreference = "Continue"
-    try {
-        $versionOutput = & podman compose version 2>&1
-        return [pscustomobject]@{
-            ExitCode = $LASTEXITCODE
-            Lines = @($versionOutput)
-        }
-    }
-    finally {
-        $ErrorActionPreference = $previousErrorActionPreference
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable] $Command
+    )
+
+    $result = Invoke-TowerScoutBootstrapCommand `
+        -FileName ([string] $Command["Executable"]) `
+        -Arguments @($Command["Arguments"] + "version") `
+        -TimeoutSeconds 15
+    return [pscustomobject]@{
+        ExitCode = $result.ExitCode
+        Lines = @(
+            @($result.StdOut -split "(`r`n|`n|`r)")
+            @($result.StdErr -split "(`r`n|`n|`r)")
+        )
     }
 }
 
@@ -476,6 +600,7 @@ function Get-TowerScoutPackageManagedEnvironmentNames {
         "TOWERSCOUT_MAX_REQUEST_BODY_BYTES",
         "TOWERSCOUT_MODEL_UPLOAD_KEY",
         "TOWERSCOUT_PILOT_MAX_TILES",
+        "TOWERSCOUT_PODMAN_CONNECTION",
         "TOWERSCOUT_PODMAN_GPU_OVERLAY",
         "TOWERSCOUT_PODMAN_MACHINE",
         "TOWERSCOUT_PORT",
@@ -515,10 +640,17 @@ function Sync-TowerScoutPackageEnvToProcess {
 function Write-TowerScoutComposeProviderSummary {
     param(
         [ValidateSet("auto", "docker", "podman")]
-        [string] $Engine = "auto"
+        [string] $Engine = "auto",
+
+        [string] $PodmanMachineName = "",
+
+        [string] $PodmanConnectionName = ""
     )
 
-    $command = Get-TowerScoutComposeCommand -Engine $Engine
+    $command = Get-TowerScoutComposeCommand `
+        -Engine $Engine `
+        -PodmanMachineName $PodmanMachineName `
+        -PodmanConnectionName $PodmanConnectionName
     $effectiveEngine = [string] $command["Executable"]
 
     if ($effectiveEngine -eq "podman") {
@@ -526,7 +658,7 @@ function Write-TowerScoutComposeProviderSummary {
         Write-Host "Podman Compose provider: $providerPath"
 
         try {
-            $versionResult = Get-TowerScoutPodmanComposeVersionResult
+            $versionResult = Get-TowerScoutPodmanComposeVersionResult -Command $command
             Assert-TowerScoutPodmanComposeProviderAllowed -Lines $versionResult.Lines
             foreach ($line in $versionResult.Lines) {
                 $normalizedLine = ([string] $line).Replace([string][char]0, "")
@@ -707,52 +839,6 @@ function Test-TowerScoutPodmanVersionAtLeast {
     return ($actualMajor -gt $Major -or ($actualMajor -eq $Major -and $actualMinor -ge $Minor))
 }
 
-function Join-TowerScoutProcessArguments {
-    param(
-        [string[]] $Arguments = @()
-    )
-
-    $quoted = foreach ($argument in $Arguments) {
-        $text = [string] $argument
-        if ($text -match '[\s"]') {
-            '"' + $text.Replace('"', '\"') + '"'
-        }
-        else {
-            $text
-        }
-    }
-
-    return ($quoted -join " ")
-}
-
-function Stop-TowerScoutProcessTree {
-    param(
-        [Parameter(Mandatory = $true)]
-        [System.Diagnostics.Process] $Process
-    )
-
-    if ($Process.HasExited) {
-        return
-    }
-
-    if ($env:OS -eq "Windows_NT") {
-        try {
-            & taskkill.exe /PID $Process.Id /T /F 2>$null | Out-Null
-            return
-        }
-        catch {
-            # Fall back to direct process termination below.
-        }
-    }
-
-    try {
-        $Process.Kill()
-    }
-    catch {
-        # Best effort cleanup after a timed-out runtime probe.
-    }
-}
-
 function Invoke-TowerScoutPodmanCommand {
     param(
         [Parameter(Mandatory = $true)]
@@ -775,45 +861,10 @@ function Invoke-TowerScoutPodmanCommand {
         }
     }
 
-    $process = New-Object System.Diagnostics.Process
-    $process.StartInfo.FileName = $podmanPath
-    $process.StartInfo.Arguments = Join-TowerScoutProcessArguments -Arguments $Arguments
-    $process.StartInfo.UseShellExecute = $false
-    $process.StartInfo.RedirectStandardOutput = $true
-    $process.StartInfo.RedirectStandardError = $true
-    $process.StartInfo.CreateNoWindow = $true
-
-    try {
-        [void] $process.Start()
-        $completed = $process.WaitForExit($TimeoutSeconds * 1000)
-        if (-not $completed) {
-            Stop-TowerScoutProcessTree -Process $process
-            return [pscustomobject]@{
-                ExitCode = 124
-                TimedOut = $true
-                StdOut = ""
-                StdErr = "podman command timed out after $TimeoutSeconds seconds."
-            }
-        }
-
-        return [pscustomobject]@{
-            ExitCode = $process.ExitCode
-            TimedOut = $false
-            StdOut = $process.StandardOutput.ReadToEnd()
-            StdErr = $process.StandardError.ReadToEnd()
-        }
-    }
-    catch {
-        return [pscustomobject]@{
-            ExitCode = 127
-            TimedOut = $false
-            StdOut = ""
-            StdErr = $_.Exception.Message
-        }
-    }
-    finally {
-        $process.Dispose()
-    }
+    return Invoke-TowerScoutBootstrapCommand `
+        -FileName $podmanPath `
+        -Arguments $Arguments `
+        -TimeoutSeconds $TimeoutSeconds
 }
 
 function Get-TowerScoutFirstJsonObject {
@@ -1049,17 +1100,21 @@ function Get-TowerScoutComposeServiceContainerIds {
 
     Push-Location $repoRoot
     try {
-        $previousErrorActionPreference = $ErrorActionPreference
-        $ErrorActionPreference = "Continue"
-        $output = & $command["Executable"] @(($command["Arguments"]) + $composeFiles + @("ps", "-a", "-q", $ServiceName)) 2>$null
-        if ($LASTEXITCODE -ne 0) {
+        $result = Invoke-TowerScoutBootstrapCommand `
+            -FileName ([string] $command["Executable"]) `
+            -Arguments @(($command["Arguments"]) + $composeFiles + @("ps", "-a", "-q", $ServiceName)) `
+            -TimeoutSeconds 30
+        if ($result.ExitCode -ne 0) {
             return @()
         }
 
-        return @($output | ForEach-Object { ([string] $_).Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+        return @(
+            $result.StdOut -split "(`r`n|`n|`r)" |
+                ForEach-Object { ([string] $_).Trim() } |
+                Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+        )
     }
     finally {
-        $ErrorActionPreference = $previousErrorActionPreference
         Pop-Location
     }
 }
@@ -1276,12 +1331,22 @@ function Get-TowerScoutPodmanServiceContainerId {
     )
 
     foreach ($labelSet in $labelSets) {
-        $ids = & podman ps `
-            --filter "label=$($labelSet[0])" `
-            --filter "label=$($labelSet[1])" `
-            --format "{{.ID}}" 2>$null
-        if ($LASTEXITCODE -eq 0) {
-            $containerId = @($ids | ForEach-Object { ([string] $_).Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -First 1)
+        $result = Invoke-TowerScoutContainerEngineCommand `
+            -EngineName "podman" `
+            -Arguments @(
+                "ps",
+                "--filter", "label=$($labelSet[0])",
+                "--filter", "label=$($labelSet[1])",
+                "--format", "{{.ID}}"
+            ) `
+            -TimeoutSeconds 30
+        if ($result.ExitCode -eq 0) {
+            $containerId = @(
+                $result.StdOut -split "(`r`n|`n|`r)" |
+                    ForEach-Object { ([string] $_).Trim() } |
+                    Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+                    Select-Object -First 1
+            )
             if ($containerId.Count -gt 0 -and -not [string]::IsNullOrWhiteSpace($containerId[0])) {
                 return [string] $containerId[0]
             }
@@ -1315,19 +1380,11 @@ function Copy-TowerScoutContainerPath {
             throw "Could not locate the running TowerScout Podman container for direct copy."
         }
 
-        & podman cp $LocalPath "${containerId}:$ContainerPath"
-        $copySucceeded = $?
-        try {
-            $script:TowerScoutComposeExitCode = [int] $LASTEXITCODE
-        }
-        catch {
-            if ($copySucceeded) {
-                $script:TowerScoutComposeExitCode = 0
-            }
-            else {
-                $script:TowerScoutComposeExitCode = 1
-            }
-        }
+        $copyResult = Invoke-TowerScoutContainerEngineCommand `
+            -EngineName "podman" `
+            -Arguments @("cp", $LocalPath, "${containerId}:$ContainerPath") `
+            -TimeoutSeconds 120
+        $script:TowerScoutComposeExitCode = $copyResult.ExitCode
         return
     }
 
@@ -1348,12 +1405,15 @@ function Get-TowerScoutContainerSessionInfo {
         [string] $ContainerId
     )
 
-    $inspectOutput = & $EngineName container inspect $ContainerId 2>$null
-    if ($LASTEXITCODE -ne 0 -or $null -eq $inspectOutput) {
+    $inspectResult = Invoke-TowerScoutContainerEngineCommand `
+        -EngineName $EngineName `
+        -Arguments @("container", "inspect", $ContainerId) `
+        -TimeoutSeconds 30
+    if ($inspectResult.ExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($inspectResult.StdOut)) {
         return $null
     }
 
-    $inspect = @($inspectOutput | ConvertFrom-Json)[0]
+    $inspect = @($inspectResult.StdOut | ConvertFrom-Json)[0]
     $state = $inspect.State
     $healthStatus = ""
     if ($null -ne $state -and $state.PSObject.Properties.Name -contains "Health" -and $null -ne $state.Health) {
@@ -1601,14 +1661,23 @@ function Invoke-TowerScoutContainerStopRemove {
         }
 
         Write-Host "Stopping TowerScout container $shortId before starting a fresh UAT session..."
-        & $EngineName container stop $containerId 2>$null | Out-Null
+        $stopResult = Invoke-TowerScoutContainerEngineCommand `
+            -EngineName $EngineName `
+            -Arguments @("container", "stop", $containerId) `
+            -TimeoutSeconds 30
 
         Write-Host "Removing TowerScout container $shortId without deleting named volumes..."
-        & $EngineName container rm $containerId 2>$null | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            & $EngineName container rm --force $containerId 2>$null | Out-Null
+        $removeResult = Invoke-TowerScoutContainerEngineCommand `
+            -EngineName $EngineName `
+            -Arguments @("container", "rm", $containerId) `
+            -TimeoutSeconds 30
+        if ($removeResult.ExitCode -ne 0) {
+            $removeResult = Invoke-TowerScoutContainerEngineCommand `
+                -EngineName $EngineName `
+                -Arguments @("container", "rm", "--force", $containerId) `
+                -TimeoutSeconds 30
         }
-        if ($LASTEXITCODE -ne 0) {
+        if ($removeResult.ExitCode -ne 0) {
             throw "Could not remove existing TowerScout container $shortId. Stop TowerScout through support guidance and try again."
         }
     }
@@ -1697,11 +1766,16 @@ function Invoke-TowerScoutCompose {
         [ValidateSet("off", "auto", "on")]
         [string] $Gpu = "off",
 
-        [string] $PodmanMachineName = $(Get-TowerScoutConfiguredPodmanMachineName)
+        [string] $PodmanMachineName = $(Get-TowerScoutConfiguredPodmanMachineName),
+
+        [string] $PodmanConnectionName = ""
     )
 
     $repoRoot = Get-TowerScoutRepoRoot
-    $command = Get-TowerScoutComposeCommand -Engine $Engine
+    $command = Get-TowerScoutComposeCommand `
+        -Engine $Engine `
+        -PodmanMachineName $PodmanMachineName `
+        -PodmanConnectionName $PodmanConnectionName
     $effectiveEngine = [string] $command["Executable"]
     $gpuOverlayFile = ""
     if ($effectiveEngine -in @("docker", "podman")) {
@@ -1714,7 +1788,7 @@ function Invoke-TowerScoutCompose {
     Set-TowerScoutGpuEnvironment -Gpu $Gpu -Build:$Build
     $env:TOWERSCOUT_CONTAINER_ENGINE = $effectiveEngine
     if ($effectiveEngine -eq "podman") {
-        $versionResult = Get-TowerScoutPodmanComposeVersionResult
+        $versionResult = Get-TowerScoutPodmanComposeVersionResult -Command $command
         Assert-TowerScoutPodmanComposeProviderAllowed -Lines $versionResult.Lines
         if ($versionResult.ExitCode -ne 0) {
             throw "podman compose version exited with code $($versionResult.ExitCode). Confirm the approved Compose provider is installed and selected."

@@ -411,7 +411,9 @@ if ($SessionMaxHours -lt 0) {
 
 Initialize-TowerScoutEnvFile -RootPath $repoRoot
 
-$composeCommand = Get-TowerScoutComposeCommand -Engine $Engine
+$composeCommand = Get-TowerScoutComposeCommand `
+    -Engine $Engine `
+    -PodmanMachineName $PodmanMachineName
 $effectiveEngine = [string] $composeCommand["Executable"]
 $packageFlavor = Get-TowerScoutPackagePytorchFlavor -RootPath $repoRoot
 if ([string]::IsNullOrWhiteSpace($packageFlavor)) {
@@ -429,7 +431,9 @@ if ($hostHelperReviewEnabled) {
 }
 
 Write-Host "Starting TowerScout with $effectiveEngine on $appUrl..."
-Write-TowerScoutComposeProviderSummary -Engine $effectiveEngine
+Write-TowerScoutComposeProviderSummary `
+    -Engine $effectiveEngine `
+    -PodmanMachineName $PodmanMachineName
 Set-TowerScoutGpuEnvironment -Gpu $Gpu -Build:$Build
 Write-TowerScoutGpuModeSummary -EngineName $effectiveEngine -Gpu $Gpu -Build:$Build
 Invoke-TowerScoutStaleContainerGuard -EngineName $effectiveEngine -SessionMaxHours $SessionMaxHours | Out-Null
