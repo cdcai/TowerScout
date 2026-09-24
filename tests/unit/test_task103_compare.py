@@ -423,6 +423,27 @@ def test_cpu_profile_marks_arch_and_precision_not_applicable(scenario):
     assert code == 0
 
 
+def test_cpu_profile_on_cuda_image_preserves_image_identity(scenario):
+    scenario.candidate = run_docs(
+        "cand-c-cpu-on-cuda128",
+        stage="C",
+        profile="cpu",
+        flavor="cuda128",
+    )
+    scenario.baseline = run_docs("base-a-cpu", stage="A", profile="cpu")
+    scenario.counterpart = None
+
+    code, verdict = scenario.run()
+
+    statuses = _statuses(verdict)
+    assert statuses["G1"] == "pass"
+    assert statuses["G2"] == "not_applicable"
+    assert statuses["G3"] == "pass"
+    assert statuses["G12"] == "pass"
+    assert verdict["overall"] == "pass"
+    assert code == 0
+
+
 def test_stage_a_skips_precision_and_null_kernel_probe_uses_execution_evidence(scenario):
     scenario.candidate = run_docs("cand-a-cuda", stage="A", profile="cuda")
     identity = scenario.candidate["identity"]

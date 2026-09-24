@@ -227,8 +227,11 @@ def test_harness_pilot_mode_never_overwrites_and_keeps_legacy_contract():
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell harness is Windows-only")
-def test_harness_pilot_mode_passes_exact_probe_arguments_to_docker(tmp_path):
-    """Run pilot mode against fake git/docker and assert the exact docker run arguments."""
+@pytest.mark.parametrize("profile, expects_gpu", [("cuda", True), ("cpu", False)])
+def test_harness_pilot_mode_passes_exact_probe_arguments_to_docker(
+    tmp_path, profile, expects_gpu
+):
+    """Image identity stays cuda128 independently of the requested execution device."""
     powershell = shutil.which("powershell.exe")
     if powershell is None:
         pytest.skip("Windows PowerShell not found")
@@ -298,7 +301,7 @@ def test_harness_pilot_mode_passes_exact_probe_arguments_to_docker(tmp_path):
     result = subprocess.run(
         [
             powershell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(scripts / HARNESS_PATH.name),
-            "-Image", "towerscout:fake-c", "-Profile", "cuda", "-CudaWheelTag", "cu128", "-Stage", "C",
+            "-Image", "towerscout:fake-c", "-Profile", profile, "-CudaWheelTag", "cu128", "-Stage", "C",
             "-TorchVersion", "2.10.0", "-TorchvisionVersion", "0.25.0",
             "-EvidenceRoot", str(evidence_root),
             "-FixtureManifest", str(fixture_dir / "fixture-manifest.json"),
@@ -315,12 +318,18 @@ def test_harness_pilot_mode_passes_exact_probe_arguments_to_docker(tmp_path):
     invocation = run_log.read_text(encoding="ascii")
     assert "--fixture-manifest /fixtures/fixture-manifest.json" in invocation
     assert "--phase combined --output /evidence/combined.json" in invocation
-    assert "--gpus all" in invocation
+    if expects_gpu:
+        assert "--gpus all" in invocation
+    else:
+        assert "--gpus all" not in invocation
+    assert f"TOWERSCOUT_DEVICE={profile}" in invocation
     assert "TASK103_EXPECTED_CUDA_BUILD=12.8" in invocation
     assert "TASK103_EXPECTED_WHEEL_TAG=cu128" in invocation
     run_dirs = list((evidence_root / "runs").iterdir())
     assert len(run_dirs) == 1 and "_C_cuda128_torch2-10-0_" in run_dirs[0].name
     run = json.loads((run_dirs[0] / "run.json").read_text(encoding="utf-8-sig"))
+    assert run["profile"] == profile
     assert run["flavor"] == "cuda128"
     assert run["expected"]["cuda_build"] == "12.8"
+    assert run["expected"]["wheel_tag"] == "cu128"
     assert run["phases"]["combined"]["exit_code"] == 0

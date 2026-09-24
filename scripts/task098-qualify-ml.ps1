@@ -221,6 +221,35 @@ $imageInfo = ($imageJson | Out-String | ConvertFrom-Json)[0]
 $labels = $imageInfo.Config.Labels
 $imageRevision = [string] $labels."org.opencontainers.image.revision"
 $imageFlavor = [string] $labels."org.towerscout.pytorch.flavor"
+$imageIdentityByFlavor = @{
+    "cpu" = @{
+        wheel_tag = "cpu"
+        cuda_build = ""
+    }
+    "cuda126" = @{
+        wheel_tag = "cu126"
+        cuda_build = "12.6"
+    }
+    "cuda128" = @{
+        wheel_tag = "cu128"
+        cuda_build = "12.8"
+    }
+}
+if (-not $imageIdentityByFlavor.ContainsKey($imageFlavor)) {
+    throw "Image $image has missing or unsupported org.towerscout.pytorch.flavor label: '$imageFlavor'"
+}
+if ([string]::IsNullOrWhiteSpace($Image)) {
+    if ($imageFlavor -ne $flavor) {
+        throw "Built image flavor label '$imageFlavor' does not match requested flavor '$flavor'."
+    }
+}
+else {
+    # Execution device and image package identity are independent. For example,
+    # a cuda128 image can be qualified with explicit CPU execution.
+    $flavor = $imageFlavor
+    $wheelTag = [string] $imageIdentityByFlavor[$imageFlavor].wheel_tag
+    $expectedCudaBuild = [string] $imageIdentityByFlavor[$imageFlavor].cuda_build
+}
 $revisionShort = if ($imageRevision.Length -ge 12) { $imageRevision.Substring(0, 12) } else { $shortCommit }
 
 $fixtureMountSource = ""
