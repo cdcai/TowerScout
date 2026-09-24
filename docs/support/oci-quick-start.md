@@ -149,6 +149,12 @@ The publish workflow has an explicit PyTorch wheel flavor input:
 
 The workflow publishes flavor-specific tags. For example, a workflow tag input of `<release-version>` with `cuda128` publishes `<release-version>-cuda128`; `push_latest` publishes `latest-cpu` or `latest-cuda128`, not an ambiguous `latest`.
 
+The measured CUDA image is 14.4 GB. Budget at least 35 GB for a normal
+pull/unpack plus assets/volumes, 60 GB for a support source build, and 150 GB
+for a full multi-stage comparison (the pilot grew Docker's virtual disk by
+about 120 GB). Publish only exact GPU/driver/Windows/WSL/engine/toolkit
+combinations qualified in release evidence.
+
 Source-checkout and local-validation defaults use `latest-cpu` when no package
 digest is present. Release packages should still pin `TOWERSCOUT_IMAGE` to the
 exact digest recorded in the release handoff.

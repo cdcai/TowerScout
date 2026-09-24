@@ -2,7 +2,7 @@
 
 **Applies to**: Current V1 package path through the stable `v0.1.0` closeout,
 unless release notes say otherwise
-**Last reviewed**: 2026-07-08
+**Last reviewed**: 2026-09-24
 **Audience**: Pilot users, support leads, and release reviewers
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
 12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
@@ -46,12 +46,19 @@ not the preferred pilot path.
 Pilot users need Windows 11 AMD64, PowerShell, a modern browser, normal outbound
 internet access, WSL 2/hardware virtualization support for Docker Desktop, and
 Docker Desktop installed, approved, and running as the primary pilot engine.
-Plan for at least `15 GB` of free disk space for the CPU package; `25 GB` is a
-better first-setup target for CUDA validation.
+Plan for at least `15 GB` of free disk space for the CPU package. The measured
+CUDA image is `14.4 GB`; plan for at least `35 GB` free for pull/unpack and
+runtime data, or `60 GB` for a support-directed source qualification build.
 Podman is a qualified support path only when support tells the user to use it
 and the workstation already has a running Podman machine plus an approved
 Compose provider. Users also need one site/user-owned restricted Google Maps or
 Azure Maps provider key.
+
+The CUDA package expects Volta-or-newer NVIDIA hardware, while release support
+is limited to exact combinations named in release notes. Maxwell and Pascal
+use the CPU path. GPU hosts need a current NVIDIA or OEM production Windows
+driver that lists the exact GPU. Do not install a Linux display driver in WSL;
+Podman CDI must be refreshed and reverified after Windows driver updates.
 
 The package path does not require Git, Python, Conda, Node.js, VS Code, or a
 source-code checkout.

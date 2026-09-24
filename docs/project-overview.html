@@ -31,7 +31,7 @@
         <h2>Document Metadata</h2>
         <p><strong>Applies to:</strong> Current V1 package path through the stable v0.1.0 closeout, unless release notes
           say otherwise.</p>
-        <p><strong>Last reviewed:</strong> 2026-07-08.</p>
+        <p><strong>Last reviewed:</strong> 2026-09-24.</p>
         <p><strong>Audience:</strong> Pilot users, support leads, and release reviewers.</p>
         <p><strong>Runtime scope:</strong> The CPU Application Package is the primary path; the CUDA 12.8 Application
           Package, Podman CPU, Docker GPU, and Podman GPU are support-assigned paths after workstation-specific engine,
@@ -52,12 +52,17 @@
         <p>Pilot users need Windows 11 AMD64, PowerShell, a modern browser, normal outbound internet access, WSL 2 and
           hardware virtualization support for Docker Desktop, and Docker Desktop installed, approved, and running as the
           primary pilot engine.</p>
-        <p>Plan for at least <code>15 GB</code> of free disk space for the CPU package; <code>25 GB</code> is a better
-          first-setup target for CUDA validation.</p>
+        <p>Plan for at least <code>15 GB</code> free for the CPU package. The measured CUDA image is
+          <code>14.4 GB</code>; plan at least <code>35 GB</code> for pull/unpack plus runtime data, or
+          <code>60 GB</code> for a support-directed source qualification build.</p>
         <p>Podman is a qualified support path only when support tells the user to use it and the workstation already has
           a running Podman machine plus an approved Compose provider. Users also need one site/user-owned restricted
           Google Maps or Azure Maps provider key.</p>
         <p>The package path does not require Git, Python, Conda, Node.js, VS Code, or a source-code checkout.</p>
+        <p>The CUDA package has a Volta-or-newer architecture expectation, while release support is limited to exact
+          combinations named in release notes. Maxwell and Pascal use the CPU path. Use a current NVIDIA or OEM
+          production Windows driver that lists the exact GPU; never install a Linux display driver inside WSL, and
+          refresh Podman CDI after Windows driver updates.</p>
       </section>
       <section class="doc-section" id="workflow">
         <h2>Main Workflow</h2>

@@ -2,7 +2,7 @@
 
 **Applies to**: Current V1 package path through the stable `v0.1.0` closeout,
 unless release notes say otherwise
-**Last reviewed**: 2026-07-08
+**Last reviewed**: 2026-09-24
 **Audience**: Pilot users after first setup
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
 12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
@@ -26,6 +26,13 @@ This guide assumes the package setup work is already complete:
 - At least one provider key is configured through Setup Wizard or Settings.
 
 If any of those are not true, start with `docs/quick-start.md`.
+
+GPU use is qualified only for the exact combinations named in the release
+notes. A host `nvidia-smi` result alone is not acceptance; readiness must show
+`selected_device=cuda`. Architecture mismatch messages require the correct
+CUDA package or the CPU path, not a forced override. After a Windows NVIDIA
+driver update, Podman GPU users must refresh and reverify CDI. Never install a
+Linux display driver inside WSL.
 
 When this guide shows package commands, run them from Windows PowerShell opened
 in the extracted TowerScout package folder. Commands that begin with `.\` run a

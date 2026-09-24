@@ -131,6 +131,26 @@ def test_task_101_pr_ci_builds_docker_frontend_stage_as_blocking_job() -> None:
     assert "continue-on-error" not in build_step
 
 
+def test_python_ci_caches_pip_and_installs_approved_cpu_torch_pair_first() -> None:
+    workflow = _workflow()
+
+    setup = workflow.split("- name: Set up Python", maxsplit=1)[1].split(
+        "- name: Install system dependencies", maxsplit=1
+    )[0]
+    install = workflow.split("- name: Install Python dependencies", maxsplit=1)[1].split(
+        "- name: Lint with flake8", maxsplit=1
+    )[0]
+    torch_install = (
+        'pip install "torch==2.10.0" "torchvision==0.25.0" '
+        "--index-url https://download.pytorch.org/whl/cpu"
+    )
+
+    assert "cache: 'pip'" in setup
+    assert "webapp/requirements.txt" in setup
+    assert torch_install in install
+    assert install.index(torch_install) < install.index("pip install -r webapp/requirements.txt")
+
+
 def test_task_087_puppeteer_uses_supported_node_and_pinned_playwright() -> None:
     workflow = _task_087_puppeteer_workflow()
 

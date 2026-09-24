@@ -17,6 +17,21 @@ def _powershell_executable():
     return shutil.which("powershell.exe") or shutil.which("pwsh")
 
 
+def _run_compose_helper(command):
+    powershell = _powershell_executable()
+    if powershell is None:
+        pytest.skip("PowerShell executable not found")
+    helper_path = REPO_ROOT / "scripts" / "lib" / "TowerScoutCompose.ps1"
+    script = f'$ErrorActionPreference = "Stop"\n. "{helper_path}"\n{command}'
+    return subprocess.run(
+        [powershell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
 def test_gpu_launcher_helpers_use_cpu_safe_auto_and_build_indexes():
     powershell = _powershell_executable()
@@ -145,3 +160,66 @@ def test_cpu_release_package_rejects_gpu_on_without_blocking_build_or_cuda_packa
         assert "ok" in result.stdout
     finally:
         shutil.rmtree(temp_root, ignore_errors=True)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
+def test_gpu_build_overrides_stale_official_cuda_index_and_exports_pins():
+    result = _run_compose_helper(
+        r'''
+        Remove-Item env:TOWERSCOUT_TORCH_VERSION -ErrorAction SilentlyContinue
+        Remove-Item env:TOWERSCOUT_TORCHVISION_VERSION -ErrorAction SilentlyContinue
+        Remove-Item env:TOWERSCOUT_PYTORCH_FLAVOR -ErrorAction SilentlyContinue
+        $env:PYTORCH_INDEX_URL = "https://download.pytorch.org/whl/" + "cu" + "126"
+        Set-TowerScoutGpuEnvironment -Gpu on -Build
+        [ordered]@{
+            index = $env:PYTORCH_INDEX_URL
+            flavor = $env:TOWERSCOUT_PYTORCH_FLAVOR
+            torch = $env:TOWERSCOUT_TORCH_VERSION
+            torchvision = $env:TOWERSCOUT_TORCHVISION_VERSION
+        } | ConvertTo-Json -Compress
+        '''
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout.strip().splitlines()[-1])
+    assert payload == {
+        "index": "https://download.pytorch.org/whl/cu128",
+        "flavor": "cuda128",
+        "torch": "2.10.0",
+        "torchvision": "0.25.0",
+    }
+    assert "Ignoring stale PYTORCH_INDEX_URL" in result.stdout + result.stderr
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
+def test_gpu_build_custom_mirror_without_declared_flavor_fails_closed():
+    result = _run_compose_helper(
+        r'''
+        Remove-Item env:TOWERSCOUT_PYTORCH_FLAVOR -ErrorAction SilentlyContinue
+        Remove-Item env:TOWERSCOUT_TORCH_VERSION -ErrorAction SilentlyContinue
+        Remove-Item env:TOWERSCOUT_TORCHVISION_VERSION -ErrorAction SilentlyContinue
+        $env:PYTORCH_INDEX_URL = "https://mirror.example.invalid/pytorch"
+        Set-TowerScoutGpuEnvironment -Gpu on -Build
+        '''
+    )
+
+    assert result.returncode != 0
+    assert "custom index" in result.stderr
+    assert "set TOWERSCOUT_PYTORCH_FLAVOR explicitly" in result.stderr
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
+def test_gpu_build_rejects_versions_copied_from_an_old_package_env():
+    result = _run_compose_helper(
+        r'''
+        $env:TOWERSCOUT_TORCH_VERSION = "2." + "6.0"
+        $env:TOWERSCOUT_TORCHVISION_VERSION = "0." + "21.0"
+        $env:TOWERSCOUT_PYTORCH_FLAVOR = "cuda128"
+        $env:PYTORCH_INDEX_URL = "https://download.pytorch.org/whl/cu128"
+        Set-TowerScoutGpuEnvironment -Gpu on -Build
+        '''
+    )
+
+    assert result.returncode != 0
+    assert "does not match the pinned source-build version" in result.stderr
+    assert "remove stale package .env values" in result.stderr

@@ -331,3 +331,15 @@ reproduction remain release blockers or not-run gates.
 **Next**: Obtain and predeclare the private fixture baseline, add the
 exact-package invocation, and run the Day-3 Docker/rootless-Podman rehearsal
 without weakening the W09/W10 identity and host requirements.
+
+### 2026-09-24 - Task-103 Track L Unlock And Phase-2 Integration
+
+Task-103 Track L passed on the Blackwell laptop with torch 2.10.0/cu128: both
+models executed on `cuda:0`, output tolerances passed, the `sm_120` kernel
+probe passed, and the explicit CPU profile of the same CUDA image passed. The
+owner acknowledged Checkpoint 1 and authorized Phase 2, the feature-branch
+push, and PR creation. ADR-022 now amends only the ML runtime baseline; this
+task's package, provider, persistence, recovery, and independent-host gates
+remain unchanged. The merged PR #83 combined-flow runner is the sole current
+ML acceptance contract; the historical external HTTP detection harness is
+retired for this purpose. Publication still waits for Task-103 Checkpoint 2.

@@ -2,7 +2,7 @@
 
 **Applies to**: Current V1 release-candidate package path through the RC7
 provider TLS repair baseline, unless release notes say otherwise
-**Last reviewed**: 2026-06-29
+**Last reviewed**: 2026-09-24
 **Audience**: Windows users assigned Podman NVIDIA GPU validation
 **Runtime scope**: Podman, CUDA 12.8 Application Package, GPU launch mode
 
@@ -22,7 +22,9 @@ Install or confirm these items before running TowerScout.
 - Normal outbound internet access to GitHub Releases, GHCR, the approved
   Compose provider source if installation is needed, NVIDIA Container Toolkit
   sources if support enables CDI, and the selected map provider.
-- At least `25 GB` free disk space. CUDA images are larger than CPU images.
+- At least `35 GB` free for package pull/unpack, assets, and volumes. The
+  measured CUDA image is `14.4 GB`. A support-directed source qualification
+  build needs at least `60 GB` free.
 - One approved Google Maps or Azure Maps provider key.
 - An NVIDIA GPU supported by the current Windows NVIDIA driver.
 - Windows Subsystem for Linux 2.
@@ -48,14 +50,13 @@ Install or confirm these items before running TowerScout.
   - CDI validation must show `nvidia.com/gpu=all`.
   - TowerScout readiness must report `selected_device=cuda` after launch.
 
-**Supported GPUs and drivers**: The CUDA 12.8 Application Package supports
-NVIDIA GPUs from Volta (compute capability 7.0) through Blackwell (compute
-capability 12.x), including Turing GPUs such as the NVIDIA T1000 and Blackwell
-RTX and RTX PRO GPUs. Maxwell and Pascal GPUs are not supported by the CUDA
-package; use the CPU Application Package or launch with `-Gpu off`. Use the
-current NVIDIA or OEM production Windows driver that lists your exact GPU;
-Blackwell GPUs require driver R570 or newer. Older drivers are untested. The
-qualified GPU, driver, and engine combinations are listed in the release notes.
+**GPU and driver boundary**: The CUDA 12.8 Application Package has a
+Volta-or-newer architecture expectation. Only GPU, driver, Windows, WSL,
+Podman, Compose-provider, toolkit, and CDI combinations explicitly listed in
+the release notes are qualified. Maxwell and Pascal are unsupported by the
+CUDA package; use the CPU Application Package or `-Gpu off`. Use the current
+NVIDIA or OEM production Windows driver that lists your exact GPU. Never
+install a Linux display driver inside WSL.
 
 Podman must be installed, the Podman machine must be running, the Compose
 provider must be available, and NVIDIA CDI must be validated before entering
@@ -98,9 +99,17 @@ If support approves provisioning or refresh of NVIDIA CDI, use:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\enable-podman-gpu.ps1
 ```
 
+Refresh and reverify CDI after every Windows NVIDIA driver update. Record
+`nvidia-ctk --version` inside the Podman machine; Task-103 requires NVIDIA
+Container Toolkit `>=1.19.1` and recommends the current `1.20.x` line.
+
 Important GPU boundary: a successful host `nvidia-smi` result is not enough by
 itself. The Podman machine and the TowerScout container must also be able to
 use the GPU through CDI.
+
+If readiness says the GPU is newer than the package build, obtain the current
+CUDA 12.8 package. If it says the GPU generation is older than the build, use
+the CPU package or `-Gpu off`; do not force an architecture list.
 
 ## Install TowerScout
 

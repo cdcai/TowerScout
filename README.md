@@ -46,6 +46,14 @@ approved Compose provider, and NVIDIA validation for the selected runtime. You
 do not need Git, Python, Conda, Node.js, VS Code, or a source checkout for the
 normal package workflow.
 
+The CUDA package has a Volta-or-newer architecture expectation, but a release
+supports only the exact GPU, Windows driver, WSL, engine, and toolkit
+combinations named in its release notes. Maxwell and Pascal must use the CPU
+package or `-Gpu off`. Use a current NVIDIA or OEM production Windows driver
+that lists the exact GPU; never install a Linux display driver inside WSL. The
+measured CUDA image is 14.4 GB, so GPU users should plan at least 35 GB free for
+pull/unpack and runtime data; source qualification builds need at least 60 GB.
+
 ## Provenance
 
 This repository is a fork of `cdcai/TowerScout`, which itself carries forward

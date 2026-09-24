@@ -60,7 +60,7 @@
   },
   "sbom": {
     "reference": "SBOM.txt",
-    "status": "Automatic SBOM generation is not yet wired into the release pipeline. Attach a release-specific SBOM when available; otherwise treat SBOM.txt as a reference-only placeholder."
+    "status": "The container publication workflow generates a CycloneDX SBOM for the exact published image digest. Retain that workflow artifact with the release evidence; SBOM.txt is the package policy/reference pointer."
   },
   "revocation": {
     "notes": "If the ZIP, image digest, model/data asset, source ref, or license notices are defective, revoke the affected release artifact and publish corrected artifacts with new checksums."

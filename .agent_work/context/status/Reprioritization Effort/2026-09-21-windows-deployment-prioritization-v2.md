@@ -4,6 +4,12 @@
 
 **Execution plan:** [Version 2 work breakdown](2026-09-21-windows-deployment-hardening-v2.md). **Review evidence:** [Static verification record](2026-09-21-windows-deployment-hardening-v2-verification.md).
 
+**Amended by ADR-022 (2026-09-24):** The selected ML candidate is now
+torch 2.10.0 / torchvision 0.25.0 with distinct `cpu` and `cuda128` artifacts.
+ADR-022 supersedes this document's CUDA 12.6/torch 2.6.0 ML baseline only;
+all package, device, provider, persistence, recovery, and independent-host
+acceptance requirements remain in force.
+
 **Version rule:** This pair supersedes the September 21 unversioned analysis/plan for the proposed deadline effort. Preserve those originals as history; do not execute their larger task list in addition to this one. Repository handoff files and skills still need the targeted alignment described in W00. Writing this revision does not change application behavior, task status, branches, PRs, or runtime state.
 
 ## 1. Decision and intended outcome

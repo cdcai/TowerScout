@@ -178,6 +178,14 @@ requires a WSL2-backed Podman machine, an approved non-Docker-Desktop Compose
 provider, NVIDIA Container Toolkit/CDI registration inside the Podman machine,
 and readiness evidence showing `selected_device=cuda`.
 
+The CUDA image has a Volta-or-newer architecture expectation, not a blanket
+support claim. Maxwell and Pascal use the CPU package or `-Gpu off`; exact
+qualified combinations belong in release notes. Hosts use a current NVIDIA or
+OEM production Windows driver that lists the exact GPU, never a Linux display
+driver installed inside WSL. A newer/older architecture diagnostic is resolved
+with the correct package or CPU path, not a forced architecture override.
+Podman CDI must be refreshed and reverified after a Windows driver update.
+
 Readiness diagnostics verify CUDA with a lightweight CUDA tensor probe when `TOWERSCOUT_DEVICE=auto` or `cuda`; `torch.cuda.is_available()` alone is not treated as a sufficient release diagnostic.
 
 ## Upload Limit

@@ -2,7 +2,7 @@
 
 **Applies to**: Current V1 package path through the stable `v0.1.0` closeout,
 unless release notes say otherwise
-**Last reviewed**: 2026-07-08
+**Last reviewed**: 2026-09-24
 **Audience**: Pilot users and first-line support
 **Runtime scope**: The CPU Application Package is the normal path. The CUDA
 12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
@@ -42,9 +42,9 @@ installing WSL, Docker Desktop, Podman, or provider credentials.
   TowerScout image from GHCR and TowerScout can reach the selected map provider.
 - Enough local disk space for the selected Application Package, Model & Data
   Package, container image, and Docker or Podman volumes. Plan for at least
-  `15 GB` free for the CPU package; `25 GB` free is a better target for first
-  setup and CUDA validation. CUDA images use substantially more space than
-  CPU-only images.
+  `15 GB` free for the CPU package. The measured CUDA image is `14.4 GB`;
+  plan for at least `35 GB` free for its pull/unpack plus assets and volumes,
+  and at least `60 GB` for a support-directed source qualification build.
 - One container engine, selected as follows:
   - Docker Desktop is the primary pilot path. During Docker Desktop
     installation, keep the WSL 2 backend selected when prompted, start Docker
@@ -59,6 +59,21 @@ installing WSL, Docker Desktop, Podman, or provider credentials.
 
 You do not need Git, Python, Conda, Node.js, VS Code, or a source-code checkout
 for the normal package path.
+
+### CUDA Qualification Boundary
+
+The CUDA 12.8 package expects Volta-or-newer hardware, but only the exact GPU,
+Windows driver, WSL, engine, Compose provider, and toolkit combinations listed
+in the release notes are qualified. Maxwell and Pascal are unsupported by the
+CUDA package; use the CPU package or `-Gpu off`. Install a current NVIDIA or
+OEM production Windows driver that lists your exact GPU. Do not install a Linux
+display driver inside WSL.
+
+If readiness reports that the GPU is newer or older than the image's compiled
+architecture list, stop GPU qualification and use the correct release package
+or the CPU path; do not mask the mismatch with environment variables. Podman
+users must refresh and reverify the CDI specification after a Windows NVIDIA
+driver update before restarting GPU mode.
 
 Unless support has explicitly assigned you the Podman path, stop here and
 contact your site administrator or support lead if Docker Desktop is not

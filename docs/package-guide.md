@@ -580,20 +580,25 @@ requires the CDI path: approved non-Docker-Desktop Compose provider,
 WSL2-backed Podman machine, NVIDIA Container Toolkit/CDI registration, and a
 readiness result with `selected_device=cuda`.
 
-For optional GPU validation, the workstation also needs an NVIDIA GPU, current
-NVIDIA host drivers, selected-engine GPU validation, and site-approved proof
+For optional GPU validation, the workstation also needs an NVIDIA GPU, a
+current NVIDIA or OEM production Windows driver that lists the exact GPU,
+selected-engine GPU validation, and site-approved proof
 that the engine can expose the GPU to a test container. Do not set
 `TOWERSCOUT_GPU_AUTO_OVERLAY=1` or `TOWERSCOUT_PODMAN_GPU_OVERLAY=1` until that
 validation has passed on the workstation.
 
-**Supported GPUs and drivers**: The CUDA 12.8 Application Package supports
-NVIDIA GPUs from Volta (compute capability 7.0) through Blackwell (compute
-capability 12.x), including Turing GPUs such as the NVIDIA T1000 and Blackwell
-RTX and RTX PRO GPUs. Maxwell and Pascal GPUs are not supported by the CUDA
-package; use the CPU Application Package or launch with `-Gpu off`. Use the
-current NVIDIA or OEM production Windows driver that lists your exact GPU;
-Blackwell GPUs require driver R570 or newer. Older drivers are untested. The
-qualified GPU, driver, and engine combinations are listed in the release notes.
+**GPU and driver boundary**: The CUDA 12.8 Application Package has a
+Volta-or-newer architecture expectation, but only exact GPU/driver/Windows/WSL/
+engine/toolkit combinations in the release notes are qualified. Maxwell and
+Pascal are unsupported by the CUDA package; use the CPU package or `-Gpu off`.
+Never install a Linux display driver inside WSL. Refresh Podman CDI after a
+Windows driver update. A newer/older architecture mismatch requires the
+correct package or CPU path, never a forced architecture override.
+
+The measured CUDA image is `14.4 GB`. Plan at least `35 GB` free for normal
+pull/unpack plus assets and volumes and at least `60 GB` for one support source
+build. The pilot's full three-stage A/B/C comparison grew Docker's virtual disk
+by about `120 GB`; a full comparative build should budget `150 GB`.
 
 `/api/readiness` includes non-secret `ml_runtime` diagnostics that support can
 use to distinguish CPU-wheel images, CUDA runtime probe failures, and normal CPU

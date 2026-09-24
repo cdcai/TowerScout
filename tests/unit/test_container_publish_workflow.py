@@ -32,3 +32,19 @@ def test_container_publish_exposes_pytorch_flavor_input_and_build_arg():
     # Generic tag guard: any -cuda<digits> suffix must match the selected
     # flavor, so a stale CUDA suffix fails instead of being re-suffixed.
     assert "*-cpu|*-cuda[0-9]*)" in workflow
+
+
+def test_container_publish_scans_and_sboms_the_exact_published_digest():
+    workflow = (
+        REPO_ROOT / ".github" / "workflows" / "container-publish.yml"
+    ).read_text(encoding="utf-8")
+
+    pinned_ref = "${{ steps.build.outputs.image }}@${{ steps.build.outputs.digest }}"
+    assert workflow.count(f"image-ref: '{pinned_ref}'") == 2
+    assert "output: image-trivy.json" in workflow
+    assert "format: cyclonedx" in workflow
+    assert "output: image-sbom.cdx.json" in workflow
+    assert "image-scan-dispositions.md" in workflow
+    assert '"HIGH", "CRITICAL"' in workflow
+    assert "blocking Trivy findings" in workflow
+    assert "if: always()" in workflow

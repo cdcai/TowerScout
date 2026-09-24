@@ -706,6 +706,39 @@ function Write-TowerScoutComposeProviderSummary {
     }
 }
 
+function Set-TowerScoutBuildTorchVersions {
+    # Process environment values beat .env during Compose interpolation. Read the
+    # pinned pair only when a source build is requested; dot-source-time reads would
+    # break the sandboxed host-helper contract tests.
+    $requirementsPath = Join-Path (Get-TowerScoutRepoRoot) "webapp\requirements.txt"
+    if (-not (Test-Path -LiteralPath $requirementsPath -PathType Leaf)) {
+        return
+    }
+
+    $pins = @{}
+    foreach ($line in Get-Content -LiteralPath $requirementsPath) {
+        if ($line -match '^torch==([^\s#;]+)') {
+            $pins["TOWERSCOUT_TORCH_VERSION"] = $Matches[1]
+        }
+        elseif ($line -match '^torchvision==([^\s#;]+)') {
+            $pins["TOWERSCOUT_TORCHVISION_VERSION"] = $Matches[1]
+        }
+    }
+    foreach ($name in @("TOWERSCOUT_TORCH_VERSION", "TOWERSCOUT_TORCHVISION_VERSION")) {
+        if (-not $pins.ContainsKey($name)) {
+            throw "webapp\requirements.txt does not contain the required exact $name pin."
+        }
+        $envEntry = Get-Item "env:$name" -ErrorAction SilentlyContinue
+        $current = if ($null -eq $envEntry) { "" } else { [string] $envEntry.Value }
+        if ([string]::IsNullOrWhiteSpace($current)) {
+            Set-Item "env:$name" $pins[$name]
+        }
+        elseif ($current -ne $pins[$name]) {
+            throw "$name=$current does not match the pinned source-build version $($pins[$name]); remove stale package .env values."
+        }
+    }
+}
+
 function Set-TowerScoutGpuEnvironment {
     param(
         [ValidateSet("off", "auto", "on")]
@@ -717,6 +750,9 @@ function Set-TowerScoutGpuEnvironment {
     Assert-TowerScoutPackageGpuCompatibility -Gpu $Gpu -Build:$Build
 
     $env:TOWERSCOUT_GPU_MODE = $Gpu
+    if ($Build) {
+        Set-TowerScoutBuildTorchVersions
+    }
 
     if ($Gpu -eq "off") {
         $env:TOWERSCOUT_DEVICE = "cpu"
@@ -734,19 +770,36 @@ function Set-TowerScoutGpuEnvironment {
         $env:TOWERSCOUT_DEVICE = "cuda"
     }
 
-    if ($Build -and (
-        [string]::IsNullOrWhiteSpace($env:PYTORCH_INDEX_URL) -or
-        $env:PYTORCH_INDEX_URL -eq "https://download.pytorch.org/whl/cpu"
-    )) {
-        $env:PYTORCH_INDEX_URL = $script:TowerScoutCudaPytorchIndexUrl
-    }
-
     if ($Build) {
-        if ($env:PYTORCH_INDEX_URL -eq $script:TowerScoutCudaPytorchIndexUrl) {
+        $declaredFlavor = ([string] $env:TOWERSCOUT_PYTORCH_FLAVOR).Trim()
+        if (
+            -not [string]::IsNullOrWhiteSpace($declaredFlavor) -and
+            $declaredFlavor -notin @("cpu", "cuda128")
+        ) {
+            throw "TOWERSCOUT_PYTORCH_FLAVOR=$declaredFlavor is unsupported; remove stale package .env values."
+        }
+
+        $indexUrl = ([string] $env:PYTORCH_INDEX_URL).Trim().TrimEnd("/")
+        if (
+            [string]::IsNullOrWhiteSpace($indexUrl) -or
+            $indexUrl -eq $script:TowerScoutCpuPytorchIndexUrl
+        ) {
+            $indexUrl = $script:TowerScoutCudaPytorchIndexUrl
+        }
+        elseif (
+            $indexUrl -match '^https://download\.pytorch\.org/whl/cu\d+$' -and
+            $indexUrl -ne $script:TowerScoutCudaPytorchIndexUrl
+        ) {
+            Write-Warning "Ignoring stale PYTORCH_INDEX_URL=$indexUrl; GPU source builds use $($script:TowerScoutCudaPytorchIndexUrl)."
+            $indexUrl = $script:TowerScoutCudaPytorchIndexUrl
+        }
+        $env:PYTORCH_INDEX_URL = $indexUrl
+
+        if ($indexUrl -eq $script:TowerScoutCudaPytorchIndexUrl) {
             $env:TOWERSCOUT_PYTORCH_FLAVOR = "cuda128"
         }
-        elseif ($env:PYTORCH_INDEX_URL -eq $script:TowerScoutCpuPytorchIndexUrl) {
-            $env:TOWERSCOUT_PYTORCH_FLAVOR = "cpu"
+        elseif ([string]::IsNullOrWhiteSpace($declaredFlavor)) {
+            throw "PYTORCH_INDEX_URL=$indexUrl is a custom index; set TOWERSCOUT_PYTORCH_FLAVOR explicitly for this source build."
         }
     }
 }
