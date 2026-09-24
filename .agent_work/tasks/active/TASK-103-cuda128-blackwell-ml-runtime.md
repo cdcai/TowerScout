@@ -55,13 +55,13 @@ weakening model correctness, device, security, persistence, or recovery gates.
   confirming PRs #77-#84 merged.
 - [x] Predeclared gates v3 and implemented fail-closed total-footprint and
   interleaved-run comparison rules before Phase 2 measurement.
-- [ ] Complete RGB crop conversion, runtime messages, source-build hardening,
+- [x] Complete RGB crop conversion, runtime messages, source-build hardening,
   CI/security evidence, documentation, governance, and validation.
-- [ ] Qualify a new Podman CPU/GPU machine or record unavailable cells as
+- [x] Qualify a new Podman CPU/GPU machine or record unavailable cells as
   `blocked`, never `pass`.
-- [ ] Rehearse source, artifact/volume, and `-Gpu off` recovery paths without
+- [x] Rehearse source, artifact/volume, and `-Gpu off` recovery paths without
   deleting the eight named volumes.
-- [ ] Run rebased final CPU/CUDA qualification with gates v3; preserve every
+- [x] Run rebased final CPU/CUDA qualification with gates v3; preserve every
   run and verdict, including failures.
 - [ ] Push `feature/task-103-cuda128-ml-runtime` and open the Task-103 PR with
   links to ADR-022 and the Track L verdict.
@@ -79,6 +79,7 @@ remain explicit blockers.
 - [Track L evidence index](./TASK-103/TRACK-L-EVIDENCE-INDEX.md)
 - [T1000 pilot evidence pointer](./TASK-103/T1000-EVIDENCE-POINTER.md)
 - [Gates v3](./TASK-103/task103_gates.v3.json)
+- [Phase 2 evidence index](./TASK-103/PHASE2-EVIDENCE-INDEX.md)
 
 ## Publication Boundary
 
