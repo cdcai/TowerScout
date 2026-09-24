@@ -400,6 +400,7 @@ def test_model_upload_container_and_frontend_contracts_require_the_dedicated_key
 # Superseded CUDA names are built dynamically so the literal tokens stay out
 # of this file (it is also exempt from its own scan).
 _OLD_CUDA_TAG = "cu" + "126"
+_OLD_CUDA_FLAVOR = "cuda" + "126"
 
 STALE_CUDA_PATTERN = re.compile(
     r"\b(?:cuda(?:\s+|[-_])?12\.[16]|cuda12[16]|cu12[16])\b",
@@ -459,6 +460,16 @@ STALE_CUDA_FILE_ALLOWLIST = {
 # repo-relative path to {substring of the matched line: justification}; every
 # entry must still match something, so stale entries are pruned.
 STALE_CUDA_LINE_ALLOWLIST = {
+    ".github/security/task103-trivy-baseline.v1.json": {
+        f'"artifact_name": "towerscout:task091-355ca4c-{_OLD_CUDA_FLAVOR}"': (
+            "The committed TASK-103 security baseline preserves the exact "
+            "accepted stage-A source image identity for audit custody."
+        ),
+        f'"pytorch_flavor": "{_OLD_CUDA_FLAVOR}"': (
+            "The committed TASK-103 security baseline preserves the source "
+            "image's historical flavor metadata; it is not a publish target."
+        ),
+    },
     "scripts/task103_gates.v1.json": {
         f'"{_OLD_CUDA_TAG}": "12.6"': (
             "Declared (frozen) TASK-103 gates map the stage A/B baseline wheel "
