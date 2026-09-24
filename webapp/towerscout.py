@@ -210,6 +210,7 @@ engines = {}
 
 engine_default = None
 engine_lock = threading.Lock()
+detection_job_lock = threading.Lock()
 
 exit_events = ExitEvents()
 secondary_en = None
@@ -865,9 +866,6 @@ def _run_detection_request():
         return jsonify({'error': 'Tile limit for this session exceeded. Please close browser to continue.'}), 400
 
     start = time.time()
-    client_ip = _get_client_ip()
-    if not rate_limiter.is_allowed(client_ip, max_requests=30, window_seconds=60):
-        return jsonify({'error': 'Rate limit exceeded. Please try again later.'}), 429
 
     tmpdirname = None
     request_loop = None
@@ -889,6 +887,8 @@ def _run_detection_request():
         provider = request_context['provider']
         polygons = request_context['polygons']
 
+        exit_events.alloc(run_token)
+        exit_event_allocated = True
         _register_detection_run(
             session_id,
             provider,
@@ -901,8 +901,6 @@ def _run_detection_request():
             detail='Validating the detection request and building search tiles...',
         )
         run_registered = True
-        exit_events.alloc(run_token)
-        exit_event_allocated = True
 
         def cancelled_response(detail):
             api_logger.info("Detection cancelled for session %s: %s", session_id, detail)
@@ -2207,7 +2205,7 @@ def forward_geocode():
     try:
         # Rate limiting check
         client_ip = _get_client_ip()
-        if not rate_limiter.is_allowed(client_ip, max_requests=30, window_seconds=600):  # 10 minutes
+        if not rate_limiter.is_allowed(f"geocode-forward:{client_ip}", max_requests=30, window_seconds=600):  # 10 minutes
             return jsonify({'error': 'Rate limit exceeded. Please wait before trying again.'}), 429
             
         data = request.get_json()
@@ -2257,7 +2255,7 @@ def reverse_geocode():
     try:
         # Rate limiting check
         client_ip = _get_client_ip()
-        if not rate_limiter.is_allowed(client_ip, max_requests=30, window_seconds=600):  # 10 minutes
+        if not rate_limiter.is_allowed(f"geocode-reverse:{client_ip}", max_requests=30, window_seconds=600):  # 10 minutes
             return jsonify({'error': 'Rate limit exceeded. Please wait before trying again.'}), 429
             
         data = request.get_json()
@@ -2366,7 +2364,11 @@ def map_proxy(provider, service):
         # Rate limiting check with service-specific limits
         client_ip = _get_client_ip()
         max_requests, window_seconds = config['rate_limit']
-        if not rate_limiter.is_allowed(client_ip, max_requests=max_requests, window_seconds=window_seconds):
+        if not rate_limiter.is_allowed(
+            f"map-{provider}-{service}:{client_ip}",
+            max_requests=max_requests,
+            window_seconds=window_seconds,
+        ):
             return jsonify({'error': f'Rate limit exceeded for {provider}/{service}. Please wait before trying again.'}), 429
             
         # Validate and sanitize request parameters
@@ -2632,7 +2634,7 @@ def estimate_detection_tiles():
         })
 
     client_ip = _get_client_ip()
-    if not rate_limiter.is_allowed(client_ip, max_requests=30, window_seconds=60):
+    if not rate_limiter.is_allowed(f"detection-estimate:{client_ip}", max_requests=30, window_seconds=60):
         return jsonify({'error': 'Rate limit exceeded. Please try again later.'}), 429
 
     try:
@@ -2723,7 +2725,21 @@ def abort():
 
 @app.route('/getobjects', methods=['POST'])
 def get_objects():
-    return _run_detection_request()
+    client_ip = _get_client_ip()
+    if not rate_limiter.is_allowed(f"detection:{client_ip}", max_requests=30, window_seconds=60):
+        return jsonify({
+            'error': 'Rate limit exceeded. Please try again later.',
+            'code': 'RATE_LIMITED',
+        }), 429
+    if not detection_job_lock.acquire(blocking=False):
+        return jsonify({
+            'error': 'Detection is already running.',
+            'code': 'DETECTION_BUSY',
+        }), 429
+    try:
+        return _run_detection_request()
+    finally:
+        detection_job_lock.release()
 
 
 
@@ -2765,11 +2781,10 @@ def get_api_usage():
 @app.route('/getobjectscustom', methods=['POST'])
 def get_objects_custom():
     start = time.time()
-    session_id = _get_session_run_id()
     
     # Rate limiting
     client_ip = _get_client_ip()
-    if not rate_limiter.is_allowed(client_ip, max_requests=10, window_seconds=60):
+    if not rate_limiter.is_allowed(f"custom-image:{client_ip}", max_requests=10, window_seconds=60):
         return jsonify({'error': 'Rate limit exceeded for image uploads'}), 429
     
     # Input validation
@@ -2785,6 +2800,19 @@ def get_objects_custom():
     except Exception:
         return jsonify({'error': 'Invalid request data'}), 400
 
+    if not detection_job_lock.acquire(blocking=False):
+        return jsonify({
+            'error': 'Detection is already running.',
+            'code': 'DETECTION_BUSY',
+        }), 429
+    try:
+        return _run_custom_image_detection(start, engine, file)
+    finally:
+        detection_job_lock.release()
+
+
+def _run_custom_image_detection(start, engine, file):
+    session_id = _get_session_run_id()
     api_logger.info(
         "Incoming custom image detection request session=%s engine=%s file=%s",
         session_id,
@@ -2865,7 +2893,7 @@ def upload_model():
     
     # Rate limiting (stricter for model uploads)
     client_ip = request.remote_addr or "unknown"
-    if not rate_limiter.is_allowed(client_ip, max_requests=5, window_seconds=300):
+    if not rate_limiter.is_allowed(f"model-upload:{client_ip}", max_requests=5, window_seconds=300):
         return jsonify({'error': 'Rate limit exceeded for model uploads'}), 429
 
     provided_key = request.headers.get(MODEL_UPLOAD_KEY_HEADER, '')
@@ -3456,7 +3484,7 @@ def upload_dataset():
     # Rate limiting (more lenient for local development/testing)
     # TASK-033 Phase 3: Increased limit for manual verification testing
     client_ip = _get_client_ip()
-    if not rate_limiter.is_allowed(client_ip, max_requests=10, window_seconds=60):
+    if not rate_limiter.is_allowed(f"dataset-upload:{client_ip}", max_requests=10, window_seconds=60):
         return jsonify({'error': 'Rate limit exceeded for dataset uploads'}), 429
     
     # Input validation

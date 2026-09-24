@@ -6,7 +6,7 @@ import json
 import shutil
 import uuid
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, mock_open, patch
 
 import pytest
 from PIL import Image
@@ -67,6 +67,57 @@ def test_custom_image_upload_uses_sanitized_filename(monkeypatch):
         fake_detector.detect.assert_called_once()
         assert fake_detector.detect.call_args.args[0][0]["filename"].endswith("unsafe_image.png")
     finally:
+        shutil.rmtree(upload_dir, ignore_errors=True)
+
+
+def test_map_proxy_traffic_does_not_consume_custom_detection_quota(monkeypatch):
+    app.config["TESTING"] = True
+    client = app.test_client()
+    upload_dir = Path(".agent_work") / "pytest-temp" / f"task091-rate-scope-{uuid.uuid4().hex}"
+    upload_dir.mkdir(parents=True)
+    fake_detector = Mock()
+    fake_detector.detect.return_value = [[]]
+    monkeypatch.setattr(towerscout, "UPLOAD_DIR", upload_dir)
+
+    with towerscout.rate_limiter._lock:
+        towerscout.rate_limiter.requests.clear()
+
+    try:
+        with patch("ts_validation.time.time", return_value=1000.0), patch(
+            "towerscout._handle_google_proxy",
+            return_value=b"tile",
+        ), patch("towerscout.os.path.exists", return_value=False), patch(
+            "builtins.open",
+            mock_open(),
+        ):
+            for tile_index in range(10):
+                response = client.get(
+                    f"/api/maps/google/tiles?z=18&x={tile_index}&y=1"
+                )
+                assert response.status_code == 200
+
+        with patch("ts_validation.time.time", return_value=1000.0), patch(
+            "towerscout.get_engine",
+            return_value=fake_detector,
+        ):
+            custom_responses = [
+                client.post(
+                    "/getobjectscustom",
+                    data={
+                        "engine": "yolo",
+                        "image": (_png_bytes(), f"tower-{request_index}.png"),
+                    },
+                    content_type="multipart/form-data",
+                )
+                for request_index in range(11)
+            ]
+
+        assert custom_responses[0].status_code == 200
+        assert [response.status_code for response in custom_responses[:10]] == [200] * 10
+        assert custom_responses[10].status_code == 429
+    finally:
+        with towerscout.rate_limiter._lock:
+            towerscout.rate_limiter.requests.clear()
         shutil.rmtree(upload_dir, ignore_errors=True)
 
 
