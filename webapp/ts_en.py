@@ -221,7 +221,10 @@ class EN_Classifier:
             if conf >= min_conf and conf <= max_conf:
                 stats['candidate_count'] += 1
                 crop_start = time.time()
-                det_img = cut_square_detection(img, x1, y1, x2, y2)
+                # Production map tiles are RGB JPEGs, but imported/offline PNGs can
+                # be palette or grayscale images. EfficientNet normalization expects
+                # three channels, so normalize every crop at this boundary.
+                det_img = cut_square_detection(img, x1, y1, x2, y2).convert('RGB')
                 stats['crop_seconds'] += time.time() - crop_start
 
                 # now apply transformations

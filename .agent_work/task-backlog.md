@@ -2,6 +2,7 @@
 
 **Last Updated**: September 24, 2026
 **Current Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
+**ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
 **Immediate Plan**: [September 21 v2 implementation plan](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md)
 
 The active board controls selected work. This backlog holds deferred,
@@ -13,6 +14,7 @@ not a delivery prerequisite and has no automatic restart date. Task-087 PRs
 
 | Task | Current outcome |
 | --- | --- |
+| `TASK-103` | CUDA 12.8 Blackwell bridge implementation and release qualification; Checkpoint 2 still gates publication |
 | `TASK-095` | W00 direction, task-control, evidence, and eventual handoff alignment |
 | `TASK-091` | W01/W05/W09/W10 owner-runnable package and model qualification |
 | `TASK-068` | Evidence-triggered W02 dormant-helper dependency fix and Windows package regression proof |

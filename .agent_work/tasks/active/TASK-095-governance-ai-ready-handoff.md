@@ -334,3 +334,13 @@ Task-087 resumes.
 
 Phase A is complete. Task-095 remains active for Phase B governance and final
 handoff maintenance.
+
+### 2026-09-24 - ADR-022 And Task-103 Governance Amendment
+
+Track L passed and the owner acknowledged Checkpoint 1. Added ADR-022,
+activated Task-103 on the canonical board/backlog, preserved the exact
+implementation brief and gates under the task folder, and indexed the local
+Track L and owner-held T1000 evidence without committing raw logs or fixture
+imagery. The canonical v2 sources and `AGENTS.md` now point to the narrow ML
+runtime amendment. The Task-087 archive/defer decision remains unchanged.
+External image/package publication remains gated at Task-103 Checkpoint 2.

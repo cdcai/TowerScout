@@ -9,9 +9,10 @@ The Task-087 launcher redesign is preserved in immutable archive tags and a
 final disposition record, but PRs #64/#67 are closed without merge and are not
 release gates.
 
-**Execution Baseline**: `3e7f78cdbdbaf9eca79172a34c6f4426fa7b7fd5`
+**Execution Baseline**: `10cd13a7a2f4d5504ed929ada834abb1fad905dc`
 **Authoritative Branch**: `main`
 **Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
+**ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
 **Acceptance**: [Windows deployment prioritization v2](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-prioritization-v2.md)
 **Work Plan**: [Windows deployment hardening v2](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md)
 
@@ -20,8 +21,10 @@ release gates.
 - The published `v0.1.2` pilot remains immutable.
 - New work starts from accepted `main`; PRs #64/#67 were not merged or
   reconciled and their exact heads are preserved by archive tags.
-- The release contract requires CPU and CUDA 12.6 artifacts to have distinct
-  identities and pinned digests.
+- The Task-103 candidate requires CPU and CUDA 12.8 (`cuda128`) artifacts to
+  have distinct identities and pinned digests. Checkpoint 2 is acknowledged
+  with pre-publication conditions; packaging and `latest` remain gated on the
+  owner's review of the published exact digests.
 - Full readiness requires actual YOLO and EfficientNet work on the required
   device in all four profiles plus independent-computer reproduction.
 - Static checks, health/readiness, mocked tests, or CPU fallback are not
@@ -33,6 +36,27 @@ release gates.
 ---
 
 ## Active Delivery Work
+
+### **TASK-103: CUDA 12.8 Blackwell ML Runtime**
+
+**Status**: IN_PROGRESS - Checkpoint 2 acknowledged with pre-publication
+hardening active; exact-digest image publication follows only after the
+corrections land with green CI
+**Priority**: CRITICAL
+**Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
+
+Current scope:
+
+- Adopt torch 2.10.0/torchvision 0.25.0 with distinct `cpu` and `cuda128`
+  image/package identities under ADR-022.
+- Complete gates-v3, RGB input, recovery-message, source-build, CI/security,
+  documentation, governance, Podman, rollback, and compliance work.
+- Qualify rebased CPU/CUDA images with real models and preserve every run;
+  missing external cells remain blocked rather than inferred.
+- Land the accepted-baseline scan gate, comparator hardening, evidence
+  corrections, and code-scanning disposition in PR #86 before H9 dispatch.
+- Publish only the CPU and CUDA 12.8 exact-digest candidates with
+  `push_latest=false`; report digests and security artifacts before packaging.
 
 ### **TASK-095: Governance And AI-Ready Handoff Foundation**
 

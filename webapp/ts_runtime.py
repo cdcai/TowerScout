@@ -86,26 +86,68 @@ def build_health_payload() -> Dict[str, str]:
     }
 
 
+def _cuda_failure_class(ml_runtime: Dict[str, Any]) -> str:
+    if not ml_runtime.get("torch_cuda_build"):
+        return "cpu_only_build"
+    if ml_runtime.get("cuda_precision_ok") is False:
+        return "precision_policy"
+    if ml_runtime.get("cuda_arch_supported") is False:
+        capability = str(ml_runtime.get("cuda_device_capability") or "")
+        archs = [
+            arch
+            for arch in ml_runtime.get("torch_cuda_arch_list") or []
+            if str(arch).startswith("sm_")
+        ]
+        newest = max(
+            (
+                int(str(arch)[3:].rstrip("af"))
+                for arch in archs
+                if str(arch)[3:].rstrip("af").isdigit()
+            ),
+            default=0,
+        )
+        device = int(capability[3:]) if capability[3:].isdigit() else 0
+        return "gpu_newer_than_build" if device > newest else "gpu_older_than_build"
+    return "driver_or_container"
+
+
 def _ml_runtime_recovery_message(ml_runtime: Dict[str, Any]) -> str:
-    if ml_runtime.get("fallback_reason") != "cuda_required_but_unavailable":
+    if ml_runtime.get("selected_device") == "cuda" or not ml_runtime.get(
+        "fallback_reason"
+    ):
+        return ""
+    if str(ml_runtime.get("fallback_reason")).startswith("invalid_device_policy:"):
         return "Check TOWERSCOUT_DEVICE and ML runtime configuration."
 
-    if not ml_runtime.get("torch_cuda_build"):
-        return (
+    failure_class = _cuda_failure_class(ml_runtime)
+    capability = ml_runtime.get("cuda_device_capability") or "unknown"
+
+    messages = {
+        "gpu_newer_than_build": (
+            f"This GPU ({capability}) is newer than this package's PyTorch build; "
+            "use the CUDA 12.8 package."
+        ),
+        "gpu_older_than_build": (
+            f"This GPU generation ({capability}) is not supported by the CUDA 12.8 "
+            "package; use the CPU package or -Gpu off."
+        ),
+        "cpu_only_build": (
             "CUDA was required, but this TowerScout image appears to include CPU-only PyTorch. "
             "Use a CUDA-capable TowerScout image or set TOWERSCOUT_DEVICE=auto or cpu."
-        )
-
-    if ml_runtime.get("cuda_probe_error"):
-        return (
+        ),
+        "precision_policy": (
+            "CUDA precision policy could not be enforced; TowerScout will not run "
+            "CUDA inference."
+        ),
+        "driver_or_container": (
             "CUDA was required, but TowerScout could not complete a CUDA runtime probe. "
             "Confirm NVIDIA container access or set TOWERSCOUT_DEVICE=auto or cpu."
-        )
-
-    return (
-        "CUDA was required, but PyTorch could not access CUDA. "
-        "Confirm NVIDIA container access or set TOWERSCOUT_DEVICE=auto or cpu."
-    )
+        ),
+    }
+    message = messages[failure_class]
+    if ml_runtime.get("selected_device") == "cpu" and ml_runtime.get("fallback_reason"):
+        message += " TowerScout selected CPU automatically while this fallback is active."
+    return message
 
 
 def build_readiness_payload() -> Dict[str, Any]:
@@ -148,8 +190,13 @@ def build_readiness_payload() -> Dict[str, Any]:
             recovery.append("Repair the asset manifest packaged with TowerScout.")
         else:
             recovery.append("Import or bootstrap the missing runtime assets, then restart TowerScout.")
-    if ml_runtime["status"] == "fatal":
-        recovery.append(_ml_runtime_recovery_message(ml_runtime))
+    if ml_runtime["status"] == "fatal" or (
+        ml_runtime.get("selected_device") == "cpu"
+        and ml_runtime.get("fallback_reason")
+    ):
+        message = _ml_runtime_recovery_message(ml_runtime)
+        if message:
+            recovery.append(message)
 
     return {
         "state": state,

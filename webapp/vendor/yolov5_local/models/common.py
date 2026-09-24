@@ -916,6 +916,13 @@ class AutoShape(nn.Module):
             with dt[1]:
                 y = self.model(x, augment=augment)  # forward
 
+            # TowerScout local patch (TASK-103): the CUDA forward pass is asynchronous and the
+            # Profile timers above do not synchronize, so without this the NMS wall-clock time
+            # limit also counted pending forward work and silently dropped detections on slower
+            # GPUs. Waiting here makes the limit measure NMS only; NMS needs the results anyway.
+            if p.device.type == "cuda":
+                torch.cuda.synchronize(p.device)
+
             # Post-process
             with dt[2]:
                 y = non_max_suppression(

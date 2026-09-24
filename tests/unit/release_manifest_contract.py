@@ -14,6 +14,10 @@ REQUIRED_COMPLIANCE_FILES = {
     "SHA256SUMS.txt",
 }
 
+# Release packages may only carry these PyTorch flavors (TASK-103: cuda128
+# replaced the previous CUDA flavor; see ml_runtime_contract.py).
+SUPPORTED_PYTORCH_FLAVORS = frozenset({"cpu", "cuda128"})
+
 
 def assert_manifest_schema(manifest):
     assert manifest["schema_version"] == 1
@@ -21,7 +25,7 @@ def assert_manifest_schema(manifest):
     assert isinstance(manifest["release_version"], str)
     assert isinstance(manifest["release_statement"], str)
     assert manifest["asset_manifest"] == "webapp/asset_manifest.v1.json"
-    assert manifest["pytorch_flavor"] in {"cpu", "cuda126"}
+    assert manifest["pytorch_flavor"] in SUPPORTED_PYTORCH_FLAVORS
     assert REQUIRED_COMPLIANCE_FILES.issubset(set(manifest["compliance_files"]))
 
     release_artifacts = manifest["release_artifacts"]

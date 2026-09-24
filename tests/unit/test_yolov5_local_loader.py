@@ -6,6 +6,7 @@ from importlib import metadata
 from unittest.mock import Mock, patch
 
 import pytest
+import torch
 
 from ts_errors import ModelLoadError
 from ts_yolov5 import YOLOv5_Detector, _validate_runtime_dependencies
@@ -112,11 +113,8 @@ def test_disable_yolo_autoinstall_sets_both_env_guards():
         assert os.environ[YOLOV5_AUTOINSTALL_ENV_VAR] == "true"
 
 
-def test_local_loader_wraps_attempt_load_fallback_in_autoshape_without_sys_path_mutation(monkeypatch):
-    fake_device = object()
-    raw_model = Mock()
-    select_device = Mock(return_value=fake_device)
-    attempt_load = Mock(return_value=raw_model)
+def _fake_vendored_yolov5_modules(select_device, attempt_load):
+    """Build stand-in vendored YOLOv5 modules whose DetectMultiBackend always fails."""
 
     class FakeLogger:
         def __init__(self):
@@ -183,33 +181,79 @@ def test_local_loader_wraps_attempt_load_fallback_in_autoshape_without_sys_path_
     utils_package.general = general_module
     utils_package.torch_utils = torch_utils_module
 
+    modules = {
+        "vendor": vendor_package,
+        "vendor.yolov5_local": yolov5_package,
+        "vendor.yolov5_local.models": models_package,
+        "vendor.yolov5_local.models.common": common_module,
+        "vendor.yolov5_local.models.experimental": experimental_module,
+        "vendor.yolov5_local.models.yolo": yolo_module,
+        "vendor.yolov5_local.utils": utils_package,
+        "vendor.yolov5_local.utils.general": general_module,
+        "vendor.yolov5_local.utils.torch_utils": torch_utils_module,
+    }
+    return modules, fake_logger, FakeAutoShape
+
+
+def test_local_loader_wraps_attempt_load_fallback_in_autoshape_without_sys_path_mutation(monkeypatch):
+    raw_model = Mock()
+    select_device = Mock(side_effect=AssertionError("vendored select_device must not run for CPU loads"))
+    attempt_load = Mock(return_value=raw_model)
+    modules, fake_logger, fake_autoshape_cls = _fake_vendored_yolov5_modules(select_device, attempt_load)
+
     monkeypatch.setattr("ts_yolov5_local.disable_yolo_autoinstall", lambda: nullcontext())
     monkeypatch.setattr("ts_yolov5_local.ensure_local_yolov5_source_available", lambda: None)
 
     original_sys_path = list(sys.path)
+    original_cuda_visible_devices = os.environ.get("CUDA_VISIBLE_DEVICES")
 
-    with patch.dict(
-        sys.modules,
-        {
-            "vendor": vendor_package,
-            "vendor.yolov5_local": yolov5_package,
-            "vendor.yolov5_local.models": models_package,
-            "vendor.yolov5_local.models.common": common_module,
-            "vendor.yolov5_local.models.experimental": experimental_module,
-            "vendor.yolov5_local.models.yolo": yolo_module,
-            "vendor.yolov5_local.utils": utils_package,
-            "vendor.yolov5_local.utils.general": general_module,
-            "vendor.yolov5_local.utils.torch_utils": torch_utils_module,
-        },
-        clear=False,
-    ):
+    with patch.dict(sys.modules, modules, clear=False):
         wrapped_model = load_local_yolov5_model("newest.pt", autoshape=True, verbose=False)
 
     assert YOLOV5_LOCAL_PACKAGE == "vendor.yolov5_local"
     assert sys.path == original_sys_path
-    assert isinstance(wrapped_model, FakeAutoShape)
+    assert isinstance(wrapped_model, fake_autoshape_cls)
     assert wrapped_model.model is raw_model
-    assert wrapped_model.device is fake_device
-    select_device.assert_called_once_with(None)
+    # Loaded and fused on CPU; ts_device.select_model_device() owns CUDA placement.
+    assert wrapped_model.device == torch.device("cpu")
+    assert attempt_load.call_args.kwargs["device"] == torch.device("cpu")
+    select_device.assert_not_called()
+    assert os.environ.get("CUDA_VISIBLE_DEVICES") == original_cuda_visible_devices
     attempt_load.assert_called_once()
     assert any("DetectMultiBackend load failed" in message for message in fake_logger.messages)
+
+
+@pytest.mark.parametrize("device", ["cpu", " CPU ", ""])
+def test_local_loader_uses_cpu_without_vendored_select_device_for_explicit_cpu(monkeypatch, device):
+    raw_model = Mock()
+    select_device = Mock(side_effect=AssertionError("vendored select_device must not run for CPU loads"))
+    attempt_load = Mock(return_value=raw_model)
+    modules, _fake_logger, _fake_autoshape_cls = _fake_vendored_yolov5_modules(select_device, attempt_load)
+
+    monkeypatch.setattr("ts_yolov5_local.disable_yolo_autoinstall", lambda: nullcontext())
+    monkeypatch.setattr("ts_yolov5_local.ensure_local_yolov5_source_available", lambda: None)
+
+    with patch.dict(sys.modules, modules, clear=False):
+        wrapped_model = load_local_yolov5_model("newest.pt", autoshape=True, verbose=False, device=device)
+
+    assert wrapped_model.device == torch.device("cpu")
+    select_device.assert_not_called()
+
+
+def test_local_loader_still_uses_vendored_select_device_for_explicit_non_cpu_device(monkeypatch):
+    fake_device = object()
+    raw_model = Mock()
+    select_device = Mock(return_value=fake_device)
+    attempt_load = Mock(return_value=raw_model)
+    modules, _fake_logger, fake_autoshape_cls = _fake_vendored_yolov5_modules(select_device, attempt_load)
+
+    monkeypatch.setattr("ts_yolov5_local.disable_yolo_autoinstall", lambda: nullcontext())
+    monkeypatch.setattr("ts_yolov5_local.ensure_local_yolov5_source_available", lambda: None)
+
+    with patch.dict(sys.modules, modules, clear=False):
+        wrapped_model = load_local_yolov5_model("newest.pt", autoshape=True, verbose=False, device="cuda:0")
+
+    assert isinstance(wrapped_model, fake_autoshape_cls)
+    assert wrapped_model.device is fake_device
+    select_device.assert_called_once_with("cuda:0")
+    assert attempt_load.call_args.kwargs["device"] is fake_device

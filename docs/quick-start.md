@@ -2,10 +2,10 @@
 
 **Applies to**: Current V1 package path through the stable `v0.1.0` closeout,
 unless release notes say otherwise
-**Last reviewed**: 2026-07-08
+**Last reviewed**: 2026-09-24
 **Audience**: Pilot users and first-line support
 **Runtime scope**: The CPU Application Package is the normal path. The CUDA
-12.6 Application Package, Podman CPU, Docker GPU, and Podman GPU are
+12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
 support-assigned paths after workstation-specific engine, Compose-provider,
 and NVIDIA validation.
 
@@ -20,7 +20,7 @@ Terms used in this guide:
 
 - **Application Package**: the smaller TowerScout app/control ZIP that contains
   scripts, docs, Compose files, and release metadata. There are two variants:
-  `cpu` for normal/non-GPU use and `cuda126` for support-validated NVIDIA GPU
+  `cpu` for normal/non-GPU use and `cuda128` for support-validated NVIDIA GPU
   workstations.
 - **Model & Data Package**: the larger asset ZIP, also called the asset bundle,
   that contains model weights and ZIP-code data. The CPU and CUDA Application
@@ -42,9 +42,9 @@ installing WSL, Docker Desktop, Podman, or provider credentials.
   TowerScout image from GHCR and TowerScout can reach the selected map provider.
 - Enough local disk space for the selected Application Package, Model & Data
   Package, container image, and Docker or Podman volumes. Plan for at least
-  `15 GB` free for the CPU package; `25 GB` free is a better target for first
-  setup and CUDA validation. CUDA images use substantially more space than
-  CPU-only images.
+  `15 GB` free for the CPU package. The measured CUDA image is `14.4 GB`;
+  plan for at least `35 GB` free for its pull/unpack plus assets and volumes,
+  and at least `60 GB` for a support-directed source qualification build.
 - One container engine, selected as follows:
   - Docker Desktop is the primary pilot path. During Docker Desktop
     installation, keep the WSL 2 backend selected when prompted, start Docker
@@ -59,6 +59,21 @@ installing WSL, Docker Desktop, Podman, or provider credentials.
 
 You do not need Git, Python, Conda, Node.js, VS Code, or a source-code checkout
 for the normal package path.
+
+### CUDA Qualification Boundary
+
+The CUDA 12.8 package expects Volta-or-newer hardware, but only the exact GPU,
+Windows driver, WSL, engine, Compose provider, and toolkit combinations listed
+in the release notes are qualified. Maxwell and Pascal are unsupported by the
+CUDA package; use the CPU package or `-Gpu off`. Install a current NVIDIA or
+OEM production Windows driver that lists your exact GPU. Do not install a Linux
+display driver inside WSL.
+
+If readiness reports that the GPU is newer or older than the image's compiled
+architecture list, stop GPU qualification and use the correct release package
+or the CPU path; do not mask the mismatch with environment variables. Podman
+users must refresh and reverify the CDI specification after a Windows NVIDIA
+driver update before restarting GPU mode.
 
 Unless support has explicitly assigned you the Podman path, stop here and
 contact your site administrator or support lead if Docker Desktop is not
@@ -184,9 +199,9 @@ Download these files from the same release:
 Use the CUDA package only when support assigns GPU validation:
 
 - CUDA Application Package ZIP:
-  `towerscout-<release-version>-cuda126.zip`
+  `towerscout-<release-version>-cuda128.zip`
 - CUDA Application Package checksum:
-  `towerscout-<release-version>-cuda126.zip.sha256`
+  `towerscout-<release-version>-cuda128.zip.sha256`
 
 Keep these four files together in the `TowerScoutUAT` working folder. Only the
 Application Package ZIP is extracted in the normal setup path. Leave the Model
@@ -209,7 +224,7 @@ the same release:
 - `towerscout-<release-version>-assets-<asset-version>.zip.sha256`
 
 If support assigned GPU validation, replace the `-cpu` Application Package and
-checksum with the matching `-cuda126` files. Do not keep both CPU and CUDA
+checksum with the matching `-cuda128` files. Do not keep both CPU and CUDA
 Application Package ZIPs in the same UAT working folder unless support asks you
 to compare them.
 

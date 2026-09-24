@@ -69,24 +69,24 @@ if (($Image -match "@($digestPattern)$") -and -not [string]::IsNullOrWhiteSpace(
     throw "Image already contains digest $($Matches[1]), which does not match -ImageDigest $ImageDigest."
 }
 
+$supportedPytorchFlavors = @("cpu", "cuda128")
 if ([string]::IsNullOrWhiteSpace($PytorchFlavor)) {
     $PytorchFlavor = $env:TOWERSCOUT_PYTORCH_FLAVOR
 }
 if ([string]::IsNullOrWhiteSpace($PytorchFlavor)) {
     $imageWithoutDigest = $Image -replace "@$digestPattern$", ""
-    if ($imageWithoutDigest -match "[-:]cuda126$") {
-        $PytorchFlavor = "cuda126"
-    }
-    elseif ($imageWithoutDigest -match "[-:]cpu$") {
-        $PytorchFlavor = "cpu"
+    # Infer any cpu/cuda<digits> tag suffix; an unsupported CUDA flavor is
+    # rejected by the allow-list below instead of silently becoming cpu.
+    if ($imageWithoutDigest -match "[-:](cpu|cuda\d+)$") {
+        $PytorchFlavor = $Matches[1]
     }
     else {
         $PytorchFlavor = "cpu"
     }
 }
 $PytorchFlavor = $PytorchFlavor.Trim().ToLowerInvariant()
-if ($PytorchFlavor -notin @("cpu", "cuda126")) {
-    throw "PytorchFlavor must be one of: cpu, cuda126."
+if ($PytorchFlavor -notin $supportedPytorchFlavors) {
+    throw "PytorchFlavor must be one of: $($supportedPytorchFlavors -join ', ')."
 }
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
@@ -152,10 +152,8 @@ function Get-TowerScoutDefaultAssetBundleVersion {
     )
 
     $candidate = ([string] $PackageVersion).Trim()
-    foreach ($suffix in @("-cuda126", "-cpu")) {
-        if ($candidate.EndsWith($suffix, [System.StringComparison]::OrdinalIgnoreCase)) {
-            return $candidate.Substring(0, $candidate.Length - $suffix.Length)
-        }
+    if ($candidate -match '^(?<base>.+)-(?:cpu|cuda\d+)$') {
+        return $Matches['base']
     }
 
     return $candidate

@@ -5,11 +5,12 @@ Release track: agpl-yolo
 This checked-in file records TowerScout's SBOM expectation and current release
 posture. It is not the generated SBOM itself.
 
-TowerScout does not currently generate an SBOM automatically as part of the
-release packaging flow. Release maintainers should attach a release-specific
-SBOM for the exact package and image when one is available. If no generated
-SBOM is attached, reviewers must rely on the pinned release metadata and the
-tracked dependency manifests below.
+The manual container publication workflow generates a CycloneDX SBOM for the
+exact published image digest and uploads it with the exact-digest Trivy report
+and written finding dispositions. Release maintainers must retain that SBOM
+with the image metadata and reference it from the control-package evidence.
+This checked-in file remains a policy/reference document, not the generated
+SBOM itself.
 
 At minimum, a release-specific SBOM should cover:
 

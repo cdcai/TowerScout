@@ -6,7 +6,9 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import torch
+from PIL import Image
 
+import ts_device
 import ts_en
 
 
@@ -24,7 +26,9 @@ def test_classify_applies_confidence_branches_and_inference_mode(monkeypatch):
 
     fake_input = torch.ones(3, 2, 2)
     classifier.transform = Mock(return_value=fake_input)
-    monkeypatch.setattr(ts_en, "cut_square_detection", Mock(return_value="cropped-image"))
+    cropped_image = Mock()
+    cropped_image.convert.return_value = "cropped-rgb-image"
+    monkeypatch.setattr(ts_en, "cut_square_detection", Mock(return_value=cropped_image))
     monkeypatch.setattr(
         ts_en.torch.cuda,
         "is_available",
@@ -68,7 +72,8 @@ def test_classify_applies_confidence_branches_and_inference_mode(monkeypatch):
     assert stats["candidate_count"] == 1
     assert stats["batches"] == 1
     assert stats["device"] == "cpu"
-    classifier.transform.assert_called_once_with("cropped-image")
+    cropped_image.convert.assert_called_once_with("RGB")
+    classifier.transform.assert_called_once_with("cropped-rgb-image")
     classifier.model.assert_called_once()
     ts_en.cut_square_detection.assert_called_once_with("source-image", 1, 1, 11, 11)
 
@@ -81,7 +86,9 @@ def test_classify_batches_multiple_review_band_candidates(monkeypatch):
     classifier.device_label = "cpu"
 
     classifier.transform = Mock(return_value=torch.ones(3, 2, 2))
-    monkeypatch.setattr(ts_en, "cut_square_detection", Mock(return_value="cropped-image"))
+    cropped_image = Mock()
+    cropped_image.convert.return_value = "cropped-rgb-image"
+    monkeypatch.setattr(ts_en, "cut_square_detection", Mock(return_value=cropped_image))
 
     batch_shapes = []
     stack_sizes = []
@@ -113,6 +120,30 @@ def test_classify_batches_multiple_review_band_candidates(monkeypatch):
     assert stats["batches"] == 2
     assert stats["batch_size"] == 2
     assert classifier.last_classify_stats is stats
+
+
+def test_classify_converts_palette_png_crop_to_rgb_before_transform():
+    classifier = object.__new__(ts_en.EN_Classifier)
+    classifier.save_debug_images = False
+    classifier.batch_size = 8
+    classifier.device = torch.device("cpu")
+    classifier.device_label = "cpu"
+    observed_modes = []
+
+    def transform(image):
+        observed_modes.append(image.mode)
+        return torch.ones(3, 2, 2)
+
+    classifier.transform = transform
+    classifier.model = Mock(return_value=torch.zeros((1, 1)))
+    palette_image = Image.new("P", (16, 16))
+    palette_image.putpalette([value for index in range(256) for value in (index, 0, 0)])
+    detections = [[0.0, 0.0, 1.0, 1.0, 0.5]]
+
+    classifier.classify(palette_image, detections)
+
+    assert observed_modes == ["RGB"]
+    assert detections[0][-1] == 0.5
 
 
 def test_efficientnet_init_falls_back_to_cpu_when_cuda_setup_fails(monkeypatch):
@@ -152,6 +183,8 @@ def test_efficientnet_init_falls_back_to_cpu_when_cuda_setup_fails(monkeypatch):
         monkeypatch.setattr(ts_en.torch.cuda, "is_available", Mock(return_value=True))
         monkeypatch.setattr(ts_en.torch.cuda, "get_device_name", Mock(return_value="NVIDIA Test GPU"))
         monkeypatch.setattr(ts_en.torch, "zeros", Mock(return_value=_FakeCudaProbe()))
+        # The decisive conv/GEMM kernel probe cannot run on CPU-only torch; simulate it passing.
+        monkeypatch.setattr(ts_device, "_cuda_kernel_probe", lambda: None)
         monkeypatch.setattr(ts_en.torch, "load", torch_load)
 
         classifier = ts_en.EN_Classifier()

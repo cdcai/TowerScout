@@ -19,13 +19,37 @@ def test_container_publish_exposes_pytorch_flavor_input_and_build_arg():
     ).read_text(encoding="utf-8")
 
     assert "pytorch_flavor:" in workflow
-    assert "- cuda126" in workflow
-    assert 'pytorch_index_url="https://download.pytorch.org/whl/cu126"' in workflow
+    assert "- cuda128" in workflow
+    assert 'pytorch_index_url="https://download.pytorch.org/whl/cu128"' in workflow
     assert '--build-arg PYTORCH_INDEX_URL="$pytorch_index_url"' in workflow
     assert '--build-arg TOWERSCOUT_PYTORCH_FLAVOR="$pytorch_flavor"' in workflow
-    assert '--build-arg TOWERSCOUT_TORCH_VERSION="2.6.0"' in workflow
-    assert '--build-arg TOWERSCOUT_TORCHVISION_VERSION="0.21.0"' in workflow
+    assert '--build-arg TOWERSCOUT_TORCH_VERSION="2.10.0"' in workflow
+    assert '--build-arg TOWERSCOUT_TORCHVISION_VERSION="0.25.0"' in workflow
     assert 'published_tag="$tag-$pytorch_flavor"' in workflow
     assert 'tags=(--tag "$image:$published_tag")' in workflow
     assert 'tags+=(--tag "$image:latest-$pytorch_flavor")' in workflow
     assert "already ends with a different PyTorch flavor" in workflow
+    # Generic tag guard: any -cuda<digits> suffix must match the selected
+    # flavor, so a stale CUDA suffix fails instead of being re-suffixed.
+    assert "*-cpu|*-cuda[0-9]*)" in workflow
+
+
+def test_container_publish_scans_and_sboms_the_exact_published_digest():
+    workflow = (
+        REPO_ROOT / ".github" / "workflows" / "container-publish.yml"
+    ).read_text(encoding="utf-8")
+
+    pinned_ref = "${{ steps.build.outputs.image }}@${{ steps.build.outputs.digest }}"
+    assert workflow.count(f"image-ref: '{pinned_ref}'") == 2
+    assert "output: image-trivy.json" in workflow
+    assert "format: cyclonedx" in workflow
+    assert "output: image-sbom.cdx.json" in workflow
+    assert "image-scan-dispositions.md" in workflow
+    assert "scripts/task103_trivy_delta.py compare" in workflow
+    assert "--baseline .github/security/task103-trivy-baseline.v1.json" in workflow
+    assert "--candidate image-trivy.json" in workflow
+    assert "--flavor '${{ steps.build.outputs.pytorch_flavor }}'" in workflow
+    assert "image-scan-delta.json" in workflow
+    assert ".github/security/task103-trivy-baseline.v1.json" in workflow
+    assert "CRITICAL/HIGH findings are blocking" not in workflow
+    assert "if: always()" in workflow

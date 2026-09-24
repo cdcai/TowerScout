@@ -114,7 +114,17 @@ def load_local_yolov5_model(filename, autoshape=True, verbose=False, device=None
         path = Path(filename)
         try:
             with alias_legacy_yolov5_modules():
-                resolved_device = select_device(device)
+                # Materialize and fuse on CPU; ts_device.select_model_device() owns CUDA
+                # placement (policy, precision, kernel probe, auto->CPU fallback). The vendored
+                # select_device(None) picks cuda:0 whenever torch.cuda.is_available(), ignoring
+                # that policy, and select_device("cpu") would set CUDA_VISIBLE_DEVICES=-1
+                # process-wide, so it is never called for the CPU case.
+                if device is None or str(device).strip().lower() in {"", "cpu"}:
+                    import torch
+
+                    resolved_device = torch.device("cpu")
+                else:
+                    resolved_device = select_device(device)
 
                 def _apply_autoshape_if_supported(model):
                     if not autoshape:

@@ -30,7 +30,7 @@ The project still carries public-health workflow expectations:
 - The current release direction remains GitHub-first and engine-aware: GitHub
   Releases are the normal user-facing release control plane, and a release ZIP
   plus pinned GHCR image digest is the preferred package shape.
-- `TASK-071`, `TASK-072`, and `TASK-079` are complete enough to feed the stable-release closeout path. The current release contract uses distinct CPU and CUDA 12.6 image/package identities; both remain bounded by profile-specific Windows validation.
+- `TASK-071`, `TASK-072`, and `TASK-079` are complete enough to feed the stable-release closeout path. The current release contract uses distinct CPU and CUDA 12.8 image/package identities; both remain bounded by profile-specific Windows validation.
 - `TASK-066` has validated the digest-pinned Docker Desktop and Podman package runtime paths for CPU-default launch. Podman evidence is qualified: on the validation host, `podman compose` delegated to Docker Compose v5.1.3, and Podman source-build/base-image pulls from Docker Hub still fail TLS certificate verification inside the Podman VM.
 - `TASK-067` has closed the Flask route-test timeout/isolation gap with pytest timeout safeguards and isolated test runtime paths.
 - PR #46 has merged on `main` as `d148727`, closing the non-mutating Task-087 Gate 3 proof while keeping the helper control plane dark.
@@ -604,7 +604,7 @@ The current product direction is:
 - keep local source clone/build as a developer/support path, not the preferred normal-user install path
 - package normal users through a GitHub Release ZIP with `compose.yaml`, `.env` template, scripts, docs, manifest/checksums, and a pinned GHCR image digest; reserve OCI image archives for restricted-network fallback
 - manage large model/data assets through the release asset bundle contract, extracted package-local `assets/` layout, import helper, readiness checks, and manifest hash verification
-- preserve distinct CPU and CUDA 12.6 package/image identities; GPU profiles
+- preserve distinct CPU and CUDA 12.8 package/image identities; GPU profiles
   require actual YOLO and EfficientNet CUDA work, not only a readiness label
 - clarify TowerScout's application license suitability separately from runtime-tooling choice
 

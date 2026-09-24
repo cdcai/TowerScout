@@ -65,7 +65,7 @@ blocking gate unless the caller enforces it.
 Run only when the task is to assemble or refresh a release package.
 
 ```bash
-scripts/package-release.cmd -Version <version> -OutputDir dist -Image <pinned-image-reference> -ImageDigest <sha256:digest> -PytorchFlavor <cpu|cuda126> -AssetBundleVersion <version> -AssetBundleSha256 <sha256>
+scripts/package-release.cmd -Version <version> -OutputDir dist -Image <pinned-image-reference> -ImageDigest <sha256:digest> -PytorchFlavor <cpu|cuda128> -AssetBundleVersion <version> -AssetBundleSha256 <sha256>
 ```
 
 Final evidence requires a real ZIP from clean tracked source. `-NoZip`,

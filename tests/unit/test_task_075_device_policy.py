@@ -15,6 +15,16 @@ class _FakeCudaProbe:
         return self
 
 
+def _stub_cuda_kernel_probe_and_precision(monkeypatch):
+    """Simulate a working CUDA kernel probe and an enforced IEEE FP32 policy."""
+    monkeypatch.setattr(ts_device, "_cuda_kernel_probe", lambda: None)
+    monkeypatch.setattr(
+        ts_device,
+        "cuda_precision_ok",
+        lambda: (True, {"api": "stub", "conv": "ieee", "matmul": "ieee", "config_error": None}),
+    )
+
+
 def test_runtime_diagnostics_cpu_policy_forces_cpu(monkeypatch):
     monkeypatch.setenv("TOWERSCOUT_DEVICE", "cpu")
     monkeypatch.setattr(ts_device.torch.cuda, "is_available", Mock(return_value=True))
@@ -35,6 +45,7 @@ def test_select_model_device_auto_falls_back_after_cuda_transfer_failure(monkeyp
     monkeypatch.setattr(ts_device.torch.cuda, "is_available", Mock(return_value=True))
     monkeypatch.setattr(ts_device.torch.cuda, "get_device_name", Mock(return_value="NVIDIA Test GPU"))
     monkeypatch.setattr(ts_device.torch, "zeros", Mock(return_value=_FakeCudaProbe()))
+    _stub_cuda_kernel_probe_and_precision(monkeypatch)
 
     move_to_cuda = Mock(side_effect=RuntimeError("cuda transfer failed"))
     move_to_cpu = Mock()
@@ -153,7 +164,7 @@ def test_readiness_payload_includes_ml_runtime_and_fails_when_cuda_required(monk
             "requested_policy": "cuda",
             "configured_policy": "cuda",
             "selected_device": "unavailable",
-            "torch_version": "2.6.0+cpu",
+            "torch_version": "2.10.0+cpu",
             "torch_cuda_build": None,
             "torch_cuda_available": False,
             "cuda_device_name": None,
@@ -209,8 +220,8 @@ def test_readiness_payload_explains_cuda_runtime_probe_failure(monkeypatch):
             "requested_policy": "cuda",
             "configured_policy": "cuda",
             "selected_device": "unavailable",
-            "torch_version": "2.6.0+cu126",
-            "torch_cuda_build": "12.6",
+            "torch_version": "2.10.0+cu128",
+            "torch_cuda_build": "12.8",
             "torch_cuda_available": False,
             "cuda_device_name": None,
             "fallback_reason": "cuda_required_but_unavailable",

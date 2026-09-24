@@ -8,7 +8,7 @@ provider TLS repair baseline, unless release notes say otherwise
 **Last reviewed**: 2026-06-29
 **Audience**: First-line support, release validation, and pilot testers
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
-12.6 Application Package, Podman CPU, Docker GPU, and Podman GPU are
+12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
 support-assigned paths after workstation-specific engine, Compose-provider,
 and NVIDIA validation.
 
@@ -25,7 +25,7 @@ The current release-candidate package supports:
 - CPU baseline.
 - Two digest-pinned Application Package variants:
   - `cpu` for normal and non-GPU users.
-  - `cuda126` only for support-validated NVIDIA GPU workstations.
+  - `cuda128` only for support-validated NVIDIA GPU workstations.
 - One shared Model & Data Package ZIP for both Application Package variants.
 - Normal outbound internet access for GHCR image pulls and map providers.
 - Docker Desktop as the primary controlled pilot engine.
@@ -156,9 +156,9 @@ Application Package, choose exactly one variant:
 - CPU package for normal/non-GPU users:
   - `towerscout-<release-version>-cpu.zip`
   - `towerscout-<release-version>-cpu.zip.sha256`
-- CUDA 12.6 package for support-validated NVIDIA GPU workstations:
-  - `towerscout-<release-version>-cuda126.zip`
-  - `towerscout-<release-version>-cuda126.zip.sha256`
+- CUDA 12.8 package for support-validated NVIDIA GPU workstations:
+  - `towerscout-<release-version>-cuda128.zip`
+  - `towerscout-<release-version>-cuda128.zip.sha256`
 
 Do not put both Application Package variants in a normal tester handoff folder
 unless support is intentionally comparing CPU and CUDA behavior.
@@ -193,7 +193,7 @@ C:\Users\<you>\Documents\TowerScoutUAT
 
 The release version in the Application Package and Model & Data Package
 filenames must match. The Application Package will include `-cpu` or
-`-cuda126`; the shared Model & Data Package filename does not include an image
+`-cuda128`; the shared Model & Data Package filename does not include an image
 flavor.
 
 The Application Package contains launch scripts, Compose files, docs,
@@ -293,7 +293,7 @@ ghcr.io/j-schulein/towerscout:<release-version>-cpu@sha256:<digest>
 ```
 
 `IMAGE.txt`, `.env.example`, and `release-manifest.v1.json` record the selected
-PyTorch flavor, either `cpu` or `cuda126`.
+PyTorch flavor, either `cpu` or `cuda128`.
 The CPU package rejects `-Gpu on`. The CUDA package still requires GPU
 readiness evidence before it is treated as a valid GPU launch.
 
@@ -580,11 +580,25 @@ requires the CDI path: approved non-Docker-Desktop Compose provider,
 WSL2-backed Podman machine, NVIDIA Container Toolkit/CDI registration, and a
 readiness result with `selected_device=cuda`.
 
-For optional GPU validation, the workstation also needs an NVIDIA GPU, current
-NVIDIA host drivers, selected-engine GPU validation, and site-approved proof
+For optional GPU validation, the workstation also needs an NVIDIA GPU, a
+current NVIDIA or OEM production Windows driver that lists the exact GPU,
+selected-engine GPU validation, and site-approved proof
 that the engine can expose the GPU to a test container. Do not set
 `TOWERSCOUT_GPU_AUTO_OVERLAY=1` or `TOWERSCOUT_PODMAN_GPU_OVERLAY=1` until that
 validation has passed on the workstation.
+
+**GPU and driver boundary**: The CUDA 12.8 Application Package has a
+Volta-or-newer architecture expectation, but only exact GPU/driver/Windows/WSL/
+engine/toolkit combinations in the release notes are qualified. Maxwell and
+Pascal are unsupported by the CUDA package; use the CPU package or `-Gpu off`.
+Never install a Linux display driver inside WSL. Refresh Podman CDI after a
+Windows driver update. A newer/older architecture mismatch requires the
+correct package or CPU path, never a forced architecture override.
+
+The measured CUDA image is `14.4 GB`. Plan at least `35 GB` free for normal
+pull/unpack plus assets and volumes and at least `60 GB` for one support source
+build. The pilot's full three-stage A/B/C comparison grew Docker's virtual disk
+by about `120 GB`; a full comparative build should budget `150 GB`.
 
 `/api/readiness` includes non-secret `ml_runtime` diagnostics that support can
 use to distinguish CPU-wheel images, CUDA runtime probe failures, and normal CPU

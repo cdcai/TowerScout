@@ -39,12 +39,20 @@ The normal package path assumes Windows 11 AMD64, Docker Desktop with the WSL 2
 backend as the primary pilot engine, normal outbound internet access, and one
 valid Google Maps or Azure Maps key. Current package planning uses two
 Application Package variants: the CPU package for normal/non-GPU users and the
-CUDA 12.6 package only for support-validated NVIDIA GPU workstations. Both use
+CUDA 12.8 package only for support-validated NVIDIA GPU workstations. Both use
 the same Model & Data Package ZIP. Podman CPU, Docker GPU, and Podman GPU are
 support-assigned paths only when the workstation has the required engine,
 approved Compose provider, and NVIDIA validation for the selected runtime. You
 do not need Git, Python, Conda, Node.js, VS Code, or a source checkout for the
 normal package workflow.
+
+The CUDA package has a Volta-or-newer architecture expectation, but a release
+supports only the exact GPU, Windows driver, WSL, engine, and toolkit
+combinations named in its release notes. Maxwell and Pascal must use the CPU
+package or `-Gpu off`. Use a current NVIDIA or OEM production Windows driver
+that lists the exact GPU; never install a Linux display driver inside WSL. The
+measured CUDA image is 14.4 GB, so GPU users should plan at least 35 GB free for
+pull/unpack and runtime data; source qualification builds need at least 60 GB.
 
 ## Provenance
 

@@ -10,6 +10,11 @@
 
 **Spec:** [Version 2 prioritization](2026-09-21-windows-deployment-prioritization-v2.md). **Static review:** [Verification record](2026-09-21-windows-deployment-hardening-v2-verification.md).
 
+**Amended by ADR-022 (2026-09-24):** Task-103 owns the selected
+torch 2.10.0 / torchvision 0.25.0 and `cuda128` migration. ADR-022 supersedes
+the CUDA 12.6/torch 2.6.0 no-migration constraint below, but it does not relax
+the four-profile, real-model, provider, recovery, or independent-host gates.
+
 **Assessed baseline:** `9276084d91807906c53e00060670692b27e38483`, September 21, 2026. Main may subsequently move; select and record the execution baseline once. Reassess changed files before adopting a newer revision.
 
 **Version/status:** This document and the v2 spec supersede the unversioned September 21 pair for the proposed deadline effort. Preserve the originals as history. This request authorizes documentation; it does not execute cleanup, change task status, close PRs, or deploy software. After implementation is authorized, continue within that scope without redundant per-task permission requests.
