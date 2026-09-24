@@ -32,6 +32,21 @@ PR discussion and Actions history. A separately verified pre-cleanup bundle and
 local document/artifact manifest provide disaster-recovery coverage outside the
 working repository; they are not a second live planning source.
 
+The external recovery set records:
+
+- `TowerScout-pre-cleanup-20260924.bundle` with SHA-256
+  `633D31F53F7C5F90042997246C6C5ABAAA3FFE1EFDBA0A5FF0B60E12B01FB106`
+  and 94 refs;
+- `stash-task-101-governance-transfer.patch` with SHA-256
+  `6F4A3C9659FB7EAA3A5115634D2EF58D2B66D240DE791DF4323BF9452306B2B4`;
+- a manifest of the separately preserved local-only documents and sanitized
+  CI artifacts.
+
+After verifying those records, the stale live stash, obsolete local branches,
+defunct `migration/*` refs, and temporary pre-cleanup refs were removed. The
+older intentional workstation-migration archive namespace and published release
+tags were retained because they are unrelated historical recovery records.
+
 ## Review Findings Retained
 
 The September 21 review identified nine areas that remain historical evidence,

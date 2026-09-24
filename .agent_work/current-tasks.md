@@ -3,14 +3,14 @@
 **Sprint Period**: September 22-September 28, 2026
 **Last Updated**: September 24, 2026
 **Focus**: Qualify a dependable, downloadable Windows 11 application from
-accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Begin with W00
-direction alignment and W01 early package installation. PR #67 and the
-Task-087 launcher redesign are preserved in immutable archive tags and a final
-disposition record, but PRs #64/#67 are closed without merge and are not
+accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Day 2 has moved
+the evidence-selected W03-W08 corrections through focused review and merge.
+The Task-087 launcher redesign is preserved in immutable archive tags and a
+final disposition record, but PRs #64/#67 are closed without merge and are not
 release gates.
 
-**Execution Baseline**: `9276084d91807906c53e00060670692b27e38483`
-**Delivery Branch**: `delivery/windows-deployment-v2`
+**Execution Baseline**: `3e7f78cdbdbaf9eca79172a34c6f4426fa7b7fd5`
+**Authoritative Branch**: `main`
 **Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **Acceptance**: [Windows deployment prioritization v2](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-prioritization-v2.md)
 **Work Plan**: [Windows deployment hardening v2](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md)
@@ -52,8 +52,10 @@ Current scope:
 
 **Status**: AT_RISK - first-host Docker CPU package and standalone real-model
 proof pass; secure CUDA image/package assembly passes but this Blackwell host is
-incompatible with the selected CUDA wheel; combined-flow fixture, provider,
-rootless Podman, managed-endpoint, and independent-host evidence remain
+incompatible with the selected CUDA wheel. Day-2 application corrections and
+the fail-closed W05 harness in PRs #77-#83 are merged. The authorized
+combined-flow fixture, live provider, managed-endpoint, and independent-host
+runtime evidence remain
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-091-owner-runnable-release-qualification.md`
 
@@ -70,9 +72,9 @@ Current scope:
 
 ### **TASK-068: Windows Test Portability And Script Validation**
 
-**Status**: IN_PROGRESS - W01 reproduced the dormant-helper antivirus blocker;
-bounded W02 fix is at `fa5ce83`, packaged Docker CPU proof and independent
-review and exact-head CI pass; merge disposition and final W09 repetition remain
+**Status**: IN_PROGRESS - W02 merged as `8976222`; packaged Docker CPU proof,
+independent review, and exact-head CI pass. Final W09 clean-package repetition
+remains
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-068-windows-script-validation.md`
 
@@ -88,8 +90,9 @@ Current scope:
 ### **TASK-097: Podman CPU/GPU Final Path Qualification**
 
 **Status**: AT_RISK - approved package-local provider passes with Python 3.12;
-Python 3.14 dependency resolution fails, the running default connection is
-rootful, and the existing rootless validation machine is stopped
+the running machine's explicit normal-user connection is verified rootless and
+merged W03 fix PR #77 binds operations to it. Python 3.14 dependency resolution,
+exact-package CPU inference, GPU evidence, and independent-host proof remain
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-097-podman-final-path-qualification.md`
 
@@ -177,7 +180,8 @@ and explicit authorization.
    install as soon as verified control and asset ZIPs are available.
 3. [x] Record the Day-1 forecast as `go`, `at_risk`, or `blocked`, with each
    blocker, owner, and next check named.
-4. [ ] Select only evidence-required W02-W08 fixes and focused regressions.
+4. [x] Select, review, and merge the evidence-required W02-W08 fixes and W05
+   harness through PRs #77-#83; runtime acceptance proof remains.
 5. [ ] By Day 3, require a corrected Docker/Podman rehearsal plus real combined
    inference or revise the forecast.
 6. [ ] Freeze exact W09 source/images/ZIPs/assets/fixtures/tools before final

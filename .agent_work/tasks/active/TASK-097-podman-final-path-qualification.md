@@ -1,6 +1,9 @@
 # TASK-097: Podman CPU/GPU Final Path Qualification
 
-**Status**: AT_RISK - approved provider passes with Python 3.12; rootless target is stopped
+**Status**: AT_RISK - approved provider passes with Python 3.12; the running
+machine's explicit normal-user connection is verified rootless and the W03
+target-binding fix is merged; exact-package CPU/GPU and independent-host proof
+remain
 **Priority**: HIGH
 **Type**: C (Runtime Qualification)
 
@@ -60,3 +63,30 @@ policy and is not endpoint-policy acceptance.
 select its rootless connection, then run package `VerifyOnly` before any asset
 or runtime mutation. Bound the supported provider-installer Python range from
 the pinned dependency wheel matrix.
+
+### 2026-09-23 - W03 Rootless Target And Process Boundary Checkpoint
+
+**Objective**: Prevent runtime commands from hanging or silently targeting the
+root-owned default Podman connection.
+
+**Decision**: Use the already-running `podman-machine-default` normal-user
+connection. Do not change the workstation's global default and do not create a
+new machine.
+
+**Execution**: PR #77 at head `a4bf6e1` adds bounded concurrent output draining,
+exact Windows argument handling, owned process-tree timeout cleanup, explicit
+rootless connection verification, and target-bound Compose/direct operations.
+The approved package-local `podman-compose 1.5.0` provider resolves through
+Podman `6.0.2` without the Docker Desktop provider.
+
+**Validation**: Local W03 focused/adjacent ring passes `63/63`. The two exact
+CI sandbox failures from the first PR head pass after adding the shared
+bootstrap dependency to the helperless fixture; the full enabled-helper module
+remains locally blocked by endpoint antivirus and is delegated to CI. Read-only
+real target/provider probes passed. PR #77's corrected head has green Windows
+host-helper, controller, frontend, Docker, security, and Trivy checks; its
+Python matrix was still running when recorded. No container, image, volume,
+network, machine, or connection state was changed.
+
+**Next**: Use merged commit `99858c2` to perform package `VerifyOnly` and the
+CPU rehearsal against the same explicit rootless connection.

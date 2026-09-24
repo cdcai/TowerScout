@@ -1,7 +1,7 @@
 # TASK-068: Windows Test Portability And Script Validation
 
-**Status**: IN_PROGRESS - W02 fix, no-blocker review, and exact-head CI complete;
-merge disposition and final W09 clean-package repetition remain
+**Status**: IN_PROGRESS - W02 merged as `8976222`; no-blocker review and
+exact-head CI complete; final W09 clean-package repetition remains
 **Priority**: CRITICAL
 **Type**: B (Windows Runtime Reliability)
 **Owner**: Active delivery implementer; independent reviewer validates
@@ -98,6 +98,20 @@ module or write helper state. Explicit review mode still imports and uses it.
 
 **Next**: Obtain review/merge disposition for PR #75, then repeat from a clean
 source package in W09.
+
+### 2026-09-23 - W02 Merge Checkpoint
+
+**Objective**: Close the W02 review gate without overstating final-package
+acceptance.
+
+**Execution**: PR #75 squash-merged to `main` as `8976222`. Its required checks
+passed before merge.
+
+**Validation**: PASS for the bounded helper-disabled lifecycle correction.
+Final W09 clean-source package setup/start/stop/relaunch remains required.
+
+**Next**: Reuse the merged fix in the frozen W09 candidate and repeat the
+eight-volume preservation proof.
 
 ---
 

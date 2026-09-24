@@ -263,3 +263,71 @@ This checkpoint does not establish W05 runtime acceptance. Real execution is
 blocked until the release/model owner provides a permitted, hashable fixture
 set with positive detections in the EfficientNet confidence band and declares
 expected outputs/tolerances before candidate results.
+
+### 2026-09-23 - Day-2 Focused Corrections And Review Gates
+
+**Objective**: Implement only the W03-W08 defects required by observed Day-1
+evidence and prepare the Day-3 rehearsal without weakening acceptance.
+
+**Execution**:
+
+- PR #77 binds bounded runtime commands to the verified rootless Podman
+  connection and approved package-local Compose provider.
+- PR #78 propagates required secondary-classifier failures and prevents partial
+  result publication; its local adjacent ring has zero failures.
+- PR #79 creates the viewport boundary before reading first-use Google bounds,
+  preserves Azure/explicit polygon behavior, and rebuilds the frontend bundle.
+- PR #80 isolates operation-specific rate limits, serializes detection jobs,
+  and closes the progress-before-cancel-event race.
+- PR #81 preserves the scalar TLS importer exit status and visible diagnostics.
+  Full candidate-bundle transaction work is deferred until PR #77 lands.
+- PR #82 rejects excessive candidate grids and decoded-image dimensions before
+  expensive allocation or model work.
+- Draft PR #83 contains the rebased W05 combined-model fixture/report contract.
+
+**Validation**: Local focused and adjacent results are PR #77 `63/63`, PR #78
+`60` collected with `22` passed and `38` documented legacy skips, PR #79 all
+five maintained frontend/bundle checks passed, PR #80 `96/96`, PR #81 `18/18`,
+PR #82 `140` collected with `102` passed and `38` documented legacy skips, and
+PR #83 focused `18/18`. PR #77's initial CI helper-sandbox failure was repaired
+at `a4bf6e1`; its corrected Windows/helper/controller/frontend/Docker/security
+checks pass and its Python matrix was still running when recorded. PR #78's
+sole initial Docker-stage failure was a Docker Hub OAuth connection reset; the
+unchanged rerun passed, and PRs #78-#83 are fully green. PR #84 records this
+governance checkpoint and remains subject to its own exact-head checks.
+
+**Blockers**: The authorized positive combined-flow fixture is not present;
+CUDA qualification has no compatible host; managed-endpoint policy and
+independent hosts remain unconfirmed. Google and Azure accounts are available,
+but no keys or live-provider evidence were placed in repository records.
+
+**Next**: Accept and merge the focused PRs after exact-head CI/review, rebase the
+W05 draft on PR #77, add the exact-package runner, obtain and predeclare the
+private fixture baseline, then run the Day-3 Docker/rootless-Podman rehearsal.
+
+### 2026-09-24 - Focused Corrections Accepted And W05 Harness Landed
+
+**Decision**: Accept the bounded W03-W08 corrections and the fail-closed W05
+qualification harness without treating harness availability as runtime
+acceptance.
+
+**Execution**: PRs #77-#83 squash-merged to `main` as `99858c2`, `f51d401`,
+`7160866`, `1b7336a`, `be1d74c`, `6046283`, and `3e7f78c`, respectively. Their
+ordinary task branches and clean worktrees were retired after merge.
+
+**Validation**: Every PR passed its exact-head GitHub matrix before merge.
+Targeted local review additionally covered Windows runtime parsing, TLS status
+propagation, ML failure/allocation behavior, 103 detection-admission Python
+regressions, frontend/provider-state and bundle-source parity, and 66 W05
+contract/adjacent ML tests. The W05 report contract verifies fixture hashes
+before and after inference and fails closed on missing output, device, phase,
+or secondary-classifier evidence.
+
+**Boundary**: No real combined-model acceptance run occurred. The authorized
+positive fixture, exact-package Docker/rootless-Podman runs, compatible CUDA
+host, live-provider checks, managed-endpoint policy proof, and independent-host
+reproduction remain release blockers or not-run gates.
+
+**Next**: Obtain and predeclare the private fixture baseline, add the
+exact-package invocation, and run the Day-3 Docker/rootless-Podman rehearsal
+without weakening the W09/W10 identity and host requirements.

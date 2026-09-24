@@ -136,6 +136,50 @@ Docker CPU setup from an extracted path containing spaces. In parallel, locate
 or obtain permitted W05 fixtures that exercise positive EfficientNet work and
 assign the remaining host/account/policy owners.
 
+### 2026-09-24 - Repository Consolidation And Focused PR Closeout
+
+**Objective**: Return the live repository to one authoritative task state on
+`main` without discarding recoverable Task-087 or in-flight Day-2 work.
+
+**Decision**: Close superseded PRs #64/#67 without merge, preserve their exact
+heads with pushed archive tags, and treat `.worktrees/` only as temporary Git
+checkout infrastructure. Task and release truth remains on `main`; an external
+bundle is disaster-recovery material, not a second planning source.
+
+**Execution**: PR #85 recorded the final Task-087 disposition and worktree
+policy. PRs #77-#83 then merged after focused local review and exact-head CI.
+Clean task worktrees and their local/remote branches were retired. The stale
+August 19 Task-101 governance stash, five gone local branches, defunct
+`migration/*` remote-tracking refs, and temporary pre-cleanup refs were removed
+only after their presence in the verified bundle was confirmed.
+
+**Validation**: The preservation bundle verifies as complete with 94 refs. The
+exported stash patch hash still matches its recorded SHA-256. Pushed archive
+tags preserve the final PR #63/#64/#67 and Task-087 preimplementation commits.
+The live task board now names `main` as the authoritative branch and retains
+the unpassed W05/W09/W10 runtime gates.
+
+**Next**: Merge this reconciled governance checkpoint, retire its final task
+worktree/branch, and continue only the explicit runtime evidence gates from a
+fresh branch off current `main`.
+
+### 2026-09-23 - Day-2 Review Checkpoint
+
+**Objective**: Keep the active delivery record aligned with merged Day-1 work
+and the focused Day-2 review queue.
+
+**Execution**: Updated the accepted main baseline to `715d153`; recorded W02
+merge `8976222`; opened focused PRs #77-#82 and Draft PR #83; reconciled Task
+091, Task 097, Task 068, and the delivery checklist without changing deferred
+Task-087/096 or owner-gated Task-089 boundaries.
+
+**Validation**: The checkpoint cites only sanitized branch, commit, PR, test,
+runtime version, and connection-mode facts. No provider key, certificate,
+private fixture, local AOI, or raw browser/runtime evidence is included.
+
+**Next**: Require exact-head CI and review for PRs #77-#83, obtain the private
+W05 fixture and external machine/policy inputs, then refresh the Day-3 forecast.
+
 ### 2026-08-20 - Task-101 Post-Merge Governance Checkpoint
 
 **Objective**: Reconcile the current control-plane sources after the accepted
