@@ -4,11 +4,12 @@ import uuid
 from contextlib import contextmanager
 from unittest.mock import Mock, patch
 
+import pytest
 import torch
 from PIL import Image
 
 from ts_yolov5 import YOLOv5_Detector
-from ts_errors import ModelLoadError
+from ts_errors import ModelLoadError, ProcessingError
 
 
 class _FakeEvents:
@@ -73,6 +74,32 @@ class _FakeSecondary:
             "debug_image_seconds": 0.0,
             "total_seconds": 0.15,
         }
+
+
+def test_required_secondary_failure_is_not_swallowed(tmp_path):
+    tile_path = tmp_path / "tile.jpg"
+    Image.new("RGB", (8, 8), "white").save(tile_path)
+    detector = object.__new__(YOLOv5_Detector)
+    detector.model = _FakeModel()
+    detector.batch_size = 4
+    detector.device_label = "cpu"
+
+    class BrokenSecondary:
+        device_label = "cpu"
+        batch_size = 8
+
+        def classify(self, _image, _detections, batch_id=0):
+            raise RuntimeError("synthetic classifier failure")
+
+    with pytest.raises(ProcessingError) as caught:
+        detector.detect(
+            [{"filename": str(tile_path)}],
+            _FakeEvents(),
+            "failure-test",
+            secondary=BrokenSecondary(),
+        )
+
+    assert caught.value.details["operation"] == "secondary_classifier"
 
 
 def test_cuda_detect_keeps_gpu_guard_through_tensor_conversion(monkeypatch):

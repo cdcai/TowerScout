@@ -1,12 +1,13 @@
 import asyncio
 import tempfile
+from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from flask import session
 
 from towerscout import SESSION_ID_KEY, _get_session_run_id, app
-from ts_errors import MapProviderError, NetworkError
+from ts_errors import MapProviderError, NetworkError, ProcessingError
 from ts_maps import fetch_all
 
 
@@ -134,6 +135,93 @@ def test_getobjects_reports_imagery_download_failure_before_inference():
 
     with client.session_transaction() as sess:
         assert sess[SESSION_ID_KEY].startswith("session-")
+
+
+def test_getobjects_secondary_failure_does_not_publish_partial_success_and_recovers(tmp_path):
+    app.config["TESTING"] = True
+    client = app.test_client()
+
+    fake_detector = Mock()
+    fake_detector.batch_size = 1
+    detect_calls = 0
+
+    def detect(tiles, *_args, **_kwargs):
+        nonlocal detect_calls
+        detect_calls += 1
+        if detect_calls == 1:
+            raise ProcessingError(
+                "Secondary classifier failed: synthetic classifier failure",
+                operation="secondary_classifier",
+            )
+        return [[] for _tile in tiles]
+
+    fake_detector.detect.side_effect = detect
+    fake_map_provider = Mock()
+
+    def download_tiles(tiles, _loop, tmpdirname, tmpfilename):
+        for index, _tile in enumerate(tiles):
+            Path(tmpdirname, f"{tmpfilename}{index}.jpg").write_bytes(b"fixture")
+        return []
+
+    fake_map_provider.get_sat_maps.side_effect = download_tiles
+    run_directories = [tmp_path / "failed-run", tmp_path / "successful-run"]
+    for directory in run_directories:
+        directory.mkdir()
+
+    def build_tiles(*_args, **_kwargs):
+        return (
+            [
+                {
+                    "id": 0,
+                    "lat": 37.75,
+                    "lng": -122.45,
+                    "h": 0.001,
+                    "w": 0.001,
+                    "detections": [],
+                    "url": "https://example.invalid/tile",
+                }
+            ],
+            1,
+            1,
+            10.0,
+            640,
+            640,
+            {
+                "candidate_tiles": 1,
+                "viewport_tiles": 1,
+                "retained_tiles": 1,
+            },
+        )
+
+    with patch("towerscout.get_engine", return_value=fake_detector), \
+         patch("towerscout.get_secondary_classifier", return_value=Mock()), \
+         patch("towerscout._create_map_provider", return_value=fake_map_provider), \
+         patch(
+             "towerscout._parse_detection_request",
+             return_value={
+                 "bounds": "37.7,-122.5,37.8,-122.4",
+                 "engine": "newest",
+                 "provider": "google",
+                 "polygons": [],
+             },
+         ), \
+         patch("towerscout._build_tiles_for_request", side_effect=build_tiles), \
+         patch(
+             "towerscout._make_session_tmpdir",
+             side_effect=[str(directory) for directory in run_directories],
+         ):
+        failed_response = client.post("/getobjects", data={"bounds": "x"})
+        with client.session_transaction() as sess:
+            assert "results" not in sess
+            assert "detections" not in sess
+
+        successful_response = client.post("/getobjects", data={"bounds": "x"})
+
+    assert failed_response.status_code == 500
+    assert "Secondary classifier failed" in failed_response.get_json()["error"]
+    assert successful_response.status_code == 200
+    assert successful_response.get_json()[0]["class_name"] == "tile"
+    assert detect_calls == 2
 
 
 def test_getobjects_reports_imagery_tls_repair_details_before_inference():

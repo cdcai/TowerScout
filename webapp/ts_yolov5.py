@@ -392,8 +392,11 @@ class YOLOv5_Detector:
                                     count += 1
                                 except Exception as e:
                                     logger.error(f"Secondary classifier failed: {e}")
-                                    # Continue without secondary classification
-                                    count += 1
+                                    raise ProcessingError(
+                                        f"Secondary classifier failed: {str(e)}",
+                                        operation="secondary_classifier",
+                                        cause=e,
+                                    ) from e
 
                             result_processing_start = time.time()
                             tile_results = [{
@@ -421,6 +424,8 @@ class YOLOv5_Detector:
                             record_phase('model_result_conversion_filtering', result_processing_start)
                             
                         except Exception as e:
+                            if isinstance(e, ProcessingError):
+                                raise
                             logger.error(f"Result processing failed for tile: {e}")
                             # Continue processing other tiles
                             continue
