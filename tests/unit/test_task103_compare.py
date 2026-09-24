@@ -362,6 +362,22 @@ def scenario(tmp_path):
     return Scenario(tmp_path)
 
 
+@pytest.mark.parametrize(
+    ("field", "value"),
+    (("stage", "B"), ("profile", "cuda")),
+)
+def test_reference_must_match_declared_stage_and_profile(
+    scenario, capsys, field, value
+):
+    scenario.reference["run"][field] = value
+
+    code = compare.main(scenario.argv())
+
+    assert code == 2
+    assert "gates require ('A', 'cpu')" in capsys.readouterr().err
+    assert not (scenario.out / "verdict.json").exists()
+
+
 def _statuses(verdict):
     return {gate_id: gate["status"] for gate_id, gate in verdict["gates"].items()}
 

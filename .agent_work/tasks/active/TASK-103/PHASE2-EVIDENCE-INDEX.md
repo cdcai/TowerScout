@@ -1,22 +1,23 @@
 # TASK-103 Phase 2 Evidence Index
 
 **Date**: 2026-09-24
-**Host ID**: `l510046`
+**Host ID**: `HOST-BLACKWELL`
 **Source**: `e55abaecc601` rebased on accepted `main` `10cd13a`
 **Operative gates**: v3 SHA-256
-`1dd6f7f105c62e3d741999f02c198ae69858d012d5769605a0817cc9dcd8240`
+`1dd6f7f105c62e3d741999f02c198ae69858d012d5769605a0817cc9dcd8240c`
 
-Raw runtime evidence is retained outside Git under
-`C:\ts-task103\phase2\e55abae\`. This file records sanitized identities,
+Raw runtime evidence is retained outside Git under the host-relative custody
+root `<TASK103_EVIDENCE_ROOT>\phase2\e55abae\`. This file records sanitized identities,
 outcomes, and custody paths only. It contains no credentials, model weights,
-or fixture imagery.
+or fixture imagery. The placeholder deliberately omits the host-local absolute
+path because that location is not required to verify the recorded hashes.
 
 ## Final Docker qualification
 
 | Cell | Image identity | Verdict | Raw evidence |
 | --- | --- | --- | --- |
-| CPU | `sha256:7d6e49820fd787b85983bed19f3344710c374314a069f331d19677fdbd7c4aff`; 867,919,134 bytes | PASS; G1, G3-G8, G11-G12 pass; GPU-only and scan-relative gates not applicable | `full-cpu\runs\20260924T202828Z_l510046_docker_C_cpu_torch2-10-0_e55abaecc601_final-cpu\`; `verdicts\final-cpu\` |
-| CUDA 12.8 | `sha256:a68b2c00b5653bc2814fd6008b63e3d2702cab83eb80f101f10bd49958bac45f`; 4,830,698,137 bytes | PASS; G1-G8 and G11-G12 pass; G9/G10 not applicable | `full-cuda\runs\20260924T205545Z_l510046_docker_C_cuda128_torch2-10-0_e55abaecc601_final-cuda\`; `verdicts\final-cuda\` |
+| CPU | `sha256:7d6e49820fd787b85983bed19f3344710c374314a069f331d19677fdbd7c4aff`; 867,919,134 bytes | PASS; G1, G3-G8, G11-G12 pass; GPU-only and scan-relative gates not applicable | `full-cpu\runs\20260924T202828Z_HOST-BLACKWELL_docker_C_cpu_torch2-10-0_e55abaecc601_final-cpu\`; `verdicts\final-cpu\` |
+| CUDA 12.8 | `sha256:a68b2c00b5653bc2814fd6008b63e3d2702cab83eb80f101f10bd49958bac45f`; 4,830,698,137 bytes | PASS; G1-G8 and G11-G12 pass; G9/G10 not applicable | `full-cuda\runs\20260924T205545Z_HOST-BLACKWELL_docker_C_cuda128_torch2-10-0_e55abaecc601_final-cuda\`; `verdicts\final-cuda\` |
 
 Both images carry `org.opencontainers.image.revision=e55abae` and
 `org.opencontainers.image.version=task103-e55abae`. The CPU flavor is `cpu`;
@@ -100,6 +101,8 @@ does not claim those later gates.
 
 ## Publication boundary
 
-No workflow dispatch, registry push, package/release publication, `latest`
-update, or task closeout occurred. Exact-digest Trivy/SBOM evidence and final
-release-package acceptance remain H9 work after Checkpoint 2 authorization.
+Checkpoint 2 was acknowledged with pre-publication conditions. No workflow
+dispatch, registry push, package/release publication, `latest` update, or task
+closeout occurred in this evidence phase. Exact-digest Trivy/SBOM evidence is
+the next H9 step after the conditions land with green CI; packaging and
+`latest` remain separately gated on owner confirmation of the digests.

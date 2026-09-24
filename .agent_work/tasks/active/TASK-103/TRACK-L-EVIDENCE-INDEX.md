@@ -1,9 +1,11 @@
 # TASK-103 Track L Evidence Index
 
 **Date**: 2026-09-24
-**Host ID**: `l510046`
+**Host ID**: `HOST-BLACKWELL`
 **Custody**: Raw run directories remain outside Git at
-`C:\ts-task103\evidence\`; this index contains only sanitized facts and paths.
+`<TASK103_EVIDENCE_ROOT>\`; this index contains only sanitized facts and paths.
+The placeholder omits the host-local absolute root because it is not needed to
+verify the indexed hashes.
 **Operative Track L gates**: v2 SHA-256
 `f1096e7e00a1b8edf8e4acdb20bd07f1053cc7bec04faf596eaf8e01e661557f`
 

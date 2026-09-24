@@ -1,7 +1,7 @@
 # TowerScout PyTorch CUDA 12.8 (Blackwell) Migration — Implementation Brief (Plan v3)
 
-**Date:** 2026-09-24. **Owner:** Jonathan Schulein (all approvals below are his, recorded 2026-09-24).
-**Audience:** the developer agent on the Blackwell laptop (H-BW, `win-7035fbbeab98`).
+**Date:** 2026-09-24. **Owner:** release owner (all approvals below are recorded 2026-09-24).
+**Audience:** the developer agent on the Blackwell laptop (`HOST-BLACKWELL`).
 **Supersedes** Plan v1, Plan v2 (`TowerScout-PyTorch-cu128-Blackwell-Migration-Plan-v2-2026-09-23.md`) and the email-kit README **for implementation purposes**. Those documents are history; if you have them, do not follow their steps where this brief differs. This brief folds in every correction from the pilot (report §8) and every owner decision.
 **Companion attachments** (same email): pilot patch series, expected-tree hash, RGB fixture tiles, fixture manifest, T1000 reference run, wheel evidence, pilot report. See §5.
 
@@ -11,7 +11,7 @@
 
 Replace TowerScout's ML runtime `torch==2.6.0 / torchvision==0.21.0` (CUDA 12.6, flavor `cuda126`) with **`torch==2.10.0` / `torchvision==0.25.0` (CUDA 12.8, flavor `cuda128`)** so the app runs on Blackwell GPUs (sm_120), while preserving Turing (sm_75) and CPU behavior exactly. The CPU image moves to the same pair as one coordinated change.
 
-**You are not designing this migration — it is already implemented and proven.** A full pilot ran on the owner's T1000 workstation (H-T1) on 2026-09-23: 39 qualification runs, 21 comparator verdicts, all archived on H-T1 under `task103-evidence\` (index: `INDEX.md`; narrative: `PILOT-LOG.md`). The pilot branch (9 commits) arrives with this brief as a plain-text patch series. Your work is:
+**You are not designing this migration — it is already implemented and proven.** A full pilot ran on `HOST-T1000` on 2026-09-23: 39 qualification runs, 21 comparator verdicts, all archived under `<TASK103_T1000_EVIDENCE_ROOT>\` (index: `INDEX.md`; narrative: `PILOT-LOG.md`). The pilot branch (9 commits) arrives with this brief as a plain-text patch series. Your work is:
 
 1. **Phase 0** — reconstruct the pilot branch and environment on this laptop (§6).
 2. **Phase 1** — verify the migration on this laptop's Blackwell GPU ("Track L", §7). **Checkpoint: report to the owner.**
@@ -103,7 +103,11 @@ No open decisions remain. Do not re-open these; if reality contradicts one, stop
 
 **Licensing note on the tiles:** they are captured Google satellite imagery, released to you by the owner for this qualification only. **Never commit them to the repository, never redistribute them, never regenerate them** (a different Pillow/zlib build produces different PNG bytes and the gates check exact SHA-256 hashes).
 
-**Note:** the reference run contains the workstation's host name (`jono-pc`) and Windows user paths inside some JSON files; that is expected.
+**Note:** the raw reference run contains a host-local name and user-profile
+paths inside some JSON files; the committed documentation represents them as
+`HOST-T1000` and host-relative placeholders. The raw values remain only in the
+externally retained evidence because changing them would invalidate custody
+hashes.
 
 ---
 
@@ -121,7 +125,7 @@ Use **Windows PowerShell 5.1** (`powershell.exe`) for all repository scripts —
 **Reconstruction** (paths without spaces — spaced paths have bitten this project before, §11 G-6):
 
 ```powershell
-$T = "C:\ts-task103"; $Repo = "<path to your existing TowerScout clone>"
+$T = "<TASK103_WORK_ROOT>"; $Repo = "<TOWERSCOUT_REPO_ROOT>"
 New-Item -ItemType Directory -Force "$T\kit" | Out-Null
 # Put all package attachments in $T\kit\ ; expand the tiles:
 Expand-Archive "$T\kit\fixtures-rgb.zip" "$T\fixture-manifest-A-cpu"
@@ -301,7 +305,7 @@ If you consult plan v2 (history), know that this brief corrects it as follows �
 | G-3 | Windows PowerShell 5.1 writes JSON with a BOM; Python's default cp1252 decoder chokes. | Read every JSON as `utf-8-sig` (the pilot tooling already does). |
 | G-4 | Windows PowerShell 5.1 test suites launched **from pwsh 7** break (`Get-FileHash`, `Set-Acl` PSModulePath issue). | Launch Windows suites from Git Bash or Windows PowerShell. 8 host-helper tests also need admin; their local failures are pre-existing. |
 | G-5 | In PowerShell, `,` binds tighter than `+` inside `@(...)` — this silently split a harness argument and failed every phase with exit 2. | Build strings on their own line. Behavioral tests that assert real `docker run` args caught it. |
-| G-6 | Spaced paths: a recursive delete guard misread `C:\TowerScout Pilot\...`; a spaced provider path broke podman compose in rc6. | Keep working paths space-free (`C:\ts-task103`). |
+| G-6 | Spaced paths: a recursive delete guard misread `<SPACED_WORK_ROOT>\...`; a spaced provider path broke podman compose in rc6. | Keep the selected `<TASK103_WORK_ROOT>` space-free. |
 | G-7 | Running Trivy (or builds) concurrently with measurement runs caused `ENOMEM` on bind-mount reads and NMS timeouts. | Never overlap scans/builds with qualification runs. |
 | G-8 | Cross-window single runs drift ~9% (CPU timing) to ~16% (CUDA host RSS) with no code change. | Relative gates only from interleaved same-window runs, ≥3/side (now codified in gates v3). |
 | G-9 | Binary `docker save` piped through PowerShell 5.1 gets corrupted. | `docker save -o file.tar`, or Git Bash for pipes. |

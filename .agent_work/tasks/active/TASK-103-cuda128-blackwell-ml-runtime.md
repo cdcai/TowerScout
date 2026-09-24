@@ -1,8 +1,7 @@
 # TASK-103: CUDA 12.8 Blackwell ML Runtime
 
-**Status**: IN_PROGRESS - Track L passed and Checkpoint 1 was acknowledged;
-Phase 2 implementation/qualification is active; publication waits for
-Checkpoint 2
+**Status**: IN_PROGRESS - Checkpoint 2 acknowledged with pre-publication
+conditions; hardening must land with green CI before exact-digest H9 dispatch
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
@@ -32,8 +31,9 @@ weakening model correctness, device, security, persistence, or recovery gates.
   exact published digest and preserve written finding dispositions.
 - BEFORE publication, THE PROJECT SHALL inventory the shipped NVIDIA runtime
   components for compliance review without making a legal determination.
-- UNTIL Checkpoint 2 is acknowledged, THE PROJECT SHALL NOT dispatch image
-  publication, publish a package/release, push `latest`, or close out the task.
+- AFTER Checkpoint 2, THE PROJECT SHALL land the required pre-publication
+  corrections before dispatching images; package/release publication and
+  `latest` remain gated on owner confirmation of the exact digests.
 
 ## Execution Record
 
@@ -66,6 +66,11 @@ weakening model correctness, device, security, persistence, or recovery gates.
 - [x] Push `feature/task-103-cuda128-ml-runtime` and open
   [Task-103 PR #86](https://github.com/J-Schulein/TowerScout/pull/86) with links to
   ADR-022 and the Track L verdict.
+- [ ] Land the accepted-baseline Trivy delta gate, fail-closed comparator
+  context validation, corrected/sanitized evidence, and alert #215 disposition
+  with green CI before H9 dispatch.
+- [ ] Dispatch CPU and CUDA 12.8 images with `push_latest=false`, then report
+  exact digests and scan/SBOM artifacts before any package publication.
 
 ## Acceptance Boundary
 
@@ -84,5 +89,7 @@ remain explicit blockers.
 
 ## Publication Boundary
 
-Checkpoint 2 is the owner authorization boundary for H9 publication and
-closeout. Phase 2 authorizes the feature-branch push and PR only.
+Checkpoint 2 is acknowledged for CPU/CUDA image dispatch after its stated
+pre-publication conditions land with green CI. Package publication, `latest`
+promotion, and closeout remain gated on the owner's review of exact digests and
+security artifacts.

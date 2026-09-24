@@ -45,6 +45,11 @@ def test_container_publish_scans_and_sboms_the_exact_published_digest():
     assert "format: cyclonedx" in workflow
     assert "output: image-sbom.cdx.json" in workflow
     assert "image-scan-dispositions.md" in workflow
-    assert '"HIGH", "CRITICAL"' in workflow
-    assert "blocking Trivy findings" in workflow
+    assert "scripts/task103_trivy_delta.py compare" in workflow
+    assert "--baseline .github/security/task103-trivy-baseline.v1.json" in workflow
+    assert "--candidate image-trivy.json" in workflow
+    assert "--flavor '${{ steps.build.outputs.pytorch_flavor }}'" in workflow
+    assert "image-scan-delta.json" in workflow
+    assert ".github/security/task103-trivy-baseline.v1.json" in workflow
+    assert "CRITICAL/HIGH findings are blocking" not in workflow
     assert "if: always()" in workflow

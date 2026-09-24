@@ -1965,20 +1965,24 @@ def _run_gate(gate: Callable[[Context], dict[str, Any]], ctx: Context) -> dict[s
 # ---------------------------------------------------------------------------
 
 
-def _context_findings(ctx: Context) -> None:
-    """Record evidence-hygiene warnings that do not change any gate status."""
+def _validate_context(ctx: Context) -> None:
+    """Fail closed when the supplied evidence does not match declared gates."""
 
     gates = ctx.gates
     reference = ctx.reference
     declared = (gates.reference_stage, gates.reference_profile)
     observed = (reference.value("stage"), reference.value("profile"))
     if observed != declared:
-        ctx.add_finding(
-            "reference_not_declared",
-            "warning",
+        raise UsageError(
             f"reference-outputs run {reference.run_id} is stage/profile {observed}; "
-            f"gates declare {declared}.",
+            f"gates require {declared}"
         )
+
+
+def _context_findings(ctx: Context) -> None:
+    """Record remaining evidence-hygiene warnings that do not change gates."""
+
+    reference = ctx.reference
     others = [("candidate", rd) for rd in ctx.candidates[1:]]
     others += [("reference-outputs", reference)]
     others += [("baseline", rd) for rd in ctx.baselines]
@@ -2042,6 +2046,7 @@ def _utc_now() -> str:
 def evaluate(ctx: Context) -> dict[str, Any]:
     """Run every gate and assemble the verdict document."""
 
+    _validate_context(ctx)
     _context_findings(ctx)
     results = {gate_id: _run_gate(gate, ctx) for gate_id, gate in GATES}
     for gate_id, result in results.items():

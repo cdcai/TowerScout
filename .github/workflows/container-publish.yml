@@ -134,52 +134,22 @@ jobs:
           exit-code: '0'
           version: 'v0.69.3'
 
-      - name: Write finding dispositions and enforce high-severity gate
+      - name: Diff exact-digest findings against the accepted baseline
         id: disposition
         shell: bash
         env:
           PINNED_IMAGE: '${{ steps.build.outputs.image }}@${{ steps.build.outputs.digest }}'
         run: |
-          python - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          report = json.loads(Path("image-trivy.json").read_text(encoding="utf-8"))
-          findings = []
-          for result in report.get("Results") or []:
-              for vuln in result.get("Vulnerabilities") or []:
-                  findings.append({
-                      "id": vuln.get("VulnerabilityID", "unknown"),
-                      "package": vuln.get("PkgName", "unknown"),
-                      "installed": vuln.get("InstalledVersion", "unknown"),
-                      "fixed": vuln.get("FixedVersion") or "not listed",
-                      "severity": str(vuln.get("Severity") or "UNKNOWN").upper(),
-                  })
-
-          blocking = [item for item in findings if item["severity"] in {"HIGH", "CRITICAL"}]
-          lines = [
-              "# Exact-digest image scan dispositions",
-              "",
-              f"Image: `{os.environ['PINNED_IMAGE']}`",
-              "",
-              "Policy: CRITICAL/HIGH findings are blocking; MEDIUM/LOW/UNKNOWN findings are retained for release-owner review.",
-              "",
-              "| Finding | Package | Installed | Fixed | Severity | Disposition |",
-              "|---|---|---|---|---|---|",
-          ]
-          for item in sorted(findings, key=lambda value: (value["severity"], value["id"], value["package"])):
-              disposition = "BLOCK" if item in blocking else "REVIEW"
-              lines.append(
-                  f"| {item['id']} | {item['package']} | {item['installed']} | "
-                  f"{item['fixed']} | {item['severity']} | {disposition} |"
-              )
-          if not findings:
-              lines.append("| none | - | - | - | - | PASS |")
-          Path("image-scan-dispositions.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-          if blocking:
-              raise SystemExit(f"blocking Trivy findings: {len(blocking)}")
-          PY
+          set -euo pipefail
+          python scripts/task103_trivy_delta.py compare \
+            --baseline .github/security/task103-trivy-baseline.v1.json \
+            --candidate image-trivy.json \
+            --flavor '${{ steps.build.outputs.pytorch_flavor }}' \
+            --image "$PINNED_IMAGE" \
+            --source-ref "$GITHUB_SHA" \
+            --markdown-out image-scan-dispositions.md \
+            --json-out image-scan-delta.json
+          cat image-scan-dispositions.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload exact-digest security evidence
         if: always()
@@ -190,4 +160,6 @@ jobs:
             image-trivy.json
             image-sbom.cdx.json
             image-scan-dispositions.md
+            image-scan-delta.json
+            .github/security/task103-trivy-baseline.v1.json
           if-no-files-found: error

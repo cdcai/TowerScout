@@ -22,8 +22,9 @@ release gates.
 - New work starts from accepted `main`; PRs #64/#67 were not merged or
   reconciled and their exact heads are preserved by archive tags.
 - The Task-103 candidate requires CPU and CUDA 12.8 (`cuda128`) artifacts to
-  have distinct identities and pinned digests. Publication remains gated at
-  Task-103 Checkpoint 2.
+  have distinct identities and pinned digests. Checkpoint 2 is acknowledged
+  with pre-publication conditions; packaging and `latest` remain gated on the
+  owner's review of the published exact digests.
 - Full readiness requires actual YOLO and EfficientNet work on the required
   device in all four profiles plus independent-computer reproduction.
 - Static checks, health/readiness, mocked tests, or CPU fallback are not
@@ -38,9 +39,9 @@ release gates.
 
 ### **TASK-103: CUDA 12.8 Blackwell ML Runtime**
 
-**Status**: IN_PROGRESS - Track L PASS and Checkpoint 1 acknowledged; Phase 2
-implementation, branch push, and PR are authorized; publication waits for
-Checkpoint 2
+**Status**: IN_PROGRESS - Checkpoint 2 acknowledged with pre-publication
+hardening active; exact-digest image publication follows only after the
+corrections land with green CI
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
 
@@ -52,8 +53,10 @@ Current scope:
   documentation, governance, Podman, rollback, and compliance work.
 - Qualify rebased CPU/CUDA images with real models and preserve every run;
   missing external cells remain blocked rather than inferred.
-- Push `feature/task-103-cuda128-ml-runtime` and open the Task-103 PR, but do
-  not dispatch publication before Checkpoint 2.
+- Land the accepted-baseline scan gate, comparator hardening, evidence
+  corrections, and code-scanning disposition in PR #86 before H9 dispatch.
+- Publish only the CPU and CUDA 12.8 exact-digest candidates with
+  `push_latest=false`; report digests and security artifacts before packaging.
 
 ### **TASK-095: Governance And AI-Ready Handoff Foundation**
 
