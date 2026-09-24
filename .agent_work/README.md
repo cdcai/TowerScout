@@ -83,6 +83,25 @@ authorized in the current session without asking again for each routine
 validation step. If a runtime is unavailable or requires a workstation restart,
 record that blocker and continue with safe non-runtime work.
 
+## Git Worktree Policy
+
+The root checkout on accepted `main` is the authoritative navigation point for
+task state and project-wide planning. A linked worktree is an isolated checkout
+of another branch that shares the repository's Git object database; its files
+are not an additional source of truth.
+
+- Keep project-wide task state on `main` through reviewed commits. Do not leave
+  the only current status update inside a feature worktree.
+- Use at most one linked worktree per active branch or pull request, under the
+  ignored `.worktrees/` directory.
+- Treat planning files visible in a feature worktree as that branch's snapshot,
+  not as a synchronized copy of current `main`.
+- Before removing a worktree, require a clean status and preserve or push every
+  unique commit. Remove the worktree and its branch after the pull request is
+  merged or deliberately closed.
+- Do not store evidence, caches, environments, or user data in a worktree
+  unless the owning task explicitly requires it and its retention is recorded.
+
 ## Maintenance
 
 At sprint closeout or material roadmap changes:

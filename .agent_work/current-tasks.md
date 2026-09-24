@@ -1,12 +1,13 @@
 # Current Tasks - Windows Deployment Delivery Week
 
 **Sprint Period**: September 22-September 28, 2026
-**Last Updated**: September 22, 2026
+**Last Updated**: September 24, 2026
 **Focus**: Qualify a dependable, downloadable Windows 11 application from
 accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Begin with W00
 direction alignment and W01 early package installation. PR #67 and the
-Task-087 launcher redesign are preserved but deferred and are not release
-gates.
+Task-087 launcher redesign are preserved in immutable archive tags and a final
+disposition record, but PRs #64/#67 are closed without merge and are not
+release gates.
 
 **Execution Baseline**: `9276084d91807906c53e00060670692b27e38483`
 **Delivery Branch**: `delivery/windows-deployment-v2`
@@ -17,7 +18,8 @@ gates.
 ## Current Release State
 
 - The published `v0.1.2` pilot remains immutable.
-- New work starts from accepted `main`; PR #67 is not merged or reconciled.
+- New work starts from accepted `main`; PRs #64/#67 were not merged or
+  reconciled and their exact heads are preserved by archive tags.
 - The release contract requires CPU and CUDA 12.6 artifacts to have distinct
   identities and pinned digests.
 - Full readiness requires actual YOLO and EfficientNet work on the required
@@ -146,13 +148,16 @@ delivery.
 
 ### **TASK-087: Host-Side TLS Repair Control Plane**
 
-**Status**: DEFERRED - preserved outside the delivery window
+**Status**: ARCHIVED / DEFERRED - PRs #64/#67 closed without merge; future work
+requires a new task and branch from then-current `main`
 **Task File**: `.agent_work/tasks/active/TASK-087-host-side-tls-repair-control-plane.md`
 
-Preserve PR #67, its launcher code, and its review/evidence history. Do not
-merge, reconcile, extend, resume, or repeatedly review it as a deployment
-prerequisite. The existing command-based lifecycle and TLS paths remain the
-release path; only bounded defects reproduced there are in scope.
+The exact PR heads, launcher code, and review/evidence history are preserved by
+archive tags and the
+[final disposition record](./context/archive/2026-09/TASK-087-PR64-PR67-FINAL-DISPOSITION-2026-09-24.md).
+Do not merge, reconcile, extend, resume, or repeatedly review those branches as
+a deployment prerequisite. The existing command-based lifecycle and TLS paths
+remain the release path; only bounded defects reproduced there are in scope.
 
 ### **TASK-089: cdcai Adoption Preparation And Deferred Ownership Transfer**
 

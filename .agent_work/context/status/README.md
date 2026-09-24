@@ -14,4 +14,6 @@ Current navigation:
   current delivery window.
 
 Completed PR reviews, execution packets, superseded plans, and old release
-checklists belong under [`../archive/`](../archive/).
+checklists belong under [`../archive/`](../archive/). The final Task-087 and
+PR #64/#67 disposition is recorded in
+[`../archive/2026-09/TASK-087-PR64-PR67-FINAL-DISPOSITION-2026-09-24.md`](../archive/2026-09/TASK-087-PR64-PR67-FINAL-DISPOSITION-2026-09-24.md).

@@ -1,14 +1,17 @@
 # TASK-087: Host-Side TLS Repair Control Plane
 
-> **Current disposition (September 22, 2026): DEFERRED.** ADR-021 and the
-> September 21 v2 deployment plan supersede this file's active resume/merge
-> gates. Preserve PR #67, this task, and their evidence; do not reconcile,
-> extend, review, merge, or resume launcher work during the current delivery
-> window. The existing command-based package path is the release path.
+> **Final disposition (September 24, 2026): ARCHIVED / DEFERRED.** ADR-021 and
+> the September 21 v2 deployment plan supersede this file's historical
+> resume/merge gates. PRs #64/#67 are closed without merge; their exact heads
+> and the predecessor checkpoints are preserved by immutable archive tags.
+> See the [final disposition record](../../context/archive/2026-09/TASK-087-PR64-PR67-FINAL-DISPOSITION-2026-09-24.md).
+> Any future reconsideration requires an owner-selected task and a fresh branch
+> from then-current `main`. The existing command-based package path remains the
+> release path.
 
-**Status**: DEFERRED - PR #67 and its evidence remain preserved; ADR-021 removes
-their reconciliation, merge, and launcher completion from the current release
-path. Historical unpassed gates remain unpassed.
+**Status**: ARCHIVED / DEFERRED - PRs #64/#67 closed without merge; ADR-021
+removes their reconciliation, merge, and launcher completion from the current
+release path. Historical unpassed gates remain unpassed.
 **Type**: B/C (Runtime Support / Setup UX / TLS Trust)
 **Priority**: HIGH
 **Estimated Effort**: 4-7 days (32-56 hours), plus package validation on a managed TLS-inspected network

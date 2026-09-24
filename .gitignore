@@ -98,11 +98,18 @@ webapp/tmp.py
 .towerscout-runtime/
 
 # Local analysis artifacts
+.worktrees/
 .agent_work/context/analysis/browser-runs/
 .agent_work/tasks/completed/TASK-053/evidence/browser-runs/
 .agent_work/tmp/
 .agent_work/pytest-temp/
+.agent_work/pytest-basetemp-*/
+.agent_work/pytest-task087-*/
 .agent_work/scripts/__pycache__/
+.pytest-task087-*/
+.task087-pytest-*/
+.tmp-task087-*/
+tools/podman-compose-provider/
 
 # Data files
 data/*

@@ -1,13 +1,13 @@
 # Task Backlog - Main-Based Windows Delivery
 
-**Last Updated**: September 22, 2026
+**Last Updated**: September 24, 2026
 **Current Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **Immediate Plan**: [September 21 v2 implementation plan](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md)
 
 The active board controls selected work. This backlog holds deferred,
-conditional, and follow-on work. PR #67 and Task-087/096 launcher work are
-preserved but are not delivery prerequisites and have no automatic restart
-date.
+conditional, and follow-on work. Task-087/096 launcher work is preserved but is
+not a delivery prerequisite and has no automatic restart date. Task-087 PRs
+#64/#67 are closed without merge; any restart begins from then-current `main`.
 
 ## Selected On The Active Board
 
@@ -39,7 +39,7 @@ completed current-sprint record until sprint closeout.
 
 | Task | Disposition |
 | --- | --- |
-| `TASK-087` / PR #67 | Preserve launcher/TLS-control history and evidence. Do not merge, reconcile, extend, or review as a release gate. |
+| `TASK-087` / PRs #64/#67 | Archived and closed without merge. Preserve the tagged history and [final disposition](./context/archive/2026-09/TASK-087-PR64-PR67-FINAL-DISPOSITION-2026-09-24.md); any future reconsideration requires an owner-selected task and a fresh branch from current `main`. |
 | `TASK-096` User-Initiated Exit And Container Stop | Preserve for a future owner decision. Use the tested command-based lifecycle now. |
 | `TASK-058` Background Detection Jobs | Future architecture; current work permits only minimal whole-job admission and reproduced recovery fixes. |
 | `TASK-059` Backend Layer Decomposition | Future architecture; not a one-week release gate. |
