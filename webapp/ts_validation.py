@@ -10,6 +10,7 @@ import re
 import os
 import threading
 import time
+import warnings
 from typing import List, Dict, Any, Optional, Tuple
 from shapely.geometry import Polygon
 from shapely.geometry.polygon import LinearRing
@@ -36,6 +37,9 @@ class TowerScoutValidator:
     MIN_POLYGON_POINTS = 3
     MAX_COORDINATE_PRECISION = 15  # decimal places
     MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+    MAX_CANDIDATE_TILES = 4096
+    MAX_IMAGE_PIXELS = 16000000
+    MAX_IMAGE_EDGE = 8192
     ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'tiff', 'tif'}
     IMAGE_EXTENSION_FORMATS = {
         'jpg': 'JPEG',
@@ -401,15 +405,36 @@ class TowerScoutValidator:
 
             validated_file.seek(0)
             try:
-                with Image.open(validated_file.stream) as image:
-                    if image.format != detected_format:
-                        raise ValidationError(
-                            f"Image decoder format ({image.format}) does not match "
-                            f"validated content ({detected_format})"
-                        )
-                    image.verify()
+                with warnings.catch_warnings():
+                    warnings.simplefilter("error", Image.DecompressionBombWarning)
+                    with Image.open(validated_file.stream) as image:
+                        width, height = image.size
+                        if (
+                            width > TowerScoutValidator.MAX_IMAGE_EDGE
+                            or height > TowerScoutValidator.MAX_IMAGE_EDGE
+                        ):
+                            raise ValidationError(
+                                "Image dimensions exceed the supported edge limit. "
+                                "Choose a smaller image."
+                            )
+                        if width * height > TowerScoutValidator.MAX_IMAGE_PIXELS:
+                            raise ValidationError(
+                                "Image exceeds the supported image pixel limit. "
+                                "Choose a smaller image."
+                            )
+                        if image.format != detected_format:
+                            raise ValidationError(
+                                f"Image decoder format ({image.format}) does not match "
+                                f"validated content ({detected_format})"
+                            )
+                        image.verify()
             except ValidationError:
                 raise
+            except (Image.DecompressionBombError, Image.DecompressionBombWarning):
+                raise ValidationError(
+                    "Image exceeds the supported image pixel limit. "
+                    "Choose a smaller image."
+                )
             except (OSError, SyntaxError, UnidentifiedImageError, ValueError):
                 raise ValidationError(
                     f"Malformed {detected_format} image content"

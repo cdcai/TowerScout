@@ -585,7 +585,11 @@ def _build_tiles_for_request(map_provider, bounds, polygons, crop_tiles):
         len(polygons),
     )
 
-    tiles, nx, ny, meters, h, w = map_provider.make_tiles(bounds, crop_tiles=crop_tiles)
+    tiles, nx, ny, meters, h, w = map_provider.make_tiles(
+        bounds,
+        crop_tiles=crop_tiles,
+        max_candidate_tiles=TowerScoutValidator.MAX_CANDIDATE_TILES,
+    )
     candidate_tiles = len(tiles)
     api_logger.info("Created %s candidate tile(s) (%s x %s)", len(tiles), nx, ny)
 

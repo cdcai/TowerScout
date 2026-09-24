@@ -23,6 +23,7 @@ import aiohttp
 import aiofiles
 from ts_logging import get_maps_logger
 from ts_errors import MapProviderError, NetworkError
+from ts_validation import ValidationError
 from ts_provider_http import (
     PROVIDER_NETWORK_BLOCKED,
     PROVIDER_TIMEOUT,
@@ -149,7 +150,13 @@ class Map:
     # returns a list of centers for zoom 19 scale 2 images
     #
 
-    def make_tiles(self, bounds, overlap_percent=5, crop_tiles=False):
+    def make_tiles(
+        self,
+        bounds,
+        overlap_percent=5,
+        crop_tiles=False,
+        max_candidate_tiles=None,
+    ):
         south, west, north, east = [float(x) for x in bounds.split(",")]
 
         # width and height of total map
@@ -166,6 +173,16 @@ class Map:
         # how many tiles horizontally and vertically?
         nx = math.ceil(w/w_tile/(1-overlap_percent/100.))
         ny = math.ceil(h/h_tile/(1-overlap_percent/100.))
+        candidate_tile_count = nx * ny
+        if (
+            max_candidate_tiles is not None
+            and candidate_tile_count > max_candidate_tiles
+        ):
+            raise ValidationError(
+                "Selected area exceeds the candidate tile limit. "
+                "Select a smaller area.",
+                field="bounds",
+            )
 
         # now make a list of centerpoints of the tiles for the map
         tiles = []
