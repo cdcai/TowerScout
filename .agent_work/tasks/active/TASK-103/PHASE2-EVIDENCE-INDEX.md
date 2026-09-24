@@ -1,8 +1,8 @@
 # TASK-103 Phase 2 Evidence Index
 
-**Date**: 2026-09-24  
-**Host ID**: `l510046`  
-**Source**: `e55abaecc601` rebased on accepted `main` `10cd13a`  
+**Date**: 2026-09-24
+**Host ID**: `l510046`
+**Source**: `e55abaecc601` rebased on accepted `main` `10cd13a`
 **Operative gates**: v3 SHA-256
 `1dd6f7f105c62e3d741999f02c198ae69858d012d5769605a0817cc9dcd8240`
 
