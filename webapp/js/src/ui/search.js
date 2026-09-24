@@ -443,10 +443,6 @@
       window.TowerScoutLogger.debug('   New boundaries retrieved:', currentMap.boundaries ? currentMap.boundaries.length : 0);
     }
 
-    const bounds = currentMap.getBoundaryBoundsUrl();
-    window.TowerScoutLogger.debug('Using bounds for tile generation:', bounds);
-    window.TowerScoutLogger.debug('   Final boundaries count for detection:', currentMap.boundaries ? currentMap.boundaries.length : 0);
-
     let boundaries = currentMap.getBoundariesStr();
     if (boundaries === '[]') {
       window.TowerScoutLogger.debug('No boundary selected, automatically using current viewport as detection area');
@@ -459,6 +455,10 @@
       }
       boundaries = currentMap.getBoundariesStr();
     }
+
+    const bounds = currentMap.getBoundaryBoundsUrl();
+    window.TowerScoutLogger.debug('Using bounds for tile generation:', bounds);
+    window.TowerScoutLogger.debug('   Final boundaries count for detection:', currentMap.boundaries ? currentMap.boundaries.length : 0);
 
     return {
       bounds,
