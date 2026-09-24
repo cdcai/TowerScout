@@ -248,8 +248,9 @@ function Invoke-TowerScoutImport {
         $arguments += @("-CertificatePath", $SelectedCertificatePath)
     }
 
-    & $importCommand @arguments
-    return $LASTEXITCODE
+    & $importCommand @arguments | Out-Host
+    $importExitCode = $LASTEXITCODE
+    return [int] $importExitCode
 }
 
 if (-not [string]::IsNullOrWhiteSpace($Thumbprint) -and -not [string]::IsNullOrWhiteSpace($CertificatePath)) {
