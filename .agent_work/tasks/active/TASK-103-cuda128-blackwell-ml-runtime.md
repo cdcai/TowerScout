@@ -63,8 +63,9 @@ weakening model correctness, device, security, persistence, or recovery gates.
   deleting the eight named volumes.
 - [x] Run rebased final CPU/CUDA qualification with gates v3; preserve every
   run and verdict, including failures.
-- [ ] Push `feature/task-103-cuda128-ml-runtime` and open the Task-103 PR with
-  links to ADR-022 and the Track L verdict.
+- [x] Push `feature/task-103-cuda128-ml-runtime` and open
+  [Task-103 PR #2](https://github.com/cdcai/TowerScout/pull/2) with links to
+  ADR-022 and the Track L verdict.
 
 ## Acceptance Boundary
 
