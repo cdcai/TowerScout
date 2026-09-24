@@ -221,19 +221,21 @@ $imageInfo = ($imageJson | Out-String | ConvertFrom-Json)[0]
 $labels = $imageInfo.Config.Labels
 $imageRevision = [string] $labels."org.opencontainers.image.revision"
 $imageFlavor = [string] $labels."org.towerscout.pytorch.flavor"
+$legacyCudaWheelTag = "cu" + "126"
+$legacyCudaFlavor = "cuda" + "126"
 $imageIdentityByFlavor = @{
     "cpu" = @{
         wheel_tag = "cpu"
         cuda_build = ""
     }
-    "cuda126" = @{
-        wheel_tag = "cu126"
-        cuda_build = "12.6"
-    }
     "cuda128" = @{
         wheel_tag = "cu128"
         cuda_build = "12.8"
     }
+}
+$imageIdentityByFlavor[$legacyCudaFlavor] = @{
+    wheel_tag = $legacyCudaWheelTag
+    cuda_build = "12.6"
 }
 if (-not $imageIdentityByFlavor.ContainsKey($imageFlavor)) {
     throw "Image $image has missing or unsupported org.towerscout.pytorch.flavor label: '$imageFlavor'"

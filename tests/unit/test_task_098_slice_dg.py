@@ -471,6 +471,12 @@ STALE_CUDA_LINE_ALLOWLIST = {
             "wheel tag to its CUDA build."
         ),
     },
+    "scripts/task103_gates.v3.json": {
+        f'"{_OLD_CUDA_TAG}": "12.6"': (
+            "Declared TASK-103 gates v3 map the stage A/B baseline wheel tag "
+            "to its CUDA build."
+        ),
+    },
 }
 
 

@@ -23,6 +23,7 @@ GATES_V1_PATH = REPO_ROOT / "scripts" / "task103_gates.v1.json"
 # v2 amends only the fixture (RGB-derived tiles + palette originals); it is the
 # operative gates file, so it is the default for these tests.
 GATES_PATH = REPO_ROOT / "scripts" / "task103_gates.v2.json"
+GATES_V3_PATH = REPO_ROOT / "scripts" / "task103_gates.v3.json"
 GATES = json.loads(GATES_PATH.read_text(encoding="utf-8"))
 HISTORICAL = GATES["fixture"]["historical_count_vector"]
 PHASES = GATES["required_phases"]
@@ -312,13 +313,18 @@ class Scenario:
         self.candidate = run_docs("cand-c-cuda", stage="C", profile="cuda")
         self.extra_candidates = []
         self.baseline = run_docs("base-a-cuda", stage="A", profile="cuda")
+        self.extra_baselines = []
         self.counterpart = run_docs("cpu-c", stage="C", profile="cpu")
         self.gates_path = GATES_PATH
         self.out = root / "out"
 
     def all_docs(self):
         runs = [self.reference, self.candidate, self.baseline, self.counterpart]
-        return [docs for docs in runs + self.extra_candidates if docs is not None]
+        return [
+            docs
+            for docs in runs + self.extra_candidates + self.extra_baselines
+            if docs is not None
+        ]
 
     def write_json(self, name, doc):
         path = self.root / name
@@ -339,6 +345,8 @@ class Scenario:
             argv += ["--candidate", str(write_run(runs, docs))]
         if self.baseline is not None:
             argv += ["--baseline", str(write_run(runs, self.baseline))]
+        for docs in self.extra_baselines:
+            argv += ["--baseline", str(write_run(runs, docs))]
         if self.counterpart is not None:
             argv += ["--cpu-counterpart", str(write_run(runs, self.counterpart))]
         return argv + [str(value) for value in extra] + ["--out", str(self.out)]
@@ -360,6 +368,29 @@ def _statuses(verdict):
 
 def _failed_checks(verdict, gate_id):
     return verdict["gates"][gate_id]["details"].get("failed_checks", [])
+
+
+def _use_v3_interleaved_runs(scenario):
+    scenario.gates_path = GATES_V3_PATH
+    scenario.extra_candidates = [
+        run_docs("cand-c-cuda-2"),
+        run_docs("cand-c-cuda-3"),
+    ]
+    scenario.extra_baselines = [
+        run_docs("base-a-cuda-2", stage="A", profile="cuda"),
+        run_docs("base-a-cuda-3", stage="A", profile="cuda"),
+    ]
+    ordered = [
+        scenario.candidate,
+        scenario.baseline,
+        scenario.extra_candidates[0],
+        scenario.extra_baselines[0],
+        scenario.extra_candidates[1],
+        scenario.extra_baselines[1],
+    ]
+    for minute, docs in enumerate(ordered):
+        docs["run"]["started_utc"] = f"2026-09-24T10:{minute:02d}:00Z"
+        docs["run"]["finished_utc"] = f"2026-09-24T10:{minute:02d}:30Z"
 
 
 # ---------------------------------------------------------------------------
@@ -864,6 +895,120 @@ def test_host_memory_growth_beyond_relative_max_fails(scenario):
     g8 = verdict["gates"]["G8"]
     assert g8["details"]["failed_checks"] == ["vmhwm_bytes_within_relative_max"]
     assert g8["details"]["relative"]["metrics"]["vmhwm_bytes"]["ratio"] == pytest.approx(1.25)
+
+
+def test_v3_cuda_total_footprint_passes_when_host_growth_is_offset_by_device(scenario):
+    _use_v3_interleaved_runs(scenario)
+    for docs in [scenario.candidate, *scenario.extra_candidates]:
+        docs["memory"]["host"]["vmhwm_bytes"] = int(3.4 * GIB)
+        docs["memory"]["cuda"]["max_reserved_bytes"] = int(0.9 * GIB)
+
+    code, verdict = scenario.run()
+
+    g8 = verdict["gates"]["G8"]
+    metric = g8["details"]["relative"]["metrics"]["total_footprint_bytes"]
+    assert g8["status"] == "pass", g8["summary"]
+    assert g8["details"]["relative"]["judgment"] == "total_footprint"
+    assert metric["candidate_median"] == pytest.approx(4.3 * GIB, rel=1e-8)
+    assert metric["baseline_median"] == pytest.approx(4.25 * GIB, rel=1e-8)
+    assert metric["ratio"] == pytest.approx(4.3 / 4.25, rel=1e-8)
+    assert code == 0
+
+
+def test_v3_cuda_total_footprint_fails_as_one_sum(scenario):
+    _use_v3_interleaved_runs(scenario)
+    for docs in [scenario.candidate, *scenario.extra_candidates]:
+        docs["memory"]["host"]["vmhwm_bytes"] = 4 * GIB
+        docs["memory"]["cuda"]["max_reserved_bytes"] = GIB
+
+    _, verdict = scenario.run()
+
+    g8 = verdict["gates"]["G8"]
+    assert g8["status"] == "fail"
+    assert g8["details"]["failed_checks"] == [
+        "total_footprint_within_relative_max"
+    ]
+    assert g8["details"]["relative"]["metrics"]["total_footprint_bytes"][
+        "ratio"
+    ] == pytest.approx(5 / 4.25)
+
+
+def test_v3_cpu_profile_keeps_host_only_memory_judgment(scenario):
+    scenario.candidate = run_docs("cand-c-cpu", stage="C", profile="cpu")
+    scenario.baseline = run_docs("base-a-cpu", stage="A", profile="cpu")
+    scenario.counterpart = None
+    scenario.extra_candidates = [
+        run_docs("cand-c-cpu-2", stage="C", profile="cpu"),
+        run_docs("cand-c-cpu-3", stage="C", profile="cpu"),
+    ]
+    scenario.extra_baselines = [
+        run_docs("base-a-cpu-2", stage="A", profile="cpu"),
+        run_docs("base-a-cpu-3", stage="A", profile="cpu"),
+    ]
+    scenario.gates_path = GATES_V3_PATH
+    ordered = [
+        scenario.candidate,
+        scenario.baseline,
+        scenario.extra_candidates[0],
+        scenario.extra_baselines[0],
+        scenario.extra_candidates[1],
+        scenario.extra_baselines[1],
+    ]
+    for minute, docs in enumerate(ordered):
+        docs["run"]["started_utc"] = f"2026-09-24T11:{minute:02d}:00Z"
+        docs["memory"]["host"]["vmhwm_bytes"] = int(
+            (3.75 if docs["run"]["stage"] == "C" else 3) * GIB
+        )
+
+    _, verdict = scenario.run()
+
+    g8 = verdict["gates"]["G8"]
+    assert g8["details"]["relative"]["judgment"] == "host_only"
+    assert "total_footprint_bytes" not in g8["details"]["relative"]["metrics"]
+    assert g8["details"]["relative"]["metrics"]["vmhwm_bytes"]["ratio"] == pytest.approx(
+        1.25
+    )
+    assert "vmhwm_bytes_within_relative_max" in g8["details"]["failed_checks"]
+
+
+def test_v3_relative_gates_fail_when_run_count_is_below_declared_minimum(scenario):
+    scenario.gates_path = GATES_V3_PATH
+
+    _, verdict = scenario.run()
+
+    for gate_id in ("G8", "G9"):
+        gate = verdict["gates"][gate_id]
+        assert gate["status"] == "fail"
+        assert "candidate_run_count" in gate["details"]["failed_checks"]
+        assert "baseline_run_count" in gate["details"]["failed_checks"]
+        method = (
+            gate["details"]["relative"]["method"]
+            if gate_id == "G8"
+            else gate["details"]["method"]
+        )
+        assert method["candidate_count"] == 1
+        assert method["baseline_count"] == 1
+
+
+@pytest.mark.parametrize(
+    ("section", "field", "value"),
+    [
+        ("memory", "gpu_profile_judgment", "host_plus_device_separate"),
+        ("memory", "cpu_profile_judgment", "total_footprint"),
+        ("method", "relative_gates_require", "three convenient runs"),
+        ("method", "no_concurrent_scans_or_builds", False),
+    ],
+)
+def test_v3_unimplemented_judgment_or_method_fails_closed(
+    tmp_path, section, field, value
+):
+    gates = json.loads(GATES_V3_PATH.read_text(encoding="utf-8"))
+    gates[section][field] = value
+    path = tmp_path / "unsupported-gates.json"
+    path.write_text(json.dumps(gates), encoding="utf-8")
+
+    with pytest.raises(compare.UsageError, match="unsupported|must be true"):
+        compare.load_gates(path)
 
 
 def test_performance_regression_beyond_relative_max_fails(scenario):

@@ -229,6 +229,12 @@ class Gates:
     tolerances: Tolerances
     memory_relative_max: float
     min_device_free_bytes: int
+    gpu_profile_judgment: str | None
+    total_footprint_definition: str | None
+    cpu_profile_judgment: str | None
+    relative_gates_require: str | None
+    min_runs_per_side: int | None
+    no_concurrent_scans_or_builds: bool | None
     perf_relative_max: float
     warmup_discard: int
     measured_runs: int
@@ -320,6 +326,56 @@ def _parse_gates(doc: Any, sha256: str) -> Gates:
         raise ContentError("gates.tolerances.iou_match must be at most 1")
 
     memory = _obj(_at(doc, "memory", "gates"), "gates.memory")
+    method_raw = doc.get("method")
+    method = None if method_raw is None else _obj(method_raw, "gates.method")
+    extended_memory_fields = (
+        "gpu_profile_judgment",
+        "total_footprint_definition",
+        "cpu_profile_judgment",
+    )
+    if any(memory.get(name) is not None for name in extended_memory_fields):
+        expected_memory = {
+            "gpu_profile_judgment": "total_footprint",
+            "total_footprint_definition": (
+                "peak host VmHWM bytes + torch.cuda.max_memory_reserved bytes, each "
+                "from the same run; compared as one sum against 1.10 x the reference sum"
+            ),
+            "cpu_profile_judgment": "host_only",
+        }
+        for name, expected in expected_memory.items():
+            actual = _str(memory.get(name), f"gates.memory.{name}")
+            if actual != expected:
+                raise ContentError(
+                    f"gates.memory.{name} uses unsupported value {actual!r}"
+                )
+    if method is not None:
+        requirement = _str(
+            method.get("relative_gates_require"),
+            "gates.method.relative_gates_require",
+        )
+        if requirement != "interleaved same-window runs":
+            raise ContentError(
+                "gates.method.relative_gates_require uses unsupported value "
+                f"{requirement!r}"
+            )
+        min_runs_per_side = _int(
+            method.get("min_runs_per_side"), "gates.method.min_runs_per_side"
+        )
+        if min_runs_per_side < 1:
+            raise ContentError("gates.method.min_runs_per_side must be at least 1")
+        if method.get("no_concurrent_scans_or_builds") is not True:
+            raise ContentError(
+                "gates.method.no_concurrent_scans_or_builds must be true"
+            )
+    else:
+        requirement = None
+        min_runs_per_side = None
+    if any(memory.get(name) is not None for name in extended_memory_fields) != (
+        method is not None
+    ):
+        raise ContentError(
+            "extended memory judgment and method fields must be declared together"
+        )
     performance = _obj(_at(doc, "performance", "gates"), "gates.performance")
     precision = _obj(_at(doc, "precision", "gates"), "gates.precision")
     identity = _obj(_at(doc, "identity", "gates"), "gates.identity")
@@ -368,6 +424,14 @@ def _parse_gates(doc: Any, sha256: str) -> Gates:
         ),
         min_device_free_bytes=_non_negative_int(
             memory.get("min_device_free_bytes"), "gates.memory.min_device_free_bytes"
+        ),
+        gpu_profile_judgment=memory.get("gpu_profile_judgment"),
+        total_footprint_definition=memory.get("total_footprint_definition"),
+        cpu_profile_judgment=memory.get("cpu_profile_judgment"),
+        relative_gates_require=requirement,
+        min_runs_per_side=min_runs_per_side,
+        no_concurrent_scans_or_builds=(
+            method.get("no_concurrent_scans_or_builds") if method is not None else None
         ),
         perf_relative_max=_positive(
             performance.get("relative_max"), "gates.performance.relative_max"
@@ -801,6 +865,74 @@ def _baseline_pool_problems(ctx: Context) -> list[str]:
             ctx.baselines[0], ctx.baselines[1:], "baseline", ("stage", "image.id")
         )
     return problems
+
+
+def _run_started_utc(run: RunDir) -> datetime:
+    value = _str(run.require_run().get("started_utc"), f"{run.run_id}.started_utc")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ContentError(f"{run.run_id}.started_utc is not ISO-8601: {value!r}") from exc
+    if parsed.tzinfo is None:
+        raise ContentError(f"{run.run_id}.started_utc must include a timezone")
+    return parsed
+
+
+def _relative_method(ctx: Context) -> tuple[dict[str, bool], dict[str, Any]]:
+    """Validate the gates-v3 relative-comparison collection method.
+
+    A run is one independently captured run directory. Alternating candidate and
+    baseline start times prove interleaving; the overlapping start-time ranges prove
+    both sides were collected in the same comparison window. Operators separately
+    attest that scans/builds did not overlap the window, as required by the gates file.
+    """
+
+    gates = ctx.gates
+    if gates.relative_gates_require is None:
+        return {}, {"requirement": None, "status": "legacy_gates"}
+
+    required = gates.min_runs_per_side
+    if required is None:
+        raise ContentError("extended relative method has no min_runs_per_side")
+    candidate_starts = [(run.run_id, _run_started_utc(run)) for run in ctx.candidates]
+    baseline_starts = [(run.run_id, _run_started_utc(run)) for run in ctx.baselines]
+    ordered = sorted(
+        [(when, "candidate", run_id) for run_id, when in candidate_starts]
+        + [(when, "baseline", run_id) for run_id, when in baseline_starts]
+    )
+    roles = [role for _, role, _ in ordered]
+    strictly_ordered = all(
+        ordered[index - 1][0] < ordered[index][0] for index in range(1, len(ordered))
+    )
+    interleaved = strictly_ordered and all(
+        roles[index - 1] != roles[index] for index in range(1, len(roles))
+    )
+    ranges_overlap = bool(candidate_starts and baseline_starts) and (
+        max(min(when for _, when in candidate_starts), min(when for _, when in baseline_starts))
+        <= min(max(when for _, when in candidate_starts), max(when for _, when in baseline_starts))
+    )
+    checks = {
+        "candidate_run_count": len(candidate_starts) >= required,
+        "baseline_run_count": len(baseline_starts) >= required,
+        "relative_runs_interleaved": interleaved,
+        "relative_runs_same_window": ranges_overlap,
+    }
+    details = {
+        "requirement": gates.relative_gates_require,
+        "min_runs_per_side": required,
+        "no_concurrent_scans_or_builds": gates.no_concurrent_scans_or_builds,
+        "candidate_count": len(candidate_starts),
+        "baseline_count": len(baseline_starts),
+        "start_order": [
+            {
+                "run_id": run_id,
+                "side": role,
+                "started_utc": when.isoformat().replace("+00:00", "Z"),
+            }
+            for when, role, run_id in ordered
+        ],
+    }
+    return checks, details
 
 
 def _checked(
@@ -1417,35 +1549,85 @@ def gate_g8(ctx: Context) -> dict[str, Any]:
 
     problems = _candidate_pool_problems(ctx) + _baseline_pool_problems(ctx)
     checks["runs_paired"] = not problems
+    method_checks, method_details = _relative_method(ctx)
+    checks.update(method_checks)
     baselines = _memory_docs(ctx.baselines)
     metrics: dict[str, Any] = {}
-    for key in ("vmhwm_bytes", "final_rss_bytes"):
-        candidate_values = [_num(_at(m, f"host.{key}", "memory"), key) for _, m in candidates]
-        baseline_values = [
-            _num(_at(m, f"host.{key}", "baseline memory"), key) for _, m in baselines
-        ]
-        # The probe reports 0 when /proc is unreadable; 0 <= 1.1 x 0 must not pass.
-        checks[f"{key}_measured"] = all(v > 0 for v in candidate_values + baseline_values)
-        metrics[key] = _relative(candidate_values, baseline_values, gates.memory_relative_max)
-        checks[f"{key}_within_relative_max"] = metrics[key]["passed"]
     candidate_cuda = [m.get("cuda") for _, m in candidates]
     baseline_cuda = [m.get("cuda") for _, m in baselines]
-    if all(isinstance(c, dict) for c in candidate_cuda + baseline_cuda):
-        metrics["cuda_max_reserved_bytes"] = _relative(
-            [_num(c.get("max_reserved_bytes"), "max_reserved_bytes") for c in candidate_cuda],
-            [_num(c.get("max_reserved_bytes"), "max_reserved_bytes") for c in baseline_cuda],
-            gates.memory_relative_max,
+    if profile == "cuda" and gates.gpu_profile_judgment == "total_footprint":
+        if not all(isinstance(c, dict) for c in candidate_cuda + baseline_cuda):
+            raise ContentError(
+                "gates-v3 total-footprint judgment requires CUDA memory for every run"
+            )
+
+        def total_footprint(memory: dict[str, Any], where: str) -> float:
+            host = _num(_at(memory, "host.vmhwm_bytes", where), f"{where}.host.vmhwm_bytes")
+            cuda = _obj(memory.get("cuda"), f"{where}.cuda")
+            reserved = _num(
+                cuda.get("max_reserved_bytes"), f"{where}.cuda.max_reserved_bytes"
+            )
+            return host + reserved
+
+        candidate_values = [
+            total_footprint(memory, f"candidate {run.run_id} memory")
+            for run, memory in candidates
+        ]
+        baseline_values = [
+            total_footprint(memory, f"baseline {run.run_id} memory")
+            for run, memory in baselines
+        ]
+        checks["total_footprint_measured"] = all(
+            value > 0 for value in candidate_values + baseline_values
         )
-        checks["cuda_max_reserved_within_relative_max"] = metrics[
-            "cuda_max_reserved_bytes"
+        metrics["total_footprint_bytes"] = _relative(
+            candidate_values, baseline_values, gates.memory_relative_max
+        )
+        checks["total_footprint_within_relative_max"] = metrics[
+            "total_footprint_bytes"
         ]["passed"]
     else:
-        metrics["cuda_max_reserved_bytes"] = {
-            "status": NOT_APPLICABLE,
-            "reason": "CUDA memory not recorded for both candidate and baseline",
-        }
+        for key in ("vmhwm_bytes", "final_rss_bytes"):
+            candidate_values = [
+                _num(_at(m, f"host.{key}", "memory"), key) for _, m in candidates
+            ]
+            baseline_values = [
+                _num(_at(m, f"host.{key}", "baseline memory"), key)
+                for _, m in baselines
+            ]
+            # The probe reports 0 when /proc is unreadable; 0 <= 1.1 x 0 must not pass.
+            checks[f"{key}_measured"] = all(
+                value > 0 for value in candidate_values + baseline_values
+            )
+            metrics[key] = _relative(
+                candidate_values, baseline_values, gates.memory_relative_max
+            )
+            checks[f"{key}_within_relative_max"] = metrics[key]["passed"]
+        if gates.gpu_profile_judgment is None and all(
+            isinstance(cuda, dict) for cuda in candidate_cuda + baseline_cuda
+        ):
+            metrics["cuda_max_reserved_bytes"] = _relative(
+                [
+                    _num(cuda.get("max_reserved_bytes"), "max_reserved_bytes")
+                    for cuda in candidate_cuda
+                ],
+                [
+                    _num(cuda.get("max_reserved_bytes"), "max_reserved_bytes")
+                    for cuda in baseline_cuda
+                ],
+                gates.memory_relative_max,
+            )
+            checks["cuda_max_reserved_within_relative_max"] = metrics[
+                "cuda_max_reserved_bytes"
+            ]["passed"]
     details["relative"] = {
         "relative_max": gates.memory_relative_max,
+        "judgment": (
+            gates.gpu_profile_judgment
+            if profile == "cuda"
+            else gates.cpu_profile_judgment or "host_only"
+        ),
+        "method": method_details,
         "pairing_problems": problems,
         "metrics": metrics,
     }
@@ -1509,6 +1691,7 @@ def gate_g9(ctx: Context) -> dict[str, Any]:
     rerun_threshold = gates.measured_runs + gates.borderline_extra_runs
     candidate_problems = _candidate_pool_problems(ctx)
     baseline_problems = _baseline_pool_problems(ctx)
+    method_checks, method_details = _relative_method(ctx)
     warmups = [_warmup_counts(rd) for rd in [*ctx.candidates, *ctx.baselines]]
     checks = {
         "candidate_pool_consistent": not candidate_problems,
@@ -1518,6 +1701,7 @@ def gate_g9(ctx: Context) -> dict[str, Any]:
             and row["combined_warmups"] >= gates.warmup_discard
             for row in warmups
         ),
+        **method_checks,
     }
 
     metrics: dict[str, Any] = {}
@@ -1559,6 +1743,7 @@ def gate_g9(ctx: Context) -> dict[str, Any]:
         "metrics": metrics,
         "warmups": warmups,
         "pairing_problems": candidate_problems + baseline_problems,
+        "method": method_details,
     }
     pool_valid = all(
         checks[name]
