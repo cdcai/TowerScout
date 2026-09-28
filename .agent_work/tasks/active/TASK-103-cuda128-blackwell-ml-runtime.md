@@ -1,7 +1,8 @@
 # TASK-103: CUDA 12.8 Blackwell ML Runtime
 
-**Status**: IN_PROGRESS - Checkpoint 2 acknowledged with pre-publication
-conditions; hardening must land with green CI before exact-digest H9 dispatch
+**Status**: IN_PROGRESS - H9 exact digests confirmed; W09 candidate packages
+assembled and first-host four-profile startup qualified; release acceptance
+remains AT_RISK pending provider, reboot, policy/signing, and W10 evidence
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
@@ -49,7 +50,7 @@ weakening model correctness, device, security, persistence, or recovery gates.
   Blackwell kernel path as expected; the cuda128 runtime passed.
 - Checkpoint 1 acknowledged by the owner with Track L PASS confirmed.
 
-### Phase 2 - Active
+### Phase 2 - Completed 2026-09-28
 
 - [x] Rebased the nine pilot commits onto accepted `main` (`10cd13a`) after
   confirming PRs #77-#84 merged.
@@ -66,11 +67,27 @@ weakening model correctness, device, security, persistence, or recovery gates.
 - [x] Push `feature/task-103-cuda128-ml-runtime` and open
   [Task-103 PR #86](https://github.com/J-Schulein/TowerScout/pull/86) with links to
   ADR-022 and the Track L verdict.
-- [ ] Land the accepted-baseline Trivy delta gate, fail-closed comparator
+- [x] Land the accepted-baseline Trivy delta gate, fail-closed comparator
   context validation, corrected/sanitized evidence, and alert #215 disposition
   with green CI before H9 dispatch.
-- [ ] Dispatch CPU and CUDA 12.8 images with `push_latest=false`, then report
+- [x] Dispatch CPU and CUDA 12.8 images with `push_latest=false`, then report
   exact digests and scan/SBOM artifacts before any package publication.
+
+### W09 Package Assembly And First-Host Qualification - Completed 2026-09-28
+
+- [x] Merge package-only Podman spaced-path correction in
+  [PR #87](https://github.com/J-Schulein/TowerScout/pull/87) with green CI.
+- [x] Build final CPU and CUDA 12.8 control ZIPs from accepted package source
+  `99de5595b0d98b67c24909c1f2712f72d8714ab3` and bind them to the
+  owner-confirmed image digests and shared asset ZIP.
+- [x] Verify outer sidecars, all internal checksums, manifest identities,
+  compliance inventory, forbidden-file inventory, and package secret hygiene.
+- [x] Run exact-package setup on Docker CPU, Docker CUDA, rootless Podman CPU,
+  and rootless Podman CUDA; preserve all eight named volumes for each package.
+- [x] Reconfirm real-model and memory gates against the exact image digests and
+  run an exact-package CUDA `sm_120` kernel probe.
+- [ ] Complete live-provider, reboot, policy/signing, and independent-host W10
+  acceptance cells before claiming release readiness.
 
 ## Acceptance Boundary
 
@@ -86,10 +103,10 @@ remain explicit blockers.
 - [T1000 pilot evidence pointer](./TASK-103/T1000-EVIDENCE-POINTER.md)
 - [Gates v3](./TASK-103/task103_gates.v3.json)
 - [Phase 2 evidence index](./TASK-103/PHASE2-EVIDENCE-INDEX.md)
+- [W09 candidate evidence index](./TASK-103/W09-EVIDENCE-INDEX.md)
 
 ## Publication Boundary
 
-Checkpoint 2 is acknowledged for CPU/CUDA image dispatch after its stated
-pre-publication conditions land with green CI. Package publication, `latest`
-promotion, and closeout remain gated on the owner's review of exact digests and
-security artifacts.
+Checkpoint 2 and the exact H9 digests are acknowledged. W09 assembly and local
+qualification are authorized and recorded. Package publication, `latest`
+promotion, and closeout remain explicitly owner-gated.

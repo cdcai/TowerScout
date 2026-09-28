@@ -1,7 +1,7 @@
 # Current Tasks - Windows Deployment Delivery Week
 
 **Sprint Period**: September 22-September 28, 2026
-**Last Updated**: September 24, 2026
+**Last Updated**: September 28, 2026
 **Focus**: Qualify a dependable, downloadable Windows 11 application from
 accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Day 2 has moved
 the evidence-selected W03-W08 corrections through focused review and merge.
@@ -9,7 +9,9 @@ The Task-087 launcher redesign is preserved in immutable archive tags and a
 final disposition record, but PRs #64/#67 are closed without merge and are not
 release gates.
 
-**Execution Baseline**: `10cd13a7a2f4d5504ed929ada834abb1fad905dc`
+**Accepted Control-Package Source**: `99de5595b0d98b67c24909c1f2712f72d8714ab3`
+
+**Confirmed OCI Image Source**: `378b37fbe2422d23a1dc25655f4dbad1d47d5b5f`
 **Authoritative Branch**: `main`
 **Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
@@ -21,10 +23,9 @@ release gates.
 - The published `v0.1.2` pilot remains immutable.
 - New work starts from accepted `main`; PRs #64/#67 were not merged or
   reconciled and their exact heads are preserved by archive tags.
-- The Task-103 candidate requires CPU and CUDA 12.8 (`cuda128`) artifacts to
-  have distinct identities and pinned digests. Checkpoint 2 is acknowledged
-  with pre-publication conditions; packaging and `latest` remain gated on the
-  owner's review of the published exact digests.
+- The Task-103 CPU and CUDA 12.8 (`cuda128`) images have distinct confirmed
+  digests. W09 control packages are assembled and locally qualified from
+  accepted source. Package publication and `latest` remain owner-gated.
 - Full readiness requires actual YOLO and EfficientNet work on the required
   device in all four profiles plus independent-computer reproduction.
 - Static checks, health/readiness, mocked tests, or CPU fallback are not
@@ -39,9 +40,9 @@ release gates.
 
 ### **TASK-103: CUDA 12.8 Blackwell ML Runtime**
 
-**Status**: IN_PROGRESS - Checkpoint 2 acknowledged with pre-publication
-hardening active; exact-digest image publication follows only after the
-corrections land with green CI
+**Status**: IN_PROGRESS - H9 exact digests confirmed; W09 artifacts assembled;
+first-host exact-package Docker/Podman CPU/CUDA startup passes; release remains
+AT_RISK pending provider, reboot, policy/signing, and independent-host evidence
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
 
@@ -53,10 +54,10 @@ Current scope:
   documentation, governance, Podman, rollback, and compliance work.
 - Qualify rebased CPU/CUDA images with real models and preserve every run;
   missing external cells remain blocked rather than inferred.
-- Land the accepted-baseline scan gate, comparator hardening, evidence
-  corrections, and code-scanning disposition in PR #86 before H9 dispatch.
-- Publish only the CPU and CUDA 12.8 exact-digest candidates with
-  `push_latest=false`; report digests and security artifacts before packaging.
+- Preserve the accepted-baseline scan gate, comparator hardening, sanitized
+  evidence, and code-scanning disposition merged through PR #86.
+- Keep the confirmed CPU/CUDA digests and final W09 control ZIP hashes frozen;
+  do not publish packages or promote `latest` without owner authorization.
 
 ### **TASK-095: Governance And AI-Ready Handoff Foundation**
 
@@ -74,12 +75,10 @@ Current scope:
 
 ### **TASK-091: Owner-Runnable Release Qualification**
 
-**Status**: AT_RISK - first-host Docker CPU package and standalone real-model
-proof pass; secure CUDA image/package assembly passes but this Blackwell host is
-incompatible with the selected CUDA wheel. Day-2 application corrections and
-the fail-closed W05 harness in PRs #77-#83 are merged. The authorized
-combined-flow fixture, live provider, managed-endpoint, and independent-host
-runtime evidence remain
+**Status**: AT_RISK - W09 exact-package Docker/Podman CPU/CUDA startup passes on
+the first host, and the exact image digests pass the W05 combined-model and
+memory harness. Live-provider, managed-endpoint, reboot, policy/signing, and
+independent-host runtime evidence remain
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-091-owner-runnable-release-qualification.md`
 
@@ -96,9 +95,9 @@ Current scope:
 
 ### **TASK-068: Windows Test Portability And Script Validation**
 
-**Status**: IN_PROGRESS - W02 merged as `8976222`; packaged Docker CPU proof,
-independent review, and exact-head CI pass. Final W09 clean-package repetition
-remains
+**Status**: IN_PROGRESS - W02 merged as `8976222`; final W09 exact-package
+Docker/Podman setup, start, stop, relaunch, and named-volume checks pass on the
+first host; reboot and W10 repetition remain
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-068-windows-script-validation.md`
 
@@ -113,10 +112,10 @@ Current scope:
 
 ### **TASK-097: Podman CPU/GPU Final Path Qualification**
 
-**Status**: AT_RISK - approved package-local provider passes with Python 3.12;
-the running machine's explicit normal-user connection is verified rootless and
-merged W03 fix PR #77 binds operations to it. Python 3.14 dependency resolution,
-exact-package CPU inference, GPU evidence, and independent-host proof remain
+**Status**: AT_RISK - the approved relative package-local provider passes from
+spaced paths on rootless Podman 6.0.2. Exact-package CPU and CUDA startup,
+real-model image inference, CUDA `sm_120` kernel execution, restart, and volume
+retention pass on the first host; Python 3.14 and independent-host proof remain
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-097-podman-final-path-qualification.md`
 
@@ -206,9 +205,9 @@ and explicit authorization.
    blocker, owner, and next check named.
 4. [x] Select, review, and merge the evidence-required W02-W08 fixes and W05
    harness through PRs #77-#83; runtime acceptance proof remains.
-5. [ ] By Day 3, require a corrected Docker/Podman rehearsal plus real combined
+5. [x] By Day 3, require a corrected Docker/Podman rehearsal plus real combined
    inference or revise the forecast.
-6. [ ] Freeze exact W09 source/images/ZIPs/assets/fixtures/tools before final
+6. [x] Freeze exact W09 source/images/ZIPs/assets/fixtures/tools before final
    distribution.
 7. [ ] Complete W10 four-profile and independent-host reproduction; otherwise
    report only the exact qualified subset.
