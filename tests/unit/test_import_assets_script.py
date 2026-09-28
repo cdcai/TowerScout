@@ -8,6 +8,15 @@ IMPORT_TLS_CA_SCRIPT = REPO_ROOT / "scripts" / "import-tls-ca.ps1"
 REPAIR_PROVIDER_TLS_SCRIPT = REPO_ROOT / "scripts" / "repair-provider-tls.ps1"
 REPAIR_PROVIDER_TLS_CMD = REPO_ROOT / "scripts" / "repair-provider-tls.cmd"
 START_SCRIPT = REPO_ROOT / "scripts" / "start.ps1"
+TLS_GUIDES = [
+    REPO_ROOT / "docs" / "docker-cpu-user-guide.md",
+    REPO_ROOT / "docs" / "docker-gpu-user-guide.md",
+    REPO_ROOT / "docs" / "podman-cpu-user-guide.md",
+    REPO_ROOT / "docs" / "podman-gpu-user-guide.md",
+    REPO_ROOT / "docs" / "quick-start.md",
+    REPO_ROOT / "docs" / "package-guide.md",
+    REPO_ROOT / "docs" / "support" / "oci-quick-start.md",
+]
 
 
 def test_import_assets_script_preserves_port_and_restarts_after_copy():
@@ -41,10 +50,41 @@ def test_packaged_compose_entrypoints_initialize_env_before_starting_stack():
     start_env_init = start_script.index("Initialize-TowerScoutEnvFile -RootPath $repoRoot")
     start_compose = start_script.index("Invoke-TowerScoutCompose")
     tls_env_init = tls_script.index("Initialize-TowerScoutEnvFile -RootPath $repoRoot")
+    tls_port_resolution = tls_script.index("Set-TowerScoutPortEnvironment")
     tls_compose_start = tls_script.index('Write-Host "Starting TowerScout container')
 
     assert start_env_init < start_compose
-    assert tls_env_init < tls_compose_start
+    assert "[Nullable[int]] $Port = $null" in tls_script
+    assert '$PSBoundParameters.ContainsKey("Port")' in tls_script
+    assert "if ($portWasSpecified)" in tls_script
+    assert tls_env_init < tls_port_resolution < tls_compose_start
+
+
+def test_tls_repair_guides_carry_port_through_repair_and_restart_commands():
+    for guide in TLS_GUIDES:
+        text = guide.read_text(encoding="utf-8")
+        marker = "Use the repair command shown by TowerScout"
+        if marker not in text:
+            marker = "Use the command shown by TowerScout"
+        section_start = text.index(marker)
+        section = text[section_start:]
+        next_heading = re.search(r"\n#{1,3} ", section)
+        if next_heading:
+            section = section[: next_heading.start()]
+        command_lines = [
+            line.strip()
+            for line in section.splitlines()
+            if line.strip().startswith(".\\")
+        ]
+        repair_commands = [
+            line for line in command_lines if "repair-provider-tls.cmd" in line
+        ]
+        restart_commands = [line for line in command_lines if "start.bat" in line]
+
+        assert repair_commands, guide
+        assert restart_commands, guide
+        assert all("-Port" in line for line in repair_commands), guide
+        assert all("-Port" in line for line in restart_commands), guide
 
 
 def test_tls_ca_import_persists_bundle_paths_in_env_file():
@@ -104,6 +144,10 @@ def test_provider_tls_repair_wrapper_is_dry_run_first_and_delegates_to_importer(
     assert "Join-Path $PSScriptRoot \"import-tls-ca.cmd\"" in script
     assert "\"-Provider\", $Provider" in script
     assert "\"-Gpu\", $Gpu" in script
+    assert "\"-Port\", \"$Port\"" in script
+    assert "[Nullable[int]] $Port = $null" in script
+    assert '$portWasSpecified = $PSBoundParameters.ContainsKey("Port")' in script
+    assert "if ($portWasSpecified)" in script
     assert "Support-sensitive local output" in script
     assert "issuer={0}" in script
     assert "Write-Host \"  $repairCommand\"" in script

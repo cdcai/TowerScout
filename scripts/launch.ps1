@@ -2,7 +2,8 @@ param(
     [ValidateSet("auto", "docker", "podman")]
     [string] $Engine = "auto",
 
-    [int] $Port = $(if ($env:TOWERSCOUT_PORT) { [int] $env:TOWERSCOUT_PORT } else { 5000 }),
+    [ValidateRange(1, 65535)]
+    [Nullable[int]] $Port = $null,
 
     [int] $TimeoutSeconds = 180,
 
@@ -19,6 +20,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$portWasSpecified = $PSBoundParameters.ContainsKey("Port")
 
 function Get-TowerScoutPropertyValue {
     param(
@@ -399,9 +401,6 @@ else {
     }
 }
 
-$appUrl = "http://localhost:$Port"
-$readinessUrl = "$appUrl/api/readiness"
-
 if ($TimeoutSeconds -lt 5) {
     throw "TimeoutSeconds must be at least 5."
 }
@@ -410,6 +409,17 @@ if ($SessionMaxHours -lt 0) {
 }
 
 Initialize-TowerScoutEnvFile -RootPath $repoRoot
+if ($portWasSpecified) {
+    if ($null -eq $Port) {
+        throw "Port must be an integer from 1 through 65535."
+    }
+    $Port = Set-TowerScoutPortEnvironment -Port $Port
+}
+else {
+    $Port = Set-TowerScoutPortEnvironment -RootPath $repoRoot -DefaultPort 5000
+}
+$appUrl = "http://localhost:$Port"
+$readinessUrl = "$appUrl/api/readiness"
 
 $composeCommand = Get-TowerScoutComposeCommand `
     -Engine $Engine `
@@ -420,7 +430,6 @@ if ([string]::IsNullOrWhiteSpace($packageFlavor)) {
     $packageFlavor = "source"
 }
 $env:TOWERSCOUT_CONTAINER_ENGINE = $effectiveEngine
-$env:TOWERSCOUT_PORT = "$Port"
 if ($hostHelperReviewEnabled) {
     Save-TowerScoutHostHelperLaunchProfile `
         -Engine $effectiveEngine `

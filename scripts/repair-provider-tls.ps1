@@ -8,6 +8,9 @@ param(
     [ValidateSet("off", "auto", "on")]
     [string] $Gpu = "off",
 
+    [ValidateRange(1, 65535)]
+    [Nullable[int]] $Port = $null,
+
     [switch] $Build,
 
     [switch] $Apply,
@@ -18,6 +21,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$portWasSpecified = $PSBoundParameters.ContainsKey("Port")
 . "$PSScriptRoot\lib\TowerScoutCertificateStore.ps1"
 
 function Get-TowerScoutProviderTlsHost {
@@ -186,6 +190,9 @@ function Format-TowerScoutImportCommand {
         "-Gpu", $Gpu,
         "-VerifyProvider", $Provider
     )
+    if ($portWasSpecified) {
+        $parts += @("-Port", "$Port")
+    }
     if ($Build) {
         $parts += "-Build"
     }
@@ -211,6 +218,9 @@ function Format-TowerScoutRepairCommand {
         "-Gpu", $Gpu,
         "-Apply"
     )
+    if ($portWasSpecified) {
+        $parts += @("-Port", "$Port")
+    }
     if ($Build) {
         $parts += "-Build"
     }
@@ -238,6 +248,9 @@ function Invoke-TowerScoutImport {
         "-VerifyProvider",
         $Provider
     )
+    if ($portWasSpecified) {
+        $arguments += @("-Port", "$Port")
+    }
     if ($Build) {
         $arguments += "-Build"
     }
@@ -266,6 +279,12 @@ Write-Host "  provider=$Provider"
 Write-Host "  host=$hostName"
 Write-Host "  engine=$Engine"
 Write-Host "  gpu=$Gpu"
+if ($portWasSpecified) {
+    Write-Host "  port=$Port (explicit)"
+}
+else {
+    Write-Host "  port=preserve configured value"
+}
 Write-Host "  mode=$(if ($Apply) { 'apply' } else { 'dry-run' })"
 Write-Host "No API keys or provider response bodies are used by this repair wrapper."
 Write-Host "Support-sensitive local output: certificate subjects and thumbprints can identify your organization. Do not paste dry-run output into public issue comments or public release evidence."

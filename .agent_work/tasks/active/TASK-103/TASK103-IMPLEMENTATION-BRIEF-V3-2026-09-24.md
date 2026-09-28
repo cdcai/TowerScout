@@ -1,7 +1,8 @@
 # TowerScout PyTorch CUDA 12.8 (Blackwell) Migration — Implementation Brief (Plan v3)
 
 **Date:** 2026-09-24. **Owner:** release owner (all approvals below are recorded 2026-09-24).
-**Audience:** the developer agent on the Blackwell laptop (`HOST-BLACKWELL`).
+**Audience:** the developer agent on the first local qualification host
+(`FIRST-HOST-LOCAL`).
 **Supersedes** Plan v1, Plan v2 (`TowerScout-PyTorch-cu128-Blackwell-Migration-Plan-v2-2026-09-23.md`) and the email-kit README **for implementation purposes**. Those documents are history; if you have them, do not follow their steps where this brief differs. This brief folds in every correction from the pilot (report §8) and every owner decision.
 **Companion attachments** (same email): pilot patch series, expected-tree hash, RGB fixture tiles, fixture manifest, T1000 reference run, wheel evidence, pilot report. See §5.
 

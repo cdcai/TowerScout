@@ -259,6 +259,50 @@ def test_helper_disabled_launch_and_stop_do_not_require_helper_module(tmp_path):
     assert not helper_library.exists()
 
 
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher is Windows-only")
+def test_helper_disabled_launch_uses_source_env_port_when_port_is_omitted(tmp_path):
+    powershell = _powershell_executable()
+    if powershell is None:
+        pytest.skip("PowerShell executable not found")
+
+    package_root, fake_bin = _build_helperless_package(tmp_path)
+    env_text = (package_root / ".env.example").read_text(encoding="utf-8")
+    env_text = env_text.replace("TOWERSCOUT_PORT=5000", "TOWERSCOUT_PORT=5211")
+    (package_root / ".env").write_text(env_text, encoding="utf-8")
+
+    env = os.environ.copy()
+    env["PATH"] = f"{fake_bin}{os.pathsep}{env['PATH']}"
+    env["TOWERSCOUT_HOST_HELPER_REVIEW_ENABLED"] = "0"
+    env.pop("TOWERSCOUT_PORT", None)
+
+    launch = subprocess.run(
+        [
+            powershell,
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(package_root / "scripts" / "launch.ps1"),
+            "-Engine",
+            "docker",
+            "-Gpu",
+            "off",
+            "-TimeoutSeconds",
+            "5",
+            "-NoBrowser",
+        ],
+        cwd=package_root,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
+
+    assert launch.returncode == 7, launch.stdout + launch.stderr
+    assert "http://localhost:5211" in launch.stdout
+
+
 def test_host_helper_provider_tls_repair_plan_is_docker_only_and_allowlisted():
     script = HELPER_LIB.read_text(encoding="utf-8")
     state_script = HELPER_STATE_LIB.read_text(encoding="utf-8")

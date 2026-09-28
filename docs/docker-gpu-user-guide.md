@@ -241,10 +241,15 @@ logs. This
 usually means the container does not trust a local TLS inspection root or
 intermediate certificate.
 
+Use the repair command shown by TowerScout; it includes the active `-Port`.
+If entering commands manually, use the same `-Port` on every repair and
+`start.bat` command. The examples below use port 5000 explicitly; replace every
+`-Port 5000` with the active port (for example, `-Port 5211`) when needed.
+
 Run the guided dry run from the extracted TowerScout application folder:
 
 ```powershell
-.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu on
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu on -Port 5000
 ```
 
 Review the local support-sensitive output with support. Do not paste
@@ -254,9 +259,9 @@ prints the exact apply command. With support approval, apply the repair and
 restart TowerScout:
 
 ```powershell
-.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu on -Apply
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu on -Port 5000 -Apply
 .\scripts\stop.cmd -Engine docker
-.\start.bat -Engine docker -Gpu on
+.\start.bat -Engine docker -Gpu on -Port 5000
 ```
 
 If support assigned `-Gpu auto`, use `-Gpu auto` on the repair and restart
@@ -266,10 +271,10 @@ If support already knows the correct Windows certificate thumbprint or has an
 exported CA file, they can bypass automatic selection:
 
 ```powershell
-.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu on -Thumbprint <windows-certificate-thumbprint> -Apply
-.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu on -CertificatePath C:\path\to\local-ca.pem -Apply
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu on -Port 5000 -Thumbprint <windows-certificate-thumbprint> -Apply
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu on -Port 5000 -CertificatePath C:\path\to\local-ca.pem -Apply
 .\scripts\stop.cmd -Engine docker
-.\start.bat -Engine docker -Gpu on
+.\start.bat -Engine docker -Gpu on -Port 5000
 ```
 
 Do not paste the placeholder text. Replace it with the actual support-provided

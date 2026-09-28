@@ -40,9 +40,11 @@ release gates.
 
 ### **TASK-103: CUDA 12.8 Blackwell ML Runtime**
 
-**Status**: IN_PROGRESS - H9 exact digests confirmed; W09 artifacts assembled;
-first-host exact-package Docker/Podman CPU/CUDA startup passes; release remains
-AT_RISK pending provider, reboot, policy/signing, and independent-host evidence
+**Status**: IN_PROGRESS - bounded fixes for the two W10 Docker CPU lifecycle
+defects pass focused regression and a real Google cancel-then-next local
+validation overlay; the frozen candidate remains failed and is not release-
+ready pending review/merge, new identities, repeated qualification, reboot,
+policy/signing, and independent-host evidence
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
 

@@ -2727,9 +2727,30 @@ def abort():
     session_id = _get_session_run_id()
     api_logger.info(f"Aborting session {session_id}")
     run_state = _mark_detection_run_cancel_requested(session_id)
-    if run_state is not None and run_state.get('run_token'):
+    if run_state is None:
+        return jsonify({
+            'status': 'idle',
+            'retryReady': True,
+        })
+
+    run_status = run_state.get('status', 'cancel_requested')
+    if run_status in {'completed', 'cancelled', 'error'}:
+        return jsonify({
+            'status': run_status,
+            'retryReady': True,
+        })
+
+    if run_state.get('run_token'):
         exit_events.signal(run_state['run_token'])
-    return "ok"
+
+    return jsonify({
+        'status': 'cancel_requested',
+        'retryReady': False,
+        'message': (
+            'Cancellation is still pending while the current model step finishes. '
+            'TowerScout will enable detection when the run stops.'
+        ),
+    }), 202
 
 # detection route
 

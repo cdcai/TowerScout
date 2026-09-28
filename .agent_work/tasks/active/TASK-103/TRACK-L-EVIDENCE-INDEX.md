@@ -1,7 +1,7 @@
 # TASK-103 Track L Evidence Index
 
 **Date**: 2026-09-24
-**Host ID**: `HOST-BLACKWELL`
+**Host ID**: `FIRST-HOST-LOCAL`
 **Custody**: Raw run directories remain outside Git at
 `<TASK103_EVIDENCE_ROOT>\`; this index contains only sanitized facts and paths.
 The placeholder omits the host-local absolute root because it is not needed to

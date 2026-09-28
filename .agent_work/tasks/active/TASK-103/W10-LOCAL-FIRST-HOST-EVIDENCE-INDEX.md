@@ -1,0 +1,204 @@
+# Task-103 W10 Local First-Host Evidence Index
+
+**Recorded**: 2026-09-28
+**Host ID**: `FIRST-HOST-LOCAL`
+**Scope**: Same-machine first-host rehearsal only; this is not the independent
+host required for full W10 acceptance.
+**Verdict**: `FAIL` for the frozen candidate because cancellation did not
+recover to a successful next request without relaunch. The qualified subset is
+recorded below.
+**Publication state**: No package was published and no `latest` tag was
+promoted.
+
+## Frozen Inputs
+
+- CPU control ZIP SHA-256:
+  `02f191eade141ad06251f2611892fe12064eb84601ebd39010aedf8115d98c79`
+- Shared asset ZIP SHA-256:
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`
+- CPU image digest:
+  `sha256:4d673a8ca0b3c221899062769f28adc8825e96af7413573ab31ba62d198b6a0a`
+- Sanitized local smoke tool SHA-256:
+  `815ef4266f10cf610e54304b22b1a014d7342dd4f8fd62e6b54e35eb5cc866ea`
+- Safe committed fixture SHA-256:
+  `fd6771ed3aa30a44c5bedb7575ed7f164896e496292fae29ac1da4bb9638d715`
+
+The smoke tool recorded provider names, status codes, timings, counts, and
+boolean UI state only. It did not retain provider URLs, request bodies,
+screenshots, console text, response bodies, credentials, local Windows paths,
+or machine hostnames.
+
+## Docker CPU Fresh Install
+
+The exact CPU ZIP was extracted under the spaced-path placeholder
+`<W10-STAGING>/Docker CPU Fresh`. The shipped setup command used Docker,
+`-Gpu off`, port `5211`, the exact control ZIP, and the exact asset ZIP.
+
+- Outer package and asset sidecars: `PASS`.
+- Release manifest and staged asset manifest/hash verification: `PASS`.
+- Eight fresh named volumes: `PASS`; retained throughout testing.
+- Readiness: `ready`; assets `ok`; config `ok`.
+- Runtime: engine `docker`, policy `cpu`, selected device `cpu`, PyTorch
+  flavor `cpu`.
+- Exact CPU digest: `PASS`.
+- Google and Azure configured flags: `true`; no credential value was read or
+  recorded.
+
+## Managed-Network TLS Repair
+
+Google validation initially returned `tls_ca_untrusted`; Azure was already
+configured and ready.
+
+- Packaged repair dry-run found one unambiguous non-leaf CA candidate: `PASS`.
+- Certificate subjects, issuers, and thumbprints were suppressed from the
+  transcript and are not evidence.
+- Apply imported and verified the combined CA bundle, kept TLS verification
+  enabled, updated the package `.env`, and produced no obvious credential
+  pattern in the recent application log check: `PASS`.
+- A subsequent explicit package relaunch activated both
+  `REQUESTS_CA_BUNDLE` and `SSL_CERT_FILE` at the persistent in-container
+  bundle path: `PASS`.
+
+### Finding W10-DCPU-001 - non-default port not preserved by TLS helper
+
+**Severity**: release-support defect; bounded correction required before a
+replacement candidate can be frozen.
+
+The repair helper's internal `compose up` recreated the profile on default
+port `5000` rather than preserving the active `5211` launch. It also correctly
+instructed the operator to restart after updating `.env`; running the shipped
+`start.bat -Engine docker -Gpu off -Port 5211` restored the intended port and
+activated the repaired bundle. This is a real observed lifecycle failure, so
+the previously optional saved-port convenience behavior is now evidence-
+selected.
+
+## Live Provider Results
+
+| Provider/run | Result | Safe observations | Evidence SHA-256 |
+| --- | --- | --- | --- |
+| Azure normal | `PASS` | Estimate HTTP 200, one tile, 14 detections, 14 list entries, six address groups, nine visible map overlays | `d0a8c036bb13fda1f44ffa62a327098323261efd6609a05d6881935bb08c1e6f` |
+| Google normal | `PASS` | Estimate HTTP 200, one tile, eight detections, eight list entries, four address groups, five visible map overlays | `706f689ff594c802c7cf555bd50bfa4eba2e6e994f0a29b069f2ffab78c32559` |
+| Google after stop/relaunch | `PASS` | Both providers, assets, CA bundle, port, and digest persisted; estimate HTTP 200 and eight detections rendered | `60fc61fb58ef88d74a64980db6e96f0125d55fe414aaaa0e8f1bf43b3b68d394` |
+
+## Cancellation And Recovery
+
+### Finding W10-DCPU-002 - cancellation does not recover to next request
+
+**Severity**: release blocker under W07/W10 acceptance.
+
+The corrected cancel reproducer observed a real `/getobjects` request, issued
+cancel, received abort HTTP `200`, observed populated progress text, and
+confirmed that the overlay closed. The next Google request in the same browser
+session did not complete within the declared 180-second timeout. Evidence
+SHA-256:
+`e3757b13547b0ae26c582f8cbaa46d362ee1f8e4994fe4ed8c826ade703b0e92`.
+
+Source inspection bounds the likely race: `/abort` marks cancellation and
+signals the run, but returns before the process-wide detection lock is
+necessarily released; the frontend hides progress immediately when the abort
+request returns. The required next-request success was therefore not
+demonstrated. Two bounded corrected attempts were allowed; further repetition
+stopped per the work plan.
+
+A volume-preserving package stop and fresh-shell relaunch recovered normally.
+Both provider settings, the repaired CA bundle, assets, port, and image digest
+persisted, and the following normal Google detection passed. Relaunch recovery
+does not satisfy the cancel-then-next-request gate.
+
+## Evidence Hygiene Double Check
+
+Eight local tool/result files were scanned before this index was written:
+
+- Google-key patterns: `0`
+- credential query/value patterns: `0`
+- user-specific Windows paths: `0`
+- machine-hostname labels: `0`
+
+Only the accepted sanitized summaries and their hashes are referenced here.
+Diagnostic runs that exercised a runner timing mistake are not acceptance
+evidence and are not used to strengthen or weaken the candidate verdict.
+
+## Remaining W10 Cells
+
+- Docker CUDA live-provider/recovery: `not_run`.
+- Podman CPU live-provider/recovery: `not_run`.
+- Podman CUDA live-provider/recovery: `not_run`.
+- Reboot persistence: `not_run`.
+- Managed endpoint policy/signing: `blocked` pending the actual policy/decision.
+- Independent-host repetition: `blocked` pending an independent computer.
+
+The current immutable candidate must not be described as W10-qualified. The
+smallest forward path is to add focused regressions for the two reproduced
+lifecycle defects, implement bounded fixes, rebuild new immutable image/package
+identities as affected, and repeat the impacted W09/W10 gates before resuming
+the remaining matrix.
+
+## Bounded Lifecycle Fix Validation
+
+**Recorded**: 2026-09-28
+**Scope**: Local source and local-only Docker CPU validation overlay; this is
+not a replacement candidate identity and does not change the frozen-candidate
+`FAIL` verdict above.
+
+### W10-DCPU-001 port preservation
+
+- The provider repair command now derives and validates
+  `TOWERSCOUT_HOST_PORT`, falling back safely to `5000`, and emits an explicit
+  `-Port` argument.
+- `repair-provider-tls.ps1` forwards the port through its dry-run/apply command
+  and lower-level importer invocation.
+- `import-tls-ca.ps1` sets `TOWERSCOUT_PORT` before its internal Compose start.
+- The focused Windows wrapper regression proved `-Port 5211` reaches the
+  importer for both success and nonzero child exit paths.
+- The live validation container emitted
+  `repair-provider-tls.cmd ... -Port 5211` while remaining healthy on port
+  `5211`.
+
+Verdict for the reproduced mechanism: `PASS`. A replacement package must still
+repeat the actual managed-network dry-run/apply path before candidate freeze.
+
+### W10-DCPU-002 cancellation readiness
+
+- `/abort` now signals cancellation and waits up to 60 seconds for the shared
+  detection slot. It returns HTTP `200` with `retryReady=true` only after the
+  slot is released; a bounded timeout returns HTTP `202` with
+  `retryReady=false`.
+- The frontend keeps the progress overlay and next-run guard active until the
+  backend reports retry readiness. A pending or unreadable response no longer
+  enables an unsafe retry.
+- Deterministic thread/event tests prove the abort response cannot report
+  readiness while `/getobjects` owns the slot, prove the bounded `202` path,
+  and prove a next request succeeds after the ready response.
+- A real Google cancel-and-next smoke on the local validation overlay observed
+  `/getobjects`, received abort HTTP `200` after 7.77 seconds, hid the overlay,
+  and completed the immediate next request in 2.87 seconds with eight
+  detections, eight list entries, four address groups, and five visible map
+  overlays. Sanitized evidence SHA-256:
+  `36f59d6ccf7b1e97e1ab45f2775e86432c19a1f0555c1061880e214c51dca04d`.
+
+Verdict for the reproduced mechanism: `PASS`.
+
+### Validation and restoration
+
+- Focused Python regressions: `108 passed`.
+- Package/documentation regressions: `9 passed`.
+- Complete in-scope unit suite with the explicitly deferred Task-087 host-
+  helper file excluded: `585 passed, 74 skipped`.
+- The unfiltered unit run reached `593 passed, 74 skipped`; 19 tests in the
+  unchanged deferred Task-087 host-helper file failed because Windows
+  antivirus blocked `TowerScoutHostHelper.ps1` as malicious content. This is
+  an environmental/deferred-path result, not a lifecycle-fix pass, and no
+  Task-087 work was resumed.
+- Frontend cancellation contract, generated-bundle syntax, source syntax, and
+  global contract: `PASS`.
+- Evidence credential/path/hostname scan: zero matches for Google-key patterns,
+  credential query/value patterns, user-specific Windows paths, and the prior
+  hardware-derived host label.
+- After live validation, the Docker CPU profile was restored to the original
+  exact digest on port `5211`; health returned `healthy` and all eight named
+  volumes remained attached.
+
+The bounded fixes resolve both observed lifecycle mechanisms. Forward work is
+still to review/merge the changes, build new immutable CPU/CUDA image and
+control-package identities, and repeat affected W09/W10 cells. Publication and
+`latest` promotion remain owner-gated.

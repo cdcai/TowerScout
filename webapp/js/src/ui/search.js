@@ -38,7 +38,9 @@
   let progressIndeterminate = false;
   let lastEstimate = null;
   let activeDetectionRequest = null;
+  let detectionCancellationPending = false;
   let detectionRequestSeq = 0;
+  let cancellationRequestSeq = 0;
   let progressPollInFlight = false;
   let lastProgressPollAt = 0;
   let progressStatusSeen = false;
@@ -149,6 +151,21 @@
     );
   }
 
+  function resolvePendingCancellation(message) {
+    if (!detectionCancellationPending) {
+      return;
+    }
+
+    detectionCancellationPending = false;
+    disableProgress(0, 0);
+    window.TowerScoutLogger.info(message || 'Detection cancellation completed.');
+  }
+
+  function isCancellationResolved(progressState) {
+    return progressState?.status === 'idle'
+      || TERMINAL_PROGRESS_STATUSES.has(progressState?.status);
+  }
+
   async function maybePollDetectionProgress(force = false) {
     if (progressPollInFlight) {
       return;
@@ -161,9 +178,19 @@
 
     lastProgressPollAt = now;
     progressPollInFlight = true;
+    const detectionSequence = detectionRequestSeq;
+    const cancellationSequence = cancellationRequestSeq;
 
     try {
       const progressState = await fetchDetectionProgress();
+      if (detectionSequence !== detectionRequestSeq
+        || cancellationSequence !== cancellationRequestSeq) {
+        return;
+      }
+      if (detectionCancellationPending && isCancellationResolved(progressState)) {
+        resolvePendingCancellation('Detection cancellation completed; a new detection can start.');
+        return;
+      }
       renderDetectionProgressState(progressState);
     } catch (error) {
       window.TowerScoutLogger.debug('Detection progress poll unavailable:', error?.message || error);
@@ -182,8 +209,24 @@
 
   // ===== Main Detection Workflow =====
 
+  function blockDetectionWhileCancellationPending() {
+    if (!detectionCancellationPending) {
+      return false;
+    }
+
+    TowerScoutErrorHandler.showUserNotification(
+      'Cancellation is still pending. TowerScout will enable detection when the current model step finishes.',
+      'warning'
+    );
+    return true;
+  }
+
   function getObjects(estimate) {
     //let center = currentMap.getCenterUrl();
+
+    if (blockDetectionWhileCancellationPending()) {
+      return;
+    }
 
     if (!currentMap) {
       const fallbackMap = providerManager.getMap();
@@ -584,6 +627,10 @@
   }
 
   async function getObjectsV2(estimate) {
+    if (blockDetectionWhileCancellationPending()) {
+      return;
+    }
+
     if (!currentMap) {
       const fallbackMap = providerManager.getMap();
       if (fallbackMap) {
@@ -732,7 +779,9 @@
     );
   }
 
-  function cancelRequest() {
+  async function cancelRequest() {
+    const detectionSequence = detectionRequestSeq;
+    const cancellationSequence = ++cancellationRequestSeq;
     const requestState = activeDetectionRequest;
     if (requestState) {
       requestState.cancelled = true;
@@ -745,14 +794,47 @@
       'Waiting for the active detection run to stop...'
     );
 
-    fetch("/abort", { method: "POST" })
-      .then(result => {
-        disableProgress(0, 0);
-        window.TowerScoutLogger.info("Detection request cancelled.");
-      })
-      .catch(error => {
-        console.error('❌ Cancel request error:', error);
-      });
+    detectionCancellationPending = true;
+    if (!providerManager.isProgressActive()) {
+      providerManager.startProgressTimer(progressFunction, CONFIG.PROGRESS_UPDATE_INTERVAL_MS);
+    }
+    try {
+      const response = await fetch("/abort", { method: "POST" });
+      let result = null;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        window.TowerScoutLogger.debug('Cancel response did not contain JSON:', parseError?.message || parseError);
+      }
+
+      if (detectionSequence !== detectionRequestSeq
+        || cancellationSequence !== cancellationRequestSeq) {
+        window.TowerScoutLogger.debug('Ignoring stale cancellation response.');
+        return;
+      }
+
+      if (response.ok && (result === null || result.retryReady === true)) {
+        resolvePendingCancellation('Detection request cancelled.');
+        return;
+      }
+
+      setProgressStatus(
+        'Cancellation still pending',
+        result?.message || 'The current model step must finish before another detection can start.'
+      );
+      window.TowerScoutLogger.info('Detection cancellation is still pending.');
+    } catch (error) {
+      if (detectionSequence !== detectionRequestSeq
+        || cancellationSequence !== cancellationRequestSeq) {
+        window.TowerScoutLogger.debug('Ignoring stale cancellation error.');
+        return;
+      }
+      setProgressStatus(
+        'Cancellation status unavailable',
+        'TowerScout could not confirm that detection stopped. It will keep checking automatically.'
+      );
+      console.error('❌ Cancel request error:', error);
+    }
   }
 
   // ===== Progress Management =====
@@ -809,6 +891,11 @@
   }
 
   function progressFunction() {
+    if (detectionCancellationPending) {
+      void maybePollDetectionProgress();
+      return;
+    }
+
     if (!progressIndeterminate && totalSecsEstimated > 0) {
       secsElapsed += CONFIG.PROGRESS_UPDATE_INTERVAL_MS / 1000;
       setProgress(secsElapsed / totalSecsEstimated * 100);

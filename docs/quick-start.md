@@ -540,6 +540,11 @@ Expected result: Setup Wizard saves the provider settings and TowerScout reloads
 or reports that setup is complete. Do not paste the provider key into issue
 reports, screenshots, or support chat.
 
+Use the command shown by TowerScout because it includes the active `-Port`.
+If entering commands manually, use the same `-Port` on every repair and
+`start.bat` command. The examples below use port 5000 explicitly; replace every
+`-Port 5000` with the active port (for example, `-Port 5211`) when needed.
+
 Managed-network note: if Google or Azure provider validation fails even though
 the key is correct, and support sees `CERTIFICATE_VERIFY_FAILED` in container
 logs, the problem is usually local TLS inspection. The Setup Wizard or Settings
@@ -549,10 +554,10 @@ review its local support-sensitive dry-run output, then apply the repair and
 restart TowerScout:
 
 ```powershell
-.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off
-.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Apply
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Port 5000
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Port 5000 -Apply
 .\scripts\stop.cmd -Engine docker
-.\start.bat -Engine docker -Gpu off
+.\start.bat -Engine docker -Gpu off -Port 5000
 ```
 
 Use the same `-Engine` and `-Gpu` values selected for setup. For Azure

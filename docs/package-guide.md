@@ -798,20 +798,25 @@ candidate. The helper copies the CA into the selected engine's persistent
 with an invalid test key, and updates the local `.env` so future TowerScout
 starts use the bundle automatically.
 
+Use the repair command shown by TowerScout; it includes the active `-Port`.
+If entering commands manually, use the same `-Port` on every repair and
+`start.bat` command. The examples below use port 5000 explicitly; replace every
+`-Port 5000` with the active port (for example, `-Port 5211`) when needed.
+
 ```powershell
-.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off
-.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Apply
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Port 5000
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Port 5000 -Apply
 .\scripts\stop.cmd -Engine docker
-.\start.bat -Engine docker -Gpu off
+.\start.bat -Engine docker -Gpu off -Port 5000
 ```
 
 For Podman:
 
 ```powershell
-.\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu off
-.\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu off -Apply
+.\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu off -Port 5000
+.\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu off -Port 5000 -Apply
 .\scripts\stop.cmd -Engine podman
-.\start.bat -Engine podman -Gpu off
+.\start.bat -Engine podman -Gpu off -Port 5000
 ```
 
 For support-assigned GPU validation, preserve the assigned GPU mode in the
@@ -820,7 +825,7 @@ repair and restart commands, such as `-Gpu auto` or `-Gpu on`.
 If the site blocks Google but uses Azure, choose Azure verification:
 
 ```powershell
-.\scripts\repair-provider-tls.cmd -Provider azure -Engine docker -Gpu off
+.\scripts\repair-provider-tls.cmd -Provider azure -Engine docker -Gpu off -Port 5000
 ```
 
 Do not paste dry-run certificate subjects, issuer details, or thumbprints into

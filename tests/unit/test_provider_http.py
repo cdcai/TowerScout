@@ -53,27 +53,30 @@ def test_classify_azure_bad_request_as_tls_ok_for_keyless_probe():
 def test_provider_repair_command_uses_runtime_engine_and_gpu(monkeypatch):
     monkeypatch.setenv("TOWERSCOUT_CONTAINER_ENGINE", "podman")
     monkeypatch.setenv("TOWERSCOUT_GPU_MODE", "on")
+    monkeypatch.setenv("TOWERSCOUT_HOST_PORT", "5211")
 
     assert provider_repair_command("azure") == (
-        ".\\scripts\\repair-provider-tls.cmd -Provider azure -Engine podman -Gpu on"
+        ".\\scripts\\repair-provider-tls.cmd -Provider azure -Engine podman -Gpu on -Port 5211"
     )
 
 
 def test_provider_repair_command_falls_back_to_safe_defaults(monkeypatch):
     monkeypatch.delenv("TOWERSCOUT_CONTAINER_ENGINE", raising=False)
     monkeypatch.delenv("TOWERSCOUT_GPU_MODE", raising=False)
+    monkeypatch.delenv("TOWERSCOUT_HOST_PORT", raising=False)
 
     assert provider_repair_command("google") == (
-        ".\\scripts\\repair-provider-tls.cmd -Provider google -Engine auto -Gpu off"
+        ".\\scripts\\repair-provider-tls.cmd -Provider google -Engine auto -Gpu off -Port 5000"
     )
 
 
 def test_provider_repair_command_rejects_invalid_runtime_defaults(monkeypatch):
     monkeypatch.setenv("TOWERSCOUT_CONTAINER_ENGINE", "cmd.exe")
     monkeypatch.setenv("TOWERSCOUT_GPU_MODE", "cuda && whoami")
+    monkeypatch.setenv("TOWERSCOUT_HOST_PORT", "5211 && whoami")
 
     assert provider_repair_command("google") == (
-        ".\\scripts\\repair-provider-tls.cmd -Provider google -Engine auto -Gpu off"
+        ".\\scripts\\repair-provider-tls.cmd -Provider google -Engine auto -Gpu off -Port 5000"
     )
 
 

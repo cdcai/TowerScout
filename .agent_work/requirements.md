@@ -140,6 +140,22 @@ Acceptance:
 - Source-build-only limitations may be documented only after an explicit
   Task-097 decision and owner acceptance.
 
+### RUNTIME-003: Cancellation Readiness
+
+WHEN a user cancels an active detection, THE SYSTEM SHALL distinguish a
+cancellation request from readiness to start the next detection.
+
+Acceptance:
+
+- The backend signals the active run, then reports retry readiness only after
+  the shared detection slot is released.
+- A bounded wait that expires reports cancellation as pending rather than
+  successful.
+- The frontend keeps progress and next-run admission blocked while
+  cancellation is pending or readiness cannot be confirmed.
+- After a ready cancellation response, the next real provider-backed detection
+  succeeds without a container relaunch.
+
 ### SEC-001: Dependency Security Baseline And Release Gate
 
 WHEN GitHub code scanning or release validation reports dependency

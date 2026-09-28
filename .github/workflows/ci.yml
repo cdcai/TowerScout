@@ -49,6 +49,9 @@ jobs:
     - name: Run setup wizard validation contract
       run: node tests/frontend/test_setup_wizard_validation_contract.js
 
+    - name: Run detection cancellation recovery contract
+      run: node tests/frontend/test_detection_cancel_recovery_contract.js
+
     - name: Run ProviderStateManager regression test
       run: node tests/integration/test_task_064_provider_state_manager.js
 
