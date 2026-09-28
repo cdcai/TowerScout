@@ -268,6 +268,27 @@ def test_n2_dockerfile_strips_every_torch_requirement_before_the_runtime_install
     assert _requirement_pins("\n".join(remaining)) == {}
 
 
+def test_runtime_image_keeps_gdal_tools_without_development_headers():
+    dockerfile = _read(DOCKERFILE)
+    apt_install = _single(
+        r"RUN apt-get update \\\n(.*?)\n\s*&& rm -rf /var/lib/apt/lists/\\*",
+        dockerfile,
+        flags=re.DOTALL,
+    )
+    installed = set(
+        re.findall(
+            r"^\s+([a-z0-9][a-z0-9+.-]*)\s*\\?$",
+            apt_install,
+            flags=re.MULTILINE,
+        )
+    )
+
+    assert "gdal-bin" in installed
+    assert "libgdal-dev" not in installed, (
+        "libgdal-dev pulls compiler headers and linux-libc-dev into the runtime image"
+    )
+
+
 def test_n2_build_and_release_pins_agree_everywhere():
     dockerfile = _read(DOCKERFILE)
     env_example = _read(ENV_EXAMPLE)
