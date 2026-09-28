@@ -1,8 +1,10 @@
 # TASK-103: CUDA 12.8 Blackwell ML Runtime
 
-**Status**: IN_PROGRESS - H9 exact digests confirmed; W09 candidate packages
-assembled and first-host four-profile startup qualified; release acceptance
-remains AT_RISK pending provider, reboot, policy/signing, and W10 evidence
+**Status**: IN_PROGRESS - bounded fixes for the two W10 Docker CPU lifecycle
+defects pass focused regression and real Google cancel-then-next validation on
+a local overlay; the frozen candidate remains failed pending review/merge, new
+immutable identities, repeated qualification, reboot, policy/signing, and
+independent-host evidence
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
@@ -89,6 +91,24 @@ weakening model correctness, device, security, persistence, or recovery gates.
 - [ ] Complete live-provider, reboot, policy/signing, and independent-host W10
   acceptance cells before claiming release readiness.
 
+### W10 Local First-Host Rehearsal - Started 2026-09-28
+
+- [x] Run an exact-package fresh Docker CPU install from a spaced path with new
+  volumes, the frozen CPU ZIP/digest, and the frozen asset ZIP.
+- [x] Configure live Azure and Google providers without reading or recording
+  credentials; pass normal positive detection on both providers.
+- [x] Reproduce `tls_ca_untrusted`, run the packaged dry-run/apply repair with
+  certificate identities suppressed, and verify repaired Google TLS.
+- [x] Preserve provider config, repaired CA trust, assets, port, and image
+  identity across a volume-preserving stop and fresh-shell relaunch.
+- [x] Implement and locally validate the bounded TLS helper non-default-port
+  preservation fix; replacement-package managed-network repetition remains.
+- [x] Implement and locally validate cancel readiness against the shared
+  detection slot; the real Google cancel-then-next overlay now passes.
+- [ ] Repeat affected W09/W10 gates under new immutable identities, then resume
+  Docker CUDA, Podman CPU/CUDA, reboot, policy/signing, and independent-host
+  cells.
+
 ## Acceptance Boundary
 
 Unit/static checks and health/readiness are necessary but do not establish
@@ -104,6 +124,7 @@ remain explicit blockers.
 - [Gates v3](./TASK-103/task103_gates.v3.json)
 - [Phase 2 evidence index](./TASK-103/PHASE2-EVIDENCE-INDEX.md)
 - [W09 candidate evidence index](./TASK-103/W09-EVIDENCE-INDEX.md)
+- [W10 local first-host evidence index](./TASK-103/W10-LOCAL-FIRST-HOST-EVIDENCE-INDEX.md)
 
 ## Publication Boundary
 

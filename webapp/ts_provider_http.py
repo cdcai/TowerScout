@@ -82,7 +82,22 @@ def _normalize_repair_option(value: str | None, allowed: frozenset[str], fallbac
     return fallback
 
 
-def provider_repair_command(provider: str, engine: str | None = None, gpu: str | None = None) -> str:
+def _normalize_repair_port(value: str | int | None) -> int:
+    try:
+        port = int(str(value).strip())
+    except (TypeError, ValueError):
+        return 5000
+    if 1 <= port <= 65535:
+        return port
+    return 5000
+
+
+def provider_repair_command(
+    provider: str,
+    engine: str | None = None,
+    gpu: str | None = None,
+    port: str | int | None = None,
+) -> str:
     resolved_engine = _normalize_repair_option(
         engine if engine is not None else os.getenv("TOWERSCOUT_CONTAINER_ENGINE"),
         TLS_REPAIR_ENGINES,
@@ -93,9 +108,12 @@ def provider_repair_command(provider: str, engine: str | None = None, gpu: str |
         TLS_REPAIR_GPU_MODES,
         "off",
     )
+    resolved_port = _normalize_repair_port(
+        port if port is not None else os.getenv("TOWERSCOUT_HOST_PORT")
+    )
     return (
         f".\\scripts\\repair-provider-tls.cmd -Provider {provider} "
-        f"-Engine {resolved_engine} -Gpu {resolved_gpu}"
+        f"-Engine {resolved_engine} -Gpu {resolved_gpu} -Port {resolved_port}"
     )
 
 

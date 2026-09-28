@@ -28,6 +28,7 @@ def _create_repair_sandbox(tmp_path: Path, importer_exit_code: int) -> Path:
     )
     (scripts_dir / "import-tls-ca.cmd").write_text(
         "@echo off\r\n"
+        "echo importer args:%*\r\n"
         "echo importer diagnostic one\r\n"
         "echo importer diagnostic two\r\n"
         f"exit /b {importer_exit_code}\r\n",
@@ -57,6 +58,8 @@ def test_repair_wrapper_preserves_scalar_importer_exit_code(
             "docker",
             "-Gpu",
             "off",
+            "-Port",
+            "5211",
             "-Apply",
             "-CertificatePath",
             str(tmp_path / "certificate with spaces.pem"),
@@ -71,3 +74,4 @@ def test_repair_wrapper_preserves_scalar_importer_exit_code(
     assert result.returncode == importer_exit_code, result.stdout + result.stderr
     assert "importer diagnostic one" in result.stdout
     assert "importer diagnostic two" in result.stdout
+    assert "-Port 5211" in result.stdout

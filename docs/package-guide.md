@@ -798,6 +798,11 @@ candidate. The helper copies the CA into the selected engine's persistent
 with an invalid test key, and updates the local `.env` so future TowerScout
 starts use the bundle automatically.
 
+Use the repair command shown by TowerScout; it includes the active `-Port`.
+If entering a command manually after starting on a non-default port, append
+that same port (for example, `-Port 5211`) so the repair does not rebind the
+runtime to port 5000. The examples below assume the default port 5000.
+
 ```powershell
 .\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off
 .\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Apply

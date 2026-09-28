@@ -779,7 +779,10 @@ def test_abort_route_marks_current_run_cancel_requested(client):
             response = client.post("/abort")
 
         assert response.status_code == 200
-        assert response.data == b"ok"
+        assert response.get_json() == {
+            "status": "cancelled",
+            "retryReady": True,
+        }
         mock_signal.assert_called_once_with(run_token)
 
         progress_response = client.get("/api/detection/progress")

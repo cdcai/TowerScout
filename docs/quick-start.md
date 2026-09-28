@@ -548,6 +548,11 @@ mode. Support should run the guided TLS repair helper for the selected runtime,
 review its local support-sensitive dry-run output, then apply the repair and
 restart TowerScout:
 
+Use the command shown by TowerScout because it includes the active `-Port`.
+If entering the command manually after starting on a non-default port, append
+that same port (for example, `-Port 5211`). The examples below assume port
+5000.
+
 ```powershell
 .\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off
 .\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Apply

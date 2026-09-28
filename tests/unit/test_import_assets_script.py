@@ -41,10 +41,12 @@ def test_packaged_compose_entrypoints_initialize_env_before_starting_stack():
     start_env_init = start_script.index("Initialize-TowerScoutEnvFile -RootPath $repoRoot")
     start_compose = start_script.index("Invoke-TowerScoutCompose")
     tls_env_init = tls_script.index("Initialize-TowerScoutEnvFile -RootPath $repoRoot")
+    tls_port_assignment = tls_script.index('$env:TOWERSCOUT_PORT = "$Port"')
     tls_compose_start = tls_script.index('Write-Host "Starting TowerScout container')
 
     assert start_env_init < start_compose
-    assert tls_env_init < tls_compose_start
+    assert "[int] $Port" in tls_script
+    assert tls_env_init < tls_port_assignment < tls_compose_start
 
 
 def test_tls_ca_import_persists_bundle_paths_in_env_file():
@@ -104,6 +106,8 @@ def test_provider_tls_repair_wrapper_is_dry_run_first_and_delegates_to_importer(
     assert "Join-Path $PSScriptRoot \"import-tls-ca.cmd\"" in script
     assert "\"-Provider\", $Provider" in script
     assert "\"-Gpu\", $Gpu" in script
+    assert "\"-Port\", \"$Port\"" in script
+    assert "[int] $Port" in script
     assert "Support-sensitive local output" in script
     assert "issuer={0}" in script
     assert "Write-Host \"  $repairCommand\"" in script

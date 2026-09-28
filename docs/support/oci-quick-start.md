@@ -348,6 +348,11 @@ config volume and uses a combined bundle that keeps the container's normal
 Debian CA roots. The helper updates the local `.env` after a successful import
 so future starts use the combined bundle automatically:
 
+Use the repair command shown by TowerScout because it includes the active
+`-Port`. If entering the command manually after starting on a non-default port,
+append that same port (for example, `-Port 5211`) so the repair does not rebind
+the runtime to port 5000. The examples below assume the default port 5000.
+
 ```powershell
 .\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off
 .\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Apply

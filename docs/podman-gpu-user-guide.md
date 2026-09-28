@@ -300,6 +300,11 @@ logs. This
 usually means the container does not trust a local TLS inspection root or
 intermediate certificate.
 
+Use the repair command shown by TowerScout; it includes the active `-Port`.
+If entering the command manually after starting on a non-default port, append
+that same port (for example, `-Port 5211`) so the repair does not rebind the
+runtime to port 5000. The commands below assume the default port 5000.
+
 Run the guided dry run from the extracted TowerScout application folder:
 
 ```powershell

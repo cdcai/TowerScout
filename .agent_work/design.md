@@ -74,6 +74,17 @@ workflow for Docker and Podman. It must address the selected installation,
 preserve all named volumes, and report failure truthfully. Task-096's browser
 Exit/helper design remains deferred with no automatic restart date.
 
+## Detection Cancellation Readiness Boundary
+
+The process-wide detection lock is the authoritative next-request readiness
+boundary. `/abort` signals the active run and waits a bounded interval to
+acquire and release that lock. HTTP `200` with `retryReady=true` means a next
+detection may start; HTTP `202` with `retryReady=false` means the current model
+step still owns the slot. The frontend keeps its progress overlay and
+cancellation-pending admission guard active until readiness is confirmed. This
+is bounded hardening of the existing synchronous detection path, not the
+deferred Task-058 background-job architecture.
+
 ## Podman Qualification Boundary
 
 Task-097 owns:

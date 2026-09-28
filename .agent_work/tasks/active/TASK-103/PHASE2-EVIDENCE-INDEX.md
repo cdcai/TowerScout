@@ -1,7 +1,7 @@
 # TASK-103 Phase 2 Evidence Index
 
 **Date**: 2026-09-24
-**Host ID**: `HOST-BLACKWELL`
+**Host ID**: `FIRST-HOST-LOCAL`
 **Source**: `e55abaecc601` rebased on accepted `main` `10cd13a`
 **Operative gates**: v3 SHA-256
 `1dd6f7f105c62e3d741999f02c198ae69858d012d5769605a0817cc9dcd8240c`
@@ -16,8 +16,8 @@ path because that location is not required to verify the recorded hashes.
 
 | Cell | Image identity | Verdict | Raw evidence |
 | --- | --- | --- | --- |
-| CPU | `sha256:7d6e49820fd787b85983bed19f3344710c374314a069f331d19677fdbd7c4aff`; 867,919,134 bytes | PASS; G1, G3-G8, G11-G12 pass; GPU-only and scan-relative gates not applicable | `full-cpu\runs\20260924T202828Z_HOST-BLACKWELL_docker_C_cpu_torch2-10-0_e55abaecc601_final-cpu\`; `verdicts\final-cpu\` |
-| CUDA 12.8 | `sha256:a68b2c00b5653bc2814fd6008b63e3d2702cab83eb80f101f10bd49958bac45f`; 4,830,698,137 bytes | PASS; G1-G8 and G11-G12 pass; G9/G10 not applicable | `full-cuda\runs\20260924T205545Z_HOST-BLACKWELL_docker_C_cuda128_torch2-10-0_e55abaecc601_final-cuda\`; `verdicts\final-cuda\` |
+| CPU | `sha256:7d6e49820fd787b85983bed19f3344710c374314a069f331d19677fdbd7c4aff`; 867,919,134 bytes | PASS; G1, G3-G8, G11-G12 pass; GPU-only and scan-relative gates not applicable | `full-cpu\runs\<FIRST-HOST-LOCAL-final-cpu-run>\`; `verdicts\final-cpu\` |
+| CUDA 12.8 | `sha256:a68b2c00b5653bc2814fd6008b63e3d2702cab83eb80f101f10bd49958bac45f`; 4,830,698,137 bytes | PASS; G1-G8 and G11-G12 pass; G9/G10 not applicable | `full-cuda\runs\<FIRST-HOST-LOCAL-final-cuda-run>\`; `verdicts\final-cuda\` |
 
 Both images carry `org.opencontainers.image.revision=e55abae` and
 `org.opencontainers.image.version=task103-e55abae`. The CPU flavor is `cpu`;

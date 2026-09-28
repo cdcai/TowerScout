@@ -211,6 +211,7 @@ engines = {}
 engine_default = None
 engine_lock = threading.Lock()
 detection_job_lock = threading.Lock()
+DETECTION_CANCEL_WAIT_SECONDS = 60.0
 
 exit_events = ExitEvents()
 secondary_en = None
@@ -2729,7 +2730,23 @@ def abort():
     run_state = _mark_detection_run_cancel_requested(session_id)
     if run_state is not None and run_state.get('run_token'):
         exit_events.signal(run_state['run_token'])
-    return "ok"
+
+    retry_ready = detection_job_lock.acquire(timeout=DETECTION_CANCEL_WAIT_SECONDS)
+    if retry_ready:
+        detection_job_lock.release()
+        return jsonify({
+            'status': 'cancelled',
+            'retryReady': True,
+        })
+
+    return jsonify({
+        'status': 'cancel_requested',
+        'retryReady': False,
+        'message': (
+            'Cancellation is still pending while the current model step finishes. '
+            'Wait, then select Cancel again before starting another detection.'
+        ),
+    }), 202
 
 # detection route
 

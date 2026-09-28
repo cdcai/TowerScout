@@ -8,6 +8,9 @@ param(
     [ValidateSet("off", "auto", "on")]
     [string] $Gpu = "off",
 
+    [ValidateRange(1, 65535)]
+    [int] $Port = 5000,
+
     [switch] $Build,
 
     [switch] $Apply,
@@ -184,6 +187,7 @@ function Format-TowerScoutImportCommand {
         "scripts\import-tls-ca.cmd",
         "-Engine", $Engine,
         "-Gpu", $Gpu,
+        "-Port", "$Port",
         "-VerifyProvider", $Provider
     )
     if ($Build) {
@@ -209,6 +213,7 @@ function Format-TowerScoutRepairCommand {
         "-Provider", $Provider,
         "-Engine", $Engine,
         "-Gpu", $Gpu,
+        "-Port", "$Port",
         "-Apply"
     )
     if ($Build) {
@@ -235,6 +240,8 @@ function Invoke-TowerScoutImport {
         $Engine,
         "-Gpu",
         $Gpu,
+        "-Port",
+        "$Port",
         "-VerifyProvider",
         $Provider
     )
@@ -266,6 +273,7 @@ Write-Host "  provider=$Provider"
 Write-Host "  host=$hostName"
 Write-Host "  engine=$Engine"
 Write-Host "  gpu=$Gpu"
+Write-Host "  port=$Port"
 Write-Host "  mode=$(if ($Apply) { 'apply' } else { 'dry-run' })"
 Write-Host "No API keys or provider response bodies are used by this repair wrapper."
 Write-Host "Support-sensitive local output: certificate subjects and thumbprints can identify your organization. Do not paste dry-run output into public issue comments or public release evidence."

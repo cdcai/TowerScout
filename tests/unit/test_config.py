@@ -105,13 +105,17 @@ def test_validate_api_key_fails_closed_on_ssl_error_by_default(mock_get, monkeyp
     monkeypatch.delenv("TOWERSCOUT_ALLOW_INSECURE_TLS", raising=False)
     monkeypatch.setenv("TOWERSCOUT_CONTAINER_ENGINE", "docker")
     monkeypatch.setenv("TOWERSCOUT_GPU_MODE", "on")
+    monkeypatch.setenv("TOWERSCOUT_HOST_PORT", "5211")
     mock_get.side_effect = requests.exceptions.SSLError("tls failed")
 
     with pytest.raises(NetworkError) as exc_info:
         ts_config.validate_api_key("google", "google-test-key")
 
     assert "could not verify the Google Maps TLS certificate" in exc_info.value.user_message
-    expected_command = ".\\scripts\\repair-provider-tls.cmd -Provider google -Engine docker -Gpu on"
+    expected_command = (
+        ".\\scripts\\repair-provider-tls.cmd -Provider google "
+        "-Engine docker -Gpu on -Port 5211"
+    )
     assert exc_info.value.details["repair_command"] == expected_command
     assert expected_command in exc_info.value.details["support_action"]
     assert exc_info.value.details["provider"] == "google"

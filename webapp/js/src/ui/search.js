@@ -38,6 +38,7 @@
   let progressIndeterminate = false;
   let lastEstimate = null;
   let activeDetectionRequest = null;
+  let detectionCancellationPending = false;
   let detectionRequestSeq = 0;
   let progressPollInFlight = false;
   let lastProgressPollAt = 0;
@@ -184,6 +185,14 @@
 
   function getObjects(estimate) {
     //let center = currentMap.getCenterUrl();
+
+    if (detectionCancellationPending) {
+      TowerScoutErrorHandler.showUserNotification(
+        'Cancellation is still pending. Wait for the current model step to finish, then select Cancel again before retrying.',
+        'warning'
+      );
+      return;
+    }
 
     if (!currentMap) {
       const fallbackMap = providerManager.getMap();
@@ -584,6 +593,14 @@
   }
 
   async function getObjectsV2(estimate) {
+    if (detectionCancellationPending) {
+      TowerScoutErrorHandler.showUserNotification(
+        'Cancellation is still pending. Wait for the current model step to finish, then select Cancel again before retrying.',
+        'warning'
+      );
+      return;
+    }
+
     if (!currentMap) {
       const fallbackMap = providerManager.getMap();
       if (fallbackMap) {
@@ -732,7 +749,7 @@
     );
   }
 
-  function cancelRequest() {
+  async function cancelRequest() {
     const requestState = activeDetectionRequest;
     if (requestState) {
       requestState.cancelled = true;
@@ -745,14 +762,35 @@
       'Waiting for the active detection run to stop...'
     );
 
-    fetch("/abort", { method: "POST" })
-      .then(result => {
+    detectionCancellationPending = true;
+    try {
+      const response = await fetch("/abort", { method: "POST" });
+      let result = null;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        window.TowerScoutLogger.debug('Cancel response did not contain JSON:', parseError?.message || parseError);
+      }
+
+      if (response.ok && result?.retryReady === true) {
+        detectionCancellationPending = false;
         disableProgress(0, 0);
         window.TowerScoutLogger.info("Detection request cancelled.");
-      })
-      .catch(error => {
-        console.error('❌ Cancel request error:', error);
-      });
+        return;
+      }
+
+      setProgressStatus(
+        'Cancellation still pending',
+        result?.message || 'The current model step must finish before another detection can start. Wait, then select Cancel again.'
+      );
+      window.TowerScoutLogger.info('Detection cancellation is still pending.');
+    } catch (error) {
+      setProgressStatus(
+        'Cancellation status unavailable',
+        'TowerScout could not confirm that detection stopped. Keep this window open and select Cancel again.'
+      );
+      console.error('❌ Cancel request error:', error);
+    }
   }
 
   // ===== Progress Management =====

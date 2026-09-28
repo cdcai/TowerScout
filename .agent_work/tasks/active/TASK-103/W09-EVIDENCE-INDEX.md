@@ -63,15 +63,15 @@ The written dependency disposition remains in
 ## First-Host Qualification
 
 Host IDs are neutral evidence identifiers. Raw outputs remain under the
-authorized external evidence root for `HOST-BLACKWELL`; no user-specific path
+authorized external evidence root for `FIRST-HOST-LOCAL`; no user-specific path
 or machine hostname is required for custody.
 
 | Host | Engine | Package | Device | Result |
 | --- | --- | --- | --- | --- |
-| `HOST-BLACKWELL` | Docker Desktop | CPU | CPU | PASS: exact ZIP/asset checks, import with hash verification, assets `ok`, selected device `cpu`, exact digest |
-| `HOST-BLACKWELL` | Docker Desktop | CUDA 12.8 | NVIDIA | PASS: exact ZIP/asset checks, import with hash verification, assets `ok`, selected device `cuda`, exact digest |
-| `HOST-BLACKWELL` | rootless Podman 6.0.2 | CPU | CPU | PASS: spaced-path package, relative approved provider, assets `ok`, selected device `cpu`, exact digest, stop/relaunch |
-| `HOST-BLACKWELL` | rootless Podman 6.0.2 | CUDA 12.8 | NVIDIA | PASS: spaced-path package, relative approved provider, assets `ok`, selected device `cuda`, exact digest, stop/relaunch |
+| `FIRST-HOST-LOCAL` | Docker Desktop | CPU | CPU | PASS: exact ZIP/asset checks, import with hash verification, assets `ok`, selected device `cpu`, exact digest |
+| `FIRST-HOST-LOCAL` | Docker Desktop | CUDA 12.8 | NVIDIA | PASS: exact ZIP/asset checks, import with hash verification, assets `ok`, selected device `cuda`, exact digest |
+| `FIRST-HOST-LOCAL` | rootless Podman 6.0.2 | CPU | CPU | PASS: spaced-path package, relative approved provider, assets `ok`, selected device `cpu`, exact digest, stop/relaunch |
+| `FIRST-HOST-LOCAL` | rootless Podman 6.0.2 | CUDA 12.8 | NVIDIA | PASS: spaced-path package, relative approved provider, assets `ok`, selected device `cuda`, exact digest, stop/relaunch |
 
 The CUDA package reported torch `2.10.0+cu128`, CUDA build `12.8`, device
 capability `sm_120`, architecture support, IEEE FP32 settings, and a successful
@@ -108,4 +108,3 @@ These items prevent a release-ready or full W09/W10 acceptance claim:
 - Independent-host W10 reproduction is not complete.
 - Control-package publication and any `latest` promotion require explicit
   owner authorization.
-

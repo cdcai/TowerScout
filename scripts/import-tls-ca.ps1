@@ -5,6 +5,9 @@ param(
     [ValidateSet("off", "auto", "on")]
     [string] $Gpu = "off",
 
+    [ValidateRange(1, 65535)]
+    [int] $Port = 5000,
+
     [switch] $Build,
 
     [string] $Thumbprint = "",
@@ -25,6 +28,7 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Get-TowerScoutRepoRoot
 Initialize-TowerScoutEnvFile -RootPath $repoRoot
+$env:TOWERSCOUT_PORT = "$Port"
 
 if ([string]::IsNullOrWhiteSpace($Thumbprint) -and [string]::IsNullOrWhiteSpace($CertificatePath)) {
     throw "Specify either -Thumbprint for a Windows certificate store entry or -CertificatePath for a PEM/CER/CRT file."
