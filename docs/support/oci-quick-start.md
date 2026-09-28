@@ -339,6 +339,11 @@ If provider key validation fails with "Could not reach the provider validation s
 
 If provider key validation returns an internal error and the logs mention an invalid or missing `REQUESTS_CA_BUNDLE` / `SSL_CERT_FILE` path, the selected runtime volume does not contain the CA bundle named in `.env`. This can happen when switching between Docker and Podman because each engine has its own named volumes. Re-run the CA import helper for the selected engine.
 
+Use the repair command shown by TowerScout because it includes the active
+`-Port`. If entering commands manually, use the same `-Port` on every repair
+and `start.bat` command. The examples below use port 5000 explicitly; replace
+every `-Port 5000` with the active port (for example, `-Port 5211`) when needed.
+
 Preferred fix: run the guided provider TLS repair helper first. The dry run
 inspects the Windows-observed provider TLS chain, avoids the provider leaf
 certificate, ranks CA candidates, stops on ambiguity, and prints the exact
@@ -347,11 +352,6 @@ import helper copies the selected root/intermediate CA into the persistent
 config volume and uses a combined bundle that keeps the container's normal
 Debian CA roots. The helper updates the local `.env` after a successful import
 so future starts use the combined bundle automatically:
-
-Use the repair command shown by TowerScout because it includes the active
-`-Port`. If entering commands manually, use the same `-Port` on every repair
-and `start.bat` command. The examples below use port 5000 explicitly; replace
-every `-Port 5000` with the active port (for example, `-Port 5211`) when needed.
 
 ```powershell
 .\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Port 5000
