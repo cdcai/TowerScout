@@ -6,7 +6,7 @@ param(
     [string] $Gpu = "off",
 
     [ValidateRange(1, 65535)]
-    [int] $Port = 5000,
+    [Nullable[int]] $Port = $null,
 
     [switch] $Build,
 
@@ -27,8 +27,14 @@ $ErrorActionPreference = "Stop"
 . "$PSScriptRoot\lib\TowerScoutCertificateStore.ps1"
 
 $repoRoot = Get-TowerScoutRepoRoot
+$portWasSpecified = $PSBoundParameters.ContainsKey("Port")
 Initialize-TowerScoutEnvFile -RootPath $repoRoot
-$env:TOWERSCOUT_PORT = "$Port"
+if ($portWasSpecified) {
+    Set-TowerScoutPortEnvironment -Port $Port -PortWasSpecified | Out-Null
+}
+else {
+    Set-TowerScoutPortEnvironment | Out-Null
+}
 
 if ([string]::IsNullOrWhiteSpace($Thumbprint) -and [string]::IsNullOrWhiteSpace($CertificatePath)) {
     throw "Specify either -Thumbprint for a Windows certificate store entry or -CertificatePath for a PEM/CER/CRT file."

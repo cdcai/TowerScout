@@ -549,15 +549,15 @@ review its local support-sensitive dry-run output, then apply the repair and
 restart TowerScout:
 
 Use the command shown by TowerScout because it includes the active `-Port`.
-If entering the command manually after starting on a non-default port, append
-that same port (for example, `-Port 5211`). The examples below assume port
-5000.
+If entering commands manually, use the same `-Port` on every repair and
+`start.bat` command. The examples below use port 5000 explicitly; replace every
+`-Port 5000` with the active port (for example, `-Port 5211`) when needed.
 
 ```powershell
-.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off
-.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Apply
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Port 5000
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Port 5000 -Apply
 .\scripts\stop.cmd -Engine docker
-.\start.bat -Engine docker -Gpu off
+.\start.bat -Engine docker -Gpu off -Port 5000
 ```
 
 Use the same `-Engine` and `-Gpu` values selected for setup. For Azure

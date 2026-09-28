@@ -648,6 +648,38 @@ function Sync-TowerScoutPackageEnvToProcess {
     }
 }
 
+function Set-TowerScoutPortEnvironment {
+    param(
+        [ValidateRange(1, 65535)]
+        [Nullable[int]] $Port = $null,
+
+        [switch] $PortWasSpecified,
+
+        [ValidateRange(1, 65535)]
+        [int] $DefaultPort = 5000
+    )
+
+    if ($PortWasSpecified) {
+        if ($null -eq $Port) {
+            throw "PortWasSpecified requires a port value."
+        }
+        $effectivePort = [int] $Port
+    }
+    elseif ([string]::IsNullOrWhiteSpace($env:TOWERSCOUT_PORT)) {
+        $effectivePort = $DefaultPort
+    }
+    else {
+        $effectivePort = 0
+        if (-not [int]::TryParse([string] $env:TOWERSCOUT_PORT, [ref] $effectivePort) -or
+            $effectivePort -lt 1 -or $effectivePort -gt 65535) {
+            throw "TOWERSCOUT_PORT must be an integer from 1 through 65535."
+        }
+    }
+
+    $env:TOWERSCOUT_PORT = "$effectivePort"
+    return $effectivePort
+}
+
 function Write-TowerScoutComposeProviderSummary {
     param(
         [ValidateSet("auto", "docker", "podman")]

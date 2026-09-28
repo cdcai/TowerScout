@@ -11,10 +11,59 @@ REPAIR_SCRIPT = REPO_ROOT / "scripts" / "repair-provider-tls.ps1"
 CERTIFICATE_STORE_LIB = (
     REPO_ROOT / "scripts" / "lib" / "TowerScoutCertificateStore.ps1"
 )
+COMPOSE_LIB = REPO_ROOT / "scripts" / "lib" / "TowerScoutCompose.ps1"
 
 
 def _powershell_executable():
     return shutil.which("powershell.exe") or shutil.which("pwsh")
+
+
+@pytest.mark.skipif(
+    os.name != "nt",
+    reason="PowerShell runtime helpers are Windows-only",
+)
+def test_port_environment_preserves_package_value_unless_explicitly_overridden():
+    command = rf"""
+    $ErrorActionPreference = "Stop"
+    . "{COMPOSE_LIB}"
+
+    $env:TOWERSCOUT_PORT = "5211"
+    $preserved = Set-TowerScoutPortEnvironment
+    if ($preserved -ne 5211 -or $env:TOWERSCOUT_PORT -ne "5211") {{
+        throw "Omitted port did not preserve the package value."
+    }}
+
+    $overridden = Set-TowerScoutPortEnvironment -Port 5300 -PortWasSpecified
+    if ($overridden -ne 5300 -or $env:TOWERSCOUT_PORT -ne "5300") {{
+        throw "Explicit port did not override the package value."
+    }}
+
+    Remove-Item Env:TOWERSCOUT_PORT
+    $defaulted = Set-TowerScoutPortEnvironment
+    if ($defaulted -ne 5000 -or $env:TOWERSCOUT_PORT -ne "5000") {{
+        throw "Missing package port did not use the supported default."
+    }}
+
+    "ok"
+    """
+    result = subprocess.run(
+        [
+            _powershell_executable(),
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            command,
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "ok" in result.stdout
 
 
 def _create_repair_sandbox(tmp_path: Path, importer_exit_code: int) -> Path:

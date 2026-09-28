@@ -349,24 +349,24 @@ Debian CA roots. The helper updates the local `.env` after a successful import
 so future starts use the combined bundle automatically:
 
 Use the repair command shown by TowerScout because it includes the active
-`-Port`. If entering the command manually after starting on a non-default port,
-append that same port (for example, `-Port 5211`) so the repair does not rebind
-the runtime to port 5000. The examples below assume the default port 5000.
+`-Port`. If entering commands manually, use the same `-Port` on every repair
+and `start.bat` command. The examples below use port 5000 explicitly; replace
+every `-Port 5000` with the active port (for example, `-Port 5211`) when needed.
 
 ```powershell
-.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off
-.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Apply
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Port 5000
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Port 5000 -Apply
 .\scripts\stop.cmd -Engine docker
-.\start.bat -Engine docker -Gpu off
+.\start.bat -Engine docker -Gpu off -Port 5000
 ```
 
 For Podman:
 
 ```powershell
-.\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu off
-.\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu off -Apply
+.\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu off -Port 5000
+.\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu off -Port 5000 -Apply
 .\scripts\stop.cmd -Engine podman
-.\start.bat -Engine podman -Gpu off
+.\start.bat -Engine podman -Gpu off -Port 5000
 ```
 
 The helper verifies the combined CA bundle by making a provider request with an
@@ -374,15 +374,15 @@ invalid test key. For Azure-first or Google-blocked sites, choose the provider
 explicitly:
 
 ```powershell
-.\scripts\repair-provider-tls.cmd -Provider azure -Engine podman -Gpu off
+.\scripts\repair-provider-tls.cmd -Provider azure -Engine podman -Gpu off -Port 5000
 ```
 
 If support already knows the correct CA thumbprint or has an exported
 PEM/CER/CRT file, pass it through the repair wrapper:
 
 ```powershell
-.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Thumbprint <windows-certificate-thumbprint> -Apply
-.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -CertificatePath C:\path\to\local-ca.pem -Apply
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Port 5000 -Thumbprint <windows-certificate-thumbprint> -Apply
+.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Port 5000 -CertificatePath C:\path\to\local-ca.pem -Apply
 ```
 
 If automatic discovery is ambiguous or unavailable, support may call
