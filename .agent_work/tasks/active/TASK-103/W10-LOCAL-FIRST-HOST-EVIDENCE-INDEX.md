@@ -233,3 +233,88 @@ Its live `/api/health` response is `ok`; asset-light readiness is the expected
 `setup_required` state. The test-owned container was stopped after validation.
 The correction still requires reviewed merge and new immutable tags; the
 blocked `rc2` tags must never be packaged or promoted.
+
+## Post-PR #90 `rc3` Replacement Qualification
+
+**Recorded**: 2026-09-28
+**Scope**: Replacement images and exact control packages on
+`FIRST-HOST-LOCAL`; live-provider repetition is still in progress.
+**Interim verdict**: `PASS` for image security, package integrity, four-profile
+startup, exact identity, device selection, and volume-preserving relaunch.
+This is not a complete W10 or release-ready verdict.
+
+PR [#90](https://github.com/J-Schulein/TowerScout/pull/90) removed only the
+unnecessary runtime `libgdal-dev` dependency and merged as
+`7a5eedd8c6d3d6f300f320de69646f61da64c7ae`. Focused release/runtime tests,
+strict agent-work validation, a production-argument CPU build, live health,
+geospatial imports, and package exclusion of both `libgdal-dev` and
+`linux-libc-dev` passed before merge. Exact-head CI and the automated review
+were green.
+
+### Immutable images and G10
+
+| Flavor | Run | Exact digest | G10 result |
+| --- | --- | --- | --- |
+| CPU | [36483117066](https://github.com/J-Schulein/TowerScout/actions/runs/36483117066) | `sha256:a84201cec5704e35e0e7e5e05ca96aebeebb976ddeb89c88ac3145776bc1ba88` | PASS: 0 new, 245 resolved |
+| CUDA 12.8 | [36483119457](https://github.com/J-Schulein/TowerScout/actions/runs/36483119457) | `sha256:6c54725b63cc8b66c996bc6d32d3e6714aada5fb51d07d840b7895dc70041fe5` | PASS: 0 new, 245 resolved |
+
+Both dispatches used `push_latest=false`; exact-digest scan, SBOM, delta, and
+written-disposition artifacts completed successfully. The scan artifact hashes
+match those declared in the delta reports.
+
+### Replacement control packages
+
+- CPU control ZIP SHA-256:
+  `0845a71a4b71ada66d9ba0be0ea71c500c1b0127317beff73af3e38ffbc2576b`
+- CUDA control ZIP SHA-256:
+  `d558db674c964c3a7cf47e661725157e59e7442a96e442ed02e9ff849ee5dcab`
+- Shared asset ZIP SHA-256:
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`
+- Shared asset ZIP length: `800655295` bytes.
+
+Outer sidecars, all internal checksums, manifest identities, required
+documentation/notices/helpers, and forbidden-content checks passed. No package
+was published.
+
+### First-host four-profile results
+
+| Engine/profile | Port | Result |
+| --- | ---: | --- |
+| Docker CPU | 5221 | PASS: healthy, assets `ok`, device `cpu`, exact CPU digest, eight volumes retained across stop/relaunch |
+| Docker CUDA | 5222 | PASS: healthy, assets `ok`, device `cuda`, exact CUDA digest, real `sm_120` CUDA kernel, eight volumes retained across stop/relaunch |
+| Podman CPU | 5223 | PASS: rootless Podman 6.0.2, approved relative provider from a spaced path, device `cpu`, exact CPU digest, eight volumes retained across stop/relaunch |
+| Podman CUDA | 5224 | PASS: rootless Podman 6.0.2 with NVIDIA CDI, device `cuda`, exact CUDA digest, real `sm_120` CUDA kernel, eight volumes retained across stop/relaunch |
+
+Readiness is `setup_required` only because the fresh replacement volumes have
+no provider credentials. The Docker CPU session on port 5221 is reserved for
+interactive Google/Azure configuration and managed-TLS repetition. Credentials
+will not be read, copied from the superseded volume, or retained in evidence.
+
+### Replacement managed-network TLS repetition
+
+- Keyless Google TLS probe before repair: `tls_ca_untrusted`; Azure: `tls_ok`.
+- The generated Google repair command included the active `-Port 5221`.
+- Sanitized dry-run: three CA candidates, one unambiguous top candidate, no
+  mutation, and the emitted apply command retained port 5221.
+- Apply: PASS; the helper verified Google with the imported bundle, retained
+  port 5221, and did not enable insecure TLS.
+- The documented explicit stop/start activated the persistent combined bundle
+  at `/app/webapp/config/certs/towerscout-ca-bundle.pem` for both Requests and
+  OpenSSL. Subsequent keyless Google and Azure probes both returned `tls_ok`.
+- Container health, exact CPU digest, port 5221, assets, and all eight named
+  volumes remained intact.
+
+Verdict for W10-DCPU-001 on the replacement package: `PASS`. As accepted in
+PR #89 review, an explicit launch port is process-scoped rather than persisted
+to the package `.env`; lifecycle commands must continue to include `-Port 5221`.
+
+### Remaining replacement cells
+
+- Fresh-`rc3` managed TLS repair: `PASS`.
+- Fresh-`rc3` Google normal, Google cancel-then-next, and Azure normal:
+  awaiting interactive credential entry.
+- Reboot persistence: `not_run`.
+- Managed endpoint policy/signing: `blocked` pending the actual policy and
+  owner decision.
+- Independent-host repetition: `blocked` pending an independent computer.
+- Package publication and `latest` promotion: owner-gated and not performed.

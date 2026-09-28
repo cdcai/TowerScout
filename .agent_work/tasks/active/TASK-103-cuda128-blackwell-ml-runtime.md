@@ -1,11 +1,10 @@
 # TASK-103: CUDA 12.8 Blackwell ML Runtime
 
-**Status**: IN_PROGRESS - PR #89 merged as `95a3ccc`; the first replacement
-CPU/CUDA image dispatch is blocked by the exact-digest G10 gate on two newly
-disclosed HIGH findings in a development-only runtime dependency. The bounded
-dependency removal passes local build/import validation, but no replacement
-candidate or package is frozen pending review/merge, a new immutable dispatch,
-repeated qualification, reboot, policy/signing, and independent-host evidence
+**Status**: IN_PROGRESS - PR #90 merged as `7a5eedd`; immutable `rc3` CPU/CUDA
+images pass G10 with zero new findings and the replacement control ZIPs pass
+integrity plus first-host Docker/Podman CPU/CUDA startup and lifecycle checks.
+Fresh-package live-provider repetition, reboot, policy/signing, and independent-host
+evidence remain
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
@@ -112,11 +111,17 @@ weakening model correctness, device, security, persistence, or recovery gates.
 - [x] Preserve the failed `v0.1.3-rc2` CPU/CUDA dispatches and security
   artifacts after G10 blocked two newly disclosed HIGH `linux-libc-dev`
   findings; neither digest is a replacement candidate.
-- [ ] Land the bounded removal of the unnecessary runtime development package,
-  then publish new immutable tags and require G10 PASS before packaging.
-- [ ] Repeat affected W09/W10 gates under new immutable identities, then resume
-  Docker CUDA, Podman CPU/CUDA, reboot, policy/signing, and independent-host
-  cells.
+- [x] Land the bounded removal of the unnecessary runtime development package
+  through [PR #90](https://github.com/J-Schulein/TowerScout/pull/90), then
+  publish new immutable `rc3` tags with `push_latest=false`; both G10 deltas
+  passed with zero new findings.
+- [x] Assemble replacement CPU/CUDA control ZIPs from `7a5eedd` and repeat
+  exact-package setup plus stop/relaunch across Docker/Podman CPU/CUDA without
+  deleting any of the eight named volumes per profile.
+- [x] Repeat the managed-TLS cell on the fresh `rc3` Docker CPU package,
+  including the non-default-port repair lifecycle and persistent trusted bundle.
+- [ ] Repeat the live-provider cells on the fresh `rc3` Docker CPU package,
+  then complete reboot, policy/signing, and independent-host cells.
 
 ## Acceptance Boundary
 
@@ -137,6 +142,6 @@ remain explicit blockers.
 
 ## Publication Boundary
 
-Checkpoint 2 and the exact H9 digests are acknowledged. W09 assembly and local
-qualification are authorized and recorded. Package publication, `latest`
-promotion, and closeout remain explicitly owner-gated.
+Checkpoint 2 and the replacement H9 dispatch are authorized and recorded. W09
+replacement assembly and local qualification are authorized. Package
+publication, `latest` promotion, and closeout remain explicitly owner-gated.
