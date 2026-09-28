@@ -495,7 +495,14 @@ function Initialize-TowerScoutPodmanComposeProvider {
     $providerOverride = Get-TowerScoutPodmanComposeProviderOverride
 
     if (-not [string]::IsNullOrWhiteSpace($providerOverride)) {
-        $check = Test-TowerScoutAnyApprovedPodmanComposeProvider -ProviderPath $providerOverride
+        $providerCandidate = $providerOverride
+        if (
+            -not [System.IO.Path]::IsPathRooted($providerCandidate) -and
+            ($providerCandidate.Contains("\") -or $providerCandidate.Contains("/"))
+        ) {
+            $providerCandidate = Join-Path (Get-TowerScoutRepoRoot) $providerCandidate
+        }
+        $check = Test-TowerScoutAnyApprovedPodmanComposeProvider -ProviderPath $providerCandidate
         if (-not $check.Accepted) {
             if ((Test-TowerScoutDockerDesktopComposeProvider -Value $providerOverride) -or (Test-TowerScoutDockerDesktopComposeProvider -Value ([string] $check.Path))) {
                 throw "PODMAN_COMPOSE_PROVIDER points to Docker Desktop's bundled docker-compose.exe. Select an approved non-Docker-Desktop Compose provider for the Podman path."
@@ -503,7 +510,10 @@ function Initialize-TowerScoutPodmanComposeProvider {
             throw "PODMAN_COMPOSE_PROVIDER is set to '$providerOverride', but it is not an approved Podman Compose provider: $($check.Reason). Run scripts\install-podman-compose-provider.cmd -Apply or set PODMAN_COMPOSE_PROVIDER to an approved provider path."
         }
 
-        $env:PODMAN_COMPOSE_PROVIDER = $check.Path
+        # Podman 6 on Windows loses quoting when an external .cmd provider has
+        # spaces in its absolute path. Keep a validated package-relative value
+        # relative, and execute Podman Compose from the package root.
+        $env:PODMAN_COMPOSE_PROVIDER = $providerOverride
         return $check.Path
     }
 
@@ -533,7 +543,8 @@ function Get-TowerScoutPodmanComposeVersionResult {
     $result = Invoke-TowerScoutBootstrapCommand `
         -FileName ([string] $Command["Executable"]) `
         -Arguments @($Command["Arguments"] + "version") `
-        -TimeoutSeconds 15
+        -TimeoutSeconds 15 `
+        -WorkingDirectory (Get-TowerScoutRepoRoot)
     return [pscustomobject]@{
         ExitCode = $result.ExitCode
         Lines = @(
@@ -1156,7 +1167,8 @@ function Get-TowerScoutComposeServiceContainerIds {
         $result = Invoke-TowerScoutBootstrapCommand `
             -FileName ([string] $command["Executable"]) `
             -Arguments @(($command["Arguments"]) + $composeFiles + @("ps", "-a", "-q", $ServiceName)) `
-            -TimeoutSeconds 30
+            -TimeoutSeconds 30 `
+            -WorkingDirectory $repoRoot
         if ($result.ExitCode -ne 0) {
             return @()
         }

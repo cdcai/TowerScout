@@ -294,6 +294,30 @@ function Set-TowerScoutEnvSetting {
     $output | Set-Content -LiteralPath $EnvPath -Encoding ASCII
 }
 
+function Get-TowerScoutPodmanComposeProviderEnvValue {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $ProviderPath,
+
+        [Parameter(Mandatory = $true)]
+        [string] $RootPath
+    )
+
+    $resolvedProvider = [System.IO.Path]::GetFullPath($ProviderPath)
+    $resolvedRoot = [System.IO.Path]::GetFullPath($RootPath)
+    $trimChars = [char[]]@(
+        [System.IO.Path]::DirectorySeparatorChar,
+        [System.IO.Path]::AltDirectorySeparatorChar
+    )
+    $rootPrefix = $resolvedRoot.TrimEnd($trimChars) + [System.IO.Path]::DirectorySeparatorChar
+
+    if ($resolvedProvider.StartsWith($rootPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return $resolvedProvider.Substring($rootPrefix.Length)
+    }
+
+    return $resolvedProvider
+}
+
 function Set-TowerScoutPodmanComposeProviderEnv {
     param(
         [Parameter(Mandatory = $true)]
@@ -308,15 +332,19 @@ function Set-TowerScoutPodmanComposeProviderEnv {
     if ([string]::IsNullOrWhiteSpace($resolvedPath)) {
         throw "Provider path was not found: $ProviderPath"
     }
+    $envProviderPath = Get-TowerScoutPodmanComposeProviderEnvValue `
+        -ProviderPath $resolvedPath `
+        -RootPath $RootPath
 
     $envPath = Join-Path $RootPath ".env"
     if (-not $Apply) {
         Write-Host "Set this value in .env after review:"
-        Write-Host "PODMAN_COMPOSE_PROVIDER=$resolvedPath"
+        Write-Host "PODMAN_COMPOSE_PROVIDER=$envProviderPath"
         return [pscustomobject]@{
             Applied = $false
             EnvPath = $envPath
-            ProviderPath = $resolvedPath
+            ProviderPath = $envProviderPath
+            ResolvedProviderPath = $resolvedPath
         }
     }
 
@@ -332,7 +360,7 @@ function Set-TowerScoutPodmanComposeProviderEnv {
 
     $backupPath = "$envPath.backup.$((Get-Date).ToUniversalTime().ToString('yyyyMMddHHmmss'))"
     Copy-Item -LiteralPath $envPath -Destination $backupPath
-    Set-TowerScoutEnvSetting -EnvPath $envPath -Name "PODMAN_COMPOSE_PROVIDER" -Value $resolvedPath
+    Set-TowerScoutEnvSetting -EnvPath $envPath -Name "PODMAN_COMPOSE_PROVIDER" -Value $envProviderPath
     Write-Host "Updated PODMAN_COMPOSE_PROVIDER in .env."
     Write-Host "Backup: $backupPath"
 
@@ -340,6 +368,7 @@ function Set-TowerScoutPodmanComposeProviderEnv {
         Applied = $true
         EnvPath = $envPath
         BackupPath = $backupPath
-        ProviderPath = $resolvedPath
+        ProviderPath = $envProviderPath
+        ResolvedProviderPath = $resolvedPath
     }
 }

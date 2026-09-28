@@ -149,7 +149,9 @@ function Invoke-TowerScoutBootstrapCommand {
 
         [string[]] $Arguments = @(),
 
-        [int] $TimeoutSeconds = 15
+        [int] $TimeoutSeconds = 15,
+
+        [string] $WorkingDirectory = ""
     )
 
     $process = New-Object System.Diagnostics.Process
@@ -159,6 +161,12 @@ function Invoke-TowerScoutBootstrapCommand {
     $process.StartInfo.RedirectStandardOutput = $true
     $process.StartInfo.RedirectStandardError = $true
     $process.StartInfo.CreateNoWindow = $true
+    if (-not [string]::IsNullOrWhiteSpace($WorkingDirectory)) {
+        if (-not (Test-Path -LiteralPath $WorkingDirectory -PathType Container)) {
+            throw "Command working directory was not found: $WorkingDirectory"
+        }
+        $process.StartInfo.WorkingDirectory = (Resolve-Path -LiteralPath $WorkingDirectory).Path
+    }
 
     try {
         [void] $process.Start()
@@ -439,7 +447,11 @@ function Test-TowerScoutPodmanPreflight {
         }
     }
 
-    $compose = Invoke-TowerScoutBootstrapCommand -FileName "podman" -Arguments @("compose", "version") -TimeoutSeconds 15
+    $compose = Invoke-TowerScoutBootstrapCommand `
+        -FileName "podman" `
+        -Arguments @("compose", "version") `
+        -TimeoutSeconds 15 `
+        -WorkingDirectory (Get-TowerScoutRepoRoot)
     if ($compose.ExitCode -ne 0) {
         $message = ($compose.StdErr + $compose.StdOut).Trim()
         if ([string]::IsNullOrWhiteSpace($message)) {

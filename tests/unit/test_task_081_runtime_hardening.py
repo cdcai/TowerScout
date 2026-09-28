@@ -654,7 +654,7 @@ def test_podman_compose_provider_requires_single_approved_provider():
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
 def test_podman_compose_provider_env_apply_preserves_existing_settings():
-    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task084-provider-apply-{uuid.uuid4().hex}"
+    temp_root = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task084 provider apply {uuid.uuid4().hex}"
     temp_root.mkdir(parents=True)
     provider = temp_root / "podman-compose.cmd"
     _write_podman_compose_provider(provider)
@@ -675,6 +675,9 @@ def test_podman_compose_provider_env_apply_preserves_existing_settings():
         if ($preview.Applied) {{
             throw "Preview mode should not apply .env changes."
         }}
+        if ($preview.ProviderPath -ne "podman-compose.cmd") {{
+            throw "Preview mode did not produce a package-relative provider path."
+        }}
         $before = Get-Content -LiteralPath "{env_file}" -Raw
         if ($before -notmatch "PODMAN_COMPOSE_PROVIDER=old-provider") {{
             throw "Preview mode changed .env."
@@ -688,8 +691,11 @@ def test_podman_compose_provider_env_apply_preserves_existing_settings():
             throw "Apply mode did not create a backup."
         }}
         $after = Get-Content -LiteralPath "{env_file}" -Raw
-        if ($after -notmatch [regex]::Escape("PODMAN_COMPOSE_PROVIDER={provider}")) {{
+        if ($after -notmatch [regex]::Escape("PODMAN_COMPOSE_PROVIDER=podman-compose.cmd")) {{
             throw "Apply mode did not set the provider path."
+        }}
+        if ($applied.ResolvedProviderPath -ne "{provider}") {{
+            throw "Apply mode did not retain the resolved provider path for validation evidence."
         }}
         if ($after -notmatch "TOWERSCOUT_PORT=5005" -or $after -notmatch "TOWERSCOUT_GPU_MODE=off") {{
             throw "Apply mode did not preserve existing settings."
