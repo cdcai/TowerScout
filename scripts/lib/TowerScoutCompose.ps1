@@ -653,27 +653,44 @@ function Set-TowerScoutPortEnvironment {
         [ValidateRange(1, 65535)]
         [Nullable[int]] $Port = $null,
 
-        [switch] $PortWasSpecified,
-
         [ValidateRange(1, 65535)]
-        [int] $DefaultPort = 5000
+        [Nullable[int]] $DefaultPort = $null,
+
+        [string] $RootPath = ""
     )
 
-    if ($PortWasSpecified) {
-        if ($null -eq $Port) {
-            throw "PortWasSpecified requires a port value."
-        }
+    if ($null -ne $Port) {
         $effectivePort = [int] $Port
     }
-    elseif ([string]::IsNullOrWhiteSpace($env:TOWERSCOUT_PORT)) {
-        $effectivePort = $DefaultPort
-    }
-    else {
+    elseif (-not [string]::IsNullOrWhiteSpace($env:TOWERSCOUT_PORT)) {
         $effectivePort = 0
         if (-not [int]::TryParse([string] $env:TOWERSCOUT_PORT, [ref] $effectivePort) -or
             $effectivePort -lt 1 -or $effectivePort -gt 65535) {
             throw "TOWERSCOUT_PORT must be an integer from 1 through 65535."
         }
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace($RootPath)) {
+        $envPath = Join-Path $RootPath ".env"
+        $envFilePort = Get-TowerScoutEnvFileValueFromPath -Path $envPath -Name "TOWERSCOUT_PORT"
+        if (-not [string]::IsNullOrWhiteSpace([string] $envFilePort)) {
+            $effectivePort = 0
+            if (-not [int]::TryParse([string] $envFilePort, [ref] $effectivePort) -or
+                $effectivePort -lt 1 -or $effectivePort -gt 65535) {
+                throw "TOWERSCOUT_PORT in .env must be an integer from 1 through 65535."
+            }
+        }
+        elseif ($null -eq $DefaultPort) {
+            return $null
+        }
+        else {
+            $effectivePort = [int] $DefaultPort
+        }
+    }
+    else {
+        if ($null -eq $DefaultPort) {
+            return $null
+        }
+        $effectivePort = [int] $DefaultPort
     }
 
     $env:TOWERSCOUT_PORT = "$effectivePort"

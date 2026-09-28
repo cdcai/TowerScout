@@ -543,7 +543,7 @@ async function runCancelSmoke(page, summary, minimumDetections, timeoutMs) {
     if (typeof window.cancelRequest !== 'function') {
       throw new Error('window.cancelRequest is not available');
     }
-    window.cancelRequest();
+    return window.cancelRequest();
   });
 
   const abortResponse = await abortResponsePromise;
@@ -579,8 +579,10 @@ async function runCancelSmoke(page, summary, minimumDetections, timeoutMs) {
     ...cancelState
   };
 
-  if (abortResponse.status() !== 200) {
-    throw new Error(`Abort request returned status ${abortResponse.status()}.`);
+  if (![200, 202].includes(abortResponse.status())) {
+    throw new Error(
+      `Abort request returned unexpected status ${abortResponse.status()}; expected 200 or 202.`
+    );
   }
 
   if (!progressSnapshotBeforeCancel.title || !progressSnapshotBeforeCancel.detail) {

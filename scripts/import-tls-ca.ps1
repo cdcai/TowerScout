@@ -30,7 +30,7 @@ $repoRoot = Get-TowerScoutRepoRoot
 $portWasSpecified = $PSBoundParameters.ContainsKey("Port")
 Initialize-TowerScoutEnvFile -RootPath $repoRoot
 if ($portWasSpecified) {
-    Set-TowerScoutPortEnvironment -Port $Port -PortWasSpecified | Out-Null
+    Set-TowerScoutPortEnvironment -Port $Port | Out-Null
 }
 else {
     Set-TowerScoutPortEnvironment | Out-Null

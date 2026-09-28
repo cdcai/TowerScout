@@ -145,7 +145,9 @@ def test_provider_tls_repair_wrapper_is_dry_run_first_and_delegates_to_importer(
     assert "\"-Provider\", $Provider" in script
     assert "\"-Gpu\", $Gpu" in script
     assert "\"-Port\", \"$Port\"" in script
-    assert "[int] $Port" in script
+    assert "[Nullable[int]] $Port = $null" in script
+    assert '$portWasSpecified = $PSBoundParameters.ContainsKey("Port")' in script
+    assert "if ($portWasSpecified)" in script
     assert "Support-sensitive local output" in script
     assert "issuer={0}" in script
     assert "Write-Host \"  $repairCommand\"" in script

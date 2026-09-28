@@ -173,7 +173,7 @@ def test_map_detection_rate_limit_is_checked_before_admission():
         towerscout.detection_job_lock.release()
 
 
-def test_abort_waits_for_detection_slot_before_reporting_retry_ready():
+def test_abort_returns_pending_promptly_while_detection_owns_slot():
     app.config["TESTING"] = True
     detection_entered = threading.Event()
     release_detection = threading.Event()
@@ -218,23 +218,26 @@ def test_abort_waits_for_detection_slot_before_reporting_retry_ready():
 
         abort_worker.start()
         assert cancel_signalled.wait(timeout=5), "abort did not signal cancellation"
-        assert not abort_returned.wait(timeout=0.1), (
-            "abort reported readiness while detection still held the slot"
+        assert abort_returned.wait(timeout=1), (
+            "abort blocked while detection held the slot"
         )
+        assert responses["abort"].status_code == 202
+        assert responses["abort"].get_json() == {
+            "status": "cancel_requested",
+            "retryReady": False,
+            "message": (
+                "Cancellation is still pending while the current model step "
+                "finishes. TowerScout will enable detection when the run stops."
+            ),
+        }
 
         release_detection.set()
         detection_worker.join(timeout=5)
-        abort_worker.join(timeout=5)
 
         assert not detection_worker.is_alive()
         assert not abort_worker.is_alive()
         signal.assert_called_once_with(run_token)
         assert responses["detection"].status_code == 200
-        assert responses["abort"].status_code == 200
-        assert responses["abort"].get_json() == {
-            "status": "cancelled",
-            "retryReady": True,
-        }
 
         retry_response = app.test_client().post("/getobjects", data={"bounds": "x"})
 
@@ -242,23 +245,23 @@ def test_abort_waits_for_detection_slot_before_reporting_retry_ready():
     assert retry_response.get_json() == {"ok": True}
 
 
-def test_abort_reports_pending_when_detection_slot_does_not_release(monkeypatch):
+def test_abort_without_session_run_is_ready_even_when_global_slot_is_busy():
     app.config["TESTING"] = True
     client = app.test_client()
-    run_token = "session-test:run-token"
     assert towerscout.detection_job_lock.acquire(blocking=False)
-    monkeypatch.setattr(towerscout, "DETECTION_CANCEL_WAIT_SECONDS", 0.01)
 
     try:
         with patch(
             "towerscout._mark_detection_run_cancel_requested",
-            return_value={"run_token": run_token},
+            return_value=None,
         ), patch.object(towerscout.exit_events, "signal") as signal:
             response = client.post("/abort")
 
-        assert response.status_code == 202
-        assert response.get_json()["status"] == "cancel_requested"
-        assert response.get_json()["retryReady"] is False
-        signal.assert_called_once_with(run_token)
+        assert response.status_code == 200
+        assert response.get_json() == {
+            "status": "idle",
+            "retryReady": True,
+        }
+        signal.assert_not_called()
     finally:
         towerscout.detection_job_lock.release()

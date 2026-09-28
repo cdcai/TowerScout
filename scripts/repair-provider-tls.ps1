@@ -9,7 +9,7 @@ param(
     [string] $Gpu = "off",
 
     [ValidateRange(1, 65535)]
-    [int] $Port = 5000,
+    [Nullable[int]] $Port = $null,
 
     [switch] $Build,
 
@@ -21,6 +21,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$portWasSpecified = $PSBoundParameters.ContainsKey("Port")
 . "$PSScriptRoot\lib\TowerScoutCertificateStore.ps1"
 
 function Get-TowerScoutProviderTlsHost {
@@ -187,9 +188,11 @@ function Format-TowerScoutImportCommand {
         "scripts\import-tls-ca.cmd",
         "-Engine", $Engine,
         "-Gpu", $Gpu,
-        "-Port", "$Port",
         "-VerifyProvider", $Provider
     )
+    if ($portWasSpecified) {
+        $parts += @("-Port", "$Port")
+    }
     if ($Build) {
         $parts += "-Build"
     }
@@ -213,9 +216,11 @@ function Format-TowerScoutRepairCommand {
         "-Provider", $Provider,
         "-Engine", $Engine,
         "-Gpu", $Gpu,
-        "-Port", "$Port",
         "-Apply"
     )
+    if ($portWasSpecified) {
+        $parts += @("-Port", "$Port")
+    }
     if ($Build) {
         $parts += "-Build"
     }
@@ -240,11 +245,12 @@ function Invoke-TowerScoutImport {
         $Engine,
         "-Gpu",
         $Gpu,
-        "-Port",
-        "$Port",
         "-VerifyProvider",
         $Provider
     )
+    if ($portWasSpecified) {
+        $arguments += @("-Port", "$Port")
+    }
     if ($Build) {
         $arguments += "-Build"
     }
@@ -273,7 +279,12 @@ Write-Host "  provider=$Provider"
 Write-Host "  host=$hostName"
 Write-Host "  engine=$Engine"
 Write-Host "  gpu=$Gpu"
-Write-Host "  port=$Port"
+if ($portWasSpecified) {
+    Write-Host "  port=$Port (explicit)"
+}
+else {
+    Write-Host "  port=preserve configured value"
+}
 Write-Host "  mode=$(if ($Apply) { 'apply' } else { 'dry-run' })"
 Write-Host "No API keys or provider response bodies are used by this repair wrapper."
 Write-Host "Support-sensitive local output: certificate subjects and thumbprints can identify your organization. Do not paste dry-run output into public issue comments or public release evidence."

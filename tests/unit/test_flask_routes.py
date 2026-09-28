@@ -778,16 +778,57 @@ def test_abort_route_marks_current_run_cancel_requested(client):
         with patch.object(towerscout.exit_events, "signal") as mock_signal:
             response = client.post("/abort")
 
-        assert response.status_code == 200
+        assert response.status_code == 202
         assert response.get_json() == {
-            "status": "cancelled",
-            "retryReady": True,
+            "status": "cancel_requested",
+            "retryReady": False,
+            "message": (
+                "Cancellation is still pending while the current model step "
+                "finishes. TowerScout will enable detection when the run stops."
+            ),
         }
         mock_signal.assert_called_once_with(run_token)
 
         progress_response = client.get("/api/detection/progress")
         assert progress_response.status_code == 200
         assert progress_response.get_json()["status"] == "cancel_requested"
+    finally:
+        towerscout.progress_tracker.clear(session_id, run_token=run_token)
+
+
+def test_abort_route_reports_terminal_run_ready_without_signalling(client):
+    session_id = "session-test-abort-terminal"
+    run_token = f"{session_id}:run-token"
+
+    with client.session_transaction() as sess:
+        sess[SESSION_ID_KEY] = session_id
+
+    towerscout.progress_tracker.start(
+        session_id,
+        run_token,
+        provider="google",
+        engine="newest",
+    )
+    towerscout.progress_tracker.finish(
+        session_id,
+        "cancelled",
+        run_token=run_token,
+        phase="cancelled",
+        title="Detection cancelled",
+        detail="The run stopped.",
+        cancel_requested=True,
+    )
+
+    try:
+        with patch.object(towerscout.exit_events, "signal") as mock_signal:
+            response = client.post("/abort")
+
+        assert response.status_code == 200
+        assert response.get_json() == {
+            "status": "cancelled",
+            "retryReady": True,
+        }
+        mock_signal.assert_not_called()
     finally:
         towerscout.progress_tracker.clear(session_id, run_token=run_token)
 

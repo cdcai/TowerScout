@@ -22,6 +22,7 @@ function load(fetchImplementation) {
   };
   const loggerMessages = [];
   const notifications = [];
+  let progressTimerCallback = null;
   const context = {
     AbortController,
     CONFIG: {
@@ -41,9 +42,9 @@ function load(fetchImplementation) {
     fetch: fetchImplementation,
     performance,
     providerManager: {
-      isProgressActive() { return true; },
-      stopProgressTimer() {},
-      startProgressTimer() {},
+      isProgressActive() { return progressTimerCallback !== null; },
+      stopProgressTimer() { progressTimerCallback = null; },
+      startProgressTimer(callback) { progressTimerCallback = callback; },
       getMap() { return null; }
     },
     TowerScoutErrorHandler: {
@@ -64,15 +65,26 @@ function load(fetchImplementation) {
     getObjects: context.window.getObjects,
     elements,
     loggerMessages,
-    notifications
+    notifications,
+    async runProgressTick() {
+      assert.ok(progressTimerCallback, 'progress timer was not active');
+      progressTimerCallback();
+      await new Promise(resolve => setImmediate(resolve));
+      await new Promise(resolve => setImmediate(resolve));
+    }
   };
 }
 
-function response(status, payload) {
+function response(status, payload, options = {}) {
   return {
     ok: status >= 200 && status < 300,
     status,
-    async json() { return payload; }
+    async json() {
+      if (options.invalidJson) {
+        throw new SyntaxError('synthetic invalid JSON');
+      }
+      return payload;
+    }
   };
 }
 
@@ -89,24 +101,79 @@ async function testReadyCancellationUnlocksProgressUi() {
 }
 
 async function testPendingCancellationKeepsProgressUiBlocked() {
-  const harness = load(async () => response(202, {
-    status: 'cancel_requested',
-    retryReady: false
-  }));
+  let progressStatus = 'cancel_requested';
+  const harness = load(async url => {
+    if (url === '/abort') {
+      return response(202, {
+        status: 'cancel_requested',
+        retryReady: false
+      });
+    }
+    return response(200, {
+      status: progressStatus,
+      phase: progressStatus,
+      title: progressStatus === 'cancelled' ? 'Detection cancelled' : 'Cancelling detection',
+      detail: progressStatus === 'cancelled' ? 'The run stopped.' : 'Waiting for model work.'
+    });
+  });
 
   await harness.cancelRequest();
+  await new Promise(resolve => setImmediate(resolve));
 
   assert.strictEqual(harness.elements.progress_div.style.display, 'flex');
   assert.strictEqual(harness.elements.progress_status_title.textContent, 'Cancellation still pending');
-  assert.ok(harness.elements.progress_status_detail.textContent.includes('current model step'));
 
   await harness.getObjects(false);
   assert.strictEqual(harness.notifications.length, 1);
   assert.ok(harness.notifications[0].message.includes('Cancellation is still pending'));
+
+  progressStatus = 'cancelled';
+  await harness.runProgressTick();
+  assert.strictEqual(harness.elements.progress_div.style.display, 'none');
+}
+
+async function testSuccessfulNonJsonCancellationResponseUnlocksUi() {
+  const harness = load(async () => response(200, null, { invalidJson: true }));
+
+  await harness.cancelRequest();
+
+  assert.strictEqual(harness.elements.progress_div.style.display, 'none');
+  assert.ok(harness.loggerMessages.includes('Detection request cancelled.'));
+}
+
+async function testOlderCancelResponseCannotRestorePendingState() {
+  const pendingResponses = [];
+  const harness = load(() => new Promise(resolve => pendingResponses.push(resolve)));
+
+  const firstCancel = harness.cancelRequest();
+  const secondCancel = harness.cancelRequest();
+  assert.strictEqual(pendingResponses.length, 2);
+
+  pendingResponses[1](response(200, {
+    status: 'cancelled',
+    retryReady: true
+  }));
+  await secondCancel;
+  assert.strictEqual(harness.elements.progress_div.style.display, 'none');
+
+  pendingResponses[0](response(202, {
+    status: 'cancel_requested',
+    retryReady: false,
+    message: 'stale pending response'
+  }));
+  await firstCancel;
+
+  assert.strictEqual(harness.elements.progress_div.style.display, 'none');
+  assert.notStrictEqual(
+    harness.elements.progress_status_title.textContent,
+    'Cancellation still pending'
+  );
 }
 
 testReadyCancellationUnlocksProgressUi()
   .then(testPendingCancellationKeepsProgressUiBlocked)
+  .then(testSuccessfulNonJsonCancellationResponseUnlocksUi)
+  .then(testOlderCancelResponseCannotRestorePendingState)
   .then(() => {
     console.log('Detection cancellation recovery contract PASSED');
   })
