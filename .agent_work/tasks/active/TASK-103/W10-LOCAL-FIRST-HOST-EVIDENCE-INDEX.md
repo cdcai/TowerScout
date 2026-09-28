@@ -199,6 +199,37 @@ Verdict for the reproduced mechanism: `PASS`.
   volumes remained attached.
 
 The bounded fixes resolve both observed lifecycle mechanisms. Forward work is
-still to review/merge the changes, build new immutable CPU/CUDA image and
-control-package identities, and repeat affected W09/W10 cells. Publication and
-`latest` promotion remain owner-gated.
+to build new immutable CPU/CUDA image and control-package identities and repeat
+affected W09/W10 cells. Publication and `latest` promotion remain owner-gated.
+
+## Post-PR #89 Replacement Dispatch
+
+PR [#89](https://github.com/J-Schulein/TowerScout/pull/89) merged as
+`95a3ccce01fcbaf7f36c8de6fe9e2c6a5ca86833`. The owner then authorized the
+next-step immutable image dispatch with `push_latest=false`.
+
+Both `v0.1.3-rc2` builds, exact-digest scans, SBOM generation, and artifact
+uploads completed. The accepted-baseline G10 delta gate correctly blocked both
+jobs, so neither image is a replacement candidate and package assembly did not
+use either digest.
+
+| Flavor | Run | Published digest | G10 delta | Scan SHA-256 | SBOM SHA-256 |
+| --- | --- | --- | --- | --- | --- |
+| CPU | [36480293923](https://github.com/J-Schulein/TowerScout/actions/runs/36480293923) | `sha256:d5139aaffd8adbc040cf65411ec33f4344d40aa6180b1bb07dce311e674f3f7b` | BLOCK: 2 new, 1 resolved | `c1517fe2b6a16db6e6dde6156d04d39f190de4d0e08040d1da126ce129259be1` | `60224786c91d2f5bf3e603d5ff529395e176f982cc2573308fbc1828df617fc5` |
+| CUDA 12.8 | [36480297059](https://github.com/J-Schulein/TowerScout/actions/runs/36480297059) | `sha256:a038823ff2d638edeabff617d94f0de6b86f3915cf13499b57f5dce35fc8abfc` | BLOCK: 2 new, 1 resolved | `d0f1b02d4d19dd54ee69b2c06c76397840c77ecdf9dbed44ca7ed32ae3309d2d` | `af38d6ee4c75116da016e7135f2fd4df19da664c07c2474f28b16caea572822b` |
+
+The two new findings are `CVE-2026-80521` and `CVE-2026-97417`, both reported
+as HIGH against `linux-libc-dev` 6.1.187-1 with no fixed version listed. The
+SBOM dependency graph shows that the top-level `libgdal-dev` installation is
+the sole path through `libc6-dev` to `linux-libc-dev`; the application uses
+runtime wheels and `gdal-bin`, not the development headers.
+
+A focused regression failed before the correction and passes after removing
+only `libgdal-dev` from the runtime apt list. The surrounding ML/publish
+contract ring passes 33 tests. A production-argument local CPU image builds,
+contains neither `libgdal-dev` nor `linux-libc-dev`, reports GDAL 3.6.2, and
+imports Fiona 1.10.1, GeoPandas 1.1.2, Pyogrio 0.13.0, and Shapely 2.0.3.
+Its live `/api/health` response is `ok`; asset-light readiness is the expected
+`setup_required` state. The test-owned container was stopped after validation.
+The correction still requires reviewed merge and new immutable tags; the
+blocked `rc2` tags must never be packaged or promoted.

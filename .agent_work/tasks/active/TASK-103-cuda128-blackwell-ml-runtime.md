@@ -1,10 +1,11 @@
 # TASK-103: CUDA 12.8 Blackwell ML Runtime
 
-**Status**: IN_PROGRESS - bounded fixes for the two W10 Docker CPU lifecycle
-defects pass focused regression and real Google cancel-then-next validation on
-a local overlay; the frozen candidate remains failed pending review/merge, new
-immutable identities, repeated qualification, reboot, policy/signing, and
-independent-host evidence
+**Status**: IN_PROGRESS - PR #89 merged as `95a3ccc`; the first replacement
+CPU/CUDA image dispatch is blocked by the exact-digest G10 gate on two newly
+disclosed HIGH findings in a development-only runtime dependency. The bounded
+dependency removal passes local build/import validation, but no replacement
+candidate or package is frozen pending review/merge, a new immutable dispatch,
+repeated qualification, reboot, policy/signing, and independent-host evidence
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
@@ -105,6 +106,14 @@ weakening model correctness, device, security, persistence, or recovery gates.
   preservation fix; replacement-package managed-network repetition remains.
 - [x] Implement and locally validate cancel readiness against the shared
   detection slot; the real Google cancel-then-next overlay now passes.
+- [x] Merge the lifecycle fixes through
+  [PR #89](https://github.com/J-Schulein/TowerScout/pull/89) as `95a3ccc` with
+  green exact-head CI.
+- [x] Preserve the failed `v0.1.3-rc2` CPU/CUDA dispatches and security
+  artifacts after G10 blocked two newly disclosed HIGH `linux-libc-dev`
+  findings; neither digest is a replacement candidate.
+- [ ] Land the bounded removal of the unnecessary runtime development package,
+  then publish new immutable tags and require G10 PASS before packaging.
 - [ ] Repeat affected W09/W10 gates under new immutable identities, then resume
   Docker CUDA, Podman CPU/CUDA, reboot, policy/signing, and independent-host
   cells.

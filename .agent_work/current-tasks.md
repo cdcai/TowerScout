@@ -40,11 +40,12 @@ release gates.
 
 ### **TASK-103: CUDA 12.8 Blackwell ML Runtime**
 
-**Status**: IN_PROGRESS - bounded fixes for the two W10 Docker CPU lifecycle
-defects pass focused regression and a real Google cancel-then-next local
-validation overlay; the frozen candidate remains failed and is not release-
-ready pending review/merge, new identities, repeated qualification, reboot,
-policy/signing, and independent-host evidence
+**Status**: IN_PROGRESS - PR #89 merged as `95a3ccc`; the first replacement
+CPU/CUDA image dispatch is blocked by the exact-digest G10 gate on two newly
+disclosed HIGH findings in a development-only runtime dependency. The bounded
+dependency removal passes local build/import validation, but no replacement
+candidate or package is frozen pending review/merge, a new immutable dispatch,
+repeated qualification, reboot, policy/signing, and independent-host evidence
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
 
