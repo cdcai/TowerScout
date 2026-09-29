@@ -1,7 +1,7 @@
 # Current Tasks - Windows Deployment Delivery Week
 
 **Sprint Period**: September 22-September 28, 2026
-**Last Updated**: September 28, 2026
+**Last Updated**: September 29, 2026
 **Focus**: Qualify a dependable, downloadable Windows 11 application from
 accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Day 2 has moved
 the evidence-selected W03-W08 corrections through focused review and merge.
@@ -43,9 +43,10 @@ release gates.
 **Status**: IN_PROGRESS - PR #90 merged as `7a5eedd`; replacement `rc3`
 CPU/CUDA images passed the exact-digest G10 gate with zero new findings, and
 new control ZIPs passed integrity plus first-host Docker/Podman CPU/CUDA
-startup and lifecycle checks. Fresh-package Google/Azure detection and Google
-cancel-then-next recovery pass; reboot, policy/signing, and independent-host
-evidence remain
+startup, lifecycle, and reboot checks. Fresh-package Docker CPU Google/Azure
+detection and Google cancel-then-next recovery pass. The other three profiles'
+provider/recovery/review-export cells, controlled-error checks, policy/signing,
+and independent-host evidence remain
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
 
@@ -78,11 +79,12 @@ Current scope:
 
 ### **TASK-091: Owner-Runnable Release Qualification**
 
-**Status**: AT_RISK - W09 exact-package Docker/Podman CPU/CUDA startup passes on
-the first host, and the exact image digests pass the W05 combined-model and
-memory harness. First-host Docker CPU live-provider and cancel/recovery cells
-pass; managed-endpoint, reboot, policy/signing, and independent-host runtime
-evidence remain
+**Status**: AT_RISK - W09 exact-package Docker/Podman CPU/CUDA startup and
+post-reboot persistence pass on the first host, and the exact image digests
+pass the W05 combined-model and memory harness. Docker CPU live-provider and
+cancel/recovery cells pass; remaining profile workflows, controlled-error,
+review/export, managed-endpoint policy/signing, and independent-host evidence
+remain
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-091-owner-runnable-release-qualification.md`
 
@@ -100,8 +102,8 @@ Current scope:
 ### **TASK-068: Windows Test Portability And Script Validation**
 
 **Status**: IN_PROGRESS - W02 merged as `8976222`; final W09 exact-package
-Docker/Podman setup, start, stop, relaunch, and named-volume checks pass on the
-first host; reboot and W10 repetition remain
+Docker/Podman setup, start, stop, relaunch, named-volume, and post-reboot checks
+pass on the first host; remaining W10 workflow repetition remains
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-068-windows-script-validation.md`
 

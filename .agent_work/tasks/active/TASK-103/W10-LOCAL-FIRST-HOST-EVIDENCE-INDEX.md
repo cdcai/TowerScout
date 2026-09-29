@@ -353,11 +353,63 @@ Verdict for W10-DCPU-002 on the replacement package: `PASS`. The real Google
 cancel path did not expose an unsafe retry, and the immediate next request
 succeeded without relaunch.
 
+### Replacement post-reboot persistence
+
+**Recorded**: 2026-09-29
+
+Windows last-boot time was `2026-09-29T09:00:02.5000000-04:00`, establishing a
+real reboot boundary. Docker Desktop was available after boot and
+automatically restored the Docker CPU and CUDA containers. The retained
+rootless Podman machine was running, but both retained Podman package
+containers were stopped and required an explicit manual start; no container or
+volume was recreated or removed.
+
+| Engine/profile | Post-boot observation | Result |
+| --- | --- | --- |
+| Docker CPU / `5221` | Auto-restored healthy; exact CPU digest; assets/config `ok`; selected CPU; both providers configured; default Google; zero recovery items | `PASS` |
+| Docker CUDA / `5222` | Auto-restored healthy; exact CUDA digest; assets `ok`; selected CUDA; setup remains required only because this isolated profile has no provider credentials | `PASS` for infrastructure persistence |
+| Podman CPU / `5223` | Existing container manually started healthy on the retained rootless machine; exact CPU digest; assets `ok`; selected CPU; setup remains required only because this isolated profile has no provider credentials | `PASS` for documented manual recovery |
+| Podman CUDA / `5224` | Existing container manually started healthy on the retained rootless machine; exact CUDA digest; assets `ok`; selected CUDA; setup remains required only because this isolated profile has no provider credentials | `PASS` for documented manual recovery |
+
+All four ports remained loopback-bound and each profile retained exactly eight
+named volumes. Docker and Podman CUDA each completed a real matrix kernel with
+torch `2.10.0+cu128`, CUDA build `12.8`, capability `sm_120`, and finite output.
+
+On Docker CPU, the persistent combined CA bundle remained present at the
+package path, `REQUESTS_CA_BUNDLE` and `SSL_CERT_FILE` both selected it, and no
+checked verification-disable flag was active. Keyless Google and Azure probes
+both returned `tls_ok` (Azure's expected unauthenticated HTTP `401` still
+establishes trusted TLS reachability).
+
+| Post-reboot provider run | Result | Safe observations | Evidence SHA-256 |
+| --- | --- | --- | --- |
+| Google normal | `PASS` | Estimate HTTP 200, one tile, eight detections and addresses, eight list entries, four address groups, five visible overlays | `811db8a3fc24ba13dd2a65db715f48aefe8b0a0970e118017c9dadeeed7b7b17` |
+| Azure normal | `PASS` | Estimate HTTP 200, one tile, 14 detections and addresses, 14 list entries, six address groups, nine visible overlays; all Azure initialization milestones true | `65ba9b9b966cdffa8be2fbdc009ce5078958375a05fae7f52540bab179e7c1fc` |
+
+The known-good ignored sanitized runner remained byte-identical at SHA-256
+`ac8fa29d19225b1428477c1e9f402841daf0076e9f2f966b25d0ede4909e2ca7`.
+An optional attempt to extend it for review/export and controlled-error proof
+produced no acceptance artifact and left two test-owned Node runners; both
+runners were stopped, the known-good runner bytes were restored, and no result
+from that attempt is claimed. Those cells remain `not_run` below.
+
 ### Remaining replacement cells
 
 - Fresh-`rc3` managed TLS repair: `PASS`.
 - Fresh-`rc3` Google normal, Google cancel-then-next, and Azure normal: `PASS`.
-- Reboot persistence: `not_run`.
+- First-host reboot infrastructure persistence: `PASS` for all four profiles;
+  Docker auto-restored and Podman used the documented manual container start.
+- Docker CPU post-reboot Google and Azure normal requests: `PASS`.
+- Docker CPU review/export and controlled recoverable error: `not_run`.
+- Docker CUDA Google/Azure, review/export, cancellation, controlled recoverable
+  error, and next-request success: `not_run`; its isolated volume has no
+  provider credentials.
+- Podman CPU Google/Azure, review/export, cancellation, controlled recoverable
+  error, and next-request success: `not_run`; its isolated volume has no
+  provider credentials.
+- Podman CUDA Google/Azure, review/export, cancellation, controlled recoverable
+  error, and next-request success: `not_run`; its isolated volume has no
+  provider credentials.
 - Managed endpoint policy/signing: `blocked` pending the actual policy and
   owner decision.
 - Independent-host repetition: `blocked` pending an independent computer.

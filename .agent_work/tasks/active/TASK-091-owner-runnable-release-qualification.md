@@ -1,9 +1,10 @@
 # TASK-091: Owner-Runnable Release Qualification
 
 **Status**: AT_RISK - exact `rc3` CPU/CUDA W05, first-host Docker/Podman
-CPU/CUDA package lifecycle, Docker CPU live-provider, managed-TLS, and
-cancel/recovery cells pass; reboot, managed-endpoint policy/signing, and
-independent-host evidence remain
+CPU/CUDA package lifecycle and post-reboot persistence, plus Docker CPU live-
+provider, managed-TLS, and cancel/recovery cells pass. Remaining profile
+provider/recovery/review-export, controlled-error, managed-endpoint policy/
+signing, and independent-host evidence remain
 **Priority**: CRITICAL
 **Type**: C (Release Qualification / Handoff)
 **Owner**: Release owner; active agent executes bounded preparation and checks
@@ -52,7 +53,7 @@ being inventoried before any readiness claim.
 
 ### 2026-09-22 - W01 First-Host Baseline Attempt
 
-**Host**: `win-7035fbbeab98`; Windows 11 Enterprise build 26200; 31.5 GiB RAM;
+**Host**: `FIRST-HOST-LOCAL`; Windows 11 Enterprise build 26200; 31.5 GiB RAM;
 266.4 GiB free; Windows PowerShell 5.1; NVIDIA RTX PRO 500 Blackwell Laptop GPU
 (driver 596.71, 6113 MiB). Docker Desktop 29.7.2 and Podman 6.0.2 were running.
 
@@ -360,6 +361,30 @@ index.
 The fresh Docker CPU package also passed managed-TLS repair, Google and Azure
 normal detections, and Google cancel-then-next recovery without retaining
 credential values, provider URLs, payloads, screenshots, or AOI coordinates.
-The remaining release blockers are real host reboot persistence,
-managed-endpoint policy/signing, and independent-host repetition. Package
-publication and `latest` promotion remain owner-gated.
+The remaining release blockers are the other three profiles' provider/
+recovery/review-export workflows, controlled-error checks in every profile,
+Docker CPU review/export, managed-endpoint policy/signing, and independent-host
+repetition. Package publication and `latest` promotion remain owner-gated.
+
+### 2026-09-29 - First-host reboot persistence
+
+Windows boot time established a real reboot boundary. Docker automatically
+restored both exact-digest profiles; the retained rootless Podman machine was
+running, while its two retained package containers required the documented
+manual start. All four profiles returned healthy on loopback ports `5221`-
+`5224`, retained exactly eight named volumes each, selected the required CPU or
+CUDA device, and reported the expected immutable digest. Both CUDA profiles
+then completed a real torch 2.10.0+cu128 `sm_120` kernel.
+
+The configured Docker CPU profile retained both provider-configured flags,
+default Google selection, assets, the repaired CA bundle, both CA environment
+bindings, and enabled TLS verification. Keyless Google and Azure probes both
+returned `tls_ok`. Sanitized post-reboot Google and Azure detections passed
+with evidence hashes recorded in the W10 index. No credential value, provider
+URL, request payload, response body, screenshot, AOI coordinate, local path,
+or hostname is retained.
+
+This closes the first-host reboot persistence subset only. It does not convert
+the unconfigured Docker CUDA or Podman profiles' provider workflows into
+passes, and it does not satisfy review/export, controlled-error, managed-
+endpoint, or independent-host acceptance.

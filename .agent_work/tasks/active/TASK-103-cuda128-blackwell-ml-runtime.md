@@ -2,9 +2,10 @@
 
 **Status**: IN_PROGRESS - PR #90 merged as `7a5eedd`; immutable `rc3` CPU/CUDA
 images pass G10 with zero new findings and the replacement control ZIPs pass
-integrity plus first-host Docker/Podman CPU/CUDA startup and lifecycle checks.
-Fresh-package Google/Azure detection and Google cancel-then-next recovery pass;
-reboot, policy/signing, and independent-host evidence remain
+integrity plus first-host Docker/Podman CPU/CUDA startup, lifecycle, and reboot
+checks. Fresh-package Docker CPU Google/Azure detection and Google cancel-then-
+next recovery pass; remaining profile workflows, controlled-error,
+review/export, policy/signing, and independent-host evidence remain
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
@@ -88,8 +89,9 @@ weakening model correctness, device, security, persistence, or recovery gates.
   and rootless Podman CUDA; preserve all eight named volumes for each package.
 - [x] Reconfirm real-model and memory gates against the exact image digests and
   run an exact-package CUDA `sm_120` kernel probe.
-- [ ] Complete live-provider, reboot, policy/signing, and independent-host W10
-  acceptance cells before claiming release readiness.
+- [ ] Complete the remaining per-profile provider/recovery/review-export,
+  controlled-error, policy/signing, and independent-host W10 acceptance cells
+  before claiming release readiness.
 
 ### W10 Local First-Host Rehearsal - Started 2026-09-28
 
@@ -123,7 +125,15 @@ weakening model correctness, device, security, persistence, or recovery gates.
 - [x] Repeat Google normal, Google cancel-then-next, and Azure normal live-
   provider cells on the fresh `rc3` Docker CPU package without retaining
   credentials, request payloads, provider URLs, or screenshots.
-- [ ] Complete reboot, policy/signing, and independent-host cells.
+- [x] Reboot the first host and verify exact digests, loopback ports, all eight
+  named volumes per profile, health/readiness, persistent Docker CPU provider
+  configuration and repaired CA trust, post-reboot Google/Azure requests, and
+  real Docker/Podman CUDA `sm_120` kernels. Docker restored automatically;
+  Podman required a documented manual start of the retained containers.
+- [ ] Complete Docker CUDA, Podman CPU, and Podman CUDA provider/recovery/
+  review-export workflows; controlled-error checks remain required in every
+  profile, and Docker CPU review/export is also not run.
+- [ ] Complete policy/signing and independent-host cells.
 
 ## Acceptance Boundary
 
