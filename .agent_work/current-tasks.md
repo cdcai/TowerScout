@@ -40,13 +40,12 @@ release gates.
 
 ### **TASK-103: CUDA 12.8 Blackwell ML Runtime**
 
-**Status**: IN_PROGRESS - PR #90 merged as `7a5eedd`; replacement `rc3`
-CPU/CUDA images passed the exact-digest G10 gate with zero new findings, and
-new control ZIPs passed integrity plus first-host Docker/Podman CPU/CUDA
-startup, lifecycle, and reboot checks. Fresh-package Docker CPU Google/Azure
-detection and Google cancel-then-next recovery pass. The other three profiles'
-provider/recovery/review-export cells, controlled-error checks, policy/signing,
-and independent-host evidence remain
+**Status**: IN_PROGRESS - PR #92 merged as `cbb574f` and PR #93 merged as
+`fba9dcb`. The frozen `rc3` images and control ZIPs remain valid qualification
+evidence, but they predate both fixes and are not the final candidate. New
+immutable images and control ZIPs plus affected W09/W10 requalification are
+required. The other three profiles' provider/recovery/review-export cells,
+controlled-error checks, policy/signing, and independent-host evidence remain
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
 

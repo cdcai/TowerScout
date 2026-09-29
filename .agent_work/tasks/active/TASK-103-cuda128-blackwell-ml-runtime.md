@@ -1,11 +1,12 @@
 # TASK-103: CUDA 12.8 Blackwell ML Runtime
 
-**Status**: IN_PROGRESS - PR #90 merged as `7a5eedd`; immutable `rc3` CPU/CUDA
-images pass G10 with zero new findings and the replacement control ZIPs pass
-integrity plus first-host Docker/Podman CPU/CUDA startup, lifecycle, and reboot
-checks. Fresh-package Docker CPU Google/Azure detection and Google cancel-then-
-next recovery pass; remaining profile workflows, controlled-error,
-review/export, policy/signing, and independent-host evidence remain
+**Status**: IN_PROGRESS - PR #92 merged as `cbb574f` and PR #93 merged as
+`fba9dcb`. Immutable `rc3` CPU/CUDA images and control ZIPs retain their G10,
+W05, first-host lifecycle, provider, and reboot evidence, but predate both
+fixes and are not the final candidate. New immutable images/packages and
+affected W09/W10 requalification are required; remaining profile workflows,
+controlled-error, review/export, policy/signing, and independent-host evidence
+remain
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
@@ -130,6 +131,13 @@ weakening model correctness, device, security, persistence, or recovery gates.
   configuration and repaired CA trust, post-reboot Google/Azure requests, and
   real Docker/Podman CUDA `sm_120` kernels. Docker restored automatically;
   Podman required a documented manual start of the retained containers.
+- [x] Merge the Podman TLS repair lifecycle fix through
+  [PR #92](https://github.com/J-Schulein/TowerScout/pull/92) as `cbb574f` and
+  the cancellation retry-readiness fix through
+  [PR #93](https://github.com/J-Schulein/TowerScout/pull/93) as `fba9dcb`.
+- [ ] Dispatch new immutable CPU/CUDA images from accepted `main`, assemble
+  replacement control ZIPs, and repeat every affected W09/W10 cell before
+  selecting a final candidate.
 - [ ] Complete Docker CUDA, Podman CPU, and Podman CUDA provider/recovery/
   review-export workflows; controlled-error checks remain required in every
   profile, and Docker CPU review/export is also not run.

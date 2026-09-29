@@ -159,6 +159,15 @@ repeat the actual managed-network dry-run/apply path before candidate freeze.
 
 ### W10-DCPU-002 cancellation readiness
 
+**Historical mechanism note**: This subsection records an interim local
+validation overlay that was not merged. It used a bounded server-side wait and
+therefore observed abort HTTP `200` after the slot was released. PR #93,
+subsequently merged as `fba9dcb`, supersedes that mechanism with a non-blocking
+HTTP `202` response while the slot is held and progress polling tied to the
+actual admission lock. The evidence below qualifies only the interim
+reproduction; the merged behavior requires repetition on new immutable images
+and replacement packages.
+
 - `/abort` now signals cancellation and waits up to 60 seconds for the shared
   detection slot. It returns HTTP `200` with `retryReady=true` only after the
   slot is released; a bounded timeout returns HTTP `202` with

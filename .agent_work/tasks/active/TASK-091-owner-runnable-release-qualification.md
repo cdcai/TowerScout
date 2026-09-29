@@ -2,9 +2,11 @@
 
 **Status**: AT_RISK - exact `rc3` CPU/CUDA W05, first-host Docker/Podman
 CPU/CUDA package lifecycle and post-reboot persistence, plus Docker CPU live-
-provider, managed-TLS, and cancel/recovery cells pass. Remaining profile
-provider/recovery/review-export, controlled-error, managed-endpoint policy/
-signing, and independent-host evidence remain
+provider, managed-TLS, and cancel/recovery cells pass as retained evidence.
+Those artifacts predate the PR #92/#93 lifecycle fixes, so replacement package
+qualification is required. Remaining profile provider/recovery/review-export,
+controlled-error, managed-endpoint policy/signing, and independent-host
+evidence remain
 **Priority**: CRITICAL
 **Type**: C (Release Qualification / Handoff)
 **Owner**: Release owner; active agent executes bounded preparation and checks

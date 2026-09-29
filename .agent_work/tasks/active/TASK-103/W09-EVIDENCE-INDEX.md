@@ -8,6 +8,11 @@ cells below.
 **Publication state**: Control ZIPs and the asset ZIP are assembled locally but
 not published. No `latest` tag was promoted.
 
+PR #92 (`cbb574f`) and PR #93 (`fba9dcb`) merged after these artifacts were
+assembled. The frozen `rc3` identities remain retained qualification evidence,
+but they do not contain those fixes and are not the final candidate. New
+immutable images and control ZIPs require affected W09/W10 repetition.
+
 ## Replacement `rc3` Frozen Candidate Inventory
 
 - Source: `7a5eedd8c6d3d6f300f320de69646f61da64c7ae` (PR #90 merge).
@@ -182,12 +187,18 @@ PR merged.
 
 These items prevent a release-ready or full W09/W10 acceptance claim:
 
-- Fresh-`rc3` managed-TLS repair, Google/Azure normal detection, and Google
-  cancel-then-next recovery pass on the Docker CPU package; credential values
-  were not read or retained in evidence.
+- Docker CPU managed-TLS repair, Google/Azure normal detection, and Google
+  cancel-then-next recovery passed on the frozen `rc3` package; credential
+  values were not read or retained in evidence. These affected cells require
+  repetition on the post-PR #92/#93 replacement package.
+- Docker CPU review/export and controlled-error cells remain `not_run`.
+- Docker CUDA, Podman CPU, and Podman CUDA provider/recovery/review-export and
+  controlled-error cells remain `not_run`.
 - Managed-endpoint/policy and any required signing decision remain owner or
   environment dependent.
-- A real host reboot persistence check has not been recorded for these bytes.
 - Independent-host W10 reproduction is not complete.
 - Control-package publication and any `latest` promotion require explicit
   owner authorization.
+
+First-host reboot persistence for these frozen `rc3` bytes is recorded as
+`PASS` in the W10 evidence index and is not an open cell.
