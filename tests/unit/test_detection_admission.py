@@ -245,7 +245,7 @@ def test_abort_returns_pending_promptly_while_detection_owns_slot():
     assert retry_response.get_json() == {"ok": True}
 
 
-def test_abort_without_session_run_is_ready_even_when_global_slot_is_busy():
+def test_abort_without_session_run_stays_pending_while_global_slot_is_busy():
     app.config["TESTING"] = True
     client = app.test_client()
     assert towerscout.detection_job_lock.acquire(blocking=False)
@@ -257,10 +257,14 @@ def test_abort_without_session_run_is_ready_even_when_global_slot_is_busy():
         ), patch.object(towerscout.exit_events, "signal") as signal:
             response = client.post("/abort")
 
-        assert response.status_code == 200
+        assert response.status_code == 202
         assert response.get_json() == {
             "status": "idle",
-            "retryReady": True,
+            "retryReady": False,
+            "message": (
+                "Cancellation is still pending while the current model step "
+                "finishes. TowerScout will enable detection when the run stops."
+            ),
         }
         signal.assert_not_called()
     finally:

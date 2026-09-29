@@ -753,6 +753,7 @@ def test_detection_progress_defaults_to_idle(client):
         "counts": {},
         "cancel_requested": False,
         "tile_count": 0,
+        "retryReady": True,
     }
 
 
@@ -792,6 +793,7 @@ def test_abort_route_marks_current_run_cancel_requested(client):
         progress_response = client.get("/api/detection/progress")
         assert progress_response.status_code == 200
         assert progress_response.get_json()["status"] == "cancel_requested"
+        assert progress_response.get_json()["retryReady"] is True
     finally:
         towerscout.progress_tracker.clear(session_id, run_token=run_token)
 
@@ -830,6 +832,47 @@ def test_abort_route_reports_terminal_run_ready_without_signalling(client):
         }
         mock_signal.assert_not_called()
     finally:
+        towerscout.progress_tracker.clear(session_id, run_token=run_token)
+
+
+def test_terminal_run_stays_pending_until_detection_slot_is_released(client):
+    session_id = "session-test-abort-terminal-busy"
+    run_token = f"{session_id}:run-token"
+
+    with client.session_transaction() as sess:
+        sess[SESSION_ID_KEY] = session_id
+
+    towerscout.progress_tracker.start(
+        session_id,
+        run_token,
+        provider="google",
+        engine="newest",
+    )
+    towerscout.progress_tracker.finish(
+        session_id,
+        "cancelled",
+        run_token=run_token,
+        phase="cancelled",
+        title="Detection cancelled",
+        detail="The run stopped.",
+        cancel_requested=True,
+    )
+    assert towerscout.detection_job_lock.acquire(blocking=False)
+
+    try:
+        with patch.object(towerscout.exit_events, "signal") as mock_signal:
+            abort_response = client.post("/abort")
+            progress_response = client.get("/api/detection/progress")
+
+        assert abort_response.status_code == 202
+        assert abort_response.get_json()["status"] == "cancelled"
+        assert abort_response.get_json()["retryReady"] is False
+        assert progress_response.status_code == 200
+        assert progress_response.get_json()["status"] == "cancelled"
+        assert progress_response.get_json()["retryReady"] is False
+        mock_signal.assert_not_called()
+    finally:
+        towerscout.detection_job_lock.release()
         towerscout.progress_tracker.clear(session_id, run_token=run_token)
 
 
