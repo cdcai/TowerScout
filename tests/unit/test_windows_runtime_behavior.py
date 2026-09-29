@@ -307,6 +307,9 @@ def test_compose_command_binds_explicit_rootless_podman_connection():
     if ([string]::Join(' ', $resolved.Arguments) -ne '--connection podman-machine-default compose') {{
         throw "Podman connection was not bound: $([string]::Join(' ', $resolved.Arguments))"
     }}
+    if ($env:CONTAINER_CONNECTION -ne 'podman-machine-default') {{
+        throw "External Compose provider connection was not forwarded: $env:CONTAINER_CONNECTION"
+    }}
     'ok'
     """
 

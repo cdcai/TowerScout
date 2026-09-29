@@ -102,6 +102,11 @@ function Get-TowerScoutComposeCommand {
     $connection = Assert-TowerScoutRootlessPodmanConnection `
         -ConnectionName $resolvedConnectionName
     $env:TOWERSCOUT_PODMAN_CONNECTION = $connection.Name
+    # `podman --connection ... compose` selects the connection for the Podman
+    # wrapper, but external Compose providers launch their own `podman`
+    # subprocesses. Forward the already-validated rootless connection so those
+    # child calls cannot fall back to a different global default connection.
+    $env:CONTAINER_CONNECTION = $connection.Name
     Initialize-TowerScoutPodmanComposeProvider | Out-Null
 
     return @{
