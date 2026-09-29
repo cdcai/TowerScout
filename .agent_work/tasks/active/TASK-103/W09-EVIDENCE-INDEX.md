@@ -1,9 +1,10 @@
 # Task-103 W09 Candidate Evidence Index
 
-**Recorded**: 2026-09-28  
-**Verdict**: Replacement `rc3` artifact assembly PASS; first-host four-profile
-package startup and volume-preserving relaunch PASS; overall release remains
-AT_RISK pending the open acceptance cells below.
+**Recorded**: 2026-09-28; updated 2026-09-29
+**Verdict**: Replacement `rc3` artifact assembly PASS; exact-digest CPU/CUDA
+W05 PASS; first-host four-profile package startup and volume-preserving
+relaunch PASS; overall release remains AT_RISK pending the open acceptance
+cells below.
 **Publication state**: Control ZIPs and the asset ZIP are assembled locally but
 not published. No `latest` tag was promoted.
 
@@ -56,6 +57,36 @@ binary wheel exists. The documented Python prerequisite remains material.
 All four sessions remain isolated under release-specific project names. Their
 volumes are preserved; the Docker CPU session remains available for the fresh
 `rc3` provider/TLS smoke.
+
+## Replacement `rc3` Exact-Digest W05 Qualification
+
+The automated review on PR #91 correctly found that the initial index bound
+the six-phase W05 evidence only to the superseded `rc1` digests. The four `rc3`
+package containers and the Task-103 rollback container were therefore stopped
+without deleting volumes, and the exact `rc3` CPU and CUDA images were run
+through the complete W05 harness sequentially. All five containers were then
+restored healthy with their volumes intact.
+
+Both runs used the frozen RGB fixture manifest SHA-256
+`c72b65cca35b10ed96a45b1c609f184ce3a2df93a9a100855bc9745abb2c9447`
+and gates v3 SHA-256
+`1dd6f7f105c62e3d741999f02c198ae69858d012d5769605a0817cc9dcd8240c`.
+The raw directory names retain their original host label outside the repo;
+the host-neutral identifiers below preserve the timestamp and remaining join
+key needed for evidence custody.
+
+| Profile | Host-neutral raw-run identifier | Six phases | Device proof | `run.json` SHA-256 | Verdict SHA-256 |
+| --- | --- | --- | --- | --- | --- |
+| CPU | `20260929T114520Z_FIRST-HOST-LOCAL_docker_C_cpu_torch2-10-0_7a5eedd8c6d3_rc3-exact-cpu` | PASS: identity, startup, synthetic, combined, three-run 100-tile memory, injection | YOLO and EfficientNet observed on CPU; positive secondary candidates | `755644b58c6c94be2b85492c14aaeaf40c3004c62668e51f5b6bd436f47879c2` | `46d3952c47df9c51f85b54aa6cd856c182280a16003f1e0430224803f7473915` |
+| CUDA 12.8 | `20260929T121453Z_FIRST-HOST-LOCAL_docker_C_cuda128_torch2-10-0_7a5eedd8c6d3_rc3-exact-cuda` | PASS: identity, startup, synthetic, combined, three-run 100-tile memory, injection | YOLO and EfficientNet observed on `cuda:0`; positive secondary candidates | `7c270c1d64e3649cadabf9c356f5d390167089d6f6669e4ac9de7a30449c21c8` | `92dc67679aff874f89eecc2ef76fcf7dafb63c09a51ed67822d4007966a4151e` |
+
+The CPU comparator passed G1, G3, G4, G6, G7, G8, G11, and G12; G2 and G5
+were correctly not applicable to CPU. The CUDA comparator, using the exact
+`rc3` CPU run as its counterpart, passed G1-G8, G11, and G12. G9 was not
+applicable because this exact-candidate confirmation was not an interleaved
+same-host relative comparison. G10 was not applicable inside W05; the exact-
+digest H9 scan delta above separately passed with zero new HIGH/CRITICAL
+findings. Both comparator verdicts were overall `pass`.
 
 ## Superseded `rc1` Candidate Inventory
 
@@ -151,9 +182,9 @@ PR merged.
 
 These items prevent a release-ready or full W09/W10 acceptance claim:
 
-- Fresh-`rc3` managed-TLS repetition passes on the Docker CPU package. Live
-  Google/Azure detection awaits interactive credential entry; credentials are
-  not copied from the superseded session.
+- Fresh-`rc3` managed-TLS repair, Google/Azure normal detection, and Google
+  cancel-then-next recovery pass on the Docker CPU package; credential values
+  were not read or retained in evidence.
 - Managed-endpoint/policy and any required signing decision remain owner or
   environment dependent.
 - A real host reboot persistence check has not been recorded for these bytes.

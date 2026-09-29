@@ -1,8 +1,9 @@
 # TASK-091: Owner-Runnable Release Qualification
 
-**Status**: AT_RISK - first-host Docker CPU package and standalone real-model
-proof pass; combined-flow fixture, provider, compatible CUDA host, rootless
-Podman, managed-endpoint, and independent-host evidence remain
+**Status**: AT_RISK - exact `rc3` CPU/CUDA W05, first-host Docker/Podman
+CPU/CUDA package lifecycle, Docker CPU live-provider, managed-TLS, and
+cancel/recovery cells pass; reboot, managed-endpoint policy/signing, and
+independent-host evidence remain
 **Priority**: CRITICAL
 **Type**: C (Release Qualification / Handoff)
 **Owner**: Release owner; active agent executes bounded preparation and checks
@@ -343,3 +344,22 @@ task's package, provider, persistence, recovery, and independent-host gates
 remain unchanged. The merged PR #83 combined-flow runner is the sole current
 ML acceptance contract; the historical external HTTP detection harness is
 retired for this purpose. Publication still waits for Task-103 Checkpoint 2.
+
+### 2026-09-29 - Task-103 `rc3` W05 And Live-Provider Reconciliation
+
+The exact replacement `rc3` CPU digest
+`sha256:a84201cec5704e35e0e7e5e05ca96aebeebb976ddeb89c88ac3145776bc1ba88`
+and CUDA digest
+`sha256:6c54725b63cc8b66c996bc6d32d3e6714aada5fb51d07d840b7895dc70041fe5`
+each passed all six W05 phases. Gates v3 passed every applicable absolute gate;
+the CUDA combined phase observed both YOLO and EfficientNet on `cuda:0`, and
+the CPU phase observed both on CPU. Exact run/verdict hashes and host-neutral
+timestamped custody identifiers are recorded in the Task-103 W09 evidence
+index.
+
+The fresh Docker CPU package also passed managed-TLS repair, Google and Azure
+normal detections, and Google cancel-then-next recovery without retaining
+credential values, provider URLs, payloads, screenshots, or AOI coordinates.
+The remaining release blockers are real host reboot persistence,
+managed-endpoint policy/signing, and independent-host repetition. Package
+publication and `latest` promotion remain owner-gated.
