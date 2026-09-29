@@ -240,32 +240,12 @@ function Copy-TowerScoutFileIntoContainer {
         [string] $ContainerPath
     )
 
-    Invoke-TowerScoutCompose -Engine $Engine -Build:$Build -Gpu $Gpu -ComposeArguments @(
-        "cp",
-        $LocalPath,
-        "towerscout:$ContainerPath"
-    )
-    if ($script:TowerScoutComposeExitCode -eq 0) {
-        return
-    }
-
-    $copyExitCode = $script:TowerScoutComposeExitCode
-    $command = Get-TowerScoutComposeCommand -Engine $Engine
-    if ([string] $command["Executable"] -ne "podman") {
-        exit $copyExitCode
-    }
-
-    Write-Host "Compose provider did not support cp; falling back to direct podman cp."
-    $containerId = Get-TowerScoutPodmanServiceContainerId -ServiceName "towerscout"
-    if ([string]::IsNullOrWhiteSpace($containerId)) {
-        throw "Could not locate the running TowerScout Podman container for direct copy fallback."
-    }
-
-    $copyResult = Invoke-TowerScoutContainerEngineCommand `
-        -EngineName "podman" `
-        -Arguments @("cp", $LocalPath, "${containerId}:$ContainerPath") `
-        -TimeoutSeconds 120
-    $script:TowerScoutComposeExitCode = $copyResult.ExitCode
+    Copy-TowerScoutContainerPath `
+        -Engine $Engine `
+        -LocalPath $LocalPath `
+        -ContainerPath $ContainerPath `
+        -Build:$Build `
+        -Gpu $Gpu
 }
 
 function Invoke-TowerScoutTlsProviderVerification {

@@ -115,14 +115,16 @@ def test_tls_ca_import_persists_bundle_paths_in_env_file():
     assert verify < persist < imported
 
 
-def test_tls_ca_import_podman_copy_fallback_reuses_compose_container_lookup():
+def test_tls_ca_import_uses_shared_engine_aware_copy_helper():
     script = IMPORT_TLS_CA_SCRIPT.read_text(encoding="utf-8")
 
-    fallback = script.index("Compose provider did not support cp; falling back to direct podman cp.")
+    copy_function = script.index("function Copy-TowerScoutFileIntoContainer")
+    verify_function = script.index("function Invoke-TowerScoutTlsProviderVerification")
+    copy_body = script[copy_function:verify_function]
 
-    assert 'Get-TowerScoutPodmanServiceContainerId -ServiceName "towerscout"' in script[fallback:]
-    assert "Split-Path (Get-TowerScoutRepoRoot) -Leaf" not in script[fallback:]
-    assert "--filter \"label=io.podman.compose.project=$projectName\"" not in script[fallback:]
+    assert "Copy-TowerScoutContainerPath" in copy_body
+    assert "Invoke-TowerScoutCompose" not in copy_body
+    assert '"cp"' not in copy_body
 
 
 def test_provider_tls_repair_wrapper_is_dry_run_first_and_delegates_to_importer():
