@@ -1,11 +1,12 @@
 # TASK-103: CUDA 12.8 Blackwell ML Runtime
 
-**Status**: IN_PROGRESS - PR #89 merged as `95a3ccc`; the first replacement
-CPU/CUDA image dispatch is blocked by the exact-digest G10 gate on two newly
-disclosed HIGH findings in a development-only runtime dependency. The bounded
-dependency removal passes local build/import validation, but no replacement
-candidate or package is frozen pending review/merge, a new immutable dispatch,
-repeated qualification, reboot, policy/signing, and independent-host evidence
+**Status**: IN_PROGRESS - PR #92 merged as `cbb574f` and PR #93 merged as
+`fba9dcb`. Immutable `rc3` CPU/CUDA images and control ZIPs retain their G10,
+W05, first-host lifecycle, provider, and reboot evidence, but predate both
+fixes and are not the final candidate. New immutable images/packages and
+affected W09/W10 requalification are required; remaining profile workflows,
+controlled-error, review/export, policy/signing, and independent-host evidence
+remain
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
@@ -89,8 +90,9 @@ weakening model correctness, device, security, persistence, or recovery gates.
   and rootless Podman CUDA; preserve all eight named volumes for each package.
 - [x] Reconfirm real-model and memory gates against the exact image digests and
   run an exact-package CUDA `sm_120` kernel probe.
-- [ ] Complete live-provider, reboot, policy/signing, and independent-host W10
-  acceptance cells before claiming release readiness.
+- [ ] Complete the remaining per-profile provider/recovery/review-export,
+  controlled-error, policy/signing, and independent-host W10 acceptance cells
+  before claiming release readiness.
 
 ### W10 Local First-Host Rehearsal - Started 2026-09-28
 
@@ -112,11 +114,34 @@ weakening model correctness, device, security, persistence, or recovery gates.
 - [x] Preserve the failed `v0.1.3-rc2` CPU/CUDA dispatches and security
   artifacts after G10 blocked two newly disclosed HIGH `linux-libc-dev`
   findings; neither digest is a replacement candidate.
-- [ ] Land the bounded removal of the unnecessary runtime development package,
-  then publish new immutable tags and require G10 PASS before packaging.
-- [ ] Repeat affected W09/W10 gates under new immutable identities, then resume
-  Docker CUDA, Podman CPU/CUDA, reboot, policy/signing, and independent-host
-  cells.
+- [x] Land the bounded removal of the unnecessary runtime development package
+  through [PR #90](https://github.com/J-Schulein/TowerScout/pull/90), then
+  publish new immutable `rc3` tags with `push_latest=false`; both G10 deltas
+  passed with zero new findings.
+- [x] Assemble replacement CPU/CUDA control ZIPs from `7a5eedd` and repeat
+  exact-package setup plus stop/relaunch across Docker/Podman CPU/CUDA without
+  deleting any of the eight named volumes per profile.
+- [x] Repeat the managed-TLS cell on the fresh `rc3` Docker CPU package,
+  including the non-default-port repair lifecycle and persistent trusted bundle.
+- [x] Repeat Google normal, Google cancel-then-next, and Azure normal live-
+  provider cells on the fresh `rc3` Docker CPU package without retaining
+  credentials, request payloads, provider URLs, or screenshots.
+- [x] Reboot the first host and verify exact digests, loopback ports, all eight
+  named volumes per profile, health/readiness, persistent Docker CPU provider
+  configuration and repaired CA trust, post-reboot Google/Azure requests, and
+  real Docker/Podman CUDA `sm_120` kernels. Docker restored automatically;
+  Podman required a documented manual start of the retained containers.
+- [x] Merge the Podman TLS repair lifecycle fix through
+  [PR #92](https://github.com/J-Schulein/TowerScout/pull/92) as `cbb574f` and
+  the cancellation retry-readiness fix through
+  [PR #93](https://github.com/J-Schulein/TowerScout/pull/93) as `fba9dcb`.
+- [ ] Dispatch new immutable CPU/CUDA images from accepted `main`, assemble
+  replacement control ZIPs, and repeat every affected W09/W10 cell before
+  selecting a final candidate.
+- [ ] Complete Docker CUDA, Podman CPU, and Podman CUDA provider/recovery/
+  review-export workflows; controlled-error checks remain required in every
+  profile, and Docker CPU review/export is also not run.
+- [ ] Complete policy/signing and independent-host cells.
 
 ## Acceptance Boundary
 
@@ -137,6 +162,6 @@ remain explicit blockers.
 
 ## Publication Boundary
 
-Checkpoint 2 and the exact H9 digests are acknowledged. W09 assembly and local
-qualification are authorized and recorded. Package publication, `latest`
-promotion, and closeout remain explicitly owner-gated.
+Checkpoint 2 and the replacement H9 dispatch are authorized and recorded. W09
+replacement assembly and local qualification are authorized. Package
+publication, `latest` promotion, and closeout remain explicitly owner-gated.

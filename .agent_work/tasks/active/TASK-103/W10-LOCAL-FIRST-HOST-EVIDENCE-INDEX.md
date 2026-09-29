@@ -1,16 +1,19 @@
 # Task-103 W10 Local First-Host Evidence Index
 
-**Recorded**: 2026-09-28
+**Recorded**: 2026-09-28; updated 2026-09-29
 **Host ID**: `FIRST-HOST-LOCAL`
 **Scope**: Same-machine first-host rehearsal only; this is not the independent
 host required for full W10 acceptance.
-**Verdict**: `FAIL` for the frozen candidate because cancellation did not
-recover to a successful next request without relaunch. The qualified subset is
-recorded below.
+**Verdict**: `INCOMPLETE` for W10. The later frozen `rc3` qualified subset
+passed the recorded first-host lifecycle, reboot, Docker CPU provider/TLS, and
+Google cancel-then-next cells, while the earlier pre-`rc3` package failed
+cancellation recovery as preserved below. The `rc3` artifacts predate PR #92
+and PR #93, so affected cells require repetition on new immutable images and
+replacement packages before a final candidate verdict.
 **Publication state**: No package was published and no `latest` tag was
 promoted.
 
-## Frozen Inputs
+## Superseded Pre-`rc3` Frozen Inputs
 
 - CPU control ZIP SHA-256:
   `02f191eade141ad06251f2611892fe12064eb84601ebd39010aedf8115d98c79`
@@ -159,6 +162,15 @@ repeat the actual managed-network dry-run/apply path before candidate freeze.
 
 ### W10-DCPU-002 cancellation readiness
 
+**Historical mechanism note**: This subsection records an interim local
+validation overlay that was not merged. It used a bounded server-side wait and
+therefore observed abort HTTP `200` after the slot was released. PR #93,
+subsequently merged as `fba9dcb`, supersedes that mechanism with a non-blocking
+HTTP `202` response while the slot is held and progress polling tied to the
+actual admission lock. The evidence below qualifies only the interim
+reproduction; the merged behavior requires repetition on new immutable images
+and replacement packages.
+
 - `/abort` now signals cancellation and waits up to 60 seconds for the shared
   detection slot. It returns HTTP `200` with `retryReady=true` only after the
   slot is released; a bounded timeout returns HTTP `202` with
@@ -233,3 +245,184 @@ Its live `/api/health` response is `ok`; asset-light readiness is the expected
 `setup_required` state. The test-owned container was stopped after validation.
 The correction still requires reviewed merge and new immutable tags; the
 blocked `rc2` tags must never be packaged or promoted.
+
+## Post-PR #90 `rc3` Replacement Qualification
+
+**Recorded**: 2026-09-28
+**Scope**: Replacement images and exact control packages on
+`FIRST-HOST-LOCAL`; first-host Docker CPU live-provider repetition is complete.
+**Interim verdict**: `PASS` for image security, package integrity, four-profile
+startup, exact identity, device selection, volume-preserving relaunch, managed
+TLS repair, live Google/Azure detection, and Google cancel-then-next recovery.
+This is not a complete W10 or release-ready verdict.
+
+PR [#90](https://github.com/J-Schulein/TowerScout/pull/90) removed only the
+unnecessary runtime `libgdal-dev` dependency and merged as
+`7a5eedd8c6d3d6f300f320de69646f61da64c7ae`. Focused release/runtime tests,
+strict agent-work validation, a production-argument CPU build, live health,
+geospatial imports, and package exclusion of both `libgdal-dev` and
+`linux-libc-dev` passed before merge. Exact-head CI and the automated review
+were green.
+
+### Immutable images and G10
+
+| Flavor | Run | Exact digest | G10 result |
+| --- | --- | --- | --- |
+| CPU | [36483117066](https://github.com/J-Schulein/TowerScout/actions/runs/36483117066) | `sha256:a84201cec5704e35e0e7e5e05ca96aebeebb976ddeb89c88ac3145776bc1ba88` | PASS: 0 new, 245 resolved |
+| CUDA 12.8 | [36483119457](https://github.com/J-Schulein/TowerScout/actions/runs/36483119457) | `sha256:6c54725b63cc8b66c996bc6d32d3e6714aada5fb51d07d840b7895dc70041fe5` | PASS: 0 new, 245 resolved |
+
+Both dispatches used `push_latest=false`; exact-digest scan, SBOM, delta, and
+written-disposition artifacts completed successfully. The scan artifact hashes
+match those declared in the delta reports.
+
+### Replacement control packages
+
+- CPU control ZIP SHA-256:
+  `0845a71a4b71ada66d9ba0be0ea71c500c1b0127317beff73af3e38ffbc2576b`
+- CUDA control ZIP SHA-256:
+  `d558db674c964c3a7cf47e661725157e59e7442a96e442ed02e9ff849ee5dcab`
+- Shared asset ZIP SHA-256:
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`
+- Shared asset ZIP length: `800655295` bytes.
+
+Outer sidecars, all internal checksums, manifest identities, required
+documentation/notices/helpers, and forbidden-content checks passed. No package
+was published.
+
+### First-host four-profile results
+
+| Engine/profile | Port | Result |
+| --- | ---: | --- |
+| Docker CPU | 5221 | PASS: healthy, assets `ok`, device `cpu`, exact CPU digest, eight volumes retained across stop/relaunch |
+| Docker CUDA | 5222 | PASS: healthy, assets `ok`, device `cuda`, exact CUDA digest, real `sm_120` CUDA kernel, eight volumes retained across stop/relaunch |
+| Podman CPU | 5223 | PASS: rootless Podman 6.0.2, approved relative provider from a spaced path, device `cpu`, exact CPU digest, eight volumes retained across stop/relaunch |
+| Podman CUDA | 5224 | PASS: rootless Podman 6.0.2 with NVIDIA CDI, device `cuda`, exact CUDA digest, real `sm_120` CUDA kernel, eight volumes retained across stop/relaunch |
+
+Readiness is `setup_required` only because the fresh replacement volumes have
+no provider credentials. The Docker CPU session on port 5221 is reserved for
+interactive Google/Azure configuration and managed-TLS repetition. Credentials
+will not be read, copied from the superseded volume, or retained in evidence.
+
+### Replacement managed-network TLS repetition
+
+- Keyless Google TLS probe before repair: `tls_ca_untrusted`; Azure: `tls_ok`.
+- The generated Google repair command included the active `-Port 5221`.
+- Sanitized dry-run: three CA candidates, one unambiguous top candidate, no
+  mutation, and the emitted apply command retained port 5221.
+- Apply: PASS; the helper verified Google with the imported bundle, retained
+  port 5221, and did not enable insecure TLS.
+- The documented explicit stop/start activated the persistent combined bundle
+  at `/app/webapp/config/certs/towerscout-ca-bundle.pem` for both Requests and
+  OpenSSL. Subsequent keyless Google and Azure probes both returned `tls_ok`.
+- Container health, exact CPU digest, port 5221, assets, and all eight named
+  volumes remained intact.
+
+Verdict for W10-DCPU-001 on the replacement package: `PASS`. As accepted in
+PR #89 review, an explicit launch port is process-scoped rather than persisted
+to the package `.env`; lifecycle commands must continue to include `-Port 5221`.
+
+### Replacement live-provider repetition
+
+**Recorded**: 2026-09-29
+
+The fresh Docker CPU package remained on port `5221`, exact CPU digest
+`sha256:a84201cec5704e35e0e7e5e05ca96aebeebb976ddeb89c88ac3145776bc1ba88`,
+with assets `ok`, readiness `ready`, repaired TLS verification enabled, and all
+eight named volumes attached. Both providers were configured through the UI;
+no credential value was read or retained.
+
+| Provider/run | Result | Safe observations | Evidence SHA-256 |
+| --- | --- | --- | --- |
+| Google normal | `PASS` | Estimate HTTP 200, one tile, eight detections and addresses, eight list entries, four address groups, five visible overlays | `b863a1bba2da1be8450cc8e6a29e1a5ebb8ee27a4fb9cfa85475587096f36ae6` |
+| Google cancel then immediate next request | `PASS` | Cancel returned HTTP 202 while readiness was pending; progress was populated before cancel and hidden only after readiness; zero post-cancel detections; the immediate next request completed in 3.36 seconds with the same eight-detection result | `4a1629023c312b4d9645a4d951e823fb97f4b19e3dc028e0f57840426bf898f2` |
+| Azure normal | `PASS` | Estimate HTTP 200, one tile, 14 detections and addresses, 14 list entries, six address groups, nine visible overlays; all Azure initialization milestones true | `02644704c62375f9cb7bf71ba16041d345530f9c81e4bc4d96b820fa0fe07aa9` |
+
+The accepted fixture SHA-256 remained
+`fd6771ed3aa30a44c5bedb7575ed7f164896e496292fae29ac1da4bb9638d715`.
+The final ignored sanitized-runner SHA-256 was
+`ac8fa29d19225b1428477c1e9f402841daf0076e9f2f966b25d0ede4909e2ca7`.
+The runner retained only status/timing/count/boolean fields and coarse error
+categories; it disabled screenshots and omitted provider URLs, payloads,
+response bodies, console text, credentials, AOI coordinates, local paths, and
+machine hostnames.
+
+Two initial Azure attempts timed out before provider initialization and are not
+acceptance evidence. Investigation showed the stock smoke harness considered
+the provider-radio insertion sufficient for readiness even though default-
+provider startup and switch-handler attachment were still in progress. The
+ignored wrapper was corrected to wait for a settled, fully initialized default
+provider and an idle switch manager before selecting Azure. Azure then passed
+twice; the second passing run above is the accepted double-check.
+
+The accepted Azure run recorded no page, authentication, rate-limit,
+initialization, drawing, search, or geocoding errors. Its only HTTP failure was
+the same-origin missing favicon (`404`). Three provider-labelled browser-console
+events remained unclassified external SDK noise; they had no matching network
+failure or functional effect and are retained as a visible residual rather
+than suppressed.
+
+Verdict for W10-DCPU-002 on the replacement package: `PASS`. The real Google
+cancel path did not expose an unsafe retry, and the immediate next request
+succeeded without relaunch.
+
+### Replacement post-reboot persistence
+
+**Recorded**: 2026-09-29
+
+Windows last-boot time was `2026-09-29T09:00:02.5000000-04:00`, establishing a
+real reboot boundary. Docker Desktop was available after boot and
+automatically restored the Docker CPU and CUDA containers. The retained
+rootless Podman machine was running, but both retained Podman package
+containers were stopped and required an explicit manual start; no container or
+volume was recreated or removed.
+
+| Engine/profile | Post-boot observation | Result |
+| --- | --- | --- |
+| Docker CPU / `5221` | Auto-restored healthy; exact CPU digest; assets/config `ok`; selected CPU; both providers configured; default Google; zero recovery items | `PASS` |
+| Docker CUDA / `5222` | Auto-restored healthy; exact CUDA digest; assets `ok`; selected CUDA; setup remains required only because this isolated profile has no provider credentials | `PASS` for infrastructure persistence |
+| Podman CPU / `5223` | Existing container manually started healthy on the retained rootless machine; exact CPU digest; assets `ok`; selected CPU; setup remains required only because this isolated profile has no provider credentials | `PASS` for documented manual recovery |
+| Podman CUDA / `5224` | Existing container manually started healthy on the retained rootless machine; exact CUDA digest; assets `ok`; selected CUDA; setup remains required only because this isolated profile has no provider credentials | `PASS` for documented manual recovery |
+
+All four ports remained loopback-bound and each profile retained exactly eight
+named volumes. Docker and Podman CUDA each completed a real matrix kernel with
+torch `2.10.0+cu128`, CUDA build `12.8`, capability `sm_120`, and finite output.
+
+On Docker CPU, the persistent combined CA bundle remained present at the
+package path, `REQUESTS_CA_BUNDLE` and `SSL_CERT_FILE` both selected it, and no
+checked verification-disable flag was active. Keyless Google and Azure probes
+both returned `tls_ok` (Azure's expected unauthenticated HTTP `401` still
+establishes trusted TLS reachability).
+
+| Post-reboot provider run | Result | Safe observations | Evidence SHA-256 |
+| --- | --- | --- | --- |
+| Google normal | `PASS` | Estimate HTTP 200, one tile, eight detections and addresses, eight list entries, four address groups, five visible overlays | `811db8a3fc24ba13dd2a65db715f48aefe8b0a0970e118017c9dadeeed7b7b17` |
+| Azure normal | `PASS` | Estimate HTTP 200, one tile, 14 detections and addresses, 14 list entries, six address groups, nine visible overlays; all Azure initialization milestones true | `65ba9b9b966cdffa8be2fbdc009ce5078958375a05fae7f52540bab179e7c1fc` |
+
+The known-good ignored sanitized runner remained byte-identical at SHA-256
+`ac8fa29d19225b1428477c1e9f402841daf0076e9f2f966b25d0ede4909e2ca7`.
+An optional attempt to extend it for review/export and controlled-error proof
+produced no acceptance artifact and left two test-owned Node runners; both
+runners were stopped, the known-good runner bytes were restored, and no result
+from that attempt is claimed. Those cells remain `not_run` below.
+
+### Remaining replacement cells
+
+- Fresh-`rc3` managed TLS repair: `PASS`.
+- Fresh-`rc3` Google normal, Google cancel-then-next, and Azure normal: `PASS`.
+- First-host reboot infrastructure persistence: `PASS` for all four profiles;
+  Docker auto-restored and Podman used the documented manual container start.
+- Docker CPU post-reboot Google and Azure normal requests: `PASS`.
+- Docker CPU review/export and controlled recoverable error: `not_run`.
+- Docker CUDA Google/Azure, review/export, cancellation, controlled recoverable
+  error, and next-request success: `not_run`; its isolated volume has no
+  provider credentials.
+- Podman CPU Google/Azure, review/export, cancellation, controlled recoverable
+  error, and next-request success: `not_run`; its isolated volume has no
+  provider credentials.
+- Podman CUDA Google/Azure, review/export, cancellation, controlled recoverable
+  error, and next-request success: `not_run`; its isolated volume has no
+  provider credentials.
+- Managed endpoint policy/signing: `blocked` pending the actual policy and
+  owner decision.
+- Independent-host repetition: `blocked` pending an independent computer.
+- Package publication and `latest` promotion: owner-gated and not performed.

@@ -1,8 +1,12 @@
 # TASK-091: Owner-Runnable Release Qualification
 
-**Status**: AT_RISK - first-host Docker CPU package and standalone real-model
-proof pass; combined-flow fixture, provider, compatible CUDA host, rootless
-Podman, managed-endpoint, and independent-host evidence remain
+**Status**: AT_RISK - exact `rc3` CPU/CUDA W05, first-host Docker/Podman
+CPU/CUDA package lifecycle and post-reboot persistence, plus Docker CPU live-
+provider, managed-TLS, and cancel/recovery cells pass as retained evidence.
+Those artifacts predate the PR #92/#93 lifecycle fixes, so replacement package
+qualification is required. Remaining profile provider/recovery/review-export,
+controlled-error, managed-endpoint policy/signing, and independent-host
+evidence remain
 **Priority**: CRITICAL
 **Type**: C (Release Qualification / Handoff)
 **Owner**: Release owner; active agent executes bounded preparation and checks
@@ -51,7 +55,7 @@ being inventoried before any readiness claim.
 
 ### 2026-09-22 - W01 First-Host Baseline Attempt
 
-**Host**: `win-7035fbbeab98`; Windows 11 Enterprise build 26200; 31.5 GiB RAM;
+**Host**: `FIRST-HOST-LOCAL`; Windows 11 Enterprise build 26200; 31.5 GiB RAM;
 266.4 GiB free; Windows PowerShell 5.1; NVIDIA RTX PRO 500 Blackwell Laptop GPU
 (driver 596.71, 6113 MiB). Docker Desktop 29.7.2 and Podman 6.0.2 were running.
 
@@ -343,3 +347,46 @@ task's package, provider, persistence, recovery, and independent-host gates
 remain unchanged. The merged PR #83 combined-flow runner is the sole current
 ML acceptance contract; the historical external HTTP detection harness is
 retired for this purpose. Publication still waits for Task-103 Checkpoint 2.
+
+### 2026-09-29 - Task-103 `rc3` W05 And Live-Provider Reconciliation
+
+The exact replacement `rc3` CPU digest
+`sha256:a84201cec5704e35e0e7e5e05ca96aebeebb976ddeb89c88ac3145776bc1ba88`
+and CUDA digest
+`sha256:6c54725b63cc8b66c996bc6d32d3e6714aada5fb51d07d840b7895dc70041fe5`
+each passed all six W05 phases. Gates v3 passed every applicable absolute gate;
+the CUDA combined phase observed both YOLO and EfficientNet on `cuda:0`, and
+the CPU phase observed both on CPU. Exact run/verdict hashes and host-neutral
+timestamped custody identifiers are recorded in the Task-103 W09 evidence
+index.
+
+The fresh Docker CPU package also passed managed-TLS repair, Google and Azure
+normal detections, and Google cancel-then-next recovery without retaining
+credential values, provider URLs, payloads, screenshots, or AOI coordinates.
+The remaining release blockers are the other three profiles' provider/
+recovery/review-export workflows, controlled-error checks in every profile,
+Docker CPU review/export, managed-endpoint policy/signing, and independent-host
+repetition. Package publication and `latest` promotion remain owner-gated.
+
+### 2026-09-29 - First-host reboot persistence
+
+Windows boot time established a real reboot boundary. Docker automatically
+restored both exact-digest profiles; the retained rootless Podman machine was
+running, while its two retained package containers required the documented
+manual start. All four profiles returned healthy on loopback ports `5221`-
+`5224`, retained exactly eight named volumes each, selected the required CPU or
+CUDA device, and reported the expected immutable digest. Both CUDA profiles
+then completed a real torch 2.10.0+cu128 `sm_120` kernel.
+
+The configured Docker CPU profile retained both provider-configured flags,
+default Google selection, assets, the repaired CA bundle, both CA environment
+bindings, and enabled TLS verification. Keyless Google and Azure probes both
+returned `tls_ok`. Sanitized post-reboot Google and Azure detections passed
+with evidence hashes recorded in the W10 index. No credential value, provider
+URL, request payload, response body, screenshot, AOI coordinate, local path,
+or hostname is retained.
+
+This closes the first-host reboot persistence subset only. It does not convert
+the unconfigured Docker CUDA or Podman profiles' provider workflows into
+passes, and it does not satisfy review/export, controlled-error, managed-
+endpoint, or independent-host acceptance.

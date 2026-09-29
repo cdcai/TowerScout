@@ -1,12 +1,99 @@
 # Task-103 W09 Candidate Evidence Index
 
-**Recorded**: 2026-09-28  
-**Verdict**: Artifact assembly PASS; first-host four-profile package startup
-PASS; overall release remains AT_RISK pending the open acceptance cells below.  
+**Recorded**: 2026-09-28; updated 2026-09-29
+**Verdict**: Replacement `rc3` artifact assembly PASS; exact-digest CPU/CUDA
+W05 PASS; first-host four-profile package startup and volume-preserving
+relaunch PASS; overall release remains AT_RISK pending the open acceptance
+cells below.
 **Publication state**: Control ZIPs and the asset ZIP are assembled locally but
 not published. No `latest` tag was promoted.
 
-## Frozen Candidate Inventory
+PR #92 (`cbb574f`) and PR #93 (`fba9dcb`) merged after these artifacts were
+assembled. The frozen `rc3` identities remain retained qualification evidence,
+but they do not contain those fixes and are not the final candidate. New
+immutable images and control ZIPs require affected W09/W10 repetition.
+
+## Replacement `rc3` Frozen Candidate Inventory
+
+- Source: `7a5eedd8c6d3d6f300f320de69646f61da64c7ae` (PR #90 merge).
+- CPU image:
+  `ghcr.io/j-schulein/towerscout:v0.1.3-rc3-cpu@sha256:a84201cec5704e35e0e7e5e05ca96aebeebb976ddeb89c88ac3145776bc1ba88`
+- CUDA image:
+  `ghcr.io/j-schulein/towerscout:v0.1.3-rc3-cuda128@sha256:6c54725b63cc8b66c996bc6d32d3e6714aada5fb51d07d840b7895dc70041fe5`
+- CPU control ZIP SHA-256:
+  `0845a71a4b71ada66d9ba0be0ea71c500c1b0127317beff73af3e38ffbc2576b`
+- CUDA control ZIP SHA-256:
+  `d558db674c964c3a7cf47e661725157e59e7442a96e442ed02e9ff849ee5dcab`
+- Shared asset ZIP SHA-256:
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`
+
+Both exact-digest dispatches used `push_latest=false`. The accepted-baseline
+G10 result was 396 baseline findings, 151 candidate findings, zero new, and
+245 resolved for each flavor.
+
+| Flavor | Publish run | Scan SHA-256 | SBOM SHA-256 | Delta SHA-256 | Disposition SHA-256 | Components |
+| --- | --- | --- | --- | --- | --- | ---: |
+| CPU | [run 36483117066](https://github.com/J-Schulein/TowerScout/actions/runs/36483117066) | `b4a8e5d39ba603ad6e509459cc8d2534cbcc773a1f1cadef3b4e81753ea4d432` | `ca45a7c93f292374278e51a58656f78cbbc5358f637bcb2e9ed4162bdcaae7a7` | `81ed7f788c2ba161b2a078cd56bd57b65db8458982355f0f3057ccdad787f2b0` | `80e2df0d56612fffc2f09affd58118175de2fd06cd2da7d653e51be1bd4db00a` | 340 |
+| CUDA 12.8 | [run 36483119457](https://github.com/J-Schulein/TowerScout/actions/runs/36483119457) | `bd813c5f8825090bb51765b55db503c57a52fc405061e5389244c91bfc684f87` | `ea96b43a30604d8af6ab50cf275a131481237ab47874cb007474e85e5bd4bd78` | `f132d95d2675c98dc65a6c72ab63c55a91c09f99f37afc77d5ded33e7ede9585` | `46e0d3ef0fa388f87de4b6449c3d4ed8bca8d0a5c030cddf5a066ffd5b737234` | 358 |
+
+Package double-checks passed for both control ZIPs: the outer sidecars match;
+each ZIP has 72 files and all 71 internal `SHA256SUMS.txt` entries verify;
+the manifests bind the exact source, flavor, image digest, asset filename, and
+asset digest; required notices and recovery/TLS helpers are present; and no
+credential file, model/data payload, log, session, cache, dependency tree, or
+user-specific path was found.
+
+## Replacement `rc3` First-Host Qualification
+
+| Host | Engine | Package | Device | Result |
+| --- | --- | --- | --- | --- |
+| `FIRST-HOST-LOCAL` | Docker Desktop | CPU | CPU | PASS: exact ZIP/asset verification, assets `ok`, device `cpu`, exact digest, eight volumes retained across stop/relaunch on port 5221 |
+| `FIRST-HOST-LOCAL` | Docker Desktop | CUDA 12.8 | NVIDIA | PASS: exact ZIP/asset verification, assets `ok`, device `cuda`, exact digest, eight volumes retained across stop/relaunch on port 5222 |
+| `FIRST-HOST-LOCAL` | rootless Podman 6.0.2 | CPU | CPU | PASS: spaced-path relative approved provider, assets `ok`, device `cpu`, exact digest, eight volumes retained across stop/relaunch on port 5223 |
+| `FIRST-HOST-LOCAL` | rootless Podman 6.0.2 | CUDA 12.8 | NVIDIA | PASS: spaced-path relative approved provider, assets `ok`, device `cuda`, exact digest, eight volumes retained across stop/relaunch on port 5224 |
+
+Both CUDA profiles report torch `2.10.0+cu128`, CUDA build `12.8`, cuDNN
+`91002`, capability `sm_120`, and an architecture list containing `sm_120`.
+Real CUDA tensor kernels completed on the NVIDIA device under both engines.
+The Podman package-local provider required supported Python 3.12; the default
+host Python 3.14 could not install pinned PyYAML 6.0.2 because no matching
+binary wheel exists. The documented Python prerequisite remains material.
+
+All four sessions remain isolated under release-specific project names. Their
+volumes are preserved; the Docker CPU session remains available for the fresh
+`rc3` provider/TLS smoke.
+
+## Replacement `rc3` Exact-Digest W05 Qualification
+
+The automated review on PR #91 correctly found that the initial index bound
+the six-phase W05 evidence only to the superseded `rc1` digests. The four `rc3`
+package containers and the Task-103 rollback container were therefore stopped
+without deleting volumes, and the exact `rc3` CPU and CUDA images were run
+through the complete W05 harness sequentially. All five containers were then
+restored healthy with their volumes intact.
+
+Both runs used the frozen RGB fixture manifest SHA-256
+`c72b65cca35b10ed96a45b1c609f184ce3a2df93a9a100855bc9745abb2c9447`
+and gates v3 SHA-256
+`1dd6f7f105c62e3d741999f02c198ae69858d012d5769605a0817cc9dcd8240c`.
+The raw directory names retain their original host label outside the repo;
+the host-neutral identifiers below preserve the timestamp and remaining join
+key needed for evidence custody.
+
+| Profile | Host-neutral raw-run identifier | Six phases | Device proof | `run.json` SHA-256 | Verdict SHA-256 |
+| --- | --- | --- | --- | --- | --- |
+| CPU | `20260929T114520Z_FIRST-HOST-LOCAL_docker_C_cpu_torch2-10-0_7a5eedd8c6d3_rc3-exact-cpu` | PASS: identity, startup, synthetic, combined, three-run 100-tile memory, injection | YOLO and EfficientNet observed on CPU; positive secondary candidates | `755644b58c6c94be2b85492c14aaeaf40c3004c62668e51f5b6bd436f47879c2` | `46d3952c47df9c51f85b54aa6cd856c182280a16003f1e0430224803f7473915` |
+| CUDA 12.8 | `20260929T121453Z_FIRST-HOST-LOCAL_docker_C_cuda128_torch2-10-0_7a5eedd8c6d3_rc3-exact-cuda` | PASS: identity, startup, synthetic, combined, three-run 100-tile memory, injection | YOLO and EfficientNet observed on `cuda:0`; positive secondary candidates | `7c270c1d64e3649cadabf9c356f5d390167089d6f6669e4ac9de7a30449c21c8` | `92dc67679aff874f89eecc2ef76fcf7dafb63c09a51ed67822d4007966a4151e` |
+
+The CPU comparator passed G1, G3, G4, G6, G7, G8, G11, and G12; G2 and G5
+were correctly not applicable to CPU. The CUDA comparator, using the exact
+`rc3` CPU run as its counterpart, passed G1-G8, G11, and G12. G9 was not
+applicable because this exact-candidate confirmation was not an interleaved
+same-host relative comparison. G10 was not applicable inside W05; the exact-
+digest H9 scan delta above separately passed with zero new HIGH/CRITICAL
+findings. Both comparator verdicts were overall `pass`.
+
+## Superseded `rc1` Candidate Inventory
 
 - Control-package source: `99de5595b0d98b67c24909c1f2712f72d8714ab3`
   (PR #87 merge; package-only Podman spaced-path correction).
@@ -30,10 +117,10 @@ not published. No `latest` tag was promoted.
 - RGB fixture manifest SHA-256:
   `c72b65cca35b10ed96a45b1c609f184ce3a2df93a9a100855bc9745abb2c9447`
 
-The earlier control ZIPs in the rehearsal output directory are superseded and
-are not release candidates.
+The `rc1` images and control ZIPs below remain immutable historical evidence
+but are superseded and are not release candidates.
 
-## Security Artifacts
+## Superseded `rc1` Security Artifacts
 
 Both exact-digest H9 dispatches used `push_latest=false` and passed the
 accepted-baseline HIGH/CRITICAL delta gate with zero new findings.
@@ -46,7 +133,7 @@ accepted-baseline HIGH/CRITICAL delta gate with zero new findings.
 The written dependency disposition remains in
 `DEPENDENCY-SECURITY-DISPOSITION.md`.
 
-## Package Integrity
+## Superseded `rc1` Package Integrity
 
 - Both control ZIP sidecars match their archives.
 - Each ZIP contains 72 files; every `SHA256SUMS.txt` entry verifies.
@@ -60,7 +147,7 @@ The written dependency disposition remains in
   runtime token-handling source; no packaged credential value was found.
 - The shared asset ZIP sidecar matches its 800,655,295-byte archive.
 
-## First-Host Qualification
+## Superseded `rc1` First-Host Qualification
 
 Host IDs are neutral evidence identifiers. Raw outputs remain under the
 authorized external evidence root for `FIRST-HOST-LOCAL`; no user-specific path
@@ -100,11 +187,18 @@ PR merged.
 
 These items prevent a release-ready or full W09/W10 acceptance claim:
 
-- Live Google and Azure provider workflows were not run because credentials
-  were not supplied to this qualification session.
+- Docker CPU managed-TLS repair, Google/Azure normal detection, and Google
+  cancel-then-next recovery passed on the frozen `rc3` package; credential
+  values were not read or retained in evidence. These affected cells require
+  repetition on the post-PR #92/#93 replacement package.
+- Docker CPU review/export and controlled-error cells remain `not_run`.
+- Docker CUDA, Podman CPU, and Podman CUDA provider/recovery/review-export and
+  controlled-error cells remain `not_run`.
 - Managed-endpoint/policy and any required signing decision remain owner or
   environment dependent.
-- A real host reboot persistence check has not been recorded for these bytes.
 - Independent-host W10 reproduction is not complete.
 - Control-package publication and any `latest` promotion require explicit
   owner authorization.
+
+First-host reboot persistence for these frozen `rc3` bytes is recorded as
+`PASS` in the W10 evidence index and is not an open cell.

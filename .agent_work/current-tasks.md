@@ -1,7 +1,7 @@
 # Current Tasks - Windows Deployment Delivery Week
 
 **Sprint Period**: September 22-September 28, 2026
-**Last Updated**: September 28, 2026
+**Last Updated**: September 29, 2026
 **Focus**: Qualify a dependable, downloadable Windows 11 application from
 accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Day 2 has moved
 the evidence-selected W03-W08 corrections through focused review and merge.
@@ -9,9 +9,9 @@ The Task-087 launcher redesign is preserved in immutable archive tags and a
 final disposition record, but PRs #64/#67 are closed without merge and are not
 release gates.
 
-**Accepted Control-Package Source**: `99de5595b0d98b67c24909c1f2712f72d8714ab3`
+**Accepted Control-Package Source**: `7a5eedd8c6d3d6f300f320de69646f61da64c7ae`
 
-**Confirmed OCI Image Source**: `378b37fbe2422d23a1dc25655f4dbad1d47d5b5f`
+**Confirmed OCI Image Source**: `7a5eedd8c6d3d6f300f320de69646f61da64c7ae`
 **Authoritative Branch**: `main`
 **Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
@@ -40,12 +40,12 @@ release gates.
 
 ### **TASK-103: CUDA 12.8 Blackwell ML Runtime**
 
-**Status**: IN_PROGRESS - PR #89 merged as `95a3ccc`; the first replacement
-CPU/CUDA image dispatch is blocked by the exact-digest G10 gate on two newly
-disclosed HIGH findings in a development-only runtime dependency. The bounded
-dependency removal passes local build/import validation, but no replacement
-candidate or package is frozen pending review/merge, a new immutable dispatch,
-repeated qualification, reboot, policy/signing, and independent-host evidence
+**Status**: IN_PROGRESS - PR #92 merged as `cbb574f` and PR #93 merged as
+`fba9dcb`. The frozen `rc3` images and control ZIPs remain valid qualification
+evidence, but they predate both fixes and are not the final candidate. New
+immutable images and control ZIPs plus affected W09/W10 requalification are
+required. The other three profiles' provider/recovery/review-export cells,
+controlled-error checks, policy/signing, and independent-host evidence remain
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
 
@@ -78,10 +78,12 @@ Current scope:
 
 ### **TASK-091: Owner-Runnable Release Qualification**
 
-**Status**: AT_RISK - W09 exact-package Docker/Podman CPU/CUDA startup passes on
-the first host, and the exact image digests pass the W05 combined-model and
-memory harness. Live-provider, managed-endpoint, reboot, policy/signing, and
-independent-host runtime evidence remain
+**Status**: AT_RISK - W09 exact-package Docker/Podman CPU/CUDA startup and
+post-reboot persistence pass on the first host, and the exact image digests
+pass the W05 combined-model and memory harness. Docker CPU live-provider and
+cancel/recovery cells pass; remaining profile workflows, controlled-error,
+review/export, managed-endpoint policy/signing, and independent-host evidence
+remain
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-091-owner-runnable-release-qualification.md`
 
@@ -99,8 +101,8 @@ Current scope:
 ### **TASK-068: Windows Test Portability And Script Validation**
 
 **Status**: IN_PROGRESS - W02 merged as `8976222`; final W09 exact-package
-Docker/Podman setup, start, stop, relaunch, and named-volume checks pass on the
-first host; reboot and W10 repetition remain
+Docker/Podman setup, start, stop, relaunch, named-volume, and post-reboot checks
+pass on the first host; remaining W10 workflow repetition remains
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-068-windows-script-validation.md`
 
