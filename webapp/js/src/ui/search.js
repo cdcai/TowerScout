@@ -162,8 +162,9 @@
   }
 
   function isCancellationResolved(progressState) {
-    return progressState?.status === 'idle'
+    const terminal = progressState?.status === 'idle'
       || TERMINAL_PROGRESS_STATUSES.has(progressState?.status);
+    return terminal && progressState?.retryReady === true;
   }
 
   async function maybePollDetectionProgress(force = false) {
@@ -813,7 +814,7 @@
         return;
       }
 
-      if (response.ok && (result === null || result.retryReady === true)) {
+      if (response.ok && result?.retryReady === true) {
         resolvePendingCancellation('Detection request cancelled.');
         return;
       }

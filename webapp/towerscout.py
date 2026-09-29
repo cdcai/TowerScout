@@ -211,6 +211,10 @@ engines = {}
 engine_default = None
 engine_lock = threading.Lock()
 detection_job_lock = threading.Lock()
+CANCELLATION_PENDING_MESSAGE = (
+    'Cancellation is still pending while the current model step finishes. '
+    'TowerScout will enable detection when the run stops.'
+)
 
 exit_events = ExitEvents()
 secondary_en = None
@@ -2716,6 +2720,10 @@ def get_detection_progress():
     progress_state = _serialize_detection_progress_state(
         _get_detection_progress_state(session_id)
     )
+    # A terminal progress record is published before get_objects() returns and
+    # releases the process-wide admission lock.  Keep retry readiness tied to
+    # the actual shared slot so clients cannot race that final cleanup window.
+    progress_state['retryReady'] = not detection_job_lock.locked()
     response = jsonify(progress_state)
     response.headers['Cache-Control'] = 'no-store'
     return response
@@ -2727,29 +2735,37 @@ def abort():
     session_id = _get_session_run_id()
     api_logger.info(f"Aborting session {session_id}")
     run_state = _mark_detection_run_cancel_requested(session_id)
+    retry_ready = not detection_job_lock.locked()
     if run_state is None:
-        return jsonify({
+        payload = {
             'status': 'idle',
-            'retryReady': True,
-        })
+            'retryReady': retry_ready,
+        }
+        if retry_ready:
+            return jsonify(payload)
+        payload['message'] = CANCELLATION_PENDING_MESSAGE
+        return jsonify(payload), 202
 
     run_status = run_state.get('status', 'cancel_requested')
     if run_status in {'completed', 'cancelled', 'error'}:
+        if retry_ready:
+            return jsonify({
+                'status': run_status,
+                'retryReady': True,
+            })
         return jsonify({
             'status': run_status,
-            'retryReady': True,
-        })
+            'retryReady': False,
+            'message': CANCELLATION_PENDING_MESSAGE,
+        }), 202
 
     if run_state.get('run_token'):
         exit_events.signal(run_state['run_token'])
 
     return jsonify({
-        'status': 'cancel_requested',
+        'status': run_status,
         'retryReady': False,
-        'message': (
-            'Cancellation is still pending while the current model step finishes. '
-            'TowerScout will enable detection when the run stops.'
-        ),
+        'message': CANCELLATION_PENDING_MESSAGE,
     }), 202
 
 # detection route

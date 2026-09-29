@@ -27,7 +27,7 @@ function load(fetchImplementation) {
     AbortController,
     CONFIG: {
       SECS_PER_TILE_DEFAULT: 1,
-      DETECTION_PROGRESS_POLL_INTERVAL_MS: 1000,
+      DETECTION_PROGRESS_POLL_INTERVAL_MS: 0,
       PROGRESS_UPDATE_INTERVAL_MS: 1000
     },
     Date,
@@ -102,6 +102,7 @@ async function testReadyCancellationUnlocksProgressUi() {
 
 async function testPendingCancellationKeepsProgressUiBlocked() {
   let progressStatus = 'cancel_requested';
+  let retryReady = false;
   const harness = load(async url => {
     if (url === '/abort') {
       return response(202, {
@@ -111,6 +112,7 @@ async function testPendingCancellationKeepsProgressUiBlocked() {
     }
     return response(200, {
       status: progressStatus,
+      retryReady,
       phase: progressStatus,
       title: progressStatus === 'cancelled' ? 'Detection cancelled' : 'Cancelling detection',
       detail: progressStatus === 'cancelled' ? 'The run stopped.' : 'Waiting for model work.'
@@ -129,16 +131,20 @@ async function testPendingCancellationKeepsProgressUiBlocked() {
 
   progressStatus = 'cancelled';
   await harness.runProgressTick();
+  assert.strictEqual(harness.elements.progress_div.style.display, 'flex');
+
+  retryReady = true;
+  await harness.runProgressTick();
   assert.strictEqual(harness.elements.progress_div.style.display, 'none');
 }
 
-async function testSuccessfulNonJsonCancellationResponseUnlocksUi() {
+async function testSuccessfulNonJsonCancellationResponseStaysPending() {
   const harness = load(async () => response(200, null, { invalidJson: true }));
 
   await harness.cancelRequest();
 
-  assert.strictEqual(harness.elements.progress_div.style.display, 'none');
-  assert.ok(harness.loggerMessages.includes('Detection request cancelled.'));
+  assert.strictEqual(harness.elements.progress_div.style.display, 'flex');
+  assert.strictEqual(harness.elements.progress_status_title.textContent, 'Cancellation still pending');
 }
 
 async function testOlderCancelResponseCannotRestorePendingState() {
@@ -172,7 +178,7 @@ async function testOlderCancelResponseCannotRestorePendingState() {
 
 testReadyCancellationUnlocksProgressUi()
   .then(testPendingCancellationKeepsProgressUiBlocked)
-  .then(testSuccessfulNonJsonCancellationResponseUnlocksUi)
+  .then(testSuccessfulNonJsonCancellationResponseStaysPending)
   .then(testOlderCancelResponseCannotRestorePendingState)
   .then(() => {
     console.log('Detection cancellation recovery contract PASSED');
