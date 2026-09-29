@@ -43,8 +43,9 @@ release gates.
 **Status**: IN_PROGRESS - PR #90 merged as `7a5eedd`; replacement `rc3`
 CPU/CUDA images passed the exact-digest G10 gate with zero new findings, and
 new control ZIPs passed integrity plus first-host Docker/Podman CPU/CUDA
-startup and lifecycle checks. Fresh-package live-provider repetition, reboot,
-policy/signing, and independent-host evidence remain
+startup and lifecycle checks. Fresh-package Google/Azure detection and Google
+cancel-then-next recovery pass; reboot, policy/signing, and independent-host
+evidence remain
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
 
@@ -79,8 +80,9 @@ Current scope:
 
 **Status**: AT_RISK - W09 exact-package Docker/Podman CPU/CUDA startup passes on
 the first host, and the exact image digests pass the W05 combined-model and
-memory harness. Live-provider, managed-endpoint, reboot, policy/signing, and
-independent-host runtime evidence remain
+memory harness. First-host Docker CPU live-provider and cancel/recovery cells
+pass; managed-endpoint, reboot, policy/signing, and independent-host runtime
+evidence remain
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-091-owner-runnable-release-qualification.md`
 

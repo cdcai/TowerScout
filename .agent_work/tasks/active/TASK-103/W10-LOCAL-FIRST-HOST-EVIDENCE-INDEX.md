@@ -238,9 +238,10 @@ blocked `rc2` tags must never be packaged or promoted.
 
 **Recorded**: 2026-09-28
 **Scope**: Replacement images and exact control packages on
-`FIRST-HOST-LOCAL`; live-provider repetition is still in progress.
+`FIRST-HOST-LOCAL`; first-host Docker CPU live-provider repetition is complete.
 **Interim verdict**: `PASS` for image security, package integrity, four-profile
-startup, exact identity, device selection, and volume-preserving relaunch.
+startup, exact identity, device selection, volume-preserving relaunch, managed
+TLS repair, live Google/Azure detection, and Google cancel-then-next recovery.
 This is not a complete W10 or release-ready verdict.
 
 PR [#90](https://github.com/J-Schulein/TowerScout/pull/90) removed only the
@@ -308,11 +309,54 @@ Verdict for W10-DCPU-001 on the replacement package: `PASS`. As accepted in
 PR #89 review, an explicit launch port is process-scoped rather than persisted
 to the package `.env`; lifecycle commands must continue to include `-Port 5221`.
 
+### Replacement live-provider repetition
+
+**Recorded**: 2026-09-29
+
+The fresh Docker CPU package remained on port `5221`, exact CPU digest
+`sha256:a84201cec5704e35e0e7e5e05ca96aebeebb976ddeb89c88ac3145776bc1ba88`,
+with assets `ok`, readiness `ready`, repaired TLS verification enabled, and all
+eight named volumes attached. Both providers were configured through the UI;
+no credential value was read or retained.
+
+| Provider/run | Result | Safe observations | Evidence SHA-256 |
+| --- | --- | --- | --- |
+| Google normal | `PASS` | Estimate HTTP 200, one tile, eight detections and addresses, eight list entries, four address groups, five visible overlays | `b863a1bba2da1be8450cc8e6a29e1a5ebb8ee27a4fb9cfa85475587096f36ae6` |
+| Google cancel then immediate next request | `PASS` | Cancel returned HTTP 202 while readiness was pending; progress was populated before cancel and hidden only after readiness; zero post-cancel detections; the immediate next request completed in 3.36 seconds with the same eight-detection result | `4a1629023c312b4d9645a4d951e823fb97f4b19e3dc028e0f57840426bf898f2` |
+| Azure normal | `PASS` | Estimate HTTP 200, one tile, 14 detections and addresses, 14 list entries, six address groups, nine visible overlays; all Azure initialization milestones true | `02644704c62375f9cb7bf71ba16041d345530f9c81e4bc4d96b820fa0fe07aa9` |
+
+The accepted fixture SHA-256 remained
+`fd6771ed3aa30a44c5bedb7575ed7f164896e496292fae29ac1da4bb9638d715`.
+The final ignored sanitized-runner SHA-256 was
+`ac8fa29d19225b1428477c1e9f402841daf0076e9f2f966b25d0ede4909e2ca7`.
+The runner retained only status/timing/count/boolean fields and coarse error
+categories; it disabled screenshots and omitted provider URLs, payloads,
+response bodies, console text, credentials, AOI coordinates, local paths, and
+machine hostnames.
+
+Two initial Azure attempts timed out before provider initialization and are not
+acceptance evidence. Investigation showed the stock smoke harness considered
+the provider-radio insertion sufficient for readiness even though default-
+provider startup and switch-handler attachment were still in progress. The
+ignored wrapper was corrected to wait for a settled, fully initialized default
+provider and an idle switch manager before selecting Azure. Azure then passed
+twice; the second passing run above is the accepted double-check.
+
+The accepted Azure run recorded no page, authentication, rate-limit,
+initialization, drawing, search, or geocoding errors. Its only HTTP failure was
+the same-origin missing favicon (`404`). Three provider-labelled browser-console
+events remained unclassified external SDK noise; they had no matching network
+failure or functional effect and are retained as a visible residual rather
+than suppressed.
+
+Verdict for W10-DCPU-002 on the replacement package: `PASS`. The real Google
+cancel path did not expose an unsafe retry, and the immediate next request
+succeeded without relaunch.
+
 ### Remaining replacement cells
 
 - Fresh-`rc3` managed TLS repair: `PASS`.
-- Fresh-`rc3` Google normal, Google cancel-then-next, and Azure normal:
-  awaiting interactive credential entry.
+- Fresh-`rc3` Google normal, Google cancel-then-next, and Azure normal: `PASS`.
 - Reboot persistence: `not_run`.
 - Managed endpoint policy/signing: `blocked` pending the actual policy and
   owner decision.

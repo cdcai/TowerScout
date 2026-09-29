@@ -3,8 +3,8 @@
 **Status**: IN_PROGRESS - PR #90 merged as `7a5eedd`; immutable `rc3` CPU/CUDA
 images pass G10 with zero new findings and the replacement control ZIPs pass
 integrity plus first-host Docker/Podman CPU/CUDA startup and lifecycle checks.
-Fresh-package live-provider repetition, reboot, policy/signing, and independent-host
-evidence remain
+Fresh-package Google/Azure detection and Google cancel-then-next recovery pass;
+reboot, policy/signing, and independent-host evidence remain
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
@@ -120,8 +120,10 @@ weakening model correctness, device, security, persistence, or recovery gates.
   deleting any of the eight named volumes per profile.
 - [x] Repeat the managed-TLS cell on the fresh `rc3` Docker CPU package,
   including the non-default-port repair lifecycle and persistent trusted bundle.
-- [ ] Repeat the live-provider cells on the fresh `rc3` Docker CPU package,
-  then complete reboot, policy/signing, and independent-host cells.
+- [x] Repeat Google normal, Google cancel-then-next, and Azure normal live-
+  provider cells on the fresh `rc3` Docker CPU package without retaining
+  credentials, request payloads, provider URLs, or screenshots.
+- [ ] Complete reboot, policy/signing, and independent-host cells.
 
 ## Acceptance Boundary
 
