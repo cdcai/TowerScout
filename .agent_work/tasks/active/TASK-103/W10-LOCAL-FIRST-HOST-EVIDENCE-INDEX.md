@@ -1,16 +1,19 @@
 # Task-103 W10 Local First-Host Evidence Index
 
-**Recorded**: 2026-09-28
+**Recorded**: 2026-09-28; updated 2026-09-29
 **Host ID**: `FIRST-HOST-LOCAL`
 **Scope**: Same-machine first-host rehearsal only; this is not the independent
 host required for full W10 acceptance.
-**Verdict**: `FAIL` for the frozen candidate because cancellation did not
-recover to a successful next request without relaunch. The qualified subset is
-recorded below.
+**Verdict**: `INCOMPLETE` for W10. The later frozen `rc3` qualified subset
+passed the recorded first-host lifecycle, reboot, Docker CPU provider/TLS, and
+Google cancel-then-next cells, while the earlier pre-`rc3` package failed
+cancellation recovery as preserved below. The `rc3` artifacts predate PR #92
+and PR #93, so affected cells require repetition on new immutable images and
+replacement packages before a final candidate verdict.
 **Publication state**: No package was published and no `latest` tag was
 promoted.
 
-## Frozen Inputs
+## Superseded Pre-`rc3` Frozen Inputs
 
 - CPU control ZIP SHA-256:
   `02f191eade141ad06251f2611892fe12064eb84601ebd39010aedf8115d98c79`
