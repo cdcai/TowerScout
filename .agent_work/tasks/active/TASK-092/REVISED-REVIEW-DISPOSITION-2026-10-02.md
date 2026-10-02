@@ -69,9 +69,15 @@ release publication, image/package rebuild, or cdcai mutation.
 
 ## 2026-10-02 Validation Result
 
-- `91 passed`: Task-092, ADR-023, package-generation, and Flask documentation-
-  route tests, using a dedicated host temp directory because the managed
-  default pytest temp path has a known Windows ACL problem.
+- `100 passed`: the expanded Task-092, prior UAT follow-up, asset-import,
+  ADR-023, package-generation, and Flask documentation-route set, using a
+  dedicated host temp directory because the managed default pytest temp path
+  has a known Windows ACL problem.
+- The first pull-request CI run exposed two legacy assertions that still
+  required advanced TLS repair and the old UAT appendix in the beginner Quick
+  Start. The assertions now protect the final-user structure instead: the
+  Quick Start keeps ordinary setup/recovery while advanced TLS repair remains
+  in Local IT and engine-specific guidance.
 - Documentation command/path checker: passed across 21 scanned documents.
 - Quick and canonical `.agent_work` validators: passed.
 - Four maintained HTML files: balanced structural tags and no unresolved local

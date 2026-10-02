@@ -13,7 +13,6 @@ TLS_GUIDES = [
     REPO_ROOT / "docs" / "docker-gpu-user-guide.md",
     REPO_ROOT / "docs" / "podman-cpu-user-guide.md",
     REPO_ROOT / "docs" / "podman-gpu-user-guide.md",
-    REPO_ROOT / "docs" / "quick-start.md",
     REPO_ROOT / "docs" / "package-guide.md",
     REPO_ROOT / "docs" / "support" / "oci-quick-start.md",
 ]
