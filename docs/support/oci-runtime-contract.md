@@ -1,7 +1,7 @@
 # TowerScout OCI Runtime Contract
 
 **Applies to**: Current V1 release-candidate package support path
-**Last reviewed**: 2026-06-16
+**Last reviewed**: 2026-10-01
 **Audience**: Release/support users and runtime maintainers
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
 12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
@@ -10,6 +10,13 @@ and NVIDIA validation.
 
 This document summarizes the v1 container runtime contract. The detailed task
 evidence lives in `.agent_work/tasks/completed/TASK-025-docker-containerization.md`.
+
+The host-side Windows control package is intentionally unsigned under ADR-023.
+Its supported entrypoints are the supplied `.cmd`/`.bat` wrappers using a
+process-scoped execution-policy setting. That host boundary does not change the
+OCI runtime contract and does not claim compatibility with signature-enforcing
+or organization-allowlisted endpoints. Exact browser-downloaded ZIPs must be
+verified against authoritative published SHA-256 values before extraction.
 
 ## Runtime Shape
 

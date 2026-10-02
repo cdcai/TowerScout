@@ -31,7 +31,7 @@
         <h2>Document Metadata</h2>
         <p><strong>Applies to:</strong> Current V1 package path through the stable v0.1.0 closeout, unless release notes
           say otherwise.</p>
-        <p><strong>Last reviewed:</strong> 2026-09-24.</p>
+        <p><strong>Last reviewed:</strong> 2026-10-01.</p>
         <p><strong>Audience:</strong> Pilot users, support leads, and release reviewers.</p>
         <p><strong>Runtime scope:</strong> The CPU Application Package is the primary path; the CUDA 12.8 Application
           Package, Podman CPU, Docker GPU, and Podman GPU are support-assigned paths after workstation-specific engine,
@@ -59,6 +59,11 @@
           a running Podman machine plus an approved Compose provider. Users also need one site/user-owned restricted
           Google Maps or Azure Maps provider key.</p>
         <p>The package path does not require Git, Python, Conda, Node.js, VS Code, or a source-code checkout.</p>
+        <p class="callout">The Windows PowerShell scripts are intentionally unsigned. Users run the supplied
+          <code>.cmd</code>/<code>.bat</code> wrappers, which use a process-scoped execution-policy setting without
+          changing persistent machine policy. The standard package supports only endpoints where that path is
+          permitted. Trusted-publisher, WDAC/AppLocker, constrained-language, or organization-allowlisting
+          requirements need site-administrator approval.</p>
         <p>The CUDA package has a Volta-or-newer architecture expectation, while release support is limited to exact
           combinations named in release notes. Maxwell and Pascal use the CPU path. Use a current NVIDIA or OEM
           production Windows driver that lists the exact GPU; never install a Linux display driver inside WSL, and
@@ -70,6 +75,8 @@
           <li>Open the TowerScout GitHub Releases page, select the exact release support provided, and download the
             assigned Application Package variant, the shared Model &amp; Data Package, and matching checksum files from
             the release <code>Assets</code> section.</li>
+          <li>Compare each ZIP's local SHA-256 and sidecar with the value displayed in the authoritative release record
+            before extracting or unblocking it.</li>
           <li>Extract only the Application Package ZIP, leave the Model &amp; Data Package ZIP beside the extracted
             folder, and run <code>setup-towerscout.cmd</code> for first setup, prerequisite checks, checksum
             verification, asset import, and launch.</li>
@@ -85,6 +92,8 @@
           outbound internet access, the CPU Application Package on Docker Desktop as the primary controlled runtime,
           qualified Podman package-runtime support only where explicitly approved, and one site/user-owned restricted
           provider key.</p>
+        <p>Signature-enforcing managed endpoints without separate site approval or allowlisting are outside the
+          standard package support boundary.</p>
         <p>GPU launch is optional and support-assigned. The default launch remains CPU-safe. The CPU package rejects
           <code>-Gpu on</code>; Docker GPU and Podman GPU use the CUDA package only after support validates the selected
           engine's NVIDIA container path and readiness reports <code>selected_device=cuda</code>.</p>

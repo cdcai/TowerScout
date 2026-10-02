@@ -2,7 +2,7 @@
 
 **Applies to**: Current V1 release-candidate package path through the RC7
 provider TLS repair baseline, unless release notes say otherwise
-**Last reviewed**: 2026-09-24
+**Last reviewed**: 2026-10-01
 **Audience**: Windows users assigned Podman NVIDIA GPU validation
 **Runtime scope**: Podman, CUDA 12.8 Application Package, GPU launch mode
 
@@ -10,6 +10,17 @@ Use this guide only when support assigns a workstation to the Podman GPU path.
 This path requires a running WSL2-backed Podman machine, an approved
 non-Docker-Desktop Compose provider, NVIDIA GPU access inside the Podman
 machine, and NVIDIA CDI validation.
+
+**Unsigned package boundary**: TowerScout's PowerShell scripts are unsigned.
+Use the supplied `.cmd`/`.bat` wrappers only where you and your organization
+permit them. They use a process-scoped execution-policy setting and do not
+change persistent machine policy. Do not disable endpoint protection or weaken
+machine-wide policy; signature-enforcing or organization-allowlisted endpoints
+require site-administrator approval.
+
+The documented `enable-podman-gpu.ps1` command below is the one explicit
+support-directed `.ps1` exception. Its command line applies `Bypass` only to
+that PowerShell process; it does not change persistent machine policy.
 
 ## Before You Start
 

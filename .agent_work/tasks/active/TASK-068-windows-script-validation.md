@@ -1,7 +1,8 @@
 # TASK-068: Windows Test Portability And Script Validation
 
-**Status**: IN_PROGRESS - W02 merged as `8976222`; no-blocker review and
-exact-head CI complete; final W09 clean-package repetition remains
+**Status**: COMPLETED - W02 merged as `8976222`; no-blocker review, exact-head
+CI, and final `rc4` four-profile package setup/start/stop/relaunch repetition
+pass with eight volumes preserved per profile
 **Priority**: CRITICAL
 **Type**: B (Windows Runtime Reliability)
 **Owner**: Active delivery implementer; independent reviewer validates
@@ -35,7 +36,7 @@ paths exposed by W01-W04 and W09.
   PowerShell 5.1 with helper review disabled.
 - [x] All eight named volumes survive packaged stop and relaunch.
 - [x] Independent review and required CI pass at the exact fix head.
-- [ ] Final clean-source candidate package repeats the same behavior in W09.
+- [x] Final clean-source candidate package repeats the same behavior in W09.
 
 ## Dependencies
 
@@ -117,5 +118,13 @@ eight-volume preservation proof.
 
 ## Validation Results
 
-**Status**: PARTIAL PASS - implementation, first-host package behavior,
-independent review, and exact-head CI pass; final clean-source packaging remains.
+### 2026-09-30 - Final `rc4` package repetition
+
+**Validation**: PASS. Docker CPU/CUDA and Podman CPU/CUDA control packages from
+source `541622556fb7999ee4e88fb1e44f7797b9da34f5` each passed setup, start,
+stop, and fresh-process relaunch on ports 5231-5234. Every profile retained
+exactly eight mounts and returned `ready` with its exact CPU or CUDA digest.
+No volume-deleting operation was used.
+
+**Status**: PASS - implementation, first-host final-package behavior,
+independent review, exact-head CI, and final clean-source repetition pass.

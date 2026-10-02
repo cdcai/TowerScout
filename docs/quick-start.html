@@ -40,7 +40,7 @@
         <h2>Document Metadata</h2>
         <p><strong>Applies to:</strong> Current V1 package path through the stable v0.1.0 closeout, unless release notes
           say otherwise.</p>
-        <p><strong>Last reviewed:</strong> 2026-09-24.</p>
+        <p><strong>Last reviewed:</strong> 2026-10-01.</p>
         <p><strong>Audience:</strong> Pilot users and first-line support.</p>
         <p><strong>Runtime scope:</strong> The CPU Application Package is the normal path. The CUDA 12.8 Application
           Package, Podman CPU, Docker GPU, and Podman GPU are support-assigned paths after workstation-specific engine,
@@ -74,6 +74,14 @@ docker compose version</code></pre>
           requires an NVIDIA GPU, current Windows NVIDIA drivers, WSL2 Podman, and NVIDIA CDI validation.</p>
         <p>You do not need Git, Python, Conda, Node.js, VS Code, or a source-code checkout for the normal package path.
         </p>
+        <p class="callout"><strong>Unsigned Windows package:</strong> TowerScout's packaged PowerShell scripts are
+          intentionally unsigned. Use the supplied <code>.cmd</code> and <code>.bat</code> entrypoints. They start
+          Windows PowerShell with a process-scoped execution-policy setting and do not change the computer's
+          persistent policy.</p>
+        <p>The standard package supports only workstations where the user and organization permit those wrappers.
+          Endpoints requiring a trusted publisher, WDAC/AppLocker approval, constrained-language approval, or other
+          organization-specific allowlisting require site-administrator action and are outside the standard support
+          boundary. Do not change machine-wide execution policy or disable Defender/EDR to run TowerScout.</p>
         <p class="callout">The CUDA 12.8 package has a Volta-or-newer architecture expectation, but only exact GPU,
           Windows driver, WSL, engine, Compose-provider, and toolkit combinations listed in release notes are
           qualified. Maxwell and Pascal use the CPU package or <code>-Gpu off</code>. Use a current NVIDIA or OEM
@@ -94,7 +102,8 @@ docker compose version</code></pre>
           missing, corrupt, or hash-failed files; TowerScout reports <code>fatal</code>; or provider validation
           repeatedly fails after you confirm the key is correct. On managed networks, provider validation can fail
           because the container does not trust the local TLS inspection certificate; support can import the site CA
-          without needing your provider key.</p>
+          without needing your provider key. Also stop if Windows, SmartScreen, Defender/EDR, or an organization
+          policy blocks the package or requires administrator/publisher approval.</p>
         <p>Do not share provider keys, <code>.env</code>, raw logs, raw screenshots, private AOIs, browser network
           traces, cached provider responses, or exported datasets unless your site has an approved handling procedure.
         </p>
@@ -133,19 +142,28 @@ docker compose version</code></pre>
           versions differ, stop and download the matching files from the same GitHub release.</p>
       </section>
       <section class="doc-section" id="verify">
-        <h2>Confirm The Release Files Match</h2>
-        <p>Before extracting anything, confirm the folder contains exactly one Application Package ZIP and checksum,
+        <h2>Verify The Release Files Before Extraction</h2>
+        <p>Before extracting or unblocking anything, confirm the folder contains exactly one Application Package ZIP and checksum,
           plus the shared Model &amp; Data Package ZIP and checksum from the same release. The Application Package is
           usually the <code>-cpu</code> variant. If support assigned GPU validation, replace it with the matching
           <code>-cuda128</code> variant. Do not keep both variants in the same UAT folder unless support asks you to
           compare them.</p>
-        <p>Setup verifies the checksum sidecars during first run. If support asks for manual checksum evidence, use the
-          package guide for the detailed <code>Get-FileHash</code> or <code>certutil</code> commands.</p>
+        <p>The authoritative release page or release notes must display the SHA-256 for each exact ZIP. Compare those
+          values with the matching sidecar and a local hash:</p>
+        <pre><code>Get-FileHash .\towerscout-&lt;release-version&gt;-cpu.zip -Algorithm SHA256
+Get-Content .\towerscout-&lt;release-version&gt;-cpu.zip.sha256
+Get-FileHash .\towerscout-&lt;release-version&gt;-assets-&lt;asset-version&gt;.zip -Algorithm SHA256
+Get-Content .\towerscout-&lt;release-version&gt;-assets-&lt;asset-version&gt;.zip.sha256</code></pre>
+        <p>If support assigned the CUDA package, replace <code>-cpu</code> with <code>-cuda128</code>. Every local hash
+          must match its sidecar and the value displayed in the authoritative release record. If Windows shows an
+          <code>Unblock</code> checkbox for the verified Application Package ZIP, select it only after the comparison
+          succeeds. Do not select <code>Run anyway</code> for an unverified file or disable endpoint protection.</p>
       </section>
       <section class="doc-section" id="extract">
         <h2>Extract The Application Package</h2>
-        <p>In the <code>TowerScoutUAT</code> folder, extract only the Application Package ZIP. Most Windows ZIP tools
-          will create <code>C:\Users\&lt;you&gt;\Documents\TowerScoutUAT\towerscout-&lt;release-version&gt;-cpu</code>
+        <p>In the <code>TowerScoutUAT</code> folder, use Windows File Explorer's <code>Extract All</code> on only the
+          verified Application Package ZIP. File Explorer will normally create
+          <code>C:\Users\&lt;you&gt;\Documents\TowerScoutUAT\towerscout-&lt;release-version&gt;-cpu</code>
           for the normal package. After extraction, <code>TowerScoutUAT</code> should contain the four downloaded files
           plus one extracted package folder.</p>
         <p>Do not extract the Model &amp; Data Package ZIP for the normal setup path. The extracted Application Package

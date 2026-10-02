@@ -1,12 +1,11 @@
 # TASK-103: CUDA 12.8 Blackwell ML Runtime
 
-**Status**: IN_PROGRESS - PR #92 merged as `cbb574f` and PR #93 merged as
-`fba9dcb`. Immutable `rc3` CPU/CUDA images and control ZIPs retain their G10,
-W05, first-host lifecycle, provider, and reboot evidence, but predate both
-fixes and are not the final candidate. New immutable images/packages and
-affected W09/W10 requalification are required; remaining profile workflows,
-controlled-error, review/export, policy/signing, and independent-host evidence
-remain
+**Status**: IN_PROGRESS - local `rc4` CPU/CUDA images and control ZIPs pass
+G10, W05, four-profile W09 setup/device/lifecycle, and the complete local W10
+provider/cancel/error/review-export/relaunch/reboot matrix. ADR-023 resolves
+the unsigned support boundary. A preliminary `rc4` browser-download shakedown,
+documentation-aligned image/control-ZIP rebuild, final browser-download
+validation, and independent-host evidence remain
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
@@ -90,9 +89,16 @@ weakening model correctness, device, security, persistence, or recovery gates.
   and rootless Podman CUDA; preserve all eight named volumes for each package.
 - [x] Reconfirm real-model and memory gates against the exact image digests and
   run an exact-package CUDA `sm_120` kernel probe.
-- [ ] Complete the remaining per-profile provider/recovery/review-export,
-  controlled-error, policy/signing, and independent-host W10 acceptance cells
-  before claiming release readiness.
+- [x] Complete the first-host per-profile provider/recovery/review-export and
+  controlled-error W10 acceptance cells on the exact `rc4` packages.
+- [x] Complete exact-`rc4` first-host reboot persistence on all four profiles.
+- [x] Resolve policy/signing through ADR-023's unsigned standard-package
+  support boundary; signature-enforcing managed endpoints remain out of scope.
+- [ ] Run the preserved `rc4` package as a preliminary browser-download
+  diagnostic, then rebuild the updated manuals into new CPU/CUDA image and
+  control-ZIP identities because `docs/` is present in both surfaces. Complete
+  final browser-download and independent-host W10 acceptance cells before
+  claiming release readiness.
 
 ### W10 Local First-Host Rehearsal - Started 2026-09-28
 
@@ -135,13 +141,16 @@ weakening model correctness, device, security, persistence, or recovery gates.
   [PR #92](https://github.com/J-Schulein/TowerScout/pull/92) as `cbb574f` and
   the cancellation retry-readiness fix through
   [PR #93](https://github.com/J-Schulein/TowerScout/pull/93) as `fba9dcb`.
-- [ ] Dispatch new immutable CPU/CUDA images from accepted `main`, assemble
-  replacement control ZIPs, and repeat every affected W09/W10 cell before
-  selecting a final candidate.
-- [ ] Complete Docker CUDA, Podman CPU, and Podman CUDA provider/recovery/
-  review-export workflows; controlled-error checks remain required in every
-  profile, and Docker CPU review/export is also not run.
-- [ ] Complete policy/signing and independent-host cells.
+- [x] Dispatch new immutable `rc4` CPU/CUDA images from accepted `main`,
+  assemble replacement control ZIPs, and repeat affected W09/W10 cells.
+- [x] Complete Docker CPU/CUDA and Podman CPU/CUDA provider/recovery/
+  review-export workflows plus controlled-error checks in every profile.
+- [x] Complete an exact-`rc4` reboot with provider/TLS/device persistence and
+  post-reboot Google/Azure workflow checks in every profile.
+- [x] Resolve policy/signing scope through ADR-023.
+- [ ] Complete the preliminary `rc4` browser-download shakedown, then the
+  documentation-aligned image/package rebuild and final exact-candidate
+  browser-download and independent-host cells.
 
 ## Acceptance Boundary
 

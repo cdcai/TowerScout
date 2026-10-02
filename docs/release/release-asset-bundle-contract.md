@@ -1,7 +1,7 @@
 # TowerScout Release Asset Bundle Contract
 
 **Applies to**: Current V1 release-candidate package support path
-**Last reviewed**: 2026-06-16
+**Last reviewed**: 2026-10-01
 **Audience**: Release engineering, support, and release reviewers
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
 12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
@@ -12,6 +12,15 @@ This document defines the contract for TowerScout runtime assets that are too
 large or policy-sensitive to keep in git. It is the handoff point between
 release packaging, end-user package documentation, and clean-machine
 validation.
+
+The control package is intentionally unsigned. The release record must state
+that its PowerShell scripts lack Authenticode signatures, identify the supplied
+`.cmd`/`.bat` wrappers and their process-scoped execution-policy setting as the
+supported entrypoints, and publish the exact
+control/asset ZIP SHA-256 values directly in the authoritative release record.
+The adjacent sidecars remain required but are not, by themselves, publisher
+authentication. Signature-enforcing managed endpoints require separate site
+approval and are outside the standard package claim.
 
 ## Scope
 

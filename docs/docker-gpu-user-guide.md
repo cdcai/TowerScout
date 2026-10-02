@@ -2,7 +2,7 @@
 
 **Applies to**: Current V1 release-candidate package path through the RC7
 provider TLS repair baseline, unless release notes say otherwise
-**Last reviewed**: 2026-09-24
+**Last reviewed**: 2026-10-01
 **Audience**: Windows users assigned Docker Desktop NVIDIA GPU validation
 **Runtime scope**: Docker Desktop, CUDA 12.8 Application Package, GPU launch
 mode
@@ -10,6 +10,13 @@ mode
 Use this guide only when support assigns a workstation to the Docker GPU path.
 The normal user path is Docker CPU. Docker GPU requires the CUDA Application
 Package and workstation-specific NVIDIA container validation.
+
+**Unsigned package boundary**: TowerScout's PowerShell scripts are unsigned.
+Use the supplied `.cmd`/`.bat` wrappers only where you and your organization
+permit them. They use a process-scoped execution-policy setting and do not
+change persistent machine policy. Do not disable endpoint protection or weaken
+machine-wide policy; signature-enforcing or organization-allowlisted endpoints
+require site-administrator approval.
 
 ## Before You Start
 

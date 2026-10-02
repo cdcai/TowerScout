@@ -10,6 +10,14 @@ ADR-022 supersedes this document's CUDA 12.6/torch 2.6.0 ML baseline only;
 all package, device, provider, persistence, recovery, and independent-host
 acceptance requirements remain in force.
 
+**Amended by ADR-023 (2026-10-01):** The Windows control package will remain
+unsigned. The claimed support boundary now requires a user/site that permits
+the supplied process-scoped `.cmd`/`.bat` wrapper path. Endpoints requiring a
+trusted Authenticode publisher, WDAC/AppLocker approval, or organization-
+specific allowlisting are outside the standard package claim. The Day-1 policy
+decision is therefore resolved, while a real browser-download test and all
+independent-host acceptance requirements remain in force.
+
 **Version rule:** This pair supersedes the September 21 unversioned analysis/plan for the proposed deadline effort. Preserve those originals as history; do not execute their larger task list in addition to this one. Repository handoff files and skills still need the targeted alignment described in W00. Writing this revision does not change application behavior, task status, branches, PRs, or runtime state.
 
 ## 1. Decision and intended outcome
@@ -71,7 +79,9 @@ The existing Podman provider installer needs Python. Document and test that runt
 - Targeted late-cancellation/session cleanup and provider deadline fixes when fault tests fail. Such a failure can block release; the broader redesign remains deferred.
 - A blocking Windows CI job if available without delaying actual Windows verification.
 - Resource/batch tuning only after a measured problem on the smallest supported host; rerun correctness afterward.
-- Signing-stage support when the claimed deployment environment actually requires signing. Establish that dependency on Day 1; required signing cannot be waived to meet the date.
+- Signing-stage support only for a separately claimed managed environment that
+  requires it. ADR-023 excludes signature-enforcing endpoints from the standard
+  support claim, so project-owned signing is not a release gate for that claim.
 
 ### Defer
 
@@ -115,4 +125,10 @@ This sequence assumes implementation and testing can overlap when people/machine
 
 This revision is grounded in source and instruction/skill inspection at the stated commit and the external feedback supplied by the user. Its companion verification record describes the static checks actually performed. Planning review can establish coherent instructions and known dependencies; only execution can establish model results, target-machine compatibility, timing, and delivery readiness.
 
-The final claim must name tested profiles/hosts and artifact hashes. Missing hardware, keys, approved certificate handling, signing access, or provider availability are external blockers with owners. They are not completed tests. A smaller successful result remains useful but does not replace the user's four-profile independent-reproduction objective.
+The final claim must name tested profiles/hosts and artifact hashes. Missing
+hardware, keys, or provider availability are external blockers with owners.
+Certificate handling or signing access is a blocker only for a separately
+claimed signature-enforcing environment; ADR-023 keeps that environment outside
+the standard support boundary. These are not completed tests. A smaller
+successful result remains useful but does not replace the user's four-profile
+independent-reproduction objective.

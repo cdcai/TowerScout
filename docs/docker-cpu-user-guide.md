@@ -2,12 +2,19 @@
 
 **Applies to**: Current V1 release-candidate package path through the RC7
 provider TLS repair baseline, unless release notes say otherwise
-**Last reviewed**: 2026-06-29
+**Last reviewed**: 2026-10-01
 **Audience**: Windows users assigned the Docker Desktop CPU path
 **Runtime scope**: Docker Desktop, CPU Application Package, CPU launch mode
 
 Use this guide when support tells you to run TowerScout with Docker Desktop
 without GPU acceleration. This is the normal package path for most users.
+
+**Unsigned package boundary**: TowerScout's PowerShell scripts are unsigned.
+Use the supplied `.cmd`/`.bat` wrappers only where you and your organization
+permit them. They use a process-scoped execution-policy setting and do not
+change persistent machine policy. Do not disable endpoint protection or weaken
+machine-wide policy; signature-enforcing or organization-allowlisted endpoints
+require site-administrator approval.
 
 ## Before You Start
 

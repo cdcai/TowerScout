@@ -43,8 +43,24 @@ CUDA 12.8 package only for support-validated NVIDIA GPU workstations. Both use
 the same Model & Data Package ZIP. Podman CPU, Docker GPU, and Podman GPU are
 support-assigned paths only when the workstation has the required engine,
 approved Compose provider, and NVIDIA validation for the selected runtime. You
-do not need Git, Python, Conda, Node.js, VS Code, or a source checkout for the
-normal package workflow.
+  do not need Git, Python, Conda, Node.js, VS Code, or a source checkout for the
+  normal package workflow.
+
+### Unsigned Windows Package Boundary
+
+TowerScout's Windows PowerShell scripts are intentionally not Authenticode-
+signed. The supported user entrypoints are the supplied `.cmd` and `.bat`
+wrappers. They use a process-scoped PowerShell execution-policy setting and do
+not change the computer's persistent policy.
+
+The standard package supports only workstations where the user and
+organization permit that wrapper path. Environments requiring a trusted
+publisher, WDAC/AppLocker approval, constrained-language approval, or other
+organization-specific allowlisting require site-administrator action and are
+not part of the standard support claim. Verify the ZIP's SHA-256 against the
+value displayed in the authoritative release record before extracting or
+unblocking it. Do not disable Defender/EDR or weaken machine-wide policy to run
+TowerScout; stop and contact the site administrator if Windows blocks it.
 
 The CUDA package has a Volta-or-newer architecture expectation, but a release
 supports only the exact GPU, Windows driver, WSL, engine, and toolkit

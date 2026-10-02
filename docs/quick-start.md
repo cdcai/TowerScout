@@ -2,7 +2,7 @@
 
 **Applies to**: Current V1 package path through the stable `v0.1.0` closeout,
 unless release notes say otherwise
-**Last reviewed**: 2026-09-24
+**Last reviewed**: 2026-10-01
 **Audience**: Pilot users and first-line support
 **Runtime scope**: The CPU Application Package is the normal path. The CUDA
 12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
@@ -56,6 +56,20 @@ installing WSL, Docker Desktop, Podman, or provider credentials.
     NVIDIA GPU, current Windows NVIDIA drivers, WSL2 Podman, and NVIDIA CDI
     validation.
 - One valid site/user-owned Google Maps or Azure Maps provider key.
+
+### Unsigned Windows Package
+
+TowerScout's packaged PowerShell scripts are intentionally unsigned. Use the
+provided `.cmd` and `.bat` entrypoints; they start Windows PowerShell with a
+process-scoped execution-policy setting and do not change the computer's
+persistent policy.
+
+This package is supported only when you and your organization are permitted to
+run those wrappers. A workstation that requires a trusted publisher,
+WDAC/AppLocker approval, constrained-language approval, or another organization
+allowlist needs site-administrator approval and is outside the standard package
+support boundary. Do not change machine-wide execution policy or disable
+Defender/EDR to run TowerScout.
 
 You do not need Git, Python, Conda, Node.js, VS Code, or a source-code checkout
 for the normal package path.
@@ -151,6 +165,8 @@ Stop before continuing and contact your support lead if any of these happen:
   On managed networks, this may mean the container does not trust the local
   TLS inspection certificate; support can import the site CA without needing
   your provider key.
+- Windows, SmartScreen, Defender/EDR, or an organization policy blocks the
+  package or reports that administrator/publisher approval is required.
 
 Do not troubleshoot by sharing provider keys, full `.env` files, raw logs, raw
 screenshots, private AOIs, browser network traces, cached provider responses,
@@ -213,10 +229,10 @@ downloads for normal pilot setup. Those files are source snapshots, not the
 TowerScout release package. Do not use the green GitHub `Code` button for the
 normal pilot install.
 
-## 2. Confirm The Release Files Match
+## 2. Verify The Release Files Before Extraction
 
-Before extracting anything, confirm the folder contains these four files from
-the same release:
+Before extracting or unblocking anything, confirm the folder contains these
+four files from the same release:
 
 - `towerscout-<release-version>-cpu.zip`
 - `towerscout-<release-version>-cpu.zip.sha256`
@@ -234,6 +250,30 @@ Package. Both ZIP filenames should contain the same release tag. If the
 versions differ, stop and download the matching files from the same GitHub
 release.
 
+The authoritative release page or release notes must display the SHA-256 for
+each exact ZIP. Compare those published values with both the matching
+`.sha256` files and a local hash. A sidecar downloaded beside the ZIP is not by
+itself proof of who published both files.
+
+From the `TowerScoutUAT` working folder, run:
+
+```powershell
+Get-FileHash .\towerscout-<release-version>-cpu.zip -Algorithm SHA256
+Get-Content .\towerscout-<release-version>-cpu.zip.sha256
+Get-FileHash .\towerscout-<release-version>-assets-<asset-version>.zip -Algorithm SHA256
+Get-Content .\towerscout-<release-version>-assets-<asset-version>.zip.sha256
+```
+
+If support assigned the CUDA package, replace `-cpu` with `-cuda128`. Every
+local hash must match its sidecar and the value displayed in the authoritative
+release record. If any value differs or the release record does not provide the
+value, stop and contact support.
+
+If Windows shows an `Unblock` checkbox in the verified Application Package
+ZIP's Properties dialog, select it only after the hash comparison succeeds.
+Do not select `Run anyway` for an unverified file and do not disable endpoint
+protection.
+
 Do not type the angle brackets from `<asset-version>` into PowerShell. Replace
 the placeholder with the exact filename text from the Model & Data Package ZIP
 you downloaded. Example only:
@@ -244,13 +284,14 @@ towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip
 
 ## 3. Extract Only The Application Package
 
-In the `TowerScoutUAT` folder, extract only the Application Package ZIP:
+In the `TowerScoutUAT` folder, use Windows File Explorer's `Extract All` on only
+the verified Application Package ZIP:
 
 ```text
 towerscout-<release-version>-cpu.zip
 ```
 
-Extract it inside the `TowerScoutUAT` folder. Most Windows ZIP tools will
+Extract it inside the `TowerScoutUAT` folder. File Explorer will normally
 create an extracted folder named:
 
 ```text

@@ -3,6 +3,7 @@
 **Last Updated**: September 24, 2026
 **Current Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
+**Windows Package Policy**: [ADR-023](./decisions/023-unsigned-windows-package-support-boundary.md)
 **Immediate Plan**: [September 21 v2 implementation plan](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md)
 
 The active board controls selected work. This backlog holds deferred,

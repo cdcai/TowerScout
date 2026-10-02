@@ -2,7 +2,7 @@
 
 **Applies to**: Current V1 package path through the stable `v0.1.0` closeout,
 unless release notes say otherwise
-**Last reviewed**: 2026-09-24
+**Last reviewed**: 2026-10-01
 **Audience**: Pilot users after first setup
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
 12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
@@ -26,6 +26,12 @@ This guide assumes the package setup work is already complete:
 - At least one provider key is configured through Setup Wizard or Settings.
 
 If any of those are not true, start with `docs/quick-start.md`.
+
+TowerScout's Windows host scripts are intentionally unsigned. Use the supplied
+`.cmd` and `.bat` entrypoints from a workstation where you and your organization
+are permitted to run them. Do not weaken persistent execution policy or disable
+endpoint protection. If Windows or an organization control requires a trusted
+publisher or administrator approval, stop and use the site approval process.
 
 GPU use is qualified only for the exact combinations named in the release
 notes. A host `nvidia-smi` result alone is not acceptance; readiness must show

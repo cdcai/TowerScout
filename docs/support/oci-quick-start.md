@@ -1,7 +1,7 @@
 # TowerScout OCI Quick Start
 
 **Applies to**: Current V1 release-candidate package support path
-**Last reviewed**: 2026-06-16
+**Last reviewed**: 2026-10-01
 **Audience**: Release/support users who need engine-level detail
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
 12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
@@ -18,6 +18,13 @@ Package is for support-validated NVIDIA GPU workstations. Podman remains a
 qualified support-directed package runtime path only when the workstation has a
 running Podman machine and an approved non-Docker-Desktop Compose provider.
 
+The Windows control package is intentionally unsigned. Supported users invoke
+the packaged PowerShell scripts through the supplied `.cmd`/`.bat` wrappers,
+which use a process-scoped execution-policy setting. This does not change
+persistent machine policy or qualify signature-enforcing/organization-
+allowlisted endpoints. Compare browser-downloaded ZIP hashes with the values in
+the authoritative release record before extraction or unblocking.
+
 ## Supported V1 Target
 
 - Windows 11 on AMD64
@@ -33,7 +40,9 @@ running Podman machine and an approved non-Docker-Desktop Compose provider.
 - Optional Docker GPU and Podman GPU launch after support validates the selected
   engine's NVIDIA container path
 
-Out of scope for v1: Mac, ARM64, air-gapped/offline installs, VDI, shared multi-user hosting, native installer behavior, and managed remote deployment.
+Out of scope for v1: Mac, ARM64, air-gapped/offline installs, VDI, shared
+multi-user hosting, native installer behavior, managed remote deployment, and
+signature-enforcing managed endpoints without separate site approval.
 
 ## Prerequisite Software
 

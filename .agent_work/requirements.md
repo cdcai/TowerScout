@@ -1,6 +1,6 @@
 # TowerScout Requirements
 
-**Last Updated**: September 22, 2026
+**Last Updated**: October 1, 2026
 **Current Planning Horizon**: October 31, 2026 hard project end
 **Operational Closeout**: October 30, 2026
 **Current Delivery Requirements**:
@@ -72,6 +72,28 @@ Acceptance:
 - `cdcai/TowerScout` remains unchanged until explicit owner authorization.
 - Technical access alone is not migration authorization.
 
+### REL-005: Unsigned Windows Package Boundary
+
+WHEN TowerScout distributes a Windows control package, THE PROJECT SHALL ship
+the host PowerShell scripts without Authenticode signatures and SHALL limit the
+standard support claim to users/sites that permit the supplied `.cmd`/`.bat`
+wrapper path.
+
+Acceptance:
+
+- User documentation states that the host scripts are unsigned and that the
+  wrappers use a process-scoped execution-policy setting without changing the
+  computer's persistent policy.
+- Endpoints requiring a trusted publisher, WDAC/AppLocker approval,
+  constrained-language approval, or organization-specific allowlisting are
+  not claimed as supported by the standard package.
+- The authoritative release record publishes SHA-256 values for the exact
+  control and asset ZIPs; users verify them before extraction or unblocking.
+- Documentation never instructs users to weaken persistent execution policy,
+  disable Defender/EDR, or override an organizational control.
+- Final package evidence includes an ordinary-user run from the exact browser-
+  downloaded ZIP with its Windows downloaded-file marker.
+
 ## Required Fix And Runtime Requirements
 
 ### TLS-001: Provider TLS Repair
@@ -128,6 +150,17 @@ Acceptance:
 - Any remaining limitation is documented and explicitly accepted before
   freeze.
 
+Current result (2026-10-01): the exact local `rc4` Docker CPU/CUDA and
+Podman CPU/CUDA packages pass setup, readiness, both provider workflows,
+cancellation recovery, export checks, provider TLS repair, and
+volume-preserving stop/relaunch and Windows reboot restoration on the first
+host. ADR-023 resolves policy/signing by choosing an unsigned, narrower support
+boundary. The documentation is included in the control ZIP and baked into the
+runtime image for in-app Help, so documentation alignment changes both final
+artifact identities. A preliminary `rc4` browser-download diagnostic is
+planned; final exact-candidate browser-download and independent-host evidence
+remain open.
+
 ### RUNTIME-002: Podman Trust Separation
 
 IF Podman image-pull or source-build TLS fails, THEN THE PROJECT SHALL treat it
@@ -149,12 +182,18 @@ Acceptance:
 
 - The backend signals the active run, then reports retry readiness only after
   the shared detection slot is released.
-- A bounded wait that expires reports cancellation as pending rather than
-  successful.
+- While the shared slot remains occupied, `/abort` returns promptly with HTTP
+  `202` and `retryReady=false`; `/api/detection/progress` is the continuing
+  readiness authority.
 - The frontend keeps progress and next-run admission blocked while
   cancellation is pending or readiness cannot be confirmed.
-- After a ready cancellation response, the next real provider-backed detection
-  succeeds without a container relaunch.
+- After progress reports a terminal run with `retryReady=true`, the next real
+  provider-backed detection succeeds without a container relaunch.
+
+Current result (2026-09-30): all four final local `rc4` profiles observed HTTP
+`202` while cancellation was pending, retained the progress overlay until
+retry readiness, and completed an immediate next real Google detection without
+a relaunch or page error.
 
 ### SEC-001: Dependency Security Baseline And Release Gate
 
@@ -245,6 +284,11 @@ Acceptance:
 - End-user documentation makes clear that normal users do not need the key and
   that model upload remains disabled unless an administrator explicitly
   enables it.
+- Public and package-local manuals state the ADR-023 unsigned support boundary,
+  authoritative-hash procedure, supported wrapper entrypoints, managed-endpoint
+  exclusions, and safe stop/escalation behavior.
+- Markdown and manually maintained HTML pairs are aligned before the final
+  control ZIP is frozen and distributed to independent testers.
 
 ### HANDOFF-001: Tool-Neutral Maintenance Foundation
 

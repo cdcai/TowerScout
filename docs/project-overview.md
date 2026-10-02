@@ -2,7 +2,7 @@
 
 **Applies to**: Current V1 package path through the stable `v0.1.0` closeout,
 unless release notes say otherwise
-**Last reviewed**: 2026-09-24
+**Last reviewed**: 2026-10-01
 **Audience**: Pilot users, support leads, and release reviewers
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
 12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
@@ -63,6 +63,14 @@ Podman CDI must be refreshed and reverified after Windows driver updates.
 The package path does not require Git, Python, Conda, Node.js, VS Code, or a
 source-code checkout.
 
+The Windows PowerShell scripts in the control package are intentionally
+unsigned. Users run the supplied `.cmd`/`.bat` wrappers, which use a process-
+scoped execution-policy setting without changing persistent machine policy.
+The standard package supports only endpoints where that path is permitted.
+Trusted-publisher, WDAC/AppLocker, constrained-language, or organization-
+allowlisting requirements need site-administrator approval and are outside the
+standard support claim.
+
 ## Main Workflow
 
 A typical TowerScout user:
@@ -71,18 +79,20 @@ A typical TowerScout user:
    provided, and downloads the assigned Application Package variant, the shared
    Model & Data Package, and matching checksum files from the release `Assets`
    section.
-2. Extracts only the Application Package ZIP, leaves the Model & Data Package
+2. Compares each ZIP's local SHA-256 and sidecar with the value displayed in
+   the authoritative release record before extracting or unblocking it.
+3. Extracts only the Application Package ZIP, leaves the Model & Data Package
    ZIP beside the extracted folder, and runs `setup-towerscout.cmd` for first
    setup so the package can find the asset ZIP, verify checksums, import
    assets, and start TowerScout.
-3. Uses `start.bat -Engine docker -Gpu off` for later direct launches.
-4. Configures Google Maps or Azure Maps in Setup Wizard or Settings.
-5. Chooses a provider.
-6. Defines a search area.
-7. Estimates tile count.
-8. Runs detection.
-9. Reviews detections and adds manual corrections.
-10. Exports CSV, KML, or dataset results.
+4. Uses `start.bat -Engine docker -Gpu off` for later direct launches.
+5. Configures Google Maps or Azure Maps in Setup Wizard or Settings.
+6. Chooses a provider.
+7. Defines a search area.
+8. Estimates tile count.
+9. Runs detection.
+10. Reviews detections and adds manual corrections.
+11. Exports CSV, KML, or dataset results.
 
 The User Guide is available in the running app Resource Links section and at:
 
@@ -104,7 +114,8 @@ The supported target is:
 
 Out of scope for the current package path: macOS, ARM64, air-gapped or fully
 offline installs, VDI, shared multi-user hosting, managed remote deployment,
-and native installer behavior.
+native installer behavior, and signature-enforcing managed endpoints without
+separate site approval or allowlisting.
 
 GPU launch is optional and support-assigned. The default launch remains
 CPU-safe. The CPU package rejects `-Gpu on`; Docker GPU and Podman GPU use the

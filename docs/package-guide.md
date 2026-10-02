@@ -5,7 +5,7 @@ and pilot testers using the TowerScout Windows package path.
 
 **Applies to**: Current V1 release-candidate package path through the RC7
 provider TLS repair baseline, unless release notes say otherwise
-**Last reviewed**: 2026-06-29
+**Last reviewed**: 2026-10-01
 **Audience**: First-line support, release validation, and pilot testers
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
 12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
@@ -34,6 +34,8 @@ The current release-candidate package supports:
 - Optional Docker GPU and Podman GPU launch only after support validates the
   selected engine's NVIDIA container path.
 - One valid Google Maps or Azure Maps provider key.
+- Unsigned PowerShell host scripts invoked through the supplied `.cmd`/`.bat`
+  wrappers on a workstation where the user and organization permit that path.
 
 Out of scope for this release path:
 
@@ -45,6 +47,28 @@ Out of scope for this release path:
 - Managed remote deployment.
 - Native Windows installer behavior.
 - Bundled OCI image archive workflow.
+- Signature-enforcing managed endpoints unless the site administrator
+  separately approves, allowlists, or internally signs the package.
+
+## Unsigned Windows Package And Execution Policy
+
+TowerScout's packaged PowerShell scripts are intentionally not Authenticode-
+signed. The supported user entrypoints are the provided `.cmd` and `.bat`
+wrappers. They invoke Windows PowerShell 5.1 with a process-scoped
+`-ExecutionPolicy Bypass`; this does not change the computer's persistent
+execution-policy configuration.
+
+That wrapper behavior is part of the standard unsigned support profile. It
+does not override or qualify WDAC, AppLocker, constrained-language,
+antivirus/EDR, SmartScreen, or organization-specific allowlisting. If any of
+those controls requires administrator or trusted-publisher approval, stop and
+use the site's approval process. Do not change persistent execution policy,
+disable endpoint protection, or tell a user to select `Run anyway` for an
+unverified file.
+
+An organization may review and internally sign or allowlist TowerScout, but it
+then owns the modified bytes and new checksums. Project qualification applies
+only to the original published artifacts.
 
 Docker Desktop is the default pilot support path because that is the path most
 external testers will be asked to exercise first. Podman remains a qualified
@@ -127,6 +151,8 @@ Stop validation and contact support if:
 - TowerScout readiness state is `fatal`.
 - Provider validation repeatedly fails after the key value and provider setup
   have been checked.
+- Windows, SmartScreen, Defender/EDR, or an organization policy blocks the
+  package or requires administrator/trusted-publisher approval.
 
 Do not ask users to send provider keys, full `.env` files, raw screenshots,
 browser traces, cached provider responses, named-volume contents, exported
@@ -209,14 +235,14 @@ only the Application Package ZIP. Leave the Model & Data Package ZIP
 unextracted beside the extracted application folder. `setup-towerscout.cmd`
 discovers it and verifies the matching `.sha256` sidecar.
 
-## Optional Manual Download Verification
+## Required Download Verification For The Unsigned Package
 
-The normal `setup-towerscout.cmd` path verifies checksum sidecars during first
-setup. Use this manual verification section only when support wants checksum
-evidence before setup, when a tester is blocked before setup can run, or when
-validating release artifacts internally. Run these commands from the
-`TowerScoutUAT` working folder that contains only the four copied release
-files:
+The authoritative release page or release notes must display the SHA-256 for
+the exact Application Package and Model & Data Package ZIPs. Before extraction
+or unblocking, compare those values with the matching `.sha256` sidecars and
+locally calculated hashes. A sidecar downloaded beside a ZIP is not by itself
+proof of who published both files. Run these commands from the `TowerScoutUAT`
+working folder that contains only the four copied release files:
 
 ```powershell
 Get-FileHash .\towerscout-<release-version>.zip -Algorithm SHA256
@@ -228,6 +254,10 @@ Get-Content .\towerscout-<release-version>-assets-*.zip.sha256
 The `Hash` value from `Get-FileHash` must match the SHA-256 value in the
 corresponding `.sha256` file. If the values do not match, stop validation and
 obtain a fresh copy of the affected release artifact.
+
+The calculated value and sidecar must also match the value displayed in the
+authoritative release record. If that value is missing, stop and contact the
+release owner rather than treating the sidecar alone as release authentication.
 
 If PowerShell says `Get-FileHash` is not recognized, use Windows `certutil`
 instead and compare the printed SHA-256 value to the matching `.sha256` file:
@@ -256,6 +286,11 @@ HASH      0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF
 
 Uppercase and lowercase letters are not important. The letters and numbers
 must otherwise be identical.
+
+After all three sources agree, use the Application Package ZIP's Windows
+Properties dialog to select `Unblock` only if Windows displays that option,
+then use File Explorer's `Extract All`. Do not unblock or run a file whose hash
+has not been verified.
 
 ## Application Package Layout
 
