@@ -432,6 +432,9 @@ from that attempt is claimed. Those cells remain `not_run` below.
 - Independent-host repetition: `blocked` pending an independent computer.
 - Package publication and `latest` promotion: owner-gated and not performed.
 
+The bounded cleanup inventory and preservation decision are recorded in
+[RC4-CLEANUP-INVENTORY-2026-10-02.md](./RC4-CLEANUP-INVENTORY-2026-10-02.md).
+
 ## Final Local `rc4` Four-Profile Repetition
 
 **Recorded**: 2026-09-29 through 2026-09-30

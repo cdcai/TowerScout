@@ -1,8 +1,8 @@
 # TowerScout Docker CPU User Guide
 
-**Applies to**: Current V1 release-candidate package path through the RC7
-provider TLS repair baseline, unless release notes say otherwise
-**Last reviewed**: 2026-10-01
+**Applies to**: The exact documentation-aligned Windows release package named
+by the authoritative release record
+**Last reviewed**: 2026-10-02
 **Audience**: Windows users assigned the Docker Desktop CPU path
 **Runtime scope**: Docker Desktop, CPU Application Package, CPU launch mode
 

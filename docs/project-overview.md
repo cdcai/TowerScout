@@ -1,9 +1,9 @@
 # TowerScout Project Overview
 
-**Applies to**: Current V1 package path through the stable `v0.1.0` closeout,
-unless release notes say otherwise
-**Last reviewed**: 2026-10-01
-**Audience**: Pilot users, support leads, and release reviewers
+**Applies to**: The exact documentation-aligned Windows release package named
+by the authoritative release record
+**Last reviewed**: 2026-10-02
+**Audience**: Package users, Local IT, support leads, and release reviewers
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
 12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
 support-assigned paths after workstation-specific engine, Compose-provider,
@@ -18,7 +18,7 @@ app Resource Links section.
 
 ## What The Package Provides
 
-The package provides a Windows-first local pilot path:
+The package provides a Windows-first local path:
 
 - A GitHub Release CPU Application Package ZIP for normal users.
 - A GitHub Release CUDA 12.8 Application Package ZIP for support-validated
@@ -26,7 +26,7 @@ The package provides a Windows-first local pilot path:
 - A shared GitHub Release Model & Data Package ZIP used by both package
   variants.
 - A pinned GHCR container image digest in each Application Package.
-- Docker Desktop primary pilot runtime configuration, with qualified Podman
+- Docker Desktop primary runtime configuration, with qualified Podman
   package-runtime support when a site explicitly chooses that path.
 - A CPU-safe default launcher.
 - Optional Docker and Podman GPU launch controls for validated NVIDIA hosts.
@@ -37,15 +37,15 @@ The package provides a Windows-first local pilot path:
   notices.
 - A separate asset bundle contract for model weights and ZIP-code data.
 
-The normal pilot path is package-based. Source checkout, Python virtual
+The normal user path is package-based. Source checkout, Python virtual
 environment, and Conda setup guides are legacy/source-install support material,
-not the preferred pilot path.
+not the preferred package path.
 
 ## What Users Need Installed
 
-Pilot users need Windows 11 AMD64, PowerShell, a modern browser, normal outbound
+Package users need Windows 11 AMD64, PowerShell, a modern browser, normal outbound
 internet access, WSL 2/hardware virtualization support for Docker Desktop, and
-Docker Desktop installed, approved, and running as the primary pilot engine.
+Docker Desktop installed, approved, and running as the primary engine.
 Plan for at least `15 GB` of free disk space for the CPU package. The measured
 CUDA image is `14.4 GB`; plan for at least `35 GB` free for pull/unpack and
 runtime data, or `60 GB` for a support-directed source qualification build.
@@ -108,7 +108,7 @@ The supported target is:
 - Single-user local use.
 - CPU baseline.
 - Normal outbound internet access.
-- CPU Application Package on Docker Desktop as the primary pilot runtime, with
+- CPU Application Package on Docker Desktop as the primary runtime, with
   qualified Podman package-runtime support only where explicitly approved.
 - One site/user-owned restricted Google Maps or Azure Maps provider key.
 

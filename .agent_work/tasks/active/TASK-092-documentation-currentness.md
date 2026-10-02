@@ -1,9 +1,9 @@
 # TASK-092: Documentation Currentness And Information Architecture
 
-**Status**: IN_PROGRESS - information architecture and Wiki child plan recorded;
-the bounded `rc4` browser-download findings are dispositioned. Finish packaged,
-in-app, Wiki, external Setup Guide, and demo material before the final W09
-source/image/package freeze and independent-tester distribution
+**Status**: IN_PROGRESS - `rc4` findings are dispositioned; packaged/in-app
+Local IT guidance and the complete local Wiki draft set are implemented and
+focused tests pass. Owner/permission review, final release identities, running-
+image Help validation, publication, and final W09/W10 gates remain
 **Priority**: HIGH
 **Type**: C (Documentation / Release)
 **Child Work Plan**:
@@ -133,11 +133,13 @@ affected W09/W10 checks before distribution.
   candidate acceptance and its applicable findings are incorporated.
 - [ ] The source-of-truth matrix and complete page inventory in the child plan
   are accepted.
-- [ ] The Wiki has clear paths for end users, Local IT administrators, support,
-  and future maintainers without duplicating release-specific commands.
+- [x] The local Wiki draft has clear paths for end users, Local IT
+  administrators, support, and future maintainers without duplicating release-
+  specific commands. External publication remains owner-authorized.
 - [ ] Packaged Markdown, paired HTML, in-app Help, README/release wording, and
   external guidance agree on the tested paths and ADR-023 boundary.
-- [ ] The written package remains sufficient without Wiki/video access.
+- [x] The written package remains sufficient without Wiki/video access,
+  including the new paired Local IT Administrator guide.
 - [ ] Wiki/video ownership, edit permissions, version labels, accessibility,
   backup/migration, and future repository custody are documented.
 - [ ] The documentation checker, link/render review, running-image Help check,
@@ -203,3 +205,34 @@ independent-host, or broader four-profile acceptance. See the
 
 **Next**: Implement the packaged/in-app source-of-truth content and local Wiki
 drafts. External Wiki publication remains owner-authorized.
+
+### 2026-10-02 - Packaged/in-app guidance and local Wiki drafts implemented
+
+Added a paired `docs/local-it-administrator-guide.md` and `.html`, included the
+pair in release packaging and the in-app public-doc allowlist, and added the
+Local IT guide to Settings Resource Links. The guide covers the unsigned
+support boundary, pre-extraction authoritative hash comparison, default versus
+support-assigned runtime paths, provider restrictions, network/TLS inspection,
+named-volume custody, safe evidence, non-destructive recovery, and escalation.
+
+Updated the primary Markdown/HTML guides and runtime-specific guides to stop
+claiming stale `v0.1.0`, `v0.1.2`, or `RC7` current scope. The Quick Start now
+documents both normal ZIP co-location and the observed quoted `-PackageZip` plus
+`-AssetZip` fallback for a spaced Windows path.
+
+Created all 14 planned Wiki pages plus `_Sidebar.md` under `wiki/` as local
+drafts. They use role/task navigation and point exact commands, hashes,
+identities, notices, and support claims back to the downloaded package and
+authoritative release record. No live Wiki page or permission was changed.
+
+All 86 focused documentation/package/Flask tests pass in one clean rerun. The
+docs command/path scan, four-file HTML parse, canonical/quick task validators,
+`git diff --check`, and a redacted 45-file secret-delta scan also pass. The
+initial workspace pytest run had a temp-directory ACL teardown error; the same
+tests passed with a host temp directory. No product failure is attributed to
+that ACL condition.
+
+**Next**: Review content/ownership, confirm Wiki destination/permissions and
+future backup owner, finalize release-note wording, then freeze content and
+build new documentation-aligned image/control-ZIP identities. Validate in-app
+Help from those exact images before any final package/browser claim.

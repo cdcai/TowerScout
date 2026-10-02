@@ -151,10 +151,10 @@ Current scope:
 
 ### **TASK-092: Documentation Currentness And Information Architecture**
 
-**Status**: IN_PROGRESS - hybrid Wiki/package information architecture and
-child plan recorded; the bounded `rc4` browser-download findings are now
-dispositioned. Complete shipped/in-app instructions, Wiki pages, external
-Setup Guide, and demo material before the final W09 source/image/package freeze
+**Status**: IN_PROGRESS - `rc4` findings are dispositioned; packaged/in-app
+Local IT guidance and the complete local Wiki draft set are implemented with
+focused tests passing. Complete owner/permission review, final release wording,
+content freeze, new artifact identities, and running-image validation
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-092-documentation-currentness.md`
 

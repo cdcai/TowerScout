@@ -240,6 +240,8 @@ $releaseFiles = @(
     "PROVIDER_TERMS.md",
     "docs\docker-cpu-user-guide.md",
     "docs\docker-gpu-user-guide.md",
+    "docs\local-it-administrator-guide.md",
+    "docs\local-it-administrator-guide.html",
     "docs\quick-start.md",
     "docs\quick-start.html",
     "docs\package-guide.md",

@@ -1,7 +1,8 @@
 # Task-092 Child Work Plan: GitHub Wiki Information Architecture And Local IT Guide
 
-**Status**: IN_PROGRESS - preliminary `rc4` findings dispositioned; content
-implementation is next
+**Status**: IN_PROGRESS - local Wiki drafts plus packaged/in-app Local IT
+guidance implemented; owner/permission review, publication, final identities,
+and running-image validation remain
 **Parent**: [TASK-092 Documentation Currentness And Information Architecture](../TASK-092-documentation-currentness.md)
 **Priority**: HIGH
 **Planned implementation window**: October 5-8, 2026
@@ -224,17 +225,17 @@ but the required affected W09/W10 checks bind to the new identities.
   procedure are confirmed.
 - [ ] Required pages have content owners, release scope, and last-reviewed
   metadata.
-- [ ] Page navigation starts from user role and intended task.
-- [ ] CPU/default versus support-assigned GPU/Podman paths are unmistakable.
-- [ ] One authoritative command/source location is named for every repeated
+- [x] Page navigation starts from user role and intended task.
+- [x] CPU/default versus support-assigned GPU/Podman paths are unmistakable.
+- [x] One authoritative command/source location is named for every repeated
   topic.
-- [ ] Local IT guidance covers prerequisites, integrity, unsigned execution,
+- [x] Local IT guidance covers prerequisites, integrity, unsigned execution,
   network/TLS, data custody, support evidence, and escalation.
-- [ ] Provider guidance states ownership/restriction obligations and never
+- [x] Provider guidance states ownership/restriction obligations and never
   implies browser SDK keys are secret from the browser.
-- [ ] Video page has an accessible written alternative and privacy-safe media
+- [x] Video page has an accessible written alternative and privacy-safe media
   plan.
-- [ ] Packaged guidance is complete without Wiki/video access.
+- [x] Packaged guidance is complete without Wiki/video access.
 - [ ] Markdown/HTML pairs, in-app routes, package contents, and running-image
   Help agree.
 - [ ] Documentation-aligned CPU/CUDA images and control ZIPs receive new

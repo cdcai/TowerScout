@@ -1,18 +1,18 @@
 # TowerScout Package Guide
 
 This guide is for first-line support, internal release-candidate validation,
-and pilot testers using the TowerScout Windows package path.
+and users of the TowerScout Windows package path.
 
-**Applies to**: Current V1 release-candidate package path through the RC7
-provider TLS repair baseline, unless release notes say otherwise
-**Last reviewed**: 2026-10-01
-**Audience**: First-line support, release validation, and pilot testers
+**Applies to**: The exact documentation-aligned Windows release package named
+by the authoritative release record
+**Last reviewed**: 2026-10-02
+**Audience**: First-line support, release validation, and package users
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
 12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
 support-assigned paths after workstation-specific engine, Compose-provider,
 and NVIDIA validation.
 
-The package path is the preferred pilot path. Older source, virtual
+The package path is the preferred user path. Older source, virtual
 environment, and Conda tester guides are legacy source-install guidance and are
 not the preferred package path.
 
@@ -28,7 +28,7 @@ The current release-candidate package supports:
   - `cuda128` only for support-validated NVIDIA GPU workstations.
 - One shared Model & Data Package ZIP for both Application Package variants.
 - Normal outbound internet access for GHCR image pulls and map providers.
-- Docker Desktop as the primary controlled pilot engine.
+- Docker Desktop as the primary controlled engine.
 - Podman as a qualified package-runtime option only when a running Podman
   machine and approved Compose provider are already available.
 - Optional Docker GPU and Podman GPU launch only after support validates the
@@ -70,14 +70,14 @@ An organization may review and internally sign or allowlist TowerScout, but it
 then owns the modified bytes and new checksums. Project qualification applies
 only to the original published artifacts.
 
-Docker Desktop is the default pilot support path because that is the path most
+Docker Desktop is the default package support path because that is the path most
 external testers will be asked to exercise first. Podman remains a qualified
 support path for sites that explicitly choose it and can provide a working
 Podman machine plus Compose provider.
 
 ## Prerequisite Software Checklist
 
-Before a pilot user starts the package, confirm the workstation has:
+Before a package user starts, confirm the workstation has:
 
 - Windows 11 AMD64 with virtualization/WSL2 support enabled according to local
   IT policy.
@@ -91,7 +91,7 @@ Before a pilot user starts the package, confirm the workstation has:
   more disk space than CPU-only images. Use `15 GB` free as a minimum and
   `25 GB` free as the recommended first-setup target.
 - One approved container engine path:
-  - Docker Desktop with the WSL 2 backend is the primary pilot path.
+  - Docker Desktop with the WSL 2 backend is the primary controlled path.
     Docker's current Windows requirements include WSL `2.1.5` or later, 8 GB
     RAM, and hardware virtualization enabled in BIOS/UEFI.
   - Podman CLI or Podman Desktop is a qualified support path only when the
@@ -102,7 +102,7 @@ Before a pilot user starts the package, confirm the workstation has:
 - One valid site/user-owned restricted Google Maps or Azure Maps provider key.
 
 The package path does not require Git, Python, Conda, Node.js, VS Code, or a
-source-code checkout on the pilot user's computer.
+source-code checkout on the package user's computer.
 
 For users who do not normally use the command line, open commands from Windows
 PowerShell in the extracted TowerScout package folder. In File Explorer, open
@@ -141,7 +141,7 @@ are installed, automatic engine selection can choose Docker first. Use
 Stop validation and contact support if:
 
 - Docker Desktop is not installed, not approved, or cannot start on the primary
-  pilot path, unless support explicitly assigned the Podman path.
+  package path, unless support explicitly assigned the Podman path.
 - WSL is unavailable, or `wsl --list --verbose` shows version `1` and the user
   does not have administrator approval to update it.
 - An Application Package or Model & Data Package checksum does not match.
@@ -161,9 +161,10 @@ procedure.
 
 ## Release Artifacts
 
-For the July 2026 pilot, the validated `v0.1.2` assets remain on the development
-fork. `cdcai/TowerScout` remains unchanged during feedback collection and must
-not be presented as the source of the pilot package.
+Use only the exact release URL or tag supplied by the release owner or support
+team. A draft release, source archive, branch name, or numerically newer tag is
+not an approved package unless the authoritative release record explicitly
+names it.
 
 A normal release-candidate handoff has two artifact groups. Open the
 TowerScout releases page and use the exact release that support selected:
@@ -334,7 +335,7 @@ readiness evidence before it is treated as a valid GPU launch.
 
 Source-checkout or local-validation defaults use the explicit `latest-cpu`
 tag when no package digest is present. Do not use a bare `latest` image tag for
-release or pilot instructions.
+release or package instructions.
 
 ## Guided Setup Path
 
@@ -632,7 +633,7 @@ correct package or CPU path, never a forced architecture override.
 
 The measured CUDA image is `14.4 GB`. Plan at least `35 GB` free for normal
 pull/unpack plus assets and volumes and at least `60 GB` for one support source
-build. The pilot's full three-stage A/B/C comparison grew Docker's virtual disk
+build. A full three-stage A/B/C qualification grew Docker's virtual disk
 by about `120 GB`; a full comparative build should budget `150 GB`.
 
 `/api/readiness` includes non-secret `ml_runtime` diagnostics that support can
@@ -669,7 +670,7 @@ Provider-key policy:
 
 - Browser map SDK keys are client-visible to someone with access to the running
   browser app.
-- Pilot keys must be site/user-owned unless a separate owner-approved exception
+- Provider keys must be site/user-owned unless a separate owner-approved exception
   is recorded.
 - Unrestricted shared TowerScout project keys are unsupported.
 - Users/sites should apply provider-side restrictions, API scoping, quotas,
@@ -698,7 +699,7 @@ Azure Maps subscription keys must support TowerScout's use of:
 - Imagery/tiles.
 - Search and geocoding.
 
-For the local pilot, Azure shared-key authentication is acceptable only
+For the local package deployment, Azure shared-key authentication is acceptable only
 with site/user-owned keys, monitoring, quota controls, and rotation according
 to local policy. Broader or hosted distribution should revisit Microsoft Entra
 ID or SAS-token authentication. Microsoft publishes current Azure Maps
@@ -714,13 +715,13 @@ After readiness is `ready`:
 
 1. Open `http://localhost:5000`.
 2. Confirm the expected provider is selected.
-3. Search for an approved pilot location or navigate the map manually.
+3. Search for an approved public/non-sensitive location or navigate the map manually.
 4. Define a small search area with a circle or custom shape.
 5. Select `Estimate tiles`.
 6. Confirm the tile count and expected time are reasonable.
 7. Select `Find towers`.
 8. Review results in the detection list and map.
-9. Export CSV/KML or dataset results only if allowed by the pilot workflow.
+9. Export CSV/KML or dataset results only if allowed by the site workflow.
 
 Use the owner-provided public fixture when available. If a fixture has not been
 provided, use a non-sensitive approved area and keep the first run small,
@@ -764,9 +765,8 @@ For Podman, confirm:
 - If needed, `PODMAN_COMPOSE_PROVIDER` points to the approved provider.
 
 The selected Compose provider must be explicitly validated in the target
-environment. The RC5 validation used standalone Docker Compose v5.1.4 selected
-through `PODMAN_COMPOSE_PROVIDER` rather than Docker Desktop's bundled
-provider. The launcher reports Compose-provider information before startup,
+environment and match the provider/version named by the authoritative release
+record. The launcher reports Compose-provider information before startup,
 rejects Docker Desktop provider paths for the Podman path, and validates a
 `PODMAN_COMPOSE_PROVIDER` override before Compose is invoked.
 
@@ -796,7 +796,7 @@ clear local Podman container/port state before continuing.
 ### Docker Desktop
 
 Docker Desktop use depends on local license, procurement, endpoint policy, and
-installation approval. For the primary pilot path, Docker Desktop should be
+installation approval. For the primary package path, Docker Desktop should be
 open from the Start menu, the WSL 2 backend should be selected when the option
 is visible, and these commands should print version information:
 

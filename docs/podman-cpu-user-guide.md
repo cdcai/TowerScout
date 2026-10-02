@@ -1,13 +1,13 @@
 # TowerScout Podman CPU User Guide
 
-**Applies to**: Current V1 release-candidate package path through the RC7
-provider TLS repair baseline, unless release notes say otherwise
-**Last reviewed**: 2026-10-01
+**Applies to**: The exact documentation-aligned Windows release package named
+by the authoritative release record
+**Last reviewed**: 2026-10-02
 **Audience**: Windows users assigned the Podman CPU path
 **Runtime scope**: Podman, CPU Application Package, CPU launch mode
 
 Use this guide only when support tells you to run TowerScout with Podman. The
-normal pilot path is Docker Desktop CPU. Podman requires a running Podman
+normal package path is Docker Desktop CPU. Podman requires a running Podman
 machine and an approved non-Docker-Desktop Compose provider.
 
 **Unsigned package boundary**: TowerScout's PowerShell scripts are unsigned.

@@ -1,9 +1,9 @@
 # TowerScout User Guide
 
-**Applies to**: Current V1 package path through the stable `v0.1.0` closeout,
-unless release notes say otherwise
-**Last reviewed**: 2026-10-01
-**Audience**: Pilot users after first setup
+**Applies to**: The exact documentation-aligned Windows release package named
+by the authoritative release record
+**Last reviewed**: 2026-10-02
+**Audience**: Package users after first setup
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
 12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
 support-assigned paths after workstation-specific engine, Compose-provider,
@@ -19,7 +19,7 @@ Use `docs/quick-start.md` for first-run package setup and
 
 This guide assumes the package setup work is already complete:
 
-- Docker Desktop is installed, approved, and running for the primary pilot
+- Docker Desktop is installed, approved, and running for the primary package
   path, or support has explicitly directed you to a qualified Podman path.
 - Required model and ZIP-code assets are imported.
 - TowerScout opens at `http://localhost:5000`.
@@ -129,7 +129,7 @@ The estimate tells you:
 - How many imagery tiles TowerScout expects to process.
 - Rough expected processing time.
 
-If the tile count is too large for the pilot workflow, clear the search area or
+If the tile count is too large for the approved workflow, clear the search area or
 draw a smaller one. Estimating first avoids starting a long detection run by
 accident.
 

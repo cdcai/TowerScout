@@ -1,8 +1,8 @@
 # TowerScout Podman GPU User Guide
 
-**Applies to**: Current V1 release-candidate package path through the RC7
-provider TLS repair baseline, unless release notes say otherwise
-**Last reviewed**: 2026-10-01
+**Applies to**: The exact documentation-aligned Windows release package named
+by the authoritative release record
+**Last reviewed**: 2026-10-02
 **Audience**: Windows users assigned Podman NVIDIA GPU validation
 **Runtime scope**: Podman, CUDA 12.8 Application Package, GPU launch mode
 

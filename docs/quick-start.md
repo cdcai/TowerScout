@@ -1,15 +1,15 @@
 # TowerScout Quick Start
 
-**Applies to**: Current V1 package path through the stable `v0.1.0` closeout,
-unless release notes say otherwise
-**Last reviewed**: 2026-10-01
-**Audience**: Pilot users and first-line support
+**Applies to**: The exact documentation-aligned Windows release package named
+by the authoritative release record
+**Last reviewed**: 2026-10-02
+**Audience**: Windows package users and first-line support
 **Runtime scope**: The CPU Application Package is the normal path. The CUDA
 12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
 support-assigned paths after workstation-specific engine, Compose-provider,
 and NVIDIA validation.
 
-This is the short Windows pilot path for the TowerScout `agpl-yolo` release
+This is the short Windows package path for the TowerScout `agpl-yolo` release
 package. It assumes a Windows 11 AMD64 workstation, Docker Desktop as the
 primary controlled runtime, normal outbound internet access, and one approved
 Google Maps or Azure Maps provider key.
@@ -46,7 +46,7 @@ installing WSL, Docker Desktop, Podman, or provider credentials.
   plan for at least `35 GB` free for its pull/unpack plus assets and volumes,
   and at least `60 GB` for a support-directed source qualification build.
 - One container engine, selected as follows:
-  - Docker Desktop is the primary pilot path. During Docker Desktop
+  - Docker Desktop is the primary controlled path. During Docker Desktop
     installation, keep the WSL 2 backend selected when prompted, start Docker
     Desktop from the Windows Start menu, and wait until Docker Desktop reports
     that it is running.
@@ -174,9 +174,9 @@ or exported datasets unless your site has an approved handling procedure.
 
 ## 1. Get The Release Files From GitHub Releases
 
-For the July 2026 pilot, use the exact validated `v0.1.2` release from the
-development fork. The existing `cdcai/TowerScout` repository remains unchanged
-while feedback is collected and is not the pilot download source.
+Use the exact release URL or tag supplied by the release owner or support team.
+A draft release, source archive, branch name, or numerically newer tag is not
+an approved package unless the authoritative release record explicitly says so.
 
 In your browser, open the TowerScout GitHub repository release page:
 
@@ -225,9 +225,9 @@ Application Package ZIP is extracted in the normal setup path. Leave the Model
 them into the `assets\` folder.
 
 Do not use GitHub's automatic `Source code (zip)` or `Source code (tar.gz)`
-downloads for normal pilot setup. Those files are source snapshots, not the
+downloads for normal package setup. Those files are source snapshots, not the
 TowerScout release package. Do not use the green GitHub `Code` button for the
-normal pilot install.
+normal package install.
 
 ## 2. Verify The Release Files Before Extraction
 
@@ -378,16 +378,19 @@ setup.
 If the browser does not open, leave PowerShell open and manually open
 `http://localhost:5000`.
 
-If setup reports that more than one Model & Data Package ZIP was found, move
-old TowerScout ZIPs out of the folder and run setup again. If support asks you
-to pass an explicit ZIP path, use:
+If setup reports that more than one ZIP candidate was found, move old
+TowerScout ZIPs out of the folder and run setup again. If the downloaded ZIPs
+cannot remain beside the extracted folder, pass both exact quoted paths:
 
 ```powershell
-.\setup-towerscout.cmd -AssetZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>-assets-<asset-version>.zip
+.\setup-towerscout.cmd `
+  -PackageZip "C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>-cpu.zip" `
+  -AssetZip "C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>-assets-<asset-version>.zip"
 ```
 
-Do not type the angle brackets in `<asset-version>`. Use the exact Model &
-Data Package filename.
+If support assigned CUDA, use the exact `-cuda128` Application Package path.
+Do not type the angle brackets. Copy both exact filenames from the release or
+download folder.
 
 If setup cannot find or start a container engine, confirm the selected
 engine is installed and running before continuing. For Podman, confirm the
@@ -556,10 +559,10 @@ Optional Podman GPU mode after support has validated NVIDIA CDI:
   package. The CUDA package still fails closed unless readiness reports
   `selected_device=cuda`.
 
-For Podman GPU, support must validate the non-Docker-Desktop Compose provider
-and NVIDIA CDI path before launch. The RC5 validated path used Podman 5.8.2 on
-Windows 11 WSL2, standalone Docker Compose v5.1.4 selected through
-`PODMAN_COMPOSE_PROVIDER`, and NVIDIA CDI device `nvidia.com/gpu=all`.
+For Podman GPU, support must validate the intended rootless machine, approved
+non-Docker-Desktop Compose provider, NVIDIA CDI path, and exact release-
+qualified version/device combination before launch. Do not inherit a version
+tuple from an earlier release.
 
 ## 9. Complete Setup
 
@@ -568,7 +571,7 @@ When the browser opens, use Setup Wizard or Settings to configure one provider:
 - Google Maps, or
 - Azure Maps.
 
-One valid provider key is enough to start. Provider keys for the pilot
+One valid provider key is enough to start. Provider keys for the deployment
 must be site/user-owned and restricted. Browser map SDK keys are visible to
 someone who can access the running browser app, so do not use an unrestricted
 shared TowerScout project key.
@@ -637,28 +640,26 @@ owner-provided public test area or another non-sensitive approved area. Support
 should provide the smoke-test fixture before UAT starts: provider,
 public/non-sensitive location name, expected tile range, and whether zero
 detections is an acceptable result. Do not choose a private investigation AOI
-for the first smoke test. Keep the first run small. The default pilot Azure
-smoke fixture is about `8` tiles.
+for the first smoke test. Keep the first run small and follow the expected tile
+range and zero-detection rule supplied with the release test fixture.
 
-The UAT package defaults to a pilot guard of `100` tiles. If TowerScout reports
-that the selected area exceeds the current pilot limit, reduce the search area
-or contact support before running a larger validation.
+The package defaults to a `100`-tile safety guard. If TowerScout reports that
+the selected area exceeds the configured limit, reduce the search area or
+contact support before running a larger validation.
 
 Suggested smoke flow:
 
 1. Search for or navigate to the approved test location.
 2. Draw a small circle or custom shape.
 3. Select `Estimate tiles`.
-4. Confirm the tile count is small enough for the pilot.
+4. Confirm the tile count is within the approved fixture range.
 5. Select `Find towers`.
 6. Confirm the run completes and the review panel updates.
 
 Expected result: status is `ready` before the detection smoke, and the detection
-workflow completes without crashing. For the default pilot Azure fixture, expect a
-non-zero tower result. Exact counts may vary, but zero towers, no review-panel
-update, or a crash should be reported as `BLOCKED` or `FAIL`. For any future
-support-approved fixture, follow the zero-detection rule support provided for
-that fixture.
+workflow completes without crashing. Compare the tile/detection result with the
+predeclared fixture expectation. A missing review-panel update, crash, or result
+outside that expectation should be reported as `BLOCKED` or `FAIL`.
 
 ## 11. Stop Or Restart
 

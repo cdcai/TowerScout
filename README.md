@@ -6,21 +6,22 @@ TowerScout Enterprise, a new program re-designed from the ground up to make bett
 
 ## Install The Release Package
 
-### July 2026 Pilot Notice
+### Release Package Notice
 
-The validated `v0.1.2` package is being distributed from this fork as a pilot
-while user feedback is collected. The existing `cdcai/TowerScout` repository
-remains unchanged and continues to represent the application currently adopted
-there; it is not the download source for this pilot. Use the exact `v0.1.2`
-release link supplied by the pilot team. Future cdcai adoption will occur only
-after the cdcai owner reviews feedback and approves the version to adopt.
+The published `v0.1.2` package remains a historical pilot release. A newer
+package becomes the current supported release only when its GitHub release
+record names the exact downloads, public SHA-256 values, image digests,
+qualified environments, and known limitations. Use the exact release URL or
+tag supplied by the release owner or support team; do not treat a draft,
+source archive, branch name, or numerically newer tag as approved by inference.
 
-Most pilot users should not start by cloning this repository. If you received a
+Package users should not start by cloning this repository. If you received a
 TowerScout release package, start here instead:
 
 - [Quick Start](docs/quick-start.md)
 - [Full Package Guide](docs/package-guide.md)
 - [User Guide](docs/user-guide.md)
+- [Local IT Administrator Guide](docs/local-it-administrator-guide.md)
 
 Runtime-specific package guides:
 
@@ -36,8 +37,8 @@ exact release URL or tag support gives you, download the files from the release
 source-code ZIP/TAR.GZ downloads for the normal package workflow.
 
 The normal package path assumes Windows 11 AMD64, Docker Desktop with the WSL 2
-backend as the primary pilot engine, normal outbound internet access, and one
-valid Google Maps or Azure Maps key. Current package planning uses two
+backend as the primary controlled engine, normal outbound internet access, and
+one valid Google Maps or Azure Maps key. Current package planning uses two
 Application Package variants: the CPU package for normal/non-GPU users and the
 CUDA 12.8 package only for support-validated NVIDIA GPU workstations. Both use
 the same Model & Data Package ZIP. Podman CPU, Docker GPU, and Podman GPU are
@@ -73,10 +74,10 @@ pull/unpack and runtime data; source qualification builds need at least 60 GB.
 ## Provenance
 
 This repository is a fork of `cdcai/TowerScout`, which itself carries forward
-the original `TowerScout/TowerScout` project history. The validated 2026
-`v0.1.2` pilot package, validation, and handoff work were developed on this
-fork. The cdcai owner will decide whether and when to adopt `v0.1.2` or a later
-validated successor after reviewing pilot feedback.
+the original `TowerScout/TowerScout` project history. The 2026 Windows package,
+validation, and handoff work were developed on this fork. The cdcai owner will
+decide whether and when to adopt a validated release after reviewing its
+evidence and support boundary.
 
 ## About TowerScout
 

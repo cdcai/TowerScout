@@ -103,6 +103,8 @@ PUBLIC_DOC_FILES = {
     "project-overview.md",
     "docker-cpu-user-guide.md",
     "docker-gpu-user-guide.md",
+    "local-it-administrator-guide.html",
+    "local-it-administrator-guide.md",
     "podman-cpu-user-guide.md",
     "podman-gpu-user-guide.md",
     "quick-start.html",

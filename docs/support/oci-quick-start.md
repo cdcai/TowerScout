@@ -1,7 +1,8 @@
 # TowerScout OCI Quick Start
 
-**Applies to**: Current V1 release-candidate package support path
-**Last reviewed**: 2026-10-01
+**Applies to**: The exact documentation-aligned Windows release package named
+by the authoritative release record
+**Last reviewed**: 2026-10-02
 **Audience**: Release/support users who need engine-level detail
 **Runtime scope**: The CPU Application Package is the primary path; the CUDA
 12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
@@ -9,10 +10,10 @@ support-assigned paths after workstation-specific engine, Compose-provider,
 and NVIDIA validation.
 
 This guide covers the v1 local container package shape for TowerScout for
-release/support users who need engine-level detail. External pilot users
+release/support users who need engine-level detail. Package users
 should start with `docs/quick-start.md` instead.
 
-The primary pilot path is the CPU Application Package on Docker Desktop with
+The primary package path is the CPU Application Package on Docker Desktop with
 the WSL 2 backend, launched with CPU-safe `-Gpu off`. The CUDA 12.8 Application
 Package is for support-validated NVIDIA GPU workstations. Podman remains a
 qualified support-directed package runtime path only when the workstation has a
@@ -34,7 +35,7 @@ the authoritative release record before extraction or unblocking.
   `cuda128` for support-validated NVIDIA GPU workstations
 - One shared Model & Data Package ZIP for both Application Package variants
 - Normal outbound internet access for GHCR image pulls and map providers
-- Docker Desktop with WSL 2 backend for the primary pilot path, or a
+- Docker Desktop with WSL 2 backend for the primary package path, or a
   support-approved Podman machine and Compose provider for the qualified Podman
   path
 - Optional Docker GPU and Podman GPU launch after support validates the selected
@@ -46,15 +47,15 @@ signature-enforcing managed endpoints without separate site approval.
 
 ## Prerequisite Software
 
-The normal pilot package path expects Windows PowerShell, a modern browser,
+The normal package path expects Windows PowerShell, a modern browser,
 normal outbound internet access, and Docker Desktop with the WSL 2 backend
 licensed, approved, installed, and running. The Podman path requires support
 direction, a created and running Podman machine, and an approved Compose
-provider. The RC5 Podman GPU path additionally requires WSL2 Podman, NVIDIA
-host drivers, NVIDIA Container Toolkit/CDI inside the Podman machine, and a
+provider. A Podman GPU path additionally requires the exact release-qualified
+WSL2 Podman, NVIDIA host driver, NVIDIA Container Toolkit/CDI setup, and a
 readiness result with `selected_device=cuda`.
 
-Pilot users do not need Git, Python, Conda, Node.js, VS Code, or a source-code
+Package users do not need Git, Python, Conda, Node.js, VS Code, or a source-code
 checkout for the package path. If both Docker and Podman are installed, the
 launcher can choose Docker first. Use `-Engine podman` consistently only when
 validating a support-directed Podman path.
@@ -94,8 +95,9 @@ The release package is expected to include:
 - `webapp/asset_manifest.v1.json`
 - `IMAGE.txt`
 - `SHA256SUMS.txt`
-- Quick Start, Package Guide, User Guide, Project Overview, runtime-specific
-  Docker/Podman CPU/GPU user guides, and runtime-contract documentation
+- Quick Start, Package Guide, User Guide, Project Overview, Local IT
+  Administrator Guide, runtime-specific Docker/Podman CPU/GPU user guides, and
+  runtime-contract documentation
 - release asset bundle contract documentation
 - a pinned GHCR image reference by digest
 
@@ -160,7 +162,7 @@ The workflow publishes flavor-specific tags. For example, a workflow tag input o
 
 The measured CUDA image is 14.4 GB. Budget at least 35 GB for a normal
 pull/unpack plus assets/volumes, 60 GB for a support source build, and 150 GB
-for a full multi-stage comparison (the pilot grew Docker's virtual disk by
+for a full multi-stage comparison (qualification grew Docker's virtual disk by
 about 120 GB). Publish only exact GPU/driver/Windows/WSL/engine/toolkit
 combinations qualified in release evidence.
 
@@ -275,25 +277,22 @@ Scripts auto-detect the engine. To force one:
 ```
 
 Docker Desktop use depends on license, procurement, endpoint policy, and local
-installation approval. It is the primary pilot runtime path. Podman is a
+installation approval. It is the primary package runtime path. Podman is a
 qualified support path when Podman and a working Compose provider are
 installed, approved on the workstation, and explicitly selected by support.
 
 On Windows, `podman compose` is a wrapper around an external Compose provider
-such as standalone Docker Compose or `podman-compose`. The TowerScout scripts
-call `podman compose` for the Podman path, and RC5 validation confirmed the
-package can run with standalone Docker Compose v5.1.4 selected explicitly
-through `PODMAN_COMPOSE_PROVIDER` rather than Docker Desktop's bundled
-provider.
+such as `podman-compose`. The TowerScout scripts call `podman compose` for the
+Podman path and require the approved provider/version named by the release.
+Docker Desktop's bundled provider is not an approved Podman substitute.
 
-Validated Podman checks on the current host:
+Required Podman release checks:
 
 - Podman WSL engine startup, named volumes, asset import, readiness, and containerized smoke behavior.
 - Podman CPU startup through an approved non-Docker-Desktop Compose provider.
-- Podman GPU CDI startup on Windows 11 WSL2 with Podman 5.8.2, NVIDIA T1000
-  hardware, standalone Docker Compose v5.1.4 selected through
-  `PODMAN_COMPOSE_PROVIDER`, readiness `selected_device=cuda`, and fixed-fixture
-  parity against Docker CPU/GPU and Podman CPU.
+- Podman GPU CDI startup on the exact qualified Windows/WSL/Podman/NVIDIA
+  combination, readiness `selected_device=cuda`, a real CUDA probe, and
+  fixed-fixture parity against the other required profiles.
 
 Podman support prerequisites:
 

@@ -29,29 +29,28 @@
     <main class="doc-main">
       <section class="doc-section" id="metadata">
         <h2>Document Metadata</h2>
-        <p><strong>Applies to:</strong> Current V1 package path through the stable v0.1.0 closeout, unless release notes
-          say otherwise.</p>
-        <p><strong>Last reviewed:</strong> 2026-10-01.</p>
-        <p><strong>Audience:</strong> Pilot users, support leads, and release reviewers.</p>
+        <p><strong>Applies to:</strong> The exact documentation-aligned Windows release package named by the authoritative release record.</p>
+        <p><strong>Last reviewed:</strong> 2026-10-02.</p>
+        <p><strong>Audience:</strong> Package users, Local IT, support leads, and release reviewers.</p>
         <p><strong>Runtime scope:</strong> The CPU Application Package is the primary path; the CUDA 12.8 Application
           Package, Podman CPU, Docker GPU, and Podman GPU are support-assigned paths after workstation-specific engine,
           Compose-provider, and NVIDIA validation.</p>
       </section>
       <section class="doc-section" id="package">
         <h2>What The Package Provides</h2>
-        <p>The package provides a Windows-first local pilot path with a CPU Application Package ZIP for normal users, a
+        <p>The package provides a Windows-first local path with a CPU Application Package ZIP for normal users, a
           CUDA 12.8 Application Package ZIP for support-validated NVIDIA GPU workstations, one shared Model &amp; Data
-          Package ZIP, pinned GHCR image digests, Docker Desktop primary pilot runtime configuration, CPU-safe default
+          Package ZIP, pinned GHCR image digests, Docker Desktop primary runtime configuration, CPU-safe default
           launch, optional Docker and Podman GPU controls, setup and support helper scripts, package-local docs, and
           release notices.</p>
-        <p>The normal pilot path is package-based. Source checkout, Python virtual environment, and Conda setup guides
+        <p>The normal user path is package-based. Source checkout, Python virtual environment, and Conda setup guides
           are legacy support material.</p>
       </section>
       <section class="doc-section" id="prerequisites">
         <h2>What Users Need Installed</h2>
-        <p>Pilot users need Windows 11 AMD64, PowerShell, a modern browser, normal outbound internet access, WSL 2 and
+        <p>Package users need Windows 11 AMD64, PowerShell, a modern browser, normal outbound internet access, WSL 2 and
           hardware virtualization support for Docker Desktop, and Docker Desktop installed, approved, and running as the
-          primary pilot engine.</p>
+          primary engine.</p>
         <p>Plan for at least <code>15 GB</code> free for the CPU package. The measured CUDA image is
           <code>14.4 GB</code>; plan at least <code>35 GB</code> for pull/unpack plus runtime data, or
           <code>60 GB</code> for a support-directed source qualification build.</p>

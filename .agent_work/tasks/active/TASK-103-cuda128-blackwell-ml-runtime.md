@@ -4,9 +4,9 @@
 G10, W05, four-profile W09 setup/device/lifecycle, and the complete local W10
 provider/cancel/error/review-export/relaunch/reboot matrix. ADR-023 resolves
 the unsigned support boundary. The preliminary `rc4` browser-download Docker
-CPU diagnostic passed; its documentation findings, documentation-aligned
-image/control-ZIP rebuild, final browser-download validation, and independent-
-host evidence remain
+CPU diagnostic passed and its documentation findings are incorporated in local
+source drafts. Content freeze, documentation-aligned image/control-ZIP rebuild,
+final browser-download validation, and independent-host evidence remain
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation

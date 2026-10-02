@@ -17,6 +17,8 @@ PUBLIC_UNSIGNED_DOCS = (
     "docs/docker-gpu-user-guide.md",
     "docs/podman-cpu-user-guide.md",
     "docs/podman-gpu-user-guide.md",
+    "docs/local-it-administrator-guide.md",
+    "docs/local-it-administrator-guide.html",
     "docs/support/oci-quick-start.md",
     "docs/support/oci-runtime-contract.md",
     "docs/release/release-asset-bundle-contract.md",

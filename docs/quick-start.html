@@ -12,7 +12,7 @@
   <header class="page-header">
     <p class="eyebrow">TowerScout release package</p>
     <h1>Quick Start</h1>
-    <p class="lead">The short Windows pilot path for extracting the package, importing assets, launching TowerScout,
+    <p class="lead">The short Windows package path for extracting the package, importing assets, launching TowerScout,
       completing setup, and confirming readiness.</p>
   </header>
   <div class="doc-frame">
@@ -38,10 +38,9 @@
     <main class="doc-main">
       <section class="doc-section" id="metadata">
         <h2>Document Metadata</h2>
-        <p><strong>Applies to:</strong> Current V1 package path through the stable v0.1.0 closeout, unless release notes
-          say otherwise.</p>
-        <p><strong>Last reviewed:</strong> 2026-10-01.</p>
-        <p><strong>Audience:</strong> Pilot users and first-line support.</p>
+        <p><strong>Applies to:</strong> The exact documentation-aligned Windows release package named by the authoritative release record.</p>
+        <p><strong>Last reviewed:</strong> 2026-10-02.</p>
+        <p><strong>Audience:</strong> Windows package users and first-line support.</p>
         <p><strong>Runtime scope:</strong> The CPU Application Package is the normal path. The CUDA 12.8 Application
           Package, Podman CPU, Docker GPU, and Podman GPU are support-assigned paths after workstation-specific engine,
           Compose-provider, and NVIDIA validation.</p>
@@ -57,7 +56,7 @@
           support-validated NVIDIA GPU workstations. <strong>Model &amp; Data Package</strong> means the larger asset
           ZIP, also called the asset bundle, with model weights and ZIP-code data. Both Application Package variants use
           the same Model &amp; Data Package for this release path.</p>
-        <p>Docker Desktop with the WSL 2 backend is the primary pilot engine. During Docker Desktop installation, keep
+        <p>Docker Desktop with the WSL 2 backend is the primary controlled engine. During Docker Desktop installation, keep
           the WSL 2 backend selected when prompted, start Docker Desktop from the Windows Start menu, and wait until
           Docker Desktop reports that it is running.</p>
         <p>Docker's current Windows requirements include WSL <code>2.1.5</code> or later, 8 GB RAM, and hardware
@@ -117,9 +116,9 @@ docker compose version</code></pre>
       </section>
       <section class="doc-section" id="download">
         <h2>Get The Release Files</h2>
-        <p>For the July 2026 pilot, use the exact validated <code>v0.1.2</code> release from the development fork. The
-          existing <code>cdcai/TowerScout</code> repository remains unchanged while feedback is collected and is not
-          the pilot download source.</p>
+        <p>Use the exact release URL or tag supplied by the release owner or support team. A draft release, source
+          archive, branch name, or numerically newer tag is not an approved package unless the authoritative release
+          record explicitly says so.</p>
         <p>Open <a
             href="https://github.com/J-Schulein/TowerScout/releases">https://github.com/J-Schulein/TowerScout/releases</a>
           in your browser, then open the exact release that support told you to use. If support provides a direct
@@ -137,7 +136,7 @@ docker compose version</code></pre>
           Package ZIP and leave the Model &amp; Data Package ZIP plus both <code>.sha256</code> files beside the
           extracted folder.</p>
         <p>Do not use the green GitHub <code>Code</code> button or GitHub's automatic <code>Source code (zip)</code> or
-          <code>Source code (tar.gz)</code> downloads for normal pilot setup.</p>
+          <code>Source code (tar.gz)</code> downloads for normal package setup.</p>
         <p>The release version must match between the Application Package and the Model &amp; Data Package. If the
           versions differ, stop and download the matching files from the same GitHub release.</p>
       </section>
@@ -183,10 +182,14 @@ Get-Content .\towerscout-&lt;release-version&gt;-assets-&lt;asset-version&gt;.zi
           metadata, checksum sidecars, and asset ZIP layout before importing assets and launching TowerScout. It finds
           the Model &amp; Data Package ZIP in the extracted application folder or parent <code>TowerScoutUAT</code>
           folder.</p>
-        <p>If setup reports that more than one Model &amp; Data Package ZIP was found, move old TowerScout ZIPs out of
-          the folder and run setup again. If support asks for an explicit ZIP path, use the exact Model &amp; Data
-          Package filename:</p>
-        <pre><code>.\setup-towerscout.cmd -AssetZip C:\Users\&lt;you&gt;\Documents\TowerScoutUAT\towerscout-&lt;release-version&gt;-assets-&lt;asset-version&gt;.zip</code></pre>
+        <p>If setup reports that more than one ZIP candidate was found, move old TowerScout ZIPs out of the folder and
+          run setup again. If the downloaded ZIPs cannot remain beside the extracted folder, pass both exact quoted
+          paths:</p>
+        <pre><code>.\setup-towerscout.cmd `
+  -PackageZip "C:\Users\&lt;you&gt;\Documents\TowerScoutUAT\towerscout-&lt;release-version&gt;-cpu.zip" `
+  -AssetZip "C:\Users\&lt;you&gt;\Documents\TowerScoutUAT\towerscout-&lt;release-version&gt;-assets-&lt;asset-version&gt;.zip"</code></pre>
+        <p>If support assigned CUDA, use the exact <code>-cuda128</code> Application Package path. Copy both exact
+          filenames from the release or download folder.</p>
         <p>Expected result: PowerShell prints <code>TowerScout setup</code>, reports prerequisite checks, verifies
           checksums, imports valid assets with hash verification, starts TowerScout, and opens
           <code>http://localhost:5000</code>. If the browser does not open, leave PowerShell open and manually open that
@@ -238,9 +241,9 @@ readiness: setup_required</code></pre>
 .\start.bat -Engine podman -Gpu on</code></pre>
         <p>The CPU package rejects <code>-Gpu on</code>. The CUDA package still fails closed unless readiness reports
           <code>selected_device=cuda</code>. For Podman GPU, support must validate the non-Docker-Desktop Compose
-          provider and NVIDIA CDI path before launch. The RC5 validated path used Podman 5.8.2 on Windows 11 WSL2,
-          standalone Docker Compose v5.1.4 selected through <code>PODMAN_COMPOSE_PROVIDER</code>, and NVIDIA CDI device
-          <code>nvidia.com/gpu=all</code>.</p>
+          intended rootless machine, approved non-Docker-Desktop Compose provider, NVIDIA CDI path, and exact
+          release-qualified version/device combination before launch. Do not inherit a version tuple from an earlier
+          release.</p>
       </section>
       <section class="doc-section" id="setup">
         <h2>Complete Setup</h2>
@@ -260,15 +263,12 @@ readiness: setup_required</code></pre>
         <p>Readiness should become <code>ready</code> after provider setup and required assets are present. For a smoke
           check, support should provide the fixture before UAT starts: provider, public/non-sensitive location name,
           expected tile range, and whether zero detections is acceptable. Do not choose a private investigation AOI for
-          the first smoke test. Estimate tiles first, keep the run small, then select <code>Find towers</code>. The
-          default pilot Azure smoke fixture is about <code>8</code> tiles.</p>
-        <p>The UAT package defaults to a pilot guard of <code>100</code> tiles. If TowerScout reports that the selected
-          area exceeds the current pilot limit, reduce the search area or contact support before running a larger
-          validation.</p>
-        <p>Expected result: the detection workflow completes without crashing. For the default pilot Azure fixture,
-          expect a non-zero tower result. Exact counts may vary, but zero towers, no review-panel update, or a crash
-          should be reported as <code>BLOCKED</code> or <code>FAIL</code>. For any future support-approved fixture,
-          follow the zero-detection rule support provided for that fixture.</p>
+          the first smoke test. Estimate tiles first, keep the run small, then select <code>Find towers</code>.</p>
+        <p>The package defaults to a <code>100</code>-tile safety guard. If TowerScout reports that the selected area
+          exceeds the configured limit, reduce the search area or contact support before running a larger validation.</p>
+        <p>Expected result: the detection workflow completes without crashing. Compare the tile/detection result with
+          the predeclared fixture expectation. A missing review-panel update, crash, or result outside that expectation
+          should be reported as <code>BLOCKED</code> or <code>FAIL</code>.</p>
       </section>
       <section class="doc-section" id="stop">
         <h2>Stop Or Restart</h2>

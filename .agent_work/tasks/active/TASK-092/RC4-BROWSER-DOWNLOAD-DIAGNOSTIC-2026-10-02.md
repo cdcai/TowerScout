@@ -155,5 +155,6 @@ booleans, artifact identities, and coarse runtime state. It excludes provider
 keys, `.env` contents, AOI coordinates, provider URLs, request/response bodies,
 console text, screenshots, and raw browser traces. The runner removed its
 temporary export directory and reported `sensitiveArtifactsRetained=false`.
-The diagnostic container and all eight volumes are retained until Task-092
-reconciliation and the final candidate handoff no longer require them.
+After evidence reconciliation, the diagnostic container/network were removed
+through the supported stop wrapper. All eight named volumes, the exact
+browser-downloaded/extracted files, and the written evidence remain preserved.

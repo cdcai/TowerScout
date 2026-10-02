@@ -58,6 +58,7 @@ def test_index_route_renders_towerscout_shell(client):
     assert b"/docs/quick-start.html" in response.data
     assert b"/docs/project-overview.html" in response.data
     assert b"/docs/user-guide.html" in response.data
+    assert b"/docs/local-it-administrator-guide.html" in response.data
     assert b"https://pubmed.ncbi.nlm.nih.gov/38906615/" in response.data
     assert b"sciencedirect.com/science/article/pii/S2589750024000943" not in response.data
     assert b"Documentation Placeholder" not in response.data
@@ -103,6 +104,7 @@ def test_docs_routes_expose_package_local_docs(client):
     podman_cpu_response = client.get("/docs/podman-cpu-user-guide.md")
     podman_gpu_response = client.get("/docs/podman-gpu-user-guide.md")
     user_guide_response = client.get("/docs/user-guide.html")
+    local_it_response = client.get("/docs/local-it-administrator-guide.html")
     package_guide_response = client.get("/docs/package-guide.md")
     css_response = client.get("/docs/towerscout-docs.css")
 
@@ -135,6 +137,10 @@ def test_docs_routes_expose_package_local_docs(client):
     assert b"Before Using This Guide" in user_guide_response.data
     assert b"Docker Desktop is installed, approved, and running" in user_guide_response.data
     assert b"qualified Podman path" in user_guide_response.data
+    assert local_it_response.status_code == 200
+    assert local_it_response.mimetype == "text/html"
+    assert b"Local IT Administrator Guide" in local_it_response.data
+    assert b"process-scoped execution-policy" in local_it_response.data
     assert package_guide_response.status_code == 200
     assert b"TowerScout Package Guide" in package_guide_response.data
     assert b"CPU Application Package is the primary path" in package_guide_response.data
