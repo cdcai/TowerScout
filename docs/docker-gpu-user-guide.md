@@ -3,13 +3,13 @@
 **Applies to**: The exact documentation-aligned Windows release package named
 by the authoritative release record
 **Last reviewed**: 2026-10-02
-**Audience**: Windows users assigned Docker Desktop NVIDIA GPU validation
+**Audience**: Windows users who choose Docker Desktop with NVIDIA GPU processing
 **Runtime scope**: Docker Desktop, CUDA 12.8 Application Package, GPU launch
 mode
 
-Use this guide only when support assigns a workstation to the Docker GPU path.
-The normal user path is Docker CPU. Docker GPU requires the CUDA Application
-Package and workstation-specific NVIDIA container validation.
+Use this guide when you choose Docker Desktop with a compatible NVIDIA GPU.
+Docker GPU requires the CUDA Application Package and successful NVIDIA
+container validation. You may choose CPU instead.
 
 **Unsigned package boundary**: TowerScout's PowerShell scripts are unsigned.
 Use the supplied `.cmd`/`.bat` wrappers only where you and your organization
@@ -28,10 +28,9 @@ Install or confirm these items before running TowerScout.
 - A modern browser such as Microsoft Edge or Google Chrome.
 - Normal outbound internet access to GitHub Releases, GHCR, NVIDIA/Docker
   dependencies allowed by local policy, and the selected map provider.
-- At least `35 GB` free for package pull/unpack, assets, and volumes. The
-  measured CUDA image is `14.4 GB`. A support-directed source qualification
-  build needs at least `60 GB` free.
-- One approved Google Maps or Azure Maps provider key.
+- At least `35 GB` free for package download, image pull/unpack, assets, and
+  volumes. The measured CUDA image is `14.4 GB`.
+- One user- or organization-owned Google Maps or Azure Maps provider key.
 - An NVIDIA GPU supported by the current Windows NVIDIA driver.
 - Windows Subsystem for Linux 2.
   - Install guide:
@@ -40,7 +39,8 @@ Install or confirm these items before running TowerScout.
     software. Check with your local IT support if you encounter problems
     installing this software.
 - Docker Desktop.
-  - Download page: `https://www.docker.com/products/docker-desktop/`
+  - Installation guide:
+    `https://docs.docker.com/desktop/setup/install/windows-install/`
   - Note: Docker Desktop is free to download. A Docker account is not required
     to run the TowerScout local package, but local license, procurement, and
     endpoint-management rules still apply.
@@ -87,8 +87,8 @@ fallback as GPU validation.
    C:\Users\<you>\Documents\TowerScout
    ```
 
-2. Open the TowerScout GitHub Releases page and use the exact release that
-   support selected:
+2. Open the TowerScout GitHub Releases page and select the entry whose notes
+   identify it as the current supported final Windows release:
 
    ```text
    https://github.com/J-Schulein/TowerScout/releases
@@ -107,7 +107,23 @@ fallback as GPU validation.
    Do not use the CPU Application Package for this guide. The CPU package
    rejects `-Gpu on`.
 
-4. Extract only the CUDA 12.8 Application Package ZIP:
+4. Before extracting anything, calculate the SHA-256 of both ZIPs and compare
+   each result with both its downloaded `.sha256` file and the authoritative
+   value printed in the final release notes:
+
+   ```powershell
+   $appZip = Get-ChildItem -File "*-cuda128.zip"
+   $assetZip = Get-ChildItem -File "*-assets-*.zip"
+   Get-FileHash -Algorithm SHA256 -LiteralPath $appZip.FullName
+   Get-Content -LiteralPath ($appZip.FullName + ".sha256")
+   Get-FileHash -Algorithm SHA256 -LiteralPath $assetZip.FullName
+   Get-Content -LiteralPath ($assetZip.FullName + ".sha256")
+   ```
+
+   Stop if PowerShell finds zero or multiple matches, the release notes omit
+   the authoritative values, or any value differs.
+
+5. Extract only the verified CUDA 12.8 Application Package ZIP:
 
    ```text
    towerscout-<release-version>-cuda128.zip
@@ -116,31 +132,30 @@ fallback as GPU validation.
    Leave the Model & Data Package ZIP and both `.sha256` files beside the
    extracted folder. Do not extract the assets ZIP for the normal setup path.
 
-5. Open the extracted application folder in File Explorer. It should contain
+6. Open the extracted application folder in File Explorer. It should contain
    `setup-towerscout.cmd`, `start.bat`, `compose.gpu.yaml`, `scripts\`,
    `docs\`, and `assets\`.
 
-6. In Windows File Explorer, click the address bar, type `powershell`, and
+7. In Windows File Explorer, click the address bar, type `powershell`, and
    press Enter.
 
-7. In the PowerShell window, run the support-assigned setup command:
+8. In the PowerShell window, run the required-GPU setup command:
 
    ```powershell
    .\setup-towerscout.cmd -Engine docker -Gpu on
    ```
 
-   If support is still checking workstation GPU readiness and wants CPU
-   fallback allowed during the first pass, they may assign:
+   To allow CPU fallback if GPU readiness fails, you may instead run:
 
    ```powershell
    .\setup-towerscout.cmd -Engine docker -Gpu auto
    ```
 
-8. Keep the PowerShell window open while Docker Desktop downloads and starts
+9. Keep the PowerShell window open while Docker Desktop downloads and starts
    the CUDA image. The first image pull can take several minutes.
 
-9. When TowerScout opens in the browser, use Setup Wizard or Settings to
-   configure one approved provider key. One valid Google Maps or Azure Maps key
+10. When TowerScout opens in the browser, use Setup Wizard or Settings to
+   configure the provider key you prepared. One valid Google Maps or Azure Maps key
    is enough to start.
 
 Setup verifies the package checksum sidecars, imports the Model & Data Package
@@ -169,7 +184,7 @@ Start again with required CUDA:
 .\start.bat -Engine docker -Gpu on
 ```
 
-Start again with support-approved CPU fallback:
+Start again with CPU fallback allowed:
 
 ```powershell
 .\start.bat -Engine docker -Gpu auto
@@ -188,15 +203,20 @@ Check status:
 .\scripts\status.cmd -Engine docker
 ```
 
-Show recent logs if support asks:
+Show recent logs for troubleshooting:
 
 ```powershell
 .\scripts\logs.cmd -Engine docker -Tail 200
 ```
 
-Use the same `-Engine docker` and support-assigned `-Gpu` value on setup,
-start, stop, status, logs, asset import, and TLS commands. Docker and Podman
+Use `-Engine docker` on each helper that accepts an engine. Preserve the chosen
+`-Gpu on` or `-Gpu auto` value on setup, `start.bat`, and TLS-repair commands;
+stop, status, logs, and asset import do not take a GPU flag. Docker and Podman
 use separate storage.
+
+If you chose a non-default port, add the recorded `-Port` value to setup,
+`start.bat`, status, and TLS-repair commands and use that port in the browser
+address. `stop.cmd` and `logs.cmd` do not take a port.
 
 ## Troubleshooting
 
@@ -227,24 +247,25 @@ http://localhost:5000
 If setup reports multiple asset ZIPs, move old TowerScout ZIPs out of the
 working folder and rerun setup.
 
-If status is `degraded`, required assets may be missing or corrupt. Ask support
-before manually importing assets. A support-directed import command is:
+If status is `degraded`, required assets may be missing or corrupt. Retry the
+verified import command:
 
 ```powershell
 .\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180
 ```
 
-If status is `fatal`, stop validation and send support the release version,
-package filename, requested GPU mode, status output, and a reviewed summary of
-recent logs. Do not send provider secrets, `.env`, raw screenshots, browser
-network traces, exported datasets, or unreviewed raw logs unless your site has
-an approved handling procedure.
+If status is `fatal`, stop. Record the release version, package filename,
+chosen GPU mode, status output, and a reviewed summary of recent logs. Ask
+Local IT about local policy, network, driver, or certificate problems. Report
+a non-sensitive product defect at `https://github.com/J-Schulein/TowerScout/issues`.
+That tracker is public and does not promise a response. Never post provider
+secrets, `.env`, raw screenshots, browser traces, exported datasets,
+certificate details, or unreviewed raw logs.
 
 ### Provider TLS Inspection CA
 
 Use this only when Google Maps or Azure Maps key validation fails even though
-the key is correct and support sees `CERTIFICATE_VERIFY_FAILED` in container
-logs. This
+the key is correct and logs show `CERTIFICATE_VERIFY_FAILED`. This
 usually means the container does not trust a local TLS inspection root or
 intermediate certificate.
 
@@ -259,10 +280,10 @@ Run the guided dry run from the extracted TowerScout application folder:
 .\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu on -Port 5000
 ```
 
-Review the local support-sensitive output with support. Do not paste
+Review the locally sensitive output with Local IT. Do not paste
 certificate subjects, issuer details, or thumbprints into public issue comments
 or public release evidence. If the helper identifies a safe CA candidate, it
-prints the exact apply command. With support approval, apply the repair and
+prints the exact apply command. With Local IT approval, apply the repair and
 restart TowerScout:
 
 ```powershell
@@ -271,11 +292,11 @@ restart TowerScout:
 .\start.bat -Engine docker -Gpu on -Port 5000
 ```
 
-If support assigned `-Gpu auto`, use `-Gpu auto` on the repair and restart
+If you chose `-Gpu auto`, use `-Gpu auto` on the repair and restart
 commands instead.
 
-If support already knows the correct Windows certificate thumbprint or has an
-exported CA file, they can bypass automatic selection:
+If Local IT knows the correct Windows certificate thumbprint or has an
+exported CA file, it can bypass automatic selection:
 
 ```powershell
 .\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu on -Port 5000 -Thumbprint <windows-certificate-thumbprint> -Apply
@@ -284,13 +305,13 @@ exported CA file, they can bypass automatic selection:
 .\start.bat -Engine docker -Gpu on -Port 5000
 ```
 
-Do not paste the placeholder text. Replace it with the actual support-provided
+Do not paste the placeholder text. Replace it with the actual Local IT-provided
 thumbprint or certificate path. The helper copies the CA chain into Docker's
 persistent TowerScout config volume, builds a combined CA bundle, updates
 `.env`, and verifies that selected provider TLS reaches the normal invalid-key
 response instead of a certificate error.
 
-If your site uses Azure Maps instead of Google Maps for validation, support may
-use `-Provider azure`. If automatic discovery is ambiguous or unavailable,
-support may still use the lower-level `scripts\import-tls-ca.cmd` command with a
+If your site uses Azure Maps instead of Google Maps for validation, use
+`-Provider azure`. If automatic discovery is ambiguous or unavailable, Local
+IT may use the lower-level `scripts\import-tls-ca.cmd` command with a
 known `-Thumbprint` or `-CertificatePath`.

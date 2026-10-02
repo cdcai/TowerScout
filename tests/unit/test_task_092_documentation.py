@@ -44,9 +44,9 @@ def test_wiki_keeps_release_and_package_authority_explicit():
     releases = _read("wiki/Releases-And-Supported-Versions.md")
 
     assert "release record" in home
-    assert "docs\\" in home
+    assert "versioned `docs` folder" in home
     assert "authoritative release record" in install
-    assert "not yet publicly frozen/published" in releases.lower()
+    assert "final release is not yet frozen or published" in releases.lower()
 
 
 def test_local_it_guide_is_packaged_and_exposed_in_app():
@@ -104,3 +104,86 @@ def test_current_primary_docs_do_not_claim_stale_release_scope():
         text = _read(relative_path)
         for stale_phrase in stale_phrases:
             assert stale_phrase not in text, (relative_path, stale_phrase)
+
+
+def test_current_user_docs_do_not_require_project_assigned_pathways():
+    prohibited = (
+        "support-assigned",
+        "support assigned",
+        "support-selected",
+        "support selected",
+        "support explicitly assigns",
+        "changes the assigned path",
+    )
+    current_docs = (
+        "README.md",
+        "docs/quick-start.md",
+        "docs/quick-start.html",
+        "docs/package-guide.md",
+        "docs/project-overview.md",
+        "docs/project-overview.html",
+        "docs/user-guide.md",
+        "docs/user-guide.html",
+        "docs/docker-cpu-user-guide.md",
+        "docs/docker-gpu-user-guide.md",
+        "docs/podman-cpu-user-guide.md",
+        "docs/podman-gpu-user-guide.md",
+        "wiki/Home.md",
+        "wiki/Before-You-Install.md",
+        "wiki/Choose-Your-Setup.md",
+        "wiki/Install-And-First-Run.md",
+    )
+
+    for relative_path in current_docs:
+        text = _read(relative_path).lower()
+        for phrase in prohibited:
+            assert phrase not in text, (relative_path, phrase)
+
+
+def test_quick_start_explains_independent_choices_and_provider_acquisition():
+    for relative_path in ("docs/quick-start.md", "docs/quick-start.html"):
+        text = " ".join(_read(relative_path).lower().split())
+        assert "three independent choices" in text, relative_path
+        assert "google cloud console" in text, relative_path
+        assert "azure portal" in text, relative_path
+        assert "one credential per provider" in text, relative_path
+        assert "browser can see" in text, relative_path
+
+
+def test_engine_guides_verify_both_zips_before_extraction():
+    for relative_path in (
+        "docs/docker-cpu-user-guide.md",
+        "docs/docker-gpu-user-guide.md",
+        "docs/podman-cpu-user-guide.md",
+        "docs/podman-gpu-user-guide.md",
+    ):
+        text = _read(relative_path).lower()
+        verify_at = text.index("before extracting anything")
+        extract_at = text.index("extract only the verified")
+        assert verify_at < extract_at, relative_path
+        assert "authoritative" in text[verify_at:extract_at], relative_path
+        assert "get-filehash" in text[verify_at:extract_at], relative_path
+
+
+def test_maintained_html_keeps_core_user_actions_and_responsive_commands():
+    quick_start = _read("docs/quick-start.html")
+    user_guide = _read("docs/user-guide.html")
+
+    assert 'href="towerscout-docs.css"' in quick_start
+    assert "command-grid" in quick_start
+    assert "<table" not in quick_start
+    for label in ("Circle", "Custom shape", "Clear all", "Stop And Resume Later"):
+        assert label in user_guide
+
+
+def test_final_user_recovery_does_not_recommend_insecure_tls():
+    for relative_path in (
+        "docs/quick-start.md",
+        "docs/quick-start.html",
+        "docs/package-guide.md",
+        "wiki/Troubleshooting-And-Safe-Support.md",
+        "docs/support/oci-quick-start.md",
+    ):
+        text = _read(relative_path)
+        assert "last-resort validation-only workaround" not in text, relative_path
+        assert "```powershell\nTOWERSCOUT_ALLOW_INSECURE_TLS=1" not in text, relative_path

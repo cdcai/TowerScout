@@ -4,10 +4,8 @@
 by the authoritative release record
 **Last reviewed**: 2026-10-02
 **Audience**: Release/support users and runtime maintainers
-**Runtime scope**: The CPU Application Package is the primary path; the CUDA
-12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
-support-assigned paths after workstation-specific engine, Compose-provider,
-and NVIDIA validation.
+**Runtime scope**: Users independently choose Docker or Podman and CPU or a
+compatible NVIDIA GPU; each path must meet the release-listed requirements.
 
 This document summarizes the v1 container runtime contract. The detailed task
 evidence lives in `.agent_work/tasks/completed/TASK-025-docker-containerization.md`.
@@ -218,7 +216,8 @@ Docker and Podman use separate named volumes, so CA import must be run for the s
 
 The guided repair helper supports `-Provider google|azure`, `-Engine auto|docker|podman`, `-Gpu off|auto|on`, and `-Port 1..65535`, and forwards the selected engine/GPU profile and host port to the import helper so the repaired config volume and port binding match the active runtime. The CA import helper supports `-VerifyProvider auto|google|azure|none`. `auto` follows `DEFAULT_MAP_PROVIDER` when available and otherwise uses Google; `azure` avoids a Google-only verification assumption for Azure-first or Google-blocked sites; `none` builds the bundle without making a remote verification request.
 
-`TOWERSCOUT_ALLOW_INSECURE_TLS=1` exists only as a local validation fallback for provider-key checks and should not be used as the normal release posture.
+`TOWERSCOUT_ALLOW_INSECURE_TLS=1` is not an end-user recovery path and must not
+be recommended for the final package. Use a properly imported local CA or stop.
 
 ## Validation Split
 

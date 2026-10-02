@@ -5,100 +5,141 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TowerScout Local IT Administrator Guide</title>
-  <link rel="stylesheet" href="/docs/towerscout-docs.css">
+  <link rel="stylesheet" href="towerscout-docs.css">
 </head>
 
 <body>
+  <a class="skip-link" href="#main-content">Skip to Local IT instructions</a>
   <header class="page-header">
     <p class="eyebrow">TowerScout release package</p>
     <h1>Local IT Administrator Guide</h1>
-    <p class="lead">Approval, integrity, runtime, data-custody, and safe-support boundaries for the Windows package.</p>
+    <p class="lead">Prerequisite, integrity, security, network, credential, data-custody, and recovery boundaries for
+      the local Windows package.</p>
   </header>
   <div class="doc-frame">
     <nav class="doc-nav" aria-label="Local IT guide sections">
-      <h2>Sections</h2>
-      <a href="#metadata">Metadata</a>
-      <a href="#decision">Decision Summary</a>
-      <a href="#architecture">Runtime And Data</a>
-      <a href="#prerequisites">Prerequisites</a>
-      <a href="#integrity">Download Integrity</a>
-      <a href="#readiness">Readiness</a>
-      <a href="#providers">Provider Keys</a>
-      <a href="#network">Network/TLS</a>
-      <a href="#volumes">Data And Recovery</a>
-      <a href="#evidence">Safe Evidence</a>
-      <a href="#escalate">Stop/Escalate</a>
+      <h2>On this page</h2>
+      <a href="#scope">Role and scope</a>
+      <a href="#approval">Approval checklist</a>
+      <a href="#unsigned">Unsigned package</a>
+      <a href="#integrity">Download integrity</a>
+      <a href="#providers">Provider credentials</a>
+      <a href="#network">Network and TLS</a>
+      <a href="#data">Data and recovery</a>
+      <a href="#evidence">Safe evidence</a>
+      <a href="#handoff">Upgrade/handoff</a>
     </nav>
-    <main class="doc-main">
-      <section class="doc-section" id="metadata">
-        <h2>Document Metadata</h2>
-        <p><strong>Applies to:</strong> The next documentation-aligned Windows release package unless its release notes state otherwise.</p>
-        <p><strong>Last reviewed:</strong> 2026-10-02.</p>
-        <p><strong>Audience:</strong> Local IT, security, endpoint-management, and support staff.</p>
-        <p><strong>Runtime scope:</strong> Windows 11 AMD64. Docker CPU is the default path; Docker GPU, Podman CPU, and Podman GPU are support-assigned.</p>
-        <p>The shipped Quick Start and Package Guide own exact user commands. The GitHub release record owns exact downloads, public SHA-256 values, image digests, qualified environments, and known limitations.</p>
+    <main class="doc-main" id="main-content">
+      <section class="doc-section" id="scope">
+        <h2>Role And Scope</h2>
+        <p><strong>Applies to:</strong> The next documentation-aligned Windows release. <strong>Last reviewed:</strong>
+          2026-10-02. <strong>Audience:</strong> Local IT, security, and endpoint-management staff.</p>
+        <p>The user chooses Docker or Podman, CPU or a compatible NVIDIA GPU, and Google Maps or Azure Maps. Local IT
+          confirms that the chosen prerequisites, network access, credential model, and unsigned-script boundary are
+          permitted. The final release record limits support to exact tested combinations.</p>
+        <p>TowerScout is a local browser application served from a digest-pinned Linux container on loopback, normally
+          at <code>http://localhost:5000</code>. Results require human review.</p>
       </section>
-      <section class="doc-section" id="decision">
-        <h2>Decision Summary</h2>
-        <ul>
-          <li>TowerScout is a local browser application served from a digest-pinned Linux container. The normal URL is <code>http://localhost:5000</code>, with a loopback host binding.</li>
-          <li>The CPU Application Package on Docker Desktop is the normal path. CUDA and Podman require release-specific support assignment and validation.</li>
-          <li>Windows PowerShell scripts are intentionally unsigned. The supplied <code>.cmd</code>/<code>.bat</code> wrappers use a process-scoped execution-policy setting and do not change persistent policy.</li>
-          <li>Trusted-signature, WDAC/AppLocker, constrained-language, or organization-allowlisting requirements need a site-owned approval path and are outside the standard support claim.</li>
-        </ul>
-        <p class="callout">Do not disable Defender/EDR, select <code>Run anyway</code> for unverified files, weaken machine-wide policy, or change persistent execution policy.</p>
+
+      <section class="doc-section" id="approval">
+        <h2>Approval Checklist</h2>
+        <ol>
+          <li>Windows 11 x64, supported build, RAM, disk, hardware virtualization, and WSL 2 meet final requirements.</li>
+          <li>The chosen engine is allowed: licensed/running Docker Desktop with WSL 2 Linux containers, or Podman
+              Desktop with rootless <code>podman-machine-default</code>.</li>
+          <li>Podman's tested path may install Python 3.12 and the package-local pinned Compose provider.</li>
+          <li>GPU use matches the release's exact GPU/driver/engine matrix; Podman GPU includes NVIDIA Toolkit/CDI.</li>
+          <li>Outbound HTTPS is permitted to the final GitHub release, GHCR, and selected provider endpoints.</li>
+          <li>The site accepts one browser-visible credential per provider and owns billing, restrictions, quotas,
+              monitoring, and rotation.</li>
+          <li>Configuration, sessions, uploads, logs, caches, and exports have an approved custody/retention plan.</li>
+        </ol>
+        <p>Normal package use does not need Git, Node.js, Conda, VS Code, or a source checkout. Host Python 3.12 is the
+          tested exception for installing the package-local Podman Compose provider.</p>
       </section>
-      <section class="doc-section" id="architecture">
-        <h2>Runtime And Data Shape</h2>
-        <p>The Application Package contains wrappers, Compose files, documentation, manifests, and notices. The separate Model &amp; Data Package contains model weights and ZIP-code data. Docker or Podman pulls the exact digest-pinned image from GHCR.</p>
-        <p>Persistent named volumes hold configuration, assets, data, sessions, logs, uploads, caches, and temporary workflow state. They may contain sensitive configuration or investigation data and require site retention, access-control, backup, and disposal rules.</p>
-        <p>TowerScout results require human review and do not replace field verification or epidemiologic judgment.</p>
+
+      <section class="doc-section" id="unsigned">
+        <h2>Unsigned Windows Boundary</h2>
+        <p>TowerScout PowerShell scripts are intentionally unsigned. Supported <code>.cmd</code>/<code>.bat</code>
+          wrappers start Windows PowerShell 5.1 with a process-scoped execution-policy argument,
+          <code>-ExecutionPolicy Bypass</code>; they do not change persistent policy.</p>
+        <p class="callout"><strong>Stop:</strong> The standard package does not claim trusted Authenticode, WDAC/
+          AppLocker, constrained-language, antivirus/EDR exception, or organization-specific allowlisting
+          compatibility. Do not disable those controls or select Run anyway for unverified bytes. A site that signs or
+          repackages the package owns the changed bytes, new checksums, and qualification.</p>
       </section>
-      <section class="doc-section" id="prerequisites">
-        <h2>Prerequisite Approval</h2>
-        <p>Confirm Windows 11 AMD64, allowed WSL 2/virtualization, a modern browser, outbound HTTPS to the exact GitHub release/GHCR/selected provider, release-specific free disk, and a restricted site/user-owned provider key.</p>
-        <p>Docker Desktop must be installed, licensed, approved, and running for the default path. Podman requires the named machine and approved package-local Compose provider. GPU paths additionally require the release-qualified NVIDIA driver and Docker NVIDIA or Podman CDI checks. CPU fallback does not pass a required-GPU run.</p>
-      </section>
+
       <section class="doc-section" id="integrity">
         <h2>Required Download And Integrity Flow</h2>
         <ol>
-          <li>Use a normal browser and the exact release link. Download one Application Package, its sidecar, the shared Model &amp; Data Package, and its sidecar from release <code>Assets</code>.</li>
-          <li>Before extraction or unblocking, compare each local SHA-256 with its sidecar and the value displayed in the authoritative release record.</li>
-          <li>Use File Explorer <code>Extract All</code> on only the verified Application Package in a user-writable folder. Spaces are supported.</li>
-          <li>Keep both ZIPs and both sidecars beside the extracted folder, then use <code>setup-towerscout.cmd</code>.</li>
+          <li>Use the public <a href="https://github.com/J-Schulein/TowerScout/releases">Releases page</a> and the entry
+              identified as the current supported final Windows release.</li>
+          <li>Download one Application Package, its sidecar, the shared Model &amp; Data Package, and its sidecar.</li>
+          <li>Before extraction/unblocking, compare each calculated SHA-256 with its sidecar and the value displayed in
+              the release record.</li>
+          <li>Use File Explorer Extract All on only the verified Application Package in a user-writable folder.</li>
+          <li>Keep both ZIPs and sidecars beside the extracted folder and use <code>setup-towerscout.cmd</code>.</li>
         </ol>
-        <p>When co-location is not possible, quote both exact paths:</p>
+        <p>When co-location is not possible, copy full paths from File Explorer, replace the bracketed descriptions,
+          and keep the quotes and line-continuation backticks:</p>
         <pre><code>.\setup-towerscout.cmd -Engine docker -Gpu off `
-  -PackageZip "C:\Approved Path\towerscout-&lt;release-version&gt;-cpu.zip" `
-  -AssetZip "C:\Approved Path\towerscout-&lt;release-version&gt;-assets-&lt;asset-version&gt;.zip"</code></pre>
+  -PackageZip "[full path copied from the Application Package ZIP]" `
+  -AssetZip "[full path copied from the Model &amp; Data Package ZIP]"</code></pre>
+        <p><code>setup_required</code> is normal before provider setup. With assets and a validated provider,
+          readiness should become <code>ready</code>.</p>
       </section>
-      <section class="doc-section" id="readiness">
-        <h2>First Run And Readiness</h2>
-        <p><code>setup_required</code> is normal before a provider key is saved. The user enters the key privately through Setup Wizard or Settings. With a validated provider and imported assets, readiness should become <code>ready</code>.</p>
-        <p>Safe readiness evidence includes state, configured/not-configured booleans, engine, device policy, selected device, digest, loopback binding, and volume count—not keys, <code>.env</code>, raw traces, or screenshots.</p>
-      </section>
+
       <section class="doc-section" id="providers">
-        <h2>Provider Accounts And Restrictions</h2>
-        <p>The site/user owns provider enrollment, billing, quotas, restrictions, monitoring, and incident response. Browser SDK keys are client-visible by provider design. Use narrow restrictions and separate browser/server credentials where supported. Never commit or publish a key.</p>
+        <h2>Provider Credentials</h2>
+        <p>TowerScout accepts one credential per provider and uses it for browser and application requests; it cannot
+          use split Google keys or Azure Entra ID. If policy requires either, this release is not eligible. Otherwise
+          use a dedicated limited project/account, API restrictions, quotas, alerts, monitoring, and rotation. See the
+          <a href="quick-start.html#prepare">credential walkthrough</a>.
+        </p>
+        <p>Do not request or publish a key, <code>.env</code>, provider response, browser trace, or key-bearing image.</p>
       </section>
+
       <section class="doc-section" id="network">
         <h2>Network And TLS Inspection</h2>
-        <p>Allow only destinations required by the selected release and provider. If validation reports an untrusted CA, use the package's documented support-directed TLS diagnostic and site-approved CA import. Keep dry-run certificate details private. Do not disable certificate verification or use an insecure TLS override.</p>
+        <p>Allow only destinations listed for the exact release. The engine must pull the pinned GHCR image; TowerScout
+          and the browser must reach the selected provider.</p>
+        <p>If provider validation reports an untrusted CA, run the documented helper without <code>-Apply</code>, review
+          the proposed engine/provider/port/certificate target privately, obtain approval, and only then run the
+          separate apply form. It imports an approved site CA into the selected engine's config volume. It cannot fix
+          registry-pull trust or a blocked VM. Never disable TLS verification.</p>
       </section>
-      <section class="doc-section" id="volumes">
-        <h2>Persistent Volumes, Backup, And Removal</h2>
-        <p>Normal <code>scripts\stop.cmd</code> followed by <code>start.bat</code> recreates the container/network while preserving named volumes. Do not run a broad engine prune or remove named volumes during normal troubleshooting, upgrade, rollback, or evidence collection.</p>
-        <p>A reset/uninstall that deletes volumes is destructive and requires separate approval after required data and evidence are backed up.</p>
+
+      <section class="doc-section" id="data">
+        <h2>Persistent Data And Recovery</h2>
+        <p>Each engine uses eight named volumes for configuration, models, data, logs, Flask sessions, session temporary
+          data, uploads, and cache. Normal stop/start and reboot preserve them. Docker and Podman stores are separate;
+          changing engines does not migrate data.</p>
+        <p>Users should export important results. Internal sessions are not backups. Do not use <code>down -v</code>,
+          volume prune, machine reset, or blanket cleanup as routine recovery. Destructive reset/uninstall requires a
+          separate approved procedure after backup.</p>
       </section>
+
       <section class="doc-section" id="evidence">
-        <h2>Safe Support Evidence</h2>
-        <p>Safe facts include the release URL/tag, filenames and hashes, Windows/engine/Compose versions, disk, redacted readiness, device/digest, loopback port, health, volume count, and a short error category.</p>
-        <p>Do not send provider keys, <code>.env</code>, raw logs/screenshots, private AOIs, provider URLs/bodies, browser traces, certificate identities, cached imagery, exports, volume contents, or local identifiers through public channels.</p>
+        <h2>Safe Evidence And Escalation</h2>
+        <p>Safe facts include release/package name, local hash match result, Windows/engine/provider versions, disk,
+          sanitized readiness, device/digest, loopback port, health, volume count, failed step, and non-secret error
+          category.</p>
+        <p>Never post keys, <code>.env</code>, raw logs/screenshots, private locations, provider URLs/bodies, browser
+          traces, certificate identities, cached imagery, uploads, exports, volumes, or local identifiers. The public
+          <a href="https://github.com/J-Schulein/TowerScout/issues">issue tracker</a> is not private or a guaranteed-
+          response help desk. Local IT retains responsibility for managed controls and sensitive evidence.</p>
       </section>
-      <section class="doc-section" id="escalate">
-        <h2>Stop And Escalate</h2>
-        <p>Stop on absent/mismatched hashes, security-policy blocks, unavailable prerequisites, unsafe/mismatched ZIPs, corrupt assets, <code>fatal</code>, CPU selection during a required-GPU test, persistent provider failure, or non-loopback exposure.</p>
-        <p>Use a new empty working folder for each release, preserve volumes until an approved upgrade/rollback decision, confirm in-app Help matches the package, and verify final release links/hashes without a privileged GitHub session before broad distribution.</p>
+
+      <section class="doc-section" id="handoff">
+        <h2>Upgrade And Handoff</h2>
+        <ul>
+          <li>Use a new empty folder and exact next-release bytes; never mix versions.</li>
+          <li>Preserve volumes until the data owner approves upgrade/rollback actions.</li>
+          <li>Confirm running in-app Help matches the package and release.</li>
+          <li>Reverify hashes, image digest, engine/device, provider readiness, persistence, and required smoke path.</li>
+          <li>Retain source/SBOM/license/model/data/provider notices and the release manifest.</li>
+          <li>Verify public release links and displayed hashes without a privileged GitHub session.</li>
+        </ul>
       </section>
     </main>
   </div>

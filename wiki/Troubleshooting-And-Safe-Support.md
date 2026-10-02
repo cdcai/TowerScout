@@ -1,43 +1,76 @@
 # Troubleshooting And Safe Support
 
-> **Audience:** End users and support. **Applies to:** The exact assigned
-> release. **Last reviewed:** 2026-10-02. **Publication state:** Local draft.
+> **Audience:** TowerScout users and Local IT. **Applies to:** The next final
+> Windows release. **Last reviewed:** 2026-10-02. **Publication state:** Local
+> draft.
 
-Start with the shipped `docs\package-guide.md`; it owns release-specific
-commands and recovery messages.
+Start with what you can see. Run commands from the extracted Application
+Package folder and use the same engine and port recorded for your setup.
 
-## Triage By State
+## Safe First Checks
 
-| Observation | Meaning | Safe next step |
+```powershell
+.\scripts\status.cmd -Engine docker -Port 5000
+.\scripts\logs.cmd -Engine docker -Tail 200
+```
+
+For Podman, replace `docker` with `podman`. `status.cmd` may initialize missing
+local configuration; it is not a read-only forensic command. Review log output
+on the computer and share only a small redacted excerpt when asked.
+
+| What you see | What it usually means | Safe next step |
 | --- | --- | --- |
-| Not reachable | Engine/container may not be running or port may differ | Check package status, assigned engine, and exact port. |
-| `setup_required` | App is running but no valid provider is configured | Complete Setup Wizard privately. |
-| `degraded` | App can run but required assets or another component need attention | Use readiness component status and shipped recovery guidance. |
-| `fatal` | A required path, manifest, asset, or ML runtime condition failed | Stop validation and contact support. |
-| Provider TLS error | Container may not trust a site inspection CA | Use the support-directed dry-run/import path; never disable verification. |
-| Required GPU selected CPU | GPU qualification failed closed or fell back | Stop; use the correct package/runtime or CPU path. |
+| Command is not recognized | PowerShell is in the wrong folder, or the engine is not installed/running. | Open the extracted folder in File Explorer, type `powershell` in the address bar, and retry. Start the chosen engine. |
+| Browser cannot open `localhost` | TowerScout is stopped, starting, or using another port. | Run status with the recorded engine/port. Use the recorded browser address. |
+| `setup_required` | TowerScout is running but no provider credential has been saved. | Complete Setup Wizard with one provider. |
+| `degraded` | A recoverable capability such as model/data assets is missing. | Read the status detail; rerun verified asset import or setup. |
+| `fatal` | TowerScout cannot safely provide normal service. | Stop. Record the sanitized status category and package/image identity. |
+| ZIP hash differs | The download is incomplete, wrong, or untrusted. | Delete only that downloaded copy, download it again from the same final release, and repeat all three comparisons before extraction. |
+| Provider says invalid key or unauthorized API | The key, billing, enabled service, or API restriction is wrong. | Use the provider credential page. Never post the key. |
+| Certificate or TLS verification error | A managed network may be inspecting HTTPS and the container does not trust the organization's CA. | Stop ordinary troubleshooting and give the Local IT TLS section to an administrator. Do not disable certificate verification. |
+| Port is already in use | Another program is using the chosen port. | Choose a different port, record it, and use it consistently on setup/start/status and in the browser URL. |
+| GPU mode does not show `selected_device=cuda` | The GPU, driver, engine integration, package, or CDI path is not ready. | Stop GPU use. Correct the stated prerequisite or use the CPU package. |
+| Podman target mismatch | The active machine/connection is not the one TowerScout recorded. | Start/select the intended rootless machine; do not let a helper mutate a different target. |
 
-## Common Safe Checks
+## Local IT Certificate Work
 
-- exact release tag/URL, filenames, local SHA-256, and published SHA-256;
-- free disk and whether Docker/Podman plus its Compose provider are reachable;
-- readiness state and redacted component status;
-- engine, device policy, selected device, PyTorch flavor, and image digest;
-- loopback binding, container health, and named-volume count; and
-- whether normal stop/relaunch preserves readiness and volumes.
+Certificate selection and trust import are administrator/advanced tasks. The
+package's repair helper first performs a dry run. Run the diagnostic by itself,
+review the proposed certificate and target, and only then run a separate
+`-Apply` command if Local IT approves it. Never paste both commands as one
+unreviewed block. See the packaged Local IT guide for the exact release-
+specific command.
 
-## Never Share Publicly
+Do not disable TLS verification. Ask Local IT to resolve the certificate trust
+path or stop.
 
-Provider keys, `.env`, raw logs, raw screenshots, private AOIs, provider URLs
-or response bodies, browser console/network traces, certificate identities,
-cached imagery, exported datasets, named-volume contents, and local user/host
-identifiers require an approved private handling path.
+## Getting Help After Project Handoff
 
-## Do Not Use Destructive Recovery First
+First use your organization's Local IT contact for Windows policy, software
+installation, proxy, firewall, TLS certificate, and managed-device issues.
 
-Normal stop/start preserves named volumes. Do not run broad engine prune,
-remove volumes, delete Podman machines, or reset the package until evidence and
-required data are backed up and the data owner explicitly approves the action.
+For a reproducible TowerScout defect that contains no sensitive data, use the
+[TowerScout GitHub issue tracker](https://github.com/J-Schulein/TowerScout/issues).
+The repository may transfer at handoff; use the issue link shown by the current
+repository. This is a public project record, not a staffed private help desk.
+Do not name an individual as permanent support.
 
-If Windows security policy blocks the unsigned package, stop and contact Local
-IT. Do not weaken protection or persistent execution policy.
+If you have no Local IT and the safe checks do not resolve the problem, stop at
+the applicable safety boundary and use the public documentation or issue
+tracker. Do not weaken a computer security control to continue.
+
+## Safe Issue Template
+
+Include only:
+
+- TowerScout release and Application Package filename;
+- CPU or NVIDIA GPU, Docker or Podman, and port;
+- Windows build, engine version, and sanitized readiness state;
+- the step that failed and the exact non-secret error category; and
+- a short redacted excerpt if it contains no credential, local username/path,
+  private location, provider response, certificate detail, or investigation
+  data.
+
+Never post provider keys, `.env`, raw logs, raw screenshots, browser traces,
+private areas of interest, cached provider responses, certificates, uploaded
+files, exports, or named-volume contents.

@@ -3,29 +3,28 @@
 **Applies to**: The exact documentation-aligned Windows release package named
 by the authoritative release record
 **Last reviewed**: 2026-10-02
-**Audience**: Package users after first setup
-**Runtime scope**: The CPU Application Package is the primary path; the CUDA
-12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
-support-assigned paths after workstation-specific engine, Compose-provider,
-and NVIDIA validation.
+**Audience**: Package users after first setup.
+
+**Runtime scope**: Docker CPU, Docker GPU, Podman CPU, and Podman GPU are
+user-selected supported options when their documented prerequisites and the
+final release's tested-support boundary are satisfied.
 
 This guide explains the normal TowerScout workflow after the package is
 installed, assets are imported, and at least one map provider key is configured.
 
-Use `docs/quick-start.md` for first-run package setup and
-`docs/package-guide.md` for support troubleshooting.
+Use the clickable [Quick Start](quick-start.md) for first-run package setup and
+the [Package Guide](package-guide.md) for advanced troubleshooting.
 
 ## Before Using This Guide
 
 This guide assumes the package setup work is already complete:
 
-- Docker Desktop is installed, approved, and running for the primary package
-  path, or support has explicitly directed you to a qualified Podman path.
+- The Docker or Podman engine you chose is installed, permitted, and running.
 - Required model and ZIP-code assets are imported.
 - TowerScout opens at `http://localhost:5000`.
 - At least one provider key is configured through Setup Wizard or Settings.
 
-If any of those are not true, start with `docs/quick-start.md`.
+If any of those are not true, start with the [Quick Start](quick-start.md).
 
 TowerScout's Windows host scripts are intentionally unsigned. Use the supplied
 `.cmd` and `.bat` entrypoints from a workstation where you and your organization
@@ -129,9 +128,8 @@ The estimate tells you:
 - How many imagery tiles TowerScout expects to process.
 - Rough expected processing time.
 
-If the tile count is too large for the approved workflow, clear the search area or
-draw a smaller one. Estimating first avoids starting a long detection run by
-accident.
+If the tile count is larger than you intended, clear the search area or draw a
+smaller one. Estimating first avoids starting a long detection run by accident.
 
 ## Run Detection
 
@@ -225,25 +223,50 @@ After restore:
 
 ## Stop And Resume Later
 
-Use:
+Use the pair that matches the choices in your non-secret setup record.
+
+### Docker CPU
 
 ```powershell
 .\scripts\stop.cmd -Engine docker
-```
-
-Restart later with:
-
-```powershell
 .\start.bat -Engine docker -Gpu off
 ```
 
-The package stores provider configuration, assets, logs, sessions,
-uploads, and caches in named volumes. Treat all of those local stores as
-sensitive.
+### Docker NVIDIA GPU
 
-If support asked you to run TowerScout with a specific engine, use the same
-`-Engine` value on start, stop, status, logs, and asset-import commands because
-Docker and Podman use separate named volumes.
+```powershell
+.\scripts\stop.cmd -Engine docker
+.\start.bat -Engine docker -Gpu on
+```
+
+### Podman CPU
+
+```powershell
+.\scripts\stop.cmd -Engine podman
+podman machine start podman-machine-default
+.\start.bat -Engine podman -Gpu off
+```
+
+### Podman NVIDIA GPU
+
+```powershell
+.\scripts\stop.cmd -Engine podman
+podman machine start podman-machine-default
+.\start.bat -Engine podman -Gpu on
+```
+
+`stop.cmd` does not take a port. If you selected another port, use it on setup,
+start, and status and in the browser address.
+
+The selected engine stores provider configuration, assets, logs, sessions,
+temporary review data, uploads, and caches in named volumes. Normal stop/start
+and reboot preserve them. Docker and Podman have separate stores, and switching
+engines does not migrate data. The Podman machine may need to be started after
+Windows restarts.
+
+Export important results before stopping. A browser tab or internal session is
+not a backup. Treat all local stores and exports as sensitive. Do not use
+volume deletion, prune, or Podman machine reset as routine recovery.
 
 ## Setup And Resource Links
 
@@ -252,7 +275,8 @@ Open Settings to:
 - Update Google Maps or Azure Maps keys.
 - Change the default provider.
 - View performance summary.
-- Enable debug mode when support asks for it.
+- Enable debug mode only for a bounded diagnostic and review its output before
+  sharing anything.
 - Clear cache.
 - Open Resource Links.
 
@@ -276,16 +300,22 @@ records.
 
 ## Getting Help
 
-When reporting a problem, include:
+For Windows policy, software installation, proxy, TLS, or managed-device
+problems, contact Local IT. For a reproducible TowerScout defect that contains
+no sensitive data, use the public
+[TowerScout issue tracker](https://github.com/J-Schulein/TowerScout/issues).
+It is not a private or guaranteed-response help desk.
+
+Include:
 
 - What you were trying to do.
 - The release package version.
-- Whether you used Docker Desktop or support-directed Podman.
-- The readiness state from `scripts\status.cmd -Engine docker`, or the same
-  command with the explicitly selected engine.
-- A reviewed and redacted summary of recent logs if support asks for it.
+- Whether you used Docker or Podman, CPU or GPU, and which port.
+- The sanitized readiness state from `scripts\status.cmd` with your selected
+  engine and port.
+- A short reviewed/redacted excerpt only when it contains no sensitive data.
 
-Do not share provider keys, `.env`, raw logs, raw screenshots, browser network
-traces, cached provider responses, uploaded investigation files, exported
-datasets, named-volume contents, or sensitive AOIs unless your site has an
-approved support-handling procedure.
+Never post provider keys, `.env`, raw logs, raw screenshots, browser network
+traces, cached provider responses, certificate details, uploaded investigation
+files, exported datasets, named-volume contents, or sensitive AOIs in a public
+record.

@@ -1,42 +1,32 @@
 # Licensing, Privacy, And Provider Terms
 
-> **Audience:** Users, Local IT, support, and maintainers. **Applies to:** The
-> exact assigned release. **Last reviewed:** 2026-10-02. **Publication state:**
-> Local draft.
+> **Audience:** Users, Local IT, and maintainers. **Applies to:** The selected
+> final release. **Last reviewed:** 2026-10-02. **Publication state:** Local
+> draft.
 
-This page is an index. The exact package notices and source offer control; this
-Wiki does not restate legal terms independently.
+TowerScout's source license does not grant permission to use Google Maps,
+Azure Maps, model/data inputs, or third-party components outside their own
+terms. Review the version-matched notices shipped with the Application Package:
 
-## Authoritative Package Files
+- `LICENSE` and `NOTICE`;
+- `THIRD_PARTY_NOTICES.md`;
+- `MODEL_LICENSES.md` and `DATA_LICENSES.md`;
+- `PROVIDER_TERMS.md`;
+- `SOURCE.txt`; and
+- the release SBOM when provided.
 
-- `LICENSE`
-- `NOTICE`
-- `THIRD_PARTY_NOTICES.md`
-- `MODEL_LICENSES.md`
-- `DATA_LICENSES.md`
-- `PROVIDER_TERMS.md`
-- `SOURCE.txt`
-- `SBOM.txt`
-- `release-manifest.v1.json`
+The running application exposes formatted notices at `/license` and plain text
+at `/license.txt` on its local address.
 
-The running app also exposes formatted source/license information at
-`http://localhost:5000/license` and combined plain-text notices at
-`http://localhost:5000/license.txt`.
+Provider services are separate from TowerScout. The user/site owns the
+provider account, billing, allowed-use decision, quotas, monitoring, and
+credential rotation. TowerScout currently exposes its configured provider key
+to browser code and uses the same credential for application requests; use a
+dedicated limited account/key and follow
+[Google And Azure API Credentials](Google-And-Azure-API-Credentials).
 
-## Release Boundary
-
-The YOLO-enabled application/image carries AGPL-related obligations described
-by the exact release notices. Model, data, and provider rights are separate
-from TowerScout source licensing. Provider services, keys, billing, quotas,
-and permitted use are owned by the user/site under current Google/Microsoft
-terms.
-
-## Privacy And Data Handling
-
-Search areas, cached imagery/responses, detections, addresses, exports, logs,
-sessions, uploads, and volume contents may be sensitive investigation data.
-Apply site access, retention, backup, sharing, and disposal rules.
-
-Never publish provider keys, `.env`, raw browser traces, private AOIs,
-certificate details, cached provider responses, exports, or local identifiers.
-Use a site-approved private support channel when deeper evidence is necessary.
+Search areas, uploaded images, cached provider responses, session data, logs,
+and exports may reveal sensitive locations or investigations. Keep them under
+the site's approved access, retention, backup, and deletion procedures. Do not
+place them in a public issue, screenshot, demo, browser trace, or release
+artifact.

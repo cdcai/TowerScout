@@ -1,9 +1,9 @@
 # Task-092 Child Work Plan: GitHub Wiki Information Architecture And Local IT Guide
 
-**Status**: IN_PROGRESS - local Wiki drafts plus packaged/in-app Local IT
-guidance implemented and Wiki destination/ownership decisions recorded;
-independent content review, live setting verification, publication, final
-identities, and running-image validation remain
+**Status**: IN_PROGRESS - revised independent review received and R01-R19 are
+implemented in local Wiki and packaged/in-app drafts with focused automated
+checks passing; human narrow-window re-review, final visual assets, live setting
+verification, publication, final identities, and running-image validation remain
 **Parent**: [TASK-092 Documentation Currentness And Information Architecture](../TASK-092-documentation-currentness.md)
 **Priority**: HIGH
 **Planned implementation window**: October 5-8, 2026
@@ -56,7 +56,7 @@ Markdown, but a new synchronization system is not a pre-freeze requirement.
 | --- | --- | --- | ---: |
 | **Home / Start Here** | All readers | Plain-language purpose, role selector, current release scope, links for end users, Local IT, support, and maintainers. | Required |
 | **Before You Install** | End users and Local IT | Windows/runtime/browser/disk/network/provider prerequisites, unsigned-package boundary, and stop/escalation conditions. | Required |
-| **Choose Your Setup** | End users and support | Simple Docker CPU, Docker GPU, Podman CPU, and Podman GPU matrix. CPU is default; GPU and Podman are support-assigned. | Required |
+| **Choose Your Setup** | End users and Local IT | Explain the three independent user choices: Docker/Podman, CPU/compatible NVIDIA GPU, and Google/Azure. Link requirements for each combination. | Required |
 | **Install And First Run** | End users | Download selection, authoritative hash verification, extraction, model/data package, Setup Wizard, readiness, and a small first detection. Link to exact versioned commands. | Required |
 | **Google And Azure API Credentials** | End users and Local IT | What a provider key is, provider choice, ownership/billing/restrictions, browser-visible SDK key warning, official provider links, and no-key-sharing rule. | Required |
 | **Everyday Commands** | End users and first-line support | One canonical index for start, stop, status, logs, restart, asset import, TLS diagnostics, and data-preserving recovery, with links to exact release commands. | Required |
@@ -77,7 +77,7 @@ Markdown, but a new synchronization system is not a pre-freeze requirement.
 2. Runtime shape: local Windows workstation, Docker or Podman, loopback-served
    browser application, digest-pinned OCI image, and separate model/data asset
    package.
-3. Supported deployment matrix and who assigns non-default paths.
+3. Supported deployment matrix and how users choose among eligible options.
 4. Windows 11 AMD64, WSL/virtualization, engine, browser, disk, network,
    Python-for-Podman-provider, and NVIDIA prerequisites.
 5. Administrator-required versus ordinary-user steps.
@@ -202,9 +202,9 @@ aligned image and control-package rebuild.
 - **Role-based navigation:** an end user, Local IT administrator, and support
   person can each find their starting page and common task without hunting or
   encountering a dead end.
-- **Setup choices:** Docker versus Podman and CPU versus NVIDIA GPU are easy to
-  distinguish; CPU is clearly the normal/default path; support-assigned paths
-  are not presented as universal.
+- **Setup choices:** Docker versus Podman, CPU versus compatible NVIDIA GPU,
+  and Google versus Azure are three independent user choices. The Docker CPU
+  example does not make other eligible combinations permission-gated.
 - **Correct sequence and success signs:** download, authoritative SHA-256
   comparison, extraction, setup, readiness, first detection, normal stop, and
   relaunch appear in the right order, with a clear description of what success
@@ -314,7 +314,8 @@ but the required affected W09/W10 checks bind to the new identities.
 - [x] Required pages have a content owner, release scope, and last-reviewed
   metadata.
 - [x] Page navigation starts from user role and intended task.
-- [x] CPU/default versus support-assigned GPU/Podman paths are unmistakable.
+- [x] Docker/Podman, CPU/compatible NVIDIA GPU, and Google/Azure are presented
+  as independent user-selected options with eligibility requirements.
 - [x] One authoritative command/source location is named for every repeated
   topic.
 - [x] Local IT guidance covers prerequisites, integrity, unsigned execution,

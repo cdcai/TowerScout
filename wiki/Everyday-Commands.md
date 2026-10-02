@@ -1,36 +1,77 @@
 # Everyday Commands
 
-> **Audience:** End users and first-line support. **Applies to:** The exact
-> downloaded package. **Last reviewed:** 2026-10-02. **Publication state:**
-> Local draft.
+> **Audience:** TowerScout users. **Applies to:** The next final Windows
+> release. **Last reviewed:** 2026-10-02. **Publication state:** Local draft.
 
-Run package commands from Windows PowerShell in the extracted Application
-Package folder. Use the exact commands in that package's `docs\quick-start.md`
-and `docs\package-guide.md`; options can differ by release.
+Run these commands from the extracted application folder. To open PowerShell
+there, open the folder in File Explorer, click the address bar, type
+`powershell`, and press Enter.
 
-| Task | Package entrypoint | Notes |
-| --- | --- | --- |
-| First setup | `setup-towerscout.cmd` | Verifies ZIPs/prerequisites, imports assets, and starts TowerScout. |
-| Start/reopen | `start.bat` | Use after setup. Preserve the assigned engine, GPU mode, and non-default port. |
-| Stop safely | `scripts\stop.cmd` | Removes the current container/network but preserves named volumes. |
-| Status/readiness | `scripts\status.cmd` | Share only redacted state/component facts. |
-| Logs | `scripts\logs.cmd` | Review privately and sanitize before sharing. |
-| Asset import | `scripts\import-assets.cmd` | Use only with the verified Model & Data Package and release instructions. |
-| TLS diagnosis/repair | Package TLS helper wrappers | Support-directed; preserve engine/GPU/port and never disable verification. |
+## Keep A Non-Secret Setup Record
 
-## Normal Restart
+Store this near the application folder. Never write the provider key in it.
 
-Use the package stop wrapper, then start with the same explicit engine, GPU
-mode, and port that support assigned. Named volumes preserve configuration,
-assets, and applicable workflow state. Do not use engine-wide prune or volume
-removal as a restart method.
+| Item | Your value |
+| --- | --- |
+| Application folder | Example: `C:\Users\me\Documents\TowerScout\towerscout-version-cpu` |
+| Engine | Docker or Podman |
+| Processing | CPU or NVIDIA GPU |
+| Provider | Google Maps or Azure Maps |
+| Port | 5000 unless changed |
+| Browser address | `http://localhost:5000` unless the port changed |
 
-## Keep Runtime Identity Consistent
+## Docker CPU
 
-- Use `-Engine podman` on every helper when support assigned Podman.
-- Use the same non-default `-Port` on later helpers and launch commands.
-- Use `-Gpu off` for the CPU path.
-- Required GPU validation must report CUDA; silent CPU fallback is not a pass.
+```powershell
+.\start.bat -Engine docker -Gpu off
+.\scripts\status.cmd -Engine docker -Port 5000
+.\scripts\stop.cmd -Engine docker
+```
 
-For a failure, see
-[Troubleshooting And Safe Support](Troubleshooting-And-Safe-Support).
+## Docker NVIDIA GPU
+
+```powershell
+.\start.bat -Engine docker -Gpu on
+.\scripts\status.cmd -Engine docker -Port 5000
+.\scripts\stop.cmd -Engine docker
+```
+
+## Podman CPU
+
+Start the Podman machine first if it stopped after a reboot.
+
+```powershell
+podman machine start podman-machine-default
+.\start.bat -Engine podman -Gpu off
+.\scripts\status.cmd -Engine podman -Port 5000
+.\scripts\stop.cmd -Engine podman
+```
+
+## Podman NVIDIA GPU
+
+```powershell
+podman machine start podman-machine-default
+.\start.bat -Engine podman -Gpu on
+.\scripts\status.cmd -Engine podman -Port 5000
+.\scripts\stop.cmd -Engine podman
+```
+
+If you deliberately use another port, add `-Port 5001` to setup, start, and
+status, then open `http://localhost:5001`. `stop.cmd` does not accept a port;
+it stops the selected engine's TowerScout project.
+
+## What Survives A Normal Stop
+
+A normal stop or computer restart keeps the selected engine's named volumes,
+including saved provider configuration, imported model/data assets, Flask
+session files, temporary review/export inputs, cache, uploads, and logs. The
+Podman machine may need a manual start after Windows restarts.
+
+Your browser tab is not a backup. Export any important CSV, KML, or dataset ZIP
+to a controlled folder before stopping. Reset and uninstall procedures are
+different from a normal stop and can remove data; do not run volume-deletion or
+cleanup commands as routine troubleshooting.
+
+If you switch between Docker and Podman, TowerScout uses different storage and
+may appear unconfigured. Re-run setup/import for the new engine or return to
+the original engine. Data is not migrated automatically.

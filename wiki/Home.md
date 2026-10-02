@@ -1,52 +1,70 @@
-# TowerScout Documentation: Start Here
+# TowerScout: Start Here
 
-> **Applies to:** The exact TowerScout release your release owner or support
-> team assigns. **Last reviewed:** 2026-10-02. **Publication state:** Local
-> draft; not yet published to the GitHub Wiki.
+> **Audience:** New users and Local IT. **Applies to:** The next final Windows
+> release. **Last reviewed:** 2026-10-02. **Publication state:** Local draft;
+> do not treat this page as a published release announcement.
 
-TowerScout is a local Windows browser application that helps identify likely
-cooling towers in aerial and satellite imagery. Results require human review
-and do not replace field verification or epidemiologic judgment.
+TowerScout is a local Windows application that helps a person review aerial or
+satellite images for possible cooling towers. Its results are suggestions for
+human review, not confirmed cooling-tower locations.
 
-## Choose Your Path
+You make three independent choices:
 
-- **I am installing TowerScout:** start with [Before You Install](Before-You-Install),
-  then [Choose Your Setup](Choose-Your-Setup) and
-  [Install And First Run](Install-And-First-Run).
-- **I already have TowerScout running:** use
-  [Everyday Commands](Everyday-Commands) and the package's in-app User Guide.
-- **I manage the workstation or security controls:** use the
-  [Local IT Administrator Guide](Local-IT-Administrator-Guide).
-- **I am troubleshooting with a user:** use
-  [Troubleshooting And Safe Support](Troubleshooting-And-Safe-Support).
-- **I maintain or hand off releases:** use
-  [Releases And Supported Versions](Releases-And-Supported-Versions) and the
-  release package's manifests/notices.
+1. **Docker or Podman** runs TowerScout in a protected container environment.
+2. **CPU or a compatible NVIDIA GPU** performs image processing. CPU is the
+   simplest choice. A supported GPU can be faster.
+3. **Google Maps or Azure Maps** supplies the map and imagery. You need an
+   account and usable credential for only one provider.
 
-## Documentation Authority
+These are supported options, not paths assigned by the project team. Your
+computer must meet the requirements for the options you choose. On a managed
+computer, your organization may require Local IT approval before you install
+software, enable Windows features, create cloud resources, or run unsigned
+scripts.
 
-This Wiki is the online navigation and evergreen guidance layer. It does not
-replace the exact release materials:
+## Recommended Reading Order
 
-1. The [GitHub release record](https://github.com/J-Schulein/TowerScout/releases)
-   owns exact downloads, public SHA-256 values, image digests, qualified
-   environments, and known limitations.
-2. The `docs\` files inside the downloaded Application Package own exact
-   install, setup, start, stop, recovery, and verification commands.
-3. In-app Help is baked into the exact container image and must match the
-   package/release guidance.
-4. Package notices own license, source, model, data, and provider obligations.
+Follow these pages in order. You do not need to read every advanced page.
 
-If the Wiki and downloaded package disagree, stop and use the package/release
-record for that exact version. Report the mismatch to the release owner.
+1. [Before You Install](Before-You-Install) — check the computer and learn
+   what you may need to install.
+2. [Choose Your Setup](Choose-Your-Setup) — choose an engine, processing mode,
+   and map provider.
+3. [Google And Azure API Credentials](Google-And-Azure-API-Credentials) — get
+   one provider credential before first use.
+4. [Install And First Run](Install-And-First-Run) — download, verify, extract,
+   start, configure, and try TowerScout.
+5. [Everyday Commands](Everyday-Commands) — save your choices and reopen or
+   stop TowerScout later.
+6. [Troubleshooting And Safe Support](Troubleshooting-And-Safe-Support) — use
+   symptom-based help without sharing private data.
 
-## Default Support Path
+If your organization manages the computer, give Local IT the
+[Local IT Administrator Guide](Local-IT-Administrator-Guide). Local IT approves
+workstation and security changes; it does not choose Docker versus Podman, CPU
+versus GPU, or Google versus Azure for you.
 
-The default path is Windows 11 AMD64, the CPU Application Package, Docker
-Desktop with WSL 2, normal outbound internet access, and one site/user-owned
-restricted Google Maps or Azure Maps key. GPU and Podman paths are assigned by
-support only after release-specific workstation validation.
+## Where Exact Release Information Lives
+
+The [GitHub Releases page](https://github.com/J-Schulein/TowerScout/releases)
+is the public download location. Its authoritative release record will identify the
+supported version, exact files, SHA-256 values, tested configurations, and
+known limitations.
+
+The versioned `docs` folder included with the Application Package contains the
+complete offline instructions. In-app Help comes from the same documentation
+built into the matching container image. This Wiki helps you find the right
+path, but the package must remain usable without the Wiki or a video.
+
+## Important Safety Boundary
 
 TowerScout's Windows PowerShell scripts are intentionally unsigned. Use the
-supplied `.cmd`/`.bat` wrappers only where the user and organization permit
-them. Do not disable protection or weaken persistent execution policy.
+supplied `.cmd` and `.bat` entrypoints. They use a temporary, process-only
+PowerShell setting and do not change the computer's permanent execution
+policy.
+
+Do not disable Defender, antivirus/EDR, SmartScreen, WDAC, AppLocker, TLS
+verification, or another organizational control. If policy blocks the
+package, stop and ask Local IT whether this unsigned package is allowed. A
+computer that requires trusted Authenticode signatures or organization-
+specific allowlisting is outside the standard package's supported boundary.

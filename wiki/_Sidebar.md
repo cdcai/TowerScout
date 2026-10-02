@@ -1,22 +1,22 @@
-## Start
+**TowerScout User Guide**
 
-- [Home](Home)
+- [Start Here](Home)
 - [Before You Install](Before-You-Install)
 - [Choose Your Setup](Choose-Your-Setup)
-- [Install And First Run](Install-And-First-Run)
+- [Get A Google Or Azure Credential](Google-And-Azure-API-Credentials)
+- [Download, Verify, And Run](Install-And-First-Run)
+- [Use It Again](Everyday-Commands)
 
-## Use TowerScout
+**Setup Details**
 
-- [Google And Azure API Credentials](Google-And-Azure-API-Credentials)
-- [Everyday Commands](Everyday-Commands)
-- [Docker Guidance](Docker-Guidance)
-- [Podman Guidance](Podman-Guidance)
-- [NVIDIA GPU Setup](NVIDIA-GPU-Setup)
+- [Docker](Docker-Guidance)
+- [Podman](Podman-Guidance)
+- [NVIDIA GPU](NVIDIA-GPU-Setup)
 
-## Support And Governance
+**Help And Governance**
 
 - [Troubleshooting And Safe Support](Troubleshooting-And-Safe-Support)
 - [Local IT Administrator Guide](Local-IT-Administrator-Guide)
-- [Demo Video And Written Walkthrough](Demo-Video-And-Written-Walkthrough)
 - [Releases And Supported Versions](Releases-And-Supported-Versions)
+- [Demo And Written Walkthrough](Demo-Video-And-Written-Walkthrough)
 - [Licensing, Privacy, And Provider Terms](Licensing-Privacy-And-Provider-Terms)

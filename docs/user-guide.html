@@ -5,115 +5,166 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TowerScout User Guide</title>
-  <link rel="stylesheet" href="/docs/towerscout-docs.css">
+  <link rel="stylesheet" href="towerscout-docs.css">
 </head>
 
 <body>
+  <a class="skip-link" href="#main-content">Skip to user instructions</a>
   <header class="page-header">
     <p class="eyebrow">TowerScout release package</p>
     <h1>User Guide</h1>
-    <p class="lead">Use this guide after TowerScout is installed, assets are imported, and at least one map provider key
-      is configured.</p>
+    <p class="lead">Choose a provider, define a search area, run detection, review results, correct them, export, and
+      reopen TowerScout later.</p>
   </header>
   <div class="doc-frame">
     <nav class="doc-nav" aria-label="User guide sections">
-      <h2>Sections</h2>
-      <a href="#metadata">Metadata</a>
-      <a href="#before">Before Use</a>
-      <a href="#provider">Choose A Provider</a>
-      <a href="#area">Define A Search Area</a>
-      <a href="#detect">Estimate And Detect</a>
-      <a href="#review">Review Results</a>
-      <a href="#manual">Manual Towers</a>
-      <a href="#export">Export And Restore</a>
-      <a href="#resources">Resource Links</a>
-      <a href="#help">Getting Help</a>
+      <h2>On this page</h2>
+      <a href="#before">Before using</a>
+      <a href="#workflow">Workflow</a>
+      <a href="#provider">Provider</a>
+      <a href="#area">Search area</a>
+      <a href="#detect">Estimate and detect</a>
+      <a href="#review">Review and correct</a>
+      <a href="#export">Export and restore</a>
+      <a href="#resume">Stop and resume</a>
+      <a href="#help">Getting help</a>
     </nav>
-    <main class="doc-main">
-      <section class="doc-section" id="metadata">
-        <h2>Document Metadata</h2>
-        <p><strong>Applies to:</strong> The exact documentation-aligned Windows release package named by the authoritative release record.</p>
-        <p><strong>Last reviewed:</strong> 2026-10-02.</p>
-        <p><strong>Audience:</strong> Package users after first setup.</p>
-        <p><strong>Runtime scope:</strong> The CPU Application Package is the primary path; the CUDA 12.8 Application
-          Package, Podman CPU, Docker GPU, and Podman GPU are support-assigned paths after workstation-specific engine,
-          Compose-provider, and NVIDIA validation.</p>
-      </section>
+    <main class="doc-main" id="main-content">
       <section class="doc-section" id="before">
         <h2>Before Using This Guide</h2>
-        <p>This guide assumes the package setup work is already complete: Docker Desktop is installed, approved, and running for the primary package path or support has explicitly directed you to a qualified Podman path; required assets are imported; TowerScout opens at <code>http://localhost:5000</code>; and at least one provider key is configured.</p>
-        <p>When this guide shows package commands, run them from Windows PowerShell opened in the extracted TowerScout
-          package folder. Commands that begin with <code>.\</code> run scripts from that folder.</p>
-        <p>If any of those are not true, start with the <a href="/docs/quick-start.html">Quick Start</a>.</p>
-        <p class="callout">TowerScout's Windows host scripts are intentionally unsigned. Use the supplied
-          <code>.cmd</code> and <code>.bat</code> entrypoints only where you and your organization permit them. Do not
-          weaken persistent execution policy or disable endpoint protection. If Windows or an organization control
-          requires a trusted publisher or administrator approval, stop and use the site approval process.</p>
-        <p class="callout">GPU use is qualified only for exact combinations named in release notes. Readiness must
-          show <code>selected_device=cuda</code>; a host <code>nvidia-smi</code> result or CPU fallback is not GPU
-          acceptance. Use the correct package for architecture mismatches, refresh Podman CDI after Windows driver
-          updates, and never install a Linux display driver inside WSL.</p>
+        <p><strong>Applies to:</strong> The exact documentation-aligned Windows release. <strong>Last reviewed:</strong>
+          2026-10-02. <strong>Audience:</strong> Users after first setup.</p>
+        <p>This guide applies to Docker CPU, Docker GPU, Podman CPU, and Podman GPU when the chosen path meets the final
+          release's requirements. The user chooses the engine, processing mode, and map provider.</p>
+        <ul>
+          <li>The chosen engine is installed, permitted, and running.</li>
+          <li>Model and ZIP-code assets are imported.</li>
+          <li>TowerScout opens at the recorded localhost address.</li>
+          <li>At least one Google or Azure credential is configured.</li>
+        </ul>
+        <p>If not, use the <a href="quick-start.html">Quick Start</a>. Use supplied <code>.cmd</code>/<code>.bat</code>
+          wrappers on computers where the unsigned package is permitted. Never weaken persistent execution policy,
+          endpoint protection, or TLS verification.</p>
+        <p>Required GPU mode must show <code>selected_device=cuda</code>. A host-only <code>nvidia-smi</code> result or
+          CPU fallback is not a GPU success. Refresh Podman CDI after a Windows NVIDIA driver update.</p>
       </section>
+
+      <section class="doc-section" id="workflow">
+        <h2>Normal Workflow</h2>
+        <ol>
+          <li>Choose Google Maps or Azure Maps.</li>
+          <li>Search or move the map to a public/non-sensitive location.</li>
+          <li>Define a search area.</li>
+          <li>Estimate tiles, then run detection.</li>
+          <li>Review detections and add manual corrections if needed.</li>
+          <li>Export important results.</li>
+        </ol>
+        <p>TowerScout suggests possible towers for human review. It does not replace field confirmation, environmental
+          assessment, or public-health judgment.</p>
+      </section>
+
       <section class="doc-section" id="provider">
-        <h2>Choose A Provider</h2>
-        <p>TowerScout supports Google Maps and Azure Maps. One valid provider key is enough to start. If both are
-          configured, use the provider selector for the current workflow.</p>
-        <p class="callout">Browser map SDK keys are client-visible. The package assumes site/user-owned restricted keys.
-        </p>
+        <h2>Choose A Provider And Navigate</h2>
+        <p>One valid Google or Azure credential is enough. If both are configured, use the provider selector for the
+          current workflow. Search by address, city/neighborhood, or ZIP code, or pan and zoom manually. ZIP search
+          requires imported ZIP-code data.</p>
+        <p>The current one-key-per-provider design exposes the configured credential to browser code. Never place a
+          key, <code>.env</code>, browser trace, provider response, or key-bearing screenshot in a support record.</p>
       </section>
+
       <section class="doc-section" id="area">
         <h2>Define A Search Area</h2>
-        <p>Search by address, city, neighborhood, ZIP code, or manual pan and zoom. Keep first searches small so tile
-          counts and processing time stay manageable.</p>
-        <p>For custom search-area polygons, Azure Maps uses double-click to complete the polygon. Google Maps uses
-          right-click outside to complete the polygon.</p>
+        <h3>Circle</h3>
+        <ol>
+          <li>Search for or navigate to the location.</li>
+          <li>Enter a radius in meters.</li>
+          <li>Select <strong>Circle</strong>.</li>
+          <li>Click the map to place the circle.</li>
+        </ol>
+        <h3>Custom Polygon</h3>
+        <ol>
+          <li>Select <strong>Custom shape</strong>.</li>
+          <li>Click each corner around the search area.</li>
+          <li>On Azure Maps, double-click to finish. On Google Maps, right-click outside the shape to finish.</li>
+        </ol>
+        <p>A custom search area tells TowerScout where to detect. It is different from a manual tower polygon added
+          during review.</p>
       </section>
+
       <section class="doc-section" id="detect">
         <h2>Estimate And Detect</h2>
-        <p>Select <code>Estimate tiles</code> before <code>Find towers</code>. The estimate shows expected tile count
-          and rough processing time. If the count is too large, clear the area or draw a smaller one before detecting.
-        </p>
+        <ol>
+          <li>Select <strong>Estimate tiles</strong>. It shows expected tile count and approximate time.</li>
+          <li>If the area is larger than intended, clear it and draw a smaller one.</li>
+          <li>Select <strong>Find towers</strong>.</li>
+          <li>Watch the progress overlay while TowerScout downloads imagery, detects, classifies, removes duplicates,
+              and geocodes.</li>
+        </ol>
+        <p>You may cancel an active run. Wait until the application returns to idle before starting another. A zero-
+          detection result can be valid and is not by itself an installation failure.</p>
       </section>
+
       <section class="doc-section" id="review">
-        <h2>Review Results</h2>
-        <p>Results appear on the map and in the detection list. Select results to center or highlight them, uncheck
-          likely false positives, and adjust the confidence slider to control what is visible and exported.</p>
+        <h2>Review And Correct Results</h2>
+        <p>Use the detection list to select/highlight a result, uncheck a likely false positive, adjust the minimum
+          confidence slider, switch Find/Label review modes, and step through results. The slider affects what is
+          visible and exported.</p>
+        <h3>Add Manual Towers</h3>
+        <ol>
+          <li>Run detection first.</li>
+          <li>Select <strong>Add Towers</strong> and draw around a missed or confirmed tower.</li>
+          <li>Complete the polygon: double-click on Azure, or right-click outside on Google.</li>
+          <li>Select <strong>Save Towers</strong>.</li>
+        </ol>
+        <p><strong>Clear</strong> removes unsaved drawing shapes. <strong>Clear all</strong> removes all manual tower
+          detections. Unchecking one saved detection excludes that item from export. These actions are not equivalent.</p>
       </section>
-      <section class="doc-section" id="manual">
-        <h2>Manual Towers</h2>
-        <p>Manual tower detections are corrections added after a detection run. They are different from custom
-          search-area polygons. Select <code>Add Towers</code>, draw around the tower, complete the polygon, and select
-          <code>Save Towers</code>.
-        </p>
-      </section>
+
       <section class="doc-section" id="export">
         <h2>Export And Restore</h2>
-        <p><code>Download results</code> exports CSV and KML. <code>Download dataset</code> saves the current tiles,
-          labels, metadata, and manual additions as <code>dataset.zip</code>. <code>Restore dataset</code> reloads a
-          previous dataset ZIP.</p>
-        <p>Treat dataset ZIPs as sensitive local data because they may contain locations, investigation context, imagery
-          tiles, and manual corrections.</p>
+        <ul>
+          <li><strong>Download results</strong> creates <code>detections.csv</code> and <code>detections.kml</code>.</li>
+          <li><strong>Download dataset</strong> creates <code>dataset.zip</code> with tiles, labels, metadata, and manual
+              additions.</li>
+          <li><strong>Restore dataset</strong> reloads a prior <code>dataset.zip</code>; then verify provider, map,
+              detections, and manual towers.</li>
+        </ul>
+        <p class="callout"><strong>Privacy:</strong> Dataset ZIPs can contain sensitive locations, imagery, and
+          investigation context. Store and share them only under the site's approved procedure. Export important work
+          before stopping; internal sessions are not backups.</p>
       </section>
-      <section class="doc-section" id="resources">
-        <h2>Setup And Resource Links</h2>
-        <p>Settings can update provider keys, change the default provider, show performance summary, clear cache, and
-          open Resource Links for Project Overview, User Guide, Source/licenses, Video Guides, and the research article.
-        </p>
-        <p>The formatted source/license browser page is available at <a href="/license">/license</a>. Plain-text
-          combined notices are available at <a href="/license.txt">/license.txt</a> for scripts, copy/paste, or archival
-          use.</p>
+
+      <section class="doc-section" id="resume">
+        <h2>Stop And Resume Later</h2>
+        <div class="command-grid" aria-label="Stop and reopen commands">
+          <article><h3>Docker CPU</h3><pre><code>.\scripts\stop.cmd -Engine docker
+.\start.bat -Engine docker -Gpu off</code></pre></article>
+          <article><h3>Docker GPU</h3><pre><code>.\scripts\stop.cmd -Engine docker
+.\start.bat -Engine docker -Gpu on</code></pre></article>
+          <article><h3>Podman CPU</h3><pre><code>.\scripts\stop.cmd -Engine podman
+podman machine start podman-machine-default
+.\start.bat -Engine podman -Gpu off</code></pre></article>
+          <article><h3>Podman GPU</h3><pre><code>.\scripts\stop.cmd -Engine podman
+podman machine start podman-machine-default
+.\start.bat -Engine podman -Gpu on</code></pre></article>
+        </div>
+        <p><code>stop.cmd</code> has no port option. Add a non-default port to setup/start/status and the browser URL.</p>
+        <p>Normal stop/start and reboot retain the selected engine's named volumes. Docker and Podman have separate
+          stores; changing engines does not migrate settings or assets. Do not use volume deletion, prune, or Podman
+          machine reset as ordinary recovery.</p>
       </section>
+
       <section class="doc-section" id="help">
         <h2>Getting Help</h2>
-        <p>Report what you were trying to do, the release version, Docker Desktop or support-directed Podman engine
-          choice, readiness state from <code>scripts\status.cmd -Engine docker</code> or the same command with the
-          explicitly selected engine, and a reviewed redacted log summary if support asks for it.</p>
-        <p>For fuller troubleshooting and support details, open the package guide at <a
-            href="/docs/package-guide.md">/docs/package-guide.md</a>.</p>
-        <p>Do not share provider keys, <code>.env</code>, raw logs, raw screenshots, browser network traces, cached
-          provider responses, exported datasets, named-volume contents, or sensitive AOIs unless your site has approved
-          handling.</p>
-        <p>First-run setup is covered in the <a href="/docs/quick-start.html">Quick Start</a>.</p>
+        <p>Use Local IT for Windows policy, software installation, proxy, TLS, or managed-device problems. For a
+          reproducible non-sensitive TowerScout defect, use the public
+          <a href="https://github.com/J-Schulein/TowerScout/issues">TowerScout issue tracker</a>. It is not a private
+          or guaranteed-response help desk.</p>
+        <p>Include release/package name, Docker/Podman, CPU/GPU, port, sanitized readiness, failed step, and a non-secret
+          error category. Never post keys, <code>.env</code>, raw logs/screenshots, traces, private locations, provider
+          responses, certificates, uploads, exports, or volume contents.</p>
+        <p>See the <a href="local-it-administrator-guide.html">Local IT Guide</a> and
+          <a href="package-guide.md">advanced Package Guide</a>.</p>
       </section>
     </main>
   </div>

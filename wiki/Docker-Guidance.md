@@ -1,40 +1,51 @@
 # Docker Guidance
 
-> **Audience:** Docker users and Local IT. **Applies to:** Docker paths named in
-> the assigned release. **Last reviewed:** 2026-10-02. **Publication state:**
-> Local draft.
+> **Audience:** Users who choose Docker and their Local IT staff. **Applies
+> to:** The next final Windows release. **Last reviewed:** 2026-10-02.
+> **Publication state:** Local draft.
 
-Docker Desktop with its WSL 2 Linux-container backend is TowerScout's default
-Windows engine. The CPU Application Package with GPU mode off is the normal
-path.
+Docker Desktop is one supported way to run TowerScout. You may use CPU or a
+compatible NVIDIA GPU.
 
-## Before Setup
+## Install And Check Docker Desktop
 
-- Confirm Docker Desktop is installed, approved/licensed for the site, open,
-  and reports that its engine is running.
-- Confirm WSL 2 and hardware virtualization meet the current Docker Desktop and
-  local IT requirements.
-- Confirm the release-specific free-disk and outbound-network requirements.
-- Use the CPU package unless support assigned the Docker GPU path.
+1. Review Docker's current [Windows installation requirements and instructions](https://docs.docker.com/desktop/setup/install/windows-install/).
+2. Confirm your organization's Docker Desktop licensing and installation
+   policy. A managed computer may require Local IT approval.
+3. Install Docker Desktop for Windows using its supported WSL 2 backend.
+4. Restart Windows if the installer or WSL setup requests it.
+5. Open Docker Desktop and wait until it reports that the engine is running.
+6. Open ordinary Windows PowerShell and run:
 
-Follow `docs\docker-cpu-user-guide.md` or
-`docs\docker-gpu-user-guide.md` in the exact package for commands.
+```powershell
+wsl --status
+docker --version
+docker compose version
+```
 
-## Lifecycle
+Ready means all three commands succeed and Docker Desktop reports it is
+running. TowerScout uses Linux containers; do not switch Docker to Windows
+containers.
 
-First setup imports assets and creates persistent named volumes. Normal stop
-and start may recreate the container/network while preserving those volumes.
-Do not delete volumes during routine troubleshooting or upgrade preparation.
+## Choose CPU Or GPU
 
-TowerScout should remain loopback-bound. If a port is in use, select an
-approved alternative and pass it consistently to setup, start, import, TLS,
-status, and stop helpers as documented by the release.
+- CPU: download the `-cpu` Application Package and use `-Gpu off`.
+- NVIDIA GPU: first complete [NVIDIA GPU Setup](NVIDIA-GPU-Setup), download the
+  `-cuda128` Application Package, and use `-Gpu on`.
 
-## Common Docker Stops
+Then follow [Install And First Run](Install-And-First-Run) or the complete
+[Docker CPU guide](https://github.com/J-Schulein/TowerScout/blob/main/docs/docker-cpu-user-guide.md) / [Docker GPU guide](https://github.com/J-Schulein/TowerScout/blob/main/docs/docker-gpu-user-guide.md).
 
-Stop and ask Local IT/support if Docker cannot start, WSL reports an unsupported
-state, the image digest differs, the host port is not loopback-only, setup
-reports missing/corrupt assets, or the selected device does not match the
-assigned CPU/GPU path.
+## Common Docker Symptoms
 
-For NVIDIA use, continue with [NVIDIA GPU Setup](NVIDIA-GPU-Setup).
+- **`docker` is not recognized:** close and reopen PowerShell after installing
+  Docker Desktop. Confirm Docker Desktop is open.
+- **Engine is unavailable:** start Docker Desktop and wait for it to finish
+  starting.
+- **WSL error:** follow Docker's WSL guidance and ask Local IT before changing
+  Windows features.
+- **Port 5000 is busy:** choose another port and record it; use that port on
+  setup, start, status, and the browser address.
+- **Organization blocks Docker Desktop:** do not bypass the policy. You may
+  choose Podman only if that engine is permitted and its prerequisites can be
+  met.

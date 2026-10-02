@@ -1,36 +1,64 @@
 # Podman Guidance
 
-> **Audience:** Podman users and Local IT. **Applies to:** Support-assigned
-> Podman paths named in the assigned release. **Last reviewed:** 2026-10-02.
+> **Audience:** Users who choose Podman and their Local IT staff. **Applies
+> to:** The next final Windows release. **Last reviewed:** 2026-10-02.
 > **Publication state:** Local draft.
 
-Podman is a qualified alternative only when support assigns it. It is not an
-automatic fallback for an unavailable Docker Desktop installation.
+Podman is one supported way to run TowerScout. On Windows it runs Linux
+containers inside a named Podman machine. TowerScout's tested path uses the
+rootless `podman-machine-default` connection and a package-local Compose
+provider.
 
-## Required Shape
+## Prepare Podman Before TowerScout Setup
 
-- A named rootless Podman machine that is created and running.
-- The package-approved, package-local Compose provider. Do not allow `podman
-  compose` to delegate unintentionally to Docker Desktop Compose.
-- The provider's documented Python prerequisite when installation is needed.
-- Explicit target selection so commands cannot mutate the wrong machine or
-  connection.
-- For GPU, a release-qualified NVIDIA CDI device inside the selected machine.
+1. Follow Podman Desktop's current [Windows installation instructions](https://podman-desktop.io/docs/installation/windows-install).
+2. During onboarding, install Podman and create the default WSL 2 Podman
+   machine. In Podman Desktop, this is under **Settings > Resources**.
+3. If you use the command line instead and no machine exists, open ordinary
+   PowerShell and run:
 
-Use the exact package's `docs\podman-cpu-user-guide.md` or
-`docs\podman-gpu-user-guide.md`. Keep `-Engine podman` and the assigned machine
-and Compose-provider settings consistent across setup, start, stop, status,
-logs, import, and TLS helpers.
+   ```powershell
+   podman machine init --now podman-machine-default
+   ```
 
-## Safety Rules
+   Do not run `machine init` when that machine already exists.
+4. Check the intended rootless machine and connection:
 
-- Verify the selected connection is rootless and points to the intended
-  machine before mutation.
-- Treat Docker and Podman volumes as separate; do not assume provider config or
-  assets exist in both.
-- Do not start, delete, or recreate a different Podman machine to bypass a
-  failed prerequisite.
-- Preserve volumes across normal stop/relaunch.
-- If the selected connection is unavailable or ambiguous, stop before setup.
+   ```powershell
+   podman --version
+   podman machine list
+   podman system connection list
+   ```
 
-For GPU prerequisites, see [NVIDIA GPU Setup](NVIDIA-GPU-Setup).
+5. Install 64-bit Python 3.12 for the tested package-local Compose-provider
+   path. Confirm `python --version` reports Python 3.12. Python is needed only
+   by this provider installer, not by TowerScout inside its container.
+6. Download and verify TowerScout, extract the Application Package, and then
+   run this from that extracted folder:
+
+   ```powershell
+   .\scripts\install-podman-compose-provider.cmd -Apply
+   podman compose version
+   ```
+
+The helper downloads a pinned, hash-checked provider into the package's tools
+folder. TowerScout rejects Docker Desktop's bundled Compose executable for the
+Podman path.
+
+Ready means the intended machine is running, the selected connection is its
+rootless user connection, and `podman compose version` succeeds with the
+approved provider. TowerScout checks this target before changing containers.
+
+## CPU Or NVIDIA GPU
+
+- CPU: use the `-cpu` Application Package and `-Gpu off`.
+- NVIDIA GPU: complete [NVIDIA GPU Setup](NVIDIA-GPU-Setup), including the CDI
+  checks, then use the `-cuda128` package and `-Gpu on`.
+
+Follow [Install And First Run](Install-And-First-Run) or the complete
+[Podman CPU guide](https://github.com/J-Schulein/TowerScout/blob/main/docs/podman-cpu-user-guide.md) / [Podman GPU guide](https://github.com/J-Schulein/TowerScout/blob/main/docs/podman-gpu-user-guide.md).
+
+After Windows restarts, Podman containers may remain stopped. Start the
+machine, then use the matching TowerScout start command. Do not change the
+global default connection or use a rootful connection merely to make an error
+disappear.

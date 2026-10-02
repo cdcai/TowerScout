@@ -1,34 +1,69 @@
 # NVIDIA GPU Setup
 
-> **Audience:** GPU users, Local IT, and support. **Applies to:** Only exact GPU
-> combinations named in the assigned release record. **Last reviewed:**
-> 2026-10-02. **Publication state:** Local draft.
+> **Audience:** Users choosing GPU processing and their Local IT staff.
+> **Applies to:** The next final Windows release. **Last reviewed:**
+> 2026-10-02. **Publication state:** Local draft; the final tested GPU matrix
+> belongs in the release record.
 
-GPU use is optional and support-assigned. Hardware capability alone does not
-establish support.
+GPU processing is optional. CPU remains a supported choice on any otherwise
+eligible computer. Use the GPU path only when the exact computer meets the
+final release's tested requirements.
 
-## Eligibility
+## Check Eligibility
 
-- Use the CUDA 12.8 Application Package, not the CPU package.
-- The release record must name the exact GPU/driver/WSL/engine/toolkit support
-  boundary. Follow any architecture exclusions.
-- Install a current NVIDIA or OEM Windows production driver that supports the
-  exact GPU. Do not install a Linux display driver inside WSL.
-- Docker GPU requires the release-qualified Docker Desktop NVIDIA path.
-- Podman GPU additionally requires a valid NVIDIA CDI device in the intended
-  rootless Podman machine and the approved Compose provider.
-- Plan the release-specific CUDA disk requirement; GPU images are materially
-  larger than CPU images.
+1. Open **Task Manager > Performance** or **Device Manager > Display
+   adapters** and record the exact NVIDIA GPU model.
+2. In ordinary Windows PowerShell, run `nvidia-smi` and record the displayed
+   driver version. Do not post its full output if it includes local machine
+   details.
+3. Compare the GPU and driver with the final TowerScout release's tested-
+   support list.
 
-## Fail-Closed Rule
+The CUDA 12.8 Application Package has a Volta-or-newer architecture
+expectation. Maxwell and Pascal are unsupported and must use the CPU package.
+An architecture expectation is not proof that an unlisted GPU/driver/engine
+combination was tested.
 
-Readiness and independent inspection must report the assigned CUDA device and
-exact digest. A CUDA launch that selects CPU, silently falls back, or reports an
-unsupported compiled architecture is not a pass. Use the correct image or the
-CPU package; do not mask the mismatch with environment overrides.
+## Windows And WSL Driver Rule
 
-After a Windows NVIDIA driver update, revalidate Docker integration or refresh
-and reverify Podman CDI as directed by the shipped guide before GPU launch.
+Install a current NVIDIA or computer-manufacturer Windows driver that supports
+the exact GPU. NVIDIA documents that the Windows driver supplies CUDA to WSL.
+Do not install a Linux NVIDIA display driver inside WSL; it can overwrite the
+WSL-provided driver and break GPU access.
 
-The release's qualification procedure—not this Wiki page—owns exact commands
-and the real CUDA kernel/model proof.
+Official reference: [NVIDIA CUDA on WSL guidance](https://docs.nvidia.com/cuda/cuda-quick-start-guide/).
+
+## Docker GPU
+
+Start Docker Desktop and confirm `nvidia-smi` works on Windows. TowerScout's
+`-Gpu on` setup performs the container check and must reach readiness with
+`selected_device=cuda`. A host-only `nvidia-smi` result or CPU fallback is not
+enough.
+
+## Podman GPU And CDI
+
+Prepare the rootless Podman machine and package-local Compose provider first.
+From the extracted TowerScout Application Package, the documented GPU helper
+is the one direct PowerShell-script exception:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\enable-podman-gpu.ps1 -VerifyOnly
+```
+
+If verification says CDI must be provisioned or refreshed, review the planned
+change and run the apply form only on a computer where you are allowed to
+install the NVIDIA Container Toolkit inside the Podman machine:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\enable-podman-gpu.ps1
+```
+
+Then repeat `-VerifyOnly`. The check must expose `nvidia.com/gpu=all`. NVIDIA's
+[CDI documentation](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/cdi-support.html)
+explains this device interface. Refresh and verify CDI again after a Windows
+NVIDIA driver update.
+
+The final TowerScout check is still `selected_device=cuda` from the running
+application. If any rung fails, use the CPU package or resolve the stated
+prerequisite; do not force a GPU architecture list or count CPU fallback as a
+GPU success.

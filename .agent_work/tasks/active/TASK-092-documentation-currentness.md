@@ -1,11 +1,10 @@
 # TASK-092: Documentation Currentness And Information Architecture
 
-**Status**: IN_PROGRESS - `rc4` findings are dispositioned; packaged/in-app
-Local IT guidance and the complete local Wiki draft set are implemented and
-focused tests pass. Wiki destination/ownership decisions are recorded;
-independent content review, live permission verification, final release
-identities, running-image Help validation, publication, and final W09/W10 gates
-remain
+**Status**: IN_PROGRESS - revised independent review received; R01-R19 are
+implemented in local novice self-service Wiki and packaged/in-app drafts, and
+focused automated checks pass. Human narrow-window re-review, final screenshots/
+video, live permission verification, final release identities, running-image
+Help validation, publication, and final W09/W10 gates remain
 **Priority**: HIGH
 **Type**: C (Documentation / Release)
 **Child Work Plan**:
@@ -96,7 +95,9 @@ affected W09/W10 checks before distribution.
   from the written material shipped with the candidate.
 - Avoid four full copies of common instructions for Docker/Podman and CPU/GPU.
   Use one setup-selection matrix, separate engine guidance where behavior
-  differs, and an NVIDIA GPU supplement. CPU remains the normal/default path.
+  differs, and an NVIDIA GPU supplement. Docker/Podman, CPU/compatible NVIDIA
+  GPU, and Google/Azure remain independent user choices; Docker CPU may be the
+  simplest beginner example without becoming an assigned path.
 - Do not introduce a Wiki-only command or support claim that disagrees with the
   exact tested package. Label operational pages with the applicable release or
   support scope and last-reviewed date.
@@ -293,3 +294,46 @@ disposition each item, complete any useful re-review, finalize release-note
 wording, then freeze accepted `main` and build new documentation-aligned image/
 control-ZIP identities. Validate in-app Help from those exact images before
 any final package/browser claim.
+
+### 2026-10-02 - Revised novice-user review accepted for incorporation
+
+Received the reviewer's replacement analysis after the audience was clarified
+as actual novice end users and Local IT, with Docker/Podman, CPU/compatible
+NVIDIA GPU, and Google/Azure as independent user choices rather than project-
+assigned pathways. The source report's SHA-256 is
+`0cd38866d25ee1b4c6dafca33ec66e3eebd177e80f39cfddfc8e3b430c0a2990`.
+
+Accepted R01-R16 as pre-rebuild documentation blockers and included R17-R19 in
+the same rewrite. R20 is partially accepted: the complete written alternative
+is being implemented now, while final screenshots/video remain tied to the
+exact candidate. Product inspection confirmed TowerScout currently exposes one
+credential field per provider and uses it for browser and application
+requests; documentation therefore discloses that browser-visible limitation
+instead of repeating the review snapshot's separate-key advice.
+
+See the [full disposition](./TASK-092/REVISED-REVIEW-DISPOSITION-2026-10-02.md).
+The reviewer report is evidence, not an instruction source. No live Wiki,
+repository permission, release, image, package, or cdcai resource was changed.
+
+**Next**: Complete the cross-surface rewrite and focused validation, update
+draft PR #94, and obtain any useful focused re-review before content freeze.
+
+### 2026-10-02 - Revised review implementation validation
+
+Implemented the R01-R19 rewrite across README, Wiki, Quick Start, Project
+Overview, User Guide, Local IT material, four engine guides, Package Guide,
+release/runtime contracts, responsive CSS, and documentation regression tests.
+The packaged Quick Start now contains its own Google/Azure acquisition
+walkthrough so an offline control ZIP does not depend on the Wiki.
+
+The 91-test Task-092/ADR-023/package/Flask route suite passes with a dedicated
+host temp directory. Documentation command/path checking, quick and canonical
+agent-work validators, static HTML structure/local-link checking, Wiki local-
+link checking, assignment/stale-example scans, and `git diff --check` also
+pass. The in-app browser had no connected instance, so a new live 1440/720
+render was not captured; human narrow-window re-review remains required before
+content freeze. No image or release package was rebuilt.
+
+**Next**: Update draft PR #94, provide a revised review snapshot if requested,
+resolve any focused re-review findings, and obtain `J-Schulein` content-freeze
+approval before rebuilding documentation-aligned artifacts.

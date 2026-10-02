@@ -111,17 +111,17 @@ def test_docs_routes_expose_package_local_docs(client):
     assert index_response.status_code == 200
     assert index_response.mimetype == "text/html"
     assert b"TowerScout Quick Start" in index_response.data
-    assert b"Before You Start" in index_response.data
-    assert b"You do not need Git, Python, Conda, Node.js, VS Code" in index_response.data
+    assert b"About These Instructions" in index_response.data
+    assert b"Make Three Independent Choices" in index_response.data
     assert quick_start_response.status_code == 200
-    assert b"Document Metadata" in quick_start_response.data
-    assert b"Runtime scope" in quick_start_response.data
+    assert b"Google Cloud Console" in quick_start_response.data
+    assert b"Azure portal" in quick_start_response.data
 
     assert overview_response.status_code == 200
     assert overview_response.mimetype == "text/html"
     assert b"Project Overview" in overview_response.data
-    assert b"What Users Need Installed" in overview_response.data
-    assert b"source-code checkout" in overview_response.data
+    assert b"Beginner Requirements" in overview_response.data
+    assert b"source checkout" in overview_response.data
     assert docker_cpu_response.status_code == 200
     assert b"TowerScout Docker CPU User Guide" in docker_cpu_response.data
     assert docker_gpu_response.status_code == 200
@@ -135,17 +135,17 @@ def test_docs_routes_expose_package_local_docs(client):
     assert user_guide_response.mimetype == "text/html"
     assert b"User Guide" in user_guide_response.data
     assert b"Before Using This Guide" in user_guide_response.data
-    assert b"Docker Desktop is installed, approved, and running" in user_guide_response.data
-    assert b"qualified Podman path" in user_guide_response.data
+    assert b"The user chooses the engine, processing mode, and map provider" in user_guide_response.data
+    assert b"Stop And Resume Later" in user_guide_response.data
     assert local_it_response.status_code == 200
     assert local_it_response.mimetype == "text/html"
     assert b"Local IT Administrator Guide" in local_it_response.data
     assert b"process-scoped execution-policy" in local_it_response.data
     assert package_guide_response.status_code == 200
     assert b"TowerScout Package Guide" in package_guide_response.data
-    assert b"CPU Application Package is the primary path" in package_guide_response.data
-    assert b"12.8 Application Package" in package_guide_response.data
-    assert b"support-assigned paths" in package_guide_response.data
+    assert b"Users independently choose Docker or Podman" in package_guide_response.data
+    assert b"compatible NVIDIA GPU" in package_guide_response.data
+    assert b"Google Maps or Azure Maps" in package_guide_response.data
 
     assert css_response.status_code == 200
     assert "text/css" in css_response.content_type

@@ -151,11 +151,10 @@ Current scope:
 
 ### **TASK-092: Documentation Currentness And Information Architecture**
 
-**Status**: IN_PROGRESS - `rc4` findings are dispositioned; packaged/in-app
-Local IT guidance and the complete local Wiki draft set are implemented with
-focused tests passing. Wiki destination/ownership decisions are recorded,
-draft PR #94 is open, and a rendered offline review ZIP is ready; receive and
-disposition the independent content feedback, then complete live permission
+**Status**: IN_PROGRESS - `rc4` findings are dispositioned; revised independent
+review was received and R01-R19 are implemented in novice self-service Wiki
+and packaged/in-app drafts with focused automated checks passing. Draft PR #94
+remains open; complete human narrow-window re-review, live permission
 verification, final release wording, content freeze, new artifact identities,
 and running-image validation
 **Priority**: HIGH

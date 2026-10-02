@@ -3,10 +3,12 @@
 **Applies to**: The next documentation-aligned Windows release package unless
 its release notes state otherwise
 **Last reviewed**: 2026-10-02
-**Audience**: Local IT, security, endpoint-management, and support staff
-**Runtime scope**: Windows 11 AMD64; Docker CPU is the default path. Docker GPU,
-Podman CPU, and Podman GPU are support-assigned paths that require the exact
-release-specific qualification named in the authoritative release record.
+**Audience**: Local IT, security, and endpoint-management staff.
+
+**Runtime scope**: Windows 11 x64. The end user may choose Docker or Podman and
+CPU or a compatible NVIDIA GPU. Local IT confirms that the prerequisites and
+security boundary for that choice are permitted. The authoritative release
+record limits support to exact tested combinations.
 
 This guide describes the approval and support boundary around TowerScout. The
 versioned `docs/quick-start.md` and `docs/package-guide.md` files shipped in the
@@ -19,9 +21,9 @@ values, image digests, qualified environments, and known limitations.
 - TowerScout is a local browser application served from a digest-pinned Linux
   container on the Windows workstation. The normal URL is
   `http://localhost:5000`; package defaults bind the host port to loopback.
-- The CPU Application Package on Docker Desktop is the normal user path.
-  CUDA and Podman paths are assigned only after support validates the exact
-  workstation, engine, Compose provider, NVIDIA driver, and device path.
+- Docker CPU, Docker GPU, Podman CPU, and Podman GPU are supported user choices
+  when the exact workstation, engine, Compose provider, NVIDIA driver, device,
+  and final-release requirements for that path are satisfied.
 - The Windows PowerShell scripts are intentionally unsigned. Supported user
   entrypoints are the supplied `.cmd` and `.bat` wrappers, which use a
   process-scoped execution-policy setting and do not change persistent policy.
@@ -49,7 +51,7 @@ verification, epidemiologic judgment, or the site's data-governance process.
 
 ## Prerequisite Approval Checklist
 
-Confirm the exact release notes before assigning a path.
+Confirm the exact release notes before approving the user's chosen path.
 
 - Windows 11 on AMD64 with hardware virtualization and WSL 2 allowed by local
   policy.
@@ -59,24 +61,26 @@ Confirm the exact release notes before assigning a path.
 - Enough disk for the two ZIPs, pulled image, extraction, and persistent
   volumes. Follow the release-specific minimum; CUDA images require materially
   more space than CPU images.
-- Docker Desktop installed, licensed, approved, and running for the default
-  path.
-- For a support-assigned Podman path: the named Podman machine, approved
-  package-local Compose provider, and its documented Python prerequisite.
-- For a support-assigned GPU path: an eligible NVIDIA GPU, current Windows/OEM
+- For Docker: Docker Desktop installed, licensed, approved, and running with
+  its supported WSL 2 Linux-container backend.
+- For Podman: the rootless `podman-machine-default`, approved package-local
+  Compose provider, and tested Python 3.12 prerequisite.
+- For GPU: an eligible NVIDIA GPU, current Windows/OEM
   driver, WSL integration, and the exact Docker NVIDIA or Podman CDI checks in
   the release notes. A CPU fallback does not pass a required-GPU run.
 - A site/user-owned Google Maps or Azure Maps key with billing, API, referrer,
   and usage restrictions appropriate to the deployment.
 
-Normal package use does not require a source checkout, Git, Conda, Node.js,
-VS Code, or a host Python environment. The approved Podman Compose-provider
-installer is the exception when that support-assigned path is selected.
+Normal package use does not require a source checkout, Git, Conda, Node.js, or
+VS Code. Host Python 3.12 is required only to install the tested package-local
+Podman Compose provider.
 
 ## Required Download And Integrity Flow
 
-Use a normal browser and the exact GitHub release link supplied by the release
-owner or support team.
+Use a normal browser and the public
+[TowerScout Releases page](https://github.com/J-Schulein/TowerScout/releases).
+Select only the entry whose notes identify it as the current supported final
+Windows release.
 
 1. Download exactly one Application Package variant, its `.sha256` sidecar,
    the shared Model & Data Package, and its sidecar from the release `Assets`
@@ -93,16 +97,18 @@ owner or support team.
 5. Start first setup with the supplied wrapper. Do not invoke the `.ps1` file
    directly as the normal user path.
 
-If the ZIPs cannot remain beside the extracted folder, quote both exact paths:
+If the ZIPs cannot remain beside the extracted folder, copy their full paths
+from File Explorer and quote both. The example below is a template; replace
+the bracketed descriptions and do not type the brackets:
 
 ```powershell
 .\setup-towerscout.cmd -Engine docker -Gpu off `
-  -PackageZip "C:\Approved Path\towerscout-<release-version>-cpu.zip" `
-  -AssetZip "C:\Approved Path\towerscout-<release-version>-assets-<asset-version>.zip"
+  -PackageZip "[full path copied from the Application Package ZIP]" `
+  -AssetZip "[full path copied from the Model & Data Package ZIP]"
 ```
 
-Do not type the angle-bracket placeholders. Copy exact filenames from the
-release `Assets` section or the download folder.
+The backtick continues the command on the next line. Copy the whole block and
+retain double quotes around paths containing spaces.
 
 ## First Run And Readiness
 
@@ -125,11 +131,15 @@ provider enrollment, billing, quotas, API restrictions, monitoring, and
 incident response. Browser SDK keys are client-visible by provider design;
 they are not secret from someone who can inspect the running browser.
 
-Use the narrowest practical provider restrictions and separate browser/server
-credentials where the provider supports that model. Never commit a key, place
-it in a release package, paste it into an issue, or publish it in screenshots,
-logs, browser traces, or support evidence. See `PROVIDER_TERMS.md` in the
-package for the release boundary.
+TowerScout currently accepts one credential per provider and uses it for both
+browser and application requests. It cannot use separate browser/server Google
+keys or Microsoft Entra ID for Azure Maps. If site policy requires either, the
+current release is not eligible. Otherwise use a dedicated limited provider
+project/account, API restrictions, quotas, alerts, monitoring, and rotation.
+Never commit a key, place it in a release package, paste it into an issue, or
+publish it in screenshots, logs, browser traces, or support evidence. See the
+clickable [provider credential walkthrough](quick-start.md#prepare-one-map-provider-credential)
+and `PROVIDER_TERMS.md`.
 
 ## Network And TLS Inspection
 
@@ -138,12 +148,13 @@ container engine must reach GHCR for the pinned image; TowerScout and its
 browser must reach the selected map provider. Record site proxy and TLS-
 inspection requirements before user testing.
 
-If provider validation reports an untrusted CA, use the package's documented
-TLS diagnostic and support-directed CA import path. Review the dry-run output
-privately, import only the site-approved CA, and preserve certificate details
-as support-sensitive evidence. Do not disable certificate verification or set
-an insecure TLS override. Docker and Podman use separate configuration volumes,
-so repair the selected engine only.
+If provider validation reports an untrusted CA, run the package's documented
+TLS diagnostic without `-Apply`, review the proposed certificate and target
+privately, and obtain the required site approval. Run the separate `-Apply`
+form only after that review. Import only the site-approved CA and preserve
+certificate details as sensitive evidence. Do not disable certificate
+verification or set an insecure TLS override. Docker and Podman use separate
+configuration volumes, so repair the selected engine only.
 
 ## Persistent Volumes, Backup, And Removal
 
@@ -165,7 +176,7 @@ backed up.
 
 ## Safe Support Evidence
 
-Support may request:
+A public issue or approved maintainer may request:
 
 - exact release URL/tag and filenames;
 - local SHA-256 values and whether they match the published record;
@@ -180,7 +191,9 @@ Do not send provider keys, `.env`, raw logs, raw screenshots, private AOIs,
 provider URLs or response bodies, browser console/network traces, certificate
 thumbprints/issuer details, cached imagery, exported datasets, volume contents,
 or local user/host identifiers through public channels. Use an approved private
-handling path when deeper investigation is necessary.
+handling path when deeper investigation is necessary. The current public route
+is the [TowerScout issue tracker](https://github.com/J-Schulein/TowerScout/issues),
+which is not a private or guaranteed-response help desk.
 
 ## Stop And Escalate
 

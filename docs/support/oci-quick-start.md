@@ -4,10 +4,8 @@
 by the authoritative release record
 **Last reviewed**: 2026-10-02
 **Audience**: Release/support users who need engine-level detail
-**Runtime scope**: The CPU Application Package is the primary path; the CUDA
-12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
-support-assigned paths after workstation-specific engine, Compose-provider,
-and NVIDIA validation.
+**Runtime scope**: Users independently choose Docker or Podman and CPU or a
+compatible NVIDIA GPU; each path must meet the release-listed requirements.
 
 This guide covers the v1 local container package shape for TowerScout for
 release/support users who need engine-level detail. Package users
@@ -15,9 +13,9 @@ should start with `docs/quick-start.md` instead.
 
 The primary package path is the CPU Application Package on Docker Desktop with
 the WSL 2 backend, launched with CPU-safe `-Gpu off`. The CUDA 12.8 Application
-Package is for support-validated NVIDIA GPU workstations. Podman remains a
-qualified support-directed package runtime path only when the workstation has a
-running Podman machine and an approved non-Docker-Desktop Compose provider.
+Package is for release-listed NVIDIA GPU workstations. Users may choose Podman
+when the workstation has a running rootless WSL 2 machine, Python 3.12, and the
+package-local non-Docker-Desktop Compose provider.
 
 The Windows control package is intentionally unsigned. Supported users invoke
 the packaged PowerShell scripts through the supplied `.cmd`/`.bat` wrappers,
@@ -35,10 +33,9 @@ the authoritative release record before extraction or unblocking.
   `cuda128` for support-validated NVIDIA GPU workstations
 - One shared Model & Data Package ZIP for both Application Package variants
 - Normal outbound internet access for GHCR image pulls and map providers
-- Docker Desktop with WSL 2 backend for the primary package path, or a
-  support-approved Podman machine and Compose provider for the qualified Podman
-  path
-- Optional Docker GPU and Podman GPU launch after support validates the selected
+- Docker Desktop with WSL 2 backend, or a rootless Podman machine and the
+  package-local Compose provider
+- Optional Docker GPU and Podman GPU launch after the user validates the selected
   engine's NVIDIA container path
 
 Out of scope for v1: Mac, ARM64, air-gapped/offline installs, VDI, shared
@@ -57,8 +54,8 @@ readiness result with `selected_device=cuda`.
 
 Package users do not need Git, Python, Conda, Node.js, VS Code, or a source-code
 checkout for the package path. If both Docker and Podman are installed, the
-launcher can choose Docker first. Use `-Engine podman` consistently only when
-validating a support-directed Podman path.
+launcher can choose Docker first. Use `-Engine podman` consistently when you
+choose Podman.
 
 ## Package Contents
 
@@ -155,8 +152,8 @@ Use that digest reference when generating the release package.
 The publish workflow has an explicit PyTorch wheel flavor input:
 
 - `cpu`: publishes the smaller CPU-wheel image.
-- `cuda128`: publishes the CUDA 12.8 PyTorch image for the support-assigned GPU
-  package path.
+- `cuda128`: publishes the CUDA 12.8 PyTorch image for compatible NVIDIA GPU
+  package paths.
 
 The workflow publishes flavor-specific tags. For example, a workflow tag input of `<release-version>` with `cuda128` publishes `<release-version>-cuda128`; `push_latest` publishes `latest-cpu` or `latest-cuda128`, not an ambiguous `latest`.
 
@@ -191,9 +188,9 @@ availability, release metadata, asset ZIP checksum/layout, imports assets with
 hash verification when assets are available, then starts TowerScout. Automatic
 engine selection prefers a reachable engine over an installed but stopped
 engine. Use
-`setup-towerscout.cmd -Engine podman` only for the support-directed Podman
-path, and use `setup-towerscout.cmd -Engine docker -Gpu auto|on` only for
-support-directed Docker GPU validation.
+`setup-towerscout.cmd -Engine podman` for the Podman path, and use
+`setup-towerscout.cmd -Engine docker -Gpu auto|on` for a release-listed Docker
+GPU configuration.
 
 2. For later direct launches after setup, start TowerScout from the package
    directory:
@@ -240,7 +237,7 @@ The default launcher mode is CPU-safe:
 .\start.bat -Engine docker -Gpu off
 ```
 
-GPU launch is opt-in and support-assigned:
+GPU launch is a user-selected option when its prerequisites are met:
 
 ```powershell
 .\start.bat -Engine docker -Gpu auto
@@ -393,7 +390,7 @@ PEM/CER/CRT file, pass it through the repair wrapper:
 .\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Port 5000 -CertificatePath C:\path\to\local-ca.pem -Apply
 ```
 
-If automatic discovery is ambiguous or unavailable, support may call
+If automatic discovery is ambiguous or unavailable, Local IT may call
 `scripts\import-tls-ca.cmd` directly with the known `-Thumbprint` or
 `-CertificatePath`; it remains the lower-level mutation helper and supports
 `-VerifyProvider auto|google|azure|none`.
@@ -409,13 +406,8 @@ The helper writes these values automatically. Restart TowerScout after the helpe
 
 The helper verifies Google TLS with an invalid test key. A successful TLS fix returns a normal provider invalid-key response instead of a certificate verification error.
 
-Last-resort validation-only workaround:
-
-```powershell
-TOWERSCOUT_ALLOW_INSECURE_TLS=1
-```
-
-Do not use the insecure setting as the normal release configuration.
+Do not disable TLS verification. If the trusted CA cannot be imported safely,
+stop and ask Local IT to resolve the certificate trust path.
 
 ## Persistent Data
 
@@ -436,7 +428,7 @@ These volumes can contain provider keys, addresses, coordinates, uploaded files,
 
 TowerScout readiness reports missing or corrupt required assets as `degraded`. Import or set up assets into the named volumes according to the release asset instructions, then restart TowerScout.
 
-The v1 release package does not implement hosted asset download. Assets are expected to be supplied as a release asset bundle, site-provided bundle, or support-provided bundle and imported with `setup-towerscout.cmd` or `scripts\import-assets.cmd`. For the YOLO-enabled `agpl-yolo` release track, YOLO detector weights must stay labeled as YOLO-derived/AGPL-governed unless separate written model terms say otherwise. A hosted downloader can be added later after the asset host, checksum policy, retry behavior, proxy/TLS handling, and restricted-network fallback are designed and validated.
+The v1 release package does not implement hosted asset download. Assets are expected to be supplied as the shared release bundle or a site-provided bundle and imported with `setup-towerscout.cmd` or `scripts\import-assets.cmd`. For the YOLO-enabled `agpl-yolo` release track, YOLO detector weights must stay labeled as YOLO-derived/AGPL-governed unless separate written model terms say otherwise. A hosted downloader can be added later after the asset host, checksum policy, retry behavior, proxy/TLS handling, and restricted-network fallback are designed and validated.
 
 For a GitHub Release package, keep the Model & Data Package ZIP and matching
 `.sha256` file beside the extracted package folder and run

@@ -11,9 +11,10 @@ TowerScout Enterprise, a new program re-designed from the ground up to make bett
 The published `v0.1.2` package remains a historical pilot release. A newer
 package becomes the current supported release only when its GitHub release
 record names the exact downloads, public SHA-256 values, image digests,
-qualified environments, and known limitations. Use the exact release URL or
-tag supplied by the release owner or support team; do not treat a draft,
-source archive, branch name, or numerically newer tag as approved by inference.
+tested environments, and known limitations. On the Releases page, choose the
+entry whose notes call it the current supported final Windows release; do not
+treat a draft, prerelease, source archive, branch name, or numerically newer
+tag as supported by inference.
 
 Package users should not start by cloning this repository. If you received a
 TowerScout release package, start here instead:
@@ -32,20 +33,18 @@ Runtime-specific package guides:
 
 Release packages are published from the repository
 [Releases](https://github.com/J-Schulein/TowerScout/releases) page. Use the
-exact release URL or tag support gives you, download the files from the release
-`Assets` section, and do not use the green GitHub `Code` button or automatic
+identified final release, download the files from its `Assets` section, and do
+not use the green GitHub `Code` button or automatic
 source-code ZIP/TAR.GZ downloads for the normal package workflow.
 
-The normal package path assumes Windows 11 AMD64, Docker Desktop with the WSL 2
-backend as the primary controlled engine, normal outbound internet access, and
-one valid Google Maps or Azure Maps key. Current package planning uses two
-Application Package variants: the CPU package for normal/non-GPU users and the
-CUDA 12.8 package only for support-validated NVIDIA GPU workstations. Both use
-the same Model & Data Package ZIP. Podman CPU, Docker GPU, and Podman GPU are
-support-assigned paths only when the workstation has the required engine,
-approved Compose provider, and NVIDIA validation for the selected runtime. You
-  do not need Git, Python, Conda, Node.js, VS Code, or a source checkout for the
-  normal package workflow.
+The Windows package supports three independent user choices: Docker Desktop or
+Podman, CPU or a compatible NVIDIA GPU, and Google Maps or Azure Maps. Choose
+the CPU Application Package for CPU processing or the CUDA 12.8 Application
+Package for a release-listed NVIDIA configuration; both use the same Model &
+Data Package ZIP. Podman needs a rootless WSL 2 machine, 64-bit Python 3.12,
+and the package-local Compose provider. GPU use additionally needs the exact
+driver and selected-engine container path listed in the release notes. Docker
+users do not need Git, Python, Conda, Node.js, VS Code, or a source checkout.
 
 ### Unsigned Windows Package Boundary
 
@@ -69,7 +68,7 @@ combinations named in its release notes. Maxwell and Pascal must use the CPU
 package or `-Gpu off`. Use a current NVIDIA or OEM production Windows driver
 that lists the exact GPU; never install a Linux display driver inside WSL. The
 measured CUDA image is 14.4 GB, so GPU users should plan at least 35 GB free for
-pull/unpack and runtime data; source qualification builds need at least 60 GB.
+package download, image pull/unpack, assets, and runtime data.
 
 ## Provenance
 

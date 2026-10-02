@@ -1,40 +1,37 @@
 # Demo Video And Written Walkthrough
 
-> **Audience:** New users, trainers, and the handoff owner. **Applies to:** The
-> exact frozen release recorded below. **Last reviewed:** 2026-10-02.
-> **Publication state:** Local draft; final media intentionally pending the
-> documentation-aligned candidate.
+> **Audience:** New users and trainers. **Applies to:** The next final Windows
+> release. **Last reviewed:** 2026-10-02. **Publication state:** Local draft;
+> final screenshots and video are intentionally pending the frozen candidate.
 
-The written package must remain sufficient when video hosting or the Wiki is
-unavailable. This page is a stable landing page, not an inline-player
-dependency.
-
-## Final Media Record
-
-- **Release/package identity:** Pending final documentation-aligned freeze.
-- **Image digest:** Pending.
-- **Recording date:** Pending.
-- **Duration:** Pending.
-- **Video link and descriptive thumbnail:** Pending owner-approved host.
-- **Captions:** Required before publication.
-- **Transcript:** Required before publication.
-- **Privacy review:** Required before publication.
+The written instructions are the complete path. A video is optional and must
+never be the only explanation.
 
 ## Written Walkthrough
 
-1. Open the exact GitHub release provided by support.
-2. Download one Application Package, the Model & Data Package, and both
-   sidecars from release `Assets`.
-3. Compare local hashes and sidecars with the displayed authoritative values.
-4. Extract only the Application Package with File Explorer.
-5. Run the supplied setup wrapper from Windows PowerShell.
-6. Enter an approved provider key privately; show only redacted readiness.
-7. Run one small public/non-sensitive example, review results, and export only
-   approved data.
-8. Stop and relaunch through the package wrappers, showing that named volumes
-   preserve setup/assets.
+1. Use [Before You Install](Before-You-Install) to prepare the computer.
+2. Make the three decisions on [Choose Your Setup](Choose-Your-Setup).
+3. Obtain one credential using
+   [Google And Azure API Credentials](Google-And-Azure-API-Credentials).
+4. Follow [Install And First Run](Install-And-First-Run) from download through
+   a small search and normal stop.
+5. Save the non-secret setup record from [Everyday Commands](Everyday-Commands).
 
-The final recording must not display keys, `.env`, private AOIs, provider URLs,
-raw logs, browser traces, certificate details, local identifiers, or sensitive
-exports. Add chapter timestamps and a stale-video warning when the demonstrated
-workflow no longer matches the current release.
+## Final Visuals Required Before Publication
+
+After the exact candidate is frozen, add a small set of annotated,
+privacy-safe screenshots showing:
+
+- the correct GitHub release and four downloads;
+- the download folder before verification;
+- the extracted Application Package folder;
+- the Setup Wizard provider field using a fabricated/redacted key;
+- `setup_required` versus `ready`;
+- a small non-sensitive search, results review, and export; and
+- the matching stop and reopen commands.
+
+Every image needs useful alternative text. A final video must name its exact
+release/package/image identity, have captions and a transcript, contain no
+real key or sensitive location, and be replaced or clearly marked stale when
+the workflow changes. Until those checks pass, do not publish a placeholder as
+if it were a working final video.
