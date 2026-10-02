@@ -3,9 +3,9 @@
 **Status**: AT_RISK - local `rc4` CPU/CUDA W05, four-profile W09, and first-
 host provider/cancel/error/review-export/relaunch/reboot cells pass. ADR-023
 resolves policy/signing through an unsigned, narrower support boundary.
-A preliminary `rc4` browser-download shakedown is planned before Task-092
-implementation; final documentation-aligned artifacts, exact browser-download,
-and independent-host evidence remain
+The preliminary `rc4` browser-download Docker CPU diagnostic passed and its
+findings are dispositioned for Task-092; final documentation-aligned artifacts,
+exact browser-download, and independent-host evidence remain
 **Priority**: CRITICAL
 **Type**: C (Release Qualification / Handoff)
 **Owner**: Release owner; active agent executes bounded preparation and checks
@@ -460,3 +460,27 @@ ZIPs and images. `Dockerfile` copies `docs/` into the OCI image and the app
 serves them through `/docs/`, so removing in-app/package drift requires new
 image and control-package identities even when functional runtime code remains
 unchanged.
+
+### 2026-10-02 - `rc4` browser-download Docker CPU diagnostic
+
+The owner downloaded all six assets from the authenticated GitHub draft release
+through the normal browser flow. GitHub digests, downloaded ZIP hashes,
+sidecars, and frozen originals agreed, and Windows download markers were
+present. File Explorer extraction to a user-writable path containing spaces and
+the supplied ordinary-user process-scoped wrapper both worked without changing
+persistent execution policy or endpoint-protection settings.
+
+Fresh Docker CPU setup verified/imported the exact downloaded CPU and asset
+ZIPs, created eight named volumes, matched the pinned CPU image digest, and
+bound only to loopback. After private Azure configuration, a sanitized browser
+run passed estimate, controlled HTTP 400 then HTTP 200 recovery, 14-detection
+review/navigation, and valid nonempty dataset export. Package stop/relaunch
+retained Azure configuration, assets, digest, CPU selection, and all eight
+volumes. In-app Help returned HTTP 200.
+
+No larger blocker was found in this bounded subset. The run is diagnostic, not
+final acceptance: it did not repeat CUDA, Podman, Google, cancellation, reboot,
+managed-signing-policy, public unauthenticated download, or independent-host
+cells. The draft remains non-public. Full evidence and Task-092 dispositions
+are in
+[the rc4 diagnostic record](./TASK-092/RC4-BROWSER-DOWNLOAD-DIAGNOSTIC-2026-10-02.md).

@@ -1,7 +1,7 @@
 # Current Tasks - Windows Deployment Delivery Week
 
 **Sprint Period**: September 22-September 28, 2026
-**Last Updated**: October 1, 2026
+**Last Updated**: October 2, 2026
 **Focus**: Qualify a dependable, downloadable Windows 11 application from
 accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Day 2 has moved
 the evidence-selected W03-W08 corrections through focused review and merge.
@@ -51,10 +51,11 @@ content completion and clean-source rebuild
 
 **Status**: IN_PROGRESS - local `rc4` images/packages pass G10, exact-digest
 W05, four-profile W09, and all first-host provider/recovery/review-export/
-controlled-error/reboot cells. ADR-023 resolves the unsigned support boundary.
-Run a bounded `rc4` browser-download shakedown for early findings, then freeze
-documentation-aligned image/control-ZIP identities and complete final browser-
-download plus independent-host evidence
+controlled-error/reboot cells. ADR-023 resolves the unsigned support boundary,
+and the bounded `rc4` browser-download Docker CPU diagnostic passed without a
+larger blocker. Incorporate its findings, then freeze documentation-aligned
+image/control-ZIP identities and complete final browser-download plus
+independent-host evidence
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
 
@@ -93,9 +94,9 @@ Current scope:
 **Status**: AT_RISK - local `rc4` W05/W09 and four-profile first-host
 provider, cancellation/error recovery, review/export, and stop/relaunch cells
 pass, including exact-`rc4` reboot persistence. ADR-023 resolves policy/signing
-by narrowing the supported environment. A preliminary `rc4` browser-download
-shakedown is next; it informs Task-092 but does not replace the final exact-
-candidate browser-download and independent-host evidence
+by narrowing the supported environment. The preliminary `rc4` browser-download
+Docker CPU diagnostic passed and now informs Task-092; it does not replace the
+final exact-candidate browser-download and independent-host evidence
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-091-owner-runnable-release-qualification.md`
 
@@ -151,9 +152,9 @@ Current scope:
 ### **TASK-092: Documentation Currentness And Information Architecture**
 
 **Status**: IN_PROGRESS - hybrid Wiki/package information architecture and
-child plan recorded. Run the bounded `rc4` browser-download shakedown first,
-then complete shipped/in-app instructions, Wiki pages, external Setup Guide,
-and demo material before the final W09 source/image/package freeze
+child plan recorded; the bounded `rc4` browser-download findings are now
+dispositioned. Complete shipped/in-app instructions, Wiki pages, external
+Setup Guide, and demo material before the final W09 source/image/package freeze
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-092-documentation-currentness.md`
 
@@ -241,7 +242,7 @@ and explicit authorization.
    inference or revise the forecast.
 6. [x] Freeze exact W09 source/images/ZIPs/assets/fixtures/tools before final
    distribution.
-7. [ ] Run the preserved `rc4` browser-download shakedown as preliminary
+7. [x] Run the preserved `rc4` browser-download shakedown as preliminary
    diagnostic evidence, then incorporate applicable findings into Task-092.
 8. [ ] Freeze Task-092 content and rebuild documentation-aligned CPU/CUDA
    images and control ZIPs under new identities; publish authoritative hashes

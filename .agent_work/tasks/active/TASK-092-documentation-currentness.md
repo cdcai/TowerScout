@@ -1,7 +1,7 @@
 # TASK-092: Documentation Currentness And Information Architecture
 
 **Status**: IN_PROGRESS - information architecture and Wiki child plan recorded;
-run a bounded `rc4` browser-download shakedown first, then finish packaged,
+the bounded `rc4` browser-download findings are dispositioned. Finish packaged,
 in-app, Wiki, external Setup Guide, and demo material before the final W09
 source/image/package freeze and independent-tester distribution
 **Priority**: HIGH
@@ -129,7 +129,7 @@ affected W09/W10 checks before distribution.
 
 ## Acceptance Criteria
 
-- [ ] The `rc4` preliminary shakedown is recorded separately from final
+- [x] The `rc4` preliminary shakedown is recorded separately from final
   candidate acceptance and its applicable findings are incorporated.
 - [ ] The source-of-truth matrix and complete page inventory in the child plan
   are accepted.
@@ -181,3 +181,25 @@ update.
 
 **Next**: Run the bounded `rc4` diagnostic, record its findings, and then begin
 the October 5-6 documentation/Wiki implementation window.
+
+### 2026-10-02 - Preliminary browser-download findings dispositioned
+
+The bounded first-host Docker CPU diagnostic passed the authenticated GitHub
+browser download, exact hash/sidecar comparison, Windows File Explorer
+extraction to a spaced path, ordinary-user wrapper, setup/asset import, Azure
+detection/review/dataset export, and volume-preserving stop/relaunch paths. No
+larger package/runtime blocker was found in the tested subset.
+
+Task-092 must make artifact co-location versus explicit quoted ZIP paths,
+pre-extraction authoritative hash comparison, ADR-023's unsigned boundary,
+`setup_required` versus `ready`, private provider-key entry, normal stop/start,
+and non-destructive volume preservation explicit. The running `rc4` Help route
+was reachable but serves the older manuals, reaffirming the need for new
+documentation-aligned image and control-ZIP identities.
+
+This run does not close final public/unauthenticated download, exact-final-byte,
+independent-host, or broader four-profile acceptance. See the
+[full diagnostic and disposition](./TASK-092/RC4-BROWSER-DOWNLOAD-DIAGNOSTIC-2026-10-02.md).
+
+**Next**: Implement the packaged/in-app source-of-truth content and local Wiki
+drafts. External Wiki publication remains owner-authorized.

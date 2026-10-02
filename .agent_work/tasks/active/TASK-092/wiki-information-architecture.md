@@ -1,7 +1,7 @@
 # Task-092 Child Work Plan: GitHub Wiki Information Architecture And Local IT Guide
 
-**Status**: PLANNED - execute after the bounded `rc4` browser-download
-shakedown
+**Status**: IN_PROGRESS - preliminary `rc4` findings dispositioned; content
+implementation is next
 **Parent**: [TASK-092 Documentation Currentness And Information Architecture](../TASK-092-documentation-currentness.md)
 **Priority**: HIGH
 **Planned implementation window**: October 5-8, 2026
@@ -218,7 +218,8 @@ but the required affected W09/W10 checks bind to the new identities.
 
 ## Acceptance Checklist
 
-- [ ] Preliminary `rc4` findings are dispositioned.
+- [x] Preliminary `rc4` findings are dispositioned in
+  [the diagnostic record](./RC4-BROWSER-DOWNLOAD-DIAGNOSTIC-2026-10-02.md).
 - [ ] Wiki destination, edit permissions, owner, backup, and migration/backup
   procedure are confirmed.
 - [ ] Required pages have content owners, release scope, and last-reviewed

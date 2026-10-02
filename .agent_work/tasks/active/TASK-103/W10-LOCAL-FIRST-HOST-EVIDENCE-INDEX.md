@@ -1,6 +1,6 @@
 # Task-103 W10 Local First-Host Evidence Index
 
-**Recorded**: 2026-09-28; updated 2026-10-01
+**Recorded**: 2026-09-28; updated 2026-10-02
 **Host ID**: `FIRST-HOST-LOCAL`
 **Scope**: Same-machine first-host rehearsal only; this is not the independent
 host required for full W10 acceptance.
@@ -10,11 +10,12 @@ Azure detection, cancellation/next-request recovery, a controlled recoverable
 error followed by success, review/export, provider/TLS persistence,
 volume-preserving stop/relaunch and reboot, exact digest, and required CPU/CUDA
 device selection. ADR-023 resolves policy/signing by narrowing the standard
-support claim. A preliminary `rc4` browser-download diagnostic plus final
-documentation-aligned image/package identities, browser-download proof, and
-independent-host repetition remain open.
-**Publication state**: No package was published and no `latest` tag was
-promoted.
+support claim. The preliminary `rc4` browser-download Docker CPU diagnostic
+passed; final documentation-aligned image/package identities, browser-download
+proof, and independent-host repetition remain open.
+**Publication state**: An authenticated, non-public GitHub draft release holds
+the diagnostic assets. No public package release was published and no `latest`
+tag was promoted.
 
 ## Superseded Pre-`rc3` Frozen Inputs
 
@@ -528,10 +529,13 @@ The remaining gates are explicit:
 - Managed endpoint policy/signing: `resolved by scope` under ADR-023. The
   package remains unsigned; signature-enforcing managed endpoints are outside
   the standard support claim and are not recorded as passes.
+- Preliminary `rc4` browser download: `PASS` for the bounded Docker CPU subset;
+  see the
+  [diagnostic record](../TASK-092/RC4-BROWSER-DOWNLOAD-DIAGNOSTIC-2026-10-02.md).
+  It is diagnostic only.
 - Replacement package/browser download: `blocked` until the updated manuals
   receive new documentation-aligned CPU/CUDA image and control-ZIP identities
-  plus authoritative published hashes. An earlier `rc4` browser download is
-  diagnostic only.
+  plus authoritative published hashes.
 - Independent-host four-profile repetition: `blocked` pending an independent
   Windows computer.
 - Package publication and `latest` promotion: owner-gated and not performed.

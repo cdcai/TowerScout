@@ -3,9 +3,10 @@
 **Status**: IN_PROGRESS - local `rc4` CPU/CUDA images and control ZIPs pass
 G10, W05, four-profile W09 setup/device/lifecycle, and the complete local W10
 provider/cancel/error/review-export/relaunch/reboot matrix. ADR-023 resolves
-the unsigned support boundary. A preliminary `rc4` browser-download shakedown,
-documentation-aligned image/control-ZIP rebuild, final browser-download
-validation, and independent-host evidence remain
+the unsigned support boundary. The preliminary `rc4` browser-download Docker
+CPU diagnostic passed; its documentation findings, documentation-aligned
+image/control-ZIP rebuild, final browser-download validation, and independent-
+host evidence remain
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
@@ -94,8 +95,9 @@ weakening model correctness, device, security, persistence, or recovery gates.
 - [x] Complete exact-`rc4` first-host reboot persistence on all four profiles.
 - [x] Resolve policy/signing through ADR-023's unsigned standard-package
   support boundary; signature-enforcing managed endpoints remain out of scope.
-- [ ] Run the preserved `rc4` package as a preliminary browser-download
-  diagnostic, then rebuild the updated manuals into new CPU/CUDA image and
+- [x] Run the preserved `rc4` package as a preliminary browser-download
+  diagnostic and disposition its findings for Task-092.
+- [ ] Rebuild the updated manuals into new CPU/CUDA image and
   control-ZIP identities because `docs/` is present in both surfaces. Complete
   final browser-download and independent-host W10 acceptance cells before
   claiming release readiness.
@@ -148,8 +150,9 @@ weakening model correctness, device, security, persistence, or recovery gates.
 - [x] Complete an exact-`rc4` reboot with provider/TLS/device persistence and
   post-reboot Google/Azure workflow checks in every profile.
 - [x] Resolve policy/signing scope through ADR-023.
-- [ ] Complete the preliminary `rc4` browser-download shakedown, then the
-  documentation-aligned image/package rebuild and final exact-candidate
+- [x] Complete the preliminary `rc4` browser-download Docker CPU shakedown and
+  disposition its findings for Task-092.
+- [ ] Complete the documentation-aligned image/package rebuild and final exact-candidate
   browser-download and independent-host cells.
 
 ## Acceptance Boundary
