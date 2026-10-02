@@ -132,10 +132,11 @@ References:
 - **Current Wiki destination:**
   `https://github.com/J-Schulein/TowerScout/wiki`.
 - **Current documentation owner:** `J-Schulein`.
-- **Backup reviewer/custodian:** `cdcai`. Before requesting a GitHub pull-
-  request review, cdcai must identify a specific member or, after organization
-  handoff, a requestable team. The organization name alone is not a human
-  review assignment.
+- **Backup reviewer/custodian:** `cdcai`. This is the project-handoff role; no
+  named cdcai person or GitHub review account is required for the current
+  readability review. `J-Schulein` will receive the external reviewer's
+  feedback and relay it for incorporation. After handoff, cdcai may assign its
+  own individual or team.
 - **Editing policy:** restrict Wiki editing to repository collaborators. Do not
   enable public Wiki editing. Verify the live repository setting when the Wiki
   is first published and again after handoff.
@@ -164,27 +165,31 @@ References:
 
 ## Documentation Review Before Rebuild
 
-Use the documentation branch and a draft pull request for review. Do not ask
-the reviewer to edit the live Wiki. This keeps comments attached to exact
-lines and ensures the reviewed `docs/` and `wiki/` files are the files proposed
-for the documentation-aligned image and control-package rebuild.
+Use the documentation branch as the exact review source. The reviewer does not
+need a GitHub identity, repository access, or live-Wiki edit permission.
+`J-Schulein` may share the rendered Markdown/HTML, a branch comparison, or an
+exported review copy, then provide the resulting feedback directly for
+incorporation. Keep every comment tied to a page/section so the reviewed
+`docs/` and `wiki/` files remain traceable to the proposed documentation-
+aligned image and control-package rebuild.
 
 ### Review workflow
 
-1. Open a draft pull request from
-   `docs/pre-rc4-checkpoint-2026-10-02` to `main` and label it as a
-   documentation/content-freeze review, not final release approval.
-2. Ask cdcai to name a representative GitHub username for the review. Give
-   that reviewer the pull-request link and this checklist; Wiki edit access is
-   not required merely to comment on a public pull request.
+1. Use `docs/pre-rc4-checkpoint-2026-10-02` as the fixed review source. A draft
+   pull request or branch comparison may remain the internal change record,
+   but the reviewer does not need to participate on GitHub.
+2. `J-Schulein` gives the reviewer the user-facing `docs/` and `wiki/` material
+   plus this checklist, then supplies the reviewer's feedback directly for
+   incorporation.
 3. Have the reviewer first follow the end-user and Local IT reading paths
    without coaching. Ask them to note every pause, guess, backtrack, or term
    they do not understand.
-4. Have the reviewer leave line comments for specific wording or formatting
-   and one summary review that separates **must fix before rebuild** from
-   **improve before publication**.
+4. Ask the reviewer to name the page and heading, or quote a short passage, for
+   each wording/formatting comment. Their summary should separate **must fix
+   before rebuild** from **improve before publication**.
 5. Incorporate accepted feedback, rerun the documentation/link/render and
-   package-route checks, and request a short re-review of changed passages.
+   package-route checks, and return changed passages through `J-Schulein` if a
+   short re-review is useful.
 6. `J-Schulein` records content-freeze approval only after no must-fix item
    remains. Then merge to accepted `main`, freeze the source commit, and build
    new CPU/CUDA image and control-ZIP identities from that clean source.
@@ -304,8 +309,8 @@ but the required affected W09/W10 checks bind to the new identities.
 - [x] Preliminary `rc4` findings are dispositioned in
   [the diagnostic record](./RC4-BROWSER-DOWNLOAD-DIAGNOSTIC-2026-10-02.md).
 - [x] Wiki destination, editing policy, owner, backup role, and
-  migration/backup procedure are recorded. Live settings and the named cdcai
-  representative remain to be verified.
+  migration/backup procedure are recorded. Live settings remain to be
+  verified; no named reviewer account is required.
 - [x] Required pages have a content owner, release scope, and last-reviewed
   metadata.
 - [x] Page navigation starts from user role and intended task.

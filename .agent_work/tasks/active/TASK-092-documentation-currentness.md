@@ -239,22 +239,26 @@ that ACL condition.
 
 The current Wiki destination is `J-Schulein/TowerScout`; `J-Schulein` is the
 documentation owner, `cdcai` is the backup reviewer/custodian, and Wiki editing
-is limited to repository collaborators. A specific cdcai representative still
-must be named for the actionable GitHub review request. Handoff will transfer
-the Wiki with this repository or use an explicit migration into a separate
-cdcai repository, with a mirror backup and page/link verification.
+is limited to repository collaborators. No named cdcai representative or
+GitHub reviewer account is required for the current readability review;
+`J-Schulein` will provide the reviewer's feedback directly for incorporation.
+Handoff will transfer the Wiki with this repository or use an explicit
+migration into a separate cdcai repository, with a mirror backup and page/link
+verification.
 
-The pre-rebuild review will use a draft pull request from the existing
-documentation branch. The reviewer will assess first-time readability,
-role-based navigation, setup choices, safety, privacy, consistency,
-accessibility, and supportability. Must-fix findings are resolved and rechecked
-before `J-Schulein` approves the content freeze and the project rebuilds new
-documentation-aligned image/control-ZIP identities.
+The pre-rebuild review will use the existing documentation branch as its fixed
+source, but the reviewer does not need repository access. `J-Schulein` may
+share rendered files, a branch comparison, or an exported review copy and then
+relay feedback with page/section references. The reviewer will assess first-
+time readability, role-based navigation, setup choices, safety, privacy,
+consistency, accessibility, and supportability. Must-fix findings are resolved
+and rechecked before `J-Schulein` approves the content freeze and the project
+rebuilds new documentation-aligned image/control-ZIP identities.
 
 No live Wiki page or permission was changed by this planning update.
 
-**Next**: Name the cdcai reviewer account, open the draft documentation pull
-request, complete and disposition the review, finalize release-note wording,
-then freeze accepted `main` and build new documentation-aligned image/control-
-ZIP identities. Validate in-app Help from those exact images before any final
-package/browser claim.
+**Next**: Receive the reviewer's feedback from `J-Schulein`, trace and
+disposition each item, complete any useful re-review, finalize release-note
+wording, then freeze accepted `main` and build new documentation-aligned image/
+control-ZIP identities. Validate in-app Help from those exact images before
+any final package/browser claim.
