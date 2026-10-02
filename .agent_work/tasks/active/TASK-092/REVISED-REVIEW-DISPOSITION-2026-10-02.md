@@ -12,6 +12,11 @@ documentation-aligned artifact validation remain
 `8169b2b19111d6ddc5ba9d9ce6a2498199e3b0a6`
 **Reviewed bundle SHA-256**:
 `b262cea174365ac59f29f5c4bf08eb06a24e8a5896ef75dfc37b41c364151ee1`
+**Supplemental screenshot evidence**:
+`01-command-table-720.png` (`720x1000`, SHA-256
+`165b445e119b2d9314d556b402e6653ae1a2a0bceaf1502ee515793acdece403`) and
+`02-command-table-1440.png` (`1440x1000`, SHA-256
+`33dc643cc8fe5a5241dc8261f3587cab5c51ec2834633f678edb28545a462ed1`)
 
 ## Authority Boundary
 
@@ -22,8 +27,13 @@ boundary. The report's clarified audience and self-service model agree with the
 user's stated intent: actual novice users choose Docker/Podman, CPU/compatible
 NVIDIA GPU, and Google/Azure independently.
 
-Only the report was supplied in this feedback round. The evidence ZIP named by
-the report was not supplied and is not treated as locally verified evidence.
+The two supplemental screenshots were supplied after the report. They show the
+old maintained Quick Start command table at 1440 px and 720 px: the normal view
+is readable, while the narrow view clips later configuration columns and
+requires unexplained horizontal navigation. They also preserve the obsolete
+`support-assigned` labels. This corroborates R01 and R16. The screenshots are
+not committed or copied into public/reviewer artifacts; only their hashes,
+dimensions, and sanitized layout finding are recorded here.
 
 ## Disposition
 
