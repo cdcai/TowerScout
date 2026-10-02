@@ -1,8 +1,9 @@
 # Task-092 Child Work Plan: GitHub Wiki Information Architecture And Local IT Guide
 
 **Status**: IN_PROGRESS - local Wiki drafts plus packaged/in-app Local IT
-guidance implemented; owner/permission review, publication, final identities,
-and running-image validation remain
+guidance implemented and Wiki destination/ownership decisions recorded;
+independent content review, live setting verification, publication, final
+identities, and running-image validation remain
 **Parent**: [TASK-092 Documentation Currentness And Information Architecture](../TASK-092-documentation-currentness.md)
 **Priority**: HIGH
 **Planned implementation window**: October 5-8, 2026
@@ -128,16 +129,28 @@ References:
 
 ## Wiki Ownership And Handoff
 
-- Restrict editing to designated collaborators unless the future owner makes a
-  deliberate different decision.
-- Name a primary documentation owner and backup/reviewer.
-- Record the Wiki repository URL, clone/backup procedure, page inventory,
-  sidebar/navigation convention, media source location, and update checklist.
+- **Current Wiki destination:**
+  `https://github.com/J-Schulein/TowerScout/wiki`.
+- **Current documentation owner:** `J-Schulein`.
+- **Backup reviewer/custodian:** `cdcai`. Before requesting a GitHub pull-
+  request review, cdcai must identify a specific member or, after organization
+  handoff, a requestable team. The organization name alone is not a human
+  review assignment.
+- **Editing policy:** restrict Wiki editing to repository collaborators. Do not
+  enable public Wiki editing. Verify the live repository setting when the Wiki
+  is first published and again after handoff.
+- **Handoff intent:** move Wiki custody to cdcai with the project. A formal
+  transfer of this repository carries its Wiki. If cdcai instead adopts the
+  work into its existing separate repository, explicitly migrate the Wiki and
+  verify every page and link; do not assume the fork relationship moves it.
+- **Backup procedure:** after the Wiki exists, clone
+  `https://github.com/J-Schulein/TowerScout.wiki.git` as a mirror before
+  handoff or migration. Retain the version-controlled `wiki/` drafts in this
+  repository as the reviewable source and page inventory.
+- Preserve `_Sidebar.md` as the navigation convention and record any approved
+  media host on the demo landing page before publication.
 - Add `Applies to`, `Last reviewed`, audience, and support-scope metadata to
   operational pages.
-- A formal repository transfer carries the Wiki, but adoption through a
-  separate repository or fork may require an explicit Wiki migration. Do not
-  assume cdcai adoption automatically moves this fork's Wiki.
 - Verify public accessibility without a privileged session before linking the
   Wiki from release/package material.
 - Publishing pages, changing GitHub permissions, uploading media, or mutating
@@ -147,6 +160,75 @@ References:
 
 - [Changing Wiki access permissions](https://docs.github.com/en/communities/documenting-your-project-with-wikis/changing-access-permissions-for-wikis)
 - [Transferring a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/transferring-a-repository)
+- [Backing up a repository and Wiki](https://docs.github.com/en/repositories/archiving-a-github-repository/backing-up-a-repository)
+
+## Documentation Review Before Rebuild
+
+Use the documentation branch and a draft pull request for review. Do not ask
+the reviewer to edit the live Wiki. This keeps comments attached to exact
+lines and ensures the reviewed `docs/` and `wiki/` files are the files proposed
+for the documentation-aligned image and control-package rebuild.
+
+### Review workflow
+
+1. Open a draft pull request from
+   `docs/pre-rc4-checkpoint-2026-10-02` to `main` and label it as a
+   documentation/content-freeze review, not final release approval.
+2. Ask cdcai to name a representative GitHub username for the review. Give
+   that reviewer the pull-request link and this checklist; Wiki edit access is
+   not required merely to comment on a public pull request.
+3. Have the reviewer first follow the end-user and Local IT reading paths
+   without coaching. Ask them to note every pause, guess, backtrack, or term
+   they do not understand.
+4. Have the reviewer leave line comments for specific wording or formatting
+   and one summary review that separates **must fix before rebuild** from
+   **improve before publication**.
+5. Incorporate accepted feedback, rerun the documentation/link/render and
+   package-route checks, and request a short re-review of changed passages.
+6. `J-Schulein` records content-freeze approval only after no must-fix item
+   remains. Then merge to accepted `main`, freeze the source commit, and build
+   new CPU/CUDA image and control-ZIP identities from that clean source.
+
+### What the reviewer should check
+
+- **First-time readability:** headings make the next action obvious; terms are
+  explained; sentences and steps are short; each numbered step asks for one
+  action; important warnings are visible before the risky action.
+- **Role-based navigation:** an end user, Local IT administrator, and support
+  person can each find their starting page and common task without hunting or
+  encountering a dead end.
+- **Setup choices:** Docker versus Podman and CPU versus NVIDIA GPU are easy to
+  distinguish; CPU is clearly the normal/default path; support-assigned paths
+  are not presented as universal.
+- **Correct sequence and success signs:** download, authoritative SHA-256
+  comparison, extraction, setup, readiness, first detection, normal stop, and
+  relaunch appear in the right order, with a clear description of what success
+  and failure look like.
+- **Windows safety boundary:** the unsigned wrapper and process-scoped policy
+  behavior are understandable; the text never tells a user to weaken persistent
+  execution policy, Defender/EDR, WDAC, AppLocker, or organizational controls.
+- **Privacy and support safety:** no provider keys, `.env` contents, private
+  areas, raw logs/screenshots, browser traces, certificate details, or
+  investigation data are requested for public sharing.
+- **Consistency:** filenames, page names, commands, labels, prerequisites, and
+  support claims agree across the Wiki drafts, Markdown, paired HTML, release
+  wording, and in-app Help plan. Exact values remain in the release record or
+  shipped versioned guide rather than being copied inconsistently.
+- **Current versus historical scope:** `rc4` is clearly a preliminary
+  diagnostic, old pilot material is clearly historical, and no draft or
+  placeholder reads like a final supported release.
+- **Accessibility and formatting:** heading order is logical, link text is
+  descriptive, tables remain understandable when read linearly or on a narrow
+  screen, images have useful alternative text, and video plans include captions,
+  transcript, and equivalent written steps.
+- **Supportability:** troubleshooting states what the user can safely try, what
+  evidence is safe to collect, when to stop, and where to escalate.
+
+A must-fix item is any unsafe or incorrect command, missing prerequisite,
+broken navigation/link, misleading support claim, secret/privacy risk, or step
+that prevents a first-time user from completing the intended flow. Pure style
+preferences may be handled before publication without delaying the artifact
+rebuild unless they materially affect understanding.
 
 ## `rc4` Preliminary Shakedown Before Documentation Implementation
 
@@ -221,9 +303,10 @@ but the required affected W09/W10 checks bind to the new identities.
 
 - [x] Preliminary `rc4` findings are dispositioned in
   [the diagnostic record](./RC4-BROWSER-DOWNLOAD-DIAGNOSTIC-2026-10-02.md).
-- [ ] Wiki destination, edit permissions, owner, backup, and migration/backup
-  procedure are confirmed.
-- [ ] Required pages have content owners, release scope, and last-reviewed
+- [x] Wiki destination, editing policy, owner, backup role, and
+  migration/backup procedure are recorded. Live settings and the named cdcai
+  representative remain to be verified.
+- [x] Required pages have a content owner, release scope, and last-reviewed
   metadata.
 - [x] Page navigation starts from user role and intended task.
 - [x] CPU/default versus support-assigned GPU/Podman paths are unmistakable.

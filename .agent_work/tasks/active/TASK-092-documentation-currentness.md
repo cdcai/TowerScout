@@ -2,8 +2,10 @@
 
 **Status**: IN_PROGRESS - `rc4` findings are dispositioned; packaged/in-app
 Local IT guidance and the complete local Wiki draft set are implemented and
-focused tests pass. Owner/permission review, final release identities, running-
-image Help validation, publication, and final W09/W10 gates remain
+focused tests pass. Wiki destination/ownership decisions are recorded;
+independent content review, live permission verification, final release
+identities, running-image Help validation, publication, and final W09/W10 gates
+remain
 **Priority**: HIGH
 **Type**: C (Documentation / Release)
 **Child Work Plan**:
@@ -140,8 +142,9 @@ affected W09/W10 checks before distribution.
   external guidance agree on the tested paths and ADR-023 boundary.
 - [x] The written package remains sufficient without Wiki/video access,
   including the new paired Local IT Administrator guide.
-- [ ] Wiki/video ownership, edit permissions, version labels, accessibility,
-  backup/migration, and future repository custody are documented.
+- [x] Wiki ownership, editing policy, backup/migration, and future cdcai
+  custody are documented. Live-setting verification, video custody, and final
+  public accessibility remain publication gates.
 - [ ] The documentation checker, link/render review, running-image Help check,
   package allowlist review, and exact-artifact validation pass or retain named
   blockers.
@@ -232,7 +235,26 @@ initial workspace pytest run had a temp-directory ACL teardown error; the same
 tests passed with a host temp directory. No product failure is attributed to
 that ACL condition.
 
-**Next**: Review content/ownership, confirm Wiki destination/permissions and
-future backup owner, finalize release-note wording, then freeze content and
-build new documentation-aligned image/control-ZIP identities. Validate in-app
-Help from those exact images before any final package/browser claim.
+### 2026-10-02 - Wiki governance and pre-rebuild review path confirmed
+
+The current Wiki destination is `J-Schulein/TowerScout`; `J-Schulein` is the
+documentation owner, `cdcai` is the backup reviewer/custodian, and Wiki editing
+is limited to repository collaborators. A specific cdcai representative still
+must be named for the actionable GitHub review request. Handoff will transfer
+the Wiki with this repository or use an explicit migration into a separate
+cdcai repository, with a mirror backup and page/link verification.
+
+The pre-rebuild review will use a draft pull request from the existing
+documentation branch. The reviewer will assess first-time readability,
+role-based navigation, setup choices, safety, privacy, consistency,
+accessibility, and supportability. Must-fix findings are resolved and rechecked
+before `J-Schulein` approves the content freeze and the project rebuilds new
+documentation-aligned image/control-ZIP identities.
+
+No live Wiki page or permission was changed by this planning update.
+
+**Next**: Name the cdcai reviewer account, open the draft documentation pull
+request, complete and disposition the review, finalize release-note wording,
+then freeze accepted `main` and build new documentation-aligned image/control-
+ZIP identities. Validate in-app Help from those exact images before any final
+package/browser claim.
