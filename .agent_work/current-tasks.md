@@ -153,10 +153,11 @@ Current scope:
 
 **Status**: IN_PROGRESS - `rc4` findings are dispositioned; packaged/in-app
 Local IT guidance and the complete local Wiki draft set are implemented with
-focused tests passing. Wiki destination/ownership decisions are recorded;
-complete the independent content review, live permission verification, final
-release wording, content freeze, new artifact identities, and running-image
-validation
+focused tests passing. Wiki destination/ownership decisions are recorded,
+draft PR #94 is open, and a rendered offline review ZIP is ready; receive and
+disposition the independent content feedback, then complete live permission
+verification, final release wording, content freeze, new artifact identities,
+and running-image validation
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-092-documentation-currentness.md`
 

@@ -257,7 +257,38 @@ rebuilds new documentation-aligned image/control-ZIP identities.
 
 No live Wiki page or permission was changed by this planning update.
 
-**Next**: Receive the reviewer's feedback from `J-Schulein`, trace and
+### 2026-10-02 - Draft PR and external review bundle opened
+
+Opened [draft PR #94](https://github.com/J-Schulein/TowerScout/pull/94) from
+`docs/pre-rc4-checkpoint-2026-10-02` to `main`. The PR explicitly separates
+the preliminary `rc4` diagnostic, documentation review, future content freeze,
+new artifact build, final exact-byte validation, and live Wiki publication.
+
+Created the local review-only bundle at
+`dist/review/TowerScout-Documentation-Review-2026-10-02.zip` from source commit
+`8169b2b19111d6ddc5ba9d9ce6a2498199e3b0a6`. Its SHA-256 is
+`b262cea174365ac59f29f5c4bf08eb06a24e8a5896ef75dfc37b41c364151ee1`.
+The ZIP contains 40 files: an offline index, reviewer prompt, 15 rendered Wiki
+pages, 13 rendered repository/package Markdown pages, four maintained HTML
+guides plus their offline route note/style, source/scope metadata, and internal
+checksums. It contains no release binaries, models, data, credentials, logs,
+browser evidence, or investigation material.
+
+Bundle validation found 35 parseable HTML pages, no unresolved local links,
+an exact folder/ZIP content match, no unsafe ZIP member path, and zero secret-
+shaped findings. The focused 86-test documentation/package/Flask suite passed
+using a dedicated host temp directory after the known sandbox/default-temp ACL
+condition recurred. Canonical/quick agent-work validation, the documentation
+command/path scan, and `git diff --check` also passed. A connected browser was
+not available for automated visual inspection; the human review prompt
+therefore retains explicit normal-width, narrow-window, and Markdown/HTML
+comparison checks.
+
+No live Wiki was published, no release artifact was rebuilt, and no release or
+image tag was promoted.
+
+**Next**: Provide draft PR #94 and the review ZIP to the reviewer. Receive the
+reviewer's feedback from `J-Schulein`, trace and
 disposition each item, complete any useful re-review, finalize release-note
 wording, then freeze accepted `main` and build new documentation-aligned image/
 control-ZIP identities. Validate in-app Help from those exact images before
