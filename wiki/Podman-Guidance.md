@@ -1,7 +1,7 @@
 # Podman Guidance
 
 > **Audience:** Users who choose Podman and their Local IT staff. **Applies
-> to:** The next final Windows release. **Last reviewed:** 2026-10-02.
+> to:** The next final Windows release. **Last reviewed:** 2026-10-05.
 > **Publication state:** Local draft.
 
 Podman is one supported way to run TowerScout. On Windows it runs Linux
@@ -14,8 +14,8 @@ provider.
 1. Follow Podman Desktop's current [Windows installation instructions](https://podman-desktop.io/docs/installation/windows-install).
 2. During onboarding, install Podman and create the default WSL 2 Podman
    machine. In Podman Desktop, this is under **Settings > Resources**.
-3. If you use the command line instead and no machine exists, open ordinary
-   PowerShell and run:
+3. If you use the command line instead, first run `podman machine list`. Only
+   when no machine exists, open ordinary PowerShell and run:
 
    ```powershell
    podman machine init --now podman-machine-default

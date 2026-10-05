@@ -64,8 +64,10 @@
               room for exports.</li>
           <li>Open ordinary Windows PowerShell and run <code>wsl --status</code>.</li>
         </ol>
-        <p>If WSL is missing, use Microsoft's <a href="https://learn.microsoft.com/windows/wsl/install">WSL installation
-            guide</a>. Enabling Windows features or restarting may require Local IT approval.</p>
+        <p>Windows Subsystem for Linux 2 (<strong>WSL 2</strong>) is the Windows feature that lets Docker or Podman run
+          TowerScout's Linux container. If WSL is missing, use Microsoft's
+          <a href="https://learn.microsoft.com/windows/wsl/install">WSL installation guide</a>. Enabling Windows
+          features or restarting may require Local IT approval.</p>
 
         <h3>Docker</h3>
         <p>Follow Docker's <a href="https://docs.docker.com/desktop/setup/install/windows-install/">Windows installation
@@ -76,18 +78,25 @@ docker compose version</code></pre>
 
         <h3>Podman</h3>
         <p>Follow Podman Desktop's <a href="https://podman-desktop.io/docs/installation/windows-install">Windows
-            installation instructions</a>. During onboarding, create the default WSL 2 Podman machine.</p>
-        <pre><code>podman machine init --now podman-machine-default
-podman machine list
+            installation instructions</a>. Podman runs TowerScout inside a Linux virtual machine. <strong>Rootless</strong>
+          means that machine runs containers without the Linux root administrator account.</p>
+        <p>First check whether a machine already exists:</p>
+        <pre><code>podman machine list
 podman system connection list</code></pre>
-        <p>Run <code>machine init</code> only when no machine exists. The tested provider path also needs 64-bit Python
-          3.12. Install it from the official <a href="https://www.python.org/downloads/windows/">Python Windows
-            downloads</a> if permitted, then run <code>python --version</code>.</p>
+        <p>Only when no machine exists, create the default rootless WSL 2 machine:</p>
+        <pre><code>podman machine init --now podman-machine-default</code></pre>
+        <p>The tested path also needs 64-bit Python 3.12 to install its package-local <strong>Compose provider</strong>,
+          the helper Podman uses to read TowerScout's container configuration. Install it from the official
+          <a href="https://www.python.org/downloads/windows/">Python Windows downloads</a> if permitted, then run
+          <code>python --version</code>.</p>
 
         <h3>Optional NVIDIA GPU</h3>
         <p>Record the exact GPU from Task Manager or Device Manager, run <code>nvidia-smi</code>, and compare the GPU,
           driver, WSL, and engine with the final tested-support list. Use the <code>-cuda128</code> package only when it
           matches. Maxwell and Pascal must use CPU. Never install a Linux NVIDIA display driver inside WSL.</p>
+        <p>Podman GPU additionally requires NVIDIA Container Toolkit and Container Device Interface (CDI) configuration
+          inside the intended rootless machine. After verifying and extracting the package, follow the
+          <a href="podman-gpu-user-guide.md">Podman GPU guide</a> before setup.</p>
 
         <h3>One Map Credential</h3>
         <p>Prepare one Google Maps API key or Azure Maps subscription key. TowerScout currently uses one credential per
@@ -98,16 +107,22 @@ podman system connection list</code></pre>
         <ol>
           <li>Sign in to the <a href="https://console.cloud.google.com/">Google Cloud Console</a>; create or select an
             organization-owned project and attach an approved billing account.</li>
-          <li>Enable Maps JavaScript API, Maps Static API, Geocoding API, and the Places API used by the Maps
-            JavaScript Places library.</li>
+          <li>Enable Maps JavaScript API, Places API (New), Maps Static API, and Geocoding API. TowerScout's current
+            autocomplete control requires Places API (New).</li>
           <li>Open <strong>Google Maps Platform &gt; Credentials</strong>, create an API key, and give it a
             TowerScout-specific name.</li>
-          <li>Restrict it to those APIs. Use only an application restriction your organization has verified works for
-            both the browser and application paths. Add quotas, alerts, monitoring, and rotation.</li>
+          <li>Under <strong>API restrictions</strong>, restrict the key to only those four APIs.</li>
+          <li>TowerScout sends the one key from both the browser and local application service. A Website restriction
+            cannot cover the server requests, and an IP-address restriction cannot cover the browser requests. The
+            compatible one-key setting is <strong>Application restrictions: None</strong>. If an application restriction
+            is required, stop and use Azure Maps; this release cannot accept separate Google browser/server keys.</li>
+          <li>Add quotas, alerts, monitoring, and rotation.</li>
         </ol>
         <p>Use Google's official <a href="https://developers.google.com/maps/get-started">getting-started</a>,
           <a href="https://developers.google.com/maps/documentation/javascript/get-api-key">key-creation</a>, and
-          <a href="https://developers.google.com/maps/api-security-best-practices">security</a> guidance.
+          <a href="https://developers.google.com/maps/api-security-best-practices">security</a> guidance and
+          <a href="https://developers.google.com/maps/documentation/javascript/place-autocomplete-new">Place
+            Autocomplete prerequisite</a>.
         </p>
         <h4>Azure Maps</h4>
         <ol>
@@ -128,9 +143,11 @@ podman system connection list</code></pre>
 
       <section class="doc-section" id="safety">
         <h2>Unsigned-Package Safety</h2>
-        <p class="callout"><strong>Stop:</strong> TowerScout's PowerShell scripts are intentionally unsigned. Use the
-          supplied <code>.cmd</code> and <code>.bat</code> entrypoints. Their process-scoped setting does not change the
-          computer's permanent execution policy.</p>
+        <p class="callout"><strong>Important: unsigned scripts.</strong> TowerScout's PowerShell scripts are
+          intentionally unsigned. Use the supplied <code>.cmd</code> and <code>.bat</code> entrypoints. Their
+          process-scoped setting does not change the computer's permanent execution policy.</p>
+        <p><strong>Stop if Windows or your organization's policy blocks this package.</strong> Confirm the package source
+          and obtain the required approval; do not work around the control.</p>
         <p>The standard package does not support computers requiring a trusted Authenticode publisher, WDAC/AppLocker
           approval, constrained-language approval, antivirus/EDR exceptions, or organization-specific allowlisting.
           Do not weaken persistent policy, endpoint protection, or TLS verification.</p>
@@ -193,13 +210,18 @@ compose.yaml</code></pre>
 
       <section class="doc-section" id="run-setup">
         <h2>4. Run Setup For Your Choice</h2>
-        <p>Podman users first run the following from the extracted folder after the rootless default machine and Python
-          3.12 are ready:</p>
+        <p><strong>Open this folder first:</strong> Open the extracted folder in File Explorer, click the address bar,
+          type <code>powershell</code>, and press Enter. A command starting with <code>.\</code> runs a file from this
+          folder. Keep the window open.</p>
+        <p>Podman users then install and confirm the package-local Compose provider:</p>
         <pre><code>.\scripts\install-podman-compose-provider.cmd -Apply
 podman compose version</code></pre>
-        <p><strong>Open this folder:</strong> Open the extracted folder in File Explorer, click the address bar, type
-          <code>powershell</code>, and press Enter. A command starting with <code>.\</code> runs a file from this folder.
-          Keep the window open.</p>
+        <p>Podman GPU users must also complete the version-matched CDI preparation in the
+          <a href="podman-gpu-user-guide.md">Podman GPU guide</a>. After extraction, run the package-local check below.
+          The GPU helper is the guide's documented, limited <code>.ps1</code> exception:</p>
+        <pre><code>powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\enable-podman-gpu.ps1 -VerifyOnly</code></pre>
+        <p>If it says provisioning is required, use the guide's explicit provisioning step, repeat
+          <code>-VerifyOnly</code>, and continue only after it reports <code>nvidia.com/gpu=all</code>.</p>
         <div class="command-grid" aria-label="Setup commands by configuration">
           <article><h3>Docker CPU</h3><pre><code>.\setup-towerscout.cmd -Engine docker -Gpu off</code></pre></article>
           <article><h3>Docker NVIDIA GPU</h3><pre><code>.\setup-towerscout.cmd -Engine docker -Gpu on</code></pre></article>
@@ -210,8 +232,9 @@ podman compose version</code></pre>
           downloads the digest-pinned image, starts TowerScout, and normally opens
           <code>http://localhost:5000</code>. <code>setup_required</code> is normal until provider setup is saved.</p>
         <p>If ZIPs are elsewhere, copy their full paths from File Explorer and replace the bracketed explanatory text;
-          do not type the brackets. Copy the whole multiline command. Backticks mean the command continues, and quotes
-          keep paths with spaces together.</p>
+          do not type the brackets. The example below is Docker CPU. Preserve the <code>-Engine</code> and
+          <code>-Gpu</code> values from the setup card you chose. Copy the whole multiline command. Backticks mean the
+          command continues, and quotes keep paths with spaces together.</p>
         <pre><code>.\setup-towerscout.cmd `
   -Engine docker `
   -Gpu off `
@@ -230,16 +253,18 @@ podman compose version</code></pre>
         <p>One provider is enough. Do not include the key in a screenshot, issue, email, chat, log, or trace.</p>
         <pre><code>.\scripts\status.cmd -Engine docker -Port 5000</code></pre>
         <p>Use <code>podman</code> if selected. <code>ready</code> means provider setup and required assets are present.
-          <code>degraded</code> needs recovery; <code>fatal</code> is a stop condition.</p>
+          <code>degraded</code> needs recovery; <code>fatal</code> is a stop condition. For NVIDIA GPU, status must also
+          show <code>selected_device=cuda</code>; <code>ready</code> alone does not prove GPU processing.</p>
       </section>
 
       <section class="doc-section" id="first-search">
         <h2>6. Try A Small First Search</h2>
         <ol>
           <li>Search for a familiar public, non-sensitive place or move the map there.</li>
-          <li>For a circle, enter a small radius, choose <strong>Circle</strong>, and click the map. For a polygon,
-              choose <strong>Custom shape</strong>, click its corners, and complete it with the visible map control.</li>
-          <li>Select <strong>Estimate tiles</strong>. Start with only a few tiles.</li>
+          <li>The circle radius field uses metres. Enter a small radius, choose <strong>Circle</strong>, and click the map.
+              For a polygon, choose <strong>Custom shape</strong> and click its corners. Double-click to finish on Azure
+              Maps; right-click outside the shape to finish on Google Maps.</li>
+          <li>Select <strong>Estimate tiles</strong>. Reduce the area until the first run estimates only 1-6 tiles.</li>
           <li>Select <strong>Find towers</strong> and wait for completion.</li>
           <li>Review the map/list. Zero detections can be valid and does not itself mean installation failed.</li>
           <li>Export important results before closing or stopping.</li>
@@ -250,26 +275,29 @@ podman compose version</code></pre>
       </section>
 
       <section class="doc-section" id="reopen">
-        <h2>7. Record, Stop, And Reopen Your Setup</h2>
+        <h2>7. Record, Stop, Or Reopen Your Setup</h2>
         <p>Record the application folder, engine, CPU/GPU mode, provider, port, and browser address. Never record the
           credential.</p>
-        <div class="command-grid" aria-label="Stop and reopen commands by configuration">
-          <article><h3>Docker CPU</h3><pre><code>.\scripts\stop.cmd -Engine docker
-.\start.bat -Engine docker -Gpu off</code></pre></article>
-          <article><h3>Docker GPU</h3><pre><code>.\scripts\stop.cmd -Engine docker
-.\start.bat -Engine docker -Gpu on</code></pre></article>
-          <article><h3>Podman CPU</h3><pre><code>.\scripts\stop.cmd -Engine podman
-podman machine start podman-machine-default
-.\start.bat -Engine podman -Gpu off</code></pre></article>
-          <article><h3>Podman GPU</h3><pre><code>.\scripts\stop.cmd -Engine podman
-podman machine start podman-machine-default
-.\start.bat -Engine podman -Gpu on</code></pre></article>
+        <h3>Stop when finished</h3>
+        <p>Run only the line for your engine:</p>
+        <pre><code>.\scripts\stop.cmd -Engine docker
+.\scripts\stop.cmd -Engine podman</code></pre>
+        <h3>Start or reopen later</h3>
+        <p>For Podman, run <code>podman machine list</code> first. Run
+          <code>podman machine start podman-machine-default</code> only if the recorded machine is stopped. Then run only
+          the matching start command:</p>
+        <div class="command-grid" aria-label="Start or reopen commands by configuration">
+          <article><h3>Docker CPU</h3><pre><code>.\start.bat -Engine docker -Gpu off</code></pre></article>
+          <article><h3>Docker GPU</h3><pre><code>.\start.bat -Engine docker -Gpu on</code></pre></article>
+          <article><h3>Podman CPU</h3><pre><code>.\start.bat -Engine podman -Gpu off</code></pre></article>
+          <article><h3>Podman GPU</h3><pre><code>.\start.bat -Engine podman -Gpu on</code></pre></article>
         </div>
         <p><code>stop.cmd</code> has no port option. If you use port 5001, add <code>-Port 5001</code> to setup, start,
           and status, then open <code>http://localhost:5001</code>.</p>
-        <p>Normal stop/start and reboot preserve the selected engine's named volumes. Docker and Podman stores are
-          separate. Internal session storage is not a backup; export important work. Never use volume deletion, prune,
-          Podman machine reset, or blanket cleanup as routine recovery.</p>
+        <p>Normal stop/start and reboot preserve the selected engine's <strong>named volumes</strong>, engine-managed
+          storage areas for configuration, assets, sessions, temporary review data, uploads, cache, and logs. Docker and
+          Podman stores are separate. Internal session storage is not a backup; export important work. Never use volume
+          deletion, prune, Podman machine reset, or blanket cleanup as routine recovery.</p>
       </section>
 
       <section class="doc-section" id="help">

@@ -2,7 +2,7 @@
 
 **Applies to**: The exact documentation-aligned Windows release package named
 by the authoritative release record
-**Last reviewed**: 2026-10-02
+**Last reviewed**: 2026-10-05
 **Audience**: Windows users who choose Podman Desktop with CPU processing
 **Runtime scope**: Podman, CPU Application Package, CPU launch mode
 
@@ -31,18 +31,17 @@ Install or confirm these items before running TowerScout.
 - At least `15 GB` free disk space. `25 GB` is a better first-setup target.
 - One user- or organization-owned Google Maps or Azure Maps provider key.
 - Windows Subsystem for Linux 2.
-  - Install guide:
-    `https://learn.microsoft.com/en-us/windows/wsl/install#install-wsl-command`
+  - [Microsoft WSL installation guide](https://learn.microsoft.com/en-us/windows/wsl/install#install-wsl-command)
   - Note: Admin rights and/or helpdesk support may be required to install this
     software. Check with your local IT support if you encounter problems
     installing this software.
 - Podman Desktop.
-  - Installation guide:
-    `https://podman-desktop.io/docs/installation/windows-install`
+  - [Podman Desktop Windows installation guide](https://podman-desktop.io/docs/installation/windows-install)
   - Note: Podman Desktop is free and open source. A Red Hat account is not
     required for the TowerScout local package, but local IT policy still
     controls installation and support.
-- 64-bit Python 3.12 from `https://www.python.org/downloads/windows/`. It is
+- 64-bit Python 3.12 from the official
+  [Python Windows downloads](https://www.python.org/downloads/windows/). It is
   used to install TowerScout's pinned package-local Compose provider.
 
 Podman must be installed, the Podman machine must be running, and the Compose
@@ -71,12 +70,9 @@ If no Podman machine exists, create and start the default rootless machine:
 podman machine init --now podman-machine-default
 ```
 
-Do not run `machine init` if the machine already exists. After extracting the
-TowerScout Application Package, install its verified Compose provider:
-
-```powershell
-.\scripts\install-podman-compose-provider.cmd -Apply
-```
+Do not run `machine init` if the machine already exists. The package-local
+Compose provider is installed after download, verification, and extraction in
+step 8 below; its helper does not exist before the package is extracted.
 
 ## Install TowerScout
 
@@ -86,12 +82,9 @@ TowerScout Application Package, install its verified Compose provider:
    C:\Users\<you>\Documents\TowerScout
    ```
 
-2. Open the TowerScout GitHub Releases page and select the entry whose notes
-   identify it as the current supported final Windows release:
-
-   ```text
-   https://github.com/J-Schulein/TowerScout/releases
-   ```
+2. Open the [TowerScout GitHub Releases page](https://github.com/J-Schulein/TowerScout/releases)
+   and select the entry whose notes identify it as the current supported final
+   Windows release.
 
 3. Download these four files from the release `Assets` section into the new
    TowerScout folder:
@@ -108,6 +101,10 @@ TowerScout Application Package, install its verified Compose provider:
 4. Before extracting anything, calculate the SHA-256 of both ZIPs and compare
    each result with both its downloaded `.sha256` file and the authoritative
    value printed in the final release notes:
+
+   Open the working folder containing the four downloads in File Explorer,
+   click the address bar, type `powershell`, and press Enter. Run the following
+   commands in that new window:
 
    ```powershell
    $appZip = Get-ChildItem -File "*-cpu.zip"
@@ -262,7 +259,8 @@ If status is `fatal`, stop. Record the release version, package filename,
 selected Compose provider, status output, and a reviewed summary of recent
 logs. Ask Local IT about local policy, network, or certificate problems.
 Report a non-sensitive product defect at
-`https://github.com/J-Schulein/TowerScout/issues`. That tracker is public and
+[TowerScout issue tracker](https://github.com/J-Schulein/TowerScout/issues).
+That tracker is public and
 does not promise a response. Never post provider secrets, `.env`, raw
 screenshots, browser traces, exported datasets, certificate details, or
 unreviewed raw logs.

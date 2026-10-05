@@ -1,7 +1,7 @@
 # Current Tasks - Windows Deployment Delivery Week
 
 **Sprint Period**: September 22-September 28, 2026
-**Last Updated**: October 2, 2026
+**Last Updated**: October 5, 2026
 **Focus**: Qualify a dependable, downloadable Windows 11 application from
 accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Day 2 has moved
 the evidence-selected W03-W08 corrections through focused review and merge.
@@ -151,12 +151,11 @@ Current scope:
 
 ### **TASK-092: Documentation Currentness And Information Architecture**
 
-**Status**: IN_PROGRESS - `rc4` findings are dispositioned; revised independent
-review was received and R01-R19 are implemented in novice self-service Wiki
-and packaged/in-app drafts with focused automated checks passing. Draft PR #94
-remains open; complete human narrow-window re-review, live permission
-verification, final release wording, content freeze, new artifact identities,
-and running-image validation
+**Status**: IN_PROGRESS - `rc4` findings are dispositioned; Round 2 review was
+received and R2-01 through R2-12 are implemented in source. Focused content
+tests and real-browser 1440/720 layout checks pass. Draft PR #94 remains open;
+complete Round 3 review, live permission verification, final release wording,
+content freeze, new artifact identities, and running-image validation
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-092-documentation-currentness.md`
 

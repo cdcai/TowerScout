@@ -2,7 +2,7 @@
 
 **Applies to**: The exact documentation-aligned Windows release package named
 by the authoritative release record
-**Last reviewed**: 2026-10-02
+**Last reviewed**: 2026-10-05
 **Audience**: Windows users who choose Podman with NVIDIA GPU processing
 **Runtime scope**: Podman, CUDA 12.8 Application Package, GPU launch mode
 
@@ -31,24 +31,23 @@ Install or confirm these items before running TowerScout.
 - A modern browser such as Microsoft Edge or Google Chrome.
 - Normal outbound internet access to GitHub Releases, GHCR, the approved
   Compose provider source if installation is needed, NVIDIA Container Toolkit
-  sources if support enables CDI, and the selected map provider.
+  sources if CDI installation is needed, and the selected map provider.
 - At least `35 GB` free for package download, image pull/unpack, assets, and
   volumes. The measured CUDA image is `14.4 GB`.
 - One user- or organization-owned Google Maps or Azure Maps provider key.
 - An NVIDIA GPU supported by the current Windows NVIDIA driver.
 - Windows Subsystem for Linux 2.
-  - Install guide:
-    `https://learn.microsoft.com/en-us/windows/wsl/install#install-wsl-command`
+  - [Microsoft WSL installation guide](https://learn.microsoft.com/en-us/windows/wsl/install#install-wsl-command)
   - Note: Admin rights and/or helpdesk support may be required to install this
     software. Check with your local IT support if you encounter problems
     installing this software.
 - Podman Desktop.
-  - Installation guide:
-    `https://podman-desktop.io/docs/installation/windows-install`
+  - [Podman Desktop Windows installation guide](https://podman-desktop.io/docs/installation/windows-install)
   - Note: Podman Desktop is free and open source. A Red Hat account is not
     required for the TowerScout local package, but local IT policy still
     controls installation and support.
-- 64-bit Python 3.12 from `https://www.python.org/downloads/windows/`.
+- 64-bit Python 3.12 from the official
+  [Python Windows downloads](https://www.python.org/downloads/windows/).
 - The verified package-local Podman Compose provider.
   - TowerScout rejects Docker Desktop's bundled `docker-compose.exe` for the
     Podman path.
@@ -92,29 +91,12 @@ If no machine exists, create and start the default rootless machine:
 podman machine init --now podman-machine-default
 ```
 
-Do not initialize it again if it already exists. From the extracted TowerScout
-folder, install the verified Compose provider:
-
-```powershell
-.\scripts\install-podman-compose-provider.cmd -Apply
-```
-
-Check Podman GPU readiness from the extracted package folder:
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\enable-podman-gpu.ps1 -VerifyOnly
-```
-
-To provision or refresh NVIDIA CDI, use:
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\enable-podman-gpu.ps1
-```
-
-Refresh and reverify CDI after every Windows NVIDIA driver update. Record
-`nvidia-ctk --version` inside the Podman machine. The current package requires
-NVIDIA Container Toolkit `>=1.19.1` and recommends the current `1.20.x` line;
-the final release notes control the tested version.
+Do not initialize it again if it already exists. The package-local Compose and
+GPU helpers are run only after download, verification, and extraction in step
+8 below; those files do not exist before the package is extracted. Step 8 also
+shows the `-VerifyOnly` CDI check. Refresh and reverify CDI after every Windows
+NVIDIA driver update. The final release notes control the tested NVIDIA
+Container Toolkit version.
 
 Important GPU boundary: a successful host `nvidia-smi` result is not enough by
 itself. The Podman machine and the TowerScout container must also be able to
@@ -132,12 +114,9 @@ the CPU package or `-Gpu off`; do not force an architecture list.
    C:\Users\<you>\Documents\TowerScout
    ```
 
-2. Open the TowerScout GitHub Releases page and select the entry whose notes
-   identify it as the current supported final Windows release:
-
-   ```text
-   https://github.com/J-Schulein/TowerScout/releases
-   ```
+2. Open the [TowerScout GitHub Releases page](https://github.com/J-Schulein/TowerScout/releases)
+   and select the entry whose notes identify it as the current supported final
+   Windows release.
 
 3. Download these four files from the release `Assets` section into the new
    TowerScout folder:
@@ -155,6 +134,10 @@ the CPU package or `-Gpu off`; do not force an architecture list.
 4. Before extracting anything, calculate the SHA-256 of both ZIPs and compare
    each result with both its downloaded `.sha256` file and the authoritative
    value printed in the final release notes:
+
+   Open the working folder containing the four downloads in File Explorer,
+   click the address bar, type `powershell`, and press Enter. Run the following
+   commands in that new window:
 
    ```powershell
    $appZip = Get-ChildItem -File "*-cuda128.zip"
@@ -184,8 +167,8 @@ the CPU package or `-Gpu off`; do not force an architecture list.
 7. In Windows File Explorer, click the address bar, type `powershell`, and
    press Enter.
 
-8. Install the package-local Compose provider and confirm Podman and CDI are
-   ready:
+8. Install the package-local Compose provider and confirm Podman. Then run the
+   non-changing CDI check:
 
    ```powershell
    .\scripts\install-podman-compose-provider.cmd -Apply
@@ -193,6 +176,19 @@ the CPU package or `-Gpu off`; do not force an architecture list.
    podman compose version
    powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\enable-podman-gpu.ps1 -VerifyOnly
    ```
+
+   If `-VerifyOnly` says CDI must be provisioned or refreshed, review its
+   message and run the package helper without `-VerifyOnly` only when local
+   policy permits it:
+
+   ```powershell
+   powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\enable-podman-gpu.ps1
+   powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\enable-podman-gpu.ps1 -VerifyOnly
+   ```
+
+   Continue only when the final check shows `nvidia.com/gpu=all`. Record
+   `nvidia-ctk --version` inside the Podman machine if support later asks for
+   the sanitized version information.
 
 9. In the PowerShell window, run:
 
@@ -324,7 +320,8 @@ If status is `fatal`, stop. Record the release version, package filename,
 selected Compose provider, GPU/CDI result, status output, and a reviewed
 summary of recent logs. Ask Local IT about local policy, network, driver, or
 certificate problems. Report a non-sensitive product defect at
-`https://github.com/J-Schulein/TowerScout/issues`. That tracker is public and
+[TowerScout issue tracker](https://github.com/J-Schulein/TowerScout/issues).
+That tracker is public and
 does not promise a response. Never post provider secrets, `.env`, raw
 screenshots, browser traces, exported datasets, certificate details, or
 unreviewed raw logs.

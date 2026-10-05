@@ -1,7 +1,7 @@
 # Install And First Run
 
 > **Audience:** New Windows users. **Applies to:** The next final Windows
-> release. **Last reviewed:** 2026-10-02. **Publication state:** Local draft;
+> release. **Last reviewed:** 2026-10-05. **Publication state:** Local draft;
 > final filenames and hashes will appear in the authoritative release record.
 
 This page keeps the first-use path continuous: prepare, download, verify,
@@ -135,10 +135,12 @@ turning off certificate checking.
 ## 7. Try A Small Search
 
 1. Search for a familiar, public, non-sensitive place or move the map there.
-2. Choose **Circle**, enter a small radius, and place the circle; or choose
-   **Custom shape** and click points to draw a small polygon.
-3. Select **Estimate tiles**. Start with an area that estimates only a few
-   tiles.
+2. The circle radius field uses **metres**. Enter a small radius, choose
+   **Circle**, and place it; or choose **Custom shape** and click the polygon
+   corners. Double-click to finish on Azure Maps; right-click outside the shape
+   to finish on Google Maps.
+3. Select **Estimate tiles**. Reduce the area until the first run estimates
+   only 1-6 tiles.
 4. Select **Find towers** and wait for the progress display to finish.
 5. Review the map and detection list. Zero detections can be a valid result; it
    does not by itself mean installation failed.
@@ -150,7 +152,7 @@ small detection request finishes without an error, and the review area updates.
 Formal release fixtures, expected counts, and PASS/FAIL rules are maintainer
 qualification work, not an end-user prerequisite.
 
-## 8. Stop And Reopen
+## 8. Stop When Finished And Reopen Later
 
 From PowerShell in the extracted application folder, stop with the engine you
 chose:
@@ -160,10 +162,11 @@ chose:
 .\scripts\stop.cmd -Engine podman
 ```
 
-Use only one line. Normal stop keeps engine-specific named volumes containing
-configuration, imported assets, sessions, temporary review data, caches, and
-logs. Docker and Podman have separate storage. Export important results before
-stopping; do not treat internal session storage as a backup.
+Use only one line. Normal stop keeps engine-specific **named volumes**,
+engine-managed storage containing configuration, imported assets, sessions,
+temporary review data, caches, and logs. Docker and Podman have separate
+storage. Export important results before stopping; do not treat internal
+session storage as a backup.
 
 See [Everyday Commands](Everyday-Commands) for the matching reopen command and
 for a simple record of your choices.

@@ -67,7 +67,10 @@ def test_tls_repair_guides_carry_port_through_repair_and_restart_commands():
             marker = "Use the command shown by TowerScout"
         section_start = text.index(marker)
         section = text[section_start:]
-        next_heading = re.search(r"\n#{1,3} ", section)
+        # Level-three headings divide diagnostic, review, and apply phases in
+        # the Package Guide. Keep those phases in scope and stop only at the
+        # next top-level or level-two topic.
+        next_heading = re.search(r"\n#{1,2} ", section)
         if next_heading:
             section = section[: next_heading.start()]
         command_lines = [

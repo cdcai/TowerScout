@@ -1,10 +1,10 @@
 # TASK-092: Documentation Currentness And Information Architecture
 
-**Status**: IN_PROGRESS - revised independent review received; R01-R19 are
-implemented in local novice self-service Wiki and packaged/in-app drafts, and
-focused automated checks pass. Human narrow-window re-review, final screenshots/
-video, live permission verification, final release identities, running-image
-Help validation, publication, and final W09/W10 gates remain
+**Status**: IN_PROGRESS - Round 2 review received; R2-01 through R2-12 are
+implemented in source, and focused documentation plus 1440/720 browser-layout
+checks pass. Round 3 review, content-freeze approval, final screenshots/video,
+live permission verification, final release identities, running-image Help
+validation, publication, and final W09/W10 gates remain
 **Priority**: HIGH
 **Type**: C (Documentation / Release)
 **Child Work Plan**:
@@ -337,3 +337,34 @@ content freeze. No image or release package was rebuilt.
 **Next**: Update draft PR #94, provide a revised review snapshot if requested,
 resolve any focused re-review findings, and obtain `J-Schulein` content-freeze
 approval before rebuilding documentation-aligned artifacts.
+
+### 2026-10-05 - Round 2 review disposition and focused corrections
+
+Received Round 2 review against source
+`a87008c3036e80785610ee7e8675c51ea5b07704`. Accepted R2-01 through R2-08 as
+pre-rebuild blockers and R2-09 through R2-12 as pre-publication corrections.
+The report and two viewport screenshots are recorded by SHA-256 in the
+[full disposition](./TASK-092/ROUND-2-REVIEW-DISPOSITION-2026-10-05.md).
+
+Corrected desktop command-card visibility, Podman GPU HTML parity, folder and
+helper ordering, CPU/CUDA verification alternatives, configuration-preserving
+templates, separated daily commands, TLS handoffs/phases, navigation, warning
+order, first-use terminology, and stale project-assignment language. Added
+focused regression coverage and a real-browser 1440/720 layout check. All 105
+focused documentation, ADR-023, package, asset-import, and Flask-route tests
+pass with the established clean host-temp workaround for the workspace ACL
+condition. Documentation command/path, agent-work, stale-language, and diff
+hygiene checks also pass.
+
+The Google restriction setting was not assumed from an unrecorded past test.
+Source inspection and current first-party Google guidance establish that
+TowerScout uses four named APIs and sends its single Google credential from
+both browser and server paths. Documentation now requires API restriction to
+those four services but discloses `Application restrictions: None` as the
+compatible one-key limitation. Sites requiring website/IP application
+restriction must use Azure or stop; split Google keys require future product
+work.
+
+**Next**: Complete the broader validation matrix, build a source-bound Round 3
+review ZIP, update draft PR #94, and obtain the reviewer's focused response
+before content freeze or any image/control-package rebuild.

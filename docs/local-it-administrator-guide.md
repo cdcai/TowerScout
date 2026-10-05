@@ -2,7 +2,7 @@
 
 **Applies to**: The next documentation-aligned Windows release package unless
 its release notes state otherwise
-**Last reviewed**: 2026-10-02
+**Last reviewed**: 2026-10-05
 **Audience**: Local IT, security, and endpoint-management staff.
 
 **Runtime scope**: Windows 11 x64. The end user may choose Docker or Podman and
@@ -98,8 +98,9 @@ Windows release.
    directly as the normal user path.
 
 If the ZIPs cannot remain beside the extracted folder, copy their full paths
-from File Explorer and quote both. The example below is a template; replace
-the bracketed descriptions and do not type the brackets:
+from File Explorer and quote both. The example below is for Docker CPU. Keep
+the user's chosen `-Engine` and `-Gpu` values when adapting it, replace the
+bracketed descriptions, and do not type the brackets:
 
 ```powershell
 .\setup-towerscout.cmd -Engine docker -Gpu off `
@@ -155,6 +156,12 @@ form only after that review. Import only the site-approved CA and preserve
 certificate details as sensitive evidence. Do not disable certificate
 verification or set an insecure TLS override. Docker and Podman use separate
 configuration volumes, so repair the selected engine only.
+
+Use the version-matched
+[Provider-Key Validation Or TLS Failure procedure](package-guide.md#provider-key-validation-or-tls-failure).
+It separates **Diagnostic only**, **Review and obtain approval**, and **Apply
+the approved change**. Preserve the user's recorded provider, engine, GPU mode,
+and port; run only one matching alternative rather than pasting every example.
 
 ## Persistent Volumes, Backup, And Removal
 

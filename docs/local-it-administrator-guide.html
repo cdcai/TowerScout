@@ -33,7 +33,7 @@
       <section class="doc-section" id="scope">
         <h2>Role And Scope</h2>
         <p><strong>Applies to:</strong> The next documentation-aligned Windows release. <strong>Last reviewed:</strong>
-          2026-10-02. <strong>Audience:</strong> Local IT, security, and endpoint-management staff.</p>
+          2026-10-05. <strong>Audience:</strong> Local IT, security, and endpoint-management staff.</p>
         <p>The user chooses Docker or Podman, CPU or a compatible NVIDIA GPU, and Google Maps or Azure Maps. Local IT
           confirms that the chosen prerequisites, network access, credential model, and unsigned-script boundary are
           permitted. The final release record limits support to exact tested combinations.</p>
@@ -80,8 +80,9 @@
           <li>Use File Explorer Extract All on only the verified Application Package in a user-writable folder.</li>
           <li>Keep both ZIPs and sidecars beside the extracted folder and use <code>setup-towerscout.cmd</code>.</li>
         </ol>
-        <p>When co-location is not possible, copy full paths from File Explorer, replace the bracketed descriptions,
-          and keep the quotes and line-continuation backticks:</p>
+        <p>When co-location is not possible, copy full paths from File Explorer. The example below is for Docker CPU;
+          preserve the user's chosen <code>-Engine</code> and <code>-Gpu</code> values when adapting it, replace the
+          bracketed descriptions, and keep the quotes and line-continuation backticks:</p>
         <pre><code>.\setup-towerscout.cmd -Engine docker -Gpu off `
   -PackageZip "[full path copied from the Application Package ZIP]" `
   -AssetZip "[full path copied from the Model &amp; Data Package ZIP]"</code></pre>
@@ -107,6 +108,11 @@
           the proposed engine/provider/port/certificate target privately, obtain approval, and only then run the
           separate apply form. It imports an approved site CA into the selected engine's config volume. It cannot fix
           registry-pull trust or a blocked VM. Never disable TLS verification.</p>
+        <p>Use the version-matched
+          <a href="package-guide.md#provider-key-validation-or-tls-failure">Provider-Key Validation Or TLS Failure
+            procedure</a>. It separates <strong>Diagnostic only</strong>, <strong>Review and obtain approval</strong>,
+          and <strong>Apply the approved change</strong>. Preserve the user's recorded provider, engine, GPU mode, and
+          port; run only one matching alternative rather than pasting every example.</p>
       </section>
 
       <section class="doc-section" id="data">

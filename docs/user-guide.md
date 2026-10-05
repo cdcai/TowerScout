@@ -2,7 +2,7 @@
 
 **Applies to**: The exact documentation-aligned Windows release package named
 by the authoritative release record
-**Last reviewed**: 2026-10-02
+**Last reviewed**: 2026-10-05
 **Audience**: Package users after first setup.
 
 **Runtime scope**: Docker CPU, Docker GPU, Podman CPU, and Podman GPU are
@@ -194,6 +194,9 @@ TowerScout supports several export paths.
 
 ### CSV And KML
 
+Confirm that the results and their locations may be stored in the destination
+folder before exporting them.
+
 Use `Download results` to download:
 
 - `detections.csv`
@@ -204,11 +207,12 @@ summaries according to your site policy.
 
 ### Dataset ZIP
 
+Dataset ZIPs may contain sensitive locations, investigation context, imagery
+tiles, and manual corrections. Confirm the approved storage and sharing path
+before selecting the download action.
+
 Use `Download dataset` to save the current tiles, labels, metadata, and manual
 additions as `dataset.zip`.
-
-Dataset ZIPs may contain sensitive locations, investigation context, imagery
-tiles, and manual corrections. Treat them as sensitive local data.
 
 ## Restore A Dataset
 
@@ -221,37 +225,51 @@ After restore:
 - Confirm detections and manual towers appear as expected.
 - Re-export only if the restored dataset is approved for the intended use.
 
-## Stop And Resume Later
+## Stop When Finished Or Resume Later
 
-Use the pair that matches the choices in your non-secret setup record.
+Use the engine and processing mode in your non-secret setup record.
 
-### Docker CPU
+### Stop When Finished
+
+Run only the line for your engine:
 
 ```powershell
 .\scripts\stop.cmd -Engine docker
+.\scripts\stop.cmd -Engine podman
+```
+
+### Start Or Resume Later
+
+For Podman only, first run `podman machine list`. Run the following command
+only when the recorded machine is stopped:
+
+```powershell
+podman machine start podman-machine-default
+```
+
+Then run only the command matching your setup.
+
+#### Docker CPU
+
+```powershell
 .\start.bat -Engine docker -Gpu off
 ```
 
-### Docker NVIDIA GPU
+#### Docker NVIDIA GPU
 
 ```powershell
-.\scripts\stop.cmd -Engine docker
 .\start.bat -Engine docker -Gpu on
 ```
 
-### Podman CPU
+#### Podman CPU
 
 ```powershell
-.\scripts\stop.cmd -Engine podman
-podman machine start podman-machine-default
 .\start.bat -Engine podman -Gpu off
 ```
 
-### Podman NVIDIA GPU
+#### Podman NVIDIA GPU
 
 ```powershell
-.\scripts\stop.cmd -Engine podman
-podman machine start podman-machine-default
 .\start.bat -Engine podman -Gpu on
 ```
 
@@ -259,10 +277,11 @@ podman machine start podman-machine-default
 start, and status and in the browser address.
 
 The selected engine stores provider configuration, assets, logs, sessions,
-temporary review data, uploads, and caches in named volumes. Normal stop/start
-and reboot preserve them. Docker and Podman have separate stores, and switching
-engines does not migrate data. The Podman machine may need to be started after
-Windows restarts.
+temporary review data, uploads, and caches in **named volumes**, engine-managed
+storage areas that remain when the TowerScout container stops. Normal
+stop/start and reboot preserve them. Docker and Podman have separate stores,
+and switching engines does not migrate data. The Podman machine may need to be
+started after Windows restarts.
 
 Export important results before stopping. A browser tab or internal session is
 not a backup. Treat all local stores and exports as sensitive. Do not use

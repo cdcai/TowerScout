@@ -1,8 +1,9 @@
 # Google And Azure API Credentials
 
 > **Audience:** New users and Local IT. **Applies to:** The provider you choose
-> and its current terms. **Last reviewed:** 2026-10-02. **Publication state:**
-> Local draft; verify provider-console labels before final publication.
+> and its current terms. **Last reviewed:** 2026-10-05. **Publication state:**
+> Local draft; current Google labels were checked against official provider
+> documentation, but final live setup remains part of candidate validation.
 
 TowerScout needs one working Google Maps API key or one Azure Maps subscription
 key. Provider accounts, billing, usage rights, and charges are not included
@@ -30,17 +31,24 @@ does not meet that requirement.
    usage; review current pricing and set budget/usage alerts.
 4. Enable these APIs for the project:
    - Maps JavaScript API;
+   - Places API (New), required by TowerScout's current
+     `PlaceAutocompleteElement` search control;
    - Maps Static API;
-   - Geocoding API; and
-   - Places API used by the Maps JavaScript Places library.
+   - Geocoding API.
 5. Open **Google Maps Platform > Credentials**, select **Create credentials >
    API key**, and give the key a TowerScout-specific name.
-6. Apply **API restrictions** for only the four APIs above. TowerScout's
-   current one-key design makes browser-referrer and server-side restrictions
-   difficult to combine; use only an application restriction that your site
-   has verified works for both TowerScout paths. Do not assume a referrer-only
-   or IP-only rule will cover both.
-7. Set quotas and alerts appropriate for local TowerScout use. Copy the key to
+6. Under **API restrictions**, select **Restrict key** and select only the four
+   APIs above.
+7. Under **Application restrictions**, select **None** only if you accept the
+   current TowerScout one-key limitation and local policy permits it. TowerScout
+   sends this one key from both the browser and the local application service.
+   Google recommends a **Websites** restriction for the browser path and an
+   **IP addresses** restriction for server web-service requests; one key cannot
+   use both restriction types. This setting is compatible with TowerScout's
+   current design but is not Google's recommended split-key design. If an
+   application restriction is required, stop and use Azure Maps; this release
+   cannot accept separate Google browser/server keys.
+8. Set quotas and alerts appropriate for local TowerScout use. Copy the key to
    a temporary private location for entry into TowerScout; do not put it in a
    document, screenshot, issue, or chat.
 
@@ -48,6 +56,7 @@ Official instructions:
 
 - [Get started with Google Maps Platform](https://developers.google.com/maps/get-started)
 - [Set up the Maps JavaScript API and create a key](https://developers.google.com/maps/documentation/javascript/get-api-key)
+- [Place Autocomplete and its Places API (New) prerequisite](https://developers.google.com/maps/documentation/javascript/place-autocomplete-new)
 - [Google Maps Platform API security best practices](https://developers.google.com/maps/api-security-best-practices)
 
 ## Option B: Azure Maps
@@ -90,3 +99,5 @@ message category:
 - **billing/account:** confirm the provider account and billing status;
 - **quota/rate limit:** review provider usage and quota controls; or
 - **certificate/TLS:** ask Local IT to inspect the managed-network trust path.
+
+Next, continue with [Install And First Run](Install-And-First-Run).

@@ -1,7 +1,7 @@
 # Everyday Commands
 
 > **Audience:** TowerScout users. **Applies to:** The next final Windows
-> release. **Last reviewed:** 2026-10-02. **Publication state:** Local draft.
+> release. **Last reviewed:** 2026-10-05. **Publication state:** Local draft.
 
 Run these commands from the extracted application folder. To open PowerShell
 there, open the folder in File Explorer, click the address bar, type
@@ -20,39 +20,57 @@ Store this near the application folder. Never write the provider key in it.
 | Port | 5000 unless changed |
 | Browser address | `http://localhost:5000` unless the port changed |
 
-## Docker CPU
+## Start Or Reopen TowerScout
+
+Run only the command matching the engine and processing mode in your setup
+record.
+
+### Docker CPU
 
 ```powershell
 .\start.bat -Engine docker -Gpu off
-.\scripts\status.cmd -Engine docker -Port 5000
-.\scripts\stop.cmd -Engine docker
 ```
 
-## Docker NVIDIA GPU
+### Docker NVIDIA GPU
 
 ```powershell
 .\start.bat -Engine docker -Gpu on
-.\scripts\status.cmd -Engine docker -Port 5000
-.\scripts\stop.cmd -Engine docker
 ```
 
-## Podman CPU
+### Podman CPU
 
-Start the Podman machine first if it stopped after a reboot.
+First run `podman machine list`. Run
+`podman machine start podman-machine-default` only if the recorded machine is
+stopped.
 
 ```powershell
-podman machine start podman-machine-default
 .\start.bat -Engine podman -Gpu off
-.\scripts\status.cmd -Engine podman -Port 5000
-.\scripts\stop.cmd -Engine podman
 ```
 
-## Podman NVIDIA GPU
+### Podman NVIDIA GPU
 
 ```powershell
-podman machine start podman-machine-default
 .\start.bat -Engine podman -Gpu on
+```
+
+## Check Status
+
+Run only the line for your engine:
+
+```powershell
+.\scripts\status.cmd -Engine docker -Port 5000
 .\scripts\status.cmd -Engine podman -Port 5000
+```
+
+For an NVIDIA GPU setup, status must show `selected_device=cuda`. General
+`ready` status alone does not prove GPU processing.
+
+## Stop When Finished
+
+Run only the line for your engine:
+
+```powershell
+.\scripts\stop.cmd -Engine docker
 .\scripts\stop.cmd -Engine podman
 ```
 
@@ -62,10 +80,11 @@ it stops the selected engine's TowerScout project.
 
 ## What Survives A Normal Stop
 
-A normal stop or computer restart keeps the selected engine's named volumes,
-including saved provider configuration, imported model/data assets, Flask
-session files, temporary review/export inputs, cache, uploads, and logs. The
-Podman machine may need a manual start after Windows restarts.
+A normal stop or computer restart keeps the selected engine's **named
+volumes**, engine-managed storage areas containing saved provider
+configuration, imported model/data assets, Flask session files, temporary
+review/export inputs, cache, uploads, and logs. The Podman machine may need a
+manual start after Windows restarts.
 
 Your browser tab is not a backup. Export any important CSV, KML, or dataset ZIP
 to a controlled folder before stopping. Reset and uninstall procedures are

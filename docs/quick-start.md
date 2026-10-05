@@ -3,7 +3,7 @@
 **Applies to**: The next documentation-aligned Windows release identified by
 the authoritative GitHub release record.
 
-**Last reviewed**: 2026-10-02.
+**Last reviewed**: 2026-10-05.
 
 **Audience**: People using TowerScout for the first time, including people who
 have not previously used PowerShell, Docker, Podman, GitHub Releases, container
@@ -44,7 +44,9 @@ when its requirements are met.
 4. Open File Explorer, select **This PC**, and check free disk space. Plan at
    least 15 GB for the CPU package or 35 GB for the CUDA package, plus room for
    your exports. The final release note controls if it requires more.
-5. Open ordinary Windows PowerShell and run:
+5. Windows Subsystem for Linux 2 (**WSL 2**) is the Windows feature that lets
+   Docker or Podman run TowerScout's Linux container. Open ordinary Windows
+   PowerShell and run:
 
    ```powershell
    wsl --status
@@ -81,8 +83,10 @@ Follow Podman Desktop's current
 During onboarding, install Podman and create the default WSL 2 machine. In
 Podman Desktop this is under **Settings > Resources**.
 
-If Podman is installed but no machine exists, ordinary PowerShell can create
-and start the rootless default machine:
+Podman runs the container inside a Linux virtual machine. **Rootless** means
+that the machine runs containers without using the Linux root administrator
+account. If Podman is installed but no machine exists, ordinary PowerShell can
+create and start the rootless default machine:
 
 ```powershell
 podman machine init --now podman-machine-default
@@ -97,7 +101,8 @@ podman system connection list
 ```
 
 The tested TowerScout path also needs 64-bit Python 3.12 to install its pinned
-package-local Compose provider. Install Python 3.12 from the official
+package-local **Compose provider**, the helper Podman uses to read TowerScout's
+multi-container configuration. Install Python 3.12 from the official
 [Python Windows downloads](https://www.python.org/downloads/windows/) if your
 organization permits it, then confirm:
 
@@ -123,9 +128,20 @@ combinations are qualified. Maxwell and Pascal must use the CPU package. Use a
 current Windows NVIDIA/OEM driver. NVIDIA states that the Windows driver
 supplies CUDA to WSL; never install a Linux NVIDIA display driver inside WSL.
 
-Podman GPU additionally requires NVIDIA Container Toolkit/CDI inside the
-intended rootless machine. Follow the version-matched
-[Podman GPU guide](podman-gpu-user-guide.md) before setup.
+Podman GPU additionally requires NVIDIA Container Toolkit and **Container
+Device Interface (CDI)** configuration, which makes the NVIDIA GPU available
+inside the intended rootless machine. Follow the version-matched
+[Podman GPU guide](podman-gpu-user-guide.md) before setup. After you download,
+verify, and extract the Application Package, the guide has you install the
+approved provider and run this package-local check:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\enable-podman-gpu.ps1 -VerifyOnly
+```
+
+If that check says provisioning is required, use the guide's explicit
+provisioning step, repeat `-VerifyOnly`, and continue only after it reports
+`nvidia.com/gpu=all`.
 
 ### Prepare One Map Provider Credential
 
@@ -148,21 +164,30 @@ Choose one of these paths.
 1. Sign in to the [Google Cloud Console](https://console.cloud.google.com/).
 2. Create or select a project owned by you or your organization and attach an
    approved billing account. Review current pricing and set budget alerts.
-3. Enable **Maps JavaScript API**, **Maps Static API**, **Geocoding API**, and
-   the **Places API** used by the Maps JavaScript Places library.
+3. Enable **Maps JavaScript API**, **Places API (New)**, **Maps Static API**,
+   and **Geocoding API**. TowerScout's current
+   `PlaceAutocompleteElement` search control requires Places API (New).
 4. Open **Google Maps Platform > Credentials**, select **Create credentials >
    API key**, and give the key a TowerScout-specific name.
-5. Apply API restrictions for only those APIs. The current one-key design makes
-   browser-referrer and server-side restrictions difficult to combine, so use
-   only an application restriction your organization has verified works for
-   both paths.
-6. Set quotas, alerts, monitoring, and a rotation plan. Temporarily keep the key
+5. Under **API restrictions**, select **Restrict key** and select only those
+   four APIs.
+6. TowerScout sends this one key from both the browser and the local application
+   service. Google recommends a **Websites** application restriction for the
+   browser path and an **IP addresses** restriction for server web-service
+   requests, but one key cannot use both restriction types. The compatible
+   one-key setting is therefore **Application restrictions: None**. This is a
+   known limitation, not Google's recommended split-key design. If you or your
+   organization require an application restriction, stop and use Azure Maps;
+   this TowerScout release cannot accept separate Google browser/server keys.
+7. Set quotas, alerts, monitoring, and a rotation plan. Temporarily keep the key
    somewhere private until you enter it in TowerScout.
 
 Google's official references are its
 [getting-started guide](https://developers.google.com/maps/get-started),
 [key-creation guide](https://developers.google.com/maps/documentation/javascript/get-api-key),
 and [API-key security guidance](https://developers.google.com/maps/api-security-best-practices).
+The exact autocomplete prerequisite is in Google's
+[Place Autocomplete documentation](https://developers.google.com/maps/documentation/javascript/place-autocomplete-new).
 
 #### Azure Maps
 
@@ -236,7 +261,8 @@ The terms are easy to confuse:
 - **Model & Data Package** is the larger shared ZIP containing model weights,
   ZIP-code data, and an asset manifest.
 - **Container image** is the application runtime that Docker or Podman
-  downloads from GHCR during setup. You do not download it manually.
+  downloads from GitHub Container Registry (**GHCR**) during setup. You do not
+  download it manually.
 - **Local `assets` folder** appears inside the extracted Application Package.
 - **`dataset.zip`** is output you may export later; it is not an installer.
 
@@ -392,7 +418,9 @@ readiness: setup_required
 
 If setup cannot uniquely find the two ZIPs because they are stored elsewhere,
 use the complete quoted paths copied from File Explorer. Replace the example
-text with the actual paths; do not type square brackets literally:
+text with the actual paths; do not type square brackets literally. The example
+below is for Docker CPU. Preserve the `-Engine` and `-Gpu` values from the one
+setup command you chose above when adapting it:
 
 ```powershell
 .\setup-towerscout.cmd `
@@ -427,15 +455,18 @@ are present. You can check from PowerShell:
 
 Use `podman` instead of `docker` if that is your engine. `degraded` means a
 recoverable capability is missing; follow its message. `fatal` means stop and
-use the troubleshooting guide.
+use the troubleshooting guide. If you selected NVIDIA GPU, status must also
+show `selected_device=cuda`; `ready` by itself does not prove GPU processing.
 
 ## Step 8: Try A Small First Search
 
 1. Search for a familiar public, non-sensitive place or move the map there.
-2. To draw a circle, enter a small radius, choose **Circle**, and click the
-   map. To draw a polygon, choose **Custom shape**, click each corner, and
-   complete the shape using the visible map control.
-3. Select **Estimate tiles**. Start with only a few tiles.
+2. The circle radius field uses **metres**. Enter a small radius, choose
+   **Circle**, and click the map. For a polygon, choose **Custom shape** and
+   click each corner. Double-click to finish on Azure Maps; right-click outside
+   the shape to finish on Google Maps.
+3. Select **Estimate tiles**. Reduce the area until the first run estimates
+   only 1-6 tiles.
 4. Select **Find towers** and wait for the progress display to finish.
 5. Review the map and detection list. A zero-detection result can be valid and
    does not by itself mean installation failed.
@@ -459,37 +490,51 @@ Do not record a provider key.
 | Port | 5000 unless changed |
 | Browser address | `http://localhost:5000` unless changed |
 
-## Step 10: Stop And Reopen
+## Step 10: Stop When Finished Or Reopen Later
 
 Use the same engine you recorded.
 
-### Docker CPU
+### Stop When Finished
+
+Run only the line for your engine:
 
 ```powershell
 .\scripts\stop.cmd -Engine docker
+.\scripts\stop.cmd -Engine podman
+```
+
+### Start Or Reopen Later
+
+For Podman only, first run `podman machine list`. Run the following command only
+when the recorded machine is stopped:
+
+```powershell
+podman machine start podman-machine-default
+```
+
+Then run only the command matching your recorded setup:
+
+#### Docker CPU
+
+```powershell
 .\start.bat -Engine docker -Gpu off
 ```
 
-### Docker NVIDIA GPU
+#### Docker NVIDIA GPU
 
 ```powershell
-.\scripts\stop.cmd -Engine docker
 .\start.bat -Engine docker -Gpu on
 ```
 
-### Podman CPU
+#### Podman CPU
 
 ```powershell
-.\scripts\stop.cmd -Engine podman
-podman machine start podman-machine-default
 .\start.bat -Engine podman -Gpu off
 ```
 
-### Podman NVIDIA GPU
+#### Podman NVIDIA GPU
 
 ```powershell
-.\scripts\stop.cmd -Engine podman
-podman machine start podman-machine-default
 .\start.bat -Engine podman -Gpu on
 ```
 
@@ -497,11 +542,11 @@ podman machine start podman-machine-default
 `-Port 5001` to setup, start, and status, and open
 `http://localhost:5001`.
 
-Normal stop/start and reboot preserve the selected engine's TowerScout named
-volumes: provider configuration, imported assets, sessions, temporary review
-data, uploads, cache, and logs. Docker and Podman use separate stores. An
-engine switch does not migrate them. The Podman machine may require a manual
-start after reboot.
+Normal stop/start and reboot preserve the selected engine's TowerScout **named
+volumes**, engine-managed storage areas containing provider configuration,
+imported assets, sessions, temporary review data, uploads, cache, and logs.
+Docker and Podman use separate stores. An engine switch does not migrate them.
+The Podman machine may require a manual start after reboot.
 
 Internal session storage is not a backup. Export important CSV, KML, or
 dataset ZIP files to an approved folder before stopping. Do not use `down -v`,

@@ -136,7 +136,7 @@ def test_docs_routes_expose_package_local_docs(client):
     assert b"User Guide" in user_guide_response.data
     assert b"Before Using This Guide" in user_guide_response.data
     assert b"The user chooses the engine, processing mode, and map provider" in user_guide_response.data
-    assert b"Stop And Resume Later" in user_guide_response.data
+    assert b"Stop When Finished Or Resume Later" in user_guide_response.data
     assert local_it_response.status_code == 200
     assert local_it_response.mimetype == "text/html"
     assert b"Local IT Administrator Guide" in local_it_response.data

@@ -113,7 +113,11 @@ def test_current_user_docs_do_not_require_project_assigned_pathways():
         "support-selected",
         "support selected",
         "support explicitly assigns",
+        "support has confirmed",
         "changes the assigned path",
+        "first-cohort",
+        "towerscoutuat",
+        "owner-provided",
     )
     current_docs = (
         "README.md",
@@ -128,10 +132,14 @@ def test_current_user_docs_do_not_require_project_assigned_pathways():
         "docs/docker-gpu-user-guide.md",
         "docs/podman-cpu-user-guide.md",
         "docs/podman-gpu-user-guide.md",
+        "docs/local-it-administrator-guide.md",
+        "docs/local-it-administrator-guide.html",
         "wiki/Home.md",
         "wiki/Before-You-Install.md",
         "wiki/Choose-Your-Setup.md",
         "wiki/Install-And-First-Run.md",
+        "wiki/Google-And-Azure-API-Credentials.md",
+        "wiki/Everyday-Commands.md",
     )
 
     for relative_path in current_docs:
@@ -163,17 +171,99 @@ def test_engine_guides_verify_both_zips_before_extraction():
         assert verify_at < extract_at, relative_path
         assert "authoritative" in text[verify_at:extract_at], relative_path
         assert "get-filehash" in text[verify_at:extract_at], relative_path
+        assert "open the working folder" in text[verify_at:extract_at], relative_path
+        assert "click the address bar" in text[verify_at:extract_at], relative_path
+        assert "type `powershell`" in text[verify_at:extract_at], relative_path
 
 
 def test_maintained_html_keeps_core_user_actions_and_responsive_commands():
     quick_start = _read("docs/quick-start.html")
     user_guide = _read("docs/user-guide.html")
+    stylesheet = _read("docs/towerscout-docs.css")
 
     assert 'href="towerscout-docs.css"' in quick_start
     assert "command-grid" in quick_start
     assert "<table" not in quick_start
-    for label in ("Circle", "Custom shape", "Clear all", "Stop And Resume Later"):
+    assert "minmax(min(100%, 30rem), 1fr)" in stylesheet
+    for command in (
+        r".\setup-towerscout.cmd -Engine docker -Gpu off",
+        r".\setup-towerscout.cmd -Engine docker -Gpu on",
+        r".\setup-towerscout.cmd -Engine podman -Gpu off",
+        r".\setup-towerscout.cmd -Engine podman -Gpu on",
+    ):
+        assert command in quick_start
+    for label in ("Circle", "Custom shape", "Clear all", "Stop When Finished Or Resume Later"):
         assert label in user_guide
+
+
+def test_quick_start_markdown_and_html_keep_critical_setup_details_in_sync():
+    for relative_path in ("docs/quick-start.md", "docs/quick-start.html"):
+        text = _read(relative_path)
+        for phrase in (
+            "Maps JavaScript API",
+            "Places API (New)",
+            "Maps Static API",
+            "Geocoding API",
+            "Application restrictions: None",
+            "selected_device=cuda",
+            "enable-podman-gpu.ps1",
+            "podman-gpu-user-guide.md",
+        ):
+            assert phrase in text, (relative_path, phrase)
+
+
+def test_package_guide_covers_both_variants_and_separates_tls_phases():
+    text = _read("docs/package-guide.md")
+    verify_at = text.index("## Required Download Verification For The Unsigned Package")
+    extract_at = text.index("## Application Package Layout")
+    verification = text[verify_at:extract_at]
+    assert "*-cpu.zip" in verification
+    assert "*-cuda128.zip" in verification
+    assert "certutil -hashfile .\\towerscout-<release-version>-cpu.zip" in verification
+    assert "certutil -hashfile .\\towerscout-<release-version>-cuda128.zip" in verification
+
+    diagnostic_at = text.index("### Diagnostic Only")
+    review_at = text.index("### Review And Obtain Approval")
+    apply_at = text.index("### Apply The Approved Change")
+    assert diagnostic_at < review_at < apply_at
+
+
+def test_setup_fallback_examples_preserve_the_users_selected_configuration():
+    for relative_path in (
+        "docs/quick-start.md",
+        "docs/quick-start.html",
+        "docs/package-guide.md",
+        "docs/local-it-administrator-guide.md",
+        "docs/local-it-administrator-guide.html",
+    ):
+        text = _read(relative_path)
+        normalized = text.lower()
+        assert "-PackageZip" in text, relative_path
+        assert "-AssetZip" in text, relative_path
+        assert "-engine" in normalized and "-gpu" in normalized, relative_path
+        assert "preserve" in normalized or "keep" in normalized, relative_path
+
+
+def test_wiki_orders_credentials_before_install_and_separates_daily_actions():
+    choice = _read("wiki/Choose-Your-Setup.md")
+    credentials = _read("wiki/Google-And-Azure-API-Credentials.md")
+    everyday = _read("wiki/Everyday-Commands.md")
+
+    assert "Next, follow [Google And Azure API Credentials]" in choice
+    assert "Next, continue with [Install And First Run]" in credentials
+    assert everyday.index("## Start Or Reopen TowerScout") < everyday.index("## Check Status")
+    assert everyday.index("## Check Status") < everyday.index("## Stop When Finished")
+
+    fenced_blocks = everyday.split("```")
+    for block in fenced_blocks[1::2]:
+        assert not ("start.bat" in block and "stop.cmd" in block)
+
+
+def test_privacy_warning_precedes_user_export_actions():
+    markdown = _read("docs/user-guide.md")
+    html = _read("docs/user-guide.html")
+    assert markdown.index("Confirm that the results and their locations") < markdown.index("Use `Download results`")
+    assert html.index("<strong>Privacy:</strong>") < html.index("Download results")
 
 
 def test_final_user_recovery_does_not_recommend_insecure_tls():

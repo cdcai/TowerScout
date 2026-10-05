@@ -33,7 +33,7 @@
       <section class="doc-section" id="before">
         <h2>Before Using This Guide</h2>
         <p><strong>Applies to:</strong> The exact documentation-aligned Windows release. <strong>Last reviewed:</strong>
-          2026-10-02. <strong>Audience:</strong> Users after first setup.</p>
+          2026-10-05. <strong>Audience:</strong> Users after first setup.</p>
         <p>This guide applies to Docker CPU, Docker GPU, Podman CPU, and Podman GPU when the chosen path meets the final
           release's requirements. The user chooses the engine, processing mode, and map provider.</p>
         <ul>
@@ -122,6 +122,10 @@
 
       <section class="doc-section" id="export">
         <h2>Export And Restore</h2>
+        <p class="callout"><strong>Privacy:</strong> Confirm the approved destination before selecting a download.
+          Dataset ZIPs can contain sensitive locations, imagery, and investigation context. Store and share them only
+          under the site's approved procedure. Export important work before stopping; internal sessions are not
+          backups.</p>
         <ul>
           <li><strong>Download results</strong> creates <code>detections.csv</code> and <code>detections.kml</code>.</li>
           <li><strong>Download dataset</strong> creates <code>dataset.zip</code> with tiles, labels, metadata, and manual
@@ -129,29 +133,29 @@
           <li><strong>Restore dataset</strong> reloads a prior <code>dataset.zip</code>; then verify provider, map,
               detections, and manual towers.</li>
         </ul>
-        <p class="callout"><strong>Privacy:</strong> Dataset ZIPs can contain sensitive locations, imagery, and
-          investigation context. Store and share them only under the site's approved procedure. Export important work
-          before stopping; internal sessions are not backups.</p>
       </section>
 
       <section class="doc-section" id="resume">
-        <h2>Stop And Resume Later</h2>
-        <div class="command-grid" aria-label="Stop and reopen commands">
-          <article><h3>Docker CPU</h3><pre><code>.\scripts\stop.cmd -Engine docker
-.\start.bat -Engine docker -Gpu off</code></pre></article>
-          <article><h3>Docker GPU</h3><pre><code>.\scripts\stop.cmd -Engine docker
-.\start.bat -Engine docker -Gpu on</code></pre></article>
-          <article><h3>Podman CPU</h3><pre><code>.\scripts\stop.cmd -Engine podman
-podman machine start podman-machine-default
-.\start.bat -Engine podman -Gpu off</code></pre></article>
-          <article><h3>Podman GPU</h3><pre><code>.\scripts\stop.cmd -Engine podman
-podman machine start podman-machine-default
-.\start.bat -Engine podman -Gpu on</code></pre></article>
+        <h2>Stop When Finished Or Resume Later</h2>
+        <h3>Stop when finished</h3>
+        <p>Run only the line for your engine:</p>
+        <pre><code>.\scripts\stop.cmd -Engine docker
+.\scripts\stop.cmd -Engine podman</code></pre>
+        <h3>Start or resume later</h3>
+        <p>For Podman, run <code>podman machine list</code> first. Run
+          <code>podman machine start podman-machine-default</code> only if the recorded machine is stopped. Then run only
+          the matching start command:</p>
+        <div class="command-grid" aria-label="Start or resume commands">
+          <article><h3>Docker CPU</h3><pre><code>.\start.bat -Engine docker -Gpu off</code></pre></article>
+          <article><h3>Docker GPU</h3><pre><code>.\start.bat -Engine docker -Gpu on</code></pre></article>
+          <article><h3>Podman CPU</h3><pre><code>.\start.bat -Engine podman -Gpu off</code></pre></article>
+          <article><h3>Podman GPU</h3><pre><code>.\start.bat -Engine podman -Gpu on</code></pre></article>
         </div>
         <p><code>stop.cmd</code> has no port option. Add a non-default port to setup/start/status and the browser URL.</p>
-        <p>Normal stop/start and reboot retain the selected engine's named volumes. Docker and Podman have separate
-          stores; changing engines does not migrate settings or assets. Do not use volume deletion, prune, or Podman
-          machine reset as ordinary recovery.</p>
+        <p>Normal stop/start and reboot retain the selected engine's <strong>named volumes</strong>, engine-managed storage
+          areas for settings, assets, sessions, and other application data. Docker and Podman have separate stores;
+          changing engines does not migrate settings or assets. Do not use volume deletion, prune, or Podman machine
+          reset as ordinary recovery.</p>
       </section>
 
       <section class="doc-section" id="help">

@@ -1,7 +1,7 @@
 # Troubleshooting And Safe Support
 
 > **Audience:** TowerScout users and Local IT. **Applies to:** The next final
-> Windows release. **Last reviewed:** 2026-10-02. **Publication state:** Local
+> Windows release. **Last reviewed:** 2026-10-05. **Publication state:** Local
 > draft.
 
 Start with what you can see. Run commands from the extracted Application
@@ -38,8 +38,11 @@ Certificate selection and trust import are administrator/advanced tasks. The
 package's repair helper first performs a dry run. Run the diagnostic by itself,
 review the proposed certificate and target, and only then run a separate
 `-Apply` command if Local IT approves it. Never paste both commands as one
-unreviewed block. See the packaged Local IT guide for the exact release-
-specific command.
+unreviewed block. Use the
+[version-matched package procedure](https://github.com/J-Schulein/TowerScout/blob/main/docs/package-guide.md#provider-key-validation-or-tls-failure),
+which separates **Diagnostic only**, **Review and obtain approval**, and
+**Apply the approved change**. Preserve the recorded provider, engine, GPU
+mode, and port, and run only the matching alternative.
 
 Do not disable TLS verification. Ask Local IT to resolve the certificate trust
 path or stop.

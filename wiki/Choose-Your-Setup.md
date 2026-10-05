@@ -1,7 +1,7 @@
 # Choose Your Setup
 
 > **Audience:** New users and Local IT. **Applies to:** The next final Windows
-> release. **Last reviewed:** 2026-10-02. **Publication state:** Local draft.
+> release. **Last reviewed:** 2026-10-05. **Publication state:** Local draft.
 
 Make three separate choices. Choosing one item does not choose the others.
 
@@ -12,7 +12,9 @@ Make three separate choices. Choosing one item does not choose the others.
   `docker` and `docker compose` commands.
 - **Podman Desktop:** Choose this if you prefer Podman or your organization
   permits Podman instead of Docker Desktop. On Windows it uses a named Linux
-  virtual machine and needs a package-local Compose provider. The provider
+  virtual machine running without the Linux root administrator account
+  (called **rootless**) and needs a package-local **Compose provider**, the
+  helper that reads TowerScout's container configuration. The provider
   installer also needs Python 3.12 for the tested path.
 
 You need only one engine. Docker and Podman keep separate TowerScout data. If
@@ -61,4 +63,6 @@ Do not write a credential here.
 | Map provider | Google Maps / Azure Maps |
 | Port | 5000 unless you intentionally choose another |
 
-Continue with [Install And First Run](Install-And-First-Run).
+Next, follow [Google And Azure API Credentials](Google-And-Azure-API-Credentials).
+If you already have a credential that meets the documented limitations, you
+may continue directly to [Install And First Run](Install-And-First-Run).

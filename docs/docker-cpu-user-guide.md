@@ -2,7 +2,7 @@
 
 **Applies to**: The exact documentation-aligned Windows release package named
 by the authoritative release record
-**Last reviewed**: 2026-10-02
+**Last reviewed**: 2026-10-05
 **Audience**: Windows users who choose Docker Desktop with CPU processing
 **Runtime scope**: Docker Desktop, CPU Application Package, CPU launch mode
 
@@ -29,14 +29,12 @@ Install or confirm these items before running TowerScout.
 - At least `15 GB` free disk space. `25 GB` is a better first-setup target.
 - One user- or organization-owned Google Maps or Azure Maps provider key.
 - Windows Subsystem for Linux 2.
-  - Install guide:
-    `https://learn.microsoft.com/en-us/windows/wsl/install#install-wsl-command`
+  - [Microsoft WSL installation guide](https://learn.microsoft.com/en-us/windows/wsl/install#install-wsl-command)
   - Note: Admin rights and/or helpdesk support may be required to install this
     software. Check with your local IT support if you encounter problems
     installing this software.
 - Docker Desktop.
-  - Installation guide:
-    `https://docs.docker.com/desktop/setup/install/windows-install/`
+  - [Docker Desktop Windows installation guide](https://docs.docker.com/desktop/setup/install/windows-install/)
   - Note: Docker Desktop is free to download. A Docker account is not required
     to run the TowerScout local package, but local license, procurement, and
     endpoint-management rules still apply.
@@ -65,12 +63,9 @@ information.
    C:\Users\<you>\Documents\TowerScout
    ```
 
-2. Open the TowerScout GitHub Releases page and select the entry whose notes
-   identify it as the current supported final Windows release:
-
-   ```text
-   https://github.com/J-Schulein/TowerScout/releases
-   ```
+2. Open the [TowerScout GitHub Releases page](https://github.com/J-Schulein/TowerScout/releases)
+   and select the entry whose notes identify it as the current supported final
+   Windows release.
 
 3. Download these four files from the release `Assets` section into the new
    TowerScout folder:
@@ -87,6 +82,10 @@ information.
 4. Before extracting anything, calculate the SHA-256 of both ZIPs and compare
    each result with both its downloaded `.sha256` file and the authoritative
    value printed in the final release notes:
+
+   Open the working folder containing the four downloads in File Explorer,
+   click the address bar, type `powershell`, and press Enter. Run the following
+   commands in that new window:
 
    ```powershell
    $appZip = Get-ChildItem -File "*-cpu.zip"
@@ -209,7 +208,8 @@ verified import command:
 If status is `fatal`, stop. Record the release version, package filename,
 `IMAGE.txt`, status output, and a reviewed summary of recent logs. Ask Local IT
 about local policy, network, or certificate problems. For a non-sensitive
-TowerScout defect, open `https://github.com/J-Schulein/TowerScout/issues`.
+TowerScout defect, use the public
+[TowerScout issue tracker](https://github.com/J-Schulein/TowerScout/issues).
 That public issue tracker is not a private or guaranteed-response support
 service. Never post provider secrets, `.env`, raw screenshots, browser network
 traces, exported datasets, certificate details, or unreviewed raw logs.
