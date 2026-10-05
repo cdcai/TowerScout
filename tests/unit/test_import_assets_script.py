@@ -8,6 +8,8 @@ IMPORT_TLS_CA_SCRIPT = REPO_ROOT / "scripts" / "import-tls-ca.ps1"
 REPAIR_PROVIDER_TLS_SCRIPT = REPO_ROOT / "scripts" / "repair-provider-tls.ps1"
 REPAIR_PROVIDER_TLS_CMD = REPO_ROOT / "scripts" / "repair-provider-tls.cmd"
 START_SCRIPT = REPO_ROOT / "scripts" / "start.ps1"
+LOGS_SCRIPT = REPO_ROOT / "scripts" / "logs.ps1"
+OCI_RUNTIME_CONTRACT = REPO_ROOT / "docs" / "support" / "oci-runtime-contract.md"
 TLS_GUIDES = [
     REPO_ROOT / "docs" / "docker-cpu-user-guide.md",
     REPO_ROOT / "docs" / "docker-gpu-user-guide.md",
@@ -70,6 +72,20 @@ def test_gpu_asset_recovery_docs_preserve_gpu_mode_and_port():
     assert "Asset import accepts `-Engine`, `-Gpu`, and `-Port`" in package_guide
     assert "status/log/import commands" not in package_guide
     assert "Stop and log commands do not take a port" in package_guide
+
+
+def test_packaged_oci_port_recovery_matches_helper_parameter_contract():
+    logs_script = LOGS_SCRIPT.read_text(encoding="utf-8")
+    runtime_contract = OCI_RUNTIME_CONTRACT.read_text(encoding="utf-8")
+
+    assert "$Port" not in logs_script
+    assert (
+        "Use the same selected port on setup, start,\n"
+        "status, TLS-repair, and asset-import commands, and in the browser address."
+        in runtime_contract
+    )
+    assert "`stop.cmd` and `logs.cmd` do not accept `-Port`." in runtime_contract
+    assert "same port on status, logs" not in runtime_contract
 
 
 def test_packaged_compose_entrypoints_initialize_env_before_starting_stack():

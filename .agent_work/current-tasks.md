@@ -151,13 +151,12 @@ Current scope:
 
 ### **TASK-092: Documentation Currentness And Information Architecture**
 
-**Status**: IN_PROGRESS - `rc4` findings are dispositioned; Round 2 review was
-received and R2-01 through R2-12 are implemented in source. Round 3 confirmed
-the major corrections and identified one focused asset-import documentation
-blocker plus five publication/PR items; R3-01 through R3-06 are implemented
-locally and focused tests pass. Draft PR #94 remains open; complete targeted
-Round 4 confirmation, live permission verification, final release wording,
-content freeze, new artifact identities, and running-image validation
+**Status**: IN_PROGRESS - `rc4` findings are dispositioned; Round 2 and Round 3
+findings are implemented. Round 4 confirmed those corrections and found one
+residual packaged OCI port instruction; R4-01 is implemented locally with
+regression coverage. Draft PR #94 remains open; complete final focused
+confirmation, live permission verification, final release wording, content
+freeze, new artifact identities, and running-image validation
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-092-documentation-currentness.md`
 

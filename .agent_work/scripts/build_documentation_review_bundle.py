@@ -137,11 +137,11 @@ a:focus-visible { outline: 3px solid #f59e0b; outline-offset: 3px; }
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source-commit", required=True)
-    parser.add_argument("--name", default="TowerScout-Documentation-Review-v4-2026-10-05")
+    parser.add_argument("--name", default="TowerScout-Documentation-Review-v5-2026-10-05")
     parser.add_argument("--branch", default="docs/pre-rc4-checkpoint-2026-10-02")
     parser.add_argument(
         "--instructions",
-        default=".agent_work/tasks/active/TASK-092/REVIEWER-INSTRUCTIONS-ROUND-4-2026-10-05.md",
+        default=".agent_work/tasks/active/TASK-092/REVIEWER-INSTRUCTIONS-ROUND-5-2026-10-05.md",
     )
     parser.add_argument("--output-root", default="dist/review")
     return parser.parse_args()

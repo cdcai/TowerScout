@@ -245,9 +245,11 @@ The launcher reports Compose-provider information before startup. For Podman, a 
 
 Podman/rootless port forwarding can report a port bind conflict from inside the
 Podman machine even when the Windows host port appears free. Support should
-retry with a non-default `-Port` and use that same port on status, logs, and
-asset-import commands, or clear stale local Podman container/port state before
-continuing.
+retry with a non-default `-Port`. Use the same selected port on setup, start,
+status, TLS-repair, and asset-import commands, and in the browser address.
+`stop.cmd` and `logs.cmd` do not accept `-Port`. If the conflict follows the
+same port after retry, ask Local IT to inspect and clear stale local Podman
+container/port state before continuing.
 
 ## Browser Origin
 

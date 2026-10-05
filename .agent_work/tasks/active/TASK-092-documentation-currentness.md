@@ -1,9 +1,9 @@
 # TASK-092: Documentation Currentness And Information Architecture
 
-**Status**: IN_PROGRESS - Round 3 review confirmed the major documentation and
-1440/720 layout corrections. R3-01 through R3-06 are implemented locally;
-focused validation passes. Targeted Round 4 confirmation, content-freeze
-approval, final screenshots/video, live permission verification, final release
+**Status**: IN_PROGRESS - Round 4 confirmed the Round 3 corrections and found
+one residual packaged OCI port instruction. R4-01 is implemented locally with
+regression coverage. Final focused confirmation, content-freeze approval,
+final screenshots/video, live permission verification, final release
 identities, running-image Help validation, publication, and final W09/W10 gates
 remain
 **Priority**: HIGH
@@ -398,3 +398,23 @@ No runtime script, live Wiki, release artifact, or image was changed.
 **Next**: Complete the full validation matrix, create the source-bound Round 4
 focused review package, update draft PR #94 without flattening its Markdown,
 and obtain a short confirmation before content freeze.
+
+### 2026-10-05 - Round 4 focused review disposition
+
+Round 4 confirmed the substantive Round 3 fixes and found one remaining
+occurrence of the old port instruction in the packaged OCI Runtime Contract.
+Source inspection confirmed that `logs.ps1` accepts engine, tail, and follow
+options but not `-Port`.
+
+Accepted R4-01. The runtime contract now lists the commands and browser address
+that preserve the selected port, explicitly says `stop.cmd` and `logs.cmd` do
+not accept `-Port`, and retains the Local IT escalation for a conflict that
+follows a retry. The relevant parameter-consistency test now includes this
+shipped reference and the actual logs helper.
+
+See the [Round 4 disposition](./TASK-092/ROUND-4-REVIEW-DISPOSITION-2026-10-05.md).
+No runtime script, live Wiki, release artifact, or image was changed.
+
+**Next**: Complete validation, create a source-bound Round 5 one-finding
+confirmation copy, update draft PR #94, and obtain owner content-freeze
+approval before rebuilding documentation-aligned artifacts.
