@@ -224,7 +224,9 @@ def render_markdown(text: str) -> str:
     return heading_ids(renderer.render(text))
 
 
-def document_wrapper(title: str, source: str, commit: str, body: str) -> str:
+def document_wrapper(
+    title: str, source: str, commit: str, body: str, prefix: str = "../"
+) -> str:
     safe_title = html.escape(title)
     return f"""<!doctype html>
 <html lang="en">
@@ -232,7 +234,7 @@ def document_wrapper(title: str, source: str, commit: str, body: str) -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{safe_title} — TowerScout documentation review v3</title>
-  <link rel="stylesheet" href="../assets/review.css">
+  <link rel="stylesheet" href="{prefix}assets/review.css">
 </head>
 <body>
   <a class="review-skip" href="#review-content">Skip to reviewed document</a>
@@ -242,8 +244,8 @@ def document_wrapper(title: str, source: str, commit: str, body: str) -> str:
     <p>Review only — not a release package and not final release approval.</p>
   </header>
   <div class="review-toolbar">
-    <a href="../index.html">Review index</a>
-    <a href="../reviewer-instructions.html">Reviewer instructions</a>
+    <a href="{prefix}index.html">Review index</a>
+    <a href="{prefix}reviewer-instructions.html">Reviewer instructions</a>
   </div>
   <main class="review-page" id="review-content">
     <aside class="review-metadata">
@@ -522,6 +524,7 @@ def main() -> int:
             repository_path(instructions),
             args.source_commit,
             render_markdown(instructions_text),
+            prefix="",
         ),
         encoding="utf-8",
     )
@@ -532,8 +535,6 @@ def main() -> int:
         source_record(args.source_commit, args.branch), encoding="utf-8"
     )
 
-    html_count, checked_links = validate_links(bundle)
-
     checksum_paths = sorted(
         path for path in bundle.rglob("*") if path.is_file() and path.name != "SHA256SUMS.txt"
     )
@@ -541,6 +542,8 @@ def main() -> int:
         f"{sha256(path)}  {path.relative_to(bundle).as_posix()}\n" for path in checksum_paths
     )
     (bundle / "SHA256SUMS.txt").write_text(checksum_text, encoding="utf-8")
+
+    html_count, checked_links = validate_links(bundle)
 
     with zipfile.ZipFile(archive, "x", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as handle:
         for path in sorted(path for path in bundle.rglob("*") if path.is_file()):
