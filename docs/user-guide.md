@@ -103,7 +103,8 @@ small so tile counts and processing time stay manageable.
 1. Search for or navigate to the location.
 2. Enter a radius in meters.
 3. Select `Circle`.
-4. Select `Estimate tiles`.
+4. Click the map to place the circle.
+5. Select `Estimate tiles`.
 
 ### Custom Search Area
 

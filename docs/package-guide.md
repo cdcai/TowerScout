@@ -157,9 +157,10 @@ procedure.
 
 Ask Local IT about installation permission, WSL, endpoint policy, proxies,
 TLS inspection, certificates, drivers, or firewall rules. Report a
-non-sensitive TowerScout product defect at
-`https://github.com/J-Schulein/TowerScout/issues`. The issue tracker is public
-and is not a private or guaranteed-response help desk.
+non-sensitive TowerScout product defect in the
+[TowerScout public issue tracker](https://github.com/J-Schulein/TowerScout/issues).
+The issue tracker is public and is not a private or guaranteed-response help
+desk.
 
 ## Release Artifacts
 
@@ -168,12 +169,9 @@ Windows release. A draft, prerelease, source archive, branch name, or
 numerically newer tag is not supported unless the authoritative release record
 explicitly says otherwise.
 
-A normal final release has two artifact groups. Open the TowerScout Releases
-page and choose the identified final release:
-
-```text
-https://github.com/J-Schulein/TowerScout/releases
-```
+A normal final release has two artifact groups. Open
+[TowerScout Releases](https://github.com/J-Schulein/TowerScout/releases) and
+choose the identified final release.
 
 On GitHub Releases, download these files from the release `Assets` section,
 not from the green
@@ -478,7 +476,7 @@ volumes:
 
 ```powershell
 .\start.bat -Engine podman -Gpu off
-.\scripts\import-assets.cmd -Engine podman -Source assets
+.\scripts\import-assets.cmd -Engine podman -Gpu off -Port 5000 -Source assets
 .\scripts\status.cmd -Engine podman
 .\scripts\logs.cmd -Engine podman -Tail 200
 .\scripts\stop.cmd -Engine podman
@@ -535,24 +533,32 @@ one level so they sit directly inside the package `assets\` folder. If the
 outer `assets\` folder already contains other files and a nested `assets\`
 folder, treat the layout as ambiguous and stop before continuing.
 
+Asset import accepts `-Engine`, `-Gpu`, and `-Port`. Use all three values from
+the non-secret setup record so an import or recovery does not change the
+selected processing mode or address. The examples below are Docker CPU on the
+default port; substitute the recorded values for another configuration.
+
 Normal import:
 
 ```powershell
-.\scripts\import-assets.cmd -Engine docker -Source assets
+.\scripts\import-assets.cmd -Engine docker -Gpu off -Port 5000 -Source assets
 ```
 
 Release-candidate or support validation import:
 
 ```powershell
-.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180
+.\scripts\import-assets.cmd -Engine docker -Gpu off -Port 5000 -Source assets -VerifyHashes -RestartWaitSeconds 180
 ```
 
 If the launcher was started with a non-default port, pass the same `-Port`
 value to the asset importer:
 
 ```powershell
-.\scripts\import-assets.cmd -Engine docker -Source assets -Port 5001 -VerifyHashes -RestartWaitSeconds 180
+.\scripts\import-assets.cmd -Engine docker -Gpu off -Port 5001 -Source assets -VerifyHashes -RestartWaitSeconds 180
 ```
+
+Stop and log commands do not take a port. Status, setup, start, TLS-repair, and
+asset-import commands do. Stop, status, and logs do not take a GPU option.
 
 The importer copies assets into the selected engine's named volumes. It does
 not copy assets into another local package folder. The importer starts the
@@ -739,12 +745,8 @@ Azure Maps subscription keys must support TowerScout's use of:
 For the local package deployment, Azure shared-key authentication is acceptable only
 with site/user-owned keys, monitoring, quota controls, and rotation according
 to local policy. Broader or hosted distribution should revisit Microsoft Entra
-ID or SAS-token authentication. Microsoft publishes current Azure Maps
-authentication guidance at:
-
-```text
-https://learn.microsoft.com/en-us/azure/azure-maps/authentication-best-practices
-```
+ID or SAS-token authentication. See Microsoft's current
+[Azure Maps authentication guidance](https://learn.microsoft.com/en-us/azure/azure-maps/authentication-best-practices).
 
 ## Basic User Validation
 
@@ -818,8 +820,10 @@ and updates only `PODMAN_COMPOSE_PROVIDER`. Running the helper without
 `-Apply` prints the recommended `.env` setting without changing `.env`.
 
 If Podman reports `rootlessport listen ... bind: address already in use` even
-when Windows shows the port as free, retry with a non-default package port and
-use that same port on status/log/import commands:
+when Windows shows the port as free, retry with a non-default package port.
+Use that same port on setup, `start.bat`, status, TLS-repair, and asset-import
+commands and in the browser address. `stop.cmd` and `logs.cmd` do not take a
+port:
 
 ```powershell
 .\setup-towerscout.cmd -Engine podman -Gpu off -Port 5009
@@ -849,9 +853,12 @@ prerequisites are met.
 
 Recheck the Model & Data Package ZIP version and layout, then run:
 
+The example below is Docker CPU on the default port. Preserve the `-Engine`,
+`-Gpu`, and `-Port` values from the setup record when adapting it.
+
 ```powershell
-.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180
-.\scripts\status.cmd -Engine docker
+.\scripts\import-assets.cmd -Engine docker -Gpu off -Port 5000 -Source assets -VerifyHashes -RestartWaitSeconds 180
+.\scripts\status.cmd -Engine docker -Port 5000
 ```
 
 Do not continue release-candidate validation if required asset hashes fail.

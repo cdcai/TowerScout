@@ -209,13 +209,13 @@ Show recent logs for troubleshooting:
 ```
 
 Use `-Engine docker` on each helper that accepts an engine. Preserve the chosen
-`-Gpu on` or `-Gpu auto` value on setup, `start.bat`, and TLS-repair commands;
-stop, status, logs, and asset import do not take a GPU flag. Docker and Podman
-use separate storage.
+`-Gpu on` or `-Gpu auto` value on setup, `start.bat`, TLS-repair, and asset-
+import commands. Stop, status, and logs do not take a GPU flag. Docker and
+Podman use separate storage.
 
 If you chose a non-default port, add the recorded `-Port` value to setup,
-`start.bat`, status, and TLS-repair commands and use that port in the browser
-address. `stop.cmd` and `logs.cmd` do not take a port.
+`start.bat`, status, TLS-repair, and asset-import commands and use that port in
+the browser address. `stop.cmd` and `logs.cmd` do not take a port.
 
 ## Troubleshooting
 
@@ -247,10 +247,12 @@ If setup reports multiple asset ZIPs, move old TowerScout ZIPs out of the
 working folder and rerun setup.
 
 If status is `degraded`, required assets may be missing or corrupt. Retry the
-verified import command:
+verified import command. The example below uses required GPU mode and the
+default port. If your setup record says `-Gpu auto` or another port, substitute
+those recorded values:
 
 ```powershell
-.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180
+.\scripts\import-assets.cmd -Engine docker -Gpu on -Port 5000 -Source assets -VerifyHashes -RestartWaitSeconds 180
 ```
 
 If status is `fatal`, stop. Record the release version, package filename,

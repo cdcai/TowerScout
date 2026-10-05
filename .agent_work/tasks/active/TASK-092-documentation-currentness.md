@@ -1,10 +1,11 @@
 # TASK-092: Documentation Currentness And Information Architecture
 
-**Status**: IN_PROGRESS - Round 2 review received; R2-01 through R2-12 are
-implemented in source, and focused documentation plus 1440/720 browser-layout
-checks pass. Round 3 review, content-freeze approval, final screenshots/video,
-live permission verification, final release identities, running-image Help
-validation, publication, and final W09/W10 gates remain
+**Status**: IN_PROGRESS - Round 3 review confirmed the major documentation and
+1440/720 layout corrections. R3-01 through R3-06 are implemented locally;
+focused validation passes. Targeted Round 4 confirmation, content-freeze
+approval, final screenshots/video, live permission verification, final release
+identities, running-image Help validation, publication, and final W09/W10 gates
+remain
 **Priority**: HIGH
 **Type**: C (Documentation / Release)
 **Child Work Plan**:
@@ -368,3 +369,32 @@ work.
 **Next**: Complete the broader validation matrix, build a source-bound Round 3
 review ZIP, update draft PR #94, and obtain the reviewer's focused response
 before content freeze or any image/control-package rebuild.
+
+### 2026-10-05 - Round 3 review disposition and focused correction
+
+Round 3 confirmed the setup-card fix at 1440 x 1000 and 720 x 1000, the
+Podman GPU/readiness handoff, main command-folder sequencing, task-separated
+daily commands, TLS phases, independent-choice model, and Google one-key
+explanation. The reviewer identified one remaining pre-rebuild blocker and
+five smaller publication/PR presentation items.
+
+Accepted R3-01 through R3-06 after checking the helper and documentation
+sources. Asset import accepts `-Engine`, `-Gpu`, and `-Port`; its GPU default is
+`off`. GPU recovery instructions now preserve the recorded GPU mode and port,
+and a parameter-contract test prevents the omitted-flag contradiction from
+returning. The same correction set adds novice PowerShell-opening guidance,
+restores the Markdown circle-placement action, shares the conditional Podman
+machine step across CPU/GPU, makes three Package Guide destinations clickable,
+and prepares a body-file update for PR #94.
+
+All 107 focused documentation, ADR-023, package, asset-import, and Flask-route
+tests pass with a clean host temporary directory. The Edge layout regression
+passes at both 1440 and 720 pixels. The documentation checker, agent-work
+validator, and diff-hygiene check pass.
+
+See the [Round 3 disposition](./TASK-092/ROUND-3-REVIEW-DISPOSITION-2026-10-05.md).
+No runtime script, live Wiki, release artifact, or image was changed.
+
+**Next**: Complete the full validation matrix, create the source-bound Round 4
+focused review package, update draft PR #94 without flattening its Markdown,
+and obtain a short confirmation before content freeze.

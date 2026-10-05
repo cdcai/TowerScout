@@ -42,6 +42,36 @@ def test_import_assets_script_preserves_port_and_restarts_after_copy():
     assert "engine_count > 0" in script
 
 
+def test_gpu_asset_recovery_docs_preserve_gpu_mode_and_port():
+    script = IMPORT_ASSETS_SCRIPT.read_text(encoding="utf-8")
+    assert '[ValidateSet("off", "auto", "on")]' in script
+    assert '[string] $Gpu = "off"' in script
+    assert "[int] $Port" in script
+    assert "Set-TowerScoutGpuEnvironment -Gpu $Gpu" in script
+
+    expected = {
+        REPO_ROOT / "docs" / "docker-gpu-user-guide.md": (
+            ".\\scripts\\import-assets.cmd -Engine docker -Gpu on -Port 5000",
+            "asset import do not take a GPU flag",
+        ),
+        REPO_ROOT / "docs" / "podman-gpu-user-guide.md": (
+            ".\\scripts\\import-assets.cmd -Engine podman -Gpu on -Port 5000",
+            "asset import do not take a GPU flag",
+        ),
+    }
+    for guide, (command, prohibited) in expected.items():
+        text = guide.read_text(encoding="utf-8")
+        assert command in text, guide
+        assert prohibited not in text, guide
+
+    package_guide = (REPO_ROOT / "docs" / "package-guide.md").read_text(
+        encoding="utf-8"
+    )
+    assert "Asset import accepts `-Engine`, `-Gpu`, and `-Port`" in package_guide
+    assert "status/log/import commands" not in package_guide
+    assert "Stop and log commands do not take a port" in package_guide
+
+
 def test_packaged_compose_entrypoints_initialize_env_before_starting_stack():
     start_script = START_SCRIPT.read_text(encoding="utf-8")
     tls_script = IMPORT_TLS_CA_SCRIPT.read_text(encoding="utf-8")

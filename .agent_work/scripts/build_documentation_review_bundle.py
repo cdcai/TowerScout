@@ -137,11 +137,11 @@ a:focus-visible { outline: 3px solid #f59e0b; outline-offset: 3px; }
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source-commit", required=True)
-    parser.add_argument("--name", default="TowerScout-Documentation-Review-v3-2026-10-05")
+    parser.add_argument("--name", default="TowerScout-Documentation-Review-v4-2026-10-05")
     parser.add_argument("--branch", default="docs/pre-rc4-checkpoint-2026-10-02")
     parser.add_argument(
         "--instructions",
-        default=".agent_work/tasks/active/TASK-092/REVIEWER-INSTRUCTIONS-ROUND-3-2026-10-05.md",
+        default=".agent_work/tasks/active/TASK-092/REVIEWER-INSTRUCTIONS-ROUND-4-2026-10-05.md",
     )
     parser.add_argument("--output-root", default="dist/review")
     return parser.parse_args()
@@ -233,13 +233,13 @@ def document_wrapper(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{safe_title} — TowerScout documentation review v3</title>
+  <title>{safe_title} — TowerScout documentation review v4</title>
   <link rel="stylesheet" href="{prefix}assets/review.css">
 </head>
 <body>
   <a class="review-skip" href="#review-content">Skip to reviewed document</a>
   <header class="review-header">
-    <p class="eyebrow">TowerScout documentation review v3</p>
+    <p class="eyebrow">TowerScout documentation review v4</p>
     <h1>{safe_title}</h1>
     <p>Review only — not a release package and not final release approval.</p>
   </header>
@@ -299,7 +299,7 @@ def route_note() -> str:
 <body>
   <a class="skip-link" href="#main-content">Skip to route note</a>
   <header class="page-header">
-    <p class="eyebrow">TowerScout documentation review v3</p>
+    <p class="eyebrow">TowerScout documentation review v4</p>
     <h1>Running-Application Route Note</h1>
     <p class="lead">This offline review bundle cannot open routes served only by a running TowerScout container.</p>
   </header>
@@ -337,13 +337,13 @@ def index_html(commit: str, branch: str) -> str:
     )
     return f"""<!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>TowerScout documentation review v3</title><link rel="stylesheet" href="assets/review.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>TowerScout documentation review v4</title><link rel="stylesheet" href="assets/review.css"></head>
 <body>
   <a class="review-skip" href="#review-content">Skip to review index</a>
-  <header class="review-header"><p class="eyebrow">TowerScout documentation review v3</p><h1>Start Here</h1><p>Focused confirmation review before documentation content freeze and rebuild.</p></header>
+  <header class="review-header"><p class="eyebrow">TowerScout documentation review v4</p><h1>Start Here</h1><p>Focused confirmation review before documentation content freeze and rebuild.</p></header>
   <main class="review-index" id="review-content">
-    <section class="review-callout"><h2>Review boundary</h2><p>This ZIP is not a TowerScout release package. It contains no application binaries, model/data assets, provider credentials, logs, browser-run evidence, or release images.</p><p><strong>Branch:</strong> <code>{html.escape(branch)}</code><br><strong>Source commit:</strong> <code>{html.escape(commit)}</code><br><strong>Draft PR:</strong> <a href="{PR_URL}">J-Schulein/TowerScout #94</a></p><p><a class="button" href="reviewer-instructions.html">Open Round 3 Reviewer Instructions</a></p></section>
-    <section class="review-change-list"><h2>Round 3 focus</h2><p>Confirm the twelve Round 2 corrections, especially complete setup commands at 1440 px and 720 px, command ordering, Podman GPU parity, configuration-preserving examples, task-separated daily commands, TLS phases, and the disclosed Google one-key restriction limitation.</p></section>
+    <section class="review-callout"><h2>Review boundary</h2><p>This ZIP is not a TowerScout release package. It contains no application binaries, model/data assets, provider credentials, logs, browser-run evidence, or release images.</p><p><strong>Branch:</strong> <code>{html.escape(branch)}</code><br><strong>Source commit:</strong> <code>{html.escape(commit)}</code><br><strong>Draft PR:</strong> <a href="{PR_URL}">J-Schulein/TowerScout #94</a></p><p><a class="button" href="reviewer-instructions.html">Open Round 4 Reviewer Instructions</a></p></section>
+    <section class="review-change-list"><h2>Round 4 focus</h2><p>Confirm GPU asset-import recovery preserves GPU mode and port, plus the five small Round 3 publication and PR-presentation corrections. Previously passing setup-card and Google guidance findings remain in the bundle for context but do not require another broad audit.</p></section>
     <section><h2>Pass 1: complete new-user Wiki journey</h2><ol>{journey_items}</ol></section>
     <section><h2>Pass 2: remaining rendered Wiki pages</h2><ul>{remaining_items}</ul></section>
     <section><h2>Pass 3: rendered package and repository Markdown</h2><ul>{docs_items}</ul></section>
@@ -356,9 +356,9 @@ def index_html(commit: str, branch: str) -> str:
 
 
 def source_record(commit: str, branch: str) -> str:
-    return f"""TowerScout documentation review bundle v3
+    return f"""TowerScout documentation review bundle v4
 
-Purpose: Focused third-round confirmation of Round 2 corrections before
+Purpose: Focused fourth-round confirmation of Round 3 corrections before
 documentation content freeze and rebuild. This is not a TowerScout release
 package and contains no application binaries, container images, model/data
 assets, provider credentials, logs, raw browser-run evidence, or investigation
@@ -375,7 +375,7 @@ Included:
 - 13 rendered current repository/package Markdown sources
 - Four current manually maintained HTML guides and their stylesheet
 - An offline running-application route note
-- Round 3 Reviewer Instructions in HTML and Markdown
+- Round 4 Reviewer Instructions in HTML and Markdown
 - Internal SHA-256 inventory
 
 Offline-only transformations:
@@ -384,13 +384,13 @@ Offline-only transformations:
 - Maintained HTML links to included Markdown point to rendered review copies.
 - No user-facing source content was otherwise rewritten for this bundle.
 
-Supplemental Round 2 evidence intentionally not included:
-- TowerScout-Round-2-Documentation-and-PR94-Review.md, SHA-256
-  d62e3bceaed6a33bf278fff521369a7d4be1248705567f99d2ffd59037b73e6f
-- 01-setup-cards-1440.png, SHA-256
-  331365c84a5705f5c3aec83f4e74ff4073fb3419a486b29cf3d5a359ca665af8
-- 01-setup-cards-720.png, SHA-256
-  8823a5ab3e4ac96387dbbcd5c077c0087cd06b7db80715318aab7719a0171e37
+Supplemental Round 3 evidence intentionally not included:
+- TowerScout-Round-3-Documentation-and-PR94-Review-2026-10-05.md, SHA-256
+  4083f6c4f8509ffb07a007475f5c7f05b6d5cb977b64900483e13efeb2268ea1
+- setup-cards-1440.png, SHA-256
+  91e28636be3a7f0f4bc6e2f96f723aa0412e7965b9ad32ccb1ae6832c41fa660
+- setup-cards-720.png, SHA-256
+  c8713d36d3447db696d93a961bfa4eb28a1b306abfee483e1fbcbf501eaf9ab8
 
 Excluded:
 - Historical pilot/compatibility pages
@@ -520,7 +520,7 @@ def main() -> int:
     (bundle / "REVIEWER-INSTRUCTIONS.md").write_text(instructions_text, encoding="utf-8")
     (bundle / "reviewer-instructions.html").write_text(
         document_wrapper(
-            "Round 3 Reviewer Instructions",
+            "Round 4 Reviewer Instructions",
             repository_path(instructions),
             args.source_commit,
             render_markdown(instructions_text),

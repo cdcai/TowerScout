@@ -7,6 +7,11 @@ Use this page to decide whether the computer is ready and what to do when a
 requirement is missing. You do not need Docker and Podman; install one. You do
 not need both map providers; prepare one.
 
+When this checklist says to open ordinary Windows PowerShell, select the
+Windows **Start** button, type `Windows PowerShell`, and open **Windows
+PowerShell**. Use the normal window; do not select **Run as administrator**
+unless a later step explicitly requires it.
+
 ## Computer Checklist
 
 | Check | How to check | What to do if missing | Ready when |

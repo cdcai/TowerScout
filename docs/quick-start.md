@@ -45,8 +45,10 @@ when its requirements are met.
    least 15 GB for the CPU package or 35 GB for the CUDA package, plus room for
    your exports. The final release note controls if it requires more.
 5. Windows Subsystem for Linux 2 (**WSL 2**) is the Windows feature that lets
-   Docker or Podman run TowerScout's Linux container. Open ordinary Windows
-   PowerShell and run:
+   Docker or Podman run TowerScout's Linux container. Select the Windows
+   **Start** button, type `Windows PowerShell`, and open **Windows PowerShell**.
+   Use the normal window; do not select **Run as administrator** unless a step
+   explicitly says administrator approval is required. Then run:
 
    ```powershell
    wsl --status

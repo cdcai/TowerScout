@@ -37,11 +37,11 @@ record.
 .\start.bat -Engine docker -Gpu on
 ```
 
-### Podman CPU
-
-First run `podman machine list`. Run
+Before either Podman command, run `podman machine list`. Run
 `podman machine start podman-machine-default` only if the recorded machine is
 stopped.
+
+### Podman CPU
 
 ```powershell
 .\start.bat -Engine podman -Gpu off

@@ -271,8 +271,10 @@ Show recent logs for troubleshooting:
 ```
 
 If you chose a non-default port, add the recorded `-Port` value to setup,
-`start.bat`, status, and TLS-repair commands and use that port in the browser
-address. `stop.cmd` and `logs.cmd` do not take a port.
+`start.bat`, status, TLS-repair, and asset-import commands and use that port in
+the browser address. Preserve `-Gpu on` on setup, `start.bat`, TLS-repair, and
+asset-import commands. Stop, status, and logs do not take a GPU flag;
+`stop.cmd` and `logs.cmd` do not take a port.
 
 ## Troubleshooting
 
@@ -310,10 +312,11 @@ http://localhost:5000
 ```
 
 If status is `degraded`, required assets may be missing or corrupt. Retry the
-verified import command:
+verified import command. The example below uses the default port. If your setup
+record uses another port, substitute that recorded value:
 
 ```powershell
-.\scripts\import-assets.cmd -Engine podman -Source assets -VerifyHashes
+.\scripts\import-assets.cmd -Engine podman -Gpu on -Port 5000 -Source assets -VerifyHashes
 ```
 
 If status is `fatal`, stop. Record the release version, package filename,

@@ -266,6 +266,30 @@ def test_privacy_warning_precedes_user_export_actions():
     assert html.index("<strong>Privacy:</strong>") < html.index("Download results")
 
 
+def test_novice_terminal_circle_and_podman_restart_instructions_are_complete():
+    for relative_path in (
+        "docs/quick-start.md",
+        "docs/quick-start.html",
+        "wiki/Before-You-Install.md",
+    ):
+        text = _read(relative_path)
+        assert "Windows PowerShell" in text, relative_path
+        assert "Start" in text, relative_path
+        assert "normal window" in text, relative_path
+        assert "administrator" in text, relative_path
+
+    user_guide = _read("docs/user-guide.md")
+    circle = user_guide[user_guide.index("### Circle Search"):]
+    assert circle.index("Select `Circle`") < circle.index("Click the map to place the circle")
+    assert circle.index("Click the map to place the circle") < circle.index("Select `Estimate tiles`")
+
+    everyday = _read("wiki/Everyday-Commands.md")
+    shared_podman = everyday.index("Before either Podman command")
+    podman_cpu = everyday.index("### Podman CPU")
+    podman_gpu = everyday.index("### Podman NVIDIA GPU")
+    assert shared_podman < podman_cpu < podman_gpu
+
+
 def test_final_user_recovery_does_not_recommend_insecure_tls():
     for relative_path in (
         "docs/quick-start.md",
