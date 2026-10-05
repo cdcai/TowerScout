@@ -233,13 +233,13 @@ def document_wrapper(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{safe_title} — TowerScout documentation review v4</title>
+  <title>{safe_title} — TowerScout documentation review v5</title>
   <link rel="stylesheet" href="{prefix}assets/review.css">
 </head>
 <body>
   <a class="review-skip" href="#review-content">Skip to reviewed document</a>
   <header class="review-header">
-    <p class="eyebrow">TowerScout documentation review v4</p>
+    <p class="eyebrow">TowerScout documentation review v5</p>
     <h1>{safe_title}</h1>
     <p>Review only — not a release package and not final release approval.</p>
   </header>
@@ -299,7 +299,7 @@ def route_note() -> str:
 <body>
   <a class="skip-link" href="#main-content">Skip to route note</a>
   <header class="page-header">
-    <p class="eyebrow">TowerScout documentation review v4</p>
+    <p class="eyebrow">TowerScout documentation review v5</p>
     <h1>Running-Application Route Note</h1>
     <p class="lead">This offline review bundle cannot open routes served only by a running TowerScout container.</p>
   </header>
@@ -337,13 +337,13 @@ def index_html(commit: str, branch: str) -> str:
     )
     return f"""<!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>TowerScout documentation review v4</title><link rel="stylesheet" href="assets/review.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>TowerScout documentation review v5</title><link rel="stylesheet" href="assets/review.css"></head>
 <body>
   <a class="review-skip" href="#review-content">Skip to review index</a>
-  <header class="review-header"><p class="eyebrow">TowerScout documentation review v4</p><h1>Start Here</h1><p>Focused confirmation review before documentation content freeze and rebuild.</p></header>
+  <header class="review-header"><p class="eyebrow">TowerScout documentation review v5</p><h1>Start Here</h1><p>Final one-finding confirmation before documentation content freeze and rebuild.</p></header>
   <main class="review-index" id="review-content">
-    <section class="review-callout"><h2>Review boundary</h2><p>This ZIP is not a TowerScout release package. It contains no application binaries, model/data assets, provider credentials, logs, browser-run evidence, or release images.</p><p><strong>Branch:</strong> <code>{html.escape(branch)}</code><br><strong>Source commit:</strong> <code>{html.escape(commit)}</code><br><strong>Draft PR:</strong> <a href="{PR_URL}">J-Schulein/TowerScout #94</a></p><p><a class="button" href="reviewer-instructions.html">Open Round 4 Reviewer Instructions</a></p></section>
-    <section class="review-change-list"><h2>Round 4 focus</h2><p>Confirm GPU asset-import recovery preserves GPU mode and port, plus the five small Round 3 publication and PR-presentation corrections. Previously passing setup-card and Google guidance findings remain in the bundle for context but do not require another broad audit.</p></section>
+    <section class="review-callout"><h2>Review boundary</h2><p>This ZIP is not a TowerScout release package. It contains no application binaries, model/data assets, provider credentials, logs, browser-run evidence, or release images.</p><p><strong>Branch:</strong> <code>{html.escape(branch)}</code><br><strong>Source commit:</strong> <code>{html.escape(commit)}</code><br><strong>Draft PR:</strong> <a href="{PR_URL}">J-Schulein/TowerScout #94</a></p><p><a class="button" href="reviewer-instructions.html">Open Round 5 Reviewer Instructions</a></p></section>
+    <section class="review-change-list"><h2>Round 5 focus</h2><p>Confirm the packaged OCI Runtime Contract no longer tells readers to pass <code>-Port</code> to <code>logs.cmd</code>, accurately names the commands that preserve the selected port, and retains a clear Local IT next action. No broad documentation review is requested.</p></section>
     <section><h2>Pass 1: complete new-user Wiki journey</h2><ol>{journey_items}</ol></section>
     <section><h2>Pass 2: remaining rendered Wiki pages</h2><ul>{remaining_items}</ul></section>
     <section><h2>Pass 3: rendered package and repository Markdown</h2><ul>{docs_items}</ul></section>
@@ -356,13 +356,13 @@ def index_html(commit: str, branch: str) -> str:
 
 
 def source_record(commit: str, branch: str) -> str:
-    return f"""TowerScout documentation review bundle v4
+    return f"""TowerScout documentation review bundle v5
 
-Purpose: Focused fourth-round confirmation of Round 3 corrections before
-documentation content freeze and rebuild. This is not a TowerScout release
-package and contains no application binaries, container images, model/data
-assets, provider credentials, logs, raw browser-run evidence, or investigation
-data.
+Purpose: Final one-finding confirmation of the Round 4 OCI port-guidance
+correction before documentation content freeze and rebuild. This is not a
+TowerScout release package and contains no application binaries, container
+images, model/data assets, provider credentials, logs, raw browser-run
+evidence, or investigation data.
 
 Generated: 2026-10-05 (America/New_York)
 Repository: {REPOSITORY_URL}
@@ -375,7 +375,7 @@ Included:
 - 13 rendered current repository/package Markdown sources
 - Four current manually maintained HTML guides and their stylesheet
 - An offline running-application route note
-- Round 4 Reviewer Instructions in HTML and Markdown
+- Round 5 Reviewer Instructions in HTML and Markdown
 - Internal SHA-256 inventory
 
 Offline-only transformations:
@@ -384,13 +384,11 @@ Offline-only transformations:
 - Maintained HTML links to included Markdown point to rendered review copies.
 - No user-facing source content was otherwise rewritten for this bundle.
 
-Supplemental Round 3 evidence intentionally not included:
-- TowerScout-Round-3-Documentation-and-PR94-Review-2026-10-05.md, SHA-256
-  4083f6c4f8509ffb07a007475f5c7f05b6d5cb977b64900483e13efeb2268ea1
-- setup-cards-1440.png, SHA-256
-  91e28636be3a7f0f4bc6e2f96f723aa0412e7965b9ad32ccb1ae6832c41fa660
-- setup-cards-720.png, SHA-256
-  c8713d36d3447db696d93a961bfa4eb28a1b306abfee483e1fbcbf501eaf9ab8
+Supplemental Round 4 evidence intentionally not included:
+- TowerScout-Round-4-Focused-Review-2026-10-05.md, SHA-256
+  5d66b0b2ffd0a7cb09f622943d5b0d89dfca0b9e0f40bc68e44a989eb5de9985
+- oci-port-recovery-720.png, SHA-256
+  1f0c6303e0142b50f31b2b048256ba2efe64caa2a53eb1bad7df48762a409ce7
 
 Excluded:
 - Historical pilot/compatibility pages
@@ -520,7 +518,7 @@ def main() -> int:
     (bundle / "REVIEWER-INSTRUCTIONS.md").write_text(instructions_text, encoding="utf-8")
     (bundle / "reviewer-instructions.html").write_text(
         document_wrapper(
-            "Round 4 Reviewer Instructions",
+            "Round 5 Reviewer Instructions",
             repository_path(instructions),
             args.source_commit,
             render_markdown(instructions_text),
