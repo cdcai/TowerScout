@@ -4,8 +4,9 @@
 G10, W05, four-profile W09 setup/device/lifecycle, and the complete local W10
 provider/cancel/error/review-export/relaunch/reboot matrix. ADR-023 resolves
 the unsigned support boundary. The preliminary `rc4` browser-download Docker
-CPU diagnostic passed and its documentation findings are incorporated in local
-source drafts. Content freeze, documentation-aligned image/control-ZIP rebuild,
+CPU diagnostic passed, its findings are incorporated, and the documentation
+content freeze is merged through PR #94 as `fc97b32`. The reconciled
+accepted-main source freeze, documentation-aligned image/control-ZIP rebuild,
 final browser-download validation, and independent-host evidence remain
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
@@ -177,3 +178,12 @@ remain explicit blockers.
 Checkpoint 2 and the replacement H9 dispatch are authorized and recorded. W09
 replacement assembly and local qualification are authorized. Package
 publication, `latest` promotion, and closeout remain explicitly owner-gated.
+
+## 2026-10-06 Documentation Merge Checkpoint
+
+The owner approved the Task-092 content freeze at `524ba37`; bounded
+reproducibility corrections landed at `f8e191d`; and PR #94 merged as
+`fc97b32` with green post-merge CI. The next candidate must be rebuilt from the
+exact accepted-main commit after the project-state reconciliation. This
+checkpoint does not authorize package publication or `latest` promotion and
+does not replace the final browser-download or independent-host gates.

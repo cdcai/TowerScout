@@ -1,19 +1,20 @@
-# Current Tasks - Windows Deployment Delivery Week
+# Current Tasks - Final Candidate Build And Acceptance
 
-**Sprint Period**: September 22-September 28, 2026
-**Last Updated**: October 5, 2026
+**Sprint Period**: October 5-October 16, 2026
+**Last Updated**: October 6, 2026
 **Focus**: Qualify a dependable, downloadable Windows 11 application from
-accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Day 2 has moved
-the evidence-selected W03-W08 corrections through focused review and merge.
-The Task-087 launcher redesign is preserved in immutable archive tags and a
-final disposition record, but PRs #64/#67 are closed without merge and are not
-release gates.
+accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Documentation
+content is frozen and merged through PR #94; the immediate work is to reconcile
+the exact source, build new documentation-aligned artifacts, and complete final
+browser-download and independent-host acceptance. The Task-087 launcher
+redesign remains preserved and deferred, not a release gate.
 
-**Accepted Control-Package Source**: `541622556fb7999ee4e88fb1e44f7797b9da34f5`
+**Historical `rc4` Control-Package Source**: `541622556fb7999ee4e88fb1e44f7797b9da34f5`
 
 **Confirmed `rc4` Runtime Image Source**: `541622556fb7999ee4e88fb1e44f7797b9da34f5`
-**Next Documentation-Aligned Candidate Source**: Not frozen; pending Task-092
-content completion and clean-source rebuild
+**Accepted Documentation Content Source**: `fc97b3200785d307b39ef5a683979002a5f409e6`
+**Next Documentation-Aligned Candidate Source**: Not frozen; use the exact
+accepted `main` commit after this project-state reconciliation merges
 **Authoritative Branch**: `main`
 **Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
@@ -32,6 +33,10 @@ content completion and clean-source rebuild
   served in-app, the ADR-023/Task-092 documentation refresh requires new
   documentation-aligned image and control-package identities before final
   distribution. Package publication and `latest` remain owner-gated.
+- `J-Schulein` approved the documentation content freeze at `524ba37`. The
+  bounded post-freeze reproducibility corrections landed at `f8e191d`, PR #94
+  merged as `fc97b32`, and post-merge CI passed. No documentation review
+  blocker remains before the clean-source rebuild.
 - Full readiness requires actual YOLO and EfficientNet work on the required
   device in all four profiles plus independent-computer reproduction.
 - Static checks, health/readiness, mocked tests, or CPU fallback are not
@@ -52,9 +57,10 @@ content completion and clean-source rebuild
 **Status**: IN_PROGRESS - local `rc4` images/packages pass G10, exact-digest
 W05, four-profile W09, and all first-host provider/recovery/review-export/
 controlled-error/reboot cells. ADR-023 resolves the unsigned support boundary,
-and the bounded `rc4` browser-download Docker CPU diagnostic passed without a
-larger blocker. Incorporate its findings, then freeze documentation-aligned
-image/control-ZIP identities and complete final browser-download plus
+the bounded `rc4` browser-download Docker CPU diagnostic passed without a
+larger blocker, and its documentation findings are merged through PR #94.
+Freeze the reconciled accepted-main source, rebuild documentation-aligned
+image/control-ZIP identities, and complete final browser-download plus
 independent-host evidence
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
@@ -114,23 +120,6 @@ Current scope:
 - Report `pass`, `fail`, `blocked`, `not_run`, or justified `not_applicable`;
   never infer readiness from an absent prerequisite.
 
-### **TASK-068: Windows Test Portability And Script Validation**
-
-**Status**: COMPLETED - W02 merged as `8976222`; final `rc4` exact-package
-Docker/Podman setup, start, stop, relaunch, and eight-volume preservation pass
-on the first host
-**Priority**: CRITICAL
-**Task File**: `.agent_work/tasks/active/TASK-068-windows-script-validation.md`
-
-Current scope:
-
-- Keep normal helper-disabled launch and stop independent of the dormant
-  helper module, profile writes, and ACL operations.
-- Preserve the explicitly enabled review path without reactivating it for the
-  release.
-- Prove Windows PowerShell 5.1 preflight failure, scalar Compose failure,
-  packaged setup/start/stop/relaunch, and named-volume preservation.
-
 ### **TASK-097: Podman CPU/GPU Final Path Qualification**
 
 **Status**: AT_RISK - the approved relative package-local provider passes from
@@ -151,12 +140,12 @@ Current scope:
 
 ### **TASK-092: Documentation Currentness And Information Architecture**
 
-**Status**: IN_PROGRESS - `rc4` findings and all review findings are
-dispositioned. Round 5 confirms R4-01 resolved, reports `ready for content
-freeze`, and names no remaining documentation rebuild blocker. Draft PR #94
-remains open; complete required checks and explicit owner content-freeze
-approval before merge or rebuild, then complete live permission verification,
-final release wording, new artifact identities, and running-image validation
+**Status**: IN_PROGRESS - `rc4` and five review rounds are dispositioned;
+`J-Schulein` approved the content freeze at `524ba37`, bounded follow-up fixes
+landed at `f8e191d`, and PR #94 merged as `fc97b32` with green post-merge CI.
+Complete live permission verification, final artifact identities, packaged and
+running-image Help validation, publication checks, screenshots/video, and the
+final W09/W10 gates
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-092-documentation-currentness.md`
 
@@ -191,21 +180,6 @@ Current scope:
 ---
 
 ## Preserved, Completed, Deferred, Or Owner-Gated Work
-
-### **TASK-101: extract-zip Advisory Assessment And Release-Gate Disposition**
-
-**Status**: COMPLETED - security remediation passed on accepted `main`; the
-former PR #67 integration condition is superseded by ADR-021, not passed
-**Task File**: `.agent_work/tasks/active/TASK-101-extract-zip-advisory-release-gate.md`
-
-The Node/Puppeteer remediation, exact-main checks, and alert closure remain
-valid completed evidence. No PR #67 reconciliation is required for this
-delivery.
-
-### **TASK-099: August Dependency Advisory Follow-Up**
-
-**Status**: COMPLETED - retained in the active directory until sprint closeout
-**Task File**: `.agent_work/tasks/active/TASK-099-august-dependency-advisory-follow-up.md`
 
 ### **TASK-087: Host-Side TLS Repair Control Plane**
 
@@ -246,10 +220,13 @@ and explicit authorization.
    distribution.
 7. [x] Run the preserved `rc4` browser-download shakedown as preliminary
    diagnostic evidence, then incorporate applicable findings into Task-092.
-8. [ ] Freeze Task-092 content and rebuild documentation-aligned CPU/CUDA
-   images and control ZIPs under new identities; publish authoritative hashes
-   before final extraction testing or tester distribution.
-9. [ ] Complete W10 four-profile and independent-host reproduction; otherwise
+8. [x] Freeze Task-092 content, merge the accepted documentation through PR
+   #94, and confirm post-merge CI.
+9. [ ] Freeze the reconciled accepted-main source and rebuild
+   documentation-aligned CPU/CUDA images and control ZIPs under new identities;
+   publish authoritative hashes before final extraction testing or tester
+   distribution.
+10. [ ] Complete W10 four-profile and independent-host reproduction; otherwise
    report only the exact qualified subset.
 
 ## Runtime Coordination

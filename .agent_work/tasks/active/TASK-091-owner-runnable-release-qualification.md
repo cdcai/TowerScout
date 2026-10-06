@@ -4,7 +4,8 @@
 host provider/cancel/error/review-export/relaunch/reboot cells pass. ADR-023
 resolves policy/signing through an unsigned, narrower support boundary.
 The preliminary `rc4` browser-download Docker CPU diagnostic passed and its
-findings are dispositioned for Task-092; final documentation-aligned artifacts,
+findings are dispositioned for Task-092. The documentation content is frozen
+and merged through PR #94 as `fc97b32`; final documentation-aligned artifacts,
 exact browser-download, and independent-host evidence remain
 **Priority**: CRITICAL
 **Type**: C (Release Qualification / Handoff)
@@ -484,3 +485,13 @@ managed-signing-policy, public unauthenticated download, or independent-host
 cells. The draft remains non-public. Full evidence and Task-092 dispositions
 are in
 [the rc4 diagnostic record](./TASK-092/RC4-BROWSER-DOWNLOAD-DIAGNOSTIC-2026-10-02.md).
+
+### 2026-10-06 - Documentation content accepted for candidate rebuild
+
+The owner approved the documentation content freeze at `524ba37`; the bounded
+post-freeze reproducibility correction landed at `f8e191d`; and PR #94 merged
+as `fc97b32` with green post-merge CI. The build source will be the exact
+accepted-main commit after the project-state reconciliation merges. No prior
+`rc4` image or ZIP is promoted by this checkpoint. Final acceptance still
+starts with the newly published authoritative hashes and exact
+browser-downloaded bytes and still requires the independent-host matrix.

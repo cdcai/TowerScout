@@ -344,3 +344,35 @@ Track L and owner-held T1000 evidence without committing raw logs or fixture
 imagery. The canonical v2 sources and `AGENTS.md` now point to the narrow ML
 runtime amendment. The Task-087 archive/defer decision remains unchanged.
 External image/package publication remains gated at Task-103 Checkpoint 2.
+
+### 2026-10-06 - Post-PR #94 project-state reconciliation
+
+**Objective**: Reconcile the repository-native control plane before the final
+documentation-aligned build.
+
+**Context**: The owner approved the Task-092 content freeze at `524ba37`,
+bounded reproducibility fixes landed at `f8e191d`, PR #94 merged as `fc97b32`,
+and post-merge CI passed. The active board, Task-092/103 summaries,
+requirements, design, backlog, and completed-task placement still described
+the pre-merge state.
+
+**Decision**: Keep Tasks 091/092/093/095/097/103 active, retain Task-089 as
+owner-gated, and preserve Task-087 as explicitly deferred. Move only completed
+Tasks 068/099/101 and completed PR review records to their documented
+completion/archive locations. Record TASK-076 guidance as absorbed by the
+frozen Task-092 documentation rather than inventing a new implementation task.
+
+**Execution**: Updated the current sprint and release-source boundary,
+corrected the selected ML runtime and completed browser diagnostic, reconciled
+the backlog/completion records, and archived completed PR review snapshots.
+
+**Output**: A bounded task-state-only reconciliation that will establish the
+source commit to freeze before the final image/control-package build.
+
+**Validation**: The quick wrapper and strict agent-work validator pass;
+`git diff --check` passes; and the current-source scan checked 95 relative
+links across 47 files with no missing target. Pull-request CI remains pending.
+
+**Next**: Merge this bounded reconciliation, freeze its exact accepted-main
+commit, restore the documented free-space prerequisite, and begin the final
+candidate build without publishing packages or promoting `latest`.

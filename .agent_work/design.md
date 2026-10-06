@@ -1,6 +1,6 @@
 # TowerScout Current Technical Design
 
-**Last Updated**: October 1, 2026
+**Last Updated**: October 6, 2026
 **Scope**: Main-based Windows deployment delivery, four-profile runtime
 qualification, and cdcai handoff through October 2026
 **Archived Pre-Rebaseline Design**:
@@ -135,10 +135,13 @@ The current security boundary is:
 2. Release-model hashes are enforced by default; model upload remains disabled
    by default and requires both an administrator key and approved SHA-256 hash
    when enabled.
-3. The selected `torch==2.6.0` / `torchvision==0.21.0` pair is qualified for
-   the Task-098 CPU/CUDA boundary.
-4. The July 27 closeout left eight medium/low torch advisories visible and
-   non-reachable on supported paths. A future upgrade must move torch and
+3. ADR-022 selects `torch==2.10.0` / `torchvision==0.25.0` for distinct `cpu`
+   and `cuda128` images. Task-103 has qualified the pair locally on CPU,
+   Turing, and Blackwell; the documentation-aligned rebuild and final
+   independent-host release evidence remain open.
+4. The prior `torch==2.6.0` / `torchvision==0.21.0` Task-098 pair and its
+   July advisory disposition remain historical evidence, not the current
+   candidate runtime. Future upgrades must continue to move torch and
    torchvision together and repeat CPU/CUDA, model-load, output-parity, and
    performance validation.
 5. Task-099 updated runtime `aiohttp` from `3.14.2` to `3.14.3` for alert
@@ -192,6 +195,9 @@ TASK-101 extract-zip advisory gate [COMPLETE ON ACCEPTED MAIN]
 ADR-021 / W00 main-based direction
         |
         +--> TASK-087 / PR #67 and TASK-096 [PRESERVED, DEFERRED]
+        |
+        v
+ADR-022 / TASK-103 torch 2.10.0 cpu + cuda128 bridge
         |
         v
 TASK-091 + TASK-097 early package and Podman qualification

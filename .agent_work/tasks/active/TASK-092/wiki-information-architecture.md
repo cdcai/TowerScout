@@ -325,9 +325,10 @@ but the required affected W09/W10 checks bind to the new identities.
 - [x] Video page has an accessible written alternative and privacy-safe media
   plan.
 - [x] Packaged guidance is complete without Wiki/video access.
-- [x] Draft PR #94 and the source-bound rendered review ZIP provide the
-  reviewer prompt, ordered reading path, rendered Wiki/Markdown pages, and
-  maintained-HTML comparison set without requiring repository access.
+- [x] PR #94 merged as `fc97b32` after five source-bound review rounds whose
+  ZIPs provided the reviewer prompt, ordered reading path, rendered
+  Wiki/Markdown pages, and maintained-HTML comparison set without requiring
+  repository access.
 - [ ] Markdown/HTML pairs, in-app routes, package contents, and running-image
   Help agree.
 - [ ] Documentation-aligned CPU/CUDA images and control ZIPs receive new

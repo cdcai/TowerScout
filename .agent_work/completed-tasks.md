@@ -1,13 +1,33 @@
 # Completed Tasks
 
-**Last Updated**: August 11, 2026
-**Current Retention Window**: Sprint 06 through current Sprint 09 completions
+**Last Updated**: October 6, 2026
+**Current Retention Window**: Sprint 06 through the October final-candidate delivery
 **Historical Snapshot**:
 [`2026-07-23-pre-rebaseline-completed-tasks.md`](./context/archive/2026-07/2026-07-23-pre-rebaseline-completed-tasks.md)
 
 This file is the concise completion source for recent work. Older detailed task
 files remain under `tasks/completed/`, and older summaries are preserved under
 `context/archive/`.
+
+---
+
+## September Delivery Completed Tasks
+
+### TASK-068: Windows Test Portability And Script Validation
+
+**Status**: COMPLETED
+**Completed**: September 30, 2026
+**Task File**:
+[`TASK-068-windows-script-validation.md`](./tasks/completed/TASK-068-windows-script-validation.md)
+
+Key outcomes:
+
+- Merged the evidence-triggered W02 dormant-helper dependency fix as `8976222`.
+- Passed Windows PowerShell 5.1 preflight and focused package-script contracts.
+- Repeated exact-`rc4` Docker/Podman CPU/CUDA setup, start, stop, relaunch, and
+  eight-volume preservation on the first host.
+- Left final documentation-aligned artifact and independent-host acceptance to
+  Tasks 091/092/093/097/103 rather than overstating Task-068 completion.
 
 ---
 
@@ -18,7 +38,7 @@ files remain under `tasks/completed/`, and older summaries are preserved under
 **Status**: COMPLETED
 **Completed**: August 11, 2026
 **Task File**:
-[`TASK-099-august-dependency-advisory-follow-up.md`](./tasks/active/TASK-099-august-dependency-advisory-follow-up.md)
+[`TASK-099-august-dependency-advisory-follow-up.md`](./tasks/completed/TASK-099-august-dependency-advisory-follow-up.md)
 
 Key outcomes:
 
@@ -34,7 +54,20 @@ Key outcomes:
 - Cleared the Task-099 signing/candidate dependency gate without changing the
   qualified ML pair, application behavior, frozen pilot, or cdcai.
 
-The Task-099 file remains under `tasks/active/` until Sprint 09 closeout.
+### TASK-101: extract-zip Advisory Assessment And Release-Gate Disposition
+
+**Status**: COMPLETED
+**Completed**: August 20, 2026
+**Task File**:
+[`TASK-101-extract-zip-advisory-release-gate.md`](./tasks/completed/TASK-101-extract-zip-advisory-release-gate.md)
+
+Key outcomes:
+
+- Merged the Node/Puppeteer `extract-zip` remediation through PR #72 as
+  `0cc189c` and confirmed alert `#76` closed without dismissal.
+- Passed exact-main dependency, package, frontend, and security validation.
+- Preserved the former PR #67 integration condition as superseded by ADR-021,
+  not passed and not a current release gate.
 
 ---
 
@@ -82,7 +115,7 @@ Key outcomes:
 
 Post-closeout note: GitHub disclosed alerts `#72-#75` on August 4-5. They do
 not reopen Task-098 or change its July evidence; the separately governed
-[`TASK-099` follow-up](./tasks/active/TASK-099-august-dependency-advisory-follow-up.md)
+[`TASK-099` follow-up](./tasks/completed/TASK-099-august-dependency-advisory-follow-up.md)
 owned their remediation together with npm audit finding
 `GHSA-5p4m-2wfm-xmqj`, detected while Task-099 remained active. During its
 execution Task-099 blocked signing and candidate inclusion, not ongoing
