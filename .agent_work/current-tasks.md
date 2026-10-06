@@ -44,9 +44,11 @@ redesign remains preserved and deferred, not a release gate.
   post-merge workflows passed. Local CPU/CUDA `rc5` rehearsals from that exact
   source passed build, runtime/device, documentation-parity, control-ZIP, and
   verification checks, but fresh Trivy scans blocked publication on 14 new
-  HIGH keys. Two are fixed by pinning `urllib3==2.8.0`; the remaining 12
-  require an explicit no-fix residual-risk disposition or fixed upstream
-  packages. No image or package was published.
+  HIGH keys. TowerScout's imported HTTP client is now locally pinned and
+  verified at `urllib3==2.8.0`, but two scan keys persist against pip's vendored
+  2.7.0 copy; the other 12 have no Debian bookworm fix. All residual scan keys
+  require an explicit disposition or fixed upstream packages. No image or
+  package was published.
 - Full readiness requires actual YOLO and EfficientNet work on the required
   device in all four profiles plus independent-computer reproduction.
 - Static checks, health/readiness, mocked tests, or CPU fallback are not

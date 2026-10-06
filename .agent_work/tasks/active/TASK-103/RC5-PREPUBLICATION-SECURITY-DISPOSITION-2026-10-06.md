@@ -32,6 +32,8 @@ The ignored local evidence is under
 | `cuda128-trivy.json` | `0993b13984d7540d6ead9dbe00db080a5fbd53185165d799e25232ebf35c1697` |
 | `cpu-sbom.cdx.json` | `9b78770c58139fd0302f35d93818e5bcdbe050c3935170a94d1f70dd51ec0030` |
 | `cuda128-sbom.cdx.json` | `492401812a5b171f55503d98cb9ba8f38ebfaa8425806fc92a94986828a1aab6` |
+| `securityfix-cpu-trivy.json` | `f7d144062508fe95187f57cdedc25711717e96842245ac3200344f013c16cb3d` |
+| `securityfix-cpu-sbom.cdx.json` | `ff2b58a6b8de38238573e83745decfa5a1ca265149a06f25e0c95a26a2ff0c8b` |
 
 The local control ZIPs are also expressly non-publishable because they use
 mutable local image tags rather than authoritative registry digests.
@@ -40,7 +42,7 @@ mutable local image tags rather than authoritative registry digests.
 
 | Finding(s) | Keys | Current disposition |
 | --- | ---: | --- |
-| `CVE-2026-97687`, `CVE-2026-97689` / `urllib3` | 2 | Fix available in `urllib3==2.8.0`. Pin added and focused provider/TLS tests pass. A rebuilt image and fresh scan are required. |
+| `CVE-2026-97687`, `CVE-2026-97689` / `urllib3` | 2 | TowerScout's importable runtime dependency is fixed at `urllib3==2.8.0`. Trivy still reports these keys against pip 26.2.1's isolated vendored `urllib3==2.7.0`, not TowerScout's imported package. Pip is used by qualification tooling but not by the running application. The fail-closed key gate still blocks until this residual is explicitly accepted or upstream pip vendors 2.8.0. |
 | `CVE-2026-19445` / four Python 3.11 binary packages | 4 | No Debian bookworm fix is listed. The affected behavior is a TLS server changing `SSLContext` from `sni_callback`; TowerScout does not configure a TLS server or `sni_callback`. Residual acceptance remains owner-gated. |
 | `CVE-2026-19553` / four Python 3.11 binary packages | 4 | No Debian bookworm fix is listed. The affected behavior requires `wrap_bio()` without a valid `server_hostname`; TowerScout has no direct `wrap_bio()` use and its supported provider clients use hostname-bearing HTTPS URLs. Residual acceptance remains owner-gated. |
 | `CVE-2026-84450`, `CVE-2026-84451` / `libheif1` | 2 | No Debian bookworm fix is listed. `libheif1` is a transitive geospatial runtime package, but TowerScout's validated custom-image boundary accepts only JPEG, PNG, and TIFF; no HEIF/AVIF path is supported. Residual acceptance remains owner-gated. |
@@ -69,6 +71,17 @@ and full requalification.
 - Eight Task-098 provider-download tests passed after the exact pin was added.
 - Fifty-six provider HTTP, geocoding, configuration, and TLS-focused tests
   passed with the isolated `urllib3==2.8.0` target active.
+- A local CPU image was rebuilt from exact commit
+  `721fe38cae668e0e14a1de2ed7083fc92efdf506`; its OCI source label matches,
+  and Python imports `urllib3 2.8.0`, `Requests 2.33.1`, torch `2.10.0+cpu`,
+  and torchvision `0.25.0+cpu`.
+- The rebuilt-image scan still reports 14 new HIGH keys. Direct inspection
+  proves the two `urllib3` keys originate from
+  `pip._vendor.urllib3==2.7.0`; the normal `urllib3` distribution and import
+  path are version 2.8.0. No baseline entry was added.
+- A patched CUDA rebuild was not started after the common CPU dependency layer
+  proved the key gate remains blocked; publishing either flavor remains
+  prohibited, and both flavors will be rebuilt after the residual decision.
 - The temporary build/scan CA bundle contained only a public trusted root, was
   used with certificate verification enabled, and was deleted after the scans.
 - The temporary Trivy database cache and isolated dependency target were
@@ -76,13 +89,16 @@ and full requalification.
 
 ## Required Next Decision
 
-1. Land the bounded `urllib3==2.8.0` correction through normal review and CI.
-2. Rebuild both local image flavors from the resulting accepted-main commit
-   and repeat Trivy/SBOM generation.
-3. Do not modify the accepted baseline merely to make the gate pass. Present
-   the remaining no-fix, non-reachable findings and exact rebuilt scan evidence
-   to the release owner for an explicit residual-risk decision, or wait for
-   fixed Debian bookworm packages.
+1. Land the bounded `urllib3==2.8.0` correction through normal review and CI;
+   it protects TowerScout's imported HTTP client even though pip's vendored
+   inventory continues to trigger the key-based scanner.
+2. Do not modify the accepted baseline merely to make the gate pass. Present
+   all 14 scanner keys, including the pip-vendor explanation and the 12 no-fix
+   operating-system keys, to the release owner for an explicit residual-risk
+   decision, or wait for fixed pip/Debian packages.
+3. If the owner accepts the residuals, amend the baseline only through a
+   reviewed, auditable commit that preserves this disposition; then rebuild
+   both local image flavors and repeat Trivy/SBOM generation.
 4. Only after the security gate has an approved disposition may the owner
    separately authorize immutable GHCR publication. Final packages must then
    bind exact published digests and exact browser-downloaded bytes.

@@ -201,9 +201,11 @@ control-ZIP integrity, and package `-VerifyOnly` checks. These local packages
 are non-publishable because they intentionally use mutable local image tags.
 
 Fresh Trivy `0.69.3` scans produced identical CPU/CUDA results and blocked on
-14 new HIGH keys. Two `urllib3` keys have an available 2.8.0 fix; the remaining
-12 keys have no Debian bookworm fix and affect five CVEs whose reported paths
-are outside TowerScout's supported TLS/DTLS/image workflows. Publication
-remains stopped pending a rebuilt scan after the bounded dependency fix and an
-explicit owner disposition of any residual findings. See
+14 new HIGH keys. TowerScout's importable `urllib3` dependency is now pinned to
+2.8.0 and a rebuilt CPU image imports that fixed version. Trivy's two
+`urllib3` keys persist against pip 26.2.1's vendored 2.7.0 copy; the other 12
+keys have no Debian bookworm fix and affect five CVEs whose reported paths are
+outside TowerScout's supported TLS/DTLS/image workflows. Publication remains
+stopped pending normal review of the bounded dependency fix and an explicit
+owner disposition of all residual scanner keys. See
 [the full security disposition](./TASK-103/RC5-PREPUBLICATION-SECURITY-DISPOSITION-2026-10-06.md).
