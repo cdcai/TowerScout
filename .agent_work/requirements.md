@@ -1,6 +1,6 @@
 # TowerScout Requirements
 
-**Last Updated**: October 1, 2026
+**Last Updated**: October 6, 2026
 **Current Planning Horizon**: October 31, 2026 hard project end
 **Operational Closeout**: October 30, 2026
 **Current Delivery Requirements**:
@@ -150,16 +150,17 @@ Acceptance:
 - Any remaining limitation is documented and explicitly accepted before
   freeze.
 
-Current result (2026-10-01): the exact local `rc4` Docker CPU/CUDA and
+Current result (2026-10-06): the exact local `rc4` Docker CPU/CUDA and
 Podman CPU/CUDA packages pass setup, readiness, both provider workflows,
 cancellation recovery, export checks, provider TLS repair, and
 volume-preserving stop/relaunch and Windows reboot restoration on the first
 host. ADR-023 resolves policy/signing by choosing an unsigned, narrower support
 boundary. The documentation is included in the control ZIP and baked into the
 runtime image for in-app Help, so documentation alignment changes both final
-artifact identities. A preliminary `rc4` browser-download diagnostic is
-planned; final exact-candidate browser-download and independent-host evidence
-remain open.
+artifact identities. The preliminary `rc4` browser-download diagnostic passed
+on October 2 and informed the documentation content merged through PR #94 as
+`fc97b32`. A new documentation-aligned build, final exact-candidate
+browser-download, and independent-host evidence remain open.
 
 ### RUNTIME-002: Podman Trust Separation
 

@@ -1,11 +1,11 @@
 # TASK-092: Documentation Currentness And Information Architecture
 
-**Status**: IN_PROGRESS - Round 5 confirms R4-01 resolved and reports `ready
-for content freeze`, with no remaining documentation rebuild blocker. Required
-PR checks and explicit `J-Schulein` content-freeze approval remain before merge
-or rebuild. Final screenshots/video, live permission verification, final
-release identities, running-image Help validation, publication, and final
-W09/W10 gates also remain
+**Status**: IN_PROGRESS - all five review rounds are dispositioned,
+`J-Schulein` approved the content freeze at `524ba37`, bounded post-freeze
+reproducibility corrections landed at `f8e191d`, and PR #94 merged as
+`fc97b32` with green post-merge CI. Final screenshots/video, live permission
+verification, documentation-aligned image/control-ZIP identities, packaged and
+running-image Help validation, publication, and final W09/W10 gates remain
 **Priority**: HIGH
 **Type**: C (Documentation / Release)
 **Child Work Plan**:
@@ -135,13 +135,15 @@ affected W09/W10 checks before distribution.
 
 - [x] The `rc4` preliminary shakedown is recorded separately from final
   candidate acceptance and its applicable findings are incorporated.
-- [ ] The source-of-truth matrix and complete page inventory in the child plan
+- [x] The source-of-truth matrix and complete page inventory in the child plan
   are accepted.
 - [x] The local Wiki draft has clear paths for end users, Local IT
   administrators, support, and future maintainers without duplicating release-
   specific commands. External publication remains owner-authorized.
-- [ ] Packaged Markdown, paired HTML, in-app Help, README/release wording, and
-  external guidance agree on the tested paths and ADR-023 boundary.
+- [x] The reviewed source versions of packaged Markdown, paired HTML, in-app
+  Help, README/release wording, and external guidance agree on the tested
+  paths and ADR-023 boundary. Running-image and exact-package parity remain
+  part of the open artifact-validation criterion below.
 - [x] The written package remains sufficient without Wiki/video access,
   including the new paired Local IT Administrator guide.
 - [x] Wiki ownership, editing policy, backup/migration, and future cdcai
@@ -437,3 +439,22 @@ image, package, release, live Wiki, or repository permission was changed.
 freeze decision. If approved, merge accepted changes to `main`, freeze the
 exact accepted source, and begin the separately gated documentation-aligned
 image/control-package rebuild and validation sequence.
+
+### 2026-10-06 - Content freeze approved and PR #94 merged
+
+`J-Schulein` explicitly approved the documentation content freeze at commit
+`524ba37`. The later `f8e191d` correction was limited to reproducible review
+and validation artifacts; it did not reopen the accepted user-facing content.
+All PR checks passed, PR #94 merged to `main` as `fc97b32`, and the post-merge
+CI matrix passed.
+
+The source-of-truth inventory and cross-surface content-alignment criteria are
+now accepted. Task-092 remains open because final proof belongs to the new
+documentation-aligned images and control ZIPs: package allowlists, packaged
+HTML/Markdown, running-image Help, exact hashes/digests, browser-downloaded
+bytes, and live Wiki permission/publication checks still require validation.
+
+**Next**: Merge the bounded project-state reconciliation, freeze that exact
+accepted-main source for the rebuild, then complete the final artifact-bound
+Task-092 checks without changing frozen user-facing content unless a new
+release blocker is found and explicitly dispositioned.

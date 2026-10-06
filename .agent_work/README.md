@@ -11,13 +11,14 @@ Read in this order:
 1. [`current-tasks.md`](./current-tasks.md)
 2. [`context/status/Reprioritization Effort/2026-09-21-windows-deployment-prioritization-v2.md`](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-prioritization-v2.md)
 3. [`context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2.md`](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md)
-4. [`decisions/023-unsigned-windows-package-support-boundary.md`](./decisions/023-unsigned-windows-package-support-boundary.md)
-5. [`context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2-verification.md`](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2-verification.md)
-6. [`context/status/Reprioritization Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md`](./context/status/Reprioritization%20Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md)
-7. [`task-backlog.md`](./task-backlog.md)
-8. [`requirements.md`](./requirements.md)
-9. [`design.md`](./design.md)
-10. [`completed-tasks.md`](./completed-tasks.md)
+4. [`decisions/022-cuda128-blackwell-ml-runtime.md`](./decisions/022-cuda128-blackwell-ml-runtime.md)
+5. [`decisions/023-unsigned-windows-package-support-boundary.md`](./decisions/023-unsigned-windows-package-support-boundary.md)
+6. [`context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2-verification.md`](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2-verification.md)
+7. [`context/status/Reprioritization Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md`](./context/status/Reprioritization%20Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md)
+8. [`task-backlog.md`](./task-backlog.md)
+9. [`requirements.md`](./requirements.md)
+10. [`design.md`](./design.md)
+11. [`completed-tasks.md`](./completed-tasks.md)
 
 The September 21 v2 prioritization and work plan control immediate development
 and acceptance as amended by ADR-022 and ADR-023. ADR-023 resolves the Windows

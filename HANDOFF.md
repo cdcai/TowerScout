@@ -1,6 +1,6 @@
 # TowerScout Handoff Guide
 
-**Last Updated**: October 1, 2026
+**Last Updated**: October 6, 2026
 **Operational Closeout**: October 30, 2026
 **Hard Project End**: October 31, 2026
 
@@ -18,6 +18,9 @@ The cdcai owner selected a fix-first path:
 - Keep `cdcai/TowerScout` unchanged until owner qualification and explicit
   adoption approval.
 - Select the official cdcai tag and display title before the official build.
+- Treat PR #94 merge `fc97b32` as the accepted documentation-content source;
+  final image/package identities and independent-host qualification remain
+  open.
 
 ## Immediate Delivery Direction
 
@@ -98,9 +101,9 @@ are recorded in
 `.agent_work/tasks/completed/TASK-098-dependency-security-remediation.md`.
 Task-099 records the completed post-closeout advisory remediation, including
 the later js-yaml npm audit finding and root graph reconciliation, in
-`.agent_work/tasks/active/TASK-099-august-dependency-advisory-follow-up.md`.
+`.agent_work/tasks/completed/TASK-099-august-dependency-advisory-follow-up.md`.
 Alert `#76` opened after that closeout and its completed remediation record is
-`.agent_work/tasks/active/TASK-101-extract-zip-advisory-release-gate.md`.
+`.agent_work/tasks/completed/TASK-101-extract-zip-advisory-release-gate.md`.
 Task-087 and PR #67 remain preserved historical work. They receive no new
 implementation, reconciliation, merge, or review work in the current delivery
 window. Package, provider/recovery, Podman, and managed-endpoint gates are
