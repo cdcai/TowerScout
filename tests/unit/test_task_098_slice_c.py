@@ -125,6 +125,12 @@ def test_aiohttp_security_pin_is_exact():
     assert "aiohttp==3.14.3" in requirements
 
 
+def test_urllib3_security_pin_is_exact():
+    requirements = REQUIREMENTS_FILE.read_text(encoding="utf-8").splitlines()
+
+    assert "urllib3==2.8.0" in requirements
+
+
 @pytest.mark.parametrize("provider", ["google", "azure"])
 def test_provider_download_follows_redirect_and_writes_response(
     provider_server,

@@ -5,9 +5,12 @@ G10, W05, four-profile W09 setup/device/lifecycle, and the complete local W10
 provider/cancel/error/review-export/relaunch/reboot matrix. ADR-023 resolves
 the unsigned support boundary. The preliminary `rc4` browser-download Docker
 CPU diagnostic passed, its findings are incorporated, and the documentation
-content freeze is merged through PR #94 as `fc97b32`. The reconciled
-accepted-main source freeze, documentation-aligned image/control-ZIP rebuild,
-final browser-download validation, and independent-host evidence remain
+content plus project-state reconciliation are merged through PRs #94/#95. A
+local documentation-aligned `rc5` rehearsal from `a24d369` passed build,
+health, device, package-integrity, and documentation-parity checks, but both
+flavors are blocked from publication by 14 new HIGH Trivy delta keys. The
+bounded `urllib3` fix, residual-risk disposition, final browser-download
+validation, and independent-host evidence remain
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
@@ -187,3 +190,20 @@ reproducibility corrections landed at `f8e191d`; and PR #94 merged as
 exact accepted-main commit after the project-state reconciliation. This
 checkpoint does not authorize package publication or `latest` promotion and
 does not replace the final browser-download or independent-host gates.
+
+## 2026-10-06 Reconciled Source And RC5 Security Checkpoint
+
+PR #95 merged as `a24d369668d27240ed0baa184d071395455b9c95`; both post-merge
+workflows passed. Local CPU and CUDA 12.8 images built from that exact source.
+Both images passed label/runtime checks, CPU health/readiness, in-image
+documentation parity, CUDA 12.8 `sm_120` execution on the RTX PRO 500, local
+control-ZIP integrity, and package `-VerifyOnly` checks. These local packages
+are non-publishable because they intentionally use mutable local image tags.
+
+Fresh Trivy `0.69.3` scans produced identical CPU/CUDA results and blocked on
+14 new HIGH keys. Two `urllib3` keys have an available 2.8.0 fix; the remaining
+12 keys have no Debian bookworm fix and affect five CVEs whose reported paths
+are outside TowerScout's supported TLS/DTLS/image workflows. Publication
+remains stopped pending a rebuilt scan after the bounded dependency fix and an
+explicit owner disposition of any residual findings. See
+[the full security disposition](./TASK-103/RC5-PREPUBLICATION-SECURITY-DISPOSITION-2026-10-06.md).

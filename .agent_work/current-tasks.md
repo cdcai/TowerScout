@@ -4,17 +4,20 @@
 **Last Updated**: October 6, 2026
 **Focus**: Qualify a dependable, downloadable Windows 11 application from
 accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Documentation
-content is frozen and merged through PR #94; the immediate work is to reconcile
-the exact source, build new documentation-aligned artifacts, and complete final
-browser-download and independent-host acceptance. The Task-087 launcher
+content is frozen and merged through PR #94, and the project-state
+reconciliation is merged through PR #95. The first local documentation-aligned
+build exposed a fail-closed security delta that must be dispositioned before
+publication; final browser-download and independent-host acceptance follow.
+The Task-087 launcher
 redesign remains preserved and deferred, not a release gate.
 
 **Historical `rc4` Control-Package Source**: `541622556fb7999ee4e88fb1e44f7797b9da34f5`
 
 **Confirmed `rc4` Runtime Image Source**: `541622556fb7999ee4e88fb1e44f7797b9da34f5`
 **Accepted Documentation Content Source**: `fc97b3200785d307b39ef5a683979002a5f409e6`
-**Next Documentation-Aligned Candidate Source**: Not frozen; use the exact
-accepted `main` commit after this project-state reconciliation merges
+**Preliminary Local RC5 Source**: `a24d369668d27240ed0baa184d071395455b9c95`
+**Next Publishable Candidate Source**: Not frozen; use the exact accepted
+`main` commit after the bounded security correction and disposition merge
 **Authoritative Branch**: `main`
 **Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
@@ -37,6 +40,13 @@ accepted `main` commit after this project-state reconciliation merges
   bounded post-freeze reproducibility corrections landed at `f8e191d`, PR #94
   merged as `fc97b32`, and post-merge CI passed. No documentation review
   blocker remains before the clean-source rebuild.
+- PR #95 merged the bounded project-state reconciliation as `a24d369`; both
+  post-merge workflows passed. Local CPU/CUDA `rc5` rehearsals from that exact
+  source passed build, runtime/device, documentation-parity, control-ZIP, and
+  verification checks, but fresh Trivy scans blocked publication on 14 new
+  HIGH keys. Two are fixed by pinning `urllib3==2.8.0`; the remaining 12
+  require an explicit no-fix residual-risk disposition or fixed upstream
+  packages. No image or package was published.
 - Full readiness requires actual YOLO and EfficientNet work on the required
   device in all four profiles plus independent-computer reproduction.
 - Static checks, health/readiness, mocked tests, or CPU fallback are not
@@ -59,9 +69,11 @@ W05, four-profile W09, and all first-host provider/recovery/review-export/
 controlled-error/reboot cells. ADR-023 resolves the unsigned support boundary,
 the bounded `rc4` browser-download Docker CPU diagnostic passed without a
 larger blocker, and its documentation findings are merged through PR #94.
-Freeze the reconciled accepted-main source, rebuild documentation-aligned
-image/control-ZIP identities, and complete final browser-download plus
-independent-host evidence
+PR #95 then reconciled the accepted project state. The local `rc5` rehearsal
+from `a24d369` passes functional and documentation checks but is blocked from
+publication by 14 new HIGH Trivy keys. Land the bounded `urllib3` fix, obtain
+an explicit residual disposition, then build exact-digest artifacts and
+complete final browser-download plus independent-host evidence
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
 
@@ -142,10 +154,12 @@ Current scope:
 
 **Status**: IN_PROGRESS - `rc4` and five review rounds are dispositioned;
 `J-Schulein` approved the content freeze at `524ba37`, bounded follow-up fixes
-landed at `f8e191d`, and PR #94 merged as `fc97b32` with green post-merge CI.
-Complete live permission verification, final artifact identities, packaged and
-running-image Help validation, publication checks, screenshots/video, and the
-final W09/W10 gates
+landed at `f8e191d`, PR #94 merged as `fc97b32`, and PR #95 merged the bounded
+state reconciliation as `a24d369`. Local `rc5` image/package documentation
+parity passes, but those local artifacts are non-publishable and the security
+delta gate is blocked. Complete live permission verification, final
+digest-pinned artifact identities, exact-package/running-image Help validation,
+publication checks, screenshots/video, and the final W09/W10 gates
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-092-documentation-currentness.md`
 

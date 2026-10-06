@@ -3,9 +3,12 @@
 **Status**: IN_PROGRESS - all five review rounds are dispositioned,
 `J-Schulein` approved the content freeze at `524ba37`, bounded post-freeze
 reproducibility corrections landed at `f8e191d`, and PR #94 merged as
-`fc97b32` with green post-merge CI. Final screenshots/video, live permission
-verification, documentation-aligned image/control-ZIP identities, packaged and
-running-image Help validation, publication, and final W09/W10 gates remain
+`fc97b32` with green post-merge CI. PR #95 merged the bounded project-state
+reconciliation as `a24d369`; local image/package documentation parity passes,
+but the artifacts are non-publishable while Task-103's security delta is
+blocked. Final screenshots/video, live permission verification, exact-digest
+image/control-ZIP identities, packaged and running-image Help validation,
+publication, and final W09/W10 gates remain
 **Priority**: HIGH
 **Type**: C (Documentation / Release)
 **Child Work Plan**:
@@ -458,3 +461,24 @@ bytes, and live Wiki permission/publication checks still require validation.
 accepted-main source for the rebuild, then complete the final artifact-bound
 Task-092 checks without changing frozen user-facing content unless a new
 release blocker is found and explicitly dispositioned.
+
+### 2026-10-06 - Project-state merge and local artifact-parity rehearsal
+
+PR #95 merged the bounded project-state reconciliation as
+`a24d369668d27240ed0baa184d071395455b9c95`; both post-merge workflows passed.
+Local CPU and CUDA 12.8 images plus local-only control ZIPs were rebuilt from
+that exact source. All 27 source `docs/` files matched each image byte-for-byte,
+all 23 packaged documentation files matched source, the required in-app Help
+routes returned HTTP 200, and the package guide retained the approved Google
+TLS repair procedure and verification warning.
+
+The rehearsal does not close Task-092: the local packages use mutable local
+image tags, and fresh Trivy scans blocked both image flavors before
+publication. Final Task-092 evidence must therefore bind the later approved
+published digests, authoritative package hashes, browser-downloaded bytes, and
+running-image Help. Frozen user-facing content remains unchanged.
+
+**Next**: Resolve the Task-103 pre-publication security delta through normal
+review and explicit disposition, then rebuild final digest-pinned packages and
+complete the remaining artifact-bound, browser-download, live-Wiki, and
+independent-host checks.
