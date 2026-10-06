@@ -140,8 +140,10 @@ affected W09/W10 checks before distribution.
 - [x] The local Wiki draft has clear paths for end users, Local IT
   administrators, support, and future maintainers without duplicating release-
   specific commands. External publication remains owner-authorized.
-- [x] Packaged Markdown, paired HTML, in-app Help, README/release wording, and
-  external guidance agree on the tested paths and ADR-023 boundary.
+- [x] The reviewed source versions of packaged Markdown, paired HTML, in-app
+  Help, README/release wording, and external guidance agree on the tested
+  paths and ADR-023 boundary. Running-image and exact-package parity remain
+  part of the open artifact-validation criterion below.
 - [x] The written package remains sufficient without Wiki/video access,
   including the new paired Local IT Administrator guide.
 - [x] Wiki ownership, editing policy, backup/migration, and future cdcai
