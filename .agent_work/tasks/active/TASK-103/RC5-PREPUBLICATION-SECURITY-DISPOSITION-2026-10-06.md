@@ -86,12 +86,19 @@ and full requalification.
   used with certificate verification enabled, and was deleted after the scans.
 - The temporary Trivy database cache and isolated dependency target were
   deleted after evidence generation.
+- Draft PR #96 contains the bounded dependency correction and this disposition.
+  All required CI checks passed at head commit
+  `2e4f0c472dce0c033eca510d27eabb064fbd67b7`, and the requested Codex review
+  reported no major issues. The expected publish/build job remained skipped
+  because the PR is a draft. This review checkpoint does not accept the
+  residual keys, amend the accepted baseline, or authorize publication.
 
 ## Required Next Decision
 
-1. Land the bounded `urllib3==2.8.0` correction through normal review and CI;
-   it protects TowerScout's imported HTTP client even though pip's vendored
-   inventory continues to trigger the key-based scanner.
+1. PR #96 has passed normal CI and automated review. The release owner may
+   merge the bounded `urllib3==2.8.0` correction independently of the residual
+   decision; it protects TowerScout's imported HTTP client even though pip's
+   vendored inventory continues to trigger the key-based scanner.
 2. Do not modify the accepted baseline merely to make the gate pass. Present
    all 14 scanner keys, including the pip-vendor explanation and the 12 no-fix
    operating-system keys, to the release owner for an explicit residual-risk

@@ -47,8 +47,10 @@ redesign remains preserved and deferred, not a release gate.
   HIGH keys. TowerScout's imported HTTP client is now locally pinned and
   verified at `urllib3==2.8.0`, but two scan keys persist against pip's vendored
   2.7.0 copy; the other 12 have no Debian bookworm fix. All residual scan keys
-  require an explicit disposition or fixed upstream packages. No image or
-  package was published.
+  require an explicit disposition or fixed upstream packages. Draft PR #96
+  contains the bounded dependency correction; all required CI checks passed
+  at `2e4f0c4`, and Codex review reported no major issues. No baseline was
+  amended and no image or package was published.
 - Full readiness requires actual YOLO and EfficientNet work on the required
   device in all four profiles plus independent-computer reproduction.
 - Static checks, health/readiness, mocked tests, or CPU fallback are not
@@ -73,7 +75,8 @@ the bounded `rc4` browser-download Docker CPU diagnostic passed without a
 larger blocker, and its documentation findings are merged through PR #94.
 PR #95 then reconciled the accepted project state. The local `rc5` rehearsal
 from `a24d369` passes functional and documentation checks but is blocked from
-publication by 14 new HIGH Trivy keys. Land the bounded `urllib3` fix, obtain
+publication by 14 new HIGH Trivy keys. The bounded `urllib3` fix is in draft
+PR #96 with required CI and Codex review green. Merge that correction, obtain
 an explicit residual disposition, then build exact-digest artifacts and
 complete final browser-download plus independent-host evidence
 **Priority**: CRITICAL

@@ -206,6 +206,8 @@ Fresh Trivy `0.69.3` scans produced identical CPU/CUDA results and blocked on
 `urllib3` keys persist against pip 26.2.1's vendored 2.7.0 copy; the other 12
 keys have no Debian bookworm fix and affect five CVEs whose reported paths are
 outside TowerScout's supported TLS/DTLS/image workflows. Publication remains
-stopped pending normal review of the bounded dependency fix and an explicit
-owner disposition of all residual scanner keys. See
+stopped pending merge of draft PR #96 and an explicit owner disposition of
+all residual scanner keys. All required PR #96 CI checks passed at `2e4f0c4`,
+and the requested Codex review reported no major issues; neither result amends
+the baseline or authorizes publication. See
 [the full security disposition](./TASK-103/RC5-PREPUBLICATION-SECURITY-DISPOSITION-2026-10-06.md).
