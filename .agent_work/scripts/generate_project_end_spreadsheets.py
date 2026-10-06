@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import argparse
+import base64
+import gzip
+import hashlib
+import json
 import re
 import zipfile
-from collections import Counter, defaultdict
+from collections import Counter
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Iterable
 from xml.sax.saxutils import escape
 
 
@@ -15,6 +19,66 @@ OUTPUT_DIR = AGENT_WORK / "context" / "analysis" / "project-end-planning"
 AS_OF = date(2026, 10, 1)
 PROJECT_END = date(2026, 10, 31)
 OPERATIONAL_CLOSEOUT = date(2026, 10, 30)
+SOURCE_SNAPSHOT = (
+    OUTPUT_DIR
+    / "TowerScout-Comprehensive-Backlog-source-snapshot-2026-10-01.json.gz.b64"
+)
+SOURCE_SNAPSHOT_GZIP_SHA256 = "8498d834590b1b386ce2b9b9a638a0aef1919e099e3ddf0dd8f2deffca73cb1d"
+SOURCE_SNAPSHOT_JSON_SHA256 = "d7a23d4961e8e9e90da01e0270ad2f9b1f205470e650fc8a445502b210dbf1db"
+SOURCE_SNAPSHOT_COUNTS = {
+    "task_registry": 70,
+    "raw_unchecked": 711,
+    "source_register": 122,
+}
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Regenerate the fixed October 1 project-end planning snapshot."
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=OUTPUT_DIR,
+        help="Destination directory; defaults to the tracked historical artifact folder.",
+    )
+    return parser.parse_args()
+
+
+def load_source_snapshot() -> dict[str, object]:
+    try:
+        encoded = "".join(SOURCE_SNAPSHOT.read_text(encoding="ascii").split())
+        compressed = base64.b64decode(encoded, validate=True)
+        if hashlib.sha256(compressed).hexdigest() != SOURCE_SNAPSHOT_GZIP_SHA256:
+            raise RuntimeError("compressed snapshot SHA-256 does not match")
+        payload = gzip.decompress(compressed)
+        if hashlib.sha256(payload).hexdigest() != SOURCE_SNAPSHOT_JSON_SHA256:
+            raise RuntimeError("JSON snapshot SHA-256 does not match")
+        snapshot = json.loads(payload)
+    except (OSError, ValueError, gzip.BadGzipFile, json.JSONDecodeError) as exc:
+        raise RuntimeError(
+            f"Cannot read the fixed October 1 source snapshot at {SOURCE_SNAPSHOT}. "
+            "Do not regenerate the dated workbooks from the live task tree."
+        ) from exc
+    if snapshot.get("schema_version") != 1 or snapshot.get("as_of") != AS_OF.isoformat():
+        raise RuntimeError("source snapshot identity does not match the dated workbooks")
+    for key, expected in SOURCE_SNAPSHOT_COUNTS.items():
+        rows = snapshot.get(key)
+        if not isinstance(rows, list) or len(rows) != expected:
+            raise RuntimeError(
+                f"source snapshot {key} count mismatch: expected {expected}, "
+                f"found {len(rows) if isinstance(rows, list) else 'invalid'}"
+            )
+
+    # JSON has no integer typing metadata from the workbook's inline-string cells.
+    for row in snapshot["task_registry"]:
+        row[7] = int(row[7])
+    for row in snapshot["raw_unchecked"]:
+        row[1] = int(row[1])
+    for row in snapshot["source_register"]:
+        row[2] = int(row[2])
+        row[3] = int(row[3])
+    return snapshot
 
 
 def clean_text(value: object) -> str:
@@ -445,231 +509,6 @@ def build_open_actions() -> list[list[object]]:
     return rows
 
 
-def metadata_block(lines: list[str], label: str) -> str:
-    marker = f"**{label}**:"
-    for index, line in enumerate(lines):
-        if line.startswith(marker):
-            parts = [line[len(marker):].strip()]
-            for following in lines[index + 1 :]:
-                if not following.strip() or following.startswith("**") or following.startswith("#"):
-                    break
-                if following.startswith(" ") or not following.startswith(("-", "|")):
-                    parts.append(following.strip())
-                else:
-                    break
-            return " ".join(part for part in parts if part)
-    return ""
-
-
-CURRENT_DISPOSITIONS = {
-    "068": "Completed current-sprint record; move at sprint closeout",
-    "087": "Archived / deferred; no October implementation",
-    "089": "Blocked / owner-gated preparation and possible adoption",
-    "091": "At risk; replacement package, browser download, and independent host remain",
-    "092": "In progress; final artifact/external documentation remains",
-    "093": "In progress; independent-host recovery remains",
-    "095": "In progress; Phase B governance/handoff remains",
-    "097": "At risk; independent Podman proof remains",
-    "099": "Completed current-sprint record; move at sprint closeout",
-    "101": "Completed; unchecked PR #67 items are superseded, not open",
-    "103": "In progress; replacement package/browser/independent host remain",
-}
-
-
-BACKLOG_ONLY = {
-    "026": ("CPU Optimization", "Conditional"),
-    "027": ("Enhanced Error Handling", "Conditional"),
-    "028": ("Mobile Responsiveness", "Deferred / parking lot"),
-    "029": ("Multi-Provider Fallback", "Deferred"),
-    "058": ("Background Detection Jobs", "Deferred"),
-    "059": ("Backend Layer Decomposition", "Deferred"),
-    "060": ("Frontend Build Modernization", "Deferred"),
-    "061": ("Coordinated NumPy 2 Migration", "Deferred"),
-    "070": ("Restricted-Network Package Enhancements", "Conditional"),
-    "076": ("Provider API Key Exposure And Restriction Policy", "Required guidance / conditional code"),
-    "077": ("Public Release Manifest And Asset Import Hardening", "Evidence-selected"),
-    "078": ("Permissive Apache-Only Runtime Migration", "Deferred"),
-    "094": ("Evidence-Gated Support Snapshot", "Evidence-gated"),
-    "096": ("User-Initiated Exit And Container Stop", "Deferred"),
-}
-
-
-def build_task_registry() -> list[list[object]]:
-    grouped: dict[str, list[Path]] = defaultdict(list)
-    task_re = re.compile(r"TASK-(\d{3})", re.IGNORECASE)
-    for base in (AGENT_WORK / "tasks" / "active", AGENT_WORK / "tasks" / "completed"):
-        for path in sorted(base.glob("TASK-*.md")):
-            match = task_re.search(path.name)
-            if match:
-                grouped[match.group(1)].append(path)
-
-    rows: list[list[object]] = []
-    for task_id in sorted(set(grouped) | set(BACKLOG_ONLY), key=int):
-        paths = grouped.get(task_id, [])
-        title = BACKLOG_ONLY.get(task_id, ("", ""))[0]
-        file_statuses = []
-        created = ""
-        effort = ""
-        unchecked = 0
-        locations = []
-        for path in paths:
-            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-            locations.append(path.relative_to(ROOT).as_posix())
-            heading = next((line for line in lines if re.match(r"^# TASK-\d{3}:", line)), "")
-            if heading and not title:
-                title = heading.split(":", 1)[1].strip()
-            status = metadata_block(lines, "Status")
-            if status:
-                file_statuses.append(status)
-            created = created or metadata_block(lines, "Created")
-            effort = effort or metadata_block(lines, "Estimated Effort")
-            unchecked += sum(1 for line in lines if re.match(r"^- \[ \]", line))
-
-        if task_id in CURRENT_DISPOSITIONS:
-            current = CURRENT_DISPOSITIONS[task_id]
-            authority = "Current board"
-            included = "Yes" if task_id in {"089", "091", "092", "093", "095", "097", "103"} else "No"
-        elif task_id in BACKLOG_ONLY:
-            current = BACKLOG_ONLY[task_id][1]
-            authority = "Current backlog"
-            included = "Yes"
-        else:
-            current = "Historical / completed; not current work unless reselected"
-            authority = "Completed-task history"
-            included = "No"
-        interpretation = (
-            "Current open work is represented in the curated Open Actions sheet."
-            if included == "Yes"
-            else "Unchecked boxes or old status text are historical residue and do not reopen the task."
-        )
-        rows.append(
-            [
-                f"TASK-{task_id}",
-                title or "Title not recovered from top-level task file",
-                current,
-                authority,
-                " | ".join(file_statuses) if file_statuses else "No top-level task status",
-                created or "Not recorded in current task metadata",
-                effort or "Not estimated in current task metadata",
-                unchecked,
-                included,
-                interpretation,
-                "\n".join(locations) if locations else ".agent_work/task-backlog.md",
-            ]
-        )
-    return rows
-
-
-def iter_unchecked_items(path: Path) -> Iterable[tuple[int, str, str]]:
-    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    heading = ""
-    index = 0
-    while index < len(lines):
-        line = lines[index]
-        if line.startswith("#"):
-            heading = line.lstrip("#").strip()
-        match = re.match(r"^- \[ \]\s*(.*)", line)
-        if not match:
-            index += 1
-            continue
-        parts = [match.group(1).strip()]
-        cursor = index + 1
-        while cursor < len(lines):
-            follow = lines[cursor]
-            if not follow.strip():
-                break
-            if re.match(r"^(?:#{1,6}\s|[-*+]\s|\d+\.\s)", follow):
-                break
-            if follow.startswith(" "):
-                parts.append(follow.strip())
-                cursor += 1
-                continue
-            break
-        yield index + 1, heading, " ".join(parts)
-        index = max(cursor, index + 1)
-
-
-def source_authority(path: Path) -> tuple[str, str, str]:
-    rel = path.relative_to(ROOT).as_posix()
-    if "/tasks/completed/" in "/" + rel:
-        return "Historical task", "No", "Historical checklist residue; do not reopen without owner reselection."
-    if "TASK-101-" in path.name:
-        return "Completed / superseded", "No", "PR #67 integration boxes were superseded by ADR-021."
-    if "TASK-099-" in path.name or "TASK-068-" in path.name:
-        return "Completed current-sprint record", "No", "Completed; retain until sprint closeout."
-    if "/tasks/active/" in "/" + rel:
-        return "Current task detail", "Yes", "Reconcile with the curated Open Actions sheet and current board."
-    if path.name == "2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md":
-        return "Historical roadmap", "No", "Immediate PR #67/Task-087 sequence is superseded; milestones remain context."
-    if path.name == "2026-09-21-windows-deployment-hardening-v2.md":
-        return "Current controlling work plan", "Partial", "Use the W00-W10 Crosswalk; unchecked plan boxes were not maintained as a live tracker."
-    if path.name == "2026-09-21-post-day-7-backlog-and-handoff-guide.md":
-        return "Current suggested closeout guide", "Yes", "Mapped into release, documentation, sanitization, backlog, and handoff actions."
-    return "Supporting or historical status", "No", "Consult current board and source precedence before treating as work."
-
-
-def build_raw_unchecked() -> list[list[object]]:
-    paths: list[Path] = []
-    paths.extend((AGENT_WORK / "tasks").rglob("*.md"))
-    for folder in (
-        AGENT_WORK / "context" / "status" / "Handoff-Planning",
-        AGENT_WORK / "context" / "status" / "Reprioritization Effort",
-    ):
-        paths.extend(folder.rglob("*.md"))
-    rows: list[list[object]] = []
-    for path in sorted(set(paths)):
-        authority, included, guidance = source_authority(path)
-        for line_number, heading, item in iter_unchecked_items(path):
-            rows.append(
-                [
-                    path.relative_to(ROOT).as_posix(),
-                    line_number,
-                    heading,
-                    item,
-                    authority,
-                    included,
-                    guidance,
-                ]
-            )
-    return rows
-
-
-def build_source_register() -> list[list[object]]:
-    paths: list[Path] = []
-    paths.extend((AGENT_WORK / "tasks").rglob("*.md"))
-    for folder in (
-        AGENT_WORK / "context" / "status" / "Handoff-Planning",
-        AGENT_WORK / "context" / "status" / "Reprioritization Effort",
-    ):
-        paths.extend(folder.rglob("*.md"))
-    rows: list[list[object]] = []
-    for path in sorted(set(paths)):
-        rel = path.relative_to(ROOT).as_posix()
-        content = path.read_text(encoding="utf-8", errors="replace")
-        authority, _, guidance = source_authority(path)
-        if "/tasks/active/" in "/" + rel and path.parent.name == "active":
-            method = "Full read for current task or structured current-status review"
-        elif "/tasks/active/TASK-103/" in "/" + rel:
-            method = "Structured evidence/status scan; current open gates reconciled"
-        elif "/tasks/completed/" in "/" + rel:
-            method = "Structured metadata and unchecked-checklist scan; historical body not treated as current authority"
-        elif "Reprioritization Effort" in rel or "Handoff-Planning" in rel:
-            method = "Full read for controlling/current guides; structured scan for historical evidence files"
-        else:
-            method = "Structured documentation scan"
-        rows.append(
-            [
-                rel,
-                authority,
-                len(content.splitlines()),
-                len(content.encode("utf-8")),
-                method,
-                guidance,
-            ]
-        )
-    return rows
-
-
 def build_w_crosswalk() -> list[list[object]]:
     return [
         ["W00", "Direction and agent entrypoints", "Complete", "ADR-021/022/023, board, agent instructions, skills, and current direction are aligned.", "Keep aligned through closeout; final entrypoint check is part of H09/H13.", "Not a current implementation blocker."],
@@ -708,11 +547,11 @@ def overview_rows(action_rows: list[list[object]], raw_rows: list[list[object]],
     ]
 
 
-def make_backlog_workbook() -> Path:
+def make_backlog_workbook(output_dir: Path, snapshot: dict[str, object]) -> Path:
     actions = build_open_actions()
-    registry = build_task_registry()
-    raw = build_raw_unchecked()
-    sources = build_source_register()
+    registry = snapshot["task_registry"]
+    raw = snapshot["raw_unchecked"]
+    sources = snapshot["source_register"]
     sheets = [
         {
             "name": "Read Me",
@@ -775,7 +614,7 @@ def make_backlog_workbook() -> Path:
             "table_name": "SourceRegister",
         },
     ]
-    path = OUTPUT_DIR / "TowerScout-Comprehensive-Backlog-and-Next-Steps-2026-10-01.xlsx"
+    path = output_dir / "TowerScout-Comprehensive-Backlog-and-Next-Steps-2026-10-01.xlsx"
     write_workbook(path, sheets, "TowerScout Comprehensive Backlog and Next Steps")
     return path
 
@@ -967,7 +806,7 @@ def build_source_mapping() -> list[list[object]]:
     ]
 
 
-def make_plan_workbook() -> Path:
+def make_plan_workbook(output_dir: Path) -> Path:
     weekly = build_weekly_plan()
     calendar = build_calendar()
     milestones = build_milestones()
@@ -1046,7 +885,7 @@ def make_plan_workbook() -> Path:
             "table_name": "PlanSources",
         },
     ]
-    path = OUTPUT_DIR / "TowerScout-Project-End-Plan-2026-10-01-to-2026-10-31.xlsx"
+    path = output_dir / "TowerScout-Project-End-Plan-2026-10-01-to-2026-10-31.xlsx"
     write_workbook(path, sheets, "TowerScout Project-End Plan")
     return path
 
@@ -1079,15 +918,23 @@ def validate_xlsx(path: Path, expected_sheet_count: int) -> None:
 
 
 def main() -> int:
-    backlog = make_backlog_workbook()
-    plan = make_plan_workbook()
+    args = parse_args()
+    output_dir = args.output_dir.resolve()
+    snapshot = load_source_snapshot()
+    backlog = make_backlog_workbook(output_dir, snapshot)
+    plan = make_plan_workbook(output_dir)
     validate_xlsx(backlog, 6)
     validate_xlsx(plan, 7)
-    print(f"created: {backlog.relative_to(ROOT)} ({backlog.stat().st_size} bytes)")
-    print(f"created: {plan.relative_to(ROOT)} ({plan.stat().st_size} bytes)")
-    print(f"weekday count through operational closeout: {len(weekday_dates(AS_OF, OPERATIONAL_CLOSEOUT))}")
+    print(f"source snapshot: {SOURCE_SNAPSHOT}")
+    print(f"source snapshot JSON SHA-256: {SOURCE_SNAPSHOT_JSON_SHA256}")
+    print(f"created: {backlog} ({backlog.stat().st_size} bytes)")
+    print(f"created: {plan} ({plan.stat().st_size} bytes)")
+    print(
+        "weekday count through operational closeout: "
+        f"{len(weekday_dates(AS_OF, OPERATIONAL_CLOSEOUT))}"
+    )
     print(f"curated open-action rows: {len(build_open_actions())}")
-    print(f"raw unchecked checklist rows: {len(build_raw_unchecked())}")
+    print(f"raw unchecked checklist rows: {len(snapshot['raw_unchecked'])}")
     return 0
 
 

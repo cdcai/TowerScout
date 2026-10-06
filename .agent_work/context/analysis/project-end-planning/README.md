@@ -12,6 +12,10 @@
 - `TowerScout-Project-End-Plan-2026-10-01-to-2026-10-31.xlsx`
   contains the prioritized weekly plan, weekday calendar, milestones, capacity
   allocation, risks/decisions, and source mapping.
+- `TowerScout-Comprehensive-Backlog-source-snapshot-2026-10-01.json.gz.b64`
+  is the immutable, compressed source-table snapshot for the dated backlog
+  workbook. It contains the original 70 task-registry rows, 711 raw unchecked
+  items, and 122 source-register rows.
 
 ## Interpretation Boundary
 
@@ -35,5 +39,11 @@ Run:
 .venv\Scripts\python.exe .agent_work\scripts\generate_project_end_spreadsheets.py
 ```
 
-The generator validates ZIP integrity and parses every generated Open XML
-part. The October 1 artifacts were also opened successfully in Microsoft Excel.
+The generator validates the snapshot identity, row counts, compressed
+SHA-256, and JSON SHA-256 before use. It also validates ZIP integrity and
+parses every generated Open XML part. It does not read the live task tree.
+The decoded snapshot JSON SHA-256 is
+`d7a23d4961e8e9e90da01e0270ad2f9b1f205470e650fc8a445502b210dbf1db`.
+Changing the source inventory requires a new as-of date and new artifact and
+snapshot filenames rather than overwriting the October 1 historical inventory.
+The October 1 artifacts were also opened successfully in Microsoft Excel.
