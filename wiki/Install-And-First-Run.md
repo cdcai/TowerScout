@@ -1,7 +1,7 @@
 # Install And First Run
 
 > **Audience:** New Windows users. **Applies to:** The next final Windows
-> release. **Last reviewed:** 2026-10-05. **Publication state:** Local draft;
+> release. **Last reviewed:** 2026-10-06. **Publication state:** Local draft;
 > final filenames and hashes will appear in the authoritative release record.
 
 This page keeps the first-use path continuous: prepare, download, verify,
@@ -129,8 +129,12 @@ In the Setup Wizard:
 4. save setup.
 
 Do not include the key in a screenshot or support message. If validation
-reports a certificate or TLS problem, use Local IT guidance rather than
-turning off certificate checking.
+reports a certificate or TLS problem such as `CERTIFICATE_VERIFY_FAILED`, stop
+and give Local IT the
+[certificate-repair workflow](Troubleshooting-And-Safe-Support#local-it-certificate-work).
+This can affect Google or Azure on a managed network and does not necessarily
+mean the key is wrong. Do not turn off certificate checking or add `-Apply` to
+a command unless Local IT has reviewed and approved the diagnostic result.
 
 ## 7. Try A Small Search
 

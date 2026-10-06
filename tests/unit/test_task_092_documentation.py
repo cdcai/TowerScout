@@ -228,6 +228,28 @@ def test_package_guide_covers_both_variants_and_separates_tls_phases():
     assert diagnostic_at < review_at < apply_at
 
 
+def test_wiki_tls_repair_is_discoverable_and_preserves_safe_phases():
+    credentials = _read("wiki/Google-And-Azure-API-Credentials.md")
+    install = _read("wiki/Install-And-First-Run.md")
+    troubleshooting = _read("wiki/Troubleshooting-And-Safe-Support.md")
+
+    repair_link = (
+        "Troubleshooting-And-Safe-Support#local-it-certificate-work"
+    )
+    assert repair_link in credentials
+    assert repair_link in install
+
+    assert "CERTIFICATE_VERIFY_FAILED" in troubleshooting
+    assert (
+        r".\scripts\repair-provider-tls.cmd -Provider google -Engine docker "
+        r"-Gpu off -Port 5000"
+    ) in troubleshooting
+    assert "run one diagnostic command\n   without `-Apply`" in troubleshooting
+    assert "complete command printed\n   by the diagnostic" in troubleshooting
+    assert r"docs\package-guide.md" in troubleshooting
+    assert "Do not disable TLS verification" in troubleshooting
+
+
 def test_setup_fallback_examples_preserve_the_users_selected_configuration():
     for relative_path in (
         "docs/quick-start.md",

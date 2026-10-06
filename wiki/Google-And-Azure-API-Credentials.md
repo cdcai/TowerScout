@@ -1,7 +1,7 @@
 # Google And Azure API Credentials
 
 > **Audience:** New users and Local IT. **Applies to:** The provider you choose
-> and its current terms. **Last reviewed:** 2026-10-05. **Publication state:**
+> and its current terms. **Last reviewed:** 2026-10-06. **Publication state:**
 > Local draft; current Google labels were checked against official provider
 > documentation, but final live setup remains part of candidate validation.
 
@@ -98,6 +98,14 @@ message category:
   restrictions;
 - **billing/account:** confirm the provider account and billing status;
 - **quota/rate limit:** review provider usage and quota controls; or
-- **certificate/TLS:** ask Local IT to inspect the managed-network trust path.
+- **certificate/TLS:** if the message or logs include
+  `CERTIFICATE_VERIFY_FAILED`, stop and give Local IT the
+  [certificate-repair workflow](Troubleshooting-And-Safe-Support#local-it-certificate-work).
+
+A certificate/TLS error usually means the TowerScout container does not yet
+trust a certificate authority used by the local network, proxy, or security
+software. It does not necessarily mean the Google or Azure credential is
+wrong, and it can affect either provider. Do not turn off certificate checking
+or guess at an `-Apply` command.
 
 Next, continue with [Install And First Run](Install-And-First-Run).
