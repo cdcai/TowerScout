@@ -1,5 +1,12 @@
 # TowerScout Deployment Plan v2 - Static Verification Record
 
+**ADR-023 amendment (2026-10-01):** The project selected an unsigned Windows
+control package with a narrower support boundary. References below to obtaining
+signing approval remain accurate descriptions of the September 21 review, but
+they are no longer an open requirement for the claimed standard profile.
+Signature-enforcing managed endpoints are out of scope; browser-download,
+authoritative-hash, ordinary-user wrapper, and independent-host proof remain.
+
 **Date:** September 21, 2026. **Source assessed:** `9276084d91807906c53e00060670692b27e38483`.
 
 **Documents:** [Prioritization v2](2026-09-21-windows-deployment-prioritization-v2.md) and [implementation plan v2](2026-09-21-windows-deployment-hardening-v2.md).

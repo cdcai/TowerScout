@@ -1,9 +1,9 @@
 # TASK-097: Podman CPU/GPU Final Path Qualification
 
-**Status**: AT_RISK - approved provider passes with Python 3.12; the running
-machine's explicit normal-user connection is verified rootless and the W03
-target-binding fix is merged; exact-package CPU/GPU and independent-host proof
-remain
+**Status**: AT_RISK - final `rc4` Podman CPU/GPU package paths pass on the
+first host, including provider workflows, TLS repair, cancellation recovery,
+exports, persistence, reboot restoration, and real CUDA execution;
+independent-host proof remains
 **Priority**: HIGH
 **Type**: C (Runtime Qualification)
 
@@ -90,3 +90,42 @@ network, machine, or connection state was changed.
 
 **Next**: Use merged commit `99858c2` to perform package `VerifyOnly` and the
 CPU rehearsal against the same explicit rootless connection.
+
+### 2026-09-30 - Final `rc4` Podman CPU/GPU Qualification
+
+**Objective**: Repeat the advertised Podman paths with the exact final local
+candidate packages and published image digests.
+
+**Execution**: Qualified the Podman CPU package on port 5233 and Podman CUDA
+package on port 5234 from source
+`541622556fb7999ee4e88fb1e44f7797b9da34f5`. Both used the package-pinned
+Compose provider and explicit normal-user Podman connection. Provider
+credentials were entered by the workstation owner; no secret value was read,
+copied, logged, or retained in evidence.
+
+**Validation**: PASS for the first-host local matrix. Both profiles reached
+`ready`, reported the exact pinned image digest, retained all eight named
+mounts through stop/relaunch, and preserved configured Google and Azure
+providers. Google and Azure each completed real estimate and detection work;
+controlled validation failure recovered in the same browser; cancellation
+returned HTTP 202 while the slot was held, the frontend waited for
+`retryReady`, and the immediate next detection passed. CSV/KML and dataset ZIP
+exports were nonempty and structurally valid. Provider TLS repair passed dry
+run, apply, fresh-process relaunch, and keyless provider probes. The CUDA
+profile executed a finite real kernel on `cuda` with capability 12.0 and no CPU
+fallback. No Docker Desktop Compose provider or volume-deleting operation was
+used.
+
+### 2026-09-30 - Exact-`rc4` Reboot Restoration
+
+**Validation**: PASS on the first host. The rootless Podman WSL machine was
+running after reboot; the retained CPU and CUDA containers were stopped, as
+expected, and were manually started in place without recreation. Both returned
+healthy on ports 5233/5234 with exact digests, assets/config `ok`, configured
+Google and Azure providers, keyless `tls_ok` for both providers, and eight
+mounts each. Google and Azure detection plus controlled-error recovery, review
+navigation, and valid dataset ZIP export passed on both profiles with zero page
+errors. Podman CUDA completed a finite capability-12.0 kernel on `cuda:0`.
+
+**Remaining**: Repeat the final package matrix on the independent Windows
+host.

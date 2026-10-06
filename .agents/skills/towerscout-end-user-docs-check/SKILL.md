@@ -46,6 +46,10 @@ Read relevant files that exist among:
 6. Troubleshooting includes Podman/Docker/Compose, ports, Podman machine, TLS CA, provider-key validation, missing assets, and logs/status commands.
 7. Support instructions collect useful evidence without secrets, raw logs, raw screenshots, or sensitive locations.
 8. License/source/provider/model/data notice locations are described.
+9. The unsigned Windows support boundary is explicit: supported wrapper path,
+   process-scoped execution-policy behavior, managed-endpoint exclusions,
+   authoritative hash verification before extraction, and no instructions to
+   weaken persistent policy or endpoint protection.
 
 ## Inspect commands (read-only)
 

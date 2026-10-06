@@ -1,6 +1,6 @@
 # TowerScout Current Technical Design
 
-**Last Updated**: September 22, 2026
+**Last Updated**: October 1, 2026
 **Scope**: Main-based Windows deployment delivery, four-profile runtime
 qualification, and cdcai handoff through October 2026
 **Archived Pre-Rebaseline Design**:
@@ -42,6 +42,23 @@ The application includes:
   explicit adoption approval.
 - The fork remains available as pilot and provenance history.
 
+## Windows Host-Script Trust Boundary
+
+ADR-023 selects an unsigned Windows control package. The supported user path is
+the supplied `.cmd` and `.bat` entrypoints, which invoke Windows PowerShell 5.1
+with a process-scoped execution-policy setting. That setting does not change
+persistent machine policy and does not override WDAC, AppLocker,
+constrained-language, antivirus/EDR, or organization-specific allowlisting.
+
+The standard package therefore supports only endpoints where the user and
+organization already permit that wrapper path. Signature-enforcing managed
+endpoints require site approval, allowlisting, or internal signing and are not
+part of the standard support claim. Artifact trust is anchored in the
+authoritative release record, exact SHA-256 values, internal checksums, source
+identity, and digest-pinned OCI images. Clean-machine validation begins with a
+real browser download and verifies the official hash before extraction or
+unblocking.
+
 ## Runtime Profiles
 
 The final supported matrix contains four profiles:
@@ -77,13 +94,14 @@ Exit/helper design remains deferred with no automatic restart date.
 ## Detection Cancellation Readiness Boundary
 
 The process-wide detection lock is the authoritative next-request readiness
-boundary. `/abort` signals the active run and waits a bounded interval to
-acquire and release that lock. HTTP `200` with `retryReady=true` means a next
-detection may start; HTTP `202` with `retryReady=false` means the current model
-step still owns the slot. The frontend keeps its progress overlay and
-cancellation-pending admission guard active until readiness is confirmed. This
-is bounded hardening of the existing synchronous detection path, not the
-deferred Task-058 background-job architecture.
+boundary. `/abort` signals the active run and returns promptly. HTTP `200` with
+`retryReady=true` means the slot is already free; HTTP `202` with
+`retryReady=false` means the current model step still owns it. The frontend
+then polls `/api/detection/progress`, whose `retryReady` value is derived from
+the same lock, and keeps its progress overlay and cancellation-pending
+admission guard active until the run is terminal and the slot is free. This is
+bounded hardening of the existing synchronous detection path, not the deferred
+Task-058 background-job architecture.
 
 ## Podman Qualification Boundary
 
@@ -179,7 +197,10 @@ ADR-021 / W00 main-based direction
 TASK-091 + TASK-097 early package and Podman qualification
         |
         v
-TASK-091/092/093 qualification, docs, and recovery
+ADR-023 unsigned package boundary
+        |
+        v
+TASK-091/092/093 qualification, packaged docs, and recovery
         |
         +--> TASK-094 only if pilot/support evidence justifies it
         |
@@ -210,6 +231,8 @@ security checks where practical. Manual evidence remains required for:
 - live-provider browser behavior
 - asset-backed package smoke
 - owner-operated release and recovery rehearsal
+- browser-downloaded unsigned ZIP behavior, downloaded-file marking, official
+  hash verification, and ordinary-user wrapper execution
 
 State the selected engine/profile before runtime-dependent validation and
 verify actual availability. When the current session grants W00-W10
@@ -227,3 +250,5 @@ non-runtime work continues.
   replacement.
 - Do not mutate `v0.1.2` or publish `v0.1.3` final prematurely.
 - Do not change cdcai before explicit owner authorization.
+- Do not instruct users to disable endpoint protection, weaken persistent
+  execution policy, or override an organizational application-control rule.

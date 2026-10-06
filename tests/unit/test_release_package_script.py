@@ -188,6 +188,8 @@ def test_package_release_stages_digest_pinned_image():
             "user-guide.html",
             "project-overview.md",
             "project-overview.html",
+            "local-it-administrator-guide.md",
+            "local-it-administrator-guide.html",
             "towerscout-docs.css",
             "v1-rc1-quick-start.md",
             "v1-rc1-quick-start.html",

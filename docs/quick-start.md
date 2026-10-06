@@ -1,734 +1,607 @@
 # TowerScout Quick Start
 
-**Applies to**: Current V1 package path through the stable `v0.1.0` closeout,
-unless release notes say otherwise
-**Last reviewed**: 2026-09-24
-**Audience**: Pilot users and first-line support
-**Runtime scope**: The CPU Application Package is the normal path. The CUDA
-12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
-support-assigned paths after workstation-specific engine, Compose-provider,
-and NVIDIA validation.
+**Applies to**: The next documentation-aligned Windows release identified by
+the authoritative GitHub release record.
 
-This is the short Windows pilot path for the TowerScout `agpl-yolo` release
-package. It assumes a Windows 11 AMD64 workstation, Docker Desktop as the
-primary controlled runtime, normal outbound internet access, and one approved
-Google Maps or Azure Maps provider key.
+**Last reviewed**: 2026-10-05.
 
-For detailed support guidance, see `docs/package-guide.md`.
+**Audience**: People using TowerScout for the first time, including people who
+have not previously used PowerShell, Docker, Podman, GitHub Releases, container
+images, API keys, or SHA-256 checks.
 
-Terms used in this guide:
+**Release state**: Draft. Final filenames, hashes, tested combinations, and
+known limitations must be inserted in the release record before publication.
+That authoritative release record controls which package is supported.
 
-- **Application Package**: the smaller TowerScout app/control ZIP that contains
-  scripts, docs, Compose files, and release metadata. There are two variants:
-  `cpu` for normal/non-GPU use and `cuda128` for support-validated NVIDIA GPU
-  workstations.
-- **Model & Data Package**: the larger asset ZIP, also called the asset bundle,
-  that contains model weights and ZIP-code data. The CPU and CUDA Application
-  Packages use the same Model & Data Package for this release path.
+TowerScout is a local Windows application that helps a person review aerial or
+satellite images for possible cooling towers. Its results require human review.
+
+## The Three Independent Choices
+
+You choose each item independently. These options are not assigned by project
+support.
+
+1. **Docker Desktop or Podman Desktop** runs TowerScout in a Linux container.
+2. **CPU or a compatible NVIDIA GPU** processes the images. CPU is simpler;
+   GPU can be faster when the exact hardware and engine path are supported.
+3. **Google Maps or Azure Maps** supplies the map and imagery. You need a
+   usable credential for only one provider.
+
+If you are unsure, start with Docker CPU and the provider account you can
+properly own and secure. You may instead choose any other supported combination
+when its requirements are met.
 
 ## Before You Start
 
-Install or confirm these prerequisites before opening the TowerScout package.
-If your workstation is managed by IT, ask your site administrator before
-installing WSL, Docker Desktop, Podman, or provider credentials.
+### Check The Computer
 
-- Windows 11 on AMD64.
-- Windows PowerShell. This is included with Windows.
-- A modern browser such as Microsoft Edge or Google Chrome.
-- WSL 2 and hardware virtualization support for Docker Desktop's normal Windows
-  Linux-container backend. Docker's current Windows requirements include WSL
-  `2.1.5` or later, virtualization enabled in BIOS/UEFI, and at least 8 GB RAM.
-- Normal outbound internet access so the container engine can pull the pinned
-  TowerScout image from GHCR and TowerScout can reach the selected map provider.
-- Enough local disk space for the selected Application Package, Model & Data
-  Package, container image, and Docker or Podman volumes. Plan for at least
-  `15 GB` free for the CPU package. The measured CUDA image is `14.4 GB`;
-  plan for at least `35 GB` free for its pull/unpack plus assets and volumes,
-  and at least `60 GB` for a support-directed source qualification build.
-- One container engine, selected as follows:
-  - Docker Desktop is the primary pilot path. During Docker Desktop
-    installation, keep the WSL 2 backend selected when prompted, start Docker
-    Desktop from the Windows Start menu, and wait until Docker Desktop reports
-    that it is running.
-  - Podman is a qualified package-runtime option only when support tells you to
-    use it and the workstation already has a running Podman machine plus an
-    approved non-Docker-Desktop Compose provider. Podman GPU also requires an
-    NVIDIA GPU, current Windows NVIDIA drivers, WSL2 Podman, and NVIDIA CDI
-    validation.
-- One valid site/user-owned Google Maps or Azure Maps provider key.
+1. Open **Settings > System > About**.
+2. Confirm the computer runs Windows 11 and says **64-bit operating system,
+   x64-based processor**. ARM64, macOS, and Windows Server are not supported by
+   this package.
+3. Record **Installed RAM** and compare it with the final release's tested
+   minimum.
+4. Open File Explorer, select **This PC**, and check free disk space. Plan at
+   least 15 GB for the CPU package or 35 GB for the CUDA package, plus room for
+   your exports. The final release note controls if it requires more.
+5. Windows Subsystem for Linux 2 (**WSL 2**) is the Windows feature that lets
+   Docker or Podman run TowerScout's Linux container. Select the Windows
+   **Start** button, type `Windows PowerShell`, and open **Windows PowerShell**.
+   Use the normal window; do not select **Run as administrator** unless a step
+   explicitly says administrator approval is required. Then run:
 
-You do not need Git, Python, Conda, Node.js, VS Code, or a source-code checkout
-for the normal package path.
+   ```powershell
+   wsl --status
+   ```
 
-### CUDA Qualification Boundary
+   If WSL is missing, follow Microsoft's
+   [WSL installation guide](https://learn.microsoft.com/windows/wsl/install).
+   Enabling Windows features or restarting may require administrator or Local
+   IT approval.
 
-The CUDA 12.8 package expects Volta-or-newer hardware, but only the exact GPU,
-Windows driver, WSL, engine, Compose provider, and toolkit combinations listed
-in the release notes are qualified. Maxwell and Pascal are unsupported by the
-CUDA package; use the CPU package or `-Gpu off`. Install a current NVIDIA or
-OEM production Windows driver that lists your exact GPU. Do not install a Linux
-display driver inside WSL.
+### Choose And Prepare One Engine
 
-If readiness reports that the GPU is newer or older than the image's compiled
-architecture list, stop GPU qualification and use the correct release package
-or the CPU path; do not mask the mismatch with environment variables. Podman
-users must refresh and reverify the CDI specification after a Windows NVIDIA
-driver update before restarting GPU mode.
+You do not need both.
 
-Unless support has explicitly assigned you the Podman path, stop here and
-contact your site administrator or support lead if Docker Desktop is not
-already installed and approved on your workstation. Also stop if you do not
-already have a valid restricted provider key.
+#### Docker Desktop
 
-If both Docker and Podman are installed, the launcher's automatic engine
-selection can choose Docker first. If support or local policy tells you to use
-Podman, pass `-Engine podman` on every helper command.
-
-### If Docker Desktop Or WSL 2 Is Not Ready
-
-If support asks you to check WSL 2, open PowerShell as Administrator and run:
-
-```powershell
-wsl --status
-wsl --list --verbose
-```
-
-Expected result: WSL is installed, and any listed Linux distribution uses
-version `2`. If WSL is not installed and your site allows you to install it,
-Microsoft's current install path is:
-
-```powershell
-wsl --install
-```
-
-Restart the computer after installation if Windows asks. The first Linux
-distribution launch may ask you to create a Linux username and password; that
-is normal WSL setup and is separate from your Windows password.
-
-After Docker Desktop is installed, open Docker Desktop from the Start menu. In
-Docker Desktop Settings, the WSL 2 based engine should be selected when the
-option is visible. Then open a normal PowerShell window and run:
+Follow Docker's current
+[Windows installation instructions](https://docs.docker.com/desktop/setup/install/windows-install/).
+Confirm your organization's Docker Desktop licensing and installation policy.
+Use the supported WSL 2 Linux-container backend, start Docker Desktop, and wait
+until it reports that it is running.
 
 ```powershell
 docker --version
 docker compose version
 ```
 
-Expected result: both commands print version information. If either command is
-not recognized or says Docker is not running, keep Docker Desktop open and ask
-support before continuing.
+Both commands must print version information.
 
-### How To Run The Commands In This Guide
+#### Podman Desktop
 
-Use Windows PowerShell, not the WSL/Ubuntu terminal, for the package commands.
+Follow Podman Desktop's current
+[Windows installation instructions](https://podman-desktop.io/docs/installation/windows-install).
+During onboarding, install Podman and create the default WSL 2 machine. In
+Podman Desktop this is under **Settings > Resources**.
 
-To open PowerShell in a folder:
-
-1. Open File Explorer.
-2. Open the folder that contains the downloaded release files or extracted
-   TowerScout package.
-3. Click the address bar at the top of File Explorer.
-4. Type `powershell` and press Enter.
-
-Expected result: a blue or black PowerShell window opens, and the prompt shows
-the folder path. Copy one command at a time from this guide, paste it into
-PowerShell, and press Enter. Commands that start with `.\` run a script from
-the current folder.
-
-## Stop And Contact Support
-
-Stop before continuing and contact your support lead if any of these happen:
-
-- Unless support explicitly assigned you the Podman path, Docker Desktop is not
-  installed, not approved, or cannot start.
-- WSL is not installed, or `wsl --list --verbose` shows version `1` and you do
-  not have administrator approval to update it.
-- TowerScout setup reports that a ZIP checksum does not match its `.sha256`
-  file.
-- The asset import reports missing, corrupt, or hash-failed files.
-- TowerScout reports readiness state `fatal`.
-- Provider validation repeatedly fails after you confirm the key is correct.
-  On managed networks, this may mean the container does not trust the local
-  TLS inspection certificate; support can import the site CA without needing
-  your provider key.
-
-Do not troubleshoot by sharing provider keys, full `.env` files, raw logs, raw
-screenshots, private AOIs, browser network traces, cached provider responses,
-or exported datasets unless your site has an approved handling procedure.
-
-## 1. Get The Release Files From GitHub Releases
-
-For the July 2026 pilot, use the exact validated `v0.1.2` release from the
-development fork. The existing `cdcai/TowerScout` repository remains unchanged
-while feedback is collected and is not the pilot download source.
-
-In your browser, open the TowerScout GitHub repository release page:
-
-```text
-https://github.com/J-Schulein/TowerScout/releases
-```
-
-Open the exact release that support told you to use. If support provides a
-direct release URL, use that link. In the examples below, replace
-`<release-version>` with the exact release tag or filename text from that
-release.
-
-In the release `Assets` section, download one Application Package variant and
-the shared Model & Data Package. Most browsers save downloaded files to your
-Windows `Downloads` folder.
-
-After the downloads finish, create a new empty working folder, such as:
-
-```text
-C:\Users\<you>\Documents\TowerScoutUAT
-```
-
-Copy the four downloaded TowerScout files from your `Downloads` folder and
-paste them into this `TowerScoutUAT` working folder.
-
-Download these files from the same release:
-
-- CPU Application Package ZIP for normal users:
-  `towerscout-<release-version>-cpu.zip`
-- CPU Application Package checksum:
-  `towerscout-<release-version>-cpu.zip.sha256`
-- Model & Data Package ZIP: `towerscout-<release-version>-assets-<asset-version>.zip`
-- Model & Data Package checksum:
-  `towerscout-<release-version>-assets-<asset-version>.zip.sha256`
-
-Use the CUDA package only when support assigns GPU validation:
-
-- CUDA Application Package ZIP:
-  `towerscout-<release-version>-cuda128.zip`
-- CUDA Application Package checksum:
-  `towerscout-<release-version>-cuda128.zip.sha256`
-
-Keep these four files together in the `TowerScoutUAT` working folder. Only the
-Application Package ZIP is extracted in the normal setup path. Leave the Model
-& Data Package ZIP and both `.sha256` files as files; do not extract or move
-them into the `assets\` folder.
-
-Do not use GitHub's automatic `Source code (zip)` or `Source code (tar.gz)`
-downloads for normal pilot setup. Those files are source snapshots, not the
-TowerScout release package. Do not use the green GitHub `Code` button for the
-normal pilot install.
-
-## 2. Confirm The Release Files Match
-
-Before extracting anything, confirm the folder contains these four files from
-the same release:
-
-- `towerscout-<release-version>-cpu.zip`
-- `towerscout-<release-version>-cpu.zip.sha256`
-- `towerscout-<release-version>-assets-<asset-version>.zip`
-- `towerscout-<release-version>-assets-<asset-version>.zip.sha256`
-
-If support assigned GPU validation, replace the `-cpu` Application Package and
-checksum with the matching `-cuda128` files. Do not keep both CPU and CUDA
-Application Package ZIPs in the same UAT working folder unless support asks you
-to compare them.
-
-The exact Model & Data Package filename can change by release. The release
-version must match between the Application Package and the Model & Data
-Package. Both ZIP filenames should contain the same release tag. If the
-versions differ, stop and download the matching files from the same GitHub
-release.
-
-Do not type the angle brackets from `<asset-version>` into PowerShell. Replace
-the placeholder with the exact filename text from the Model & Data Package ZIP
-you downloaded. Example only:
-
-```text
-towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip
-```
-
-## 3. Extract Only The Application Package
-
-In the `TowerScoutUAT` folder, extract only the Application Package ZIP:
-
-```text
-towerscout-<release-version>-cpu.zip
-```
-
-Extract it inside the `TowerScoutUAT` folder. Most Windows ZIP tools will
-create an extracted folder named:
-
-```text
-C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>-cpu
-```
-
-Do not extract the Model & Data Package ZIP for the normal setup path. After
-extracting only the Application Package ZIP, the working folder should look
-like this:
-
-```text
-TowerScoutUAT\
-  towerscout-<release-version>-cpu.zip
-  towerscout-<release-version>-cpu.zip.sha256
-  towerscout-<release-version>-assets-<asset-version>.zip
-  towerscout-<release-version>-assets-<asset-version>.zip.sha256
-  towerscout-<release-version>-cpu\
-    setup-towerscout.cmd
-    bootstrap.cmd
-    start.bat
-    scripts\
-    docs\
-    assets\
-```
-
-The `assets\` folder starts empty. Do not put the Model & Data Package ZIP
-inside `assets\`.
-
-## 4. Run TowerScout Setup
-
-Open PowerShell in the extracted application folder that contains
-`setup-towerscout.cmd`, then run:
-
-Before running setup, confirm Docker Desktop is open and running. If support
-assigned the Podman path, confirm the Podman machine is running and the Compose
-provider is available. For Docker GPU setup, see the optional Docker GPU track
-below for the GPU setup command.
+Podman runs the container inside a Linux virtual machine. **Rootless** means
+that the machine runs containers without using the Linux root administrator
+account. If Podman is installed but no machine exists, ordinary PowerShell can
+create and start the rootless default machine:
 
 ```powershell
-.\setup-towerscout.cmd
+podman machine init --now podman-machine-default
 ```
 
-The setup command checks prerequisites, finds the Model & Data Package ZIP in
-the extracted folder or parent `TowerScoutUAT` folder, verifies the matching
-`.sha256` files, rejects unsafe or nested asset ZIP layouts, imports the
-assets with hash verification, starts TowerScout, and explains readiness in
-plain language.
+Do not run that command if the machine already exists. Check it with:
 
-Expected result: PowerShell prints `TowerScout setup`, reports disk, port,
-engine, Compose, and WSL/Podman checks, verifies the ZIP checksums, imports
-assets, starts TowerScout, and opens:
+```powershell
+podman --version
+podman machine list
+podman system connection list
+```
+
+The tested TowerScout path also needs 64-bit Python 3.12 to install its pinned
+package-local **Compose provider**, the helper Podman uses to read TowerScout's
+multi-container configuration. Install Python 3.12 from the official
+[Python Windows downloads](https://www.python.org/downloads/windows/) if your
+organization permits it, then confirm:
+
+```powershell
+python --version
+```
+
+The package-local Compose provider is installed after the TowerScout
+Application Package is downloaded, verified, and extracted.
+
+### Optional NVIDIA GPU
+
+You may use CPU even if the computer has a GPU. For GPU processing:
+
+1. open Task Manager or Device Manager and record the exact NVIDIA GPU;
+2. run `nvidia-smi` in ordinary PowerShell;
+3. confirm the exact GPU, Windows driver, WSL, and engine combination appears
+   in the final release's tested-support list; and
+4. use the `-cuda128` Application Package.
+
+The CUDA 12.8 package expects Volta-or-newer NVIDIA hardware, but only listed
+combinations are qualified. Maxwell and Pascal must use the CPU package. Use a
+current Windows NVIDIA/OEM driver. NVIDIA states that the Windows driver
+supplies CUDA to WSL; never install a Linux NVIDIA display driver inside WSL.
+
+Podman GPU additionally requires NVIDIA Container Toolkit and **Container
+Device Interface (CDI)** configuration, which makes the NVIDIA GPU available
+inside the intended rootless machine. Follow the version-matched
+[Podman GPU guide](podman-gpu-user-guide.md) before setup. After you download,
+verify, and extract the Application Package, the guide has you install the
+approved provider and run this package-local check:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\enable-podman-gpu.ps1 -VerifyOnly
+```
+
+If that check says provisioning is required, use the guide's explicit
+provisioning step, repeat `-VerifyOnly`, and continue only after it reports
+`nvidia.com/gpu=all`.
+
+### Prepare One Map Provider Credential
+
+You need one Google Maps API key or one Azure Maps subscription key. Provider
+accounts, billing, charges, quotas, and usage rights are separate from
+TowerScout.
+
+TowerScout currently uses one credential per provider for both browser and
+application requests. Do not create separate browser/server keys for
+TowerScout; there is only one field for each provider, and the browser can see
+that key. Use a dedicated limited project/account, API restrictions, quotas,
+alerts, monitoring, and a rotation plan. If your organization requires a
+browser-secret credential, split credentials, or Microsoft Entra ID, this
+release does not meet that requirement.
+
+Choose one of these paths.
+
+#### Google Maps
+
+1. Sign in to the [Google Cloud Console](https://console.cloud.google.com/).
+2. Create or select a project owned by you or your organization and attach an
+   approved billing account. Review current pricing and set budget alerts.
+3. Enable **Maps JavaScript API**, **Places API (New)**, **Maps Static API**,
+   and **Geocoding API**. TowerScout's current
+   `PlaceAutocompleteElement` search control requires Places API (New).
+4. Open **Google Maps Platform > Credentials**, select **Create credentials >
+   API key**, and give the key a TowerScout-specific name.
+5. Under **API restrictions**, select **Restrict key** and select only those
+   four APIs.
+6. TowerScout sends this one key from both the browser and the local application
+   service. Google recommends a **Websites** application restriction for the
+   browser path and an **IP addresses** restriction for server web-service
+   requests, but one key cannot use both restriction types. The compatible
+   one-key setting is therefore **Application restrictions: None**. This is a
+   known limitation, not Google's recommended split-key design. If you or your
+   organization require an application restriction, stop and use Azure Maps;
+   this TowerScout release cannot accept separate Google browser/server keys.
+7. Set quotas, alerts, monitoring, and a rotation plan. Temporarily keep the key
+   somewhere private until you enter it in TowerScout.
+
+Google's official references are its
+[getting-started guide](https://developers.google.com/maps/get-started),
+[key-creation guide](https://developers.google.com/maps/documentation/javascript/get-api-key),
+and [API-key security guidance](https://developers.google.com/maps/api-security-best-practices).
+The exact autocomplete prerequisite is in Google's
+[Place Autocomplete documentation](https://developers.google.com/maps/documentation/javascript/place-autocomplete-new).
+
+#### Azure Maps
+
+1. Sign in to the [Azure portal](https://portal.azure.com/).
+2. Use a subscription and resource group owned by you or your organization.
+   Review current pricing and approval requirements.
+3. Search for **Azure Maps**, select **Create**, create an Azure Maps account,
+   and accept its terms. Use the current Gen2 pricing tier unless your
+   organization directs otherwise.
+4. Open the Azure Maps account and then **Settings > Authentication**.
+5. Copy the **Primary Key** to a temporary private location. Keep the Secondary
+   Key available for controlled rotation.
+6. Configure the budgets, alerts, monitoring, and rotation required by your
+   organization.
+
+TowerScout uses Azure Maps Web SDK, imagery/tile, search, and geocoding
+requests. It currently supports the shared subscription-key method, not
+Microsoft Entra ID. See Microsoft's official
+[account-and-key walkthrough](https://learn.microsoft.com/azure/azure-maps/quick-demo-map-app)
+and [authentication guidance](https://learn.microsoft.com/azure/azure-maps/authentication-best-practices).
+
+## Unsigned Windows Package
+
+TowerScout's packaged PowerShell scripts are intentionally unsigned. Use the
+supplied `.cmd` and `.bat` entrypoints. They start Windows PowerShell 5.1 with
+a temporary, process-scoped execution-policy setting and do not change the
+computer's permanent policy.
+
+The standard package does not support an endpoint that requires a trusted
+Authenticode publisher, WDAC/AppLocker approval, constrained-language
+approval, antivirus/EDR exceptions, or organization-specific allowlisting.
+If Windows or organizational policy blocks the package, stop and ask Local IT
+whether it is allowed. Do not change persistent execution policy, select **Run
+anyway** for an unverified file, disable endpoint protection, or disable TLS
+verification.
+
+## Step 1: Create A Download Folder
+
+1. Open **File Explorer**.
+2. Open **Documents**.
+3. Create a folder named `TowerScout`.
+4. Open it. The address bar should end in `Documents\TowerScout`.
+
+Do not run commands from inside a ZIP preview. You will first use PowerShell in
+this download folder and later open it in the extracted application folder.
+
+## Step 2: Download The Four Files
+
+Open the
+[TowerScout GitHub Releases page](https://github.com/J-Schulein/TowerScout/releases).
+Select the entry whose notes identify it as the current supported final Windows
+release. If none does, stop. A draft, prerelease, source archive, branch, or
+numerically newer tag is not automatically supported.
+
+GitHub labels its download list **Assets**. From that list, download exactly:
+
+1. one Application Package ZIP:
+   - choose the filename ending in `-cpu.zip` for CPU; or
+   - choose the filename ending in `-cuda128.zip` for NVIDIA GPU;
+2. the matching Application Package `.zip.sha256` file;
+3. the shared Model & Data Package ZIP whose name contains `-assets-`; and
+4. the matching Model & Data `.zip.sha256` file.
+
+Move all four files from Downloads into `Documents\TowerScout`.
+
+The terms are easy to confuse:
+
+- **GitHub Assets** is the list of downloadable release files.
+- **Application Package** is the smaller CPU or CUDA control ZIP containing
+  scripts, docs, Compose files, and release metadata.
+- **Model & Data Package** is the larger shared ZIP containing model weights,
+  ZIP-code data, and an asset manifest.
+- **Container image** is the application runtime that Docker or Podman
+  downloads from GitHub Container Registry (**GHCR**) during setup. You do not
+  download it manually.
+- **Local `assets` folder** appears inside the extracted Application Package.
+- **`dataset.zip`** is output you may export later; it is not an installer.
+
+Do not use GitHub's green **Code** button or its automatic **Source code
+(zip)** / **Source code (tar.gz)** files for package installation.
+
+## Step 3: Verify Both ZIPs Before Extraction
+
+SHA-256 is a long check value for a file. Each ZIP must have the same value in
+three places:
+
+1. the value printed in the public final release notes;
+2. the value in the downloaded `.sha256` text file; and
+3. the value calculated on this computer.
+
+Open `Documents\TowerScout` in File Explorer. Click the address bar, type
+`powershell`, and press Enter. This opens a normal PowerShell window in the
+correct folder. Paste one complete block and press Enter.
+
+CPU Application Package:
+
+```powershell
+$appZip = Get-ChildItem -File "*-cpu.zip"
+$assetZip = Get-ChildItem -File "*-assets-*.zip"
+Get-FileHash -Algorithm SHA256 -LiteralPath $appZip.FullName
+Get-Content -LiteralPath ($appZip.FullName + ".sha256")
+Get-FileHash -Algorithm SHA256 -LiteralPath $assetZip.FullName
+Get-Content -LiteralPath ($assetZip.FullName + ".sha256")
+```
+
+NVIDIA GPU Application Package: use the same block but replace its first line
+with:
+
+```powershell
+$appZip = Get-ChildItem -File "*-cuda128.zip"
+```
+
+Expected result: two calculated hash values and two sidecar lines appear.
+Compare all 64 characters for each ZIP with the matching value displayed on
+the final release page. Letter case does not matter; every character does.
+
+Stop if:
+
+- PowerShell finds no matching ZIP or more than one matching ZIP;
+- the release page does not display the two authoritative values;
+- a sidecar names a different file; or
+- any value differs.
+
+Do not extract, unblock, or run a failed or unverifiable download. Download
+that file again from the same final release and repeat the comparison.
+
+Only after both ZIPs pass, you may right-click the Application Package ZIP,
+open **Properties**, and select **Unblock** if Windows shows that checkbox.
+
+## Step 4: Extract The Application Package
+
+In File Explorer, right-click only the verified `-cpu.zip` or
+`-cuda128.zip`, select **Extract All**, and extract it inside the
+`Documents\TowerScout` folder.
+
+Do not extract the Model & Data Package ZIP. Leave it and both `.sha256` files
+beside the new extracted folder.
+
+Open the extracted folder. It should contain:
 
 ```text
-http://localhost:5000
+setup-towerscout.cmd
+start.bat
+scripts\
+docs\
+assets\
+compose.yaml
 ```
 
-A successful first-run output will look similar to this abbreviated example:
+The `assets` folder starts empty. Do not put the Model & Data ZIP inside it;
+setup finds the ZIP in the parent download folder.
 
-```text
-TowerScout setup
-[OK] Engine docker is available
-[OK] Compose is available
-[OK] Model & Data Package checksum matched
-[OK] Asset import completed with hash verification
-[OK] TowerScout responded at http://localhost:5000
-readiness: setup_required
-```
+## Step 5: Finish Podman Preparation, If Chosen
 
-`setup_required` is normal before provider setup is complete. After provider
-setup and asset import are complete, readiness should become `ready`.
+Skip this section for Docker.
 
-The first launch may download the TowerScout container image from GHCR. This
-can take several minutes on first run. Keep the PowerShell window open while
-Docker downloads and starts the image.
-
-If TowerScout finds an older UAT container from a previous session, setup starts
-a fresh container while keeping saved setup, imported assets, and support logs
-in named volumes.
-
-Readiness may be `setup_required` because provider setup is not complete, or
-`degraded` because assets are not imported yet. That is expected during first
-setup.
-
-If the browser does not open, leave PowerShell open and manually open
-`http://localhost:5000`.
-
-If setup reports that more than one Model & Data Package ZIP was found, move
-old TowerScout ZIPs out of the folder and run setup again. If support asks you
-to pass an explicit ZIP path, use:
+With the rootless `podman-machine-default` running and Python 3.12 available,
+open PowerShell in the extracted Application Package folder and run:
 
 ```powershell
-.\setup-towerscout.cmd -AssetZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>-assets-<asset-version>.zip
+.\scripts\install-podman-compose-provider.cmd -Apply
+podman compose version
 ```
 
-Do not type the angle brackets in `<asset-version>`. Use the exact Model &
-Data Package filename.
+The helper downloads a pinned provider, verifies its SHA-256, and installs it
+under the extracted package. Ready means the version command succeeds using
+that approved provider. TowerScout rejects Docker Desktop's Compose executable
+for Podman.
 
-If setup cannot find or start a container engine, confirm the selected
-engine is installed and running before continuing. For Podman, confirm the
-Podman machine is started and a Compose provider is available. For Docker,
-confirm Docker Desktop is running.
+For Podman GPU, now follow the CDI preparation and `-VerifyOnly` procedure in
+[Podman GPU User Guide](podman-gpu-user-guide.md).
 
-## 5. Optional Runtime Validation Tracks
+## Step 6: Run One Setup Command
 
-Run the CPU Application Package first unless support assigned the CUDA package
-or a different engine. If support asks you to validate Podman CPU, run setup
-with Podman and keep using `-Engine podman` on later status, logs, import,
-stop, and start commands:
+Open the extracted Application Package folder in File Explorer. Click the
+address bar, type `powershell`, and press Enter. A prompt ending in the package
+folder means you are in the right place. `.\` means "run this file from the
+current folder."
+
+Make sure Docker Desktop is running or the intended Podman machine is running.
+Copy only one command:
+
+### Docker CPU
 
 ```powershell
-.\setup-towerscout.cmd -Engine podman
+.\setup-towerscout.cmd -Engine docker -Gpu off
 ```
 
-If support asks you to validate Docker GPU behavior on a workstation with
-NVIDIA Docker GPU support, use the CUDA Application Package and one of these
-setup commands:
+### Docker NVIDIA GPU
 
 ```powershell
-.\setup-towerscout.cmd -Engine docker -Gpu auto
 .\setup-towerscout.cmd -Engine docker -Gpu on
 ```
 
-Use `-Gpu auto` for exploratory GPU validation with CPU fallback. Use `-Gpu on`
-only when support expects CUDA to be available inside the container.
-The CPU Application Package rejects `-Gpu on`; use the CUDA package for GPU
-validation.
+### Podman CPU
 
-## 6. Manual Asset Staging And Import Fallback
+```powershell
+.\setup-towerscout.cmd -Engine podman -Gpu off
+```
 
-Use this section only if support tells you not to use `setup-towerscout.cmd`,
-or if you already extracted the Model & Data Package manually.
+### Podman NVIDIA GPU
 
-Open the Model & Data Package ZIP. Its root should contain:
+```powershell
+.\setup-towerscout.cmd -Engine podman -Gpu on
+```
+
+Keep PowerShell open. Setup checks the engine, disk, port, package metadata,
+checksums, and Model & Data ZIP; imports hash-verified assets; downloads the
+digest-pinned container image; starts TowerScout; and normally opens
+`http://localhost:5000`.
+
+The first image pull can take several minutes. Do not close the window while
+it is working.
+
+Expected milestones include:
 
 ```text
-model_params\
-data\
-asset_manifest.v1.json
+TowerScout setup
+Engine: docker or podman
+GPU: off or on
+Model & Data Package checksum matched
+Asset import completed with hash verification
+TowerScout responded at http://localhost:5000
+readiness: setup_required
 ```
 
-Extract those entries into the package `assets\` folder so the result is:
+`setup_required` is normal before a provider credential is saved.
 
-```text
-assets\
-  model_params\
-  data\
-  asset_manifest.v1.json
-```
-
-After extraction, open the package `assets\` folder and confirm you see
-`model_params`, `data`, and `asset_manifest.v1.json` directly inside it.
-
-If you see this layout, it is wrong:
-
-```text
-assets\
-  assets\
-    model_params\
-    data\
-    asset_manifest.v1.json
-```
-
-Move the inner `model_params`, `data`, and `asset_manifest.v1.json` entries up
-one level so they sit directly inside the package `assets\` folder. If you are
-unsure, stop and ask support before importing assets.
-
-From PowerShell in the package folder, import the assets:
+If setup cannot uniquely find the two ZIPs because they are stored elsewhere,
+use the complete quoted paths copied from File Explorer. Replace the example
+text with the actual paths; do not type square brackets literally. The example
+below is for Docker CPU. Preserve the `-Engine` and `-Gpu` values from the one
+setup command you chose above when adapting it:
 
 ```powershell
-.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180
+.\setup-towerscout.cmd `
+  -Engine docker `
+  -Gpu off `
+  -PackageZip "[full path copied from the Application Package ZIP]" `
+  -AssetZip "[full path copied from the Model & Data Package ZIP]"
 ```
 
-If you started with an explicit engine, use that same engine here:
+The backtick at the end of a line tells PowerShell that the command continues
+on the next line. Copy the entire block. Keep paths in double quotes because
+Windows folder names can contain spaces.
+
+## Step 7: Configure One Provider
+
+When TowerScout opens, Setup Wizard shows Google and Azure credential fields.
+
+1. Paste only the credential for the provider you prepared.
+2. Select **Validate** for that provider.
+3. Select it as the default map provider.
+4. Save setup.
+
+One valid provider is enough. Do not show the key in a screenshot, issue,
+email, chat, log excerpt, or browser trace.
+
+Readiness should change to `ready` after a valid provider and required assets
+are present. You can check from PowerShell:
 
 ```powershell
-.\scripts\import-assets.cmd -Engine podman -Source assets
+.\scripts\status.cmd -Engine docker -Port 5000
 ```
 
-If you started TowerScout on a non-default port, use that same `-Port` value
-when importing assets so the helper recreates the Compose service with the same
-port binding:
+Use `podman` instead of `docker` if that is your engine. `degraded` means a
+recoverable capability is missing; follow its message. `fatal` means stop and
+use the troubleshooting guide. If you selected NVIDIA GPU, status must also
+show `selected_device=cuda`; `ready` by itself does not prove GPU processing.
+
+## Step 8: Try A Small First Search
+
+1. Search for a familiar public, non-sensitive place or move the map there.
+2. The circle radius field uses **metres**. Enter a small radius, choose
+   **Circle**, and click the map. For a polygon, choose **Custom shape** and
+   click each corner. Double-click to finish on Azure Maps; right-click outside
+   the shape to finish on Google Maps.
+3. Select **Estimate tiles**. Reduce the area until the first run estimates
+   only 1-6 tiles.
+4. Select **Find towers** and wait for the progress display to finish.
+5. Review the map and detection list. A zero-detection result can be valid and
+   does not by itself mean installation failed.
+6. Export important results before closing or stopping.
+
+A successful first run means readiness is `ready`, the chosen map loads, the
+small request reaches a completed state without an error, and the review panel
+updates. Maintainer fixtures, expected detection counts, and formal PASS/FAIL
+rules are not end-user setup requirements.
+
+## Step 9: Save Your Setup Record
+
+Do not record a provider key.
+
+| Item | Your value |
+| --- | --- |
+| Application folder |  |
+| Engine | Docker / Podman |
+| Processing | CPU / NVIDIA GPU |
+| Provider | Google / Azure |
+| Port | 5000 unless changed |
+| Browser address | `http://localhost:5000` unless changed |
+
+## Step 10: Stop When Finished Or Reopen Later
+
+Use the same engine you recorded.
+
+### Stop When Finished
+
+Run only the line for your engine:
 
 ```powershell
-.\scripts\import-assets.cmd -Engine docker -Source assets -Port 5001 -RestartWaitSeconds 180
+.\scripts\stop.cmd -Engine docker
+.\scripts\stop.cmd -Engine podman
 ```
 
-For release-candidate or support validation, verify hashes during import:
+### Start Or Reopen Later
+
+For Podman only, first run `podman machine list`. Run the following command only
+when the recorded machine is stopped:
 
 ```powershell
-.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180
+podman machine start podman-machine-default
 ```
 
-Or, with an explicit engine:
+Then run only the command matching your recorded setup:
 
-```powershell
-.\scripts\import-assets.cmd -Engine podman -Source assets -VerifyHashes
-```
-
-The import helper uses the selected engine's named volumes. If `.env` is
-missing, the helper initializes it from the package `.env.example` before
-starting the selected container stack. After copying assets, the helper restarts
-TowerScout so the running application discovers the imported model files before
-the first detection run.
-
-Expected result: the command finishes without missing or corrupt asset errors,
-then waits for TowerScout to respond after restart. If hash verification fails,
-stop and ask support for the correct Model & Data Package.
-
-## 7. Start TowerScout Later
-
-Skip this section during first setup if setup already opened TowerScout.
-Use this command when reopening TowerScout after setup is complete, or when
-support asks you to isolate direct launch behavior. From the package folder,
-run:
+#### Docker CPU
 
 ```powershell
 .\start.bat -Engine docker -Gpu off
 ```
 
-The default launch path is CPU-safe. It sets `TOWERSCOUT_DEVICE=cpu` for the
-launch and does not request GPU devices.
-
-Use `localhost`, not `127.0.0.1`, for normal browser use:
-
-```text
-http://localhost:5000
-```
-
-## 8. Optional GPU Launch
-
-GPU launch is optional and support-assigned. Do not use it as the normal
-first-run path unless support assigned the CUDA Application Package and is
-validating a workstation with NVIDIA container GPU access for the selected
-engine.
-
-CPU-safe default:
+#### Docker NVIDIA GPU
 
 ```powershell
-.\start.bat -Gpu off
-```
-
-Optional Docker GPU modes:
-
-```powershell
-.\start.bat -Engine docker -Gpu auto
 .\start.bat -Engine docker -Gpu on
 ```
 
-Optional Podman GPU mode after support has validated NVIDIA CDI:
+#### Podman CPU
+
+```powershell
+.\start.bat -Engine podman -Gpu off
+```
+
+#### Podman NVIDIA GPU
 
 ```powershell
 .\start.bat -Engine podman -Gpu on
 ```
 
-- `-Gpu off` forces CPU execution.
-- `-Gpu auto` uses CPU fallback unless `TOWERSCOUT_GPU_AUTO_OVERLAY=1` has been
-  set after workstation-specific Docker GPU validation or
-  `TOWERSCOUT_PODMAN_GPU_OVERLAY=1` has been set after Podman CDI validation.
-- `-Gpu on` requests the selected engine's GPU overlay and fails readiness if
-  CUDA is not available to the container.
-- The CPU Application Package rejects `-Gpu on` with guidance to use the CUDA
-  package. The CUDA package still fails closed unless readiness reports
-  `selected_device=cuda`.
+`stop.cmd` does not accept a port. If you intentionally used port 5001, add
+`-Port 5001` to setup, start, and status, and open
+`http://localhost:5001`.
 
-For Podman GPU, support must validate the non-Docker-Desktop Compose provider
-and NVIDIA CDI path before launch. The RC5 validated path used Podman 5.8.2 on
-Windows 11 WSL2, standalone Docker Compose v5.1.4 selected through
-`PODMAN_COMPOSE_PROVIDER`, and NVIDIA CDI device `nvidia.com/gpu=all`.
+Normal stop/start and reboot preserve the selected engine's TowerScout **named
+volumes**, engine-managed storage areas containing provider configuration,
+imported assets, sessions, temporary review data, uploads, cache, and logs.
+Docker and Podman use separate stores. An engine switch does not migrate them.
+The Podman machine may require a manual start after reboot.
 
-## 9. Complete Setup
+Internal session storage is not a backup. Export important CSV, KML, or
+dataset ZIP files to an approved folder before stopping. Do not use `down -v`,
+volume prune, Podman machine reset, or blanket cleanup as routine recovery.
 
-When the browser opens, use Setup Wizard or Settings to configure one provider:
+## Troubleshooting And Help
 
-- Google Maps, or
-- Azure Maps.
-
-One valid provider key is enough to start. Provider keys for the pilot
-must be site/user-owned and restricted. Browser map SDK keys are visible to
-someone who can access the running browser app, so do not use an unrestricted
-shared TowerScout project key.
-
-Google keys must support TowerScout's Maps JavaScript, Places/autocomplete,
-Static Maps imagery, and Geocoding usage. Azure Maps subscription keys must
-support TowerScout's Web SDK, imagery, search, and geocoding usage.
-
-Expected result: Setup Wizard saves the provider settings and TowerScout reloads
-or reports that setup is complete. Do not paste the provider key into issue
-reports, screenshots, or support chat.
-
-Use the command shown by TowerScout because it includes the active `-Port`.
-If entering commands manually, use the same `-Port` on every repair and
-`start.bat` command. The examples below use port 5000 explicitly; replace every
-`-Port 5000` with the active port (for example, `-Port 5211`) when needed.
-
-Managed-network note: if Google or Azure provider validation fails even though
-the key is correct, and support sees `CERTIFICATE_VERIFY_FAILED` in container
-logs, the problem is usually local TLS inspection. The Setup Wizard or Settings
-may show a suggested dry-run command that preserves the active engine and GPU
-mode. Support should run the guided TLS repair helper for the selected runtime,
-review its local support-sensitive dry-run output, then apply the repair and
-restart TowerScout:
+Start with the same engine and port from your setup record:
 
 ```powershell
-.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Port 5000
-.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Port 5000 -Apply
-.\scripts\stop.cmd -Engine docker
-.\start.bat -Engine docker -Gpu off -Port 5000
-```
-
-Use the same `-Engine` and `-Gpu` values selected for setup. For Azure
-validation failures, support may use `-Provider azure`.
-
-The TLS helper stores the combined CA bundle in the selected engine's
-`towerscout_config` volume and updates the local `.env` so future starts use
-that bundle automatically. Do not send provider keys, full `.env` files, raw
-logs, browser network traces, certificate thumbprints, or certificate issuer
-details when reporting this issue.
-
-## 10. Confirm Success
-
-Run:
-
-```powershell
-.\scripts\status.cmd -Engine docker
-```
-
-If you started with an explicit engine, use the same engine:
-
-```powershell
-.\scripts\status.cmd -Engine podman
-```
-
-Expected readiness states:
-
-- `setup_required`: TowerScout is running, but provider setup is not complete.
-- `degraded`: TowerScout is running, but assets or another recoverable
-  capability are missing.
-- `ready`: provider setup and required assets are present.
-- `fatal`: TowerScout cannot safely serve the app; collect support evidence.
-
-For a small smoke check, open TowerScout, choose a provider, and use the
-owner-provided public test area or another non-sensitive approved area. Support
-should provide the smoke-test fixture before UAT starts: provider,
-public/non-sensitive location name, expected tile range, and whether zero
-detections is an acceptable result. Do not choose a private investigation AOI
-for the first smoke test. Keep the first run small. The default pilot Azure
-smoke fixture is about `8` tiles.
-
-The UAT package defaults to a pilot guard of `100` tiles. If TowerScout reports
-that the selected area exceeds the current pilot limit, reduce the search area
-or contact support before running a larger validation.
-
-Suggested smoke flow:
-
-1. Search for or navigate to the approved test location.
-2. Draw a small circle or custom shape.
-3. Select `Estimate tiles`.
-4. Confirm the tile count is small enough for the pilot.
-5. Select `Find towers`.
-6. Confirm the run completes and the review panel updates.
-
-Expected result: status is `ready` before the detection smoke, and the detection
-workflow completes without crashing. For the default pilot Azure fixture, expect a
-non-zero tower result. Exact counts may vary, but zero towers, no review-panel
-update, or a crash should be reported as `BLOCKED` or `FAIL`. For any future
-support-approved fixture, follow the zero-detection rule support provided for
-that fixture.
-
-## 11. Stop Or Restart
-
-Stop TowerScout:
-
-```powershell
-.\scripts\stop.cmd -Engine docker
-```
-
-Start again:
-
-```powershell
-.\start.bat -Engine docker -Gpu off
-```
-
-Provider setup and imported assets are stored in named volumes and should
-survive container restarts and replacement.
-
-TowerScout treats a healthy container that is less than 12 hours old as the
-current UAT session. If a container is stopped, unhealthy, or older than 12
-hours, the launcher starts a fresh container and keeps named volumes by
-default. Support can change the session lifetime with `-SessionMaxHours` when a
-longer validation session is approved.
-
-Important: always use the same `-Engine` value you used during setup. Docker
-Desktop and Podman use separate local storage. If you switch engines, provider
-setup or imported assets may appear to be missing because they are stored under
-the other engine.
-
-## Appendix: Command Reference
-
-Run commands from the extracted TowerScout application folder, such as
-`C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>-cpu`.
-
-| Purpose | Docker CPU/default | Docker GPU support-assigned | Podman CPU support-assigned | Podman GPU support-assigned |
-|---|---|---|---|---|
-| First setup | `.\setup-towerscout.cmd` | `.\setup-towerscout.cmd -Engine docker -Gpu auto` or `.\setup-towerscout.cmd -Engine docker -Gpu on` | `.\setup-towerscout.cmd -Engine podman` | `.\setup-towerscout.cmd -Engine podman -Gpu on` after CDI validation |
-| Start or reopen | `.\start.bat -Engine docker -Gpu off` | `.\start.bat -Engine docker -Gpu auto` or `.\start.bat -Engine docker -Gpu on` | `.\start.bat -Engine podman -Gpu off` | `.\start.bat -Engine podman -Gpu on` after CDI validation |
-| Stop | `.\scripts\stop.cmd -Engine docker` | `.\scripts\stop.cmd -Engine docker` | `.\scripts\stop.cmd -Engine podman` | `.\scripts\stop.cmd -Engine podman` |
-| Restart | `.\scripts\stop.cmd -Engine docker`, then `.\start.bat -Engine docker -Gpu off` | `.\scripts\stop.cmd -Engine docker`, then the assigned Docker GPU start command | `.\scripts\stop.cmd -Engine podman`, then `.\start.bat -Engine podman -Gpu off` | `.\scripts\stop.cmd -Engine podman`, then `.\start.bat -Engine podman -Gpu on` |
-| Status | `.\scripts\status.cmd -Engine docker` | `.\scripts\status.cmd -Engine docker` | `.\scripts\status.cmd -Engine podman` | `.\scripts\status.cmd -Engine podman` |
-| Logs if support asks | `.\scripts\logs.cmd -Engine docker -Tail 200` | `.\scripts\logs.cmd -Engine docker -Tail 200` | `.\scripts\logs.cmd -Engine podman -Tail 200` | `.\scripts\logs.cmd -Engine podman -Tail 200` |
-| TLS CA repair if support asks | `.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off` | `.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu auto` or `.\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu on` | `.\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu off` | `.\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu on` |
-| Manual asset import fallback | `.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180` | `.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180` | `.\scripts\import-assets.cmd -Engine podman -Source assets -VerifyHashes` | `.\scripts\import-assets.cmd -Engine podman -Source assets -VerifyHashes` |
-| Longer support session | Add `-SessionMaxHours 24` to setup, start, or import commands when support approves it. | Add `-SessionMaxHours 24` to the assigned Docker GPU command when support approves it. | Add `-SessionMaxHours 24` to setup, start, or import commands when support approves it. | Add `-SessionMaxHours 24` to setup, start, or import commands when support approves it. |
-
-Use `-Gpu auto` for exploratory GPU validation with CPU fallback only after
-support has set the matching engine overlay gate. Use `-Gpu on` only when
-support expects CUDA to be available inside the container. With `-Gpu on`, the
-launcher checks readiness and fails closed unless TowerScout reports
-`selected_device=cuda`.
-
-## 12. Source, Licenses, And Help
-
-The YOLO-enabled package/image is not Apache-2.0-only. It is distributed
-with AGPL-3.0 obligations because it includes Ultralytics YOLOv5 runtime source
-and YOLO-derived detector weights.
-
-Find release notices in the package:
-
-- `LICENSE`
-- `NOTICE`
-- `THIRD_PARTY_NOTICES.md`
-- `MODEL_LICENSES.md`
-- `DATA_LICENSES.md`
-- `PROVIDER_TERMS.md`
-- `SOURCE.txt`
-- `SBOM.txt`
-- `IMAGE.txt`
-- `release-manifest.v1.json`
-
-When TowerScout is running, Settings includes Resource Links for Project
-Overview, User Guide, Source/licenses, Video Guides, and the research article.
-The source/license notice is also available from these local routes:
-
-```text
-http://localhost:5000/license      formatted browser page
-http://localhost:5000/license.txt  plain-text combined notices
-```
-
-Use `/license.txt` when support needs plain text for scripts, copy/paste, or
-archival use.
-
-## 13. If Something Fails
-
-Run:
-
-```powershell
-.\scripts\status.cmd -Engine docker
+.\scripts\status.cmd -Engine docker -Port 5000
 .\scripts\logs.cmd -Engine docker -Tail 200
 ```
 
-Use the same `-Engine` value on status/log commands if support asked you to
-start with a specific engine.
+For Podman, replace `docker` with `podman`. Review logs locally. Do not post raw
+logs.
 
-Send only support-requested, reviewed/redacted excerpts from log output. Do not
-send raw logs unless your site has an approved handling procedure.
+Common safe actions:
 
-For package/image metadata, support may ask you to copy the package folder name
-and the contents of `IMAGE.txt`:
+- **Command not recognized:** reopen PowerShell from the extracted folder.
+- **Engine unavailable:** start Docker Desktop or the intended Podman machine.
+- **Browser unavailable:** confirm the recorded port and status.
+- **Provider invalid/unauthorized:** review billing, enabled APIs, and API
+  restrictions without sharing the key.
+- **TLS/certificate error:** ask Local IT to follow the separate dry-run and
+  approved apply procedure in the
+  [Local IT Administrator Guide](local-it-administrator-guide.md). Do not
+  disable TLS verification.
+- **GPU does not report CUDA:** correct the package/driver/engine/CDI
+  prerequisite or use CPU; do not count fallback as GPU success.
 
-```powershell
-Get-Content .\IMAGE.txt
-```
+For Windows policy, software installation, proxy, TLS, or managed-device
+issues, contact Local IT. For a reproducible non-sensitive TowerScout defect,
+use the public
+[TowerScout issue tracker](https://github.com/J-Schulein/TowerScout/issues).
+It is not a private or guaranteed-response help desk.
 
-If PowerShell says a command is not recognized, confirm the PowerShell prompt is
-open in the extracted TowerScout package folder and that the command starts
-with `.\`. If Docker commands are not recognized, open Docker Desktop from the
-Start menu and wait until it reports that it is running.
+Include only release/package name, selected engine/mode/port, versions,
+sanitized readiness, failed step, and a non-secret error category. Never post
+provider keys, `.env`, raw logs/screenshots, browser traces, private AOIs,
+provider responses, certificate details, uploaded files, exports, or named-
+volume contents.
 
-Do not share `.env`, provider keys, raw screenshots, raw browser network
-traces, cached provider responses, uploaded investigation files, exported
-datasets, named-volume contents, or unreviewed raw logs unless your site has an
-approved support-handling procedure.
+## More Information
+
+- [Project Overview](project-overview.md)
+- [User Guide](user-guide.md)
+- [Package And Advanced Troubleshooting Guide](package-guide.md)
+- [Local IT Administrator Guide](local-it-administrator-guide.md)
+- [Docker CPU Guide](docker-cpu-user-guide.md)
+- [Docker GPU Guide](docker-gpu-user-guide.md)
+- [Podman CPU Guide](podman-cpu-user-guide.md)
+- [Podman GPU Guide](podman-gpu-user-guide.md)
+
+The running application exposes version-matched formatted notices at
+`/license` and plain-text notices at `/license.txt` on its local address.

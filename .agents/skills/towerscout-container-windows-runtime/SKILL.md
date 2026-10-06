@@ -86,8 +86,11 @@ scripts\logs.cmd -Engine podman -Tail 200
 scripts\stop.cmd -Engine podman
 ```
 
-An execution-policy bypass may diagnose a permissive development host, but it
-does not qualify a managed endpoint's actual policy/signing path.
+ADR-023 permits the supplied process-scoped wrapper path for the standard
+unsigned support profile. It does not qualify a signature-enforcing or
+organization-allowlisted managed endpoint. Do not change persistent execution
+policy or disable endpoint protection. Final user-path validation starts from
+the exact browser-downloaded ZIP after authoritative SHA-256 comparison.
 
 ## Output format
 

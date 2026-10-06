@@ -58,6 +58,7 @@ def test_index_route_renders_towerscout_shell(client):
     assert b"/docs/quick-start.html" in response.data
     assert b"/docs/project-overview.html" in response.data
     assert b"/docs/user-guide.html" in response.data
+    assert b"/docs/local-it-administrator-guide.html" in response.data
     assert b"https://pubmed.ncbi.nlm.nih.gov/38906615/" in response.data
     assert b"sciencedirect.com/science/article/pii/S2589750024000943" not in response.data
     assert b"Documentation Placeholder" not in response.data
@@ -103,23 +104,24 @@ def test_docs_routes_expose_package_local_docs(client):
     podman_cpu_response = client.get("/docs/podman-cpu-user-guide.md")
     podman_gpu_response = client.get("/docs/podman-gpu-user-guide.md")
     user_guide_response = client.get("/docs/user-guide.html")
+    local_it_response = client.get("/docs/local-it-administrator-guide.html")
     package_guide_response = client.get("/docs/package-guide.md")
     css_response = client.get("/docs/towerscout-docs.css")
 
     assert index_response.status_code == 200
     assert index_response.mimetype == "text/html"
     assert b"TowerScout Quick Start" in index_response.data
-    assert b"Before You Start" in index_response.data
-    assert b"You do not need Git, Python, Conda, Node.js, VS Code" in index_response.data
+    assert b"About These Instructions" in index_response.data
+    assert b"Make Three Independent Choices" in index_response.data
     assert quick_start_response.status_code == 200
-    assert b"Document Metadata" in quick_start_response.data
-    assert b"Runtime scope" in quick_start_response.data
+    assert b"Google Cloud Console" in quick_start_response.data
+    assert b"Azure portal" in quick_start_response.data
 
     assert overview_response.status_code == 200
     assert overview_response.mimetype == "text/html"
     assert b"Project Overview" in overview_response.data
-    assert b"What Users Need Installed" in overview_response.data
-    assert b"source-code checkout" in overview_response.data
+    assert b"Beginner Requirements" in overview_response.data
+    assert b"source checkout" in overview_response.data
     assert docker_cpu_response.status_code == 200
     assert b"TowerScout Docker CPU User Guide" in docker_cpu_response.data
     assert docker_gpu_response.status_code == 200
@@ -133,13 +135,17 @@ def test_docs_routes_expose_package_local_docs(client):
     assert user_guide_response.mimetype == "text/html"
     assert b"User Guide" in user_guide_response.data
     assert b"Before Using This Guide" in user_guide_response.data
-    assert b"Docker Desktop is installed, approved, and running" in user_guide_response.data
-    assert b"qualified Podman path" in user_guide_response.data
+    assert b"The user chooses the engine, processing mode, and map provider" in user_guide_response.data
+    assert b"Stop When Finished Or Resume Later" in user_guide_response.data
+    assert local_it_response.status_code == 200
+    assert local_it_response.mimetype == "text/html"
+    assert b"Local IT Administrator Guide" in local_it_response.data
+    assert b"process-scoped execution-policy" in local_it_response.data
     assert package_guide_response.status_code == 200
     assert b"TowerScout Package Guide" in package_guide_response.data
-    assert b"CPU Application Package is the primary path" in package_guide_response.data
-    assert b"12.8 Application Package" in package_guide_response.data
-    assert b"support-assigned paths" in package_guide_response.data
+    assert b"Users independently choose Docker or Podman" in package_guide_response.data
+    assert b"compatible NVIDIA GPU" in package_guide_response.data
+    assert b"Google Maps or Azure Maps" in package_guide_response.data
 
     assert css_response.status_code == 200
     assert "text/css" in css_response.content_type

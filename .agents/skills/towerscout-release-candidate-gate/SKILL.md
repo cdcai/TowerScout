@@ -46,6 +46,10 @@ Read these files when they exist:
 4. Runtime readiness: confirm `/api/health` and `/api/readiness` remain compatible with launchers and support scripts.
 5. Setup and validation path: confirm Setup Wizard, provider key validation, restart persistence, and a bounded detection path can be validated.
 6. Evidence hygiene: summarize evidence with commands, timestamps, environment, pass/fail, and redacted excerpts.
+7. Unsigned Windows boundary: confirm manuals state that packaged PowerShell
+   scripts are unsigned, the supplied wrappers use a process-scoped setting,
+   signature-enforcing managed endpoints are outside the standard claim, and
+   official release-page SHA-256 values are checked before extraction.
 
 ## Inspect commands (read-only)
 
@@ -103,8 +107,11 @@ scripts\logs.cmd -Engine podman -Tail 200
 scripts\stop.cmd -Engine podman
 ```
 
-Bypass-based execution does not prove compatibility with a managed endpoint's
-actual execution/signing policy.
+Under ADR-023, bypass-based wrapper execution is valid only for the explicitly
+claimed unsigned support profile. It does not prove compatibility with a
+signature-enforcing or organization-allowlisted managed endpoint. Final proof
+must begin with the exact browser-downloaded package and its downloaded-file
+marker; a locally assembled ZIP is insufficient.
 
 ## Output format
 

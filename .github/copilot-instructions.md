@@ -58,6 +58,11 @@ The project still carries public-health workflow expectations:
 - ADR-021 selects accepted `main` at `9276084d...` for the September 21 v2
   Windows deployment effort. PR #67 and Task-087 launcher work are preserved
   but deferred and are not release gates.
+- ADR-023 selects an unsigned Windows control package with a narrower support
+  boundary. Support the supplied process-scoped wrappers only where users/sites
+  permit them; do not claim trusted-publisher, WDAC/AppLocker, or organization-
+  allowlisted endpoint compatibility. Verify authoritative published hashes
+  before extraction and test the exact browser-downloaded package.
 - `TASK-096` browser Exit/helper work is deferred. `TASK-097` qualifies Podman
   CPU/GPU through the existing command-based package path.
 - Docker CPU, Docker GPU, Podman CPU, and Podman GPU are required final-package
@@ -133,7 +138,7 @@ adoption:
 6. Preserve PR #67 and Task-087 history without merging, reconciling,
    extending, resuming, or repeatedly reviewing that work this week.
 7. Execute W00-W10 in the September 21 v2 plan through the existing
-   PowerShell/Compose package path.
+   PowerShell/Compose package path as amended by ADR-022 and ADR-023.
 8. Qualify Docker CPU, Docker NVIDIA, Podman CPU, and Podman NVIDIA before
    making a full support claim; require both models on the selected device.
 9. Use `v0.1.3-rc.N` for immutable fork-side candidates; do not publish

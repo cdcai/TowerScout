@@ -70,24 +70,26 @@ def test_word_uat_guide_contains_pre_uat_followup_sections():
     assert ("TLS CA repair" in text or "TLS CA import" in text) and "only if support asks" in text
 
 
-def test_quick_start_mirrors_command_appendix_and_stale_session_note():
+def test_current_quick_start_keeps_user_commands_and_moves_advanced_tls_to_it():
     text = QUICK_START.read_text(encoding="utf-8")
     compact = _compact(text)
 
-    assert "## Appendix: Command Reference" in text
-    assert "Docker Desktop is open and running" in text
-    assert "Docker GPU setup" in text
-    assert ".\\setup-towerscout.cmd -Engine docker -Gpu auto" in text
+    assert "## The Three Independent Choices" in text
+    assert "Docker Desktop or Podman Desktop" in text
+    assert "CPU or a compatible NVIDIA GPU" in text
+    assert "Google Maps or Azure Maps" in text
+    assert ".\\setup-towerscout.cmd -Engine docker -Gpu off" in text
+    assert ".\\setup-towerscout.cmd -Engine podman -Gpu on" in text
     assert ".\\start.bat -Engine podman -Gpu off" in text
-    assert ".\\scripts\\logs.cmd -Engine podman -Tail 200" in text
-    assert "-SessionMaxHours 24" in text
-    assert "older than 12 hours" in compact
-    assert "keeps named volumes by default" in compact
-    assert "CERTIFICATE_VERIFY_FAILED" in text
-    assert "TLS inspection certificate" in text
-    assert "updates the local `.env`" in text
-    assert ".\\scripts\\repair-provider-tls.cmd -Provider google -Engine docker" in text
-    assert "Do not send provider keys, full `.env` files" in text
+    assert ".\\scripts\\logs.cmd -Engine docker -Tail 200" in text
+    assert "For Podman, replace `docker` with `podman`" in text
+    assert "Save Your Setup Record" in text
+    assert "Normal stop/start and reboot preserve" in compact
+    assert "named volumes" in compact
+    assert "Local IT Administrator Guide" in text
+    assert "Do not disable TLS verification" in compact
+    assert ".\\scripts\\repair-provider-tls.cmd" not in text
+    assert "support-assigned" not in text.lower()
 
 
 def test_tester_issue_form_is_short_safe_and_email_friendly():

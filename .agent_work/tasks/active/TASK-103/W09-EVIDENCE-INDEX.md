@@ -1,17 +1,72 @@
 # Task-103 W09 Candidate Evidence Index
 
-**Recorded**: 2026-09-28; updated 2026-09-29
-**Verdict**: Replacement `rc3` artifact assembly PASS; exact-digest CPU/CUDA
+**Recorded**: 2026-09-28; updated 2026-10-01
+**Verdict**: Local `rc4` artifact assembly PASS; exact-digest CPU/CUDA
 W05 PASS; first-host four-profile package startup and volume-preserving
-relaunch PASS; overall release remains AT_RISK pending the open acceptance
-cells below.
+relaunch PASS. The local W10 provider/recovery matrix also passes, but overall
+release readiness remains AT_RISK. ADR-023 resolves policy/signing through an
+unsigned, narrower support boundary. Run `rc4` as a preliminary browser-
+download diagnostic, then rebuild documentation-aligned CPU/CUDA image and
+control-ZIP identities because `docs/` is present in both surfaces. Final
+browser-download and independent-host repetition remain required. Exact-`rc4`
+first-host reboot persistence remains valid evidence.
 **Publication state**: Control ZIPs and the asset ZIP are assembled locally but
 not published. No `latest` tag was promoted.
 
-PR #92 (`cbb574f`) and PR #93 (`fba9dcb`) merged after these artifacts were
-assembled. The frozen `rc3` identities remain retained qualification evidence,
-but they do not contain those fixes and are not the final candidate. New
-immutable images and control ZIPs require affected W09/W10 repetition.
+PR #92 (`cbb574f`) and PR #93 (`fba9dcb`) merged after the retained `rc3`
+artifacts were assembled. The final local candidate is therefore `rc4`, built
+from accepted `main` at `541622556fb7999ee4e88fb1e44f7797b9da34f5`.
+The `rc3` identities remain historical qualification evidence only.
+
+## Final Local `rc4` Candidate Inventory And Qualification
+
+- Source and OCI source label:
+  `541622556fb7999ee4e88fb1e44f7797b9da34f5`.
+- CPU image:
+  `ghcr.io/j-schulein/towerscout:v0.1.3-rc4-cpu@sha256:a3eeb77152577f3656a286777bd4c4312cecc311cb5a5cc1b132b459f1ecd18f`.
+- CUDA image:
+  `ghcr.io/j-schulein/towerscout:v0.1.3-rc4-cuda128@sha256:61dab3b83e1be8e2cf955d9d7d2d9b997a207a4dcb76b20344a268a5690f654a`.
+- CPU control ZIP SHA-256:
+  `1cf763b6184bb96dfe976f41f56a4aa5b8eeeea51a8de59830a9bf7fb9784a55`.
+- CUDA control ZIP SHA-256:
+  `02ec76b93bea28417b7ea4b086f23148b57b34c33823ce2f113da7147165915f`.
+- Shared asset ZIP SHA-256:
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+
+The CPU [publish run 36616086115](https://github.com/J-Schulein/TowerScout/actions/runs/36616086115)
+and CUDA [publish run 36616639330](https://github.com/J-Schulein/TowerScout/actions/runs/36616639330)
+used `push_latest=false`. Each exact-digest G10 comparison passed with 396
+accepted-baseline findings, 151 candidate findings, zero new findings, and 245
+resolved findings. The exact-digest SBOMs contained 340 CPU and 358 CUDA
+components.
+
+Both control ZIP sidecars, all 71 internal checksum entries across 72 packaged
+files, manifest identities, required notices/helpers, compliance inventory,
+and forbidden/secret/path checks passed. No package was published.
+
+| Host | Engine | Package | Port | Result |
+| --- | --- | --- | ---: | --- |
+| `FIRST-HOST-LOCAL` | Docker Desktop | CPU | 5231 | PASS: exact digest, assets `ok`, CPU selected, eight volumes retained across stop/relaunch |
+| `FIRST-HOST-LOCAL` | Docker Desktop | CUDA 12.8 | 5232 | PASS: exact digest, assets `ok`, CUDA selected, real `sm_120` kernel, eight volumes retained across stop/relaunch |
+| `FIRST-HOST-LOCAL` | rootless Podman 6.0.2 | CPU | 5233 | PASS: approved package-local provider, exact digest, assets `ok`, CPU selected, eight volumes retained across stop/relaunch |
+| `FIRST-HOST-LOCAL` | rootless Podman 6.0.2 | CUDA 12.8 | 5234 | PASS: approved provider plus NVIDIA CDI, exact digest, assets `ok`, CUDA selected, real `sm_120` kernel, eight volumes retained across stop/relaunch |
+
+The exact `rc4` CPU and CUDA digests also passed all six W05 phases. The CPU
+run identifier is
+`20260929T194841Z_FIRST-HOST-LOCAL_docker_C_cpu_torch2-10-0_541622556fb7_rc4-exact-cpu`;
+its `run.json` SHA-256 is
+`17e14ac418ec57ad65efe74ddb30631ef25ee415498794e66b78f5069ac0724f`
+and verdict SHA-256 is
+`e62b6723da24fb7ddb4a59ebe4162de9e8f44436e39a537657bbd0c7bff38187`.
+The CUDA run identifier is
+`20260929T201729Z_FIRST-HOST-LOCAL_docker_C_cuda128_torch2-10-0_541622556fb7_rc4-exact-cuda`;
+its `run.json` SHA-256 is
+`d49bc89226e4e1ebc108f48a6c9b5ad4ab2bae680b8c3040a7a34c0f44049a71`
+and verdict SHA-256 is
+`f09aa31d7787d1f4c8ea463f769c0a191ff3154eb51bc056f6ac965a5fb379e2`.
+Both models used CPU in the CPU run and `cuda:0` in the CUDA run; each run
+recorded positive EfficientNet work. Every applicable absolute comparator gate
+passed.
 
 ## Replacement `rc3` Frozen Candidate Inventory
 
@@ -187,18 +242,18 @@ PR merged.
 
 These items prevent a release-ready or full W09/W10 acceptance claim:
 
-- Docker CPU managed-TLS repair, Google/Azure normal detection, and Google
-  cancel-then-next recovery passed on the frozen `rc3` package; credential
-  values were not read or retained in evidence. These affected cells require
-  repetition on the post-PR #92/#93 replacement package.
-- Docker CPU review/export and controlled-error cells remain `not_run`.
-- Docker CUDA, Podman CPU, and Podman CUDA provider/recovery/review-export and
-  controlled-error cells remain `not_run`.
-- Managed-endpoint/policy and any required signing decision remain owner or
-  environment dependent.
-- Independent-host W10 reproduction is not complete.
+- The `rc4` four-profile first-host provider/recovery/review-export and
+  controlled-error matrix passes and is recorded in the W10 evidence index.
+- Exact-`rc4` reboot persistence passes for all four profiles; Docker restored
+  automatically and Podman used the documented manual retained-container
+  start without recreation or volume deletion.
+- ADR-023 resolves policy/signing by limiting the standard claim to users/sites
+  that permit the supplied unsigned wrapper path. Signature-enforcing managed
+  endpoints are out of scope, not passed.
+- The ADR-023 manual changes are control-ZIP bytes and OCI-image bytes because
+  `Dockerfile` copies `docs/` for the in-app routes. New documentation-aligned
+  image/control-ZIP identities and authoritative release-page hashes are
+  required before distribution.
+- Browser-download and independent-host W10 reproduction are not complete.
 - Control-package publication and any `latest` promotion require explicit
   owner authorization.
-
-First-host reboot persistence for these frozen `rc3` bytes is recorded as
-`PASS` in the W10 evidence index and is not an open cell.

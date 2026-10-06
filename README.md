@@ -6,21 +6,23 @@ TowerScout Enterprise, a new program re-designed from the ground up to make bett
 
 ## Install The Release Package
 
-### July 2026 Pilot Notice
+### Release Package Notice
 
-The validated `v0.1.2` package is being distributed from this fork as a pilot
-while user feedback is collected. The existing `cdcai/TowerScout` repository
-remains unchanged and continues to represent the application currently adopted
-there; it is not the download source for this pilot. Use the exact `v0.1.2`
-release link supplied by the pilot team. Future cdcai adoption will occur only
-after the cdcai owner reviews feedback and approves the version to adopt.
+The published `v0.1.2` package remains a historical pilot release. A newer
+package becomes the current supported release only when its GitHub release
+record names the exact downloads, public SHA-256 values, image digests,
+tested environments, and known limitations. On the Releases page, choose the
+entry whose notes call it the current supported final Windows release; do not
+treat a draft, prerelease, source archive, branch name, or numerically newer
+tag as supported by inference.
 
-Most pilot users should not start by cloning this repository. If you received a
+Package users should not start by cloning this repository. If you received a
 TowerScout release package, start here instead:
 
 - [Quick Start](docs/quick-start.md)
 - [Full Package Guide](docs/package-guide.md)
 - [User Guide](docs/user-guide.md)
+- [Local IT Administrator Guide](docs/local-it-administrator-guide.md)
 
 Runtime-specific package guides:
 
@@ -31,20 +33,34 @@ Runtime-specific package guides:
 
 Release packages are published from the repository
 [Releases](https://github.com/J-Schulein/TowerScout/releases) page. Use the
-exact release URL or tag support gives you, download the files from the release
-`Assets` section, and do not use the green GitHub `Code` button or automatic
+identified final release, download the files from its `Assets` section, and do
+not use the green GitHub `Code` button or automatic
 source-code ZIP/TAR.GZ downloads for the normal package workflow.
 
-The normal package path assumes Windows 11 AMD64, Docker Desktop with the WSL 2
-backend as the primary pilot engine, normal outbound internet access, and one
-valid Google Maps or Azure Maps key. Current package planning uses two
-Application Package variants: the CPU package for normal/non-GPU users and the
-CUDA 12.8 package only for support-validated NVIDIA GPU workstations. Both use
-the same Model & Data Package ZIP. Podman CPU, Docker GPU, and Podman GPU are
-support-assigned paths only when the workstation has the required engine,
-approved Compose provider, and NVIDIA validation for the selected runtime. You
-do not need Git, Python, Conda, Node.js, VS Code, or a source checkout for the
-normal package workflow.
+The Windows package supports three independent user choices: Docker Desktop or
+Podman, CPU or a compatible NVIDIA GPU, and Google Maps or Azure Maps. Choose
+the CPU Application Package for CPU processing or the CUDA 12.8 Application
+Package for a release-listed NVIDIA configuration; both use the same Model &
+Data Package ZIP. Podman needs a rootless WSL 2 machine, 64-bit Python 3.12,
+and the package-local Compose provider. GPU use additionally needs the exact
+driver and selected-engine container path listed in the release notes. Docker
+users do not need Git, Python, Conda, Node.js, VS Code, or a source checkout.
+
+### Unsigned Windows Package Boundary
+
+TowerScout's Windows PowerShell scripts are intentionally not Authenticode-
+signed. The supported user entrypoints are the supplied `.cmd` and `.bat`
+wrappers. They use a process-scoped PowerShell execution-policy setting and do
+not change the computer's persistent policy.
+
+The standard package supports only workstations where the user and
+organization permit that wrapper path. Environments requiring a trusted
+publisher, WDAC/AppLocker approval, constrained-language approval, or other
+organization-specific allowlisting require site-administrator action and are
+not part of the standard support claim. Verify the ZIP's SHA-256 against the
+value displayed in the authoritative release record before extracting or
+unblocking it. Do not disable Defender/EDR or weaken machine-wide policy to run
+TowerScout; stop and contact the site administrator if Windows blocks it.
 
 The CUDA package has a Volta-or-newer architecture expectation, but a release
 supports only the exact GPU, Windows driver, WSL, engine, and toolkit
@@ -52,15 +68,15 @@ combinations named in its release notes. Maxwell and Pascal must use the CPU
 package or `-Gpu off`. Use a current NVIDIA or OEM production Windows driver
 that lists the exact GPU; never install a Linux display driver inside WSL. The
 measured CUDA image is 14.4 GB, so GPU users should plan at least 35 GB free for
-pull/unpack and runtime data; source qualification builds need at least 60 GB.
+package download, image pull/unpack, assets, and runtime data.
 
 ## Provenance
 
 This repository is a fork of `cdcai/TowerScout`, which itself carries forward
-the original `TowerScout/TowerScout` project history. The validated 2026
-`v0.1.2` pilot package, validation, and handoff work were developed on this
-fork. The cdcai owner will decide whether and when to adopt `v0.1.2` or a later
-validated successor after reviewing pilot feedback.
+the original `TowerScout/TowerScout` project history. The 2026 Windows package,
+validation, and handoff work were developed on this fork. The cdcai owner will
+decide whether and when to adopt a validated release after reviewing its
+evidence and support boundary.
 
 ## About TowerScout
 

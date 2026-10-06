@@ -8,12 +8,13 @@ IMPORT_TLS_CA_SCRIPT = REPO_ROOT / "scripts" / "import-tls-ca.ps1"
 REPAIR_PROVIDER_TLS_SCRIPT = REPO_ROOT / "scripts" / "repair-provider-tls.ps1"
 REPAIR_PROVIDER_TLS_CMD = REPO_ROOT / "scripts" / "repair-provider-tls.cmd"
 START_SCRIPT = REPO_ROOT / "scripts" / "start.ps1"
+LOGS_SCRIPT = REPO_ROOT / "scripts" / "logs.ps1"
+OCI_RUNTIME_CONTRACT = REPO_ROOT / "docs" / "support" / "oci-runtime-contract.md"
 TLS_GUIDES = [
     REPO_ROOT / "docs" / "docker-cpu-user-guide.md",
     REPO_ROOT / "docs" / "docker-gpu-user-guide.md",
     REPO_ROOT / "docs" / "podman-cpu-user-guide.md",
     REPO_ROOT / "docs" / "podman-gpu-user-guide.md",
-    REPO_ROOT / "docs" / "quick-start.md",
     REPO_ROOT / "docs" / "package-guide.md",
     REPO_ROOT / "docs" / "support" / "oci-quick-start.md",
 ]
@@ -43,6 +44,50 @@ def test_import_assets_script_preserves_port_and_restarts_after_copy():
     assert "engine_count > 0" in script
 
 
+def test_gpu_asset_recovery_docs_preserve_gpu_mode_and_port():
+    script = IMPORT_ASSETS_SCRIPT.read_text(encoding="utf-8")
+    assert '[ValidateSet("off", "auto", "on")]' in script
+    assert '[string] $Gpu = "off"' in script
+    assert "[int] $Port" in script
+    assert "Set-TowerScoutGpuEnvironment -Gpu $Gpu" in script
+
+    expected = {
+        REPO_ROOT / "docs" / "docker-gpu-user-guide.md": (
+            ".\\scripts\\import-assets.cmd -Engine docker -Gpu on -Port 5000",
+            "asset import do not take a GPU flag",
+        ),
+        REPO_ROOT / "docs" / "podman-gpu-user-guide.md": (
+            ".\\scripts\\import-assets.cmd -Engine podman -Gpu on -Port 5000",
+            "asset import do not take a GPU flag",
+        ),
+    }
+    for guide, (command, prohibited) in expected.items():
+        text = guide.read_text(encoding="utf-8")
+        assert command in text, guide
+        assert prohibited not in text, guide
+
+    package_guide = (REPO_ROOT / "docs" / "package-guide.md").read_text(
+        encoding="utf-8"
+    )
+    assert "Asset import accepts `-Engine`, `-Gpu`, and `-Port`" in package_guide
+    assert "status/log/import commands" not in package_guide
+    assert "Stop and log commands do not take a port" in package_guide
+
+
+def test_packaged_oci_port_recovery_matches_helper_parameter_contract():
+    logs_script = LOGS_SCRIPT.read_text(encoding="utf-8")
+    runtime_contract = OCI_RUNTIME_CONTRACT.read_text(encoding="utf-8")
+
+    assert "$Port" not in logs_script
+    assert (
+        "Use the same selected port on setup, start,\n"
+        "status, TLS-repair, and asset-import commands, and in the browser address."
+        in runtime_contract
+    )
+    assert "`stop.cmd` and `logs.cmd` do not accept `-Port`." in runtime_contract
+    assert "same port on status, logs" not in runtime_contract
+
+
 def test_packaged_compose_entrypoints_initialize_env_before_starting_stack():
     start_script = START_SCRIPT.read_text(encoding="utf-8")
     tls_script = IMPORT_TLS_CA_SCRIPT.read_text(encoding="utf-8")
@@ -68,7 +113,10 @@ def test_tls_repair_guides_carry_port_through_repair_and_restart_commands():
             marker = "Use the command shown by TowerScout"
         section_start = text.index(marker)
         section = text[section_start:]
-        next_heading = re.search(r"\n#{1,3} ", section)
+        # Level-three headings divide diagnostic, review, and apply phases in
+        # the Package Guide. Keep those phases in scope and stop only at the
+        # next top-level or level-two topic.
+        next_heading = re.search(r"\n#{1,2} ", section)
         if next_heading:
             section = section[: next_heading.start()]
         command_lines = [

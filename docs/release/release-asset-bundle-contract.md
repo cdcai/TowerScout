@@ -1,17 +1,24 @@
 # TowerScout Release Asset Bundle Contract
 
 **Applies to**: Current V1 release-candidate package support path
-**Last reviewed**: 2026-06-16
+**Last reviewed**: 2026-10-01
 **Audience**: Release engineering, support, and release reviewers
-**Runtime scope**: The CPU Application Package is the primary path; the CUDA
-12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
-support-assigned paths after workstation-specific engine, Compose-provider,
-and NVIDIA validation.
+**Runtime scope**: Users independently choose Docker or Podman and CPU or a
+compatible NVIDIA GPU; release engineering qualifies the exact combinations.
 
 This document defines the contract for TowerScout runtime assets that are too
 large or policy-sensitive to keep in git. It is the handoff point between
 release packaging, end-user package documentation, and clean-machine
 validation.
+
+The control package is intentionally unsigned. The release record must state
+that its PowerShell scripts lack Authenticode signatures, identify the supplied
+`.cmd`/`.bat` wrappers and their process-scoped execution-policy setting as the
+supported entrypoints, and publish the exact
+control/asset ZIP SHA-256 values directly in the authoritative release record.
+The adjacent sidecars remain required but are not, by themselves, publisher
+authentication. Signature-enforcing managed endpoints require separate site
+approval and are outside the standard package claim.
 
 ## Scope
 
@@ -28,7 +35,7 @@ Hosted asset download, bundled OCI image archives, and air-gapped/offline
 release packages are out of scope for the normal path. The package-local
 setup/bootstrap path can discover, verify, and stage a local Model & Data
 Package ZIP, but it does not download hosted assets. Restricted-network support
-remains a support-managed image preload plus local asset import unless a later
+remains a site-managed image preload plus local asset import unless a later
 task expands that contract.
 
 ## Release Artifacts
@@ -39,10 +46,10 @@ For a release version such as `<release-version>`, the expected artifacts are:
 | --- | --- | --- |
 | CPU control ZIP | `towerscout-<release-version>-cpu.zip` | Default user-facing package with launcher, Compose, scripts, docs, manifest, and pinned CPU image metadata. |
 | CPU control ZIP checksum | `towerscout-<release-version>-cpu.zip.sha256` | SHA-256 checksum for the full CPU control ZIP. |
-| CUDA control ZIP | `towerscout-<release-version>-cuda128.zip` | Support-assigned NVIDIA GPU package with launcher, Compose, scripts, docs, manifest, and pinned CUDA 12.8 image metadata. |
+| CUDA control ZIP | `towerscout-<release-version>-cuda128.zip` | User-selectable NVIDIA GPU package with launcher, Compose, scripts, docs, manifest, and pinned CUDA 12.8 image metadata. |
 | CUDA control ZIP checksum | `towerscout-<release-version>-cuda128.zip.sha256` | SHA-256 checksum for the full CUDA control ZIP. |
 | GHCR image digest | `ghcr.io/j-schulein/towerscout@sha256:<digest>` | Immutable Linux/AMD64 runtime image referenced by each control ZIP. |
-| Asset ZIP | `towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip` | Restricted-pilot or support-supplied local bundle containing model weights, ZIP-code data, and the asset manifest copy. |
+| Asset ZIP | `towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip` | Shared release bundle containing model weights, ZIP-code data, and the asset manifest copy. |
 | Asset ZIP checksum | `towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip.sha256` | SHA-256 checksum for the full asset ZIP. |
 
 The release version in the control ZIP and asset ZIP names must match. The

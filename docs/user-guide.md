@@ -1,31 +1,36 @@
 # TowerScout User Guide
 
-**Applies to**: Current V1 package path through the stable `v0.1.0` closeout,
-unless release notes say otherwise
-**Last reviewed**: 2026-09-24
-**Audience**: Pilot users after first setup
-**Runtime scope**: The CPU Application Package is the primary path; the CUDA
-12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
-support-assigned paths after workstation-specific engine, Compose-provider,
-and NVIDIA validation.
+**Applies to**: The exact documentation-aligned Windows release package named
+by the authoritative release record
+**Last reviewed**: 2026-10-05
+**Audience**: Package users after first setup.
+
+**Runtime scope**: Docker CPU, Docker GPU, Podman CPU, and Podman GPU are
+user-selected supported options when their documented prerequisites and the
+final release's tested-support boundary are satisfied.
 
 This guide explains the normal TowerScout workflow after the package is
 installed, assets are imported, and at least one map provider key is configured.
 
-Use `docs/quick-start.md` for first-run package setup and
-`docs/package-guide.md` for support troubleshooting.
+Use the clickable [Quick Start](quick-start.md) for first-run package setup and
+the [Package Guide](package-guide.md) for advanced troubleshooting.
 
 ## Before Using This Guide
 
 This guide assumes the package setup work is already complete:
 
-- Docker Desktop is installed, approved, and running for the primary pilot
-  path, or support has explicitly directed you to a qualified Podman path.
+- The Docker or Podman engine you chose is installed, permitted, and running.
 - Required model and ZIP-code assets are imported.
 - TowerScout opens at `http://localhost:5000`.
 - At least one provider key is configured through Setup Wizard or Settings.
 
-If any of those are not true, start with `docs/quick-start.md`.
+If any of those are not true, start with the [Quick Start](quick-start.md).
+
+TowerScout's Windows host scripts are intentionally unsigned. Use the supplied
+`.cmd` and `.bat` entrypoints from a workstation where you and your organization
+are permitted to run them. Do not weaken persistent execution policy or disable
+endpoint protection. If Windows or an organization control requires a trusted
+publisher or administrator approval, stop and use the site approval process.
 
 GPU use is qualified only for the exact combinations named in the release
 notes. A host `nvidia-smi` result alone is not acceptance; readiness must show
@@ -98,7 +103,8 @@ small so tile counts and processing time stay manageable.
 1. Search for or navigate to the location.
 2. Enter a radius in meters.
 3. Select `Circle`.
-4. Select `Estimate tiles`.
+4. Click the map to place the circle.
+5. Select `Estimate tiles`.
 
 ### Custom Search Area
 
@@ -123,9 +129,8 @@ The estimate tells you:
 - How many imagery tiles TowerScout expects to process.
 - Rough expected processing time.
 
-If the tile count is too large for the pilot workflow, clear the search area or
-draw a smaller one. Estimating first avoids starting a long detection run by
-accident.
+If the tile count is larger than you intended, clear the search area or draw a
+smaller one. Estimating first avoids starting a long detection run by accident.
 
 ## Run Detection
 
@@ -190,6 +195,9 @@ TowerScout supports several export paths.
 
 ### CSV And KML
 
+Confirm that the results and their locations may be stored in the destination
+folder before exporting them.
+
 Use `Download results` to download:
 
 - `detections.csv`
@@ -200,11 +208,12 @@ summaries according to your site policy.
 
 ### Dataset ZIP
 
+Dataset ZIPs may contain sensitive locations, investigation context, imagery
+tiles, and manual corrections. Confirm the approved storage and sharing path
+before selecting the download action.
+
 Use `Download dataset` to save the current tiles, labels, metadata, and manual
 additions as `dataset.zip`.
-
-Dataset ZIPs may contain sensitive locations, investigation context, imagery
-tiles, and manual corrections. Treat them as sensitive local data.
 
 ## Restore A Dataset
 
@@ -217,27 +226,67 @@ After restore:
 - Confirm detections and manual towers appear as expected.
 - Re-export only if the restored dataset is approved for the intended use.
 
-## Stop And Resume Later
+## Stop When Finished Or Resume Later
 
-Use:
+Use the engine and processing mode in your non-secret setup record.
+
+### Stop When Finished
+
+Run only the line for your engine:
 
 ```powershell
 .\scripts\stop.cmd -Engine docker
+.\scripts\stop.cmd -Engine podman
 ```
 
-Restart later with:
+### Start Or Resume Later
+
+For Podman only, first run `podman machine list`. Run the following command
+only when the recorded machine is stopped:
+
+```powershell
+podman machine start podman-machine-default
+```
+
+Then run only the command matching your setup.
+
+#### Docker CPU
 
 ```powershell
 .\start.bat -Engine docker -Gpu off
 ```
 
-The package stores provider configuration, assets, logs, sessions,
-uploads, and caches in named volumes. Treat all of those local stores as
-sensitive.
+#### Docker NVIDIA GPU
 
-If support asked you to run TowerScout with a specific engine, use the same
-`-Engine` value on start, stop, status, logs, and asset-import commands because
-Docker and Podman use separate named volumes.
+```powershell
+.\start.bat -Engine docker -Gpu on
+```
+
+#### Podman CPU
+
+```powershell
+.\start.bat -Engine podman -Gpu off
+```
+
+#### Podman NVIDIA GPU
+
+```powershell
+.\start.bat -Engine podman -Gpu on
+```
+
+`stop.cmd` does not take a port. If you selected another port, use it on setup,
+start, and status and in the browser address.
+
+The selected engine stores provider configuration, assets, logs, sessions,
+temporary review data, uploads, and caches in **named volumes**, engine-managed
+storage areas that remain when the TowerScout container stops. Normal
+stop/start and reboot preserve them. Docker and Podman have separate stores,
+and switching engines does not migrate data. The Podman machine may need to be
+started after Windows restarts.
+
+Export important results before stopping. A browser tab or internal session is
+not a backup. Treat all local stores and exports as sensitive. Do not use
+volume deletion, prune, or Podman machine reset as routine recovery.
 
 ## Setup And Resource Links
 
@@ -246,7 +295,8 @@ Open Settings to:
 - Update Google Maps or Azure Maps keys.
 - Change the default provider.
 - View performance summary.
-- Enable debug mode when support asks for it.
+- Enable debug mode only for a bounded diagnostic and review its output before
+  sharing anything.
 - Clear cache.
 - Open Resource Links.
 
@@ -270,16 +320,22 @@ records.
 
 ## Getting Help
 
-When reporting a problem, include:
+For Windows policy, software installation, proxy, TLS, or managed-device
+problems, contact Local IT. For a reproducible TowerScout defect that contains
+no sensitive data, use the public
+[TowerScout issue tracker](https://github.com/J-Schulein/TowerScout/issues).
+It is not a private or guaranteed-response help desk.
+
+Include:
 
 - What you were trying to do.
 - The release package version.
-- Whether you used Docker Desktop or support-directed Podman.
-- The readiness state from `scripts\status.cmd -Engine docker`, or the same
-  command with the explicitly selected engine.
-- A reviewed and redacted summary of recent logs if support asks for it.
+- Whether you used Docker or Podman, CPU or GPU, and which port.
+- The sanitized readiness state from `scripts\status.cmd` with your selected
+  engine and port.
+- A short reviewed/redacted excerpt only when it contains no sensitive data.
 
-Do not share provider keys, `.env`, raw logs, raw screenshots, browser network
-traces, cached provider responses, uploaded investigation files, exported
-datasets, named-volume contents, or sensitive AOIs unless your site has an
-approved support-handling procedure.
+Never post provider keys, `.env`, raw logs, raw screenshots, browser network
+traces, cached provider responses, certificate details, uploaded investigation
+files, exported datasets, named-volume contents, or sensitive AOIs in a public
+record.

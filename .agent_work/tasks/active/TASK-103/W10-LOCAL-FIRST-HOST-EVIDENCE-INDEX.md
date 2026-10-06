@@ -1,17 +1,21 @@
 # Task-103 W10 Local First-Host Evidence Index
 
-**Recorded**: 2026-09-28; updated 2026-09-29
+**Recorded**: 2026-09-28; updated 2026-10-02
 **Host ID**: `FIRST-HOST-LOCAL`
 **Scope**: Same-machine first-host rehearsal only; this is not the independent
 host required for full W10 acceptance.
-**Verdict**: `INCOMPLETE` for W10. The later frozen `rc3` qualified subset
-passed the recorded first-host lifecycle, reboot, Docker CPU provider/TLS, and
-Google cancel-then-next cells, while the earlier pre-`rc3` package failed
-cancellation recovery as preserved below. The `rc3` artifacts predate PR #92
-and PR #93, so affected cells require repetition on new immutable images and
-replacement packages before a final candidate verdict.
-**Publication state**: No package was published and no `latest` tag was
-promoted.
+**Verdict**: `INCOMPLETE` for full W10, with the final local `rc4` first-host
+four-profile workflow subset now `PASS`. Every profile passes live Google and
+Azure detection, cancellation/next-request recovery, a controlled recoverable
+error followed by success, review/export, provider/TLS persistence,
+volume-preserving stop/relaunch and reboot, exact digest, and required CPU/CUDA
+device selection. ADR-023 resolves policy/signing by narrowing the standard
+support claim. The preliminary `rc4` browser-download Docker CPU diagnostic
+passed; final documentation-aligned image/package identities, browser-download
+proof, and independent-host repetition remain open.
+**Publication state**: An authenticated, non-public GitHub draft release holds
+the diagnostic assets. No public package release was published and no `latest`
+tag was promoted.
 
 ## Superseded Pre-`rc3` Frozen Inputs
 
@@ -127,7 +131,8 @@ evidence and are not used to strengthen or weaken the candidate verdict.
 - Podman CPU live-provider/recovery: `not_run`.
 - Podman CUDA live-provider/recovery: `not_run`.
 - Reboot persistence: `not_run`.
-- Managed endpoint policy/signing: `blocked` pending the actual policy/decision.
+- Managed endpoint policy/signing: `blocked` at this historical checkpoint;
+  later resolved by scope through ADR-023 on 2026-10-01.
 - Independent-host repetition: `blocked` pending an independent computer.
 
 The current immutable candidate must not be described as W10-qualified. The
@@ -422,7 +427,118 @@ from that attempt is claimed. Those cells remain `not_run` below.
 - Podman CUDA Google/Azure, review/export, cancellation, controlled recoverable
   error, and next-request success: `not_run`; its isolated volume has no
   provider credentials.
-- Managed endpoint policy/signing: `blocked` pending the actual policy and
-  owner decision.
+- Managed endpoint policy/signing: `blocked` at this historical checkpoint;
+  later resolved by scope through ADR-023 on 2026-10-01.
 - Independent-host repetition: `blocked` pending an independent computer.
+- Package publication and `latest` promotion: owner-gated and not performed.
+
+The bounded cleanup inventory and preservation decision are recorded in
+[RC4-CLEANUP-INVENTORY-2026-10-02.md](./RC4-CLEANUP-INVENTORY-2026-10-02.md).
+
+## Final Local `rc4` Four-Profile Repetition
+
+**Recorded**: 2026-09-29 through 2026-09-30
+**Scope**: Exact locally assembled `rc4` control packages and owner-confirmed
+immutable image digests on `FIRST-HOST-LOCAL`. This closes the first-host live
+workflow cells but not the independent-host or managed-policy gates.
+
+### Bound identities
+
+- Source: `541622556fb7999ee4e88fb1e44f7797b9da34f5`.
+- CPU image digest:
+  `sha256:a3eeb77152577f3656a286777bd4c4312cecc311cb5a5cc1b132b459f1ecd18f`.
+- CUDA image digest:
+  `sha256:61dab3b83e1be8e2cf955d9d7d2d9b997a207a4dcb76b20344a268a5690f654a`.
+- CPU control ZIP SHA-256:
+  `1cf763b6184bb96dfe976f41f56a4aa5b8eeeea51a8de59830a9bf7fb9784a55`.
+- CUDA control ZIP SHA-256:
+  `02ec76b93bea28417b7ea4b086f23148b57b34c33823ce2f113da7147165915f`.
+- Shared asset ZIP SHA-256:
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+- Safe committed fixture SHA-256:
+  `fd6771ed3aa30a44c5bedb7575ed7f164896e496292fae29ac1da4bb9638d715`.
+- Ignored sanitized qualification runner SHA-256:
+  `0ee0a785cf90bbf96dad45451dd5d00c34368d809a6ff207ab9670b37359070d`.
+
+The runner and retained summaries expose only provider labels, status codes,
+counts, and boolean UI/runtime state. Raw URLs, request/response bodies,
+credentials, AOI coordinates, screenshots, console text, local paths, and host
+names were not retained. Stock smoke artifacts were reduced to safe facts and
+their raw run directories were removed immediately after each run.
+
+### Profile matrix
+
+| Profile | Port | Live-provider and recovery result | Review/export result | Lifecycle/device result |
+| --- | ---: | --- | --- | --- |
+| Docker CPU | 5231 | PASS: Google 8 and Azure 14 detections; cancel HTTP 202, overlay cleared, immediate next request passed; controlled HTTP 400 followed by HTTP 200 | PASS: review navigation; nonempty CSV/KML; dataset HTTP 200, eight selected inputs, nonempty valid ZIP | PASS: repaired Google TLS and both provider settings survived stop/relaunch; exact CPU digest, assets/config `ok`, CPU selected, eight mounts |
+| Docker CUDA | 5232 | PASS: Google 8 and Azure 14 detections; cancel HTTP 202, overlay cleared, immediate next request passed; controlled HTTP 400 followed by HTTP 200 | PASS: review navigation; nonempty CSV; dataset HTTP 200, eight selected inputs, nonempty valid ZIP | PASS: repaired Google TLS and both provider settings survived stop/relaunch; exact CUDA digest, assets/config `ok`, real finite `sm_120` CUDA kernel, eight mounts |
+| Podman CPU | 5233 | PASS: Google 8 and Azure 14 detections; cancel HTTP 202, overlay cleared, immediate next request passed; controlled HTTP 400 followed by HTTP 200 | PASS: review navigation; nonempty CSV/KML; dataset HTTP 200, eight selected inputs, nonempty valid ZIP | PASS: repaired Google TLS and both provider settings survived package-pinned Podman stop/relaunch; exact CPU digest, assets/config `ok`, CPU selected, eight mounts |
+| Podman CUDA | 5234 | PASS: Google 8 and Azure 14 detections; cancel HTTP 202, overlay cleared, immediate next request passed; controlled HTTP 400 followed by HTTP 200 | PASS: review navigation; nonempty CSV/KML; dataset HTTP 200, eight selected inputs, nonempty valid ZIP | PASS: repaired Google TLS and both provider settings survived package-pinned Podman stop/relaunch; exact CUDA digest, assets/config `ok`, real finite `sm_120` CUDA kernel, eight mounts |
+
+Every estimate returned HTTP 200 with one tile. The controlled error was the
+documented validation path: an intentionally empty estimate request returned
+HTTP 400, after which the same browser session completed a real provider-backed
+detection with HTTP 200. Post-relaunch Google detections passed in every
+profile. No credential value was read or copied between isolated volumes.
+
+Two Docker CUDA Azure attempts using the stock harness timed out before
+detection because it switched as soon as provider radios appeared. The
+previously documented harness correction—wait for the default provider to be
+fully initialized, for `getIsInitializing()` to be false, and for the provider
+switch queue to be idle—then produced the accepted Azure pass. Several
+review/export diagnostics also exposed Chrome's suppression of simultaneous
+downloads; isolated CSV/KML sessions and an in-memory dataset ZIP check passed.
+No failed diagnostic is counted as acceptance evidence.
+
+### Exact-`rc4` post-reboot persistence
+
+**Recorded**: 2026-09-30
+
+Windows Event Log service start at `2026-09-30T17:36:44.6273762Z` established
+a new reboot boundary after the final local matrix. Docker Desktop
+automatically restored both `rc4` containers healthy. The retained rootless
+Podman machine was running, while its CPU and CUDA containers remained stopped
+until the documented explicit manual start. Those existing containers were
+started in place; no container, image, network, or named volume was recreated
+or deleted.
+
+| Profile | Restoration and identity | Post-reboot provider result |
+| --- | --- | --- |
+| Docker CPU / 5231 | Auto-restored; healthy; exact CPU digest; assets/config `ok`; CPU selected; eight mounts | Google and Azure each returned estimate HTTP 200, one tile, detection HTTP 200, review navigation, controlled HTTP 400 then HTTP 200 recovery, and a nonempty valid dataset ZIP |
+| Docker CUDA / 5232 | Auto-restored; healthy; exact CUDA digest; assets/config `ok`; CUDA selected; eight mounts; finite `sm_120` kernel on `cuda:0` | Same Google/Azure pass; eight Google and 14 Azure detections; zero page errors |
+| Podman CPU / 5233 | Existing retained container manually started; healthy; exact CPU digest; assets/config `ok`; CPU selected; eight mounts | Same Google/Azure pass; eight Google and 14 Azure detections; zero page errors |
+| Podman CUDA / 5234 | Existing retained container manually started; healthy; exact CUDA digest; assets/config `ok`; CUDA selected; eight mounts; finite `sm_120` kernel on `cuda:0` | Same Google/Azure pass; eight Google and 14 Azure detections; zero page errors |
+
+Both providers remained configured in all four isolated configuration volumes.
+Keyless Google and Azure probes returned `tls_ok` on every profile. The
+post-reboot smoke runner and fixture remained byte-identical to the hashes
+recorded above; every run reported `sensitiveArtifactsRetained=false`. No raw
+browser-run directory or temporary download directory remained.
+
+### Final local double check and open gates
+
+All four profiles simultaneously reported `ready`, assets/config `ok`, the
+required CPU or CUDA device, both providers configured, the exact expected
+digest, and exactly eight mounts. Zero raw browser-run directories, temporary
+export directories, or task-owned browser automation processes remained.
+
+The remaining gates are explicit:
+
+- Exact-`rc4` reboot persistence: `PASS` for all four profiles. Docker
+  auto-restored; Podman required the documented manual retained-container
+  start. Provider/TLS state, exact digests, devices, and eight mounts per
+  profile persisted, and all eight post-reboot Google/Azure workflow runs
+  passed.
+- Managed endpoint policy/signing: `resolved by scope` under ADR-023. The
+  package remains unsigned; signature-enforcing managed endpoints are outside
+  the standard support claim and are not recorded as passes.
+- Preliminary `rc4` browser download: `PASS` for the bounded Docker CPU subset;
+  see the
+  [diagnostic record](../TASK-092/RC4-BROWSER-DOWNLOAD-DIAGNOSTIC-2026-10-02.md).
+  It is diagnostic only.
+- Replacement package/browser download: `blocked` until the updated manuals
+  receive new documentation-aligned CPU/CUDA image and control-ZIP identities
+  plus authoritative published hashes.
+- Independent-host four-profile repetition: `blocked` pending an independent
+  Windows computer.
 - Package publication and `latest` promotion: owner-gated and not performed.

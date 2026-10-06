@@ -8,8 +8,10 @@ description: Use first when a TowerScout task spans multiple skill areas or you 
 # TowerScout Skill Router
 
 Current delivery direction is summarized in root `AGENTS.md`; the September 21
-v2 main-based plan supersedes PR #67/launcher sequencing for this delivery
-window.
+v2 main-based plan, as amended by ADR-022 and ADR-023, supersedes PR
+#67/launcher sequencing for this delivery window. ADR-023 selects an unsigned
+Windows package and excludes signature-enforcing managed endpoints from the
+standard support claim.
 
 Use this skill first when a TowerScout task spans several domains, when Codex appears likely to load several release-adjacent skills, or when you want a primary-skill recommendation before work starts.
 

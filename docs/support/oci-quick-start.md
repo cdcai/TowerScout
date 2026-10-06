@@ -1,22 +1,28 @@
 # TowerScout OCI Quick Start
 
-**Applies to**: Current V1 release-candidate package support path
-**Last reviewed**: 2026-06-16
+**Applies to**: The exact documentation-aligned Windows release package named
+by the authoritative release record
+**Last reviewed**: 2026-10-02
 **Audience**: Release/support users who need engine-level detail
-**Runtime scope**: The CPU Application Package is the primary path; the CUDA
-12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
-support-assigned paths after workstation-specific engine, Compose-provider,
-and NVIDIA validation.
+**Runtime scope**: Users independently choose Docker or Podman and CPU or a
+compatible NVIDIA GPU; each path must meet the release-listed requirements.
 
 This guide covers the v1 local container package shape for TowerScout for
-release/support users who need engine-level detail. External pilot users
+release/support users who need engine-level detail. Package users
 should start with `docs/quick-start.md` instead.
 
-The primary pilot path is the CPU Application Package on Docker Desktop with
+The primary package path is the CPU Application Package on Docker Desktop with
 the WSL 2 backend, launched with CPU-safe `-Gpu off`. The CUDA 12.8 Application
-Package is for support-validated NVIDIA GPU workstations. Podman remains a
-qualified support-directed package runtime path only when the workstation has a
-running Podman machine and an approved non-Docker-Desktop Compose provider.
+Package is for release-listed NVIDIA GPU workstations. Users may choose Podman
+when the workstation has a running rootless WSL 2 machine, Python 3.12, and the
+package-local non-Docker-Desktop Compose provider.
+
+The Windows control package is intentionally unsigned. Supported users invoke
+the packaged PowerShell scripts through the supplied `.cmd`/`.bat` wrappers,
+which use a process-scoped execution-policy setting. This does not change
+persistent machine policy or qualify signature-enforcing/organization-
+allowlisted endpoints. Compare browser-downloaded ZIP hashes with the values in
+the authoritative release record before extraction or unblocking.
 
 ## Supported V1 Target
 
@@ -27,28 +33,29 @@ running Podman machine and an approved non-Docker-Desktop Compose provider.
   `cuda128` for support-validated NVIDIA GPU workstations
 - One shared Model & Data Package ZIP for both Application Package variants
 - Normal outbound internet access for GHCR image pulls and map providers
-- Docker Desktop with WSL 2 backend for the primary pilot path, or a
-  support-approved Podman machine and Compose provider for the qualified Podman
-  path
-- Optional Docker GPU and Podman GPU launch after support validates the selected
+- Docker Desktop with WSL 2 backend, or a rootless Podman machine and the
+  package-local Compose provider
+- Optional Docker GPU and Podman GPU launch after the user validates the selected
   engine's NVIDIA container path
 
-Out of scope for v1: Mac, ARM64, air-gapped/offline installs, VDI, shared multi-user hosting, native installer behavior, and managed remote deployment.
+Out of scope for v1: Mac, ARM64, air-gapped/offline installs, VDI, shared
+multi-user hosting, native installer behavior, managed remote deployment, and
+signature-enforcing managed endpoints without separate site approval.
 
 ## Prerequisite Software
 
-The normal pilot package path expects Windows PowerShell, a modern browser,
+The normal package path expects Windows PowerShell, a modern browser,
 normal outbound internet access, and Docker Desktop with the WSL 2 backend
 licensed, approved, installed, and running. The Podman path requires support
 direction, a created and running Podman machine, and an approved Compose
-provider. The RC5 Podman GPU path additionally requires WSL2 Podman, NVIDIA
-host drivers, NVIDIA Container Toolkit/CDI inside the Podman machine, and a
+provider. A Podman GPU path additionally requires the exact release-qualified
+WSL2 Podman, NVIDIA host driver, NVIDIA Container Toolkit/CDI setup, and a
 readiness result with `selected_device=cuda`.
 
-Pilot users do not need Git, Python, Conda, Node.js, VS Code, or a source-code
+Package users do not need Git, Python, Conda, Node.js, VS Code, or a source-code
 checkout for the package path. If both Docker and Podman are installed, the
-launcher can choose Docker first. Use `-Engine podman` consistently only when
-validating a support-directed Podman path.
+launcher can choose Docker first. Use `-Engine podman` consistently when you
+choose Podman.
 
 ## Package Contents
 
@@ -85,8 +92,9 @@ The release package is expected to include:
 - `webapp/asset_manifest.v1.json`
 - `IMAGE.txt`
 - `SHA256SUMS.txt`
-- Quick Start, Package Guide, User Guide, Project Overview, runtime-specific
-  Docker/Podman CPU/GPU user guides, and runtime-contract documentation
+- Quick Start, Package Guide, User Guide, Project Overview, Local IT
+  Administrator Guide, runtime-specific Docker/Podman CPU/GPU user guides, and
+  runtime-contract documentation
 - release asset bundle contract documentation
 - a pinned GHCR image reference by digest
 
@@ -144,14 +152,14 @@ Use that digest reference when generating the release package.
 The publish workflow has an explicit PyTorch wheel flavor input:
 
 - `cpu`: publishes the smaller CPU-wheel image.
-- `cuda128`: publishes the CUDA 12.8 PyTorch image for the support-assigned GPU
-  package path.
+- `cuda128`: publishes the CUDA 12.8 PyTorch image for compatible NVIDIA GPU
+  package paths.
 
 The workflow publishes flavor-specific tags. For example, a workflow tag input of `<release-version>` with `cuda128` publishes `<release-version>-cuda128`; `push_latest` publishes `latest-cpu` or `latest-cuda128`, not an ambiguous `latest`.
 
 The measured CUDA image is 14.4 GB. Budget at least 35 GB for a normal
 pull/unpack plus assets/volumes, 60 GB for a support source build, and 150 GB
-for a full multi-stage comparison (the pilot grew Docker's virtual disk by
+for a full multi-stage comparison (qualification grew Docker's virtual disk by
 about 120 GB). Publish only exact GPU/driver/Windows/WSL/engine/toolkit
 combinations qualified in release evidence.
 
@@ -180,9 +188,9 @@ availability, release metadata, asset ZIP checksum/layout, imports assets with
 hash verification when assets are available, then starts TowerScout. Automatic
 engine selection prefers a reachable engine over an installed but stopped
 engine. Use
-`setup-towerscout.cmd -Engine podman` only for the support-directed Podman
-path, and use `setup-towerscout.cmd -Engine docker -Gpu auto|on` only for
-support-directed Docker GPU validation.
+`setup-towerscout.cmd -Engine podman` for the Podman path, and use
+`setup-towerscout.cmd -Engine docker -Gpu auto|on` for a release-listed Docker
+GPU configuration.
 
 2. For later direct launches after setup, start TowerScout from the package
    directory:
@@ -229,7 +237,7 @@ The default launcher mode is CPU-safe:
 .\start.bat -Engine docker -Gpu off
 ```
 
-GPU launch is opt-in and support-assigned:
+GPU launch is a user-selected option when its prerequisites are met:
 
 ```powershell
 .\start.bat -Engine docker -Gpu auto
@@ -266,25 +274,22 @@ Scripts auto-detect the engine. To force one:
 ```
 
 Docker Desktop use depends on license, procurement, endpoint policy, and local
-installation approval. It is the primary pilot runtime path. Podman is a
+installation approval. It is the primary package runtime path. Podman is a
 qualified support path when Podman and a working Compose provider are
 installed, approved on the workstation, and explicitly selected by support.
 
 On Windows, `podman compose` is a wrapper around an external Compose provider
-such as standalone Docker Compose or `podman-compose`. The TowerScout scripts
-call `podman compose` for the Podman path, and RC5 validation confirmed the
-package can run with standalone Docker Compose v5.1.4 selected explicitly
-through `PODMAN_COMPOSE_PROVIDER` rather than Docker Desktop's bundled
-provider.
+such as `podman-compose`. The TowerScout scripts call `podman compose` for the
+Podman path and require the approved provider/version named by the release.
+Docker Desktop's bundled provider is not an approved Podman substitute.
 
-Validated Podman checks on the current host:
+Required Podman release checks:
 
 - Podman WSL engine startup, named volumes, asset import, readiness, and containerized smoke behavior.
 - Podman CPU startup through an approved non-Docker-Desktop Compose provider.
-- Podman GPU CDI startup on Windows 11 WSL2 with Podman 5.8.2, NVIDIA T1000
-  hardware, standalone Docker Compose v5.1.4 selected through
-  `PODMAN_COMPOSE_PROVIDER`, readiness `selected_device=cuda`, and fixed-fixture
-  parity against Docker CPU/GPU and Podman CPU.
+- Podman GPU CDI startup on the exact qualified Windows/WSL/Podman/NVIDIA
+  combination, readiness `selected_device=cuda`, a real CUDA probe, and
+  fixed-fixture parity against the other required profiles.
 
 Podman support prerequisites:
 
@@ -385,7 +390,7 @@ PEM/CER/CRT file, pass it through the repair wrapper:
 .\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Port 5000 -CertificatePath C:\path\to\local-ca.pem -Apply
 ```
 
-If automatic discovery is ambiguous or unavailable, support may call
+If automatic discovery is ambiguous or unavailable, Local IT may call
 `scripts\import-tls-ca.cmd` directly with the known `-Thumbprint` or
 `-CertificatePath`; it remains the lower-level mutation helper and supports
 `-VerifyProvider auto|google|azure|none`.
@@ -401,13 +406,8 @@ The helper writes these values automatically. Restart TowerScout after the helpe
 
 The helper verifies Google TLS with an invalid test key. A successful TLS fix returns a normal provider invalid-key response instead of a certificate verification error.
 
-Last-resort validation-only workaround:
-
-```powershell
-TOWERSCOUT_ALLOW_INSECURE_TLS=1
-```
-
-Do not use the insecure setting as the normal release configuration.
+Do not disable TLS verification. If the trusted CA cannot be imported safely,
+stop and ask Local IT to resolve the certificate trust path.
 
 ## Persistent Data
 
@@ -428,7 +428,7 @@ These volumes can contain provider keys, addresses, coordinates, uploaded files,
 
 TowerScout readiness reports missing or corrupt required assets as `degraded`. Import or set up assets into the named volumes according to the release asset instructions, then restart TowerScout.
 
-The v1 release package does not implement hosted asset download. Assets are expected to be supplied as a release asset bundle, site-provided bundle, or support-provided bundle and imported with `setup-towerscout.cmd` or `scripts\import-assets.cmd`. For the YOLO-enabled `agpl-yolo` release track, YOLO detector weights must stay labeled as YOLO-derived/AGPL-governed unless separate written model terms say otherwise. A hosted downloader can be added later after the asset host, checksum policy, retry behavior, proxy/TLS handling, and restricted-network fallback are designed and validated.
+The v1 release package does not implement hosted asset download. Assets are expected to be supplied as the shared release bundle or a site-provided bundle and imported with `setup-towerscout.cmd` or `scripts\import-assets.cmd`. For the YOLO-enabled `agpl-yolo` release track, YOLO detector weights must stay labeled as YOLO-derived/AGPL-governed unless separate written model terms say otherwise. A hosted downloader can be added later after the asset host, checksum policy, retry behavior, proxy/TLS handling, and restricted-network fallback are designed and validated.
 
 For a GitHub Release package, keep the Model & Data Package ZIP and matching
 `.sha256` file beside the extracted package folder and run

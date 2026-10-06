@@ -1,14 +1,21 @@
 # TowerScout Podman CPU User Guide
 
-**Applies to**: Current V1 release-candidate package path through the RC7
-provider TLS repair baseline, unless release notes say otherwise
-**Last reviewed**: 2026-06-29
-**Audience**: Windows users assigned the Podman CPU path
+**Applies to**: The exact documentation-aligned Windows release package named
+by the authoritative release record
+**Last reviewed**: 2026-10-05
+**Audience**: Windows users who choose Podman Desktop with CPU processing
 **Runtime scope**: Podman, CPU Application Package, CPU launch mode
 
-Use this guide only when support tells you to run TowerScout with Podman. The
-normal pilot path is Docker Desktop CPU. Podman requires a running Podman
-machine and an approved non-Docker-Desktop Compose provider.
+Use this guide when you choose Podman without GPU acceleration. Podman requires
+a running rootless WSL 2 machine, 64-bit Python 3.12, and the package-local
+Compose provider.
+
+**Unsigned package boundary**: TowerScout's PowerShell scripts are unsigned.
+Use the supplied `.cmd`/`.bat` wrappers only where you and your organization
+permit them. They use a process-scoped execution-policy setting and do not
+change persistent machine policy. Do not disable endpoint protection or weaken
+machine-wide policy; signature-enforcing or organization-allowlisted endpoints
+require site-administrator approval.
 
 ## Before You Start
 
@@ -22,26 +29,20 @@ Install or confirm these items before running TowerScout.
   Compose provider source if installation is needed, and the selected map
   provider.
 - At least `15 GB` free disk space. `25 GB` is a better first-setup target.
-- One approved Google Maps or Azure Maps provider key.
+- One user- or organization-owned Google Maps or Azure Maps provider key.
 - Windows Subsystem for Linux 2.
-  - Install guide:
-    `https://learn.microsoft.com/en-us/windows/wsl/install#install-wsl-command`
+  - [Microsoft WSL installation guide](https://learn.microsoft.com/en-us/windows/wsl/install#install-wsl-command)
   - Note: Admin rights and/or helpdesk support may be required to install this
     software. Check with your local IT support if you encounter problems
     installing this software.
-- Podman or Podman Desktop.
-  - Red Hat overview and download entry point:
-    `https://www.redhat.com/en/topics/containers/what-is-podman-desktop`
-  - Podman Desktop product/download page:
-    `https://developers.redhat.com/products/podman-desktop`
+- Podman Desktop.
+  - [Podman Desktop Windows installation guide](https://podman-desktop.io/docs/installation/windows-install)
   - Note: Podman Desktop is free and open source. A Red Hat account is not
     required for the TowerScout local package, but local IT policy still
     controls installation and support.
-- An approved Podman Compose provider.
-  - TowerScout rejects Docker Desktop's bundled `docker-compose.exe` for the
-    Podman path.
-  - If no approved provider is present, support can run the package helper
-    shown below.
+- 64-bit Python 3.12 from the official
+  [Python Windows downloads](https://www.python.org/downloads/windows/). It is
+  used to install TowerScout's pinned package-local Compose provider.
 
 Podman must be installed, the Podman machine must be running, and the Compose
 provider must be available before entering the `.\setup-towerscout.cmd`
@@ -63,13 +64,15 @@ If the Podman machine exists but is stopped, start it:
 podman machine start
 ```
 
-If `podman compose version` reports no approved provider, run this from the
-extracted TowerScout application folder only when support approves connected
-provider installation:
+If no Podman machine exists, create and start the default rootless machine:
 
 ```powershell
-.\scripts\install-podman-compose-provider.cmd -Apply
+podman machine init --now podman-machine-default
 ```
+
+Do not run `machine init` if the machine already exists. The package-local
+Compose provider is installed after download, verification, and extraction in
+step 8 below; its helper does not exist before the package is extracted.
 
 ## Install TowerScout
 
@@ -79,12 +82,9 @@ provider installation:
    C:\Users\<you>\Documents\TowerScout
    ```
 
-2. Open the TowerScout GitHub Releases page and use the exact release that
-   support selected:
-
-   ```text
-   https://github.com/J-Schulein/TowerScout/releases
-   ```
+2. Open the [TowerScout GitHub Releases page](https://github.com/J-Schulein/TowerScout/releases)
+   and select the entry whose notes identify it as the current supported final
+   Windows release.
 
 3. Download these four files from the release `Assets` section into the new
    TowerScout folder:
@@ -98,7 +98,27 @@ provider installation:
 
    Do not use GitHub's automatic source-code ZIP or the green `Code` button.
 
-4. Extract only the CPU Application Package ZIP:
+4. Before extracting anything, calculate the SHA-256 of both ZIPs and compare
+   each result with both its downloaded `.sha256` file and the authoritative
+   value printed in the final release notes:
+
+   Open the working folder containing the four downloads in File Explorer,
+   click the address bar, type `powershell`, and press Enter. Run the following
+   commands in that new window:
+
+   ```powershell
+   $appZip = Get-ChildItem -File "*-cpu.zip"
+   $assetZip = Get-ChildItem -File "*-assets-*.zip"
+   Get-FileHash -Algorithm SHA256 -LiteralPath $appZip.FullName
+   Get-Content -LiteralPath ($appZip.FullName + ".sha256")
+   Get-FileHash -Algorithm SHA256 -LiteralPath $assetZip.FullName
+   Get-Content -LiteralPath ($assetZip.FullName + ".sha256")
+   ```
+
+   Stop if PowerShell finds zero or multiple matches, the release notes omit
+   the authoritative values, or any value differs.
+
+5. Extract only the verified CPU Application Package ZIP:
 
    ```text
    towerscout-<release-version>-cpu.zip
@@ -107,30 +127,32 @@ provider installation:
    Leave the Model & Data Package ZIP and both `.sha256` files beside the
    extracted folder. Do not extract the assets ZIP for the normal setup path.
 
-5. Open the extracted application folder in File Explorer. It should contain
+6. Open the extracted application folder in File Explorer. It should contain
    `setup-towerscout.cmd`, `start.bat`, `scripts\`, `docs\`, and `assets\`.
 
-6. In Windows File Explorer, click the address bar, type `powershell`, and
+7. In Windows File Explorer, click the address bar, type `powershell`, and
    press Enter.
 
-7. Confirm Podman is ready:
+8. Install and confirm the package-local Compose provider, then confirm Podman
+   is ready:
 
    ```powershell
+   .\scripts\install-podman-compose-provider.cmd -Apply
    podman machine list
    podman compose version
    ```
 
-8. In the PowerShell window, run:
+9. In the PowerShell window, run:
 
    ```powershell
    .\setup-towerscout.cmd -Engine podman -Gpu off
    ```
 
-9. Keep the PowerShell window open while Podman downloads and starts the
+10. Keep the PowerShell window open while Podman downloads and starts the
    TowerScout image. The first image pull can take several minutes.
 
-10. When TowerScout opens in the browser, use Setup Wizard or Settings to
-    configure one approved provider key. One valid Google Maps or Azure Maps
+11. When TowerScout opens in the browser, use Setup Wizard or Settings to
+    configure the provider key you prepared. One valid Google Maps or Azure Maps
     key is enough to start.
 
 Setup verifies the package checksum sidecars, imports the Model & Data Package
@@ -155,7 +177,7 @@ delegates to an external Compose provider. Keep these rules in mind:
 - If `PODMAN_COMPOSE_PROVIDER` is set, it must point to an approved
   non-Docker-Desktop provider.
 - If Podman reports a port bind conflict even though Windows shows the port as
-  free, retry with a support-assigned port and use it consistently:
+  free, choose another unused port and use it consistently:
 
   ```powershell
   .\setup-towerscout.cmd -Engine podman -Gpu off -Port 5009
@@ -191,16 +213,20 @@ Check status:
 .\scripts\status.cmd -Engine podman
 ```
 
-Show recent logs if support asks:
+Show recent logs for troubleshooting:
 
 ```powershell
 .\scripts\logs.cmd -Engine podman -Tail 200
 ```
 
+If you chose a non-default port, add the recorded `-Port` value to setup,
+`start.bat`, status, and TLS-repair commands and use that port in the browser
+address. `stop.cmd` and `logs.cmd` do not take a port.
+
 ## Troubleshooting
 
-If setup says no approved Podman Compose provider was found, run the provider
-installer only when support approves:
+If setup says no approved Podman Compose provider was found, run the verified
+package installer:
 
 ```powershell
 .\scripts\install-podman-compose-provider.cmd -Apply
@@ -222,24 +248,27 @@ http://localhost:5000
 If setup reports multiple asset ZIPs, move old TowerScout ZIPs out of the
 working folder and rerun setup.
 
-If status is `degraded`, required assets may be missing or corrupt. Ask support
-before manually importing assets. A support-directed import command is:
+If status is `degraded`, required assets may be missing or corrupt. Retry the
+verified import command:
 
 ```powershell
 .\scripts\import-assets.cmd -Engine podman -Source assets -VerifyHashes
 ```
 
-If status is `fatal`, stop validation and send support the release version,
-package filename, selected Compose provider, status output, and a reviewed
-summary of recent logs. Do not send provider secrets, `.env`, raw screenshots,
-browser network traces, exported datasets, or unreviewed raw logs unless your
-site has an approved handling procedure.
+If status is `fatal`, stop. Record the release version, package filename,
+selected Compose provider, status output, and a reviewed summary of recent
+logs. Ask Local IT about local policy, network, or certificate problems.
+Report a non-sensitive product defect at
+[TowerScout issue tracker](https://github.com/J-Schulein/TowerScout/issues).
+That tracker is public and
+does not promise a response. Never post provider secrets, `.env`, raw
+screenshots, browser traces, exported datasets, certificate details, or
+unreviewed raw logs.
 
 ### Provider TLS Inspection CA
 
 Use this only when Google Maps or Azure Maps key validation fails even though
-the key is correct and support sees `CERTIFICATE_VERIFY_FAILED` in container
-logs. This
+the key is correct and logs show `CERTIFICATE_VERIFY_FAILED`. This
 usually means the container does not trust a local TLS inspection root or
 intermediate certificate.
 
@@ -254,10 +283,10 @@ Run the guided dry run from the extracted TowerScout application folder:
 .\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu off -Port 5000
 ```
 
-Review the local support-sensitive output with support. Do not paste
+Review the locally sensitive output with Local IT. Do not paste
 certificate subjects, issuer details, or thumbprints into public issue comments
 or public release evidence. If the helper identifies a safe CA candidate, it
-prints the exact apply command. With support approval, apply the repair and
+prints the exact apply command. With Local IT approval, apply the repair and
 restart TowerScout:
 
 ```powershell
@@ -266,8 +295,8 @@ restart TowerScout:
 .\start.bat -Engine podman -Gpu off -Port 5000
 ```
 
-If support already knows the correct Windows certificate thumbprint or has an
-exported CA file, they can bypass automatic selection:
+If Local IT knows the correct Windows certificate thumbprint or has an
+exported CA file, it can bypass automatic selection:
 
 ```powershell
 .\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu off -Port 5000 -Thumbprint <windows-certificate-thumbprint> -Apply
@@ -276,7 +305,7 @@ exported CA file, they can bypass automatic selection:
 .\start.bat -Engine podman -Gpu off -Port 5000
 ```
 
-Do not paste the placeholder text. Replace it with the actual support-provided
+Do not paste the placeholder text. Replace it with the actual Local IT-provided
 thumbprint or certificate path. The helper copies the CA chain into Podman's
 persistent TowerScout config volume, builds a combined CA bundle, updates
 `.env`, and verifies that selected provider TLS reaches the normal invalid-key
@@ -285,7 +314,7 @@ response instead of a certificate error.
 Docker and Podman use separate TowerScout config volumes. If you previously
 imported the CA for Docker, repeat the import for Podman.
 
-If your site uses Azure Maps instead of Google Maps for validation, support may
-use `-Provider azure`. If automatic discovery is ambiguous or unavailable,
-support may still use the lower-level `scripts\import-tls-ca.cmd` command with a
+If your site uses Azure Maps instead of Google Maps for validation, use
+`-Provider azure`. If automatic discovery is ambiguous or unavailable, Local
+IT may use the lower-level `scripts\import-tls-ca.cmd` command with a
 known `-Thumbprint` or `-CertificatePath`.

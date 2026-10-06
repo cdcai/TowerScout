@@ -1,12 +1,11 @@
 # TASK-091: Owner-Runnable Release Qualification
 
-**Status**: AT_RISK - exact `rc3` CPU/CUDA W05, first-host Docker/Podman
-CPU/CUDA package lifecycle and post-reboot persistence, plus Docker CPU live-
-provider, managed-TLS, and cancel/recovery cells pass as retained evidence.
-Those artifacts predate the PR #92/#93 lifecycle fixes, so replacement package
-qualification is required. Remaining profile provider/recovery/review-export,
-controlled-error, managed-endpoint policy/signing, and independent-host
-evidence remain
+**Status**: AT_RISK - local `rc4` CPU/CUDA W05, four-profile W09, and first-
+host provider/cancel/error/review-export/relaunch/reboot cells pass. ADR-023
+resolves policy/signing through an unsigned, narrower support boundary.
+The preliminary `rc4` browser-download Docker CPU diagnostic passed and its
+findings are dispositioned for Task-092; final documentation-aligned artifacts,
+exact browser-download, and independent-host evidence remain
 **Priority**: CRITICAL
 **Type**: C (Release Qualification / Handoff)
 **Owner**: Release owner; active agent executes bounded preparation and checks
@@ -43,6 +42,9 @@ and tools.
   next-request success, stop/relaunch, and reboot persistence are observed.
 - CPU fallback does not pass a required-CUDA run.
 - Evidence contains sanitized summaries and private raw-evidence references.
+- A preliminary browser-download run against a superseded candidate may inform
+  later work but does not satisfy final acceptance for different ZIP/image
+  bytes.
 
 ## Implementation Log
 
@@ -233,7 +235,7 @@ is `Restricted`; that result is diagnostic, not managed-endpoint policy proof.
 | Compatible selected-profile NVIDIA host | Test owner | Run the exact CUDA image/ZIP on a supported pre-Blackwell or otherwise wheel-compatible NVIDIA host with no CPU fallback. |
 | Rootless standalone Podman runtime | Workstation/test owner | Start the existing rootless validation machine and select its rootless connection; do not use the current rootful default as acceptance. |
 | Podman Python support wording | Task-097 implementer | Reproduce and bound the supported interpreter range; current evidence passes 3.12 and fails 3.14. |
-| Managed endpoint/signing decision | Endpoint/release owner | State whether unsigned CMD-mediated scripts are allowed; bypass-based diagnostics do not qualify the endpoint. |
+| Managed endpoint/signing decision | Endpoint/release owner | Historical Day-1 blocker; resolved on 2026-10-01 by ADR-023's unsigned, narrower support boundary. |
 | Independent CPU/GPU hosts | Test owner | Reserve and inventory the required host allocation before W09 distribution. |
 | PR #75/#76 acceptance | Reviewer | Complete exact-head CI/review before using either correction in a clean candidate. |
 
@@ -390,3 +392,95 @@ This closes the first-host reboot persistence subset only. It does not convert
 the unconfigured Docker CUDA or Podman profiles' provider workflows into
 passes, and it does not satisfy review/export, controlled-error, managed-
 endpoint, or independent-host acceptance.
+
+### 2026-09-30 - Final local `rc4` four-profile workflow matrix
+
+The final local packages bind source
+`541622556fb7999ee4e88fb1e44f7797b9da34f5`, CPU digest
+`sha256:a3eeb77152577f3656a286777bd4c4312cecc311cb5a5cc1b132b459f1ecd18f`,
+and CUDA digest
+`sha256:61dab3b83e1be8e2cf955d9d7d2d9b997a207a4dcb76b20344a268a5690f654a`.
+Docker CPU/CUDA and rootless Podman CPU/CUDA all passed live Google and Azure
+detection, cancellation followed by an immediate successful request, a
+controlled HTTP 400 validation error followed by HTTP 200 success, review,
+result export, dataset ZIP export, and volume-preserving stop/relaunch. Both
+CUDA profiles completed a real finite `sm_120` kernel after relaunch. All four
+profiles simultaneously reported `ready`, exact digest, required device,
+assets/config `ok`, both providers configured, and eight retained mounts.
+
+Provider values, provider URLs, payloads, response bodies, screenshots, AOI
+coordinates, certificate identities, local paths, and hostnames were not
+retained. The Task-103 W09/W10 indexes contain the sanitized matrix and exact
+artifact/tool hashes.
+
+The exact `rc4` reboot now passes across all four profiles. Docker restored
+automatically; retained Podman containers required the documented manual
+start. Every profile then reported the exact digest, required device,
+assets/config `ok`, both providers configured, eight mounts, and successful
+Google/Azure detection plus controlled-error recovery and dataset ZIP export.
+Both CUDA profiles completed finite `sm_120` kernels. That evidence predates
+ADR-023 and remains valid local runtime evidence, but the documentation change
+requires new documentation-aligned image and control-ZIP identities before
+distribution because the image serves the repository `docs/`. ADR-023
+resolves managed-policy/signing by limiting the standard support claim to
+users/sites that permit the supplied unsigned wrapper path; it does not claim a
+pass for signature-enforcing managed endpoints. Browser-download and
+independent-host repetition remain open, and publication remains owner-gated.
+
+### 2026-10-01 - Unsigned Windows package support decision
+
+ADR-023 records the owner-approved path: ship unsigned PowerShell scripts,
+retain the supported `.cmd`/`.bat` process-scoped wrapper entrypoints, and do
+not claim compatibility with endpoints requiring a trusted Authenticode
+publisher or organization-specific allowlisting. Final acceptance must compare
+the exact control/asset ZIPs with SHA-256 values displayed in the authoritative
+release record before extraction, then run the browser-downloaded package as an
+ordinary user without weakening persistent policy or endpoint protection.
+
+This closes the Day-1 policy decision by scope. It does not close independent-
+host acceptance. The documentation edits are package and OCI-image bytes, so
+the `rc4` artifacts remain historical local evidence and newly identified
+documentation-aligned images/control packages must pass the affected W09/W10
+checks before tester distribution.
+
+### 2026-10-01 - Planned `rc4` browser-download shakedown before Task-092 implementation
+
+The owner selected a bounded preliminary use of the preserved `rc4` CPU/CUDA
+artifacts before the documentation/Wiki rewrite. The purpose is to find
+download-marker, ordinary-user extraction, wrapper/policy, endpoint-protection,
+prerequisite, setup, asset, and runtime issues that are likely to persist into
+the next candidate. Use a supplemental ADR-023-safe procedure because the
+packaged `rc4` manuals predate that decision. Label the result diagnostic, not
+final acceptance, and do not publish or mutate external assets without owner
+authorization.
+
+Task-092 will consume applicable findings before its documentation freeze.
+Final proof still requires the exact browser-downloaded documentation-aligned
+ZIPs and images. `Dockerfile` copies `docs/` into the OCI image and the app
+serves them through `/docs/`, so removing in-app/package drift requires new
+image and control-package identities even when functional runtime code remains
+unchanged.
+
+### 2026-10-02 - `rc4` browser-download Docker CPU diagnostic
+
+The owner downloaded all six assets from the authenticated GitHub draft release
+through the normal browser flow. GitHub digests, downloaded ZIP hashes,
+sidecars, and frozen originals agreed, and Windows download markers were
+present. File Explorer extraction to a user-writable path containing spaces and
+the supplied ordinary-user process-scoped wrapper both worked without changing
+persistent execution policy or endpoint-protection settings.
+
+Fresh Docker CPU setup verified/imported the exact downloaded CPU and asset
+ZIPs, created eight named volumes, matched the pinned CPU image digest, and
+bound only to loopback. After private Azure configuration, a sanitized browser
+run passed estimate, controlled HTTP 400 then HTTP 200 recovery, 14-detection
+review/navigation, and valid nonempty dataset export. Package stop/relaunch
+retained Azure configuration, assets, digest, CPU selection, and all eight
+volumes. In-app Help returned HTTP 200.
+
+No larger blocker was found in this bounded subset. The run is diagnostic, not
+final acceptance: it did not repeat CUDA, Podman, Google, cancellation, reboot,
+managed-signing-policy, public unauthenticated download, or independent-host
+cells. The draft remains non-public. Full evidence and Task-092 dispositions
+are in
+[the rc4 diagnostic record](./TASK-092/RC4-BROWSER-DOWNLOAD-DIAGNOSTIC-2026-10-02.md).

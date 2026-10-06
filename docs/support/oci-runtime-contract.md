@@ -1,15 +1,21 @@
 # TowerScout OCI Runtime Contract
 
-**Applies to**: Current V1 release-candidate package support path
-**Last reviewed**: 2026-06-16
+**Applies to**: The exact documentation-aligned Windows release package named
+by the authoritative release record
+**Last reviewed**: 2026-10-02
 **Audience**: Release/support users and runtime maintainers
-**Runtime scope**: The CPU Application Package is the primary path; the CUDA
-12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
-support-assigned paths after workstation-specific engine, Compose-provider,
-and NVIDIA validation.
+**Runtime scope**: Users independently choose Docker or Podman and CPU or a
+compatible NVIDIA GPU; each path must meet the release-listed requirements.
 
 This document summarizes the v1 container runtime contract. The detailed task
 evidence lives in `.agent_work/tasks/completed/TASK-025-docker-containerization.md`.
+
+The host-side Windows control package is intentionally unsigned under ADR-023.
+Its supported entrypoints are the supplied `.cmd`/`.bat` wrappers using a
+process-scoped execution-policy setting. That host boundary does not change the
+OCI runtime contract and does not claim compatibility with signature-enforcing
+or organization-allowlisted endpoints. Exact browser-downloaded ZIPs must be
+verified against authoritative published SHA-256 values before extraction.
 
 ## Runtime Shape
 
@@ -102,7 +108,7 @@ Hosted asset download is out of scope for the v1 control package. The supported
 v1 path is manifest-backed asset import from a local bundle using
 `setup-towerscout.cmd`, `bootstrap.cmd`, or `scripts/import-assets.cmd`, with
 SHA-256 verification for release-candidate and support validation. Docker
-Desktop is the primary pilot engine; Podman import support remains qualified by
+Desktop is the primary package engine; Podman import support remains qualified by
 the selected engine's running machine and Compose provider. If a Podman Compose
 provider cannot perform `cp`, the helper falls back to direct `podman cp`
 against the running TowerScout service container. A hosted downloader requires
@@ -120,11 +126,12 @@ The GitHub Release control package is assembled by `scripts/package-release.cmd`
 - `.env.example` with the selected image reference
 - Windows `.cmd` wrappers and PowerShell helpers for setup, bootstrap, start, stop, logs, status, asset import, guided provider TLS repair, and TLS CA import
 - top-level `setup-towerscout.cmd` first-setup helper that defaults to Docker Desktop and `-Gpu off`, discovers local release artifacts, verifies checksum sidecars, stages safe asset ZIPs, imports assets with hash verification, and then calls the launcher
-- `TOWERSCOUT_PILOT_MAX_TILES=100` by default for the first UAT package guard; support can override it for approved larger validation
+- `TOWERSCOUT_PILOT_MAX_TILES=100` by default as the package tile guard; support can override it for approved larger validation
 - top-level `bootstrap.cmd` support helper for explicit artifact paths and advanced validation
 - top-level `start.bat` launcher that starts Compose, polls `/api/readiness`, and opens the browser at `http://localhost:<port>` after the app shell is reachable
-- Quick Start, Package Guide, User Guide, Project Overview, runtime-specific
-  Docker/Podman CPU/GPU user guides, and this runtime contract
+- Quick Start, Package Guide, User Guide, Project Overview, Local IT
+  Administrator Guide, runtime-specific Docker/Podman CPU/GPU user guides, and
+  this runtime contract
 - the release asset bundle contract
 - `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.md`, `MODEL_LICENSES.md`, `DATA_LICENSES.md`, and `PROVIDER_TERMS.md`
 - `SOURCE.txt`, `SBOM.txt`, and `release-manifest.v1.json`
@@ -173,10 +180,11 @@ Docker GPU launch is opt-in through `scripts/launch.ps1 -Engine docker -Gpu auto
   payload and fails closed unless TowerScout reports `selected_device=cuda`.
 
 Docker GPU uses `compose.gpu.yaml`. Podman GPU uses `compose.gpu.podman.yaml`
-and NVIDIA CDI device `nvidia.com/gpu=all`. The RC5 validated Podman GPU path
-requires a WSL2-backed Podman machine, an approved non-Docker-Desktop Compose
-provider, NVIDIA Container Toolkit/CDI registration inside the Podman machine,
-and readiness evidence showing `selected_device=cuda`.
+and NVIDIA CDI device `nvidia.com/gpu=all`. The qualified Podman GPU path
+requires the exact release-named WSL2-backed Podman machine/version, an approved
+non-Docker-Desktop Compose provider, NVIDIA Container Toolkit/CDI registration
+inside the Podman machine, and readiness evidence showing
+`selected_device=cuda`.
 
 The CUDA image has a Volta-or-newer architecture expectation, not a blanket
 support claim. Maxwell and Pascal use the CPU package or `-Gpu off`; exact
@@ -192,9 +200,9 @@ Readiness diagnostics verify CUDA with a lightweight CUDA tensor probe when `TOW
 
 `TOWERSCOUT_MAX_REQUEST_BODY_BYTES` remains the single request-body/upload-size knob. Model upload remains disabled unless `TOWERSCOUT_ENABLE_MODEL_UPLOAD` is explicitly truthy. An enabled upload also requires a dedicated `TOWERSCOUT_MODEL_UPLOAD_KEY` of at least 32 characters, supplied through the upload dialog, plus an approved digest in `TOWERSCOUT_TRUSTED_MODEL_SHA256`. The normal Compose package remains bound to `127.0.0.1`; the key is an additional administrator capability and is never sent in a URL.
 
-`TOWERSCOUT_PILOT_MAX_TILES` is a separate UAT guard. When set, detection stops
+`TOWERSCOUT_PILOT_MAX_TILES` is the package tile guard. When set, detection stops
 before imagery download or model inference if the retained tile count exceeds
-the configured pilot limit.
+the configured limit.
 
 ## TLS Trust
 
@@ -208,7 +216,8 @@ Docker and Podman use separate named volumes, so CA import must be run for the s
 
 The guided repair helper supports `-Provider google|azure`, `-Engine auto|docker|podman`, `-Gpu off|auto|on`, and `-Port 1..65535`, and forwards the selected engine/GPU profile and host port to the import helper so the repaired config volume and port binding match the active runtime. The CA import helper supports `-VerifyProvider auto|google|azure|none`. `auto` follows `DEFAULT_MAP_PROVIDER` when available and otherwise uses Google; `azure` avoids a Google-only verification assumption for Azure-first or Google-blocked sites; `none` builds the bundle without making a remote verification request.
 
-`TOWERSCOUT_ALLOW_INSECURE_TLS=1` exists only as a local validation fallback for provider-key checks and should not be used as the normal release posture.
+`TOWERSCOUT_ALLOW_INSECURE_TLS=1` is not an end-user recovery path and must not
+be recommended for the final package. Use a properly imported local CA or stop.
 
 ## Validation Split
 
@@ -220,11 +229,10 @@ Release-candidate validation should add real asset import, SHA-256 verification,
 
 The engine-aware scripts support `-Engine podman` through `podman compose`. On Windows, `podman compose` delegates Compose behavior to an external provider such as Docker Compose or `podman-compose` while wiring that provider to the Podman socket.
 
-The current RC5 validation covers the Podman WSL engine path, named volumes,
-asset import, readiness, Docker-Desktop-free Podman CPU launch, and Podman GPU
-CDI launch. The validated provider strategy used standalone Docker Compose
-v5.1.4 selected explicitly through `PODMAN_COMPOSE_PROVIDER` rather than Docker
-Desktop's bundled `docker-compose.exe`.
+The authoritative release evidence must cover the Podman WSL engine path,
+named volumes, asset import, readiness, Docker-Desktop-free Podman CPU launch,
+Podman GPU CDI launch, and the exact approved Compose provider/version. Docker
+Desktop's bundled `docker-compose.exe` is not an approved Podman substitute.
 
 Release qualification for Podman should include the selected Compose provider
 explicitly. The supported Podman path requires a running Podman machine and an
@@ -237,9 +245,11 @@ The launcher reports Compose-provider information before startup. For Podman, a 
 
 Podman/rootless port forwarding can report a port bind conflict from inside the
 Podman machine even when the Windows host port appears free. Support should
-retry with a non-default `-Port` and use that same port on status, logs, and
-asset-import commands, or clear stale local Podman container/port state before
-continuing.
+retry with a non-default `-Port`. Use the same selected port on setup, start,
+status, TLS-repair, and asset-import commands, and in the browser address.
+`stop.cmd` and `logs.cmd` do not accept `-Port`. If the conflict follows the
+same port after retry, ask Local IT to inspect and clear stale local Podman
+container/port state before continuing.
 
 ## Browser Origin
 

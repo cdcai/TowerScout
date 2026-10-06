@@ -1,18 +1,17 @@
 # TowerScout Package Guide
 
 This guide is for first-line support, internal release-candidate validation,
-and pilot testers using the TowerScout Windows package path.
+and users of the TowerScout Windows package path.
 
-**Applies to**: Current V1 release-candidate package path through the RC7
-provider TLS repair baseline, unless release notes say otherwise
-**Last reviewed**: 2026-06-29
-**Audience**: First-line support, release validation, and pilot testers
-**Runtime scope**: The CPU Application Package is the primary path; the CUDA
-12.8 Application Package, Podman CPU, Docker GPU, and Podman GPU are
-support-assigned paths after workstation-specific engine, Compose-provider,
-and NVIDIA validation.
+**Applies to**: The exact documentation-aligned Windows release package named
+by the authoritative release record
+**Last reviewed**: 2026-10-05
+**Audience**: First-line support, release validation, and package users
+**Runtime scope**: Users independently choose Docker or Podman, CPU or a
+compatible NVIDIA GPU, and Google Maps or Azure Maps. Each choice must meet
+the requirements and tested combinations in the final release notes.
 
-The package path is the preferred pilot path. Older source, virtual
+The package path is the preferred user path. Older source, virtual
 environment, and Conda tester guides are legacy source-install guidance and are
 not the preferred package path.
 
@@ -22,18 +21,20 @@ The current release-candidate package supports:
 
 - Windows 11 on AMD64.
 - Single-user local use.
-- CPU baseline.
+- User-selected CPU or compatible NVIDIA GPU processing.
 - Two digest-pinned Application Package variants:
-  - `cpu` for normal and non-GPU users.
-  - `cuda128` only for support-validated NVIDIA GPU workstations.
+  - `cpu` for CPU processing.
+  - `cuda128` for release-listed NVIDIA GPU workstations.
 - One shared Model & Data Package ZIP for both Application Package variants.
 - Normal outbound internet access for GHCR image pulls and map providers.
-- Docker Desktop as the primary controlled pilot engine.
-- Podman as a qualified package-runtime option only when a running Podman
-  machine and approved Compose provider are already available.
-- Optional Docker GPU and Podman GPU launch only after support validates the
-  selected engine's NVIDIA container path.
+- User-selected Docker Desktop or Podman. Podman requires a running rootless
+  WSL 2 machine, 64-bit Python 3.12, and the verified package-local Compose
+  provider.
+- Optional Docker GPU or Podman GPU after the selected engine's NVIDIA
+  container path passes the documented checks.
 - One valid Google Maps or Azure Maps provider key.
+- Unsigned PowerShell host scripts invoked through the supplied `.cmd`/`.bat`
+  wrappers on a workstation where the user and organization permit that path.
 
 Out of scope for this release path:
 
@@ -45,15 +46,35 @@ Out of scope for this release path:
 - Managed remote deployment.
 - Native Windows installer behavior.
 - Bundled OCI image archive workflow.
+- Signature-enforcing managed endpoints unless the site administrator
+  separately approves, allowlists, or internally signs the package.
 
-Docker Desktop is the default pilot support path because that is the path most
-external testers will be asked to exercise first. Podman remains a qualified
-support path for sites that explicitly choose it and can provide a working
-Podman machine plus Compose provider.
+## Unsigned Windows Package And Execution Policy
+
+TowerScout's packaged PowerShell scripts are intentionally not Authenticode-
+signed. The supported user entrypoints are the provided `.cmd` and `.bat`
+wrappers. They invoke Windows PowerShell 5.1 with a process-scoped
+`-ExecutionPolicy Bypass`; this does not change the computer's persistent
+execution-policy configuration.
+
+That wrapper behavior is part of the standard unsigned support profile. It
+does not override or qualify WDAC, AppLocker, constrained-language,
+antivirus/EDR, SmartScreen, or organization-specific allowlisting. If any of
+those controls requires administrator or trusted-publisher approval, stop and
+use the site's approval process. Do not change persistent execution policy,
+disable endpoint protection, or tell a user to select `Run anyway` for an
+unverified file.
+
+An organization may review and internally sign or allowlist TowerScout, but it
+then owns the modified bytes and new checksums. Project qualification applies
+only to the original published artifacts.
+
+Docker CPU is the simplest starting point, not an assigned pathway. Users may
+choose any supported combination whose prerequisites they can meet.
 
 ## Prerequisite Software Checklist
 
-Before a pilot user starts the package, confirm the workstation has:
+Before a package user starts, confirm the workstation has:
 
 - Windows 11 AMD64 with virtualization/WSL2 support enabled according to local
   IT policy.
@@ -62,23 +83,23 @@ Before a pilot user starts the package, confirm the workstation has:
 - A modern browser such as Microsoft Edge or Google Chrome.
 - A ZIP extraction path that preserves the package folder structure.
 - Normal outbound internet access to GHCR and the selected map provider.
-- Several GB of free disk space for the Application Package, Model & Data
-  Package, container image, and engine volumes. CUDA-capable images require
-  more disk space than CPU-only images. Use `15 GB` free as a minimum and
-  `25 GB` free as the recommended first-setup target.
-- One approved container engine path:
-  - Docker Desktop with the WSL 2 backend is the primary pilot path.
+- Free disk space for the Application Package, Model & Data Package, container
+  image, and engine volumes. Plan at least `15 GB` for CPU (`25 GB` is a better
+  first-setup target) or at least `35 GB` for the CUDA package, plus room for
+  exports. The final release note controls if it requires more.
+- One chosen container engine path:
+  - Docker Desktop with the WSL 2 backend.
     Docker's current Windows requirements include WSL `2.1.5` or later, 8 GB
     RAM, and hardware virtualization enabled in BIOS/UEFI.
-  - Podman CLI or Podman Desktop is a qualified support path only when the
-    Podman machine is created and running and an approved non-Docker-Desktop
-    Compose provider is installed.
+  - Podman Desktop with a created and running rootless WSL 2 machine, 64-bit
+    Python 3.12, and the package-local non-Docker-Desktop Compose provider.
   - Podman GPU additionally requires Windows NVIDIA drivers, WSL2 Podman, and
     a validated NVIDIA CDI device inside the Podman machine.
 - One valid site/user-owned restricted Google Maps or Azure Maps provider key.
 
-The package path does not require Git, Python, Conda, Node.js, VS Code, or a
-source-code checkout on the pilot user's computer.
+Docker does not require Git, Python, Conda, Node.js, VS Code, or a source-code
+checkout. Podman requires 64-bit Python 3.12 only for the package-local Compose
+provider installer.
 
 For users who do not normally use the command line, open commands from Windows
 PowerShell in the extracted TowerScout package folder. In File Explorer, open
@@ -100,7 +121,7 @@ running. If WSL is not installed and local policy allows installation,
 Microsoft's current install path is `wsl --install` from an Administrator
 PowerShell window, followed by a restart when Windows asks.
 
-Useful Podman checks when support explicitly chooses Podman:
+Useful Podman checks when you choose Podman:
 
 ```powershell
 podman --version
@@ -112,12 +133,11 @@ Only the selected engine needs to pass its checks. If both Docker and Podman
 are installed, automatic engine selection can choose Docker first. Use
 `-Engine podman` consistently when validating the Podman path.
 
-## Stop And Contact Support
+## When To Stop And Where To Ask
 
-Stop validation and contact support if:
+Stop if:
 
-- Docker Desktop is not installed, not approved, or cannot start on the primary
-  pilot path, unless support explicitly assigned the Podman path.
+- The chosen engine is not installed, not allowed, or cannot start.
 - WSL is unavailable, or `wsl --list --verbose` shows version `1` and the user
   does not have administrator approval to update it.
 - An Application Package or Model & Data Package checksum does not match.
@@ -127,27 +147,34 @@ Stop validation and contact support if:
 - TowerScout readiness state is `fatal`.
 - Provider validation repeatedly fails after the key value and provider setup
   have been checked.
+- Windows, SmartScreen, Defender/EDR, or an organization policy blocks the
+  package or requires administrator/trusted-publisher approval.
 
 Do not ask users to send provider keys, full `.env` files, raw screenshots,
 browser traces, cached provider responses, named-volume contents, exported
 datasets, or unredacted raw logs unless the site has an approved handling
 procedure.
 
+Ask Local IT about installation permission, WSL, endpoint policy, proxies,
+TLS inspection, certificates, drivers, or firewall rules. Report a
+non-sensitive TowerScout product defect in the
+[TowerScout public issue tracker](https://github.com/J-Schulein/TowerScout/issues).
+The issue tracker is public and is not a private or guaranteed-response help
+desk.
+
 ## Release Artifacts
 
-For the July 2026 pilot, the validated `v0.1.2` assets remain on the development
-fork. `cdcai/TowerScout` remains unchanged during feedback collection and must
-not be presented as the source of the pilot package.
+Use the release entry whose notes identify it as the current supported final
+Windows release. A draft, prerelease, source archive, branch name, or
+numerically newer tag is not supported unless the authoritative release record
+explicitly says otherwise.
 
-A normal release-candidate handoff has two artifact groups. Open the
-TowerScout releases page and use the exact release that support selected:
+A normal final release has two artifact groups. Open
+[TowerScout Releases](https://github.com/J-Schulein/TowerScout/releases) and
+choose the identified final release.
 
-```text
-https://github.com/J-Schulein/TowerScout/releases
-```
-
-If support provides a direct release URL, use that link. On GitHub Releases,
-download these files from the release `Assets` section, not from the green
+On GitHub Releases, download these files from the release `Assets` section,
+not from the green
 GitHub `Code` button and not from GitHub's automatic `Source code (zip)` or
 `Source code (tar.gz)` links.
 
@@ -156,12 +183,12 @@ Application Package, choose exactly one variant:
 - CPU package for normal/non-GPU users:
   - `towerscout-<release-version>-cpu.zip`
   - `towerscout-<release-version>-cpu.zip.sha256`
-- CUDA 12.8 package for support-validated NVIDIA GPU workstations:
+- CUDA 12.8 package for release-listed NVIDIA GPU workstations:
   - `towerscout-<release-version>-cuda128.zip`
   - `towerscout-<release-version>-cuda128.zip.sha256`
 
-Do not put both Application Package variants in a normal tester handoff folder
-unless support is intentionally comparing CPU and CUDA behavior.
+Do not put both Application Package variants in the same working folder. The
+setup helper expects one matching Application Package.
 
 Model & Data Package:
 
@@ -184,11 +211,11 @@ towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip
 ```
 
 After browser download, copy all four files from the user's `Downloads` folder
-into a new empty working folder before setup or manual verification. The
-recommended first-cohort working folder is:
+into a new empty working folder before setup or manual verification. A simple
+working folder is:
 
 ```text
-C:\Users\<you>\Documents\TowerScoutUAT
+C:\Users\<you>\Documents\TowerScout
 ```
 
 The release version in the Application Package and Model & Data Package
@@ -209,32 +236,58 @@ only the Application Package ZIP. Leave the Model & Data Package ZIP
 unextracted beside the extracted application folder. `setup-towerscout.cmd`
 discovers it and verifies the matching `.sha256` sidecar.
 
-## Optional Manual Download Verification
+## Required Download Verification For The Unsigned Package
 
-The normal `setup-towerscout.cmd` path verifies checksum sidecars during first
-setup. Use this manual verification section only when support wants checksum
-evidence before setup, when a tester is blocked before setup can run, or when
-validating release artifacts internally. Run these commands from the
-`TowerScoutUAT` working folder that contains only the four copied release
-files:
+The authoritative release page or release notes must display the SHA-256 for
+the exact Application Package and Model & Data Package ZIPs. Before extraction
+or unblocking, compare those values with the matching `.sha256` sidecars and
+locally calculated hashes. A sidecar downloaded beside a ZIP is not by itself
+proof of who published both files. Open the `Documents\TowerScout` working
+folder that contains only the four copied release files in File Explorer,
+click the address bar, type `powershell`, and press Enter.
+
+Choose the first command for the Application Package you downloaded:
 
 ```powershell
-Get-FileHash .\towerscout-<release-version>.zip -Algorithm SHA256
-Get-Content .\towerscout-<release-version>.zip.sha256
-Get-FileHash .\towerscout-<release-version>-assets-*.zip -Algorithm SHA256
-Get-Content .\towerscout-<release-version>-assets-*.zip.sha256
+# CPU Application Package
+$appZip = Get-ChildItem -File "*-cpu.zip"
+
+# NVIDIA GPU Application Package; use this instead of the CPU line
+$appZip = Get-ChildItem -File "*-cuda128.zip"
+```
+
+Run only one `$appZip` line. Then run the shared verification block:
+
+```powershell
+$assetZip = Get-ChildItem -File "*-assets-*.zip"
+Get-FileHash -Algorithm SHA256 -LiteralPath $appZip.FullName
+Get-Content -LiteralPath ($appZip.FullName + ".sha256")
+Get-FileHash -Algorithm SHA256 -LiteralPath $assetZip.FullName
+Get-Content -LiteralPath ($assetZip.FullName + ".sha256")
 ```
 
 The `Hash` value from `Get-FileHash` must match the SHA-256 value in the
 corresponding `.sha256` file. If the values do not match, stop validation and
 obtain a fresh copy of the affected release artifact.
 
+The calculated value and sidecar must also match the value displayed in the
+authoritative release record. If that value is missing, stop and contact the
+release owner rather than treating the sidecar alone as release authentication.
+
 If PowerShell says `Get-FileHash` is not recognized, use Windows `certutil`
-instead and compare the printed SHA-256 value to the matching `.sha256` file:
+instead and compare the printed SHA-256 value to the matching `.sha256` file.
+Run the CPU or CUDA pair that matches your Application Package, not both:
 
 ```powershell
-certutil -hashfile .\towerscout-<release-version>.zip SHA256
-Get-Content .\towerscout-<release-version>.zip.sha256
+# CPU Application Package
+certutil -hashfile .\towerscout-<release-version>-cpu.zip SHA256
+Get-Content .\towerscout-<release-version>-cpu.zip.sha256
+
+# NVIDIA GPU Application Package; use these two lines instead of the CPU pair
+certutil -hashfile .\towerscout-<release-version>-cuda128.zip SHA256
+Get-Content .\towerscout-<release-version>-cuda128.zip.sha256
+
+# Shared Model & Data Package
 certutil -hashfile .\towerscout-<release-version>-assets-<asset-version>.zip SHA256
 Get-Content .\towerscout-<release-version>-assets-<asset-version>.zip.sha256
 ```
@@ -251,11 +304,16 @@ Get-FileHash output:
 HASH      0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF
 
 .sha256 file:
-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef  towerscout-<release-version>.zip
+0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef  towerscout-<release-version>-cpu.zip
 ```
 
 Uppercase and lowercase letters are not important. The letters and numbers
 must otherwise be identical.
+
+After all three sources agree, use the Application Package ZIP's Windows
+Properties dialog to select `Unblock` only if Windows displays that option,
+then use File Explorer's `Extract All`. Do not unblock or run a file whose hash
+has not been verified.
 
 ## Application Package Layout
 
@@ -299,7 +357,7 @@ readiness evidence before it is treated as a valid GPU launch.
 
 Source-checkout or local-validation defaults use the explicit `latest-cpu`
 tag when no package digest is present. Do not use a bare `latest` image tag for
-release or pilot instructions.
+release or package instructions.
 
 ## Guided Setup Path
 
@@ -309,15 +367,15 @@ For first setup, prefer the top-level setup entry point:
 .\setup-towerscout.cmd
 ```
 
-The expected first-cohort folder layout is:
+The expected download and extraction layout is:
 
 ```text
-C:\Users\<you>\Documents\TowerScoutUAT\
-  towerscout-<release-version>-cpu.zip
-  towerscout-<release-version>-cpu.zip.sha256
+C:\Users\<you>\Documents\TowerScout\
+  towerscout-<release-version>-<cpu-or-cuda128>.zip
+  towerscout-<release-version>-<cpu-or-cuda128>.zip.sha256
   towerscout-<release-version>-assets-<asset-version>.zip
   towerscout-<release-version>-assets-<asset-version>.zip.sha256
-  towerscout-<release-version>-cpu\
+  towerscout-<release-version>-<cpu-or-cuda128>\
     setup-towerscout.cmd
 ```
 
@@ -344,11 +402,13 @@ Setup performs the checks that users most often miss:
   selected Compose provider cannot copy files.
 - Startup through `scripts\launch.ps1`.
 
-If automatic ZIP discovery is ambiguous, move old ZIPs out of the UAT folder or
-pass explicit paths:
+If automatic ZIP discovery is ambiguous, move old ZIPs out of the working
+folder or pass explicit paths. The example below is Docker CPU. Preserve the
+`-Engine` and `-Gpu` values from the user's non-secret setup record when
+adapting it:
 
 ```powershell
-.\setup-towerscout.cmd -PackageZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>-cpu.zip -AssetZip C:\Users\<you>\Documents\TowerScoutUAT\towerscout-<release-version>-assets-<asset-version>.zip
+.\setup-towerscout.cmd -Engine docker -Gpu off -PackageZip "C:\Users\<you>\Documents\TowerScout\towerscout-<release-version>-cpu.zip" -AssetZip "C:\Users\<you>\Documents\TowerScout\towerscout-<release-version>-assets-<asset-version>.zip"
 ```
 
 Useful setup options:
@@ -357,11 +417,13 @@ Useful setup options:
   without importing assets or starting TowerScout.
 - `-SkipAssetImport`: run preflight and launch while leaving already-staged
   assets untouched.
-- `-Port <port>`: use the same non-default port that support selected.
-- `-Engine podman`: use the qualified Podman path when support selected
-  Podman and the Podman machine plus Compose provider are already ready.
-- `-Gpu auto` or `-Gpu on`: use Docker GPU behavior only when support is
-  validating an NVIDIA Docker GPU workstation.
+- `-Port <port>`: choose an unused non-default port. Use it on setup,
+  `start.bat`, `scripts\status.cmd`, the browser address, and any TLS repair
+  command. `scripts\stop.cmd` and `scripts\logs.cmd` do not accept a port.
+- `-Engine podman`: use the Podman path after its machine and package-local
+  Compose provider are ready.
+- `-Gpu auto` or `-Gpu on`: use the CUDA package on a release-listed NVIDIA
+  workstation after the selected engine's GPU checks pass.
 
 Expected result: setup prints clear checks, rejects mismatched checksums or
 unsafe asset ZIPs before mutating package assets, imports valid staged assets,
@@ -414,7 +476,7 @@ volumes:
 
 ```powershell
 .\start.bat -Engine podman -Gpu off
-.\scripts\import-assets.cmd -Engine podman -Source assets
+.\scripts\import-assets.cmd -Engine podman -Gpu off -Port 5000 -Source assets
 .\scripts\status.cmd -Engine podman
 .\scripts\logs.cmd -Engine podman -Tail 200
 .\scripts\stop.cmd -Engine podman
@@ -469,26 +531,34 @@ assets\
 Move the inner `model_params`, `data`, and `asset_manifest.v1.json` entries up
 one level so they sit directly inside the package `assets\` folder. If the
 outer `assets\` folder already contains other files and a nested `assets\`
-folder, treat the layout as ambiguous and ask support before continuing.
+folder, treat the layout as ambiguous and stop before continuing.
+
+Asset import accepts `-Engine`, `-Gpu`, and `-Port`. Use all three values from
+the non-secret setup record so an import or recovery does not change the
+selected processing mode or address. The examples below are Docker CPU on the
+default port; substitute the recorded values for another configuration.
 
 Normal import:
 
 ```powershell
-.\scripts\import-assets.cmd -Engine docker -Source assets
+.\scripts\import-assets.cmd -Engine docker -Gpu off -Port 5000 -Source assets
 ```
 
 Release-candidate or support validation import:
 
 ```powershell
-.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180
+.\scripts\import-assets.cmd -Engine docker -Gpu off -Port 5000 -Source assets -VerifyHashes -RestartWaitSeconds 180
 ```
 
 If the launcher was started with a non-default port, pass the same `-Port`
 value to the asset importer:
 
 ```powershell
-.\scripts\import-assets.cmd -Engine docker -Source assets -Port 5001 -VerifyHashes -RestartWaitSeconds 180
+.\scripts\import-assets.cmd -Engine docker -Gpu off -Port 5001 -Source assets -VerifyHashes -RestartWaitSeconds 180
 ```
+
+Stop and log commands do not take a port. Status, setup, start, TLS-repair, and
+asset-import commands do. Stop, status, and logs do not take a GPU option.
 
 The importer copies assets into the selected engine's named volumes. It does
 not copy assets into another local package folder. The importer starts the
@@ -597,7 +667,7 @@ correct package or CPU path, never a forced architecture override.
 
 The measured CUDA image is `14.4 GB`. Plan at least `35 GB` free for normal
 pull/unpack plus assets and volumes and at least `60 GB` for one support source
-build. The pilot's full three-stage A/B/C comparison grew Docker's virtual disk
+build. A full three-stage A/B/C qualification grew Docker's virtual disk
 by about `120 GB`; a full comparative build should budget `150 GB`.
 
 `/api/readiness` includes non-secret `ml_runtime` diagnostics that support can
@@ -634,7 +704,7 @@ Provider-key policy:
 
 - Browser map SDK keys are client-visible to someone with access to the running
   browser app.
-- Pilot keys must be site/user-owned unless a separate owner-approved exception
+- Provider keys must be site/user-owned unless a separate owner-approved exception
   is recorded.
 - Unrestricted shared TowerScout project keys are unsupported.
 - Users/sites should apply provider-side restrictions, API scoping, quotas,
@@ -642,20 +712,29 @@ Provider-key policy:
 - Do not paste provider keys into issue reports, screenshots, raw browser
   network traces, or support messages.
 
-Google Maps keys must support TowerScout's use of:
+Google Maps keys must support TowerScout's use of exactly:
 
 - Maps JavaScript API.
-- Places or Places API (New) features needed for autocomplete/search.
+- Places API (New), required by the current `PlaceAutocompleteElement` search
+  control.
 - Maps Static API for imagery.
 - Geocoding API.
 
-Where practical, use separate restricted Google keys for browser and server
-use. Apply website/application restrictions and API restrictions for the APIs
-TowerScout uses. Google publishes current API-key guidance at:
+TowerScout currently accepts one Google key and uses it for both browser and
+application requests. The browser can see that key. Do not create separate
+browser/server keys for TowerScout because there is only one Google field.
 
-```text
-https://developers.google.com/maps/api-security-best-practices
-```
+Under **API restrictions**, restrict the key to the four APIs above. Google
+recommends a **Websites** application restriction for browser requests and an
+**IP addresses** restriction for server web-service requests. A single key
+cannot use both application-restriction types, so the compatible TowerScout
+one-key setting is **Application restrictions: None**. This is a documented
+TowerScout limitation, not Google's recommended split-key design. Use a
+dedicated project, tight API restrictions, quotas, billing alerts, monitoring,
+and rotation. If local policy requires an application restriction, the current
+Google path is not supported; use Azure Maps or stop. See Google's
+[API-key security guidance](https://developers.google.com/maps/api-security-best-practices)
+and [Place Autocomplete prerequisite](https://developers.google.com/maps/documentation/javascript/place-autocomplete-new).
 
 Azure Maps subscription keys must support TowerScout's use of:
 
@@ -663,15 +742,11 @@ Azure Maps subscription keys must support TowerScout's use of:
 - Imagery/tiles.
 - Search and geocoding.
 
-For the local pilot, Azure shared-key authentication is acceptable only
+For the local package deployment, Azure shared-key authentication is acceptable only
 with site/user-owned keys, monitoring, quota controls, and rotation according
 to local policy. Broader or hosted distribution should revisit Microsoft Entra
-ID or SAS-token authentication. Microsoft publishes current Azure Maps
-authentication guidance at:
-
-```text
-https://learn.microsoft.com/en-us/azure/azure-maps/authentication-best-practices
-```
+ID or SAS-token authentication. See Microsoft's current
+[Azure Maps authentication guidance](https://learn.microsoft.com/en-us/azure/azure-maps/authentication-best-practices).
 
 ## Basic User Validation
 
@@ -679,23 +754,22 @@ After readiness is `ready`:
 
 1. Open `http://localhost:5000`.
 2. Confirm the expected provider is selected.
-3. Search for an approved pilot location or navigate the map manually.
+3. Search for an approved public/non-sensitive location or navigate the map manually.
 4. Define a small search area with a circle or custom shape.
 5. Select `Estimate tiles`.
 6. Confirm the tile count and expected time are reasonable.
 7. Select `Find towers`.
 8. Review results in the detection list and map.
-9. Export CSV/KML or dataset results only if allowed by the pilot workflow.
+9. Export CSV/KML or dataset results only if allowed by the site workflow.
 
-Use the owner-provided public fixture when available. If a fixture has not been
-provided, use a non-sensitive approved area and keep the first run small,
-preferably `1-6` tiles. A successful smoke check means the detection workflow
+Use a public, non-sensitive area and keep the first run small, preferably
+`1-6` tiles. A successful user check means the detection workflow
 completes without crashing and the map/review panel update, even if the result
 count is zero for the selected area.
 
-The UAT package defaults to a `TOWERSCOUT_PILOT_MAX_TILES=100` guard. If a
-tester selects a larger area, TowerScout stops before imagery download or model
-inference and asks the tester to choose a smaller area or contact support.
+The package defaults to a `TOWERSCOUT_PILOT_MAX_TILES=100` guard. If a user
+selects a larger area, TowerScout stops before imagery download or model
+inference and asks the user to choose a smaller area.
 
 Do not use sensitive AOIs in broad screenshots or public issue reports.
 
@@ -729,9 +803,8 @@ For Podman, confirm:
 - If needed, `PODMAN_COMPOSE_PROVIDER` points to the approved provider.
 
 The selected Compose provider must be explicitly validated in the target
-environment. The RC5 validation used standalone Docker Compose v5.1.4 selected
-through `PODMAN_COMPOSE_PROVIDER` rather than Docker Desktop's bundled
-provider. The launcher reports Compose-provider information before startup,
+environment and match the provider/version named by the authoritative release
+record. The launcher reports Compose-provider information before startup,
 rejects Docker Desktop provider paths for the Podman path, and validates a
 `PODMAN_COMPOSE_PROVIDER` override before Compose is invoked.
 
@@ -747,21 +820,23 @@ and updates only `PODMAN_COMPOSE_PROVIDER`. Running the helper without
 `-Apply` prints the recommended `.env` setting without changing `.env`.
 
 If Podman reports `rootlessport listen ... bind: address already in use` even
-when Windows shows the port as free, retry with a non-default package port and
-use that same port on status/log/import commands:
+when Windows shows the port as free, retry with a non-default package port.
+Use that same port on setup, `start.bat`, status, TLS-repair, and asset-import
+commands and in the browser address. `stop.cmd` and `logs.cmd` do not take a
+port:
 
 ```powershell
 .\setup-towerscout.cmd -Engine podman -Gpu off -Port 5009
 .\scripts\status.cmd -Engine podman -Port 5009
 ```
 
-If the error follows the same port after retry, ask support to inspect and
+If the error follows the same port after retry, ask Local IT to inspect and
 clear local Podman container/port state before continuing.
 
 ### Docker Desktop
 
 Docker Desktop use depends on local license, procurement, endpoint policy, and
-installation approval. For the primary pilot path, Docker Desktop should be
+installation approval. For the primary package path, Docker Desktop should be
 open from the Start menu, the WSL 2 backend should be selected when the option
 is visible, and these commands should print version information:
 
@@ -770,16 +845,20 @@ docker --version
 docker compose version
 ```
 
-If Docker is blocked or unavailable, use the qualified Podman CPU path only
-when allowed by local policy and support has confirmed the Podman prerequisites.
+If Docker is blocked or unavailable, you may choose Podman when it is allowed
+on the computer and its documented machine, Python, and Compose-provider
+prerequisites are met.
 
 ### Assets Missing Or Corrupt
 
 Recheck the Model & Data Package ZIP version and layout, then run:
 
+The example below is Docker CPU on the default port. Preserve the `-Engine`,
+`-Gpu`, and `-Port` values from the setup record when adapting it.
+
 ```powershell
-.\scripts\import-assets.cmd -Engine docker -Source assets -VerifyHashes -RestartWaitSeconds 180
-.\scripts\status.cmd -Engine docker
+.\scripts\import-assets.cmd -Engine docker -Gpu off -Port 5000 -Source assets -VerifyHashes -RestartWaitSeconds 180
+.\scripts\status.cmd -Engine docker -Port 5000
 ```
 
 Do not continue release-candidate validation if required asset hashes fail.
@@ -790,7 +869,8 @@ If key validation says TowerScout could not reach the provider validation
 service and logs mention `CERTIFICATE_VERIFY_FAILED`, the container may not
 trust the local network inspection certificate.
 
-Run the guided TLS repair helper for the selected engine. The dry run inspects
+Run the guided TLS repair helper for the selected engine. The diagnostic-only
+dry run inspects
 the provider TLS chain as Windows sees it, avoids selecting the provider leaf
 certificate, and prints the exact apply command when it finds one safe CA
 candidate. The helper copies the CA into the selected engine's persistent
@@ -803,23 +883,43 @@ If entering commands manually, use the same `-Port` on every repair and
 `start.bat` command. The examples below use port 5000 explicitly; replace every
 `-Port 5000` with the active port (for example, `-Port 5211`) when needed.
 
+### Diagnostic Only
+
+Run only the line for the selected engine. Do not add `-Apply`:
+
 ```powershell
 .\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Port 5000
+.\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu off -Port 5000
+```
+
+### Review And Obtain Approval
+
+Review the proposed engine, provider, port, and certificate target privately
+with Local IT. Do not continue when the helper reports ambiguity, selects an
+unexpected target, or site approval is absent. Do not paste certificate
+identities into public feedback.
+
+### Apply The Approved Change
+
+After approval, run only the three lines for the selected engine.
+
+Docker:
+
+```powershell
 .\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Port 5000 -Apply
 .\scripts\stop.cmd -Engine docker
 .\start.bat -Engine docker -Gpu off -Port 5000
 ```
 
-For Podman:
+Podman:
 
 ```powershell
-.\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu off -Port 5000
 .\scripts\repair-provider-tls.cmd -Provider google -Engine podman -Gpu off -Port 5000 -Apply
 .\scripts\stop.cmd -Engine podman
 .\start.bat -Engine podman -Gpu off -Port 5000
 ```
 
-For support-assigned GPU validation, preserve the assigned GPU mode in the
+For GPU use, preserve the chosen GPU mode in the
 repair and restart commands, such as `-Gpu auto` or `-Gpu on`.
 
 If the site blocks Google but uses Azure, choose Azure verification:
@@ -829,15 +929,15 @@ If the site blocks Google but uses Azure, choose Azure verification:
 ```
 
 Do not paste dry-run certificate subjects, issuer details, or thumbprints into
-public issue comments or release evidence. If support already knows the correct
+public issue comments or release evidence. If Local IT knows the correct
 Windows certificate thumbprint or has an exported PEM/CER/CRT file, pass
 `-Thumbprint` or `-CertificatePath` to `scripts\repair-provider-tls.cmd`. A
 website leaf/server certificate is not sufficient. If automatic discovery is
-ambiguous or unavailable, support may still use the lower-level
+ambiguous or unavailable, Local IT may use the lower-level
 `scripts\import-tls-ca.cmd` command with the known CA thumbprint or file.
 
-`TOWERSCOUT_ALLOW_INSECURE_TLS=1` is a last-resort validation-only workaround.
-Do not use it as normal release configuration.
+The final package requires normal TLS verification. Use the CA import workflow
+with Local IT or stop; do not disable certificate verification.
 
 The current provider TLS repair path is the guided script workflow above. The
 package now ships host-helper scaffolding for a future browser-triggered repair

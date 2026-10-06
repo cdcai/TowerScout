@@ -15,6 +15,15 @@ torch 2.10.0 / torchvision 0.25.0 and `cuda128` migration. ADR-022 supersedes
 the CUDA 12.6/torch 2.6.0 no-migration constraint below, but it does not relax
 the four-profile, real-model, provider, recovery, or independent-host gates.
 
+**Amended by ADR-023 (2026-10-01):** The Windows control package will be
+released without Authenticode-signed PowerShell scripts. The supported target
+is limited to users/sites that permit the supplied process-scoped wrapper path;
+signature-enforcing or organization-allowlisted endpoints are not claimed.
+Treat the original signing items below as resolved by scope for that target,
+not as signed-environment passes. Final proof still requires a real browser-
+downloaded ZIP, authoritative SHA-256 comparison before extraction, ordinary-
+user wrapper execution, and the independent-host matrix.
+
 **Assessed baseline:** `9276084d91807906c53e00060670692b27e38483`, September 21, 2026. Main may subsequently move; select and record the execution baseline once. Reassess changed files before adopting a newer revision.
 
 **Version/status:** This document and the v2 spec supersede the unversioned September 21 pair for the proposed deadline effort. Preserve the originals as history. This request authorizes documentation; it does not execute cleanup, change task status, close PRs, or deploy software. After implementation is authorized, continue within that scope without redundant per-task permission requests.
@@ -401,7 +410,13 @@ node tests/integration/test_task_064_provider_state_manager.js
 
 These are existing arguments. Assign variables from verified artifacts before execution; do not paste fabricated digests or assume the existing asset bundle version equals the new control-package version. Keep the script's clean-tracked-source gate; do not use `-Force`, `-NoZip`, or exception flags as final release proof.
 
-- [ ] If endpoint policy requires signed scripts, sign only the approved staging files before internal `SHA256SUMS` generation and final ZIP creation. Verify signed bytes against the policy on the target host. Do not sign the source checkout and bypass its clean-tree gate, or modify a ZIP after recording its checksum. Failure to obtain required signing blocks that claimed environment.
+- [x] Resolve the signing boundary. ADR-023 selects an unsigned standard
+  package and excludes endpoints that require trusted script signatures or
+  organization-specific allowlisting. If a future owner separately claims such
+  an environment, signing must occur only on approved staging files before
+  internal `SHA256SUMS` generation and final ZIP creation; those signed bytes
+  must then be qualified on the target host. Do not sign the source checkout or
+  modify a ZIP after recording its checksum.
 - [ ] Inspect the explicit package file allowlist. Include any new runtime file needed by W03/W04 and all required guides/notices. External qualification tools need not be user-package contents. Inspect a real ZIP: sidecar SHA256, internal `SHA256SUMS`, release manifest, CPU/CUDA flavor/digest, asset contract and actual scripts/docs. Reject `.env`, credentials, private evidence, model payloads in the control ZIP, unrelated developer state and unexpected executables. Warning-only helper output is not a blocking gate unless the caller enforces its result.
 - [ ] Execute package scripts on Windows PowerShell 5.1 from a spaced path, including unavailable engine/provider, a noisy/hanging child, helper-off launch, scalar TLS failure and matching/mismatched Podman target. Rehearse Docker and actual approved Podman provider setup/import/status/logs/stop/relaunch. Reopen a fresh shell before lifecycle checks. Never run unconditional `compose down` against an unverified project.
 - [ ] Run focused artifact tests and the repository's existing required checks for touched areas. New meaningful Windows tests must run on Windows and report their result; platform-skipped CI does not satisfy them. No wholesale audit suppression, lint reformat, or dependency update to obtain green output.
@@ -424,7 +439,12 @@ python -m pytest tests/unit/test_release_package_script.py tests/unit/test_relea
 - [ ] In every profile, run the external fixed combined probe, then the live Google/Azure workflow in the actual app process. Record both model devices and positive EN work for the fixed case, expected output comparisons, startup/warm performance and memory. Provider-dependent live counts may vary; assert valid terminal outcome/review/export rather than forcing the historical count 53.
 - [ ] On each host/profile exercise cancellation, a controlled recoverable error, and next-request success; stop/relaunch from a new shell and reboot. Confirm intended engine/target, assets, provider setup, sessions and export inputs persist. An explicit GPU-required run with CUDA unavailable must fail clearly rather than become a CPU pass.
 - [ ] Exhaustively inject shared-script failures once per relevant engine and smoke-check the remaining profiles: interrupted import/pull where safe, port occupied, missing provider/Python, wrong Podman target, TLS failure/repair, failed restart. Use test-owned state and approved synthetic/organizational certificates. If an engine-specific failure is found, repeat its fix across affected profiles.
-- [ ] Exercise instructions on the actual claimed endpoint/network policy, including required signing and approved proxy/CA setup. Do not treat a developer's permissive endpoint or `ExecutionPolicy Bypass` command as managed-environment evidence. Record support limits exactly when a policy/provider configuration remains unqualified.
+- [ ] Exercise instructions on the actual claimed endpoint/network policy,
+  including approved proxy/CA setup. For the ADR-023 standard scope, exercise
+  the unsigned wrapper path from a browser-downloaded ZIP under an ordinary
+  account; do not present process-scoped `ExecutionPolicy Bypass` as proof for
+  a signature-enforcing managed endpoint. Record those endpoints as outside the
+  support claim unless a future, separately qualified signing path is adopted.
 - [ ] Perform the second consolidated review on Day 7: reconcile every matrix cell with the final identities; inspect skips, absent hosts, hidden manual steps, keys/redaction, output comparisons and performance regressions. Resolve blocker findings or report the precise qualified subset and remaining owners/actions. Do not release under the full four-profile claim with incomplete cells.
 - [ ] Prepare the handoff: exact download references/hashes, supported prerequisites, four explicit setup command variants, troubleshooting/status/logs/TLS recovery, stop/relaunch and volume-preserving rollback, evidence custody, known limitations, and deferred backlog. Check that an independent tester can follow it. Publish/close the PR/update external repositories only within applicable authorization; local preparation can be completed beforehand.
 

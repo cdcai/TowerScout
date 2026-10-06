@@ -1,6 +1,6 @@
 # TowerScout Handoff Guide
 
-**Last Updated**: September 22, 2026
+**Last Updated**: October 1, 2026
 **Operational Closeout**: October 30, 2026
 **Hard Project End**: October 31, 2026
 
@@ -21,9 +21,14 @@ The cdcai owner selected a fix-first path:
 
 ## Immediate Delivery Direction
 
-Qualify a new Windows 11 release from accepted `main` at
-`9276084d91807906c53e00060670692b27e38483` using the existing
-PowerShell/Compose package path. PR #67 and the Task-087 launcher redesign are
+Qualify a new Windows 11 release from accepted `main` using the existing
+PowerShell/Compose package path. The last locally qualified `rc4` source was
+`541622556fb7999ee4e88fb1e44f7797b9da34f5`. Preserve `rc4` for a preliminary
+browser-download diagnostic, but its pre-ADR-023 manuals cannot establish
+final acceptance. Because repository `docs/` is packaged in the control ZIP
+and baked into the runtime image for in-app Help, Task-092 alignment requires
+new documentation-aligned image and control-package identities before
+distribution. PR #67 and the Task-087 launcher redesign are
 preserved but deferred: do not merge, reconcile, extend, or repeatedly review
 them as prerequisites for deployment.
 
@@ -33,6 +38,7 @@ Read in this order:
 2. `.agent_work/context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2.md`
 3. `.agent_work/context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2-verification.md`
 4. `.agent_work/context/status/Reprioritization Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md`
+5. `.agent_work/decisions/023-unsigned-windows-package-support-boundary.md`
 
 Task status comes from `.agent_work/current-tasks.md`. Full acceptance requires
 real YOLO and EfficientNet inference on Docker CPU, Docker NVIDIA, Podman CPU,
@@ -97,8 +103,11 @@ Alert `#76` opened after that closeout and its completed remediation record is
 `.agent_work/tasks/active/TASK-101-extract-zip-advisory-release-gate.md`.
 Task-087 and PR #67 remain preserved historical work. They receive no new
 implementation, reconciliation, merge, or review work in the current delivery
-window. Package, signing, provider/recovery, Podman, and managed-endpoint gates
-are evaluated against the main-based candidate instead.
+window. Package, provider/recovery, Podman, and managed-endpoint gates are
+evaluated against the main-based candidate instead. ADR-023 selects an unsigned
+standard Windows package: support only users/sites that permit the supplied
+process-scoped wrapper path, and do not claim signed or allowlisted managed-
+endpoint compatibility.
 
 ## Runtime And Package Model
 
@@ -108,6 +117,8 @@ Normal release delivery uses:
 - distinct digest-pinned CPU and CUDA 12.8 GHCR images
 - checksummed shared Model & Data Package
 - Docker- and Podman-compatible Compose paths
+- unsigned PowerShell host scripts invoked through the supplied `.cmd`/`.bat`
+  wrappers on endpoints where that path is permitted
 
 The final support matrix requires:
 
@@ -137,6 +148,8 @@ static/planning work continues.
 - Do not delete named volumes during normal stop or upgrade.
 - Do not store provider keys, helper tokens, certificate details, private AOIs,
   raw traces, or unsanitized logs in repository evidence.
+- Do not instruct users to disable endpoint protection, change persistent
+  execution policy, or override an organizational application-control rule.
 
 The Model & Data Package cannot be reconstructed from source alone. Preserve
 release assets, SHA-256 sidecars, `webapp/asset_manifest.v1.json`, and
