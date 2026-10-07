@@ -1,0 +1,141 @@
+name: TowerScout Existing Container Verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      pinned_ref:
+        description: "Exact TowerScout GHCR digest reference to verify"
+        required: true
+        type: string
+      expected_config_digest:
+        description: "Config digest recorded by the successful local scan"
+        required: true
+        type: string
+      source_ref:
+        description: "Expected 40-character source revision label"
+        required: true
+        type: string
+      pytorch_flavor:
+        description: "Expected PyTorch wheel flavor"
+        required: true
+        default: "cpu"
+        type: choice
+        options:
+          - cpu
+          - cuda128
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+
+      - name: Log in to GHCR for read-only verification
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Verify exact published identity and labels
+        id: identity
+        shell: bash
+        env:
+          PINNED_REF: '${{ inputs.pinned_ref }}'
+          EXPECTED_CONFIG_DIGEST: '${{ inputs.expected_config_digest }}'
+          EXPECTED_SOURCE_REF: '${{ inputs.source_ref }}'
+          EXPECTED_FLAVOR: '${{ inputs.pytorch_flavor }}'
+        run: |
+          set -euo pipefail
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          case "$PINNED_REF" in
+            "$image"@sha256:????????????????????????????????????????????????????????????????) ;;
+            *) echo "pinned_ref must be an exact digest for $image" >&2; exit 1 ;;
+          esac
+          case "$EXPECTED_CONFIG_DIGEST" in
+            sha256:????????????????????????????????????????????????????????????????) ;;
+            *) echo "expected_config_digest must be sha256:<64 hex>" >&2; exit 1 ;;
+          esac
+          EXPECTED_SOURCE_REF="$EXPECTED_SOURCE_REF" python -c 'import os, re; value=os.environ["EXPECTED_SOURCE_REF"]; assert re.fullmatch(r"[0-9a-f]{40}", value), "source_ref must be 40 lowercase hexadecimal characters"'
+
+          docker buildx imagetools inspect "$PINNED_REF" --raw > remote-manifest.json
+          remote_config_digest="$(python -c 'import json; print(json.load(open("remote-manifest.json", encoding="utf-8"))["config"]["digest"])')"
+          test "$remote_config_digest" = "$EXPECTED_CONFIG_DIGEST"
+
+          docker pull "$PINNED_REF"
+          image_id="$(docker image inspect --format '{{.Id}}' "$PINNED_REF")"
+          source_label="$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$PINNED_REF")"
+          flavor_label="$(docker image inspect --format '{{index .Config.Labels "org.towerscout.pytorch.flavor"}}' "$PINNED_REF")"
+          test "$image_id" = "$EXPECTED_CONFIG_DIGEST"
+          test "$source_label" = "$EXPECTED_SOURCE_REF"
+          test "$flavor_label" = "$EXPECTED_FLAVOR"
+
+          printf '{"expected_config_digest":"%s","image_id":"%s","pinned_ref":"%s","remote_config_digest":"%s","source_ref":"%s","pytorch_flavor":"%s"}\n' \
+            "$EXPECTED_CONFIG_DIGEST" "$image_id" "$PINNED_REF" "$remote_config_digest" "$source_label" "$flavor_label" > image-identity.json
+          echo "image_id=$image_id" >> "$GITHUB_OUTPUT"
+          echo "pinned_ref=$PINNED_REF" >> "$GITHUB_OUTPUT"
+          echo "pinned=$PINNED_REF" >> "$GITHUB_STEP_SUMMARY"
+          echo "config_digest=$remote_config_digest" >> "$GITHUB_STEP_SUMMARY"
+          echo "source_ref=$source_label" >> "$GITHUB_STEP_SUMMARY"
+          echo "pytorch_flavor=$flavor_label" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Scan exact published digest with Trivy
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: image
+          image-ref: '${{ steps.identity.outputs.pinned_ref }}'
+          scanners: vuln
+          format: json
+          output: image-trivy.json
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+          ignore-unfixed: 'false'
+          version: 'v0.69.3'
+
+      - name: Generate exact-digest CycloneDX SBOM
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: image
+          image-ref: '${{ steps.identity.outputs.pinned_ref }}'
+          format: cyclonedx
+          output: image-sbom.cdx.json
+          exit-code: '0'
+          version: 'v0.69.3'
+
+      - name: Confirm exact-digest findings against approved policy
+        shell: bash
+        env:
+          EXPECTED_SOURCE_REF: '${{ inputs.source_ref }}'
+        run: |
+          set -euo pipefail
+          python scripts/task103_trivy_delta.py compare \
+            --baseline .github/security/task103-trivy-baseline.v1.json \
+            --accepted-residuals .github/security/task103-accepted-residuals.v1.json \
+            --candidate image-trivy.json \
+            --flavor '${{ inputs.pytorch_flavor }}' \
+            --image '${{ steps.identity.outputs.pinned_ref }}' \
+            --expected-image-id '${{ steps.identity.outputs.image_id }}' \
+            --source-ref "$EXPECTED_SOURCE_REF" \
+            --markdown-out image-scan-dispositions.md \
+            --json-out image-scan-delta.json
+          cat image-scan-dispositions.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload exact-digest verification evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: image-security-verify-${{ inputs.pytorch_flavor }}-${{ github.run_id }}
+          path: |
+            image-identity.json
+            remote-manifest.json
+            image-trivy.json
+            image-sbom.cdx.json
+            image-scan-dispositions.md
+            image-scan-delta.json
+            .github/security/task103-trivy-baseline.v1.json
+            .github/security/task103-accepted-residuals.v1.json
+          if-no-files-found: error

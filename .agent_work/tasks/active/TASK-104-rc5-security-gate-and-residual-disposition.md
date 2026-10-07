@@ -1,6 +1,6 @@
 # TASK-104: RC5 Security Gate And Residual Disposition
 
-**Status**: IN_PROGRESS - implementation merged through PR #98 as `30d5585`;
+**Status**: IN_PROGRESS - implementation merged through PR #99 as `a886b8b`;
 local CPU/CUDA identity, dependency, Fiona/ZCTA, real-model/device, Trivy, and
 SBOM proof passed after the required Windows/WSL restart. The isolated CUDA
 provider-backed detection-over-ZCTA cell also passed for Azure and Google
@@ -8,8 +8,9 @@ after the known Google TLS repair. The first owner-authorized registry attempt
 failed closed before login/push on a workflow shell-quoting defect. Its PR #98
 correction passed, but the CPU retry stopped after immutable push because a
 transport-sensitive manifest equality check rejected matching config identity.
-That bounded correction, successful exact-digest dispatch evidence, and final
-package acceptance remain
+PR #99 corrected that assertion. Read-only recovery of the existing exact CPU
+digest, immutable-tag overwrite protection, successful CUDA dispatch evidence,
+and final package acceptance remain
 **Priority**: CRITICAL
 **Type**: C (Release Security / Container Publication)
 **Owner**: `J-Schulein` until handoff; `cdcai` thereafter
@@ -269,6 +270,24 @@ Exact implementation revision:
 - The correction removes only that invalid equality assertion. It retains both
   manifest digests as evidence and continues to require the exact published
   digest's config identity to equal the locally scanned image config.
+
+### Immutable-tag recovery after PR #99
+
+- PR #99 merged the transport-safe config-identity rule as
+  `a886b8bb3011ff8be8764c4fa7d5f852d2636062`; exact-head and post-merge CI
+  passed.
+- Retrying the normal publish workflow would overwrite the already-created
+  `v0.1.0-rc5-cpu` tag with a newly labeled image. That would violate the
+  blocked-evidence and immutable-version boundary, even though the application
+  build inputs did not change between `30d5585` and `a886b8b`.
+- The recovery path is therefore read-only: verify the exact existing CPU
+  digest and expected config/source/flavor identities, generate the missing
+  exact-digest Trivy report and SBOM, enforce the same comparator, and upload
+  evidence without any push or tag mutation.
+- The normal publish workflow will also fail before push when a versioned tag
+  already exists, or when registry inspection cannot prove that the requested
+  tag is absent. This preserves immutable evidence and prevents accidental
+  replacement during retries.
 
 ## Stop Conditions
 

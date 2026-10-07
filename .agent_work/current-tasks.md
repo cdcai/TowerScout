@@ -16,11 +16,12 @@ redesign remains preserved and deferred, not a release gate.
 **Confirmed `rc4` Runtime Image Source**: `541622556fb7999ee4e88fb1e44f7797b9da34f5`
 **Accepted Documentation Content Source**: `fc97b3200785d307b39ef5a683979002a5f409e6`
 **Preliminary Local RC5 Source**: `a24d369668d27240ed0baa184d071395455b9c95`
-**Next Publishable Candidate Source**: Not frozen; PR #98 merged the first
-publication correction as `30d5585d522d58e2ab2a2609d62055b31420dd91`.
-The retry proved the local CPU gate but exposed an invalid manifest-digest
-equality check after the immutable CPU tag was pushed. Freeze the exact
-accepted `main` commit after that bounded correction.
+**Next Publishable Candidate Source**: Not frozen; PR #99 merged the
+transport-safe identity correction as
+`a886b8bb3011ff8be8764c4fa7d5f852d2636062`. The existing immutable CPU tag
+must receive read-only exact-digest confirmation without being overwritten;
+then publish and confirm CUDA from the exact accepted source before freezing
+the candidate identities.
 **Authoritative Branch**: `main`
 **Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
@@ -69,9 +70,12 @@ accepted `main` commit after that bounded correction.
   changed the manifest digest to
   `sha256:8e624a332a0b70ce70a6d29625d8482bb04651767d38d21e46cac16932b65bee`.
   The workflow incorrectly required the local and registry manifest digests
-  to match, so it stopped before the exact-digest scan/SBOM. The CPU tag is
-  blocked evidence, CUDA has not been retried, and no `latest` or package was
-  published while a bounded workflow/test correction is reviewed.
+  to match, so it stopped before the exact-digest scan/SBOM. PR #99 removed
+  that invalid assertion and merged as `a886b8b` with green exact-head and
+  post-merge CI. The CPU tag remains blocked evidence and must not be
+  overwritten; a read-only exact-digest verification recovery and an explicit
+  immutable-tag overwrite guard are in progress. CUDA has not been retried,
+  and no `latest` or package was published.
 - Full readiness requires actual YOLO and EfficientNet work on the required
   device in all four profiles plus independent-computer reproduction.
 - Static checks, health/readiness, mocked tests, or CPU fallback are not
@@ -122,12 +126,12 @@ Current scope:
 
 **Status**: IN_PROGRESS - ADR-024 implementation and local CPU/CUDA security,
 identity, Fiona/ZCTA, real-model/device, and live Azure/Google ZCTA-provider
-proof pass. PR #98 merged the first publication correction as `30d5585` with
-green exact-head/post-merge CI. CPU retry `37657322565` passed its local gate
-and pushed an immutable tag, then stopped before exact-digest scanning because
-the workflow incorrectly required transport-sensitive local and registry
-manifest digests to match even though their config identity matched. Correct
-and review that assertion, then resume the authorized dispatches. Final
+proof pass. PR #99 merged the transport-safe identity correction as `a886b8b`
+with green exact-head/post-merge CI. CPU retry `37657322565` passed its local
+gate and pushed an immutable tag, then stopped before exact-digest scanning
+because the prior workflow incorrectly required transport-sensitive manifest
+digests to match. Preserve that tag, complete its read-only exact-digest
+verification, enforce no-overwrite publication, and then resume CUDA. Final
 package acceptance remains
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-104-rc5-security-gate-and-residual-disposition.md`
