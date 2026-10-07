@@ -1,22 +1,54 @@
 # Task-103 W09 Candidate Evidence Index
 
-**Recorded**: 2026-09-28; updated 2026-10-01
+**Recorded**: 2026-09-28; updated 2026-10-07
 **Verdict**: Local `rc4` artifact assembly PASS; exact-digest CPU/CUDA
 W05 PASS; first-host four-profile package startup and volume-preserving
 relaunch PASS. The local W10 provider/recovery matrix also passes, but overall
 release readiness remains AT_RISK. ADR-023 resolves policy/signing through an
-unsigned, narrower support boundary. Run `rc4` as a preliminary browser-
-download diagnostic, then rebuild documentation-aligned CPU/CUDA image and
-control-ZIP identities because `docs/` is present in both surfaces. Final
-browser-download and independent-host repetition remain required. Exact-`rc4`
-first-host reboot persistence remains valid evidence.
-**Publication state**: Control ZIPs and the asset ZIP are assembled locally but
-not published. No `latest` tag was promoted.
+unsigned, narrower support boundary. The `rc4` preliminary browser-download
+diagnostic and the same-source documentation-aligned RC8 image/control-ZIP
+rebuild are complete. Final exact-RC8 browser-download and independent-host
+repetition remain required. Exact-`rc4` first-host reboot persistence remains
+valid regression evidence.
+**Publication state**: The RC8 control ZIPs are assembled locally but are not
+published. The retained asset bytes are verified but were not duplicated under
+the RC8 filename. No `latest` tag was promoted.
 
-PR #92 (`cbb574f`) and PR #93 (`fba9dcb`) merged after the retained `rc3`
-artifacts were assembled. The final local candidate is therefore `rc4`, built
-from accepted `main` at `541622556fb7999ee4e88fb1e44f7797b9da34f5`.
-The `rc3` identities remain historical qualification evidence only.
+**Superseded RC4/RC3 context**: PR #92 (`cbb574f`) and PR #93 (`fba9dcb`)
+merged after the retained `rc3` artifacts were assembled. That produced the
+now-superseded `rc4` candidate from accepted `main` at
+`541622556fb7999ee4e88fb1e44f7797b9da34f5`. The `rc4` and `rc3` identities
+remain historical regression/qualification evidence only; they are not
+publication inputs. The RC8 inventory below is the sole current candidate.
+
+## Same-Source RC8 Local Package Inventory
+
+The final documentation-aligned image source is
+`7827c2af8ecb7d8b21d246b69e135807fa497fd2`. Owner-authorized CPU run
+`37674158762` and CUDA run `37674161407` published and qualified the first
+unused same-source tag pair with `push_latest=false`:
+
+- CPU image:
+  `ghcr.io/j-schulein/towerscout@sha256:2e040c3b09d1aa493b205ec2100c112a839ab7a9bfc90a639f73918e06135412`.
+- CUDA 12.8 image:
+  `ghcr.io/j-schulein/towerscout@sha256:712beb4e143495ba72705cc56b89a939c5bebfdc47dc2f6d0694c81e9e60ca57`.
+- CPU control ZIP: `towerscout-v0.1.0-rc8-cpu.zip`, 199842 bytes,
+  SHA-256
+  `8fd46711b57a25dd71cd879a06fe519674596ee9a71fa66b2347204fe8bc74f0`.
+- CUDA control ZIP: `towerscout-v0.1.0-rc8-cuda128.zip`, 199850 bytes,
+  SHA-256
+  `463d3f2348e369ed647bb8ed66c15588fc4051197e49ac90441552b8318bdada`.
+- Shared asset ZIP: 800655295 bytes, SHA-256
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+
+The control ZIPs were assembled from a clean detached checkout of the exact
+image source. Both manifest checks, outer sidecars, all 73 internal checksums
+across 74 entries, and the focused `7/7` package/manifest regression suite
+passed. The retained browser-downloaded asset ZIP was rehashed directly; an
+extra 800 MB copy was intentionally not created just to change its filename.
+No control ZIP, asset ZIP, release, or `latest` tag was published. Final
+browser-download and independent-host evidence still must use the exact
+published bytes and authoritative checksums.
 
 ## Final Local `rc4` Candidate Inventory And Qualification
 

@@ -5,8 +5,10 @@ host provider/cancel/error/review-export/relaunch/reboot cells pass. ADR-023
 resolves policy/signing through an unsigned, narrower support boundary.
 The preliminary `rc4` browser-download Docker CPU diagnostic passed and its
 findings are dispositioned for Task-092. The documentation content is frozen
-and merged through PR #94 as `fc97b32`; final documentation-aligned artifacts,
-exact browser-download, and independent-host evidence remain
+and merged through PR #94 as `fc97b32`. The same-source RC8 CPU/CUDA images
+and digest-pinned control ZIPs are assembled and locally verified; owner-
+authorized publication, exact browser-download, and independent-host evidence
+remain
 **Priority**: CRITICAL
 **Type**: C (Release Qualification / Handoff)
 **Owner**: Release owner; active agent executes bounded preparation and checks
@@ -495,3 +497,30 @@ accepted-main commit after the project-state reconciliation merges. No prior
 `rc4` image or ZIP is promoted by this checkpoint. Final acceptance still
 starts with the newly published authoritative hashes and exact
 browser-downloaded bytes and still requires the independent-host matrix.
+
+### 2026-10-07 - Same-source RC8 images and control packages assembled
+
+Accepted source `7827c2af8ecb7d8b21d246b69e135807fa497fd2` produced the
+same-source RC8 pair. The CPU image is pinned to
+`sha256:2e040c3b09d1aa493b205ec2100c112a839ab7a9bfc90a639f73918e06135412`;
+the CUDA 12.8 image is pinned to
+`sha256:712beb4e143495ba72705cc56b89a939c5bebfdc47dc2f6d0694c81e9e60ca57`.
+Both exact published digests passed the strict security comparison with 74
+accepted baseline findings, four exact temporary residuals, zero blocking
+findings, zero severity escalations, and 322 resolved findings. Neither
+workflow promoted a `latest` tag.
+
+A clean detached checkout of that exact source assembled the digest-pinned
+control ZIPs. The CPU ZIP SHA-256 is
+`8fd46711b57a25dd71cd879a06fe519674596ee9a71fa66b2347204fe8bc74f0`;
+the CUDA 12.8 ZIP SHA-256 is
+`463d3f2348e369ed647bb8ed66c15588fc4051197e49ac90441552b8318bdada`.
+Both package manifests, outer checksum sidecars, all 73 internal checksums,
+and the focused seven-test package suite passed. The retained asset ZIP is
+byte-identical to the required RC8 asset at SHA-256
+`00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+
+Package construction is complete. Publication remains owner-gated, and final
+acceptance still requires verification of the authoritative published hashes
+against exact browser-downloaded bytes plus the required four-profile and
+independent-host qualification.

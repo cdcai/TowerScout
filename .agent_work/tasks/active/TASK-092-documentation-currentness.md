@@ -6,9 +6,10 @@ reproducibility corrections landed at `f8e191d`, and PR #94 merged as
 `fc97b32` with green post-merge CI. PR #95 merged the bounded project-state
 reconciliation as `a24d369`; local image/package documentation parity passes,
 and the same-source RC8 CPU/CUDA image digests are frozen after strict local
-and exact-published-digest security qualification. Final screenshots/video,
-live permission verification, digest-pinned control-ZIP identities, packaged
-and running-image Help validation, publication, and final W09/W10 gates remain
+and exact-published-digest security qualification. Their digest-pinned control
+ZIPs are locally assembled and verified. Final screenshots/video, live
+permission verification, exact browser-downloaded package and running-image
+Help validation, publication, and final W09/W10 gates remain
 **Priority**: HIGH
 **Type**: C (Documentation / Release)
 **Child Work Plan**:
@@ -478,10 +479,10 @@ publication. Final Task-092 evidence must therefore bind the later approved
 published digests, authoritative package hashes, browser-downloaded bytes, and
 running-image Help. Frozen user-facing content remains unchanged.
 
-**Next at that point**: Resolve the Task-103 pre-publication security delta through normal
-review and explicit disposition, then rebuild final digest-pinned packages and
-complete the remaining artifact-bound, browser-download, live-Wiki, and
-independent-host checks.
+**Disposition of that next step**: The Task-103 pre-publication security delta
+was reviewed and resolved, and the final digest-pinned RC8 packages were built
+and locally verified. Publication plus the remaining artifact-bound,
+browser-download, live-Wiki, and independent-host checks still follow.
 
 ### 2026-10-07 - Same-source RC8 image identity freeze
 
@@ -504,3 +505,26 @@ source and image identities, verify authoritative and internal SHA-256 values,
 then complete packaged/running-image Help, browser-download, live-Wiki, and
 independent-host checks without changing frozen user-facing content unless a
 new release blocker is explicitly dispositioned.
+
+### 2026-10-07 - Same-source RC8 local package assembly
+
+A clean detached checkout of frozen source `7827c2a` produced the final local
+control packages. The CPU ZIP SHA-256 is
+`8fd46711b57a25dd71cd879a06fe519674596ee9a71fa66b2347204fe8bc74f0`;
+the CUDA 12.8 ZIP SHA-256 is
+`463d3f2348e369ed647bb8ed66c15588fc4051197e49ac90441552b8318bdada`.
+Both manifests bind the exact same-source RC8 image digest and the required
+RC8 asset filename/hash. Both outer sidecars, all 73 internal checksums, and
+the focused package/manifest regression suite (`7/7`) passed.
+
+The retained browser-downloaded 800655295-byte asset ZIP was reverified at
+SHA-256
+`00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+It was not duplicated solely to change its filename before publication. No
+control ZIP, asset ZIP, release, or `latest` tag was published.
+
+**Next**: After explicit owner authorization, publish the exact control ZIPs,
+their sidecars, and the same-content asset ZIP under the manifest-required RC8
+name. Then re-download those exact bytes through the normal browser flow and
+complete packaged/running-image Help, live-Wiki, four-profile, and
+independent-host validation.

@@ -12,7 +12,8 @@ PR #99 corrected that assertion, and PR #100 added read-only exact-digest
 recovery plus immutable-tag overwrite/race protection. PR #101 recorded the
 RC5 evidence, then the same-source RC8 CPU and CUDA registry digests passed G10
 with `push_latest=false`. Security/publication correction is complete;
-digest-pinned package and final acceptance remain
+digest-pinned packages are locally assembled and verified. Owner-authorized
+package publication and final acceptance remain
 **Priority**: CRITICAL
 **Type**: C (Release Security / Container Publication)
 **Owner**: `J-Schulein` until handoff; `cdcai` thereafter
@@ -55,8 +56,10 @@ security gate passes. Preserve the accepted 396-key baseline unchanged.
 - [x] Obtain reviewed merge and green exact-head/post-merge CI.
 - [x] After separate owner dispatch authorization, publish immutable versioned
   images with `push_latest=false` and confirm exact-digest G10 evidence.
-- [ ] Assemble digest-pinned packages and complete the final browser-download
-  and independent-host four-profile matrix under Tasks 091/092/093/097/103.
+- [x] Assemble and locally verify digest-pinned CPU and CUDA 12.8 packages.
+- [ ] After separate owner authorization, publish the exact package assets and
+  complete the final browser-download and independent-host four-profile matrix
+  under Tasks 091/092/093/097/103.
 
 ## Local Validation Record - October 7, 2026
 
@@ -376,6 +379,25 @@ Exact implementation revision:
   `7f2c261ede971d581f581857d11d8e1eafffef1b1390408dcd7b6865b05d55b2`
   matched across flavors. Both `latest` promotion steps were skipped. No
   control package or release asset was published.
+
+### Same-source RC8 local control packages
+
+- A clean detached checkout of frozen source
+  `7827c2af8ecb7d8b21d246b69e135807fa497fd2` assembled the CPU and CUDA 12.8
+  control ZIPs using only the exact RC8 registry manifest digests above.
+- CPU ZIP SHA-256:
+  `8fd46711b57a25dd71cd879a06fe519674596ee9a71fa66b2347204fe8bc74f0`.
+- CUDA 12.8 ZIP SHA-256:
+  `463d3f2348e369ed647bb8ed66c15588fc4051197e49ac90441552b8318bdada`.
+- Both manifest checks, outer sidecars, all 73 internal checksums, and the
+  focused `7/7` package/manifest regression suite passed.
+- The retained 800655295-byte browser-downloaded asset ZIP was reverified at
+  authoritative SHA-256
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+  It was not duplicated solely to stage the RC8 filename.
+- No package/release asset or `latest` tag was published. Final
+  browser-download and independent-host acceptance remain owner-gated release
+  work.
 
 ## Stop Conditions
 

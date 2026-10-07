@@ -6,8 +6,9 @@
 accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Documentation
 content is frozen and merged through PR #94, and the project-state
 reconciliation is merged through PR #95. The same-source RC8 CPU/CUDA images
-now pass the exact-digest security gate; digest-pinned package assembly, final
-browser-download, and independent-host acceptance follow.
+now pass the exact-digest security gate, and their digest-pinned control ZIPs
+are assembled and locally verified. Publication, final browser-download, and
+independent-host acceptance follow.
 The Task-087 launcher
 redesign remains preserved and deferred, not a release gate.
 
@@ -19,8 +20,9 @@ redesign remains preserved and deferred, not a release gate.
 **Frozen Publishable Candidate Source**:
 `7827c2af8ecb7d8b21d246b69e135807fa497fd2`. The same-source
 `v0.1.0-rc8` CPU and CUDA 12.8 images passed local and exact-published-digest
-security qualification with `push_latest=false`. Assemble new control packages
-only from the exact pinned manifest digests recorded below.
+security qualification with `push_latest=false`. The local control packages
+recorded below bind only those exact pinned manifest digests; package/release
+publication remains owner-gated.
 **Authoritative Branch**: `main`
 **Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
@@ -43,7 +45,7 @@ only from the exact pinned manifest digests recorded below.
 - `J-Schulein` approved the documentation content freeze at `524ba37`. The
   bounded post-freeze reproducibility corrections landed at `f8e191d`, PR #94
   merged as `fc97b32`, and post-merge CI passed. No documentation review
-  blocker remains before the clean-source rebuild.
+  blocker remained for the now-completed clean-source RC8 rebuild.
 - PR #95 merged the bounded project-state reconciliation as `a24d369`. PR #96
   then merged the application `urllib3==2.8.0` correction as `b0725e7`; all
   applicable post-merge checks passed. Retained Trivy evidence shows that ten
@@ -83,7 +85,16 @@ only from the exact pinned manifest digests recorded below.
   Both carry the exact `7827c2a` source label and passed with baseline 396,
   candidate 78, accepted baseline 74, accepted residual 4, blocking 0,
   severity escalations 0, and resolved 322. Both `latest` steps were skipped;
-  no control package or release was published.
+  no control package or release was published. A clean detached checkout of
+  `7827c2a` then produced local control ZIPs with SHA-256
+  `8fd46711b57a25dd71cd879a06fe519674596ee9a71fa66b2347204fe8bc74f0`
+  (CPU) and
+  `463d3f2348e369ed647bb8ed66c15588fc4051197e49ac90441552b8318bdada`
+  (CUDA 12.8). Both manifests, outer sidecars, all 73 internal checksums, and
+  the focused `7/7` package tests passed. The retained browser-downloaded asset
+  ZIP remains byte-identical to the required RC8 asset at SHA-256
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`;
+  it was not duplicated locally merely to rename it.
 - Full readiness requires actual YOLO and EfficientNet work on the required
   device in all four profiles plus independent-computer reproduction.
 - Static checks, health/readiness, mocked tests, or CPU fallback are not
@@ -108,8 +119,9 @@ the bounded `rc4` browser-download Docker CPU diagnostic passed without a
 larger blocker, and its documentation findings are merged through PR #94.
 PR #95 then reconciled the accepted project state, and PR #96 merged the
 application urllib3 correction. ADR-024/TASK-104 security correction and the
-same-source RC8 CPU/CUDA exact-digest registry gates now pass. Assemble the
-digest-pinned control packages, then complete final browser-download plus
+same-source RC8 CPU/CUDA exact-digest registry gates now pass. The
+digest-pinned control packages are assembled and locally verified; publish the
+approved candidate assets, then complete final browser-download plus
 independent-host evidence
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
@@ -127,17 +139,18 @@ Current scope:
 - Keep the confirmed `rc4` CPU/CUDA runtime evidence. The `rc4` images and
   control ZIPs remain the regression baseline but are not the final
   documentation-aligned distribution: repository `docs/` is copied into both
-  surfaces. Rebuild under new identities after Task-092 content freeze and do
-  not publish packages or promote `latest` without owner authorization.
+  surfaces. The same-source RC8 image and package rebuild is complete. Do not
+  publish packages or promote `latest` without owner authorization.
 
 ### **TASK-104: RC5 Security Gate And Residual Disposition**
 
 **Status**: IN_PROGRESS - ADR-024 implementation and local CPU/CUDA security,
 identity, Fiona/ZCTA, real-model/device, and live Azure/Google ZCTA-provider
 proof pass. The same-source RC8 CPU and CUDA 12.8 registry digests pass the
-strict exact-digest gate with no `latest` promotion. Security/publication
-correction is complete; digest-pinned package assembly, final browser-download,
-and independent-host acceptance remain
+strict exact-digest gate with no `latest` promotion, and their digest-pinned
+control ZIPs pass local integrity validation. Security/publication correction
+and local package assembly are complete; owner-authorized publication, final
+browser-download, and independent-host acceptance remain
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-104-rc5-security-gate-and-residual-disposition.md`
 
@@ -214,10 +227,11 @@ Current scope:
 `J-Schulein` approved the content freeze at `524ba37`, bounded follow-up fixes
 landed at `f8e191d`, PR #94 merged as `fc97b32`, and PR #95 merged the bounded
 state reconciliation as `a24d369`. Local `rc5` image/package documentation
-parity passes, and the same-source RC8 image identities are now frozen. Build
-the digest-pinned control ZIPs, then complete live permission verification,
-exact-package/running-image Help validation, publication checks,
-screenshots/video, and the final W09/W10 gates
+parity passes, the same-source RC8 image identities are frozen, and their
+digest-pinned control ZIPs are locally assembled and verified. After
+owner-authorized publication, complete live permission verification,
+exact-browser-downloaded-package/running-image Help validation, publication
+checks, screenshots/video, and the final W09/W10 gates
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-092-documentation-currentness.md`
 
@@ -294,12 +308,14 @@ and explicit authorization.
    diagnostic evidence, then incorporate applicable findings into Task-092.
 8. [x] Freeze Task-092 content, merge the accepted documentation through PR
    #94, and confirm post-merge CI.
-9. [ ] Complete ADR-024/TASK-104, merge the bounded security correction, then
-   freeze the reconciled accepted-main source and rebuild
-   documentation-aligned CPU/CUDA images and control ZIPs under new identities;
-   publish authoritative hashes before final extraction testing or tester
-   distribution.
-10. [ ] Complete W10 four-profile and independent-host reproduction; otherwise
+9. [x] Complete ADR-024/TASK-104, merge the bounded security correction,
+   freeze the reconciled accepted-main source, and rebuild and locally verify
+   documentation-aligned CPU/CUDA images and control ZIPs under the RC8
+   identities.
+10. [ ] After owner authorization, publish the exact RC8 assets and
+   authoritative hashes before final browser-download extraction testing or
+   tester distribution.
+11. [ ] Complete W10 four-profile and independent-host reproduction; otherwise
    report only the exact qualified subset.
 
 ## Runtime Coordination
