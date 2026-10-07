@@ -103,6 +103,14 @@ Exact implementation revision:
 - The C: drive had fallen to about 137 MB free. Only the disposable Trivy DB
   cache was removed (1.341 GB); reports, SBOMs, packages, assets, and prior
   evidence were retained.
+- Before the required restart, 18.891 GiB of verified ignored duplicates were
+  removed: superseded RC1-RC4 `dist` package/qualification trees, duplicate RC4
+  extracted asset trees and asset ZIP, three detached temporary package-source
+  worktrees, and an unused root-level copy of `newest.pt`. Free space increased
+  from 4.673 GiB to 22.834 GiB. The current RC5 validation tree and CPU security
+  evidence, the authoritative `webapp/model_params` assets, the exact RC4
+  browser-download evidence and downloaded asset ZIP, and the dirty
+  `task103-source-revert` recovery worktree were explicitly retained.
 - Docker's VHD then remained attached. A clean WSL shutdown detached it, but
   Windows subsequently refused WSL VM creation with `0x80070569` (requested
   logon type not granted). No Windows security policy was weakened or changed.
