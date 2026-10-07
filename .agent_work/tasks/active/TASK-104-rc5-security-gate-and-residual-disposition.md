@@ -1,6 +1,6 @@
 # TASK-104: RC5 Security Gate And Residual Disposition
 
-**Status**: IN_PROGRESS - implementation merged through PR #99 as `a886b8b`;
+**Status**: IN_PROGRESS - implementation merged through PR #100 as `928a0f0`;
 local CPU/CUDA identity, dependency, Fiona/ZCTA, real-model/device, Trivy, and
 SBOM proof passed after the required Windows/WSL restart. The isolated CUDA
 provider-backed detection-over-ZCTA cell also passed for Azure and Google
@@ -8,9 +8,11 @@ after the known Google TLS repair. The first owner-authorized registry attempt
 failed closed before login/push on a workflow shell-quoting defect. Its PR #98
 correction passed, but the CPU retry stopped after immutable push because a
 transport-sensitive manifest equality check rejected matching config identity.
-PR #99 corrected that assertion. Read-only recovery of the existing exact CPU
-digest, immutable-tag overwrite protection, successful CUDA dispatch evidence,
-and final package acceptance remain
+PR #99 corrected that assertion, and PR #100 added read-only exact-digest
+recovery plus immutable-tag overwrite/race protection. The exact CPU and CUDA
+registry digests now pass G10 independently with `push_latest=false`. Their
+source labels differ, so a paired-candidate traceability decision and final
+package acceptance remain
 **Priority**: CRITICAL
 **Type**: C (Release Security / Container Publication)
 **Owner**: `J-Schulein` until handoff; `cdcai` thereafter
@@ -51,7 +53,7 @@ security gate passes. Preserve the accepted 396-key baseline unchanged.
 - [x] Verify package inventory, Fiona linkage, ZCTA lookup, real model/device
   work, and retained scan/SBOM evidence for both flavors.
 - [x] Obtain reviewed merge and green exact-head/post-merge CI.
-- [ ] After separate owner dispatch authorization, publish immutable versioned
+- [x] After separate owner dispatch authorization, publish immutable versioned
   images with `push_latest=false` and confirm exact-digest G10 evidence.
 - [ ] Assemble digest-pinned packages and complete the final browser-download
   and independent-host four-profile matrix under Tasks 091/092/093/097/103.
@@ -288,6 +290,47 @@ Exact implementation revision:
   already exists, or when registry inspection cannot prove that the requested
   tag is absent. This preserves immutable evidence and prevents accidental
   replacement during retries.
+
+### Successful exact-digest registry qualification
+
+- PR #100 merged the read-only exact-digest verifier and immutable-tag
+  overwrite/race protection as
+  `928a0f056d6fc004f1ce3f10ccbfb43d14076ea7`; exact-head and post-merge
+  checks passed.
+- CPU read-only verification run `37663225514` qualified the existing pinned
+  image
+  `ghcr.io/j-schulein/towerscout@sha256:8e624a332a0b70ce70a6d29625d8482bb04651767d38d21e46cac16932b65bee`.
+  Its config/image ID is
+  `sha256:6d1603fedb56a87095e5cc3d77cab80c243331274e12d4668065096726cd466e`,
+  source label is `30d5585d522d58e2ab2a2609d62055b31420dd91`, and flavor is
+  `cpu`. Artifact `image-security-verify-cpu-37663225514` has GitHub artifact
+  ID `11500624238`. The exact-digest Trivy, delta, and SBOM SHA-256 values are
+  `86bbfd1309b7c619230c72e4e31cd43a79c6d30f56617e0076a735ee145a1dfd`,
+  `293e7fee14f0879a5f5eecb0710cfb1805d5093715983850f3941eecad31174e`,
+  and `be214a5aa8509a4244217933c3599a6d43a39f1a1cae03affebcbac95e047ee2`.
+- CUDA publish run `37663527863` qualified pinned image
+  `ghcr.io/j-schulein/towerscout@sha256:e50a43293d07c6904b103201f65b142cc38267d4d263be67e702c672628dbfec`.
+  Its config/image ID is
+  `sha256:131908087d2efaf36c15de8eaa585e77843b0003736ce7b7be28256b7b3b7519`,
+  source label is `928a0f056d6fc004f1ce3f10ccbfb43d14076ea7`, and flavor is
+  `cuda128`. Artifact `image-security-v0.1.0-rc5-cuda128` has GitHub artifact
+  ID `11503375308`. The exact-digest Trivy, delta, and SBOM SHA-256 values are
+  `355506f49b92a4cd882ad09eefbac0685899099b756bb1c1a5185354d1bccbd9`,
+  `634936a3ba5e28942ebd8532caf33be8baa470848f4c601afbad4b1483c177c0`,
+  and `e3a8fd13185e1dad7a7e70abc0655692839a8575429ce1ada22967214f516a4b`.
+- Both exact-digest comparisons passed with baseline 396, candidate 78,
+  accepted baseline 74, accepted temporary residuals 4, blocking 0, severity
+  escalations 0, and resolved 322. The baseline and residual-file hashes were
+  identical across flavors. No `latest` promotion step ran, and neither run
+  published a package.
+- The source labels differ because the CPU tag was preserved rather than
+  overwritten after the workflow corrections. A repository diff from
+  `30d5585` through `928a0f0` contains only `.github`, `tests`, and
+  `.agent_work` files, all excluded from the image build context. Runtime image
+  inputs are therefore unchanged, but this is not an exact single-source
+  release pair. Final package assembly remains stopped until the owner chooses
+  a fresh same-source candidate tag or explicitly approves and records this
+  traceability exception.
 
 ## Stop Conditions
 
