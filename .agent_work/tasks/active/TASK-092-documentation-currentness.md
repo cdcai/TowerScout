@@ -5,10 +5,10 @@
 reproducibility corrections landed at `f8e191d`, and PR #94 merged as
 `fc97b32` with green post-merge CI. PR #95 merged the bounded project-state
 reconciliation as `a24d369`; local image/package documentation parity passes,
-but the artifacts are non-publishable while Task-103's security delta is
-blocked. Final screenshots/video, live permission verification, exact-digest
-image/control-ZIP identities, packaged and running-image Help validation,
-publication, and final W09/W10 gates remain
+and the same-source RC8 CPU/CUDA image digests are frozen after strict local
+and exact-published-digest security qualification. Final screenshots/video,
+live permission verification, digest-pinned control-ZIP identities, packaged
+and running-image Help validation, publication, and final W09/W10 gates remain
 **Priority**: HIGH
 **Type**: C (Documentation / Release)
 **Child Work Plan**:
@@ -478,7 +478,29 @@ publication. Final Task-092 evidence must therefore bind the later approved
 published digests, authoritative package hashes, browser-downloaded bytes, and
 running-image Help. Frozen user-facing content remains unchanged.
 
-**Next**: Resolve the Task-103 pre-publication security delta through normal
+**Next at that point**: Resolve the Task-103 pre-publication security delta through normal
 review and explicit disposition, then rebuild final digest-pinned packages and
 complete the remaining artifact-bound, browser-download, live-Wiki, and
 independent-host checks.
+
+### 2026-10-07 - Same-source RC8 image identity freeze
+
+ADR-024/TASK-104 removed the unused Debian GDAL tree and enforced the exact
+four-key, expiring residual boundary without changing the 396-key baseline.
+PR #101 merged the registry-evidence reconciliation as
+`7827c2af8ecb7d8b21d246b69e135807fa497fd2`. Owner-authorized CPU run
+`37674158762` and CUDA 12.8 run `37674161407` published and qualified the
+same-source `v0.1.0-rc8` pair with `push_latest=false`.
+
+The exact manifests are CPU
+`sha256:2e040c3b09d1aa493b205ec2100c112a839ab7a9bfc90a639f73918e06135412`
+and CUDA 12.8
+`sha256:712beb4e143495ba72705cc56b89a939c5bebfdc47dc2f6d0694c81e9e60ca57`.
+Both exact-digest comparisons passed with zero blocking findings or severity
+escalations. No `latest` tag, control ZIP, or release asset was published.
+
+**Next**: Assemble new digest-pinned CPU/CUDA control ZIPs from the frozen
+source and image identities, verify authoritative and internal SHA-256 values,
+then complete packaged/running-image Help, browser-download, live-Wiki, and
+independent-host checks without changing frozen user-facing content unless a
+new release blocker is explicitly dispositioned.

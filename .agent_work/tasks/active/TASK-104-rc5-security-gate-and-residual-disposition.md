@@ -9,10 +9,10 @@ failed closed before login/push on a workflow shell-quoting defect. Its PR #98
 correction passed, but the CPU retry stopped after immutable push because a
 transport-sensitive manifest equality check rejected matching config identity.
 PR #99 corrected that assertion, and PR #100 added read-only exact-digest
-recovery plus immutable-tag overwrite/race protection. The exact CPU and CUDA
-registry digests now pass G10 independently with `push_latest=false`. Their
-source labels differ, so a paired-candidate traceability decision and final
-package acceptance remain
+recovery plus immutable-tag overwrite/race protection. PR #101 recorded the
+RC5 evidence, then the same-source RC8 CPU and CUDA registry digests passed G10
+with `push_latest=false`. Security/publication correction is complete;
+digest-pinned package and final acceptance remain
 **Priority**: CRITICAL
 **Type**: C (Release Security / Container Publication)
 **Owner**: `J-Schulein` until handoff; `cdcai` thereafter
@@ -331,6 +331,51 @@ Exact implementation revision:
   release pair. Final package assembly remains stopped until the owner chooses
   a fresh same-source candidate tag or explicitly approves and records this
   traceability exception.
+
+### Same-source RC8 registry qualification
+
+- PR #101 merged the RC5 evidence record as
+  `7827c2af8ecb7d8b21d246b69e135807fa497fd2`; exact-head review found no
+  issues, and all exact-head and post-merge checks passed. Several GitHub-hosted
+  jobs stalled during system-package installation and were canceled/retried;
+  the targeted reruns passed without source changes.
+- The initially proposed `v0.1.0-rc6-cpu` tag already identified historical
+  June source `12daa5536f580f76d063559e86b9a474451bc54b`; `rc7-cpu` was
+  also occupied. Both were preserved. `v0.1.0-rc8-cpu` and
+  `v0.1.0-rc8-cuda128` were proven absent immediately before dispatch and were
+  the first unused pair.
+- CPU run `37674158762` qualified pinned image
+  `ghcr.io/j-schulein/towerscout@sha256:2e040c3b09d1aa493b205ec2100c112a839ab7a9bfc90a639f73918e06135412`.
+  Its config/image ID is
+  `sha256:46ea8ce853eb621907e288595122312833019bb5a83f692c0f8c45ad2fae67da`,
+  source label is `7827c2af8ecb7d8b21d246b69e135807fa497fd2`, and flavor is
+  `cpu`. Evidence artifact `image-security-v0.1.0-rc8-cpu` has GitHub artifact
+  ID `11506456463` and archive digest
+  `sha256:258ec9c094f23d47f52a8b8dd1f0f4cbd20fcd05c279c606d86d8ef183441b76`.
+  The exact-digest Trivy, delta, and SBOM SHA-256 values are
+  `1668f2b2977233601cc0249f7f8202a9b013d1ff89192ea7086d235f1868bd2f`,
+  `ff0decdf309c3fb13de2716f9f46ab11fe984b6999dbefe3985ee90f46373efc`,
+  and `e1d3fdc52c7d71309f41ad4ed0d93e5fe393b8623d69e16402686fa6e29c22f2`.
+- CUDA run `37674161407` qualified pinned image
+  `ghcr.io/j-schulein/towerscout@sha256:712beb4e143495ba72705cc56b89a939c5bebfdc47dc2f6d0694c81e9e60ca57`.
+  Its config/image ID is
+  `sha256:9190dd3544d6f01a5e78fec094e0c8174703a93a0b4dbfd436f1b16866a8fc42`,
+  source label is `7827c2af8ecb7d8b21d246b69e135807fa497fd2`, and flavor is
+  `cuda128`. Evidence artifact `image-security-v0.1.0-rc8-cuda128` has GitHub
+  artifact ID `11506538018` and archive digest
+  `sha256:af5b62527d9c4f2f6c4fa8a5bd2fc9ff5d4700aadc150b82953c268d6164679f`.
+  The exact-digest Trivy, delta, and SBOM SHA-256 values are
+  `c3251bc71c28e95ed6de6f6c7b5dccbc483bf8cbc3af465708cc458751b08e14`,
+  `09bd844229dd8d4ffa4a9956e3b9ef255c0cb088dee25215791d2271f49b001f`,
+  and `fb4fa817071f1214e765855fa2d2a991f03d64ad1286eb9970261b47904158e7`.
+- Both comparisons passed with baseline 396, candidate 78, accepted baseline
+  74, accepted temporary residuals 4, blocking 0, severity escalations 0, and
+  resolved 322. Baseline SHA-256
+  `f18a4f2037573bb6f3280778fb694a8c1beb5e8c1313c47f10ac9cf507d31928`
+  and residual-file SHA-256
+  `7f2c261ede971d581f581857d11d8e1eafffef1b1390408dcd7b6865b05d55b2`
+  matched across flavors. Both `latest` promotion steps were skipped. No
+  control package or release asset was published.
 
 ## Stop Conditions
 

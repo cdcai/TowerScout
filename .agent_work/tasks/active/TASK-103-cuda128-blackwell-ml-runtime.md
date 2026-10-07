@@ -7,10 +7,11 @@ the unsigned support boundary. The preliminary `rc4` browser-download Docker
 CPU diagnostic passed, its findings are incorporated, and the documentation
 content plus project-state reconciliation are merged through PRs #94/#95. A
 local documentation-aligned `rc5` rehearsal from `a24d369` passed build,
-health, device, package-integrity, and documentation-parity checks, but both
-flavors are blocked from publication by 14 new HIGH Trivy delta keys. The
-bounded `urllib3` fix, residual-risk disposition, final browser-download
-validation, and independent-host evidence remain
+health, device, package-integrity, and documentation-parity checks. ADR-024
+then resolved the bounded security delta, and the same-source RC8 CPU/CUDA
+registry images pass local and exact-published-digest security qualification.
+Digest-pinned control ZIPs, final browser-download validation, and
+independent-host evidence remain
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
