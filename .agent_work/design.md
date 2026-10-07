@@ -1,6 +1,6 @@
 # TowerScout Current Technical Design
 
-**Last Updated**: October 6, 2026
+**Last Updated**: October 7, 2026
 **Scope**: Main-based Windows deployment delivery, four-profile runtime
 qualification, and cdcai handoff through October 2026
 **Archived Pre-Rebaseline Design**:
@@ -173,6 +173,16 @@ The current security boundary is:
    closed as fixed without dismissal. ADR-021 supersedes the former downstream
    PR #67 integration gate; no PR #67 reconciliation is required for the
    main-based delivery, and Task-087 remains preserved and deferred.
+11. ADR-024/TASK-104 preserve the 396-key image baseline unchanged while
+    removing unused Debian `gdal-bin` and accepting only four exact,
+    version/class/type/flavor-bound residuals through October 31, 2026. The
+    comparator rejects incomplete scans, identity mismatches, severity
+    escalation, unknown policy fields, duplicates, expired/mismatched/unused
+    residuals, and any other new HIGH/CRITICAL key. The container workflow
+    builds and scans locally before registry authentication or push, verifies
+    the published manifest's config digest against the scanned local image ID,
+    rescans the exact published digest, and promotes `latest` only after that
+    confirmation and separate owner authorization.
 
 ## Task Dependency Flow
 
@@ -198,6 +208,9 @@ ADR-021 / W00 main-based direction
         |
         v
 ADR-022 / TASK-103 torch 2.10.0 cpu + cuda128 bridge
+        |
+        v
+ADR-024 / TASK-104 bounded RC5 security correction
         |
         v
 TASK-091 + TASK-097 early package and Podman qualification

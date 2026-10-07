@@ -1,7 +1,7 @@
 # Current Tasks - Final Candidate Build And Acceptance
 
 **Sprint Period**: October 5-October 16, 2026
-**Last Updated**: October 6, 2026
+**Last Updated**: October 7, 2026
 **Focus**: Qualify a dependable, downloadable Windows 11 application from
 accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Documentation
 content is frozen and merged through PR #94, and the project-state
@@ -22,6 +22,7 @@ redesign remains preserved and deferred, not a release gate.
 **Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
 **Windows Package Policy**: [ADR-023](./decisions/023-unsigned-windows-package-support-boundary.md)
+**RC5 Security Boundary**: [ADR-024](./decisions/024-rc5-security-gate-and-residual-boundary.md)
 **Acceptance**: [Windows deployment prioritization v2](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-prioritization-v2.md)
 **Work Plan**: [Windows deployment hardening v2](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md)
 
@@ -40,17 +41,15 @@ redesign remains preserved and deferred, not a release gate.
   bounded post-freeze reproducibility corrections landed at `f8e191d`, PR #94
   merged as `fc97b32`, and post-merge CI passed. No documentation review
   blocker remains before the clean-source rebuild.
-- PR #95 merged the bounded project-state reconciliation as `a24d369`; both
-  post-merge workflows passed. Local CPU/CUDA `rc5` rehearsals from that exact
-  source passed build, runtime/device, documentation-parity, control-ZIP, and
-  verification checks, but fresh Trivy scans blocked publication on 14 new
-  HIGH keys. TowerScout's imported HTTP client is now locally pinned and
-  verified at `urllib3==2.8.0`, but two scan keys persist against pip's vendored
-  2.7.0 copy; the other 12 have no Debian bookworm fix. All residual scan keys
-  require an explicit disposition or fixed upstream packages. Draft PR #96
-  contains the bounded dependency correction; all required CI checks passed
-  at `2e4f0c4`, and Codex review reported no major issues. No baseline was
-  amended and no image or package was published.
+- PR #95 merged the bounded project-state reconciliation as `a24d369`. PR #96
+  then merged the application `urllib3==2.8.0` correction as `b0725e7`; all
+  applicable post-merge checks passed. Retained Trivy evidence shows that ten
+  of the 14 new HIGH keys come from unused Debian packages pulled in by
+  `gdal-bin`; the other four are pip-private urllib3 and Bookworm OpenSSL
+  records. ADR-024 authorizes removing `gdal-bin` and accepting only those four
+  exact records through October 31, 2026 using a fail-closed residual file.
+  TASK-104 implements that boundary and the scan-before-push workflow. The
+  396-key baseline remains unchanged, and no new image or package is published.
 - Full readiness requires actual YOLO and EfficientNet work on the required
   device in all four profiles plus independent-computer reproduction.
 - Static checks, health/readiness, mocked tests, or CPU fallback are not
@@ -73,12 +72,11 @@ W05, four-profile W09, and all first-host provider/recovery/review-export/
 controlled-error/reboot cells. ADR-023 resolves the unsigned support boundary,
 the bounded `rc4` browser-download Docker CPU diagnostic passed without a
 larger blocker, and its documentation findings are merged through PR #94.
-PR #95 then reconciled the accepted project state. The local `rc5` rehearsal
-from `a24d369` passes functional and documentation checks but is blocked from
-publication by 14 new HIGH Trivy keys. The bounded `urllib3` fix is in draft
-PR #96 with required CI and Codex review green. Merge that correction, obtain
-an explicit residual disposition, then build exact-digest artifacts and
-complete final browser-download plus independent-host evidence
+PR #95 then reconciled the accepted project state, and PR #96 merged the
+application urllib3 correction. ADR-024/TASK-104 now own the bounded removal of
+unused Debian GDAL packages, exact four-key time-bounded residual policy, and
+scan-before-push correction. Complete that work, rebuild exact-digest
+artifacts, then complete final browser-download plus independent-host evidence
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
 
@@ -97,6 +95,25 @@ Current scope:
   documentation-aligned distribution: repository `docs/` is copied into both
   surfaces. Rebuild under new identities after Task-092 content freeze and do
   not publish packages or promote `latest` without owner authorization.
+
+### **TASK-104: RC5 Security Gate And Residual Disposition**
+
+**Status**: IN_PROGRESS - ADR-024 accepted; implementation active on
+`fix/rc5-fast-safe-security-gate`. Remove unused `gdal-bin`, enforce four exact
+residuals through October 31, fail closed on degraded/incorrect scans, and move
+the local gate before GHCR login/push
+**Priority**: CRITICAL
+**Task File**: `.agent_work/tasks/active/TASK-104-rc5-security-gate-and-residual-disposition.md`
+
+Current scope:
+
+- Keep the 396-key accepted baseline unchanged.
+- Pin candidate bases/pip, remove Debian GDAL and its unused transitive tree,
+  and prove Fiona/ZCTA behavior through the bundled library.
+- Match only the exact pip-private urllib3 and Bookworm OpenSSL records in the
+  owner-approved, expiring residual file.
+- Build/load/scan locally before any push; verify registry config identity and
+  exact-digest scan/SBOM evidence before any `latest` promotion.
 
 ### **TASK-095: Governance And AI-Ready Handoff Foundation**
 
@@ -241,7 +258,8 @@ and explicit authorization.
    diagnostic evidence, then incorporate applicable findings into Task-092.
 8. [x] Freeze Task-092 content, merge the accepted documentation through PR
    #94, and confirm post-merge CI.
-9. [ ] Freeze the reconciled accepted-main source and rebuild
+9. [ ] Complete ADR-024/TASK-104, merge the bounded security correction, then
+   freeze the reconciled accepted-main source and rebuild
    documentation-aligned CPU/CUDA images and control ZIPs under new identities;
    publish authoritative hashes before final extraction testing or tester
    distribution.

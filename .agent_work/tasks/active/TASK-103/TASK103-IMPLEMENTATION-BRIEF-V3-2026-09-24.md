@@ -318,7 +318,11 @@ If you consult plan v2 (history), know that this brief corrects it as follows â€
 
 ## 12. Explicitly out of scope (do not do these as part of TASK-103)
 
-Logged improvement candidates the owner has **not** put in this migration's scope: image slimming (removing Debian GDAL, headless OpenCV, setuptools pinning â€” candidate follow-up task), ZIP-code data format change, `free_gpu_memory` log-line fix, absolute `-OutputDir` support, forward-slash ZIP entries, host-helper skip-when-not-elevated, T1000 disk cleanup (owner's machine). They live in `TowerScout-Pilot-Improvement-Opportunities-2026-09-23.md` on the owner's side; mention them in the TASK-103 closeout as follow-ups if useful, but do not implement them here.
+Logged improvement candidates the owner has **not** put in this migration's scope: general image slimming (including headless OpenCV and setuptools pinning), ZIP-code data format change, `free_gpu_memory` log-line fix, absolute `-OutputDir` support, forward-slash ZIP entries, host-helper skip-when-not-elevated, and T1000 disk cleanup (owner's machine). They live in `TowerScout-Pilot-Improvement-Opportunities-2026-09-23.md` on the owner's side; mention them in the TASK-103 closeout as follow-ups if useful, but do not implement them here.
+
+ADR-024 is a narrow security amendment to this boundary: TASK-104 may remove
+the unused Debian `gdal-bin` dependency only, with Fiona/ZCTA regression proof.
+It does not authorize broader image slimming.
 
 ---
 

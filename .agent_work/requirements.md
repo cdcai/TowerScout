@@ -1,6 +1,6 @@
 # TowerScout Requirements
 
-**Last Updated**: October 6, 2026
+**Last Updated**: October 7, 2026
 **Current Planning Horizon**: October 31, 2026 hard project end
 **Operational Closeout**: October 30, 2026
 **Current Delivery Requirements**:
@@ -255,6 +255,13 @@ Current result:
 - Task-101's security remediation is complete on accepted `main`. ADR-021
   supersedes its former downstream PR #67 integration gate; the gate did not
   pass and is not required for the main-based delivery.
+- PR #96 merged the TowerScout application `urllib3==2.8.0` correction as
+  `b0725e7`. ADR-024/TASK-104 are the unique RC5 follow-up for the retained
+  image scan: remove the unused Debian `gdal-bin` tree, keep the 396-key
+  baseline unchanged, and permit only the four exact pip-private/OpenSSL HIGH
+  records through an enforced exception expiring October 31, 2026. Local scan
+  qualification must pass before any registry login/push, and final CPU/CUDA,
+  browser-download, four-profile, and independent-host proof remains required.
 
 ## Qualification And Handoff Requirements
 

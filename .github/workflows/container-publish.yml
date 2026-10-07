@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       push_latest:
-        description: "Also publish the latest tag"
+        description: "Also publish the latest tag after every security gate passes"
         required: true
         default: false
         type: boolean
@@ -35,17 +35,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
-      - name: Log in to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-
-      - name: Build and push image
+      - name: Build and load local image
         id: build
         shell: bash
         run: |
           set -euo pipefail
           image="ghcr.io/${GITHUB_REPOSITORY,,}"
           tag="${{ inputs.tag }}"
-          push_latest="${{ inputs.push_latest }}"
           pytorch_flavor="${{ inputs.pytorch_flavor }}"
 
           case "$pytorch_flavor" in
@@ -74,11 +70,7 @@ jobs:
               ;;
           esac
 
-          tags=(--tag "$image:$published_tag")
-          if [ "$push_latest" = "true" ]; then
-            tags+=(--tag "$image:latest-$pytorch_flavor")
-          fi
-
+          local_ref="$image:$published_tag"
           docker buildx build \
             --platform linux/amd64 \
             --build-arg PYTORCH_INDEX_URL="$pytorch_index_url" \
@@ -87,39 +79,125 @@ jobs:
             --build-arg TOWERSCOUT_TORCHVISION_VERSION="0.25.0" \
             --build-arg TOWERSCOUT_RELEASE_VERSION="$tag" \
             --build-arg TOWERSCOUT_SOURCE_REF="$GITHUB_SHA" \
-            "${tags[@]}" \
-            --push \
+            --tag "$local_ref" \
+            --load \
             --metadata-file image-metadata.json \
             .
 
-          digest="$(python -c 'import json; print(json.load(open("image-metadata.json", encoding="utf-8"))["containerimage.digest"])')"
+          local_image_id="$(docker image inspect --format '{{.Id}}' "$local_ref")"
+          source_label="$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$local_ref")"
+          flavor_label="$(docker image inspect --format '{{index .Config.Labels "org.towerscout.pytorch.flavor"}}' "$local_ref")"
+          test "$source_label" = "$GITHUB_SHA"
+          test "$flavor_label" = "$pytorch_flavor"
+
           echo "image=$image" >> "$GITHUB_OUTPUT"
           echo "base_tag=$tag" >> "$GITHUB_OUTPUT"
           echo "tag=$published_tag" >> "$GITHUB_OUTPUT"
-          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "local_ref=$local_ref" >> "$GITHUB_OUTPUT"
+          echo "local_image_id=$local_image_id" >> "$GITHUB_OUTPUT"
           echo "pytorch_flavor=$pytorch_flavor" >> "$GITHUB_OUTPUT"
-          echo "image=$image" >> "$GITHUB_STEP_SUMMARY"
-          echo "base_tag=$tag" >> "$GITHUB_STEP_SUMMARY"
-          echo "tag=$published_tag" >> "$GITHUB_STEP_SUMMARY"
+          echo "local_ref=$local_ref" >> "$GITHUB_STEP_SUMMARY"
+          echo "local_image_id=$local_image_id" >> "$GITHUB_STEP_SUMMARY"
           echo "pytorch_flavor=$pytorch_flavor" >> "$GITHUB_STEP_SUMMARY"
-          echo "digest=$digest" >> "$GITHUB_STEP_SUMMARY"
-          echo "pinned=$image@$digest" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload image metadata
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+      - name: Verify local dependency and geospatial boundary
+        shell: bash
+        env:
+          LOCAL_IMAGE: '${{ steps.build.outputs.local_ref }}'
+        run: |
+          set -euo pipefail
+          docker run --rm --entrypoint python "$LOCAL_IMAGE" -c '
+          import urllib3
+          from pip._vendor import urllib3 as pip_urllib3
+          assert urllib3.__version__ == "2.8.0", urllib3.__version__
+          assert pip_urllib3.__version__ == "2.7.0", pip_urllib3.__version__
+          '
+          docker run --rm --entrypoint sh "$LOCAL_IMAGE" -c '
+          set -eu
+          for package in gdal-bin libgdal32 libheif1 python3.11 python3.11-minimal libpython3.11-minimal libpython3.11-stdlib; do
+            if dpkg-query -W -f="\${Status}" "$package" 2>/dev/null | grep -q "install ok installed"; then
+              echo "Unexpected runtime package: $package" >&2
+              exit 1
+            fi
+          done
+          extension="$(python -c "import fiona.ogrext as module; print(module.__file__)")"
+          linkage="$(ldd "$extension" | grep -i libgdal)"
+          case "$linkage" in
+            *site-packages/fiona.libs/*) ;;
+            *) echo "Fiona is not using its bundled GDAL library: $linkage" >&2; exit 1 ;;
+          esac
+          '
+
+      - name: Scan local image before publication
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
-          name: image-metadata-${{ steps.build.outputs.tag }}
-          path: image-metadata.json
-          if-no-files-found: error
+          scan-type: image
+          image-ref: '${{ steps.build.outputs.local_ref }}'
+          scanners: vuln
+          format: json
+          output: prepublish-image-trivy.json
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+          ignore-unfixed: 'false'
+          version: 'v0.69.3'
+
+      - name: Enforce local pre-publication security gate
+        id: prepublish-disposition
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/task103_trivy_delta.py compare \
+            --baseline .github/security/task103-trivy-baseline.v1.json \
+            --accepted-residuals .github/security/task103-accepted-residuals.v1.json \
+            --candidate prepublish-image-trivy.json \
+            --flavor '${{ steps.build.outputs.pytorch_flavor }}' \
+            --image '${{ steps.build.outputs.local_ref }}' \
+            --expected-image-id '${{ steps.build.outputs.local_image_id }}' \
+            --source-ref "$GITHUB_SHA" \
+            --markdown-out prepublish-image-scan-dispositions.md \
+            --json-out prepublish-image-scan-delta.json
+          cat prepublish-image-scan-dispositions.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Log in to GHCR after local gate passes
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Push immutable versioned image and verify identity
+        id: publish
+        shell: bash
+        env:
+          LOCAL_IMAGE: '${{ steps.build.outputs.local_ref }}'
+          LOCAL_IMAGE_ID: '${{ steps.build.outputs.local_image_id }}'
+          IMAGE: '${{ steps.build.outputs.image }}'
+        run: |
+          set -euo pipefail
+          docker push "$LOCAL_IMAGE"
+          digest="$(docker buildx imagetools inspect "$LOCAL_IMAGE" | awk '$1 == "Digest:" {print $2; exit}')"
+          case "$digest" in
+            sha256:????????????????????????????????????????????????????????????????) ;;
+            *) echo "Could not resolve published manifest digest for $LOCAL_IMAGE" >&2; exit 1 ;;
+          esac
+          pinned_ref="$IMAGE@$digest"
+          docker buildx imagetools inspect "$pinned_ref" --raw > remote-manifest.json
+          remote_config_digest="$(python -c 'import json; print(json.load(open("remote-manifest.json", encoding="utf-8"))["config"]["digest"])')"
+          test "$remote_config_digest" = "$LOCAL_IMAGE_ID"
+
+          printf '{"local_image_id":"%s","manifest_digest":"%s","pinned_ref":"%s","remote_config_digest":"%s"}\n' \
+            "$LOCAL_IMAGE_ID" "$digest" "$pinned_ref" "$remote_config_digest" > image-identity.json
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "pinned_ref=$pinned_ref" >> "$GITHUB_OUTPUT"
+          echo "digest=$digest" >> "$GITHUB_STEP_SUMMARY"
+          echo "pinned=$pinned_ref" >> "$GITHUB_STEP_SUMMARY"
+          echo "remote_config_digest=$remote_config_digest" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Scan exact published digest with Trivy
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
           scan-type: image
-          image-ref: '${{ steps.build.outputs.image }}@${{ steps.build.outputs.digest }}'
+          image-ref: '${{ steps.publish.outputs.pinned_ref }}'
           scanners: vuln
           format: json
           output: image-trivy.json
+          severity: 'CRITICAL,HIGH'
           exit-code: '0'
           ignore-unfixed: 'false'
           version: 'v0.69.3'
@@ -128,38 +206,56 @@ jobs:
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
           scan-type: image
-          image-ref: '${{ steps.build.outputs.image }}@${{ steps.build.outputs.digest }}'
+          image-ref: '${{ steps.publish.outputs.pinned_ref }}'
           format: cyclonedx
           output: image-sbom.cdx.json
           exit-code: '0'
           version: 'v0.69.3'
 
-      - name: Diff exact-digest findings against the accepted baseline
-        id: disposition
+      - name: Confirm exact-digest findings against approved policy
+        id: published-disposition
         shell: bash
-        env:
-          PINNED_IMAGE: '${{ steps.build.outputs.image }}@${{ steps.build.outputs.digest }}'
         run: |
           set -euo pipefail
           python scripts/task103_trivy_delta.py compare \
             --baseline .github/security/task103-trivy-baseline.v1.json \
+            --accepted-residuals .github/security/task103-accepted-residuals.v1.json \
             --candidate image-trivy.json \
             --flavor '${{ steps.build.outputs.pytorch_flavor }}' \
-            --image "$PINNED_IMAGE" \
+            --image '${{ steps.publish.outputs.pinned_ref }}' \
+            --expected-image-id '${{ steps.build.outputs.local_image_id }}' \
             --source-ref "$GITHUB_SHA" \
             --markdown-out image-scan-dispositions.md \
             --json-out image-scan-delta.json
           cat image-scan-dispositions.md >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload exact-digest security evidence
+      - name: Promote latest flavor tag
+        if: ${{ inputs.push_latest }}
+        shell: bash
+        env:
+          LOCAL_IMAGE: '${{ steps.build.outputs.local_ref }}'
+          LATEST_IMAGE: '${{ steps.build.outputs.image }}:latest-${{ steps.build.outputs.pytorch_flavor }}'
+        run: |
+          set -euo pipefail
+          docker tag "$LOCAL_IMAGE" "$LATEST_IMAGE"
+          docker push "$LATEST_IMAGE"
+
+      - name: Upload build and security evidence
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: image-security-${{ steps.build.outputs.tag }}
           path: |
+            image-metadata.json
+            image-identity.json
+            remote-manifest.json
+            prepublish-image-trivy.json
+            prepublish-image-scan-dispositions.md
+            prepublish-image-scan-delta.json
             image-trivy.json
             image-sbom.cdx.json
             image-scan-dispositions.md
             image-scan-delta.json
             .github/security/task103-trivy-baseline.v1.json
+            .github/security/task103-accepted-residuals.v1.json
           if-no-files-found: error

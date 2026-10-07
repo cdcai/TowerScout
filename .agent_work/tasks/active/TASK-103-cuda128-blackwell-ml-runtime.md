@@ -201,13 +201,26 @@ control-ZIP integrity, and package `-VerifyOnly` checks. These local packages
 are non-publishable because they intentionally use mutable local image tags.
 
 Fresh Trivy `0.69.3` scans produced identical CPU/CUDA results and blocked on
-14 new HIGH keys. TowerScout's importable `urllib3` dependency is now pinned to
-2.8.0 and a rebuilt CPU image imports that fixed version. Trivy's two
-`urllib3` keys persist against pip 26.2.1's vendored 2.7.0 copy; the other 12
-keys have no Debian bookworm fix and affect five CVEs whose reported paths are
-outside TowerScout's supported TLS/DTLS/image workflows. Publication remains
-stopped pending merge of draft PR #96 and an explicit owner disposition of
-all residual scanner keys. All required PR #96 CI checks passed at `2e4f0c4`,
-and the requested Codex review reported no major issues; neither result amends
-the baseline or authorizes publication. See
+14 new HIGH keys. PR #96 merged the application `urllib3==2.8.0` correction as
+`b0725e750c1541e7cb60df881d3906f761657089`; its required post-merge checks
+passed. The retained scan evidence and second-opinion investigation then
+established that ten keys belong to unused Debian Python/libheif packages
+pulled in by `gdal-bin`, while the remaining four identify pip's private
+`urllib3==2.7.0` and Bookworm OpenSSL. ADR-024 authorizes TASK-104 to remove
+only that unused Debian dependency and enforce the exact four-key exception
+through October 31, 2026. The 396-key baseline remains unchanged. Publication
+remains stopped until TASK-104 passes review and exact local qualification;
+GHCR dispatch remains a separate owner action. See
 [the full security disposition](./TASK-103/RC5-PREPUBLICATION-SECURITY-DISPOSITION-2026-10-06.md).
+
+## 2026-10-07 ADR-024 / TASK-104 Security Correction
+
+The owner selected the fastest safe path: pin the base-image indexes and pip,
+remove `gdal-bin`, fail closed on incomplete or identity-mismatched scans, and
+scan locally before registry login or push. CPU and CUDA 12.8 candidates must
+prove that Debian GDAL/libheif/Python packages are absent, Fiona still reads
+the packaged ZCTA data through its bundled library, the application imports
+`urllib3==2.8.0`, and only the four exact unexpired residuals match. A new key,
+changed package/version, CRITICAL escalation, unused exception, or expiry is a
+release blocker. Final browser-download and independent-host gates are not
+reduced by this amendment.
