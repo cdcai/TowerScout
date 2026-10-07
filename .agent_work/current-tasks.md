@@ -16,10 +16,11 @@ redesign remains preserved and deferred, not a release gate.
 **Confirmed `rc4` Runtime Image Source**: `541622556fb7999ee4e88fb1e44f7797b9da34f5`
 **Accepted Documentation Content Source**: `fc97b3200785d307b39ef5a683979002a5f409e6`
 **Preliminary Local RC5 Source**: `a24d369668d27240ed0baa184d071395455b9c95`
-**Next Publishable Candidate Source**: Not frozen; PR #97 merged the bounded
-security correction as `d0c36be1483e45c58adf9b248ca546be88dceeb3`, but the
-first owner-authorized publication attempt exposed a pre-push workflow quoting
-defect. Freeze the exact accepted `main` commit after that bounded correction.
+**Next Publishable Candidate Source**: Not frozen; PR #98 merged the first
+publication correction as `30d5585d522d58e2ab2a2609d62055b31420dd91`.
+The retry proved the local CPU gate but exposed an invalid manifest-digest
+equality check after the immutable CPU tag was pushed. Freeze the exact
+accepted `main` commit after that bounded correction.
 **Authoritative Branch**: `main`
 **Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
@@ -51,7 +52,7 @@ defect. Freeze the exact accepted `main` commit after that bounded correction.
   records. ADR-024 authorizes removing `gdal-bin` and accepting only those four
   exact records through October 31, 2026 using a fail-closed residual file.
   TASK-104 implements that boundary and the scan-before-push workflow. The
-  396-key baseline remains unchanged, and no new image or package is published.
+  396-key baseline remains unchanged.
 - PR #97 merged ADR-024/TASK-104 implementation as `d0c36be`; exact-head and
   post-merge CI passed. `J-Schulein` then authorized CPU/CUDA 12.8 dispatches
   for `v0.1.0-rc5` with `push_latest=false`. The first CPU run failed closed
@@ -59,9 +60,18 @@ defect. Freeze the exact accepted `main` commit after that bounded correction.
   or push because the workflow's nested shell quoting exposed `$3` to the host
   shell under `set -u`. Cancellation requests for the concurrent CUDA build
   returned GitHub API errors, but that run subsequently failed closed at the
-  same prepublication boundary. A bounded workflow/test correction is now
-  required before the authorized dispatches are retried; no RC5 image or
-  package was published.
+  same prepublication boundary. PR #98 corrected the quoting defect and merged
+  as `30d5585`; its exact-head and post-merge checks passed. CPU retry run
+  `37657322565` passed the dependency/Fiona and local security gates, then
+  pushed immutable tag `v0.1.0-rc5-cpu`. The registry preserved the locally
+  scanned config digest `sha256:6d1603fedb56a87095e5cc3d77cab80c243331274e12d4668065096726cd466e`
+  while translating the OCI manifest to Docker schema 2, which legitimately
+  changed the manifest digest to
+  `sha256:8e624a332a0b70ce70a6d29625d8482bb04651767d38d21e46cac16932b65bee`.
+  The workflow incorrectly required the local and registry manifest digests
+  to match, so it stopped before the exact-digest scan/SBOM. The CPU tag is
+  blocked evidence, CUDA has not been retried, and no `latest` or package was
+  published while a bounded workflow/test correction is reviewed.
 - Full readiness requires actual YOLO and EfficientNet work on the required
   device in all four profiles plus independent-computer reproduction.
 - Static checks, health/readiness, mocked tests, or CPU fallback are not
@@ -112,10 +122,13 @@ Current scope:
 
 **Status**: IN_PROGRESS - ADR-024 implementation and local CPU/CUDA security,
 identity, Fiona/ZCTA, real-model/device, and live Azure/Google ZCTA-provider
-proof pass. PR #97 merged as `d0c36be` with green exact-head/post-merge CI.
-The first owner-authorized registry attempt failed closed before login/push on
-a workflow shell-quoting defect; correct and review that gate, then retry the
-authorized CPU/CUDA dispatches. Final package acceptance remains
+proof pass. PR #98 merged the first publication correction as `30d5585` with
+green exact-head/post-merge CI. CPU retry `37657322565` passed its local gate
+and pushed an immutable tag, then stopped before exact-digest scanning because
+the workflow incorrectly required transport-sensitive local and registry
+manifest digests to match even though their config identity matched. Correct
+and review that assertion, then resume the authorized dispatches. Final
+package acceptance remains
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-104-rc5-security-gate-and-residual-disposition.md`
 

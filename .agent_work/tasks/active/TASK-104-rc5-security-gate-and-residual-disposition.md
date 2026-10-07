@@ -1,12 +1,15 @@
 # TASK-104: RC5 Security Gate And Residual Disposition
 
-**Status**: IN_PROGRESS - implementation merged through PR #97 as `d0c36be`;
+**Status**: IN_PROGRESS - implementation merged through PR #98 as `30d5585`;
 local CPU/CUDA identity, dependency, Fiona/ZCTA, real-model/device, Trivy, and
 SBOM proof passed after the required Windows/WSL restart. The isolated CUDA
 provider-backed detection-over-ZCTA cell also passed for Azure and Google
 after the known Google TLS repair. The first owner-authorized registry attempt
-failed closed before login/push on a workflow shell-quoting defect. Its bounded
-correction, successful registry dispatch, and final package acceptance remain
+failed closed before login/push on a workflow shell-quoting defect. Its PR #98
+correction passed, but the CPU retry stopped after immutable push because a
+transport-sensitive manifest equality check rejected matching config identity.
+That bounded correction, successful exact-digest dispatch evidence, and final
+package acceptance remain
 **Priority**: CRITICAL
 **Type**: C (Release Security / Container Publication)
 **Owner**: `J-Schulein` until handoff; `cdcai` thereafter
@@ -214,9 +217,11 @@ Exact implementation revision:
   identified two fail-closed gaps before merge.
 - Local config-digest resolution now prefers Buildx metadata and supports both
   Docker's containerd image store and classic image store. Local image ID,
-  manifest digest, and config digest are validated separately; the immutable
-  published manifest and config identities must still match before the
-  published-digest scan can pass.
+  manifest digest, and config digest are validated separately. Registry
+  identity is established by matching the published config digest to the
+  locally scanned config digest; local and published manifest digests are
+  retained separately because push can translate OCI media types to Docker
+  schema 2.
 - Accepted-residual duplicate detection now covers the complete file before
   flavor filtering, so duplicate CPU/CUDA-split entries cannot evade the
   one-key rule.
@@ -245,6 +250,25 @@ Exact implementation revision:
   regression coverage requires that boundary and rejects the former outer
   single-quoted `sh -c` form. No RC5 image or package was published by either
   failed attempt.
+
+### CPU retry after PR #98
+
+- PR #98 merged as `30d5585d522d58e2ab2a2609d62055b31420dd91`;
+  exact-head and post-merge CI passed.
+- CPU run `37657322565` passed build/load, dependency/Fiona verification, the
+  local Trivy scan, and the prepublication comparator before GHCR login.
+- The immutable `v0.1.0-rc5-cpu` push completed. Its registry manifest digest
+  is `sha256:8e624a332a0b70ce70a6d29625d8482bb04651767d38d21e46cac16932b65bee`,
+  and its config digest exactly matches the locally scanned config digest
+  `sha256:6d1603fedb56a87095e5cc3d77cab80c243331274e12d4668065096726cd466e`.
+- Docker translated the local OCI manifest into Docker schema 2 during push,
+  changing the manifest digest without changing image config identity. The
+  workflow's extra local-versus-registry manifest equality assertion therefore
+  failed before exact-digest Trivy/SBOM generation. No `latest` tag or package
+  was published, and CUDA was held pending the bounded correction.
+- The correction removes only that invalid equality assertion. It retains both
+  manifest digests as evidence and continues to require the exact published
+  digest's config identity to equal the locally scanned image config.
 
 ## Stop Conditions
 
