@@ -81,6 +81,7 @@ jobs:
             --build-arg TOWERSCOUT_SOURCE_REF="$GITHUB_SHA" \
             --tag "$local_ref" \
             --load \
+            --provenance=false \
             --metadata-file image-metadata.json \
             .
 

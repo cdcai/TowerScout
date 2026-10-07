@@ -46,6 +46,7 @@ def test_container_publish_gates_locally_before_login_or_push():
 
     build = next(step for step in steps if step.get("id") == "build")["run"]
     assert "--load" in build
+    assert "--provenance=false" in build
     assert "--push" not in build
 
     pre_scan = next(step for step in steps if step.get("name") == "Scan local image before publication")
