@@ -86,7 +86,11 @@ def test_container_publish_verifies_runtime_versions_and_remote_identity():
     assert "gdal-bin libgdal32 libheif1 python3.11" in workflow
     assert "site-packages/fiona.libs" in workflow
     assert "readlink -f" in workflow
-    assert 'test "$remote_config_digest" = "$LOCAL_IMAGE_ID"' in workflow
+    assert 'test "$local_image_id" = "$local_manifest_digest"' in workflow
+    assert 'test "$digest" = "$LOCAL_MANIFEST_DIGEST"' in workflow
+    assert 'test "$remote_config_digest" = "$LOCAL_CONFIG_DIGEST"' in workflow
+    assert "local_manifest_digest" in workflow
+    assert "local_config_digest" in workflow
     assert "remote-manifest.json" in workflow
 
 

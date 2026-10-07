@@ -28,13 +28,6 @@ ENV PYTHONUNBUFFERED=1 \
     YOLO_CONFIG_DIR=/app/webapp/cache/ultralytics \
     TOWERSCOUT_VERSION=${TOWERSCOUT_RELEASE_VERSION}
 
-LABEL org.opencontainers.image.title="TowerScout" \
-    org.opencontainers.image.description="TowerScout agpl-yolo runtime image; release-specific metadata is authoritative in the release control ZIP." \
-    org.opencontainers.image.version="${TOWERSCOUT_RELEASE_VERSION}" \
-    org.opencontainers.image.revision="${TOWERSCOUT_SOURCE_REF}" \
-    org.opencontainers.image.licenses="LicenseRef-TowerScout-agpl-yolo" \
-    org.towerscout.pytorch.flavor="${TOWERSCOUT_PYTORCH_FLAVOR}"
-
 WORKDIR /app
 
 RUN apt-get update \
@@ -61,6 +54,13 @@ COPY webapp webapp
 COPY docs docs
 COPY --from=frontend /src/webapp/js/towerscout.js webapp/js/towerscout.js
 COPY LICENSE NOTICE THIRD_PARTY_NOTICES.md MODEL_LICENSES.md DATA_LICENSES.md PROVIDER_TERMS.md SOURCE.txt SBOM.txt release-manifest.v1.json ./
+
+LABEL org.opencontainers.image.title="TowerScout" \
+    org.opencontainers.image.description="TowerScout agpl-yolo runtime image; release-specific metadata is authoritative in the release control ZIP." \
+    org.opencontainers.image.version="${TOWERSCOUT_RELEASE_VERSION}" \
+    org.opencontainers.image.revision="${TOWERSCOUT_SOURCE_REF}" \
+    org.opencontainers.image.licenses="LicenseRef-TowerScout-agpl-yolo" \
+    org.towerscout.pytorch.flavor="${TOWERSCOUT_PYTORCH_FLAVOR}"
 
 WORKDIR /app/webapp
 

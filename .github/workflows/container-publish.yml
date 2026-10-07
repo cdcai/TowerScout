@@ -86,8 +86,15 @@ jobs:
             .
 
           local_image_id="$(docker image inspect --format '{{.Id}}' "$local_ref")"
+          local_manifest_digest="$(python -c 'import json; print(json.load(open("image-metadata.json", encoding="utf-8"))["containerimage.digest"])')"
+          local_config_digest="$(docker image inspect --format '{{index .Descriptor.Annotations "config.digest"}}' "$local_ref")"
           source_label="$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$local_ref")"
           flavor_label="$(docker image inspect --format '{{index .Config.Labels "org.towerscout.pytorch.flavor"}}' "$local_ref")"
+          test "$local_image_id" = "$local_manifest_digest"
+          case "$local_config_digest" in
+            sha256:????????????????????????????????????????????????????????????????) ;;
+            *) echo "Could not resolve local config digest for $local_ref" >&2; exit 1 ;;
+          esac
           test "$source_label" = "$GITHUB_SHA"
           test "$flavor_label" = "$pytorch_flavor"
 
@@ -96,9 +103,13 @@ jobs:
           echo "tag=$published_tag" >> "$GITHUB_OUTPUT"
           echo "local_ref=$local_ref" >> "$GITHUB_OUTPUT"
           echo "local_image_id=$local_image_id" >> "$GITHUB_OUTPUT"
+          echo "local_manifest_digest=$local_manifest_digest" >> "$GITHUB_OUTPUT"
+          echo "local_config_digest=$local_config_digest" >> "$GITHUB_OUTPUT"
           echo "pytorch_flavor=$pytorch_flavor" >> "$GITHUB_OUTPUT"
           echo "local_ref=$local_ref" >> "$GITHUB_STEP_SUMMARY"
           echo "local_image_id=$local_image_id" >> "$GITHUB_STEP_SUMMARY"
+          echo "local_manifest_digest=$local_manifest_digest" >> "$GITHUB_STEP_SUMMARY"
+          echo "local_config_digest=$local_config_digest" >> "$GITHUB_STEP_SUMMARY"
           echo "pytorch_flavor=$pytorch_flavor" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Verify local dependency and geospatial boundary
@@ -169,7 +180,8 @@ jobs:
         shell: bash
         env:
           LOCAL_IMAGE: '${{ steps.build.outputs.local_ref }}'
-          LOCAL_IMAGE_ID: '${{ steps.build.outputs.local_image_id }}'
+          LOCAL_MANIFEST_DIGEST: '${{ steps.build.outputs.local_manifest_digest }}'
+          LOCAL_CONFIG_DIGEST: '${{ steps.build.outputs.local_config_digest }}'
           IMAGE: '${{ steps.build.outputs.image }}'
         run: |
           set -euo pipefail
@@ -179,13 +191,14 @@ jobs:
             sha256:????????????????????????????????????????????????????????????????) ;;
             *) echo "Could not resolve published manifest digest for $LOCAL_IMAGE" >&2; exit 1 ;;
           esac
+          test "$digest" = "$LOCAL_MANIFEST_DIGEST"
           pinned_ref="$IMAGE@$digest"
           docker buildx imagetools inspect "$pinned_ref" --raw > remote-manifest.json
           remote_config_digest="$(python -c 'import json; print(json.load(open("remote-manifest.json", encoding="utf-8"))["config"]["digest"])')"
-          test "$remote_config_digest" = "$LOCAL_IMAGE_ID"
+          test "$remote_config_digest" = "$LOCAL_CONFIG_DIGEST"
 
-          printf '{"local_image_id":"%s","manifest_digest":"%s","pinned_ref":"%s","remote_config_digest":"%s"}\n' \
-            "$LOCAL_IMAGE_ID" "$digest" "$pinned_ref" "$remote_config_digest" > image-identity.json
+          printf '{"local_config_digest":"%s","local_manifest_digest":"%s","published_manifest_digest":"%s","pinned_ref":"%s","remote_config_digest":"%s"}\n' \
+            "$LOCAL_CONFIG_DIGEST" "$LOCAL_MANIFEST_DIGEST" "$digest" "$pinned_ref" "$remote_config_digest" > image-identity.json
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
           echo "pinned_ref=$pinned_ref" >> "$GITHUB_OUTPUT"
           echo "digest=$digest" >> "$GITHUB_STEP_SUMMARY"
