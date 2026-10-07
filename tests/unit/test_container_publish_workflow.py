@@ -77,15 +77,26 @@ def test_container_publish_gates_locally_before_login_or_push():
 
 
 def test_container_publish_verifies_runtime_versions_and_remote_identity():
-    workflow = (
+    workflow_path = (
         REPO_ROOT / ".github" / "workflows" / "container-publish.yml"
-    ).read_text(encoding="utf-8")
+    )
+    workflow = workflow_path.read_text(encoding="utf-8")
+    parsed_workflow = yaml.safe_load(workflow)
+    boundary_step = next(
+        step
+        for step in parsed_workflow["jobs"]["publish"]["steps"]
+        if step.get("name") == "Verify local dependency and geospatial boundary"
+    )["run"]
 
     assert 'urllib3.__version__ == "2.8.0"' in workflow
     assert 'pip_urllib3.__version__ == "2.7.0"' in workflow
     assert "gdal-bin libgdal32 libheif1 python3.11" in workflow
     assert "site-packages/fiona.libs" in workflow
     assert "readlink -f" in workflow
+    assert 'docker run --rm --entrypoint sh "$LOCAL_IMAGE" -s <<\'CONTAINER_SH\'' in boundary_step
+    assert boundary_step.count("CONTAINER_SH") == 2
+    assert 'docker run --rm --entrypoint sh "$LOCAL_IMAGE" -c \'' not in boundary_step
+    assert "awk '{print $3}'" in boundary_step
     assert 'test "$local_image_id" = "$local_manifest_digest"' not in workflow
     assert 'data.get("containerimage.config.digest")' in workflow
     assert "descriptor_config_digest" in workflow
