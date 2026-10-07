@@ -207,10 +207,12 @@ jobs:
             sha256:????????????????????????????????????????????????????????????????) ;;
             *) echo "Could not resolve published manifest digest for $LOCAL_IMAGE" >&2; exit 1 ;;
           esac
-          test "$digest" = "$LOCAL_MANIFEST_DIGEST"
           pinned_ref="$IMAGE@$digest"
           docker buildx imagetools inspect "$pinned_ref" --raw > remote-manifest.json
           remote_config_digest="$(python -c 'import json; print(json.load(open("remote-manifest.json", encoding="utf-8"))["config"]["digest"])')"
+          # Docker may translate an OCI manifest to Docker schema 2 during
+          # push, which legitimately changes the manifest digest. The config
+          # digest is the stable identity of the locally scanned image.
           test "$remote_config_digest" = "$LOCAL_CONFIG_DIGEST"
 
           printf '{"local_config_digest":"%s","local_manifest_digest":"%s","published_manifest_digest":"%s","pinned_ref":"%s","remote_config_digest":"%s"}\n' \
