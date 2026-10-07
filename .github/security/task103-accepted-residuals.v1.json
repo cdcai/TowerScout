@@ -1,0 +1,95 @@
+{
+  "description": "Owner-approved, exact, time-bounded RC5 residuals. Entries that expire, change identity, change severity, or do not match the candidate fail closed.",
+  "findings": [
+    {
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "approved_by": "J-Schulein",
+      "compensating_controls": [
+        "TowerScout imports urllib3 2.8.0 from the application environment.",
+        "The publish workflow verifies the application and pip-private urllib3 versions before scanning.",
+        "The accepted record is limited to pip 26.2.1's private urllib3 2.7.0 package identity."
+      ],
+      "expires_utc": "2026-10-31T23:59:59Z",
+      "follow_up_task": "TASK-104",
+      "installed_version": "2.7.0",
+      "package": "urllib3",
+      "package_class": "lang-pkgs",
+      "package_id": "urllib3@2.7.0",
+      "package_type": "python-pkg",
+      "reason": "Trivy inventories pip's private vendored copy through pip's CycloneDX metadata; TowerScout's importable HTTP dependency is fixed at urllib3 2.8.0.",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-97687"
+    },
+    {
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "approved_by": "J-Schulein",
+      "compensating_controls": [
+        "TowerScout imports urllib3 2.8.0 from the application environment.",
+        "The publish workflow verifies the application and pip-private urllib3 versions before scanning.",
+        "The accepted record is limited to pip 26.2.1's private urllib3 2.7.0 package identity."
+      ],
+      "expires_utc": "2026-10-31T23:59:59Z",
+      "follow_up_task": "TASK-104",
+      "installed_version": "2.7.0",
+      "package": "urllib3",
+      "package_class": "lang-pkgs",
+      "package_id": "urllib3@2.7.0",
+      "package_type": "python-pkg",
+      "reason": "Trivy inventories pip's private vendored copy through pip's CycloneDX metadata; TowerScout's importable HTTP dependency is fixed at urllib3 2.8.0.",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-97689"
+    },
+    {
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "approved_by": "J-Schulein",
+      "compensating_controls": [
+        "TowerScout exposes HTTPS client workflows and no DTLS listener or DTLS peer workflow.",
+        "A package-version or severity change invalidates this acceptance.",
+        "The candidate remains blocked by any additional new HIGH or CRITICAL key."
+      ],
+      "expires_utc": "2026-10-31T23:59:59Z",
+      "follow_up_task": "TASK-104",
+      "installed_version": "3.0.22-1~deb12u1",
+      "package": "libssl3",
+      "package_class": "os-pkgs",
+      "package_id": "libssl3@3.0.22-1~deb12u1",
+      "package_type": "debian",
+      "reason": "CVE-2026-84782 affects DTLS retransmission behavior; TowerScout has no supported DTLS workflow and Debian Bookworm has no fixed package available for this candidate.",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-84782"
+    },
+    {
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "approved_by": "J-Schulein",
+      "compensating_controls": [
+        "TowerScout exposes HTTPS client workflows and no DTLS listener or DTLS peer workflow.",
+        "A package-version or severity change invalidates this acceptance.",
+        "The candidate remains blocked by any additional new HIGH or CRITICAL key."
+      ],
+      "expires_utc": "2026-10-31T23:59:59Z",
+      "follow_up_task": "TASK-104",
+      "installed_version": "3.0.22-1~deb12u1",
+      "package": "openssl",
+      "package_class": "os-pkgs",
+      "package_id": "openssl@3.0.22-1~deb12u1",
+      "package_type": "debian",
+      "reason": "CVE-2026-84782 affects DTLS retransmission behavior; TowerScout has no supported DTLS workflow and Debian Bookworm has no fixed package available for this candidate.",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-84782"
+    }
+  ],
+  "policy": "task103-g10-time-bounded-residuals",
+  "schema_version": 1
+}

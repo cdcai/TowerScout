@@ -268,7 +268,7 @@ def test_n2_dockerfile_strips_every_torch_requirement_before_the_runtime_install
     assert _requirement_pins("\n".join(remaining)) == {}
 
 
-def test_runtime_image_keeps_gdal_tools_without_development_headers():
+def test_runtime_image_uses_only_required_system_libraries():
     dockerfile = _read(DOCKERFILE)
     apt_install = _single(
         r"RUN apt-get update \\\n(.*?)\n\s*&& rm -rf /var/lib/apt/lists/\\*",
@@ -283,10 +283,27 @@ def test_runtime_image_keeps_gdal_tools_without_development_headers():
         )
     )
 
-    assert "gdal-bin" in installed
+    assert installed == {"libgl1", "libglib2.0-0"}
+    assert "gdal-bin" not in installed
     assert "libgdal-dev" not in installed, (
         "libgdal-dev pulls compiler headers and linux-libc-dev into the runtime image"
     )
+
+
+def test_runtime_image_pins_base_images_and_build_pip():
+    dockerfile = _read(DOCKERFILE)
+
+    assert (
+        "FROM node:22-bookworm-slim@sha256:"
+        "c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392 "
+        "AS frontend"
+    ) in dockerfile
+    assert (
+        "FROM python:3.11-slim-bookworm@sha256:"
+        "0a310eeecf4e1f5a0743f9a6520c90c88d089c903ca5fd283f501e3a805f5f89 "
+        "AS runtime"
+    ) in dockerfile
+    assert 'python -m pip install --upgrade "pip==26.2.1"' in dockerfile
 
 
 def test_n2_build_and_release_pins_agree_everywhere():

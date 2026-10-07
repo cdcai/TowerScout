@@ -1,9 +1,10 @@
 # Task Backlog - Main-Based Windows Delivery
 
-**Last Updated**: October 6, 2026
+**Last Updated**: October 7, 2026
 **Current Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
 **Windows Package Policy**: [ADR-023](./decisions/023-unsigned-windows-package-support-boundary.md)
+**RC5 Security Boundary**: [ADR-024](./decisions/024-rc5-security-gate-and-residual-boundary.md)
 **Immediate Plan**: [September 21 v2 implementation plan](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md)
 
 The active board controls selected work. This backlog holds deferred,
@@ -15,6 +16,7 @@ not a delivery prerequisite and has no automatic restart date. Task-087 PRs
 
 | Task | Current outcome |
 | --- | --- |
+| `TASK-104` | Remove unused Debian GDAL, enforce the exact four-key expiring residual policy, and make local security qualification precede registry publication |
 | `TASK-103` | CUDA 12.8 Blackwell bridge; rebuild documentation-aligned artifacts and complete final browser-download/independent-host qualification |
 | `TASK-095` | W00 direction, task-control, evidence, and eventual handoff alignment |
 | `TASK-091` | W01/W05/W09/W10 owner-runnable package and model qualification |

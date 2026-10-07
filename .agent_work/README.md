@@ -13,17 +13,20 @@ Read in this order:
 3. [`context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2.md`](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md)
 4. [`decisions/022-cuda128-blackwell-ml-runtime.md`](./decisions/022-cuda128-blackwell-ml-runtime.md)
 5. [`decisions/023-unsigned-windows-package-support-boundary.md`](./decisions/023-unsigned-windows-package-support-boundary.md)
-6. [`context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2-verification.md`](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2-verification.md)
-7. [`context/status/Reprioritization Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md`](./context/status/Reprioritization%20Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md)
-8. [`task-backlog.md`](./task-backlog.md)
-9. [`requirements.md`](./requirements.md)
-10. [`design.md`](./design.md)
-11. [`completed-tasks.md`](./completed-tasks.md)
+6. [`decisions/024-rc5-security-gate-and-residual-boundary.md`](./decisions/024-rc5-security-gate-and-residual-boundary.md)
+7. [`context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2-verification.md`](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2-verification.md)
+8. [`context/status/Reprioritization Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md`](./context/status/Reprioritization%20Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md)
+9. [`task-backlog.md`](./task-backlog.md)
+10. [`requirements.md`](./requirements.md)
+11. [`design.md`](./design.md)
+12. [`completed-tasks.md`](./completed-tasks.md)
 
 The September 21 v2 prioritization and work plan control immediate development
-and acceptance as amended by ADR-022 and ADR-023. ADR-023 resolves the Windows
-signing-policy choice by selecting an unsigned, explicitly narrower support
-boundary. The verification record states the static-review boundary, and
+and acceptance as amended by ADR-022, ADR-023, and ADR-024. ADR-023 resolves
+the Windows signing-policy choice by selecting an unsigned, explicitly
+narrower support boundary. ADR-024 owns the bounded RC5 dependency reduction,
+four-key expiring residual policy, and scan-before-push ordering. The
+verification record states the static-review boundary, and
 the post-Day-7 guide is future planning rather than today's task list. The older
 roadmap remains dated context. The Pilot plan still controls the immutable
 `v0.1.2` package and cdcai hold.

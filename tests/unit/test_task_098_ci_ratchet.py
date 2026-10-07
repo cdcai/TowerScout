@@ -96,7 +96,8 @@ def test_task_101_main_ci_uses_node_22_and_commonjs_smoke() -> None:
 def test_task_101_docker_frontend_uses_node_22() -> None:
     dockerfile = _dockerfile()
 
-    assert "FROM node:22-bookworm-slim AS frontend" in dockerfile
+    assert "FROM node:22-bookworm-slim@sha256:" in dockerfile
+    assert " AS frontend" in dockerfile
     assert "FROM node:18" not in dockerfile
 
 
