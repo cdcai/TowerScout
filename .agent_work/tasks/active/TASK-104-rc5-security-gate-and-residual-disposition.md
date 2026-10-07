@@ -204,7 +204,26 @@ Exact implementation revision:
 - No provider key, provider URL, request payload, certificate identity, raw
   network trace, or screenshot was written to repository evidence or terminal
   output. The keys remain only in the isolated active test config volume until
-  its separately verified cleanup. Nothing has been pushed or published.
+  its separately verified cleanup. No image, tag, package, or release has been
+  pushed or published.
+
+### PR #97 review correction
+
+- The first exact-head CI run passed all required checks. Automated review then
+  identified two fail-closed gaps before merge.
+- Local config-digest resolution now prefers Buildx metadata and supports both
+  Docker's containerd image store and classic image store. Local image ID,
+  manifest digest, and config digest are validated separately; the immutable
+  published manifest and config identities must still match before the
+  published-digest scan can pass.
+- Accepted-residual duplicate detection now covers the complete file before
+  flavor filtering, so duplicate CPU/CUDA-split entries cannot evade the
+  one-key rule.
+- Regression coverage was added for both corrections. The focused comparator,
+  workflow, CI-ratchet, and runtime-contract suite passed 56/56 tests. The
+  sandboxed test attempts could not create pytest scratch directories; the
+  same suite passed outside that filesystem restriction. No image or package
+  was built, pushed, tagged, or published during this correction.
 
 ## Stop Conditions
 

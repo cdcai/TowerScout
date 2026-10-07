@@ -420,6 +420,28 @@ def test_compare_fails_closed_on_duplicate_residual_key(tmp_path):
     assert "repeats finding key" in result.stderr
 
 
+def test_compare_fails_closed_on_duplicate_residual_key_split_across_flavors(tmp_path):
+    baseline = _baseline(tmp_path)
+    urllib = _finding(
+        "CVE-NEW",
+        "urllib3",
+        installed="2.7.0",
+        package_class="lang-pkgs",
+        package_type="python-pkg",
+    )
+    candidate = _write(tmp_path / "candidate.json", _scan(urllib, flavor="cpu"))
+    cuda_only = _residual(urllib, flavors=["cuda128"])
+    cpu_only = _residual(urllib, flavors=["cpu"])
+    result, _, _ = _compare(
+        tmp_path,
+        baseline,
+        candidate,
+        residuals=_residual_file(tmp_path, cuda_only, cpu_only),
+    )
+    assert result.returncode == 2
+    assert "repeats finding key" in result.stderr
+
+
 def test_residual_does_not_accept_an_additional_urllib3_version(tmp_path):
     baseline = _baseline(tmp_path)
     pip_private = _finding(

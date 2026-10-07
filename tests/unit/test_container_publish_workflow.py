@@ -86,7 +86,12 @@ def test_container_publish_verifies_runtime_versions_and_remote_identity():
     assert "gdal-bin libgdal32 libheif1 python3.11" in workflow
     assert "site-packages/fiona.libs" in workflow
     assert "readlink -f" in workflow
-    assert 'test "$local_image_id" = "$local_manifest_digest"' in workflow
+    assert 'test "$local_image_id" = "$local_manifest_digest"' not in workflow
+    assert 'data.get("containerimage.config.digest")' in workflow
+    assert "descriptor_config_digest" in workflow
+    assert 'local_config_digest="$(docker image inspect' not in workflow
+    assert 'Could not resolve local image ID for $local_ref' in workflow
+    assert 'Could not resolve local manifest digest for $local_ref' in workflow
     assert 'test "$digest" = "$LOCAL_MANIFEST_DIGEST"' in workflow
     assert 'test "$remote_config_digest" = "$LOCAL_CONFIG_DIGEST"' in workflow
     assert "local_manifest_digest" in workflow

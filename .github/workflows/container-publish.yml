@@ -87,10 +87,26 @@ jobs:
 
           local_image_id="$(docker image inspect --format '{{.Id}}' "$local_ref")"
           local_manifest_digest="$(python -c 'import json; print(json.load(open("image-metadata.json", encoding="utf-8"))["containerimage.digest"])')"
-          local_config_digest="$(docker image inspect --format '{{index .Descriptor.Annotations "config.digest"}}' "$local_ref")"
+          local_config_digest="$(python -c 'import json; data=json.load(open("image-metadata.json", encoding="utf-8")); descriptor=data.get("containerimage.descriptor") or {}; print(data.get("containerimage.config.digest") or (descriptor.get("annotations") or {}).get("config.digest") or "")')"
+          if [ -z "$local_config_digest" ]; then
+            descriptor_config_digest="$(docker image inspect --format '{{with .Descriptor}}{{index .Annotations "config.digest"}}{{end}}' "$local_ref" 2>/dev/null || true)"
+            if [ -n "$descriptor_config_digest" ]; then
+              local_config_digest="$descriptor_config_digest"
+            elif [ "$local_image_id" != "$local_manifest_digest" ]; then
+              # The classic Docker image store reports the config digest as .Id.
+              local_config_digest="$local_image_id"
+            fi
+          fi
           source_label="$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$local_ref")"
           flavor_label="$(docker image inspect --format '{{index .Config.Labels "org.towerscout.pytorch.flavor"}}' "$local_ref")"
-          test "$local_image_id" = "$local_manifest_digest"
+          case "$local_image_id" in
+            sha256:????????????????????????????????????????????????????????????????) ;;
+            *) echo "Could not resolve local image ID for $local_ref" >&2; exit 1 ;;
+          esac
+          case "$local_manifest_digest" in
+            sha256:????????????????????????????????????????????????????????????????) ;;
+            *) echo "Could not resolve local manifest digest for $local_ref" >&2; exit 1 ;;
+          esac
           case "$local_config_digest" in
             sha256:????????????????????????????????????????????????????????????????) ;;
             *) echo "Could not resolve local config digest for $local_ref" >&2; exit 1 ;;

@@ -354,6 +354,7 @@ def _accepted_residuals(
 
     now = datetime.now(timezone.utc)
     accepted: dict[tuple[str, str], dict[str, Any]] = {}
+    seen_keys: set[tuple[str, str]] = set()
     for index, value in enumerate(values):
         label = f"accepted residuals findings[{index}]"
         if not isinstance(value, dict):
@@ -379,10 +380,11 @@ def _accepted_residuals(
             value.get("compensating_controls"), f"{label}.compensating_controls"
         )
         key = (vulnerability_id, package)
-        if key in accepted:
+        if key in seen_keys:
             raise InputError(
                 f"accepted residuals repeats finding key {vulnerability_id}/{package}"
             )
+        seen_keys.add(key)
         normalized = {
             "vulnerability_id": vulnerability_id,
             "package": package,
