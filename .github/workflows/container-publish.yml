@@ -25,6 +25,10 @@ permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: container-publish-${{ github.repository }}-${{ inputs.tag }}-${{ inputs.pytorch_flavor }}
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -190,6 +194,21 @@ jobs:
 
       - name: Log in to GHCR after local gate passes
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Refuse to overwrite immutable version tag
+        shell: bash
+        env:
+          LOCAL_IMAGE: '${{ steps.build.outputs.local_ref }}'
+        run: |
+          set -euo pipefail
+          if docker buildx imagetools inspect "$LOCAL_IMAGE" > existing-image.txt 2> existing-image-error.txt; then
+            echo "Immutable version tag already exists: $LOCAL_IMAGE" >&2
+            exit 1
+          fi
+          if ! grep -Eqi 'manifest unknown|not found' existing-image-error.txt; then
+            echo "Could not prove that immutable version tag is absent: $LOCAL_IMAGE" >&2
+            exit 1
+          fi
 
       - name: Push immutable versioned image and verify identity
         id: publish
