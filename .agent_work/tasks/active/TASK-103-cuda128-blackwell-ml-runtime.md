@@ -10,9 +10,9 @@ local documentation-aligned `rc5` rehearsal from `a24d369` passed build,
 health, device, package-integrity, and documentation-parity checks. ADR-024
 then resolved the bounded security delta, and the same-source RC8 CPU/CUDA
 registry images pass local and exact-published-digest security qualification.
-Their digest-pinned control ZIPs are locally assembled and verified. Owner-
-authorized package publication, final browser-download validation, and
-independent-host evidence remain
+Their digest-pinned control ZIPs are published in the non-Latest RC8 validation
+prerelease. Final browser-download validation and independent-host evidence
+remain
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
@@ -252,4 +252,15 @@ browser-downloaded RC4 asset ZIP is 800655295 bytes and reverified at the same
 authoritative content hash; it was not copied under the RC8 filename merely to
 duplicate 800 MB before publication. Local packages are retained under the
 ignored `dist/rc8-candidate/` directory. No release asset or `latest` tag was
-published.
+published at that local-assembly checkpoint.
+
+## 2026-10-07 RC8 Validation Prerelease Publication
+
+After explicit owner authorization, the exact CPU package, CUDA 12.8 package,
+shared asset archive, and their three SHA-256 sidecars were published in
+[GitHub prerelease v0.1.0-rc8](https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc8).
+GitHub release ID `406175444` is non-draft and prerelease; `v0.1.2` remains the
+Latest release. The RC8 tag resolves to frozen source
+`7827c2af8ecb7d8b21d246b69e135807fa497fd2`, and GitHub's recorded sizes and
+digests match all six approved local inputs. No image `latest` tag was promoted.
+Exact browser-downloaded bytes and independent-host proof remain required.

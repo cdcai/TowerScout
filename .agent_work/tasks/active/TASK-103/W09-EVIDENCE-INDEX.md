@@ -10,9 +10,11 @@ diagnostic and the same-source documentation-aligned RC8 image/control-ZIP
 rebuild are complete. Final exact-RC8 browser-download and independent-host
 repetition remain required. Exact-`rc4` first-host reboot persistence remains
 valid regression evidence.
-**Publication state**: The RC8 control ZIPs are assembled locally but are not
-published. The retained asset bytes are verified but were not duplicated under
-the RC8 filename. No `latest` tag was promoted.
+**Publication state**: The RC8 control ZIPs, shared asset ZIP, and all three
+sidecars are published in non-draft GitHub prerelease `v0.1.0-rc8`. GitHub's
+recorded sizes/digests match the approved local files, and the tag resolves to
+the frozen source. The release is not Latest, and no image `latest` tag was
+promoted.
 
 **Superseded RC4/RC3 context**: PR #92 (`cbb574f`) and PR #93 (`fba9dcb`)
 merged after the retained `rc3` artifacts were assembled. That produced the
@@ -44,11 +46,12 @@ unused same-source tag pair with `push_latest=false`:
 The control ZIPs were assembled from a clean detached checkout of the exact
 image source. Both manifest checks, outer sidecars, all 73 internal checksums
 across 74 entries, and the focused `7/7` package/manifest regression suite
-passed. The retained browser-downloaded asset ZIP was rehashed directly; an
-extra 800 MB copy was intentionally not created just to change its filename.
-No control ZIP, asset ZIP, release, or `latest` tag was published. Final
-browser-download and independent-host evidence still must use the exact
-published bytes and authoritative checksums.
+passed. The retained browser-downloaded asset ZIP was rehashed directly before
+a same-content RC8-named publication input was staged. All six release assets
+are now published at
+[v0.1.0-rc8](https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc8).
+Final browser-download and independent-host evidence still must use the exact
+downloaded release bytes and authoritative checksums.
 
 ## Final Local `rc4` Candidate Inventory And Qualification
 
@@ -282,10 +285,10 @@ These items prevent a release-ready or full W09/W10 acceptance claim:
 - ADR-023 resolves policy/signing by limiting the standard claim to users/sites
   that permit the supplied unsigned wrapper path. Signature-enforcing managed
   endpoints are out of scope, not passed.
-- The ADR-023 manual changes are control-ZIP bytes and OCI-image bytes because
-  `Dockerfile` copies `docs/` for the in-app routes. New documentation-aligned
-  image/control-ZIP identities and authoritative release-page hashes are
-  required before distribution.
+- The ADR-023 manual changes are present in the published control-ZIP and OCI-
+  image bytes because `Dockerfile` copies `docs/` for the in-app routes. Final
+  acceptance must validate those exact browser-downloaded package bytes.
 - Browser-download and independent-host W10 reproduction are not complete.
-- Control-package publication and any `latest` promotion require explicit
-  owner authorization.
+- Control-package publication was separately authorized and completed as the
+  non-Latest `v0.1.0-rc8` validation prerelease. Any `latest` promotion remains
+  separately owner-gated.

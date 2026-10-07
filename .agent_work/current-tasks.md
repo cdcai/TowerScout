@@ -7,8 +7,8 @@ accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Documentation
 content is frozen and merged through PR #94, and the project-state
 reconciliation is merged through PR #95. The same-source RC8 CPU/CUDA images
 now pass the exact-digest security gate, and their digest-pinned control ZIPs
-are assembled and locally verified. Publication, final browser-download, and
-independent-host acceptance follow.
+are assembled, verified, and published as the non-Latest RC8 validation
+prerelease. Final browser-download and independent-host acceptance follow.
 The Task-087 launcher
 redesign remains preserved and deferred, not a release gate.
 
@@ -20,9 +20,9 @@ redesign remains preserved and deferred, not a release gate.
 **Frozen Publishable Candidate Source**:
 `7827c2af8ecb7d8b21d246b69e135807fa497fd2`. The same-source
 `v0.1.0-rc8` CPU and CUDA 12.8 images passed local and exact-published-digest
-security qualification with `push_latest=false`. The local control packages
-recorded below bind only those exact pinned manifest digests; package/release
-publication remains owner-gated.
+security qualification with `push_latest=false`. The control packages bind only
+those exact pinned manifest digests and are published in the RC8 validation
+prerelease. No `latest` image tag or stable GitHub release was promoted.
 **Authoritative Branch**: `main`
 **Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
@@ -120,9 +120,8 @@ larger blocker, and its documentation findings are merged through PR #94.
 PR #95 then reconciled the accepted project state, and PR #96 merged the
 application urllib3 correction. ADR-024/TASK-104 security correction and the
 same-source RC8 CPU/CUDA exact-digest registry gates now pass. The
-digest-pinned control packages are assembled and locally verified; publish the
-approved candidate assets, then complete final browser-download plus
-independent-host evidence
+digest-pinned control packages are published in the non-Latest RC8 validation
+prerelease. Complete final browser-download plus independent-host evidence
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
 
@@ -140,7 +139,8 @@ Current scope:
   control ZIPs remain the regression baseline but are not the final
   documentation-aligned distribution: repository `docs/` is copied into both
   surfaces. The same-source RC8 image and package rebuild is complete. Do not
-  publish packages or promote `latest` without owner authorization.
+  promote `latest` or publish a stable/general release without separate owner
+  authorization; the RC8 validation prerelease was separately authorized.
 
 ### **TASK-104: RC5 Security Gate And Residual Disposition**
 
@@ -148,9 +148,9 @@ Current scope:
 identity, Fiona/ZCTA, real-model/device, and live Azure/Google ZCTA-provider
 proof pass. The same-source RC8 CPU and CUDA 12.8 registry digests pass the
 strict exact-digest gate with no `latest` promotion, and their digest-pinned
-control ZIPs pass local integrity validation. Security/publication correction
-and local package assembly are complete; owner-authorized publication, final
-browser-download, and independent-host acceptance remain
+control ZIPs pass local integrity validation. Security/publication correction,
+local package assembly, and the non-Latest RC8 validation prerelease are
+complete; final browser-download and independent-host acceptance remain
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-104-rc5-security-gate-and-residual-disposition.md`
 
@@ -228,10 +228,10 @@ Current scope:
 landed at `f8e191d`, PR #94 merged as `fc97b32`, and PR #95 merged the bounded
 state reconciliation as `a24d369`. Local `rc5` image/package documentation
 parity passes, the same-source RC8 image identities are frozen, and their
-digest-pinned control ZIPs are locally assembled and verified. After
-owner-authorized publication, complete live permission verification,
-exact-browser-downloaded-package/running-image Help validation, publication
-checks, screenshots/video, and the final W09/W10 gates
+digest-pinned control ZIPs are published in the RC8 validation prerelease.
+Complete live permission verification, exact-browser-downloaded-package/
+running-image Help validation, publication checks, screenshots/video, and the
+final W09/W10 gates
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-092-documentation-currentness.md`
 
@@ -312,7 +312,7 @@ and explicit authorization.
    freeze the reconciled accepted-main source, and rebuild and locally verify
    documentation-aligned CPU/CUDA images and control ZIPs under the RC8
    identities.
-10. [ ] After owner authorization, publish the exact RC8 assets and
+10. [x] After owner authorization, publish the exact RC8 assets and
    authoritative hashes before final browser-download extraction testing or
    tester distribution.
 11. [ ] Complete W10 four-profile and independent-host reproduction; otherwise

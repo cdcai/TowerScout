@@ -7,9 +7,10 @@ reproducibility corrections landed at `f8e191d`, and PR #94 merged as
 reconciliation as `a24d369`; local image/package documentation parity passes,
 and the same-source RC8 CPU/CUDA image digests are frozen after strict local
 and exact-published-digest security qualification. Their digest-pinned control
-ZIPs are locally assembled and verified. Final screenshots/video, live
+ZIPs are published in the non-Latest RC8 validation prerelease. Final
+screenshots/video, live
 permission verification, exact browser-downloaded package and running-image
-Help validation, publication, and final W09/W10 gates remain
+Help validation, and final W09/W10 gates remain
 **Priority**: HIGH
 **Type**: C (Documentation / Release)
 **Child Work Plan**:
@@ -520,11 +521,19 @@ the focused package/manifest regression suite (`7/7`) passed.
 The retained browser-downloaded 800655295-byte asset ZIP was reverified at
 SHA-256
 `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
-It was not duplicated solely to change its filename before publication. No
-control ZIP, asset ZIP, release, or `latest` tag was published.
+It was not duplicated solely to change its filename before publication. At that
+local-assembly checkpoint, no control ZIP, asset ZIP, release, or `latest` tag
+was published.
 
-**Next**: After explicit owner authorization, publish the exact control ZIPs,
-their sidecars, and the same-content asset ZIP under the manifest-required RC8
-name. Then re-download those exact bytes through the normal browser flow and
+### 2026-10-07 - RC8 documentation-bearing packages published
+
+The exact CPU and CUDA 12.8 control ZIPs, their sidecars, and the shared asset
+ZIP under its manifest-required RC8 filename were published in the
+[v0.1.0-rc8 validation prerelease](https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc8).
+GitHub's byte sizes and SHA-256 digests match all six local approved files. The
+release is a prerelease, not Latest, and is bound to frozen source `7827c2a`.
+
+**Next**: Download the published bytes through the normal browser flow and
 complete packaged/running-image Help, live-Wiki, four-profile, and
-independent-host validation.
+independent-host validation. Do not substitute the local upload inputs for the
+browser-downloaded acceptance artifacts.

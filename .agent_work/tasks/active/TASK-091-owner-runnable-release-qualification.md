@@ -6,9 +6,8 @@ resolves policy/signing through an unsigned, narrower support boundary.
 The preliminary `rc4` browser-download Docker CPU diagnostic passed and its
 findings are dispositioned for Task-092. The documentation content is frozen
 and merged through PR #94 as `fc97b32`. The same-source RC8 CPU/CUDA images
-and digest-pinned control ZIPs are assembled and locally verified; owner-
-authorized publication, exact browser-download, and independent-host evidence
-remain
+and digest-pinned control ZIPs are published in the non-Latest RC8 validation
+prerelease. Exact browser-download and independent-host evidence remain
 **Priority**: CRITICAL
 **Type**: C (Release Qualification / Handoff)
 **Owner**: Release owner; active agent executes bounded preparation and checks
@@ -520,7 +519,31 @@ and the focused seven-test package suite passed. The retained asset ZIP is
 byte-identical to the required RC8 asset at SHA-256
 `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
 
-Package construction is complete. Publication remains owner-gated, and final
-acceptance still requires verification of the authoritative published hashes
-against exact browser-downloaded bytes plus the required four-profile and
-independent-host qualification.
+Package construction is complete. Final acceptance still requires verification
+of the authoritative published hashes against exact browser-downloaded bytes
+plus the required four-profile and independent-host qualification.
+
+### 2026-10-07 - RC8 validation prerelease published
+
+After explicit owner authorization, GitHub release ID `406175444` was published
+as a prerelease at
+[v0.1.0-rc8](https://github.com/J-Schulein/TowerScout/releases/tag/v0.1.0-rc8).
+It is not a draft, not the Latest release, and not a final stable-release claim.
+The existing `v0.1.2` release remains Latest; no container `latest` tag was
+promoted. Tag `v0.1.0-rc8` resolves exactly to frozen source
+`7827c2af8ecb7d8b21d246b69e135807fa497fd2`.
+
+GitHub reports all six assets as uploaded. Its recorded byte sizes and SHA-256
+digests match the local approved CPU ZIP, CUDA 12.8 ZIP, shared asset ZIP, and
+their three sidecars. The authoritative ZIP hashes are:
+
+- CPU: `8fd46711b57a25dd71cd879a06fe519674596ee9a71fa66b2347204fe8bc74f0`.
+- CUDA 12.8: `463d3f2348e369ed647bb8ed66c15588fc4051197e49ac90441552b8318bdada`.
+- Shared assets: `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+
+Unauthenticated HTTP checks returned 200 for the release page and each of the
+six browser-download URLs. Only that sanitized result is retained; temporary
+signed redirect URLs are not evidence.
+
+The next acceptance step must download these release assets through the normal
+browser path rather than reuse the local publication inputs.

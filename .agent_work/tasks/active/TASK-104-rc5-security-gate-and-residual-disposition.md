@@ -12,8 +12,8 @@ PR #99 corrected that assertion, and PR #100 added read-only exact-digest
 recovery plus immutable-tag overwrite/race protection. PR #101 recorded the
 RC5 evidence, then the same-source RC8 CPU and CUDA registry digests passed G10
 with `push_latest=false`. Security/publication correction is complete;
-digest-pinned packages are locally assembled and verified. Owner-authorized
-package publication and final acceptance remain
+digest-pinned packages are published in the non-Latest RC8 validation
+prerelease. Final browser-download and independent-host acceptance remain
 **Priority**: CRITICAL
 **Type**: C (Release Security / Container Publication)
 **Owner**: `J-Schulein` until handoff; `cdcai` thereafter
@@ -57,9 +57,9 @@ security gate passes. Preserve the accepted 396-key baseline unchanged.
 - [x] After separate owner dispatch authorization, publish immutable versioned
   images with `push_latest=false` and confirm exact-digest G10 evidence.
 - [x] Assemble and locally verify digest-pinned CPU and CUDA 12.8 packages.
-- [ ] After separate owner authorization, publish the exact package assets and
-  complete the final browser-download and independent-host four-profile matrix
-  under Tasks 091/092/093/097/103.
+- [x] After separate owner authorization, publish the exact package assets.
+- [ ] Complete the final browser-download and independent-host four-profile
+  matrix under Tasks 091/092/093/097/103.
 
 ## Local Validation Record - October 7, 2026
 
@@ -395,9 +395,21 @@ Exact implementation revision:
   authoritative SHA-256
   `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
   It was not duplicated solely to stage the RC8 filename.
-- No package/release asset or `latest` tag was published. Final
-  browser-download and independent-host acceptance remain owner-gated release
-  work.
+- That local checkpoint published no package/release asset or `latest` tag.
+
+### Owner-authorized RC8 prerelease publication
+
+- GitHub release ID `406175444` was published at `2026-10-07T21:23:59Z` as
+  non-draft prerelease `v0.1.0-rc8` targeting exact source
+  `7827c2af8ecb7d8b21d246b69e135807fa497fd2`.
+- All six assets report state `uploaded`; GitHub's byte sizes and SHA-256
+  digests match the approved CPU, CUDA 12.8, and asset ZIPs and sidecars.
+- Unauthenticated checks returned HTTP 200 for the release page and all six
+  browser-download URLs; temporary signed redirect URLs were not retained.
+- Existing stable release `v0.1.2` remains Latest. No image `latest` tag was
+  promoted, and no final release-readiness claim was made.
+- Exact browser-download and independent-host acceptance remain open under the
+  release-qualification tasks.
 
 ## Stop Conditions
 
@@ -411,7 +423,8 @@ Exact implementation revision:
 
 ## Publication Boundary
 
-Implementation, local builds, and local validation are authorized. GHCR
-dispatch, package/release publication, and `latest` promotion remain separate
-owner actions. The full support claim still requires all four profiles and
-independent-host reproduction.
+Implementation, local builds, local validation, RC8 GHCR dispatch, and RC8
+prerelease publication were separately authorized and completed. Any `latest`
+promotion or stable/general release remains a separate owner action. The full
+support claim still requires exact browser-downloaded bytes, all four profiles,
+and independent-host reproduction.
