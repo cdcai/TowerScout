@@ -98,10 +98,10 @@ Current scope:
 
 ### **TASK-104: RC5 Security Gate And Residual Disposition**
 
-**Status**: IN_PROGRESS - ADR-024 accepted; implementation active on
-`fix/rc5-fast-safe-security-gate`. Remove unused `gdal-bin`, enforce four exact
-residuals through October 31, fail closed on degraded/incorrect scans, and move
-the local gate before GHCR login/push
+**Status**: IN_PROGRESS - ADR-024 implementation and local CPU/CUDA security,
+identity, Fiona/ZCTA, real-model/device, and live Azure/Google ZCTA-provider
+proof pass on `fix/rc5-fast-safe-security-gate`. Reviewed merge/exact-head CI,
+owner-authorized registry dispatch, and final package acceptance remain
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-104-rc5-security-gate-and-residual-disposition.md`
 

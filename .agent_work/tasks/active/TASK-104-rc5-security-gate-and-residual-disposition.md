@@ -3,8 +3,9 @@
 **Status**: IN_PROGRESS - implementation is complete on
 `fix/rc5-fast-safe-security-gate`; local CPU/CUDA identity, dependency,
 Fiona/ZCTA, real-model/device, Trivy, and SBOM proof passed after the required
-Windows/WSL restart. The provider-backed detection-over-ZCTA cell, reviewed
-merge/CI, registry dispatch, and final package acceptance remain
+Windows/WSL restart. The isolated CUDA provider-backed detection-over-ZCTA
+cell also passed for Azure and Google after the known Google TLS repair. The
+reviewed merge/CI, registry dispatch, and final package acceptance remain
 **Priority**: CRITICAL
 **Type**: C (Release Security / Container Publication)
 **Owner**: `J-Schulein` until handoff; `cdcai` thereafter
@@ -179,10 +180,31 @@ Exact implementation revision:
   `.agent_work` validator and `git diff --check` also passed. Two earlier test
   attempts were blocked during pytest temporary-directory setup by host ACLs;
   no comparator test body failed, and their generated scratch was removed.
-- Remaining local validation gap: the real-model runs used the frozen qualified
-  fixture. A provider-backed map detection using the returned ZCTA polygon has
-  not yet been repeated on this candidate and remains required before any
-  publication dispatch. Nothing has been pushed or published.
+- An isolated Docker CUDA session used the exact validated image on loopback
+  port 5235, fresh Task-104 config/session volumes, and the already
+  hash-verified assets mounted read-only. Readiness remained `ready`, asset
+  status remained `ok`, and the selected device remained `cuda` on the
+  Blackwell `sm_120` host.
+- Setup saved Azure successfully. Google first reproduced the known
+  `tls_ca_untrusted` boundary. The packaged repair dry run found exactly one
+  safe CA candidate with no ambiguity; certificate identities were suppressed.
+  The selected CA was applied only to the isolated Task-104 config volume, and
+  the exact container was recreated with the combined bundle. Azure config,
+  image identity, assets, and CUDA selection persisted, and Google then
+  reported `tls_ok` before its key was saved through the `localhost:5235` UI.
+- The actual `/getzipcode` route returned one 114-point Polygon for ZCTA
+  `20004`. Both providers completed a real `newest`-model detection over that
+  complete returned polygon:
+  - Azure estimated and returned 46 tile records in 35.0 seconds, producing
+    219 detections, 120 inside-boundary detections, and 217 selected/secondary-
+    positive detections.
+  - Google estimated and returned 46 tile records in 32.4 seconds, producing
+    225 detections, 123 inside-boundary detections, and 224 selected/secondary-
+    positive detections.
+- No provider key, provider URL, request payload, certificate identity, raw
+  network trace, or screenshot was written to repository evidence or terminal
+  output. The keys remain only in the isolated active test config volume until
+  its separately verified cleanup. Nothing has been pushed or published.
 
 ## Stop Conditions
 
