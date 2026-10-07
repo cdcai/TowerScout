@@ -106,6 +106,11 @@ def test_container_publish_refuses_to_overwrite_immutable_version_tag():
     assert "Immutable version tag already exists" in guard
     assert "manifest unknown|not found" in guard
     assert "Could not prove that immutable version tag is absent" in guard
+    assert workflow["concurrency"]["group"] == (
+        "container-publish-${{ github.repository }}-${{ inputs.tag }}-"
+        "${{ inputs.pytorch_flavor }}"
+    )
+    assert workflow["concurrency"]["cancel-in-progress"] is False
 
 
 def test_container_publish_verifies_runtime_versions_and_remote_identity():

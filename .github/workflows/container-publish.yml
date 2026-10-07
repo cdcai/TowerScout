@@ -25,6 +25,10 @@ permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: container-publish-${{ github.repository }}-${{ inputs.tag }}-${{ inputs.pytorch_flavor }}
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
