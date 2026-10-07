@@ -1,11 +1,12 @@
 # TASK-104: RC5 Security Gate And Residual Disposition
 
-**Status**: IN_PROGRESS - implementation is complete on
-`fix/rc5-fast-safe-security-gate`; local CPU/CUDA identity, dependency,
-Fiona/ZCTA, real-model/device, Trivy, and SBOM proof passed after the required
-Windows/WSL restart. The isolated CUDA provider-backed detection-over-ZCTA
-cell also passed for Azure and Google after the known Google TLS repair. The
-reviewed merge/CI, registry dispatch, and final package acceptance remain
+**Status**: IN_PROGRESS - implementation merged through PR #97 as `d0c36be`;
+local CPU/CUDA identity, dependency, Fiona/ZCTA, real-model/device, Trivy, and
+SBOM proof passed after the required Windows/WSL restart. The isolated CUDA
+provider-backed detection-over-ZCTA cell also passed for Azure and Google
+after the known Google TLS repair. The first owner-authorized registry attempt
+failed closed before login/push on a workflow shell-quoting defect. Its bounded
+correction, successful registry dispatch, and final package acceptance remain
 **Priority**: CRITICAL
 **Type**: C (Release Security / Container Publication)
 **Owner**: `J-Schulein` until handoff; `cdcai` thereafter
@@ -40,12 +41,12 @@ security gate passes. Preserve the accepted 396-key baseline unchanged.
 - [x] Pin base-image indexes and pip; remove `gdal-bin`.
 - [x] Implement the fail-closed comparator and regression coverage.
 - [x] Reorder the publish workflow and add parsed workflow ratchets.
-- [ ] Pass focused tests, full required CI, `git diff --check`, and strict
+- [x] Pass focused tests, full required CI, `git diff --check`, and strict
   `.agent_work` validation.
 - [x] Build local CPU and CUDA 12.8 images from one exact source revision.
 - [x] Verify package inventory, Fiona linkage, ZCTA lookup, real model/device
   work, and retained scan/SBOM evidence for both flavors.
-- [ ] Obtain reviewed merge and green exact-head/post-merge CI.
+- [x] Obtain reviewed merge and green exact-head/post-merge CI.
 - [ ] After separate owner dispatch authorization, publish immutable versioned
   images with `push_latest=false` and confirm exact-digest G10 evidence.
 - [ ] Assemble digest-pinned packages and complete the final browser-download
@@ -224,6 +225,26 @@ Exact implementation revision:
   sandboxed test attempts could not create pytest scratch directories; the
   same suite passed outside that filesystem restriction. No image or package
   was built, pushed, tagged, or published during this correction.
+
+### First authorized registry attempt
+
+- `J-Schulein` authorized `v0.1.0-rc5` CPU and CUDA 12.8 workflow dispatches
+  with `push_latest=false` from accepted `main` at `d0c36be`.
+- CPU run `37655436322` built its local image, then failed in `Verify local
+  dependency and geospatial boundary`. The outer GitHub-host shell interpreted
+  the nested `awk '{print $3}'` while `set -u` was active, producing an unbound
+  positional-parameter error. Local Trivy comparison, GHCR login/push,
+  published-digest confirmation, SBOM, and `latest` were skipped.
+- CUDA run `37655478076` was still in the local build/load step when the shared
+  defect was confirmed. Normal and force-cancel requests returned GitHub API
+  errors, but the unchanged workflow subsequently failed closed at the same
+  dependency/Fiona boundary. Scanning, GHCR login/push, published-digest
+  confirmation, SBOM, and `latest` were skipped for both flavors.
+- The correction sends the container shell body through a quoted heredoc so
+  host expansion cannot consume container-only variables. Parsed-workflow
+  regression coverage requires that boundary and rejects the former outer
+  single-quoted `sh -c` form. No RC5 image or package was published by either
+  failed attempt.
 
 ## Stop Conditions
 

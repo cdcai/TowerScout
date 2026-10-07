@@ -16,8 +16,10 @@ redesign remains preserved and deferred, not a release gate.
 **Confirmed `rc4` Runtime Image Source**: `541622556fb7999ee4e88fb1e44f7797b9da34f5`
 **Accepted Documentation Content Source**: `fc97b3200785d307b39ef5a683979002a5f409e6`
 **Preliminary Local RC5 Source**: `a24d369668d27240ed0baa184d071395455b9c95`
-**Next Publishable Candidate Source**: Not frozen; use the exact accepted
-`main` commit after the bounded security correction and disposition merge
+**Next Publishable Candidate Source**: Not frozen; PR #97 merged the bounded
+security correction as `d0c36be1483e45c58adf9b248ca546be88dceeb3`, but the
+first owner-authorized publication attempt exposed a pre-push workflow quoting
+defect. Freeze the exact accepted `main` commit after that bounded correction.
 **Authoritative Branch**: `main`
 **Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
@@ -50,6 +52,16 @@ redesign remains preserved and deferred, not a release gate.
   exact records through October 31, 2026 using a fail-closed residual file.
   TASK-104 implements that boundary and the scan-before-push workflow. The
   396-key baseline remains unchanged, and no new image or package is published.
+- PR #97 merged ADR-024/TASK-104 implementation as `d0c36be`; exact-head and
+  post-merge CI passed. `J-Schulein` then authorized CPU/CUDA 12.8 dispatches
+  for `v0.1.0-rc5` with `push_latest=false`. The first CPU run failed closed
+  in the local dependency/Fiona boundary before security scanning, GHCR login,
+  or push because the workflow's nested shell quoting exposed `$3` to the host
+  shell under `set -u`. Cancellation requests for the concurrent CUDA build
+  returned GitHub API errors, but that run subsequently failed closed at the
+  same prepublication boundary. A bounded workflow/test correction is now
+  required before the authorized dispatches are retried; no RC5 image or
+  package was published.
 - Full readiness requires actual YOLO and EfficientNet work on the required
   device in all four profiles plus independent-computer reproduction.
 - Static checks, health/readiness, mocked tests, or CPU fallback are not
@@ -100,8 +112,10 @@ Current scope:
 
 **Status**: IN_PROGRESS - ADR-024 implementation and local CPU/CUDA security,
 identity, Fiona/ZCTA, real-model/device, and live Azure/Google ZCTA-provider
-proof pass on `fix/rc5-fast-safe-security-gate`. Reviewed merge/exact-head CI,
-owner-authorized registry dispatch, and final package acceptance remain
+proof pass. PR #97 merged as `d0c36be` with green exact-head/post-merge CI.
+The first owner-authorized registry attempt failed closed before login/push on
+a workflow shell-quoting defect; correct and review that gate, then retry the
+authorized CPU/CUDA dispatches. Final package acceptance remains
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-104-rc5-security-gate-and-residual-disposition.md`
 

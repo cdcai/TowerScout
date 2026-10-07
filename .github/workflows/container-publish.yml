@@ -140,7 +140,7 @@ jobs:
           assert urllib3.__version__ == "2.8.0", urllib3.__version__
           assert pip_urllib3.__version__ == "2.7.0", pip_urllib3.__version__
           '
-          docker run --rm --entrypoint sh "$LOCAL_IMAGE" -c '
+          docker run --rm --entrypoint sh "$LOCAL_IMAGE" -s <<'CONTAINER_SH'
           set -eu
           for package in gdal-bin libgdal32 libheif1 python3.11 python3.11-minimal libpython3.11-minimal libpython3.11-stdlib; do
             if dpkg-query -W -f="\${Status}" "$package" 2>/dev/null | grep -q "install ok installed"; then
@@ -156,7 +156,7 @@ jobs:
             */site-packages/fiona.libs/*) ;;
             *) echo "Fiona is not using its bundled GDAL library: $linkage" >&2; exit 1 ;;
           esac
-          '
+          CONTAINER_SH
 
       - name: Scan local image before publication
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
