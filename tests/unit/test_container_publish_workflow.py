@@ -84,6 +84,7 @@ def test_container_publish_verifies_runtime_versions_and_remote_identity():
     assert 'pip_urllib3.__version__ == "2.7.0"' in workflow
     assert "gdal-bin libgdal32 libheif1 python3.11" in workflow
     assert "site-packages/fiona.libs" in workflow
+    assert "readlink -f" in workflow
     assert 'test "$remote_config_digest" = "$LOCAL_IMAGE_ID"' in workflow
     assert "remote-manifest.json" in workflow
 

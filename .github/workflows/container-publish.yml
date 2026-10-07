@@ -122,8 +122,10 @@ jobs:
           done
           extension="$(python -c "import fiona.ogrext as module; print(module.__file__)")"
           linkage="$(ldd "$extension" | grep -i libgdal)"
-          case "$linkage" in
-            *site-packages/fiona.libs/*) ;;
+          library_path="$(printf '%s\n' "$linkage" | awk '{print $3}')"
+          resolved_library_path="$(readlink -f "$library_path")"
+          case "$resolved_library_path" in
+            */site-packages/fiona.libs/*) ;;
             *) echo "Fiona is not using its bundled GDAL library: $linkage" >&2; exit 1 ;;
           esac
           '
