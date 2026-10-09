@@ -13,6 +13,58 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = REPO_ROOT / "scripts" / "task103_trivy_delta.py"
 IMAGE_ID = "sha256:" + "1" * 64
 ARTIFACT_ID = "sha256:" + "2" * 64
+COMMITTED_RESIDUALS = (
+    REPO_ROOT / ".github" / "security" / "task103-accepted-residuals.v1.json"
+)
+
+
+def test_committed_residual_policy_is_exact_and_time_bounded():
+    document = json.loads(COMMITTED_RESIDUALS.read_text(encoding="utf-8"))
+    assert document["schema_version"] == 1
+    assert document["policy"] == "task103-g10-time-bounded-residuals"
+    assert len(document["findings"]) == 5
+    identities = {
+        (
+            item["vulnerability_id"],
+            item["package_id"],
+            item["package_class"],
+            item["package_type"],
+            item["severity"],
+        )
+        for item in document["findings"]
+    }
+    assert identities == {
+        ("CVE-2026-97687", "urllib3@2.7.0", "lang-pkgs", "python-pkg", "HIGH"),
+        ("CVE-2026-97689", "urllib3@2.7.0", "lang-pkgs", "python-pkg", "HIGH"),
+        (
+            "CVE-2026-84782",
+            "libssl3@3.0.22-1~deb12u1",
+            "os-pkgs",
+            "debian",
+            "HIGH",
+        ),
+        (
+            "CVE-2026-84782",
+            "openssl@3.0.22-1~deb12u1",
+            "os-pkgs",
+            "debian",
+            "HIGH",
+        ),
+        (
+            "CVE-2026-77214",
+            "libexpat1@2.5.0-1+deb12u4",
+            "os-pkgs",
+            "debian",
+            "HIGH",
+        ),
+    }
+    assert all(
+        item["applicable_publish_flavors"] == ["cpu", "cuda128"]
+        and item["approved_by"] == "J-Schulein"
+        and item["follow_up_task"] == "TASK-104"
+        and item["expires_utc"] == "2026-10-31T23:59:59Z"
+        for item in document["findings"]
+    )
 
 
 def _finding(

@@ -1,7 +1,7 @@
 # Current Tasks - Final Candidate Build And Acceptance
 
 **Sprint Period**: October 5-October 16, 2026
-**Last Updated**: October 8, 2026
+**Last Updated**: October 9, 2026
 **Focus**: Qualify a dependable, downloadable Windows 11 application from
 accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Documentation
 content is frozen and merged through PR #94, and the project-state
@@ -10,10 +10,12 @@ now pass the exact-digest security gate, and their digest-pinned control ZIPs
 are assembled, verified, and published as the non-Latest RC8 validation
 prerelease. Final browser-download and independent-host acceptance follow.
 The first-host RC8 Podman CPU browser run exposed a pre-registration
-cancellation race; a bounded request-correlation fix is locally implemented
-and passes an isolated Podman CPU Azure cancel-then-retry smoke against the
-RC8 runtime and preserved volumes. A reviewed replacement candidate is still
-required before final acceptance.
+cancellation race; the bounded request-correlation fix merged through PR #105
+as accepted-main commit `0046317`. The first RC9 CPU build then stopped safely
+before publication on one newly disclosed Debian Expat HIGH finding. The owner
+approved one exact, expiring residual for that finding; a reviewed policy
+amendment and fresh replacement candidate are still required before final
+acceptance.
 The Task-087 launcher
 redesign remains preserved and deferred, not a release gate.
 
@@ -22,6 +24,8 @@ redesign remains preserved and deferred, not a release gate.
 **Confirmed `rc4` Runtime Image Source**: `541622556fb7999ee4e88fb1e44f7797b9da34f5`
 **Accepted Documentation Content Source**: `fc97b3200785d307b39ef5a683979002a5f409e6`
 **Preliminary Local RC5 Source**: `a24d369668d27240ed0baa184d071395455b9c95`
+**Accepted RC9 Replacement Source**:
+`004631754be343a1a9c0a7e0777dfc39e689c9f3`
 **Frozen Publishable Candidate Source**:
 `7827c2af8ecb7d8b21d246b69e135807fa497fd2`. The same-source
 `v0.1.0-rc8` CPU and CUDA 12.8 images passed local and exact-published-digest
@@ -56,8 +60,9 @@ prerelease. No `latest` image tag or stable GitHub release was promoted.
   applicable post-merge checks passed. Retained Trivy evidence shows that ten
   of the 14 new HIGH keys come from unused Debian packages pulled in by
   `gdal-bin`; the other four are pip-private urllib3 and Bookworm OpenSSL
-  records. ADR-024 authorizes removing `gdal-bin` and accepting only those four
-  exact records through October 31, 2026 using a fail-closed residual file.
+  records. ADR-024 originally authorized removing `gdal-bin` and accepting
+  only those four exact records through October 31, 2026 using a fail-closed
+  residual file.
   TASK-104 implements that boundary and the scan-before-push workflow. The
   396-key baseline remains unchanged.
 - PRs #97-#100 merged the ADR-024 implementation, shell-quoting correction,
@@ -116,6 +121,17 @@ prerelease. No `latest` image tag or stable GitHub release was promoted.
   completed with 14 real detections. A reviewed replacement image/package and
   affected-profile repetition remain required; this overlay is not a release
   candidate.
+- PR #105 merged the request-correlated cancellation correction as accepted
+  source `004631754be343a1a9c0a7e0777dfc39e689c9f3`; its required post-merge
+  checks passed. Owner-authorized RC9 CPU run `37935858689` then found new
+  HIGH key `CVE-2026-77214 / libexpat1@2.5.0-1+deb12u4` and failed closed at
+  the local comparator before GHCR login/push. CUDA run `37935867972` was
+  cancelled before any publication step. No RC9 image or `latest` tag was
+  published. Reachability review found no supported TowerScout call to the
+  affected `XML_ParseBuffer` API, and Debian Bookworm had no fixed package.
+  `J-Schulein` approved adding this one exact CPU/CUDA residual under the same
+  October 31 expiry. The baseline remains 396 keys; every other new or changed
+  HIGH/CRITICAL finding remains blocking.
 - Full readiness requires actual YOLO and EfficientNet work on the required
   device in all four profiles plus independent-computer reproduction.
 - Static checks, health/readiness, mocked tests, or CPU fallback are not

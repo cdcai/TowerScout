@@ -88,6 +88,28 @@
       "reason": "CVE-2026-84782 affects DTLS retransmission behavior; TowerScout has no supported DTLS workflow and Debian Bookworm has no fixed package available for this candidate.",
       "severity": "HIGH",
       "vulnerability_id": "CVE-2026-84782"
+    },
+    {
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "approved_by": "J-Schulein",
+      "compensating_controls": [
+        "TowerScout has no supported user-supplied XML parsing workflow and its Python source does not directly call an XML parser.",
+        "The indirectly loaded CPython pyexpat wrapper calls XML_Parse rather than the affected XML_ParseBuffer API.",
+        "The Debian library is retained through the OpenGL/Mesa dependency chain; a package-version, severity, or supported-path call-chain change invalidates this acceptance."
+      ],
+      "expires_utc": "2026-10-31T23:59:59Z",
+      "follow_up_task": "TASK-104",
+      "installed_version": "2.5.0-1+deb12u4",
+      "package": "libexpat1",
+      "package_class": "os-pkgs",
+      "package_id": "libexpat1@2.5.0-1+deb12u4",
+      "package_type": "debian",
+      "reason": "CVE-2026-77214 requires a caller to misuse XML_ParseBuffer with a length beyond its allocated buffer. No supported TowerScout path calls that API, and Debian Bookworm has no fixed package available for this candidate.",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-77214"
     }
   ],
   "policy": "task103-g10-time-bounded-residuals",

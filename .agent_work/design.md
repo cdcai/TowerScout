@@ -182,7 +182,7 @@ The current security boundary is:
    PR #67 integration gate; no PR #67 reconciliation is required for the
    main-based delivery, and Task-087 remains preserved and deferred.
 11. ADR-024/TASK-104 preserve the 396-key image baseline unchanged while
-    removing unused Debian `gdal-bin` and accepting only four exact,
+    removing unused Debian `gdal-bin` and accepting only five exact,
     version/class/type/flavor-bound residuals through October 31, 2026. The
     comparator rejects incomplete scans, identity mismatches, severity
     escalation, unknown policy fields, duplicates, expired/mismatched/unused

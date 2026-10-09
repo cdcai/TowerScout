@@ -13,7 +13,10 @@ recovery plus immutable-tag overwrite/race protection. PR #101 recorded the
 RC5 evidence, then the same-source RC8 CPU and CUDA registry digests passed G10
 with `push_latest=false`. Security/publication correction is complete;
 digest-pinned packages are published in the non-Latest RC8 validation
-prerelease. Final browser-download and independent-host acceptance remain
+prerelease. RC9 CPU correctly stopped before publication on newly disclosed
+`CVE-2026-77214`; the owner approved one exact October 31-expiring residual,
+and the bounded policy amendment passes focused local validation pending
+review. Final browser-download and independent-host acceptance remain
 **Priority**: CRITICAL
 **Type**: C (Release Security / Container Publication)
 **Owner**: `J-Schulein` until handoff; `cdcai` thereafter
@@ -33,8 +36,8 @@ security gate passes. Preserve the accepted 396-key baseline unchanged.
 - Fiona loads the packaged ZCTA shapefile through its bundled GDAL library.
 - The application imports `urllib3==2.8.0`; only pip's private 2.7.0 inventory
   may match the two approved urllib3 residuals.
-- Only the exact two urllib3 and two OpenSSL package keys in the residual file
-  may pass, and only through October 31, 2026.
+- Only the exact two urllib3, two OpenSSL, and one Debian libexpat package keys
+  in the residual file may pass, and only through October 31, 2026.
 - Missing/empty scans, wrong image/source/flavor identity, severity escalation,
   unknown fields, expiry, duplicates, mismatches, and unused exceptions fail
   closed.
@@ -60,6 +63,44 @@ security gate passes. Preserve the accepted 396-key baseline unchanged.
 - [x] After separate owner authorization, publish the exact package assets.
 - [ ] Complete the final browser-download and independent-host four-profile
   matrix under Tasks 091/092/093/097/103.
+
+## RC9 Prepublication Stop And Bounded Expat Disposition - October 9, 2026
+
+- `J-Schulein` authorized CPU and CUDA 12.8 `v0.1.0-rc9` dispatches from
+  accepted `main` at `004631754be343a1a9c0a7e0777dfc39e689c9f3`, with
+  `push_latest=false`.
+- CPU run `37935858689` built and scanned locally, then failed closed before
+  GHCR login or push on one new HIGH key:
+  `CVE-2026-77214 / libexpat1@2.5.0-1+deb12u4 / Debian`.
+- The comparison reported baseline 396, candidate 79, accepted baseline 74,
+  accepted temporary residuals 4, blocking 1, severity escalations 0, and
+  resolved 322. Its sanitized security artifact is
+  `image-security-v0.1.0-rc9-cpu`, artifact ID `11618593527`.
+- CUDA run `37935867972` was cancelled after the shared stop condition was
+  known. Its build was cancelled and every scan, GHCR login/push,
+  exact-digest, SBOM, and `latest` step was skipped. Neither dispatch
+  published an RC9 image or changed a `latest` tag.
+- Local reachability review found no direct XML parser import or call in the
+  TowerScout Python source. CPython `pyexpat` is loaded indirectly by
+  `torchvision.datasets.voc`, but its wrapper uses `XML_Parse`, not the
+  affected `XML_ParseBuffer` API. Debian `libexpat1` is retained by the
+  OpenGL/Mesa packages required by OpenCV, and the system library was not
+  mapped into the observed steady-state RC8 process at startup.
+- Debian Bookworm had no fixed package on October 9. `J-Schulein` approved one
+  additional exact residual for this finding, for CPU and CUDA 12.8 only,
+  under the existing October 31 expiry. Any identity, version, severity, or
+  supported-path call-chain change remains blocking.
+- Replaying the exact retained CPU report through the amended policy passed:
+  baseline 396, candidate 79, accepted baseline 74, accepted residuals 5,
+  blocking 0, severity escalations 0, and resolved 322. The amended residual
+  file SHA-256 is
+  `da207424b181c9f9df94bde02b6ca7665a8fea29f8ca7fee7a8184795d0db064`.
+- The broader focused comparator, container-workflow, CI-ratchet, runtime, and
+  ML-runtime contract suite passed `63/63`. The strict and quick
+  `.agent_work` validators and `git diff --check` passed. The first sandboxed
+  pytest attempts were blocked during temporary-directory setup by the known
+  Windows ACL condition; the same tests passed outside that filesystem
+  restriction with an explicit repository-local base directory.
 
 ## Local Validation Record - October 7, 2026
 

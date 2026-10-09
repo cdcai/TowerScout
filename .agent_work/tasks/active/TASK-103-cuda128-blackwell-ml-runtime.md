@@ -229,10 +229,30 @@ remove `gdal-bin`, fail closed on incomplete or identity-mismatched scans, and
 scan locally before registry login or push. CPU and CUDA 12.8 candidates must
 prove that Debian GDAL/libheif/Python packages are absent, Fiona still reads
 the packaged ZCTA data through its bundled library, the application imports
-`urllib3==2.8.0`, and only the four exact unexpired residuals match. A new key,
-changed package/version, CRITICAL escalation, unused exception, or expiry is a
-release blocker. Final browser-download and independent-host gates are not
-reduced by this amendment.
+`urllib3==2.8.0`, and only the exact unexpired residuals match. ADR-024
+originally approved four records; the October 9 RC9 amendment adds only exact
+`CVE-2026-77214 / libexpat1@2.5.0-1+deb12u4`, bringing the policy to five. A
+new key, changed package/version, CRITICAL escalation, unused exception, or
+expiry is a release blocker. Final browser-download and independent-host gates
+are not reduced by this amendment.
+
+## 2026-10-09 RC9 Expat Stop And Owner Disposition
+
+PR #105 merged the cancellation-race correction as accepted source
+`004631754be343a1a9c0a7e0777dfc39e689c9f3`, with green post-merge checks.
+Owner-authorized RC9 CPU run `37935858689` stopped at its local security gate
+before GHCR login or push on newly disclosed HIGH finding
+`CVE-2026-77214 / libexpat1@2.5.0-1+deb12u4`. The paired CUDA run
+`37935867972` was cancelled before any scan or publication step. No RC9 image
+or `latest` tag was published.
+
+The affected API is `XML_ParseBuffer`. Repository and runtime tracing found no
+supported TowerScout caller: Python `pyexpat` was loaded indirectly through
+`torchvision.datasets.voc`, but CPython's wrapper uses `XML_Parse`; the Debian
+library is retained through the OpenGL/Mesa dependency chain for OpenCV.
+Debian Bookworm had no fixed package. `J-Schulein` approved one exact
+CPU/CUDA residual through October 31, 2026. The accepted baseline stays at
+396 keys and every different or changed HIGH/CRITICAL record still blocks.
 
 ## 2026-10-07 Same-Source RC8 Package Assembly
 

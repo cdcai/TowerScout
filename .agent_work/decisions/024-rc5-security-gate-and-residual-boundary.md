@@ -16,10 +16,11 @@ ordering, and final release qualification
    TowerScout's application dependency remains `urllib3==2.8.0`.
 3. Keep the committed 396-key Task-103 baseline unchanged. Do not regenerate
    or broaden it to make RC5 pass.
-4. Accept only four exact HIGH residual keys through
+4. Accept only five exact HIGH residual keys through
    `.github/security/task103-accepted-residuals.v1.json`: the two pip-private
    `urllib3==2.7.0` keys and the `libssl3`/`openssl`
-   `3.0.22-1~deb12u1` keys for `CVE-2026-84782`.
+   `3.0.22-1~deb12u1` keys for `CVE-2026-84782`, plus
+   `libexpat1@2.5.0-1+deb12u4` for `CVE-2026-77214`.
 5. Every residual expires at `2026-10-31T23:59:59Z`. A changed package ID,
    installed version, package class/type, severity, flavor, missing match, or
    expiry blocks publication. `J-Schulein` owns the current disposition;
@@ -49,13 +50,24 @@ no DTLS workflow. Debian Bookworm has no fixed package for this candidate.
 Those four records therefore receive a narrow, expiring acceptance rather than
 becoming permanent baseline entries.
 
+On October 9, 2026, the first RC9 CPU dispatch discovered the newly published
+`CVE-2026-77214` record for Debian `libexpat1@2.5.0-1+deb12u4`. The local gate
+stopped before registry login or push, and the paired CUDA dispatch was
+cancelled before publication. Debian Bookworm had no fixed package. The defect
+requires a caller to pass an invalid oversized length to `XML_ParseBuffer`.
+TowerScout has no supported user-supplied XML parsing workflow or direct XML
+parser call; its indirectly loaded CPython wrapper uses `XML_Parse` instead.
+The Debian library remains through OpenGL/Mesa for OpenCV. `J-Schulein`
+therefore approved this one exact additional HIGH record under the same
+October 31 expiry and fail-closed identity rules.
+
 ## Consequences
 
 - Task-104 is the unique SEC-001 follow-up and owns implementation/evidence.
 - Existing exact-image Task-103 and Task-097 results remain historical. New
   CPU/CUDA images and all final package identities require qualification.
 - A new HIGH/CRITICAL key, severity increase, incomplete scan, or identity
-  mismatch remains a release blocker even when the four residuals match.
+  mismatch remains a release blocker even when the five residuals match.
 - If a fixed pip or Debian package appears before dispatch, remove the matching
   residual and rebuild; do not retain an unused exception.
 - Pip-free images, a Debian distribution migration, and general image slimming

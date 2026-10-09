@@ -16,7 +16,7 @@ not a delivery prerequisite and has no automatic restart date. Task-087 PRs
 
 | Task | Current outcome |
 | --- | --- |
-| `TASK-104` | Remove unused Debian GDAL, enforce the exact four-key expiring residual policy, and make local security qualification precede registry publication |
+| `TASK-104` | Remove unused Debian GDAL, enforce the exact five-key expiring residual policy, and make local security qualification precede registry publication |
 | `TASK-103` | CUDA 12.8 Blackwell bridge; rebuild documentation-aligned artifacts and complete final browser-download/independent-host qualification |
 | `TASK-095` | W00 direction, task-control, evidence, and eventual handoff alignment |
 | `TASK-091` | W01/W05/W09/W10 owner-runnable package and model qualification |

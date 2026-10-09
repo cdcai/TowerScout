@@ -25,7 +25,7 @@ The September 21 v2 prioritization and work plan control immediate development
 and acceptance as amended by ADR-022, ADR-023, and ADR-024. ADR-023 resolves
 the Windows signing-policy choice by selecting an unsigned, explicitly
 narrower support boundary. ADR-024 owns the bounded RC5 dependency reduction,
-four-key expiring residual policy, and scan-before-push ordering. The
+five-key expiring residual policy, and scan-before-push ordering. The
 verification record states the static-review boundary, and
 the post-Day-7 guide is future planning rather than today's task list. The older
 roadmap remains dated context. The Pilot plan still controls the immutable
