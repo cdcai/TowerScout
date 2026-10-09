@@ -8,14 +8,14 @@ CPU diagnostic passed, its findings are incorporated, and the documentation
 content plus project-state reconciliation are merged through PRs #94/#95. A
 local documentation-aligned `rc5` rehearsal from `a24d369` passed build,
 health, device, package-integrity, and documentation-parity checks. ADR-024
-then resolved the bounded security delta, and the same-source RC8 CPU/CUDA
-registry images pass local and exact-published-digest security qualification.
-Their digest-pinned control ZIPs are published in the non-Latest RC8 validation
-prerelease. First-host RC8 Podman CPU testing exposed a pre-registration
-cancel-then-retry race. The bounded request-correlation fix passes focused
-source tests and an isolated real Podman CPU runtime smoke but requires a
-reviewed replacement-candidate image/package before final browser-download
-validation and independent-host evidence can resume
+then resolved the bounded security delta. First-host RC8 Podman CPU testing
+exposed a pre-registration cancel-then-retry race. The bounded request-
+correlation fix and exact Expat residual amendment are merged through PRs
+#105/#106. Same-source RC9 CPU/CUDA registry images now pass local and exact-
+published-digest security qualification, and their digest-pinned control ZIPs
+pass local integrity validation. RC9 prerelease publication remains owner-
+gated before final browser-download validation and independent-host evidence
+can resume
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
@@ -254,6 +254,49 @@ Debian Bookworm had no fixed package. `J-Schulein` approved one exact
 CPU/CUDA residual through October 31, 2026. The accepted baseline stays at
 396 keys and every different or changed HIGH/CRITICAL record still blocks.
 
+## 2026-10-09 Same-Source RC9 Registry And Package Qualification
+
+PR #106 merged the exact Expat residual amendment as accepted-main source
+`b3431cf86d8a000462df487685104558ac7becd3`; all required post-merge checks
+passed. `J-Schulein` then authorized fresh CPU and CUDA 12.8 dispatches for
+`v0.1.0-rc9` with `push_latest=false`.
+
+- CPU run `37942033212` qualified
+  `ghcr.io/j-schulein/towerscout@sha256:9d24cc71724953fba7e062b6ee71dac38f2ec413716a9b60bfaf8ad0be20c950`.
+  Its config digest is
+  `sha256:3dd62907f9f6ab4d76b3ac9b8804a73e4b04f098aad22221f737cbfc595a170a`.
+- CUDA run `37942073914` qualified
+  `ghcr.io/j-schulein/towerscout@sha256:c2d99f178465a8cdc83430092554d98aeb181797ff330fba2661bc95a45d8287`.
+  Its config digest is
+  `sha256:aa397626a037531892eb8005004aaef33faaed0c29720444cbf73fe05d5f99ad`.
+- Both images carry source label `b3431cf86d8a000462df487685104558ac7becd3`
+  and their required `cpu` or `cuda128` flavor label. Both workflows passed
+  dependency/Fiona verification, local Trivy comparison before registry
+  login, immutable-tag absence, push/config identity, exact-digest Trivy/SBOM,
+  and the final comparison. Each reported baseline 396, candidate 79,
+  accepted baseline 74, accepted residual 5, blocking 0, severity escalations
+  0, and resolved 322. Both `latest` steps were skipped.
+- A clean detached checkout of the same source produced
+  `towerscout-v0.1.0-rc9-cpu.zip` (199812 bytes, SHA-256
+  `66e674ef28d98835a981bd731bc7a86e7c6bdd07cb9ea964d47e4e9c63cfacfc`)
+  and `towerscout-v0.1.0-rc9-cuda128.zip` (199840 bytes, SHA-256
+  `5157a3a396502e524b16dd5eda6cf46aa80521ba4409546af8625f1ca43cad10`).
+  Both manifest checks, outer sidecars, all 73 internal checksums across 74
+  files, the focused `7/7` package tests, `git diff --check`, and the strict
+  `.agent_work` validator passed.
+- The retained 800655295-byte browser-downloaded asset ZIP was reverified at
+  SHA-256
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+  The RC9-named local staging entry is a same-volume hard link, not an 800 MB
+  duplicate. Package-only sensitive-term scans found only expected docs that
+  name the generated `FLASK_SECRET_KEY`; no credential values or runtime data
+  were found.
+
+No RC9 control package or GitHub release was published at this checkpoint.
+Exact release-asset publication remains separately owner-authorized, and the
+final support claim still requires browser-downloaded and independent-host
+four-profile proof.
+
 ## 2026-10-07 Same-Source RC8 Package Assembly
 
 A clean detached checkout of frozen image source
@@ -338,7 +381,7 @@ the only HTTP error was the nonfunctional `favicon.ico` 404. The temporary
 container was removed without removing volumes, and the original RC8 Podman
 CPU container was restored healthy on port 5000.
 
-**Next**: Review the final diff and task validation, then carry the bounded fix
-through normal review and build a replacement candidate. Repeat the affected
-exact-package Podman acceptance cells from the replacement bytes. Do not treat
-the local validation overlay as final release qualification.
+**Disposition**: PR #105 carried the bounded fix through review, and the
+same-source RC9 image/package now supplies the replacement candidate. Repeat
+the affected exact-package Podman acceptance cells from browser-downloaded RC9
+bytes. The local validation overlay was not final release qualification.

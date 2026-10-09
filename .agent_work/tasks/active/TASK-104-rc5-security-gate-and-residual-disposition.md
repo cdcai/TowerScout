@@ -11,12 +11,13 @@ transport-sensitive manifest equality check rejected matching config identity.
 PR #99 corrected that assertion, and PR #100 added read-only exact-digest
 recovery plus immutable-tag overwrite/race protection. PR #101 recorded the
 RC5 evidence, then the same-source RC8 CPU and CUDA registry digests passed G10
-with `push_latest=false`. Security/publication correction is complete;
-digest-pinned packages are published in the non-Latest RC8 validation
-prerelease. RC9 CPU correctly stopped before publication on newly disclosed
-`CVE-2026-77214`; the owner approved one exact October 31-expiring residual,
-and the bounded policy amendment passes focused local validation pending
-review. Final browser-download and independent-host acceptance remain
+with `push_latest=false`. RC9 CPU correctly stopped before publication on
+newly disclosed `CVE-2026-77214`; the owner approved one exact October 31-
+expiring residual, and PR #106 merged the bounded policy amendment. Fresh
+same-source RC9 CPU/CUDA publications now pass both local and exact-digest
+security gates with no `latest` promotion, and their digest-pinned packages
+pass local integrity validation. RC9 release-asset publication remains owner-
+gated; final browser-download and independent-host acceptance remain
 **Priority**: CRITICAL
 **Type**: C (Release Security / Container Publication)
 **Owner**: `J-Schulein` until handoff; `cdcai` thereafter
@@ -60,7 +61,9 @@ security gate passes. Preserve the accepted 396-key baseline unchanged.
 - [x] After separate owner dispatch authorization, publish immutable versioned
   images with `push_latest=false` and confirm exact-digest G10 evidence.
 - [x] Assemble and locally verify digest-pinned CPU and CUDA 12.8 packages.
-- [x] After separate owner authorization, publish the exact package assets.
+- [x] After separate owner authorization, publish the historical RC8 package
+  assets used to reproduce the Podman cancellation finding.
+- [ ] After separate owner authorization, publish the exact RC9 package assets.
 - [ ] Complete the final browser-download and independent-host four-profile
   matrix under Tasks 091/092/093/097/103.
 
@@ -452,6 +455,54 @@ Exact implementation revision:
 - Exact browser-download and independent-host acceptance remain open under the
   release-qualification tasks.
 
+### Same-source RC9 exact-digest and local package qualification
+
+- PR #106 merged the five-key residual-policy amendment as
+  `b3431cf86d8a000462df487685104558ac7becd3`; exact-head and post-merge checks
+  passed. The accepted baseline remains 396 keys, and the residual file hash
+  is `da207424b181c9f9df94bde02b6ca7665a8fea29f8ca7fee7a8184795d0db064`.
+- Owner-authorized CPU run `37942033212` qualified pinned image
+  `ghcr.io/j-schulein/towerscout@sha256:9d24cc71724953fba7e062b6ee71dac38f2ec413716a9b60bfaf8ad0be20c950`.
+  Its config digest is
+  `sha256:3dd62907f9f6ab4d76b3ac9b8804a73e4b04f098aad22221f737cbfc595a170a`.
+  Evidence artifact `image-security-v0.1.0-rc9-cpu` has ID `11623080423`,
+  archive digest
+  `sha256:777ad260f1c0dc4c6d7f085968207f5f081c1d6245ea63371fe941d7697380cc`,
+  and retention through January 7, 2027. Exact-digest Trivy, delta, and SBOM
+  SHA-256 values are
+  `b1ad39ee77dac8d2b86faa0c637109c5b197f728c7bb83d9af308f5fd182e526`,
+  `1f23e23843d68f47c79ef57418973ff388af7c8d91a9034aa31c85c86d7d8f11`,
+  and `d148374a12f0c328c1f84e335272e993279bcafadd29355e19b027629100b879`.
+- Owner-authorized CUDA run `37942073914` qualified pinned image
+  `ghcr.io/j-schulein/towerscout@sha256:c2d99f178465a8cdc83430092554d98aeb181797ff330fba2661bc95a45d8287`.
+  Its config digest is
+  `sha256:aa397626a037531892eb8005004aaef33faaed0c29720444cbf73fe05d5f99ad`.
+  Evidence artifact `image-security-v0.1.0-rc9-cuda128` has ID `11623017469`,
+  archive digest
+  `sha256:a408049de93922aa4065b3c4ff9314750817766c0661865de91430f1d4f489b4`,
+  and retention through January 7, 2027. Exact-digest Trivy, delta, and SBOM
+  SHA-256 values are
+  `c46f529c40a8a3d5d8e24758e24267bb4fd6cfa0635280625f43d7e165f9ae86`,
+  `08002381af49fb4faa107892721925c2fb7e73f0905b3ffa21a6d66e86348ac3`,
+  and `b448b72efc9ec54b42d0b8f7271abdc5c31bb2f8974ac98702a3942dbe059e44`.
+- Both workflows passed the local comparison before GHCR login and the exact-
+  published-digest comparison afterward: baseline 396, candidate 79, accepted
+  baseline 74, accepted residual 5, blocking 0, severity escalations 0, and
+  resolved 322. Both `latest` promotion steps were skipped.
+- A clean detached checkout of `b3431cf` assembled the exact digest-pinned
+  packages. CPU ZIP SHA-256 is
+  `66e674ef28d98835a981bd731bc7a86e7c6bdd07cb9ea964d47e4e9c63cfacfc`;
+  CUDA 12.8 ZIP SHA-256 is
+  `5157a3a396502e524b16dd5eda6cf46aa80521ba4409546af8625f1ca43cad10`.
+  Both manifests, outer sidecars, all 73 internal checksums, and the focused
+  `7/7` package/manifest suite passed. The shared asset ZIP was reverified at
+  SHA-256
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+
+No RC9 control package, GitHub release, or `latest` image tag was published.
+The exact six-asset RC9 set is staged locally pending separate owner
+authorization.
+
 ## Stop Conditions
 
 - Any new unaccepted HIGH/CRITICAL key or severity escalation.
@@ -464,8 +515,8 @@ Exact implementation revision:
 
 ## Publication Boundary
 
-Implementation, local builds, local validation, RC8 GHCR dispatch, and RC8
-prerelease publication were separately authorized and completed. Any `latest`
-promotion or stable/general release remains a separate owner action. The full
-support claim still requires exact browser-downloaded bytes, all four profiles,
-and independent-host reproduction.
+Implementation, local builds, local validation, RC8 prerelease publication,
+and RC9 GHCR dispatch were separately authorized and completed. RC9 package
+publication, any `latest` promotion, and any stable/general release remain
+separate owner actions. The full support claim still requires exact browser-
+downloaded bytes, all four profiles, and independent-host reproduction.

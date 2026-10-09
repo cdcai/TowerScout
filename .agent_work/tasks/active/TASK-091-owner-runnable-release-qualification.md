@@ -5,9 +5,12 @@ host provider/cancel/error/review-export/relaunch/reboot cells pass. ADR-023
 resolves policy/signing through an unsigned, narrower support boundary.
 The preliminary `rc4` browser-download Docker CPU diagnostic passed and its
 findings are dispositioned for Task-092. The documentation content is frozen
-and merged through PR #94 as `fc97b32`. The same-source RC8 CPU/CUDA images
-and digest-pinned control ZIPs are published in the non-Latest RC8 validation
-prerelease. Exact browser-download and independent-host evidence remain
+and merged through PR #94 as `fc97b32`. RC8 packages were published, but RC8
+browser testing exposed the Podman cancellation race and superseded those
+bytes for final acceptance. The reviewed correction and security amendment
+are included in the locally verified same-source RC9 images and digest-pinned
+control ZIPs. RC9 prerelease publication, exact browser-download testing, and
+independent-host evidence remain
 **Priority**: CRITICAL
 **Type**: C (Release Qualification / Handoff)
 **Owner**: Release owner; active agent executes bounded preparation and checks
@@ -545,5 +548,26 @@ Unauthenticated HTTP checks returned 200 for the release page and each of the
 six browser-download URLs. Only that sanitized result is retained; temporary
 signed redirect URLs are not evidence.
 
-The next acceptance step must download these release assets through the normal
-browser path rather than reuse the local publication inputs.
+This was the planned RC8 acceptance step. Subsequent RC8 Podman testing exposed
+the cancellation race, so RC8 is retained only as defect-reproduction evidence
+and must not be used for final acceptance.
+
+### 2026-10-09 - RC9 replaces RC8 for final acceptance
+
+PRs #105/#106 merged the cancellation correction and exact five-key security
+policy. Owner-authorized RC9 CPU run `37942033212` and CUDA 12.8 run
+`37942073914` qualified same-source images from
+`b3431cf86d8a000462df487685104558ac7becd3` with `push_latest=false`:
+
+- CPU manifest:
+  `sha256:9d24cc71724953fba7e062b6ee71dac38f2ec413716a9b60bfaf8ad0be20c950`.
+- CUDA 12.8 manifest:
+  `sha256:c2d99f178465a8cdc83430092554d98aeb181797ff330fba2661bc95a45d8287`.
+
+The locally verified RC9 control ZIP SHA-256 values are
+`66e674ef28d98835a981bd731bc7a86e7c6bdd07cb9ea964d47e4e9c63cfacfc`
+for CPU and
+`5157a3a396502e524b16dd5eda6cf46aa80521ba4409546af8625f1ca43cad10`
+for CUDA 12.8. RC9 package publication remains separately owner-gated. Final
+acceptance must begin with the authoritative hashes and exact browser-
+downloaded RC9 bytes; do not substitute RC8 or the local upload inputs.

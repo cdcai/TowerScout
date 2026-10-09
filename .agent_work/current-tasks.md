@@ -5,17 +5,13 @@
 **Focus**: Qualify a dependable, downloadable Windows 11 application from
 accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Documentation
 content is frozen and merged through PR #94, and the project-state
-reconciliation is merged through PR #95. The same-source RC8 CPU/CUDA images
-now pass the exact-digest security gate, and their digest-pinned control ZIPs
-are assembled, verified, and published as the non-Latest RC8 validation
-prerelease. Final browser-download and independent-host acceptance follow.
-The first-host RC8 Podman CPU browser run exposed a pre-registration
-cancellation race; the bounded request-correlation fix merged through PR #105
-as accepted-main commit `0046317`. The first RC9 CPU build then stopped safely
-before publication on one newly disclosed Debian Expat HIGH finding. The owner
-approved one exact, expiring residual for that finding; a reviewed policy
-amendment and fresh replacement candidate are still required before final
-acceptance.
+reconciliation is merged through PR #95. RC8 browser testing exposed a
+pre-registration cancellation race; the bounded fix merged through PR #105.
+PR #106 then added the owner-approved exact, expiring Debian Expat residual.
+The same-source RC9 CPU/CUDA images now pass the local and exact-published-
+digest security gates, and their digest-pinned control ZIPs are assembled and
+locally verified. RC9 release-asset publication remains owner-gated; after
+publication, final browser-download and independent-host acceptance follow.
 The Task-087 launcher
 redesign remains preserved and deferred, not a release gate.
 
@@ -25,13 +21,13 @@ redesign remains preserved and deferred, not a release gate.
 **Accepted Documentation Content Source**: `fc97b3200785d307b39ef5a683979002a5f409e6`
 **Preliminary Local RC5 Source**: `a24d369668d27240ed0baa184d071395455b9c95`
 **Accepted RC9 Replacement Source**:
-`004631754be343a1a9c0a7e0777dfc39e689c9f3`
+`b3431cf86d8a000462df487685104558ac7becd3`
 **Frozen Publishable Candidate Source**:
-`7827c2af8ecb7d8b21d246b69e135807fa497fd2`. The same-source
-`v0.1.0-rc8` CPU and CUDA 12.8 images passed local and exact-published-digest
-security qualification with `push_latest=false`. The control packages bind only
-those exact pinned manifest digests and are published in the RC8 validation
-prerelease. No `latest` image tag or stable GitHub release was promoted.
+`b3431cf86d8a000462df487685104558ac7becd3`. The same-source
+`v0.1.0-rc9` CPU and CUDA 12.8 images passed local and exact-published-digest
+security qualification with `push_latest=false`. The locally verified control
+packages bind only those exact pinned manifest digests. RC9 package/release
+publication and every `latest` promotion remain separately owner-gated.
 **Authoritative Branch**: `main`
 **Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
@@ -118,9 +114,10 @@ prerelease. No `latest` image tag or stable GitHub release was promoted.
   focused source tests and an isolated Podman CPU Azure cancel-then-retry
   runtime smoke layered on the exact RC8 image with its preserved named
   volumes. The cancelled run returned zero detections and the immediate retry
-  completed with 14 real detections. A reviewed replacement image/package and
-  affected-profile repetition remain required; this overlay is not a release
-  candidate.
+  completed with 14 real detections. The reviewed RC9 image/package now
+  supplies the required replacement; affected-profile repetition from exact
+  browser-downloaded RC9 bytes remains required. The overlay itself was not a
+  release candidate.
 - PR #105 merged the request-correlated cancellation correction as accepted
   source `004631754be343a1a9c0a7e0777dfc39e689c9f3`; its required post-merge
   checks passed. Owner-authorized RC9 CPU run `37935858689` then found new
@@ -132,6 +129,28 @@ prerelease. No `latest` image tag or stable GitHub release was promoted.
   `J-Schulein` approved adding this one exact CPU/CUDA residual under the same
   October 31 expiry. The baseline remains 396 keys; every other new or changed
   HIGH/CRITICAL finding remains blocking.
+- PR #106 merged the five-key residual-policy amendment as accepted source
+  `b3431cf86d8a000462df487685104558ac7becd3`; required post-merge checks
+  passed. Owner-authorized RC9 CPU run `37942033212` and CUDA 12.8 run
+  `37942073914` both passed build/load, dependency/Fiona verification, local
+  Trivy comparison before login, immutable-tag absence, push/config identity,
+  exact-published-digest Trivy/SBOM, and the final comparison. The immutable
+  manifests are CPU
+  `sha256:9d24cc71724953fba7e062b6ee71dac38f2ec413716a9b60bfaf8ad0be20c950`
+  and CUDA 12.8
+  `sha256:c2d99f178465a8cdc83430092554d98aeb181797ff330fba2661bc95a45d8287`.
+  Both comparisons reported baseline 396, candidate 79, accepted baseline 74,
+  accepted residual 5, blocking 0, severity escalations 0, and resolved 322.
+  Both `latest` steps were skipped. A clean detached checkout of `b3431cf`
+  then produced control ZIPs with SHA-256
+  `66e674ef28d98835a981bd731bc7a86e7c6bdd07cb9ea964d47e4e9c63cfacfc`
+  (CPU) and
+  `5157a3a396502e524b16dd5eda6cf46aa80521ba4409546af8625f1ca43cad10`
+  (CUDA 12.8). Both manifests, outer sidecars, all 73 internal checksums, and
+  the focused `7/7` package tests passed. The shared asset bytes were
+  reverified at SHA-256
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+  No RC9 control package or GitHub release has been published.
 - Full readiness requires actual YOLO and EfficientNet work on the required
   device in all four profiles plus independent-computer reproduction.
 - Static checks, health/readiness, mocked tests, or CPU fallback are not
@@ -155,14 +174,13 @@ controlled-error/reboot cells. ADR-023 resolves the unsigned support boundary,
 the bounded `rc4` browser-download Docker CPU diagnostic passed without a
 larger blocker, and its documentation findings are merged through PR #94.
 PR #95 then reconciled the accepted project state, and PR #96 merged the
-application urllib3 correction. ADR-024/TASK-104 security correction and the
-same-source RC8 CPU/CUDA exact-digest registry gates now pass. The
-digest-pinned control packages are published in the non-Latest RC8 validation
-prerelease. RC8 Podman CPU exposed a reproducible pre-registration
-cancel-then-retry race; the bounded source fix passes focused tests and an
-isolated real Podman CPU Azure cancel-then-retry smoke, but still requires a
-reviewed replacement-candidate image/package. Complete that correction, then
-resume final browser-download plus independent-host evidence
+application urllib3 correction. RC8 Podman CPU exposed a reproducible
+pre-registration cancel-then-retry race. The bounded correction and five-key
+security policy are now merged through PRs #105/#106, and the same-source RC9
+CPU/CUDA exact-digest registry gates pass. Digest-pinned RC9 control ZIPs pass
+local integrity validation. Publish those exact assets only after separate
+owner authorization, then resume final browser-download plus independent-host
+evidence
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
 
@@ -179,7 +197,7 @@ Current scope:
 - Keep the confirmed `rc4` CPU/CUDA runtime evidence. The `rc4` images and
   control ZIPs remain the regression baseline but are not the final
   documentation-aligned distribution: repository `docs/` is copied into both
-  surfaces. The same-source RC8 image and package rebuild is complete. Do not
+  surfaces. The same-source RC9 image and package rebuild is complete. Do not
   promote `latest` or publish a stable/general release without separate owner
   authorization; the RC8 validation prerelease was separately authorized.
 
@@ -187,11 +205,11 @@ Current scope:
 
 **Status**: IN_PROGRESS - ADR-024 implementation and local CPU/CUDA security,
 identity, Fiona/ZCTA, real-model/device, and live Azure/Google ZCTA-provider
-proof pass. The same-source RC8 CPU and CUDA 12.8 registry digests pass the
-strict exact-digest gate with no `latest` promotion, and their digest-pinned
-control ZIPs pass local integrity validation. Security/publication correction,
-local package assembly, and the non-Latest RC8 validation prerelease are
-complete; final browser-download and independent-host acceptance remain
+proof pass. PR #106 merged the exact five-key policy. Same-source RC9 CPU and
+CUDA 12.8 registry digests pass the strict local and exact-digest gates with no
+`latest` promotion, and their digest-pinned control ZIPs pass local integrity
+validation. RC9 package publication remains owner-gated; final browser-
+download and independent-host acceptance remain
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-104-rc5-security-gate-and-residual-disposition.md`
 
@@ -200,8 +218,8 @@ Current scope:
 - Keep the 396-key accepted baseline unchanged.
 - Pin candidate bases/pip, remove Debian GDAL and its unused transitive tree,
   and prove Fiona/ZCTA behavior through the bundled library.
-- Match only the exact pip-private urllib3 and Bookworm OpenSSL records in the
-  owner-approved, expiring residual file.
+- Match only the exact pip-private urllib3, Bookworm OpenSSL, and Debian Expat
+  records in the owner-approved, expiring residual file.
 - Build/load/scan locally before any push; verify registry config identity and
   exact-digest scan/SBOM evidence before any `latest` promotion.
 
@@ -221,12 +239,13 @@ Current scope:
 
 ### **TASK-091: Owner-Runnable Release Qualification**
 
-**Status**: AT_RISK - local `rc4` W05/W09 and four-profile first-host
-provider, cancellation/error recovery, review/export, and stop/relaunch cells
-pass, including exact-`rc4` reboot persistence. ADR-023 resolves policy/signing
-by narrowing the supported environment. The preliminary `rc4` browser-download
-Docker CPU diagnostic passed and now informs Task-092; it does not replace the
-final exact-candidate browser-download and independent-host evidence
+**Status**: AT_RISK - historical `rc4` qualification and the preliminary
+browser-download diagnostic pass. RC8 browser acceptance then exposed the
+Podman cancellation race, so RC8 is superseded for final acceptance. The
+reviewed correction and exact security amendment are included in the locally
+verified RC9 image/package pair. RC9 prerelease publication, exact browser-
+download testing, affected-profile repetition, and independent-host evidence
+remain
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-091-owner-runnable-release-qualification.md`
 
@@ -236,9 +255,9 @@ Current scope:
   ADR-023 policy inputs, fixtures, and provider-account prerequisites.
 - Attempt an extracted real control-package setup immediately when verified
   package and asset ZIPs are available; do not substitute a source build.
-- Use `rc4` first for a clearly labeled, non-qualifying browser-download
-  diagnostic; preserve findings, then repeat final acceptance against the
-  documentation-aligned image/package identities.
+- Preserve `rc4` as the clearly labeled, non-qualifying browser-download
+  diagnostic and RC8 as defect-reproduction evidence. Run final acceptance
+  only against the exact browser-downloaded RC9 image/package identities.
 - Extend truthful external combined-model qualification under W05, then bind
   W09/W10 evidence to exact ZIP hashes and image digests.
 - Report `pass`, `fail`, `blocked`, `not_run`, or justified `not_applicable`;
@@ -265,14 +284,13 @@ Current scope:
 ### **TASK-092: Documentation Currentness And Information Architecture**
 
 **Status**: IN_PROGRESS - `rc4` and five review rounds are dispositioned;
-`J-Schulein` approved the content freeze at `524ba37`, bounded follow-up fixes
-landed at `f8e191d`, PR #94 merged as `fc97b32`, and PR #95 merged the bounded
-state reconciliation as `a24d369`. Local `rc5` image/package documentation
-parity passes, the same-source RC8 image identities are frozen, and their
-digest-pinned control ZIPs are published in the RC8 validation prerelease.
-Complete live permission verification, exact-browser-downloaded-package/
-running-image Help validation, publication checks, screenshots/video, and the
-final W09/W10 gates
+the frozen documentation is merged through PR #94. RC8 documentation-bearing
+packages were published, but RC8 is superseded for final acceptance by the
+Podman cancellation defect. The corrected same-source RC9 images pass exact-
+digest qualification and their locally assembled control ZIPs preserve the
+frozen documentation. After separately authorized RC9 publication, complete
+live permission verification, exact-browser-downloaded-package/running-image
+Help validation, screenshots/video, and the final W09/W10 gates
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-092-documentation-currentness.md`
 
@@ -349,14 +367,15 @@ and explicit authorization.
    diagnostic evidence, then incorporate applicable findings into Task-092.
 8. [x] Freeze Task-092 content, merge the accepted documentation through PR
    #94, and confirm post-merge CI.
-9. [x] Complete ADR-024/TASK-104, merge the bounded security correction,
-   freeze the reconciled accepted-main source, and rebuild and locally verify
-   documentation-aligned CPU/CUDA images and control ZIPs under the RC8
-   identities.
-10. [x] After owner authorization, publish the exact RC8 assets and
-   authoritative hashes before final browser-download extraction testing or
-   tester distribution.
-11. [ ] Complete W10 four-profile and independent-host reproduction; otherwise
+9. [x] Complete ADR-024/TASK-104, merge the bounded security correction and
+   its exact Expat amendment, freeze the reconciled accepted-main source, and
+   qualify same-source RC9 CPU/CUDA images.
+10. [x] Assemble and locally verify digest-pinned RC9 CPU/CUDA control ZIPs
+    and the six-asset publication set.
+11. [ ] After owner authorization, publish the exact RC9 assets and
+    authoritative hashes before final browser-download extraction testing or
+    tester distribution.
+12. [ ] Complete W10 four-profile and independent-host reproduction; otherwise
    report only the exact qualified subset.
 
 ## Runtime Coordination

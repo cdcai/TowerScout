@@ -4,13 +4,14 @@
 `J-Schulein` approved the content freeze at `524ba37`, bounded post-freeze
 reproducibility corrections landed at `f8e191d`, and PR #94 merged as
 `fc97b32` with green post-merge CI. PR #95 merged the bounded project-state
-reconciliation as `a24d369`; local image/package documentation parity passes,
-and the same-source RC8 CPU/CUDA image digests are frozen after strict local
-and exact-published-digest security qualification. Their digest-pinned control
-ZIPs are published in the non-Latest RC8 validation prerelease. Final
-screenshots/video, live
-permission verification, exact browser-downloaded package and running-image
-Help validation, and final W09/W10 gates remain
+reconciliation as `a24d369`; local image/package documentation parity passes.
+RC8 documentation-bearing packages were published, but RC8 is superseded for
+final acceptance by the Podman cancellation defect. The corrected same-source
+RC9 CPU/CUDA images pass strict local and exact-published-digest qualification,
+and their digest-pinned control ZIPs preserve the frozen documentation and
+pass local integrity validation. RC9 publication, final screenshots/video,
+live permission verification, exact browser-downloaded package and running-
+image Help validation, and final W09/W10 gates remain
 **Priority**: HIGH
 **Type**: C (Documentation / Release)
 **Child Work Plan**:
@@ -533,7 +534,22 @@ ZIP under its manifest-required RC8 filename were published in the
 GitHub's byte sizes and SHA-256 digests match all six local approved files. The
 release is a prerelease, not Latest, and is bound to frozen source `7827c2a`.
 
-**Next**: Download the published bytes through the normal browser flow and
-complete packaged/running-image Help, live-Wiki, four-profile, and
-independent-host validation. Do not substitute the local upload inputs for the
-browser-downloaded acceptance artifacts.
+**Historical disposition**: RC8 browser testing subsequently exposed the
+Podman cancellation race. Preserve this release as defect-reproduction
+evidence, but do not use RC8 bytes for final acceptance.
+
+### 2026-10-09 - RC9 documentation-bearing replacement assembled
+
+PRs #105/#106 merged the bounded cancellation correction and exact five-key
+security amendment without changing the frozen user-facing documentation.
+Owner-authorized RC9 CPU/CUDA workflows qualified same-source images from
+`b3431cf86d8a000462df487685104558ac7becd3`. A clean detached checkout of that
+source assembled digest-pinned CPU and CUDA 12.8 control ZIPs; each package
+contains the frozen documentation and passed manifest, outer sidecar, and all
+73 internal checksum checks plus the focused `7/7` package suite.
+
+RC9 release-asset publication remains separately owner-gated. After it is
+authorized and completed, download the exact RC9 bytes through the normal
+browser flow and complete packaged/running-image Help, live-Wiki, affected-
+profile, four-profile, and independent-host validation. Do not substitute RC8
+or the local RC9 upload inputs for the browser-downloaded acceptance artifacts.
