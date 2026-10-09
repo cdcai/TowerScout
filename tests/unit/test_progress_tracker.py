@@ -79,3 +79,49 @@ def test_progress_tracker_rejects_stale_run_tokens_and_can_clear():
     cleared = tracker.clear(session_id, run_token="run-active")
     assert cleared is True
     assert tracker.get(session_id)["status"] == "idle"
+
+
+def test_progress_tracker_correlates_early_cancellation_to_one_request():
+    tracker = DetectionProgressTracker()
+    session_id = "session-race"
+    cancelled_request_id = "browser-request-1"
+
+    assert tracker.mark_cancel_requested(
+        session_id,
+        client_request_id=cancelled_request_id,
+    ) is None
+    assert tracker.consume_pending_cancellation(
+        session_id,
+        "browser-request-2",
+    ) is False
+    assert tracker.consume_pending_cancellation(
+        session_id,
+        cancelled_request_id,
+    ) is True
+    assert tracker.consume_pending_cancellation(
+        session_id,
+        cancelled_request_id,
+    ) is False
+
+
+def test_progress_tracker_does_not_cancel_a_different_active_request():
+    tracker = DetectionProgressTracker()
+    session_id = "session-current"
+    tracker.start(
+        session_id,
+        "run-current",
+        provider="azure",
+        engine="newest",
+        client_request_id="browser-request-current",
+    )
+
+    assert tracker.mark_cancel_requested(
+        session_id,
+        client_request_id="browser-request-stale",
+    ) is None
+    assert tracker.get(session_id)["status"] == "running"
+    assert "client_request_id" not in tracker.get(session_id)
+    assert tracker.consume_pending_cancellation(
+        session_id,
+        "browser-request-stale",
+    ) is True

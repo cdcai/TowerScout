@@ -16,10 +16,12 @@ def _utc_now_iso():
 
 
 class DetectionProgressTracker:
-    def __init__(self, terminal_ttl_seconds=30):
+    def __init__(self, terminal_ttl_seconds=30, cancellation_ttl_seconds=60):
         self._terminal_ttl_seconds = terminal_ttl_seconds
+        self._cancellation_ttl_seconds = cancellation_ttl_seconds
         self._lock = threading.Lock()
         self._states = {}
+        self._pending_cancellations = {}
 
     def _prune_expired_locked(self):
         now = time.time()
@@ -31,11 +33,20 @@ class DetectionProgressTracker:
         for session_id in expired_session_ids:
             self._states.pop(session_id, None)
 
+        expired_cancellations = [
+            key
+            for key, expires_at in self._pending_cancellations.items()
+            if expires_at <= now
+        ]
+        for key in expired_cancellations:
+            self._pending_cancellations.pop(key, None)
+
     def _copy_locked(self, state, include_internal=False):
         payload = copy.deepcopy(state)
         if not include_internal:
             payload.pop("run_token", None)
             payload.pop("expires_at", None)
+            payload.pop("client_request_id", None)
         return payload
 
     def _mark_terminal_locked(self, state, status):
@@ -57,6 +68,7 @@ class DetectionProgressTracker:
         detail="Starting detection request...",
         counts=None,
         cancel_requested=False,
+        client_request_id=None,
     ):
         now_iso = _utc_now_iso()
         state = {
@@ -72,6 +84,7 @@ class DetectionProgressTracker:
             "started_at": now_iso,
             "updated_at": now_iso,
             "run_token": run_token,
+            "client_request_id": client_request_id,
             "expires_at": None,
         }
 
@@ -122,10 +135,18 @@ class DetectionProgressTracker:
             self._mark_terminal_locked(state, state["status"])
             return self._copy_locked(state, include_internal=True)
 
-    def mark_cancel_requested(self, session_id):
+    def mark_cancel_requested(self, session_id, client_request_id=None):
         with self._lock:
             self._prune_expired_locked()
             state = self._states.get(session_id)
+            if client_request_id is not None and (
+                state is None
+                or state.get("client_request_id") != client_request_id
+            ):
+                self._pending_cancellations[(session_id, client_request_id)] = (
+                    time.time() + self._cancellation_ttl_seconds
+                )
+                return None
             if state is None:
                 return None
             if state.get("status") in TERMINAL_STATUSES:
@@ -139,6 +160,15 @@ class DetectionProgressTracker:
             state["updated_at"] = _utc_now_iso()
             self._mark_terminal_locked(state, state["status"])
             return self._copy_locked(state, include_internal=True)
+
+    def consume_pending_cancellation(self, session_id, client_request_id):
+        if client_request_id is None:
+            return False
+
+        with self._lock:
+            self._prune_expired_locked()
+            key = (session_id, client_request_id)
+            return self._pending_cancellations.pop(key, None) is not None
 
     def finish(self, session_id, status, run_token=None, **fields):
         return self.update(session_id, run_token=run_token, status=status, **fields)

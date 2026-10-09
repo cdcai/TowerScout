@@ -1,6 +1,6 @@
 # TowerScout Current Technical Design
 
-**Last Updated**: October 7, 2026
+**Last Updated**: October 8, 2026
 **Scope**: Main-based Windows deployment delivery, four-profile runtime
 qualification, and cdcai handoff through October 2026
 **Archived Pre-Rebaseline Design**:
@@ -102,6 +102,14 @@ the same lock, and keeps its progress overlay and cancellation-pending
 admission guard active until the run is terminal and the slot is free. This is
 bounded hardening of the existing synchronous detection path, not the deferred
 Task-058 background-job architecture.
+
+Each browser detection request also carries a short-lived, per-page request
+identity on both `/getobjects` and `/abort`. If cancellation arrives before
+the matching run is registered, the progress tracker retains a bounded
+cancellation tombstone for that request only. A delayed matching request is
+then rejected before provider or model work, while a retry with a new identity
+can proceed. The identity is internal correlation metadata and is not exposed
+in the public progress response.
 
 ## Podman Qualification Boundary
 

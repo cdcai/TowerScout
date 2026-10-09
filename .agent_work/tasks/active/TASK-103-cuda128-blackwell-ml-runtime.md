@@ -11,8 +11,11 @@ health, device, package-integrity, and documentation-parity checks. ADR-024
 then resolved the bounded security delta, and the same-source RC8 CPU/CUDA
 registry images pass local and exact-published-digest security qualification.
 Their digest-pinned control ZIPs are published in the non-Latest RC8 validation
-prerelease. Final browser-download validation and independent-host evidence
-remain
+prerelease. First-host RC8 Podman CPU testing exposed a pre-registration
+cancel-then-retry race. The bounded request-correlation fix passes focused
+source tests and an isolated real Podman CPU runtime smoke but requires a
+reviewed replacement-candidate image/package before final browser-download
+validation and independent-host evidence can resume
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
@@ -264,3 +267,58 @@ Latest release. The RC8 tag resolves to frozen source
 `7827c2af8ecb7d8b21d246b69e135807fa497fd2`, and GitHub's recorded sizes and
 digests match all six approved local inputs. No image `latest` tag was promoted.
 Exact browser-downloaded bytes and independent-host proof remain required.
+
+## 2026-10-08 RC8 Podman Cancellation Finding And Bounded Fix
+
+**Objective**: Resolve the RC8 Podman CPU cancel-then-immediate-retry failure
+without changing provider, model, package, volume, or public API behavior.
+
+**Context**: The exact browser-downloaded RC8 Podman CPU package passed setup,
+Azure configuration, real CPU detection, ZIP lookup, controlled-error
+recovery, review/export, and volume-preserving relaunch. Immediate
+cancel-then-retry failed four times, including after Windows reboot with
+Docker Desktop closed and the intended rootless Podman machine selected. The
+container remained ready, did not restart or exhaust memory, and saw about
+16.5 GB of available memory.
+
+**Decision**: Correlate each browser detection and abort request with the same
+short-lived request identity. When abort arrives before the run is registered,
+retain a 60-second cancellation tombstone for only that identity. A delayed
+matching request returns a cancelled empty result before provider/model work;
+a new retry identity remains independent. Preserve the existing legacy path
+for clients that do not send correlation metadata.
+
+**Execution**: Updated `webapp/js/src/ui/search.js`, the generated
+`webapp/js/towerscout.js`, `webapp/towerscout.py`, and `webapp/ts_progress.py`.
+Added backend tests for abort-before-admission, abort-during-admission, stale
+request separation, and internal metadata hiding. Extended the frontend
+cancellation contract to prove `/getobjects` and `/abort` send the same
+identity.
+
+**Output**: The exact reproduced ordering is now covered: an early abort is
+remembered, the delayed original request performs no provider/model work, the
+detection lock is released, and a differently identified retry remains
+eligible. No credentials, private AOI coordinates, raw traces, or screenshots
+were added to repository evidence.
+
+**Validation**: `12/12` focused admission/progress tests pass; the broader
+selected progress/admission/abort route set passes `15/15`; the frontend
+cancellation recovery contract, ProviderStateManager contract, global
+contract, debug logging contract, generated-bundle consistency check, and
+`git diff --check` pass. A wider name-filtered cancellation run also confirmed
+all 13 relevant TowerScout tests passed; its two additional selected tests
+were blocked by local Defender and temporary-directory conditions unrelated
+to this change. An isolated validation image layered only the corrected
+runtime files onto the exact RC8 CPU digest and reused the eight preserved
+RC8 Podman named volumes. Azure cancel-then-immediate-retry browser run
+`20261008-171359-azure-cancel` passed: abort returned HTTP 200 in 51 ms with
+zero detections after cancellation, and the immediate retry completed one
+real tile with 14 detections in about 21.7 seconds. There were no page errors;
+the only HTTP error was the nonfunctional `favicon.ico` 404. The temporary
+container was removed without removing volumes, and the original RC8 Podman
+CPU container was restored healthy on port 5000.
+
+**Next**: Review the final diff and task validation, then carry the bounded fix
+through normal review and build a replacement candidate. Repeat the affected
+exact-package Podman acceptance cells from the replacement bytes. Do not treat
+the local validation overlay as final release qualification.

@@ -44,6 +44,8 @@
   let progressPollInFlight = false;
   let lastProgressPollAt = 0;
   let progressStatusSeen = false;
+  const detectionRequestIdPrefix = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  const DETECTION_REQUEST_ID_HEADER = 'X-TowerScout-Detection-Request-Id';
   const TERMINAL_PROGRESS_STATUSES = new Set(['completed', 'cancelled', 'error']);
 
   async function getResponseErrorMessage(response, fallbackMessage) {
@@ -565,6 +567,7 @@
     const requestId = ++detectionRequestSeq;
     const requestState = {
       id: requestId,
+      clientRequestId: `${detectionRequestIdPrefix}-${requestId}`,
       cancelled: false,
       controller: new AbortController(),
       startedAtMs: Date.now()
@@ -589,6 +592,9 @@
         const response = await fetch('/getobjects', {
           method: 'POST',
           body: buildDetectionFormData(payload),
+          headers: {
+            [DETECTION_REQUEST_ID_HEADER]: requestState.clientRequestId
+          },
           signal: requestState.controller.signal
         });
         if (!response.ok) {
@@ -800,7 +806,13 @@
       providerManager.startProgressTimer(progressFunction, CONFIG.PROGRESS_UPDATE_INTERVAL_MS);
     }
     try {
-      const response = await fetch("/abort", { method: "POST" });
+      const abortOptions = { method: "POST" };
+      if (requestState?.clientRequestId) {
+        abortOptions.headers = {
+          [DETECTION_REQUEST_ID_HEADER]: requestState.clientRequestId
+        };
+      }
+      const response = await fetch("/abort", abortOptions);
       let result = null;
       try {
         result = await response.json();

@@ -183,6 +183,10 @@ Acceptance:
 
 - The backend signals the active run, then reports retry readiness only after
   the shared detection slot is released.
+- A cancellation that reaches the server before its detection run is
+  registered is remembered for that exact browser request; a later retry uses
+  a different request identity and is not cancelled or blocked by the stale
+  request.
 - While the shared slot remains occupied, `/abort` returns promptly with HTTP
   `202` and `retryReady=false`; `/api/detection/progress` is the continuing
   readiness authority.
@@ -191,10 +195,15 @@ Acceptance:
 - After progress reports a terminal run with `retryReady=true`, the next real
   provider-backed detection succeeds without a container relaunch.
 
-Current result (2026-09-30): all four final local `rc4` profiles observed HTTP
-`202` while cancellation was pending, retained the progress overlay until
-retry readiness, and completed an immediate next real Google detection without
-a relaunch or page error.
+Current result (2026-10-08): all four local `rc4` profiles passed the original
+cancellation contract. During exact browser-downloaded RC8 testing, Podman CPU
+reproduced an earlier request-ordering window four times: `/abort` returned
+idle/ready before the delayed `/getobjects` request registered, and the next
+request received `DETECTION_BUSY`. A bounded request-correlation/tombstone fix
+now passes focused backend/frontend tests and an isolated real Azure
+cancel-then-immediate-retry Podman CPU smoke layered on the exact RC8 runtime;
+the retry completed with 14 detections. Replacement-candidate exact-package
+Podman proof remains required before this requirement passes for final release.
 
 ### SEC-001: Dependency Security Baseline And Release Gate
 

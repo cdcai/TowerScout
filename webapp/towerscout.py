@@ -213,6 +213,8 @@ engines = {}
 engine_default = None
 engine_lock = threading.Lock()
 detection_job_lock = threading.Lock()
+DETECTION_REQUEST_ID_HEADER = 'X-TowerScout-Detection-Request-Id'
+DETECTION_REQUEST_ID_PATTERN = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$')
 CANCELLATION_PENDING_MESSAGE = (
     'Cancellation is still pending while the current model step finishes. '
     'TowerScout will enable detection when the run stops.'
@@ -449,6 +451,15 @@ def _get_session_run_id():
     return session_id
 
 
+def _get_detection_request_id():
+    request_id = request.headers.get(DETECTION_REQUEST_ID_HEADER, '').strip()
+    if not request_id:
+        return None
+    if DETECTION_REQUEST_ID_PATTERN.fullmatch(request_id) is None:
+        return None
+    return request_id
+
+
 def _register_detection_run(
     session_id,
     provider,
@@ -460,6 +471,7 @@ def _register_detection_run(
     title='Preparing tiles',
     detail='Starting detection request...',
     counts=None,
+    client_request_id=None,
 ):
     return progress_tracker.start(
         session_id,
@@ -472,6 +484,7 @@ def _register_detection_run(
         title=title,
         detail=detail,
         counts=counts,
+        client_request_id=client_request_id,
     )
 
 
@@ -479,8 +492,18 @@ def _update_detection_run(session_id, status=None, run_token=None, **fields):
     return progress_tracker.update(session_id, run_token=run_token, status=status, **fields)
 
 
-def _mark_detection_run_cancel_requested(session_id):
-    return progress_tracker.mark_cancel_requested(session_id)
+def _mark_detection_run_cancel_requested(session_id, client_request_id=None):
+    return progress_tracker.mark_cancel_requested(
+        session_id,
+        client_request_id=client_request_id,
+    )
+
+
+def _consume_pending_detection_cancellation(session_id, client_request_id):
+    return progress_tracker.consume_pending_cancellation(
+        session_id,
+        client_request_id,
+    )
 
 
 def _finish_detection_run(session_id, status, run_token=None, **fields):
@@ -869,8 +892,8 @@ def _attach_detection_addresses(results, provider, perf_metrics=None, progress_c
     )
 
 
-def _run_detection_request():
-    session_id = _get_session_run_id()
+def _run_detection_request(session_id=None, client_request_id=None):
+    session_id = session_id or _get_session_run_id()
     run_token = f"{session_id}:{secrets.token_hex(8)}"
     api_logger.debug("Processing detection request for session %s", session_id)
 
@@ -915,8 +938,12 @@ def _run_detection_request():
             phase='preparing_tiles',
             title='Preparing tiles',
             detail='Validating the detection request and building search tiles...',
+            client_request_id=client_request_id,
         )
         run_registered = True
+
+        if _consume_pending_detection_cancellation(session_id, client_request_id):
+            exit_events.signal(run_token)
 
         def cancelled_response(detail):
             api_logger.info("Detection cancelled for session %s: %s", session_id, detail)
@@ -2735,8 +2762,12 @@ def get_detection_progress():
 @app.route('/abort', methods=['GET', 'POST'])
 def abort():
     session_id = _get_session_run_id()
+    client_request_id = _get_detection_request_id()
     api_logger.info(f"Aborting session {session_id}")
-    run_state = _mark_detection_run_cancel_requested(session_id)
+    run_state = _mark_detection_run_cancel_requested(
+        session_id,
+        client_request_id=client_request_id,
+    )
     retry_ready = not detection_job_lock.locked()
     if run_state is None:
         payload = {
@@ -2780,13 +2811,24 @@ def get_objects():
             'error': 'Rate limit exceeded. Please try again later.',
             'code': 'RATE_LIMITED',
         }), 429
+    session_id = _get_session_run_id()
+    client_request_id = _get_detection_request_id()
+    if _consume_pending_detection_cancellation(session_id, client_request_id):
+        return Response("[]", mimetype='application/json')
     if not detection_job_lock.acquire(blocking=False):
         return jsonify({
             'error': 'Detection is already running.',
             'code': 'DETECTION_BUSY',
         }), 429
     try:
-        return _run_detection_request()
+        if _consume_pending_detection_cancellation(session_id, client_request_id):
+            return Response("[]", mimetype='application/json')
+        if client_request_id is None:
+            return _run_detection_request()
+        return _run_detection_request(
+            session_id=session_id,
+            client_request_id=client_request_id,
+        )
     finally:
         detection_job_lock.release()
 

@@ -1,7 +1,7 @@
 # Current Tasks - Final Candidate Build And Acceptance
 
 **Sprint Period**: October 5-October 16, 2026
-**Last Updated**: October 7, 2026
+**Last Updated**: October 8, 2026
 **Focus**: Qualify a dependable, downloadable Windows 11 application from
 accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Documentation
 content is frozen and merged through PR #94, and the project-state
@@ -9,6 +9,11 @@ reconciliation is merged through PR #95. The same-source RC8 CPU/CUDA images
 now pass the exact-digest security gate, and their digest-pinned control ZIPs
 are assembled, verified, and published as the non-Latest RC8 validation
 prerelease. Final browser-download and independent-host acceptance follow.
+The first-host RC8 Podman CPU browser run exposed a pre-registration
+cancellation race; a bounded request-correlation fix is locally implemented
+and passes an isolated Podman CPU Azure cancel-then-retry smoke against the
+RC8 runtime and preserved volumes. A reviewed replacement candidate is still
+required before final acceptance.
 The Task-087 launcher
 redesign remains preserved and deferred, not a release gate.
 
@@ -95,6 +100,22 @@ prerelease. No `latest` image tag or stable GitHub release was promoted.
   ZIP remains byte-identical to the required RC8 asset at SHA-256
   `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`;
   it was not duplicated locally merely to rename it.
+- First-host RC8 Docker CPU/CUDA browser acceptance passed the exercised
+  provider, TLS-repair, model, and cancellation paths. RC8 Podman CPU passed
+  setup, Azure/provider persistence, real CPU detection, ZIP lookup,
+  controlled-error recovery, review/export, and relaunch, but immediate
+  cancel-then-retry reproduced a request-ordering race four times, including
+  after a reboot with Docker Desktop closed. The cancelled browser request
+  reached `/getobjects` after `/abort` had returned idle/ready, so the retry
+  received `DETECTION_BUSY`. Correct Podman target selection, container health,
+  and available memory were confirmed; RC8 is therefore not the final
+  candidate. A request-correlated cancellation tombstone fix now passes
+  focused source tests and an isolated Podman CPU Azure cancel-then-retry
+  runtime smoke layered on the exact RC8 image with its preserved named
+  volumes. The cancelled run returned zero detections and the immediate retry
+  completed with 14 real detections. A reviewed replacement image/package and
+  affected-profile repetition remain required; this overlay is not a release
+  candidate.
 - Full readiness requires actual YOLO and EfficientNet work on the required
   device in all four profiles plus independent-computer reproduction.
 - Static checks, health/readiness, mocked tests, or CPU fallback are not
@@ -121,7 +142,11 @@ PR #95 then reconciled the accepted project state, and PR #96 merged the
 application urllib3 correction. ADR-024/TASK-104 security correction and the
 same-source RC8 CPU/CUDA exact-digest registry gates now pass. The
 digest-pinned control packages are published in the non-Latest RC8 validation
-prerelease. Complete final browser-download plus independent-host evidence
+prerelease. RC8 Podman CPU exposed a reproducible pre-registration
+cancel-then-retry race; the bounded source fix passes focused tests and an
+isolated real Podman CPU Azure cancel-then-retry smoke, but still requires a
+reviewed replacement-candidate image/package. Complete that correction, then
+resume final browser-download plus independent-host evidence
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
 

@@ -23,6 +23,12 @@ function load(fetchImplementation) {
   const loggerMessages = [];
   const notifications = [];
   let progressTimerCallback = null;
+  const currentMap = {
+    boundaries: [],
+    hasShapes() { return false; },
+    getBoundaryBoundsUrl() { return '40.0,-75.0,40.1,-74.9'; },
+    getBoundariesStr() { return '[[[-75,40],[-74.9,40],[-74.9,40.1],[-75,40.1],[-75,40]]]'; }
+  };
   const context = {
     AbortController,
     CONFIG: {
@@ -32,12 +38,27 @@ function load(fetchImplementation) {
     },
     Date,
     Error,
+    FormData,
     Math,
     Number,
     Set,
     console,
+    currentMap,
+    Detection_detections: [],
+    Detection: {
+      resetAll() {}
+    },
+    Tile: {
+      resetAll() {}
+    },
+    $() {
+      return {
+        val() { return 'newest'; }
+      };
+    },
     document: {
-      getElementById(id) { return elements[id] || null; }
+      getElementById(id) { return elements[id] || null; },
+      querySelector() { return { value: 'azure' }; }
     },
     fetch: fetchImplementation,
     performance,
@@ -48,9 +69,12 @@ function load(fetchImplementation) {
       getMap() { return null; }
     },
     TowerScoutErrorHandler: {
-      showUserNotification(message, type) { notifications.push({ message, type }); }
+      showUserNotification(message, type) { notifications.push({ message, type }); },
+      wrapNetworkCall(operation) { return operation; },
+      handleNetworkError() {}
     },
     window: {
+      confirm() { return true; },
       TowerScoutLogger: {
         debug() {},
         info(message) { loggerMessages.push(message); }
@@ -176,10 +200,48 @@ async function testOlderCancelResponseCannotRestorePendingState() {
   );
 }
 
+async function testCancelCorrelatesWithTheActiveDetectionRequest() {
+  const calls = [];
+  const harness = load(async (url, options = {}) => {
+    calls.push({ url, options });
+    if (url === '/getobjects') {
+      return new Promise(() => {});
+    }
+    if (url === '/abort') {
+      return response(200, {
+        status: 'idle',
+        retryReady: true
+      });
+    }
+    return response(200, {
+      status: 'idle',
+      retryReady: true
+    });
+  });
+
+  void harness.getObjects(false);
+  await new Promise(resolve => setImmediate(resolve));
+
+  const detectionCall = calls.find(call => call.url === '/getobjects');
+  assert.ok(detectionCall, 'detection request was not started');
+  const requestId = detectionCall.options.headers['X-TowerScout-Detection-Request-Id'];
+  assert.ok(requestId, 'detection request did not include a correlation ID');
+
+  await harness.cancelRequest();
+
+  const abortCall = calls.find(call => call.url === '/abort');
+  assert.ok(abortCall, 'abort request was not sent');
+  assert.strictEqual(
+    abortCall.options.headers['X-TowerScout-Detection-Request-Id'],
+    requestId
+  );
+}
+
 testReadyCancellationUnlocksProgressUi()
   .then(testPendingCancellationKeepsProgressUiBlocked)
   .then(testSuccessfulNonJsonCancellationResponseStaysPending)
   .then(testOlderCancelResponseCannotRestorePendingState)
+  .then(testCancelCorrelatesWithTheActiveDetectionRequest)
   .then(() => {
     console.log('Detection cancellation recovery contract PASSED');
   })

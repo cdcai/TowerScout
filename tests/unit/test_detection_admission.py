@@ -269,3 +269,111 @@ def test_abort_without_session_run_stays_pending_while_global_slot_is_busy():
         signal.assert_not_called()
     finally:
         towerscout.detection_job_lock.release()
+
+
+def test_abort_before_detection_admission_cancels_only_delayed_request():
+    app.config["TESTING"] = True
+    client = app.test_client()
+    session_id = "session-pre-admission-cancel"
+    cancelled_request_id = "browser-request-cancelled"
+    retry_request_id = "browser-request-retry"
+    header_name = towerscout.DETECTION_REQUEST_ID_HEADER
+
+    with client.session_transaction() as sess:
+        sess[towerscout.SESSION_ID_KEY] = session_id
+
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch(
+        "towerscout._run_detection_request",
+        return_value=({"ok": True}, 200),
+    ) as run_detection:
+        abort_response = client.post(
+            "/abort",
+            headers={header_name: cancelled_request_id},
+        )
+        delayed_response = client.post(
+            "/getobjects",
+            data={"bounds": "x"},
+            headers={header_name: cancelled_request_id},
+        )
+        retry_response = client.post(
+            "/getobjects",
+            data={"bounds": "x"},
+            headers={header_name: retry_request_id},
+        )
+
+    assert abort_response.status_code == 200
+    assert abort_response.get_json() == {
+        "status": "idle",
+        "retryReady": True,
+    }
+    assert delayed_response.status_code == 200
+    assert delayed_response.get_json() == []
+    assert retry_response.status_code == 200
+    assert retry_response.get_json() == {"ok": True}
+    run_detection.assert_called_once_with(
+        session_id=session_id,
+        client_request_id=retry_request_id,
+    )
+
+
+def test_abort_during_detection_admission_is_consumed_before_provider_work(monkeypatch):
+    app.config["TESTING"] = True
+    monkeypatch.setenv("TOWERSCOUT_PILOT_MAX_TILES", "1")
+    session_id = "session-admission-window"
+    request_id = "browser-request-admitting"
+    header_name = towerscout.DETECTION_REQUEST_ID_HEADER
+    parse_entered = threading.Event()
+    release_parse = threading.Event()
+    response_holder = {}
+
+    def parse_request(_form):
+        parse_entered.set()
+        assert release_parse.wait(timeout=5), "test did not release request parsing"
+        return {
+            "bounds": "37.7,-122.5,37.8,-122.4",
+            "engine": "newest",
+            "provider": "azure",
+            "polygons": [],
+        }
+
+    def run_detection_request():
+        response_holder["response"] = app.test_client().post(
+            "/getobjects",
+            data={"bounds": "x"},
+            headers={header_name: request_id},
+        )
+
+    worker = threading.Thread(target=run_detection_request)
+    try:
+        with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch(
+            "towerscout._get_session_run_id",
+            return_value=session_id,
+        ), patch(
+            "towerscout._parse_detection_request",
+            side_effect=parse_request,
+        ), patch(
+            "towerscout._create_map_provider",
+        ) as create_provider:
+            worker.start()
+            assert parse_entered.wait(timeout=5), "detection did not enter request parsing"
+
+            abort_response = app.test_client().post(
+                "/abort",
+                headers={header_name: request_id},
+            )
+            assert abort_response.status_code == 202
+            assert abort_response.get_json()["retryReady"] is False
+
+            release_parse.set()
+            worker.join(timeout=5)
+
+        assert not worker.is_alive()
+        assert response_holder["response"].status_code == 200
+        assert response_holder["response"].get_json() == []
+        create_provider.assert_not_called()
+        assert not towerscout.detection_job_lock.locked()
+    finally:
+        release_parse.set()
+        if worker.is_alive():
+            worker.join(timeout=5)
+        towerscout.progress_tracker.clear(session_id)
