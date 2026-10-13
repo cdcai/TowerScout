@@ -9,8 +9,9 @@ RC8 documentation-bearing packages were published, but RC8 is superseded for
 final acceptance by the Podman cancellation defect. The corrected same-source
 RC9 CPU/CUDA images pass strict local and exact-published-digest qualification,
 and their digest-pinned control ZIPs preserve the frozen documentation and
-pass local integrity validation. RC9 publication, final screenshots/video,
-live permission verification, exact browser-downloaded package and running-
+pass local integrity validation. The non-Latest RC9 prerelease is published;
+final screenshots/video, live permission verification, exact browser-
+downloaded package and running-
 image Help validation, and final W09/W10 gates remain
 **Priority**: HIGH
 **Type**: C (Documentation / Release)
@@ -548,8 +549,11 @@ source assembled digest-pinned CPU and CUDA 12.8 control ZIPs; each package
 contains the frozen documentation and passed manifest, outer sidecar, and all
 73 internal checksum checks plus the focused `7/7` package suite.
 
-RC9 release-asset publication remains separately owner-gated. After it is
-authorized and completed, download the exact RC9 bytes through the normal
-browser flow and complete packaged/running-image Help, live-Wiki, affected-
-profile, four-profile, and independent-host validation. Do not substitute RC8
-or the local RC9 upload inputs for the browser-downloaded acceptance artifacts.
+Owner-authorized release `v0.1.0-rc9` was published at
+`2026-10-09T15:26:48Z` as a non-draft, non-Latest prerelease targeting exact
+source `b3431cf86d8a000462df487685104558ac7becd3`. All six asset identities and
+public download URLs were verified after publication. Download the exact RC9
+bytes through the normal browser flow and complete packaged/running-image Help,
+live-Wiki, affected-profile, four-profile, and independent-host validation. Do
+not substitute RC8 or the local RC9 upload inputs for the browser-downloaded
+acceptance artifacts.

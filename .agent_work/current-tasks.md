@@ -8,10 +8,10 @@ content is frozen and merged through PR #94, and the project-state
 reconciliation is merged through PR #95. RC8 browser testing exposed a
 pre-registration cancellation race; the bounded fix merged through PR #105.
 PR #106 then added the owner-approved exact, expiring Debian Expat residual.
-The same-source RC9 CPU/CUDA images now pass the local and exact-published-
-digest security gates, and their digest-pinned control ZIPs are assembled and
-locally verified. RC9 release-asset publication remains owner-gated; after
-publication, final browser-download and independent-host acceptance follow.
+The same-source RC9 CPU/CUDA images pass the local and exact-published-digest
+security gates, and their digest-pinned control ZIPs are published in the
+non-Latest `v0.1.0-rc9` validation prerelease. Final browser-download and
+independent-host acceptance now follow.
 The Task-087 launcher
 redesign remains preserved and deferred, not a release gate.
 
@@ -26,8 +26,9 @@ redesign remains preserved and deferred, not a release gate.
 `b3431cf86d8a000462df487685104558ac7becd3`. The same-source
 `v0.1.0-rc9` CPU and CUDA 12.8 images passed local and exact-published-digest
 security qualification with `push_latest=false`. The locally verified control
-packages bind only those exact pinned manifest digests. RC9 package/release
-publication and every `latest` promotion remain separately owner-gated.
+packages bind only those exact pinned manifest digests. The owner-authorized
+non-Latest RC9 prerelease is published; every `latest` promotion and any
+stable/general release remain separately owner-gated.
 **Authoritative Branch**: `main`
 **Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
@@ -150,7 +151,12 @@ publication and every `latest` promotion remain separately owner-gated.
   the focused `7/7` package tests passed. The shared asset bytes were
   reverified at SHA-256
   `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
-  No RC9 control package or GitHub release has been published.
+- Owner-authorized GitHub release `v0.1.0-rc9` (release ID `408047593`) was
+  published at `2026-10-09T15:26:48Z` as a non-draft, non-Latest prerelease
+  targeting exact source `b3431cf86d8a000462df487685104558ac7becd3`.
+  GitHub reports all six assets uploaded with the approved byte sizes and
+  SHA-256 digests; all six unauthenticated browser-download URLs returned HTTP
+  200. Stable `v0.1.2` remains Latest, and no GHCR `latest` tag was promoted.
 - Full readiness requires actual YOLO and EfficientNet work on the required
   device in all four profiles plus independent-computer reproduction.
 - Static checks, health/readiness, mocked tests, or CPU fallback are not
@@ -178,9 +184,9 @@ application urllib3 correction. RC8 Podman CPU exposed a reproducible
 pre-registration cancel-then-retry race. The bounded correction and five-key
 security policy are now merged through PRs #105/#106, and the same-source RC9
 CPU/CUDA exact-digest registry gates pass. Digest-pinned RC9 control ZIPs pass
-local integrity validation. Publish those exact assets only after separate
-owner authorization, then resume final browser-download plus independent-host
-evidence
+local integrity validation and are published in the non-Latest RC9 validation
+prerelease. Resume final browser-download plus independent-host evidence using
+only those exact public bytes
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
 
@@ -208,7 +214,7 @@ identity, Fiona/ZCTA, real-model/device, and live Azure/Google ZCTA-provider
 proof pass. PR #106 merged the exact five-key policy. Same-source RC9 CPU and
 CUDA 12.8 registry digests pass the strict local and exact-digest gates with no
 `latest` promotion, and their digest-pinned control ZIPs pass local integrity
-validation. RC9 package publication remains owner-gated; final browser-
+validation. The non-Latest RC9 package prerelease is published; final browser-
 download and independent-host acceptance remain
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-104-rc5-security-gate-and-residual-disposition.md`
@@ -243,9 +249,9 @@ Current scope:
 browser-download diagnostic pass. RC8 browser acceptance then exposed the
 Podman cancellation race, so RC8 is superseded for final acceptance. The
 reviewed correction and exact security amendment are included in the locally
-verified RC9 image/package pair. RC9 prerelease publication, exact browser-
-download testing, affected-profile repetition, and independent-host evidence
-remain
+verified RC9 image/package pair, and the non-Latest RC9 prerelease is
+published. Exact browser-download testing, affected-profile repetition, and
+independent-host evidence remain
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-091-owner-runnable-release-qualification.md`
 
@@ -287,9 +293,9 @@ Current scope:
 the frozen documentation is merged through PR #94. RC8 documentation-bearing
 packages were published, but RC8 is superseded for final acceptance by the
 Podman cancellation defect. The corrected same-source RC9 images pass exact-
-digest qualification and their locally assembled control ZIPs preserve the
-frozen documentation. After separately authorized RC9 publication, complete
-live permission verification, exact-browser-downloaded-package/running-image
+digest qualification and their published control ZIPs preserve the frozen
+documentation. Complete live permission verification, exact-browser-
+downloaded-package/running-image
 Help validation, screenshots/video, and the final W09/W10 gates
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-092-documentation-currentness.md`
@@ -372,7 +378,7 @@ and explicit authorization.
    qualify same-source RC9 CPU/CUDA images.
 10. [x] Assemble and locally verify digest-pinned RC9 CPU/CUDA control ZIPs
     and the six-asset publication set.
-11. [ ] After owner authorization, publish the exact RC9 assets and
+11. [x] After owner authorization, publish the exact RC9 assets and
     authoritative hashes before final browser-download extraction testing or
     tester distribution.
 12. [ ] Complete W10 four-profile and independent-host reproduction; otherwise

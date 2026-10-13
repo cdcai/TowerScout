@@ -9,8 +9,8 @@ and merged through PR #94 as `fc97b32`. RC8 packages were published, but RC8
 browser testing exposed the Podman cancellation race and superseded those
 bytes for final acceptance. The reviewed correction and security amendment
 are included in the locally verified same-source RC9 images and digest-pinned
-control ZIPs. RC9 prerelease publication, exact browser-download testing, and
-independent-host evidence remain
+control ZIPs. The non-Latest RC9 prerelease is published; exact browser-
+download testing and independent-host evidence remain
 **Priority**: CRITICAL
 **Type**: C (Release Qualification / Handoff)
 **Owner**: Release owner; active agent executes bounded preparation and checks
@@ -568,6 +568,9 @@ The locally verified RC9 control ZIP SHA-256 values are
 `66e674ef28d98835a981bd731bc7a86e7c6bdd07cb9ea964d47e4e9c63cfacfc`
 for CPU and
 `5157a3a396502e524b16dd5eda6cf46aa80521ba4409546af8625f1ca43cad10`
-for CUDA 12.8. RC9 package publication remains separately owner-gated. Final
-acceptance must begin with the authoritative hashes and exact browser-
-downloaded RC9 bytes; do not substitute RC8 or the local upload inputs.
+for CUDA 12.8. Owner-authorized release `v0.1.0-rc9` was published at
+`2026-10-09T15:26:48Z` as a non-draft, non-Latest prerelease targeting exact
+source `b3431cf86d8a000462df487685104558ac7becd3`. All six asset identities and
+public download URLs were verified after publication; stable `v0.1.2` remains
+Latest. Final acceptance must begin with the authoritative hashes and exact
+browser-downloaded RC9 bytes; do not substitute RC8 or the local upload inputs.

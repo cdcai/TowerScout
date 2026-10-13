@@ -16,8 +16,9 @@ newly disclosed `CVE-2026-77214`; the owner approved one exact October 31-
 expiring residual, and PR #106 merged the bounded policy amendment. Fresh
 same-source RC9 CPU/CUDA publications now pass both local and exact-digest
 security gates with no `latest` promotion, and their digest-pinned packages
-pass local integrity validation. RC9 release-asset publication remains owner-
-gated; final browser-download and independent-host acceptance remain
+pass local integrity validation. The owner-authorized non-Latest RC9 package
+prerelease is published; final browser-download and independent-host
+acceptance remain
 **Priority**: CRITICAL
 **Type**: C (Release Security / Container Publication)
 **Owner**: `J-Schulein` until handoff; `cdcai` thereafter
@@ -63,7 +64,7 @@ security gate passes. Preserve the accepted 396-key baseline unchanged.
 - [x] Assemble and locally verify digest-pinned CPU and CUDA 12.8 packages.
 - [x] After separate owner authorization, publish the historical RC8 package
   assets used to reproduce the Podman cancellation finding.
-- [ ] After separate owner authorization, publish the exact RC9 package assets.
+- [x] After separate owner authorization, publish the exact RC9 package assets.
 - [ ] Complete the final browser-download and independent-host four-profile
   matrix under Tasks 091/092/093/097/103.
 
@@ -499,9 +500,20 @@ Exact implementation revision:
   SHA-256
   `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
 
-No RC9 control package, GitHub release, or `latest` image tag was published.
-The exact six-asset RC9 set is staged locally pending separate owner
-authorization.
+### Owner-authorized RC9 prerelease publication
+
+- GitHub release ID `408047593` was published at `2026-10-09T15:26:48Z` as
+  non-draft prerelease `v0.1.0-rc9` targeting exact source
+  `b3431cf86d8a000462df487685104558ac7becd3`.
+- All six approved assets report state `uploaded`; GitHub's byte sizes and
+  SHA-256 digests match the verified CPU, CUDA 12.8, and shared asset ZIPs and
+  their sidecars.
+- Unauthenticated checks returned HTTP 200 for all six browser-download URLs;
+  temporary signed redirect URLs were not retained.
+- Existing stable release `v0.1.2` remains Latest. No GHCR `latest` tag was
+  promoted and no final release-readiness claim was made.
+- Exact browser-download and independent-host acceptance remain open under the
+  release-qualification tasks.
 
 ## Stop Conditions
 
@@ -515,8 +527,8 @@ authorization.
 
 ## Publication Boundary
 
-Implementation, local builds, local validation, RC8 prerelease publication,
-and RC9 GHCR dispatch were separately authorized and completed. RC9 package
-publication, any `latest` promotion, and any stable/general release remain
-separate owner actions. The full support claim still requires exact browser-
-downloaded bytes, all four profiles, and independent-host reproduction.
+Implementation, local builds, local validation, RC8/RC9 prerelease
+publication, and RC9 GHCR dispatch were separately authorized and completed.
+Any `latest` promotion and any stable/general release remain separate owner
+actions. The full support claim still requires exact browser-downloaded bytes,
+all four profiles, and independent-host reproduction.

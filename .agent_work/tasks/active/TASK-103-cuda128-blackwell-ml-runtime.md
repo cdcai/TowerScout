@@ -13,9 +13,9 @@ exposed a pre-registration cancel-then-retry race. The bounded request-
 correlation fix and exact Expat residual amendment are merged through PRs
 #105/#106. Same-source RC9 CPU/CUDA registry images now pass local and exact-
 published-digest security qualification, and their digest-pinned control ZIPs
-pass local integrity validation. RC9 prerelease publication remains owner-
-gated before final browser-download validation and independent-host evidence
-can resume
+pass local integrity validation. The owner-authorized non-Latest RC9
+prerelease is published; final browser-download validation and independent-
+host evidence can resume
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
@@ -109,9 +109,10 @@ weakening model correctness, device, security, persistence, or recovery gates.
 - [x] Rebuild the updated manuals into same-source RC8 CPU/CUDA image and
   digest-pinned control-ZIP identities because `docs/` is present in both
   surfaces.
-- [ ] Publish the owner-approved candidate assets, then complete final
-  browser-download and independent-host W10 acceptance cells before claiming
-  release readiness.
+- [x] Publish the owner-approved RC9 candidate assets as a non-Latest
+  prerelease.
+- [ ] Complete final browser-download and independent-host W10 acceptance
+  cells before claiming release readiness.
 
 ### W10 Local First-Host Rehearsal - Started 2026-09-28
 
@@ -187,9 +188,10 @@ remain explicit blockers.
 
 ## Publication Boundary
 
-Checkpoint 2 and the replacement H9 dispatch are authorized and recorded. W09
-replacement assembly and local qualification are authorized. Package
-publication, `latest` promotion, and closeout remain explicitly owner-gated.
+Checkpoint 2, the replacement H9 dispatch, W09 replacement assembly, local
+qualification, and RC9 prerelease package publication are authorized and
+recorded. Any `latest` promotion, stable/general release, and closeout remain
+explicitly owner-gated.
 
 ## 2026-10-06 Documentation Merge Checkpoint
 
@@ -292,9 +294,13 @@ passed. `J-Schulein` then authorized fresh CPU and CUDA 12.8 dispatches for
   name the generated `FLASK_SECRET_KEY`; no credential values or runtime data
   were found.
 
-No RC9 control package or GitHub release was published at this checkpoint.
-Exact release-asset publication remains separately owner-authorized, and the
-final support claim still requires browser-downloaded and independent-host
+Owner-authorized GitHub release `v0.1.0-rc9` (release ID `408047593`) was
+published at `2026-10-09T15:26:48Z` as a non-draft, non-Latest prerelease
+targeting exact source `b3431cf86d8a000462df487685104558ac7becd3`.
+All six approved assets are uploaded with matching GitHub-reported sizes and
+SHA-256 digests, and all six public browser-download URLs returned HTTP 200.
+Stable `v0.1.2` remains Latest and no GHCR `latest` tag was promoted. The final
+support claim still requires exact browser-downloaded and independent-host
 four-profile proof.
 
 ## 2026-10-07 Same-Source RC8 Package Assembly
