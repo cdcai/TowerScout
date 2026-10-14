@@ -243,4 +243,5 @@ jobs:
           TOWERSCOUT_REQUIRE_PWSH: '1'
         run: |
           Get-Command pwsh -ErrorAction Stop | Select-Object -ExpandProperty Source
+          python -m pip install pytest
           python -m pytest --confcutdir=tests/unit tests/unit/test_task105_provider_installer.py -q -p no:cacheprovider
