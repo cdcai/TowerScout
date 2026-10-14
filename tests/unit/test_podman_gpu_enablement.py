@@ -296,6 +296,9 @@ def test_podman_gpu_provisioner_recovers_stale_cdi_once():
             if ($text -match "nvidia-ctk cdi list") {{
                 return [pscustomobject]@{{ ExitCode = 0; StdOut = "nvidia.com/gpu=all"; StdErr = "" }}
             }}
+            if ($text -match "^image exists ") {{
+                return [pscustomobject]@{{ ExitCode = 0; StdOut = ""; StdErr = "" }}
+            }}
             if ($text -match "^run --rm --device") {{
                 $script:SmokeCount += 1
                 if ($script:SmokeCount -eq 1) {{
@@ -424,3 +427,73 @@ def test_podman_gpu_image_reference_splitter_handles_registry_ports_and_digests(
 
     assert result.returncode == 0, result.stdout + result.stderr
     assert "ok" in result.stdout
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell provisioner helpers are Windows-only")
+def test_podman_gpu_fresh_image_pull_is_separate_from_bounded_smoke():
+    evidence_dir = REPO_ROOT / ".agent_work" / "pytest-temp" / f"task105-gpu-pull-{uuid.uuid4().hex}"
+    try:
+        command = f'''
+        $ErrorActionPreference = "Stop"
+        . "{PODMAN_GPU_LIB}"
+        $machineInspectJson = '[{{"Name":"podman-machine-default","State":"running","VMType":"wsl"}}]'
+        $script:PullCount = 0
+        $script:SmokeCount = 0
+        $script:FailPull = $false
+        function Invoke-TowerScoutPodmanGpuCommand {{
+            param([string] $FileName, [string[]] $Arguments, [int] $TimeoutSeconds)
+            $text = [string]::Join(" ", $Arguments)
+            if ($text -match "machine inspect") {{
+                return [pscustomobject]@{{ ExitCode = 0; StdOut = $machineInspectJson; StdErr = "" }}
+            }}
+            if ($text -match "/usr/lib/wsl/lib/nvidia-smi") {{
+                return [pscustomobject]@{{ ExitCode = 0; StdOut = "GPU 0: NVIDIA T1000"; StdErr = "" }}
+            }}
+            if ($text -match "nvidia-container-toolkit") {{
+                return [pscustomobject]@{{ ExitCode = 0; StdOut = "installed"; StdErr = "" }}
+            }}
+            if ($text -match "nvidia-ctk cdi generate") {{
+                return [pscustomobject]@{{ ExitCode = 0; StdOut = "generated"; StdErr = "" }}
+            }}
+            if ($text -match "nvidia-ctk cdi list") {{
+                return [pscustomobject]@{{ ExitCode = 0; StdOut = "nvidia.com/gpu=all"; StdErr = "" }}
+            }}
+            if ($text -match "^image exists ") {{
+                return [pscustomobject]@{{ ExitCode = 1; StdOut = ""; StdErr = "" }}
+            }}
+            if ($text -match "^pull ") {{
+                $script:PullCount++
+                if ($TimeoutSeconds -le 60) {{ throw "First pull was given the smoke timeout" }}
+                if ($script:FailPull) {{
+                    return [pscustomobject]@{{ ExitCode = 1; StdOut = ""; StdErr = "registry unavailable" }}
+                }}
+                return [pscustomobject]@{{ ExitCode = 0; StdOut = "pulled"; StdErr = "" }}
+            }}
+            if ($text -match "^run --rm --device") {{
+                $script:SmokeCount++
+                if ($TimeoutSeconds -ne 60) {{ throw "Smoke timeout changed" }}
+                return [pscustomobject]@{{ ExitCode = 0; StdOut = "GPU 0: NVIDIA T1000"; StdErr = "" }}
+            }}
+            throw "Unexpected command: $text"
+        }}
+        $result = Invoke-TowerScoutPodmanGpuEnablement -MachineName podman-machine-default `
+            -Image test:image -EvidenceDir "{evidence_dir}"
+        if (-not $result.Success -or $script:PullCount -ne 1 -or $script:SmokeCount -ne 1) {{
+            throw "Expected one long pull and one short GPU smoke."
+        }}
+        $script:FailPull = $true
+        try {{
+            Invoke-TowerScoutPodmanGpuEnablement -MachineName podman-machine-default `
+                -Image test:image -EvidenceDir "{evidence_dir}" | Out-Null
+            throw "Expected image pull failure"
+        }} catch {{
+            if ($_.Exception.Message -notmatch "Podman GPU image pull failed") {{ throw }}
+        }}
+        if ($script:SmokeCount -ne 1) {{ throw "GPU smoke ran after image pull failed" }}
+        "ok"
+        '''
+        result = _run_powershell(command)
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok" in result.stdout
+    finally:
+        shutil.rmtree(evidence_dir, ignore_errors=True)
