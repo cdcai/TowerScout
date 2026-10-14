@@ -1,7 +1,7 @@
 # Current Tasks - Final Candidate Build And Acceptance
 
 **Sprint Period**: October 5-October 16, 2026
-**Last Updated**: October 9, 2026
+**Last Updated**: October 14, 2026
 **Focus**: Qualify a dependable, downloadable Windows 11 application from
 accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Documentation
 content is frozen and merged through PR #94, and the project-state
@@ -10,8 +10,14 @@ pre-registration cancellation race; the bounded fix merged through PR #105.
 PR #106 then added the owner-approved exact, expiring Debian Expat residual.
 The same-source RC9 CPU/CUDA images pass the local and exact-published-digest
 security gates, and their digest-pinned control ZIPs are published in the
-non-Latest `v0.1.0-rc9` validation prerelease. Final browser-download and
-independent-host acceptance now follow.
+non-Latest `v0.1.0-rc9` validation prerelease. Exact browser-downloaded RC9
+Docker CPU/CUDA and Podman CPU/CUDA first-host acceptance passed on October
+13, including the affected cancel-then-immediate-retry path. Docker and Podman
+reboot persistence now pass. One independent NVIDIA host also passed all four
+profiles, but exposed beginner-path runtime/documentation/export findings and
+does not satisfy the remaining CPU-only, second-NVIDIA, or Podman-without-
+Docker allocation. TASK-105 owns the bounded corrections, the next immutable
+`v0.1.3-rc.N` final-candidate qualification, and the cdcai handoff packet.
 The Task-087 launcher
 redesign remains preserved and deferred, not a release gate.
 
@@ -157,6 +163,61 @@ stable/general release remain separately owner-gated.
   GitHub reports all six assets uploaded with the approved byte sizes and
   SHA-256 digests; all six unauthenticated browser-download URLs returned HTTP
   200. Stable `v0.1.2` remains Latest, and no GHCR `latest` tag was promoted.
+- Independent host `INDEP-HOST-01` used the exact RC9 public bytes and passed
+  Docker CPU/CUDA and Podman CPU/CUDA setup, real model/device execution, both
+  providers, detection parity, cancellation/retry, controlled recovery,
+  exports, stop/relaunch, and reboot. Sanitized extracts are retained outside
+  the repository at ZIP SHA-256
+  `39a4052a5ac2bb99ba994453b39980b5688ecb0d8586e1827e811fb92c588145`;
+  all 42 JSON files parse and all 78 internal manifest rows match. The run also
+  confirms the fresh Podman GPU pull timeout, mixed Docker/Podman startup race,
+  PowerShell 7 provider-install/hash failure and partial-retry defect,
+  misleading provider check, browser export gap, and smaller documentation/
+  reproducibility findings. Only Docker CPU received the complete click-by-
+  click UI workflow, and the required CPU-only host, second NVIDIA host, and
+  Podman-without-Docker environment remain open. RC9 therefore remains a
+  validation prerelease and must not be promoted.
+- Exact browser-downloaded RC9 Podman CPU first-host acceptance passed from the
+  CPU control ZIP at SHA-256
+  `66e674ef28d98835a981bd731bc7a86e7c6bdd07cb9ea964d47e4e9c63cfacfc`,
+  the shared asset ZIP at
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`,
+  and exact image digest
+  `sha256:9d24cc71724953fba7e062b6ee71dac38f2ec413716a9b60bfaf8ad0be20c950`.
+  The rootless Podman 6.0.2/package-local Compose path passed setup on the
+  supported alternate port 5235 with Docker Desktop closed, real Azure and
+  Google CPU detection, Google TLS repair, ZIP lookup, cancellation with zero
+  results followed by an immediate 14-detection retry, controlled HTTP 400 to
+  HTTP 200 recovery, Review navigation, nonempty CSV/KML and valid dataset ZIP
+  export, eight-volume stop/relaunch persistence, exact running Help content,
+  and loopback-only healthy runtime. No provider key, certificate identity,
+  raw browser trace, screenshot, or AOI is retained in repository evidence.
+- Exact browser-downloaded RC9 Podman CUDA first-host acceptance passed from
+  the CUDA control ZIP at SHA-256
+  `5157a3a396502e524b16dd5eda6cf46aa80521ba4409546af8625f1ca43cad10`
+  and exact image digest
+  `sha256:c2d99f178465a8cdc83430092554d98aeb181797ff330fba2661bc95a45d8287`.
+  The package-local Compose and NVIDIA CDI path passed real Azure cancellation
+  with immediate 14-detection retry, managed Google TLS repair and required
+  relaunch, real Google detection, ZIP lookup, controlled-error recovery,
+  Review and CSV/KML/dataset exports, byte-identical Help, eight-volume
+  persistence, and post-relaunch detection. Both models ran on CUDA 12.8 for
+  the `sm_120` NVIDIA device with no CPU fallback.
+- Exact browser-downloaded RC9 Docker CPU first-host acceptance passed from the
+  same CPU control ZIP, shared asset ZIP, and exact CPU image digest. Docker
+  Desktop passed real Azure cancellation with immediate 14-detection retry,
+  managed Google TLS repair and required relaunch, real Google detection, ZIP
+  lookup, controlled-error recovery, Review and CSV/KML/dataset exports,
+  byte-identical Help, eight-volume persistence, and post-relaunch detection.
+  Both models remained on CPU with no CUDA-selection marker.
+- Exact browser-downloaded RC9 Docker CUDA first-host acceptance passed from
+  the published CUDA control ZIP, shared asset ZIP, and exact CUDA image
+  digest. Docker Desktop passed CUDA 12.8/`sm_120` device and kernel checks,
+  real Azure cancellation with immediate 14-detection retry, managed Google
+  TLS repair and required relaunch, real Google detection, ZIP lookup,
+  controlled-error recovery, Review and CSV/KML/dataset exports,
+  byte-identical Help, eight-volume persistence, and post-relaunch detection.
+  Both models ran on CUDA with no CPU fallback.
 - Full readiness requires actual YOLO and EfficientNet work on the required
   device in all four profiles plus independent-computer reproduction.
 - Static checks, health/readiness, mocked tests, or CPU fallback are not
@@ -172,6 +233,34 @@ stable/general release remain separately owner-gated.
 
 ## Active Delivery Work
 
+### **TASK-105: Final Release Correction And Qualification**
+
+**Status**: IN_PROGRESS - independent-host evidence intake and implementation
+plan complete; bounded runtime/frontend/documentation corrections are in
+draft PRs #109/#110. PR #109 exact-head CI passed; stacked PR #110 still
+needs CI against `main`. Accepted-main merge and final artifact qualification
+have not started
+**Priority**: CRITICAL
+**Task File**: `.agent_work/tasks/active/TASK-105-final-release-correction-and-qualification.md`
+
+Current scope:
+
+- Resolve or explicitly disposition all ten RC9 independent-host findings.
+- Correct fresh Podman GPU provisioning, PowerShell/provider installation and
+  safe retry, selected-provider guidance, mixed-runtime recovery, exports,
+  geocoding wording, tested-support documentation, and bundle reproducibility.
+- Freeze one accepted source, pass the unexpired ADR-024 security gate, and
+  build same-source CPU/CUDA 12.8 `v0.1.3-rc.N` candidate artifacts.
+- Publish the candidate as an immutable, non-Latest fork prerelease only after
+  separate authorization, then validate the exact public bytes.
+- Complete the CPU-only, two-NVIDIA-host, and Podman-without-Docker allocation
+  before any final-candidate readiness claim or cdcai adoption recommendation.
+
+The release owner currently has access only to this Windows host and the
+previous RC9 independent NVIDIA host. Corrected-candidate repeats on those
+machines can cover a bounded subset, but the CPU-only and Podman-without-
+Docker cells are unavailable. Keep the full readiness claim open.
+
 ### **TASK-103: CUDA 12.8 Blackwell ML Runtime**
 
 **Status**: IN_PROGRESS - local `rc4` images/packages pass G10, exact-digest
@@ -186,7 +275,11 @@ security policy are now merged through PRs #105/#106, and the same-source RC9
 CPU/CUDA exact-digest registry gates pass. Digest-pinned RC9 control ZIPs pass
 local integrity validation and are published in the non-Latest RC9 validation
 prerelease. Resume final browser-download plus independent-host evidence using
-only those exact public bytes
+only those exact public bytes. All four exact-browser-downloaded RC9 first-
+host profiles and reboot-persistence cells now pass, including the affected
+cancellation race. One independent NVIDIA host passed all four RC9 profiles,
+but TASK-105 corrections and the remaining host allocation are required for
+the intended final package
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
 
@@ -215,7 +308,9 @@ proof pass. PR #106 merged the exact five-key policy. Same-source RC9 CPU and
 CUDA 12.8 registry digests pass the strict local and exact-digest gates with no
 `latest` promotion, and their digest-pinned control ZIPs pass local integrity
 validation. The non-Latest RC9 package prerelease is published; final browser-
-download and independent-host acceptance remain
+download four-profile first-host and reboot acceptance now pass. One
+independent NVIDIA host also passed all four profiles; TASK-105 must repeat the
+strict security boundary for the corrected final source before publication
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-104-rc5-security-gate-and-residual-disposition.md`
 
@@ -250,8 +345,10 @@ browser-download diagnostic pass. RC8 browser acceptance then exposed the
 Podman cancellation race, so RC8 is superseded for final acceptance. The
 reviewed correction and exact security amendment are included in the locally
 verified RC9 image/package pair, and the non-Latest RC9 prerelease is
-published. Exact browser-download testing, affected-profile repetition, and
-independent-host evidence remain
+published. All four exact-browser-downloaded RC9 first-host and reboot-
+persistence profiles now pass. One independent NVIDIA host passed all four
+profiles with disclosed deviations and findings. TASK-105 owns the corrected
+exact-byte package and remaining CPU-only/second-NVIDIA allocation
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-091-owner-runnable-release-qualification.md`
 
@@ -274,8 +371,13 @@ Current scope:
 **Status**: AT_RISK - the approved relative package-local provider passes from
 spaced paths on rootless Podman 6.0.2. Exact `rc4` CPU/CUDA startup, live
 Google/Azure workflows, cancellation/error recovery, review/export, restart,
-volume retention, and CUDA `sm_120` execution pass on the first host; the
-documented Python 3.12 prerequisite and independent-host proof remain
+volume retention, and CUDA `sm_120` execution pass on the first host. Exact
+browser-downloaded RC9 Podman CPU and Podman CUDA now repeat that path and the
+documented manual retained-container reboot recovery successfully with the
+Python 3.12 provider prerequisite and Docker Desktop closed. One independent
+NVIDIA host passed both Podman profiles but reproduced fresh-GPU-pull and
+provider-install/readiness defects; TASK-105 owns their correction and the
+remaining Podman-without-Docker host proof
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-097-podman-final-path-qualification.md`
 
@@ -294,9 +396,10 @@ the frozen documentation is merged through PR #94. RC8 documentation-bearing
 packages were published, but RC8 is superseded for final acceptance by the
 Podman cancellation defect. The corrected same-source RC9 images pass exact-
 digest qualification and their published control ZIPs preserve the frozen
-documentation. Complete live permission verification, exact-browser-
-downloaded-package/running-image
-Help validation, screenshots/video, and the final W09/W10 gates
+documentation. First-host running-image Help validation passes. Independent
+testing selected focused coexistence, Podman setup/provider, export,
+geocoding, tested-support, and reproducibility corrections under TASK-105;
+the broad PR #94 content freeze otherwise remains intact
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-092-documentation-currentness.md`
 
@@ -317,7 +420,12 @@ Current scope:
 
 **Status**: IN_PROGRESS - exact `rc4` first-host cancellation/error recovery,
 review/export, volume-preserving stop/relaunch, and reboot persistence pass in
-all four profiles; independent-host repetition remains
+all four profiles. Exact browser-downloaded RC9 Docker CPU/CUDA and Podman
+CPU/CUDA cancellation/error recovery, review/export, TLS/provider, ZIP
+lookup, Help, volume-preserving stop/relaunch, and Docker/Podman reboot
+persistence also pass. One independent NVIDIA host repeated the lifecycle but
+required manual safe recovery from a Docker/Podman startup collision;
+TASK-105 owns the guidance and final-candidate repetition
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-093-persistent-data-recovery.md`
 
@@ -381,8 +489,21 @@ and explicit authorization.
 11. [x] After owner authorization, publish the exact RC9 assets and
     authoritative hashes before final browser-download extraction testing or
     tester distribution.
-12. [ ] Complete W10 four-profile and independent-host reproduction; otherwise
-   report only the exact qualified subset.
+12. [x] Complete RC9 first-host and one independent-NVIDIA-host four-profile
+    reproduction; preserve the reported deviations and findings rather than
+    treating them as a final-release pass.
+13. [ ] Complete TASK-105 focused regressions, runtime/frontend corrections,
+    documentation alignment, review, and accepted-main merge.
+14. [ ] Recheck ADR-024 before expiry, then obtain separate authorization for
+    same-source `v0.1.3-rc.N` CPU/CUDA dispatch and non-Latest fork prerelease
+    publication with `push_latest=false`.
+15. [ ] Validate exact browser-downloaded candidate bytes across all four
+    profiles and complete the CPU-only, second-NVIDIA, and Podman-without-
+    Docker independent allocation.
+16. [ ] After final-candidate evidence reconciliation, prepare the cdcai
+    transfer packet. At adoption, separately authorize the official identity,
+    build/publication, exact-byte confirmation, and stable/Latest status;
+    otherwise report only the exact qualified candidate subset.
 
 ## Runtime Coordination
 
