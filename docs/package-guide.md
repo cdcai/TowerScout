@@ -619,9 +619,11 @@ RC9 evidence records CUDA 12.8 execution of both YOLO and EfficientNet on
 the NVIDIA RTX PRO 500 Blackwell Generation Laptop GPU (`sm_120`) on the first
 host and the NVIDIA T1000 (`sm_75`) on one independent host. Both Docker and
 rootless Podman GPU profiles ran without CPU fallback. The corrected Task-105
-candidate still requires exact-byte repetition and the remaining independent
-host allocation. This list does not qualify every driver, Windows build, WSL,
-engine, or toolkit combination for those GPU names. The downloaded package's
+candidate still requires exact-byte four-profile repetition on both available
+Windows NVIDIA hosts. CPU-only hardware and a Podman installation without
+Docker Desktop remain untested. This list does not qualify every driver,
+Windows build, WSL, engine, or toolkit combination for those GPU names. The
+downloaded package's
 `docs/release/task105-candidate-notes.md` records the current evidence boundary.
 
 ## Optional GPU Launch Boundary

@@ -17,8 +17,11 @@ not a final release.
 
 These are GPU models observed in the retained RC9 evidence, not a blanket
 claim for every driver, Windows build, WSL version, or engine version. The
-corrected final candidate must repeat the required cells. The CUDA package
-expects Volta or newer; an architecture present in a wheel alone does not
+corrected final candidate must repeat Docker CPU/CUDA and Podman CPU/CUDA on
+both available Windows NVIDIA hosts using the exact public bytes. CPU-only
+hardware and Podman without Docker Desktop installed are outside the tested
+claim. The CUDA package expects Volta or newer; an architecture present in a
+wheel alone does not
 qualify an untested GPU. Maxwell and Pascal use the CPU package.
 
 ## Tested support boundary
