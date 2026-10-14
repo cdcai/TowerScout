@@ -106,13 +106,16 @@ class ProviderInstallerTest(unittest.TestCase):
             if ($LASTEXITCODE -eq 0) {{ throw 'Expected injected Python failure' }}
             if (Test-Path -LiteralPath $install) {{ throw 'Failed install left a final directory' }}
             New-Item -ItemType Directory -Path $install | Out-Null
-            Set-Content -LiteralPath (Join-Path $install 'partial-install-marker.txt') -Value 'preserve-me'
+            Set-Content -LiteralPath (Join-Path $install 'partial-install-marker.txt') -Value '{shell}'
             & $installer -InstallDir $install -Python '{python_exe}' -Apply
             if ($LASTEXITCODE -ne 0) {{ throw 'Normal retry failed' }}
-            $backups = @(Get-ChildItem -LiteralPath (Split-Path -Parent $install) -Directory -Filter '.towerscout-provider-previous-*')
+            $backups = @(Get-ChildItem -LiteralPath (Split-Path -Parent $install) -Directory -Filter '.towerscout-provider-previous-*' | Where-Object {{
+                $candidate = Join-Path $_.FullName 'partial-install-marker.txt'
+                (Test-Path -LiteralPath $candidate) -and (Get-Content -LiteralPath $candidate) -eq '{shell}'
+            }})
             if ($backups.Count -ne 1) {{ throw 'Partial install backup missing' }}
             $marker = Join-Path $backups[0].FullName 'partial-install-marker.txt'
-            if (-not (Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker) -ne 'preserve-me') {{
+            if (-not (Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker) -ne '{shell}') {{
                 throw 'Partial install state was not preserved'
             }}
             $wrapper = Join-Path $install 'podman-compose.cmd'
