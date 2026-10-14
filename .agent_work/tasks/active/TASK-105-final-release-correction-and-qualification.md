@@ -347,7 +347,8 @@ They have not been reviewed or merged; only the first commit has exact-head CI.
 After explicit owner approval, both branches were pushed to the fork and
 opened as draft PRs: [runtime/provider PR #109](https://github.com/J-Schulein/TowerScout/pull/109)
 against `main` at `b3817c6`, and [frontend/docs PR #110](https://github.com/J-Schulein/TowerScout/pull/110)
-against the runtime branch at `c3171db`. All reported PR #109 exact-head
+against the runtime branch, containing frontend correction `c3171db` and the
+approved Task-105 tracking files. All reported PR #109 exact-head
 checks passed at `b3817c6`, including Python 3.11/3.12, frontend, Windows
 helper, controller, Docker frontend stage, security, and Trivy; the build job
 was skipped by workflow conditions. PR #110 reported no checks at initial
