@@ -1,11 +1,14 @@
 """Windows provider installation must recover from a failed first attempt."""
 
 import hashlib
+import http.server
 import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
+import threading
 import unittest
 import zipfile
 from pathlib import Path
@@ -40,14 +43,9 @@ def make_test_wheel(path: Path) -> None:
 @unittest.skipUnless(os.name == "nt", "Windows PowerShell package test")
 class ProviderInstallerTest(unittest.TestCase):
     def test_failed_install_then_ordinary_retry_and_relocated_wrapper(self):
-        temp_parent = ROOT / ".agent_work" / "pytest-temp"
-        temp_parent.mkdir(parents=True, exist_ok=True)
-        with tempfile.TemporaryDirectory(prefix="task105-provider-", dir=temp_parent) as temp:
+        with tempfile.TemporaryDirectory(prefix="task105-provider-") as temp:
             work = Path(temp)
-            python312 = subprocess.check_output(
-                ["py", "-3.12", "-c", "import sys; print(sys.executable)"],
-                text=True,
-            ).strip()
+            python_exe = sys.executable
             scripts = work / "repo" / "scripts"
             lib = scripts / "lib"
             lib.mkdir(parents=True)
@@ -57,12 +55,24 @@ class ProviderInstallerTest(unittest.TestCase):
 
             wheel = work / "podman_compose-1.5.0-py3-none-any.whl"
             make_test_wheel(wheel)
+            class QuietHandler(http.server.SimpleHTTPRequestHandler):
+                def __init__(self, *args, **kwargs):
+                    super().__init__(*args, directory=str(work), **kwargs)
+
+                def log_message(self, format, *args):
+                    pass
+
+            server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), QuietHandler)
+            server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+            server_thread.start()
+            self.addCleanup(server.server_close)
+            self.addCleanup(server.shutdown)
             catalog = {
                 "schema_version": 1,
                 "providers": [{
                     "id": "podman-compose-pypi-1.5.0",
                     "display_name": "test podman-compose",
-                    "source_url": "https://example.invalid/" + wheel.name,
+                    "source_url": f"http://127.0.0.1:{server.server_port}/{wheel.name}",
                     "package_sha256": hashlib.sha256(wheel.read_bytes()).hexdigest(),
                     "requires_python": ">=3.9",
                     "dependencies": [],
@@ -78,25 +88,26 @@ class ProviderInstallerTest(unittest.TestCase):
             (scripts / "podman-compose-providers.v1.json").write_text(
                 json.dumps(catalog), encoding="utf-8"
             )
-            install = work / "repo" / "tools" / "podman-compose-provider" / "podman-compose-pypi-1.5.0"
-            ps_script = f"""
+            shells = ["powershell.exe"]
+            if shutil.which("pwsh"):
+                shells.append("pwsh")
+            elif os.environ.get("TOWERSCOUT_REQUIRE_PWSH") == "1":
+                self.fail("PowerShell 7 is required for the Windows CI provider test")
+
+            for shell in shells:
+                with self.subTest(parent=shell):
+                    install = work / "repo" / "tools" / "podman-compose-provider" / shell
+                    ps_script = f"""
             $ErrorActionPreference = 'Stop'
-            function Invoke-WebRequest {{
-                param([switch] $UseBasicParsing, [string] $Uri, [string] $OutFile)
-                Copy-Item -LiteralPath '{wheel}' -Destination $OutFile
-            }}
-            $installer = '{scripts / 'install-podman-compose-provider.ps1'}'
+            if ('{shell}' -eq 'pwsh') {{ $env:PSModulePath = 'C:\\Program Files\\PowerShell\\7\\Modules' }}
+            $installer = '{scripts / 'install-podman-compose-provider.cmd'}'
             $install = '{install}'
-            try {{
-                & $installer -InstallDir $install -Python 'missing-task105-python' -Apply
-                throw 'Expected injected Python failure'
-            }} catch {{
-                if ($_.Exception.Message -match 'Expected injected') {{ throw }}
-            }}
+            & $installer -InstallDir $install -Python 'missing-task105-python' -Apply
+            if ($LASTEXITCODE -eq 0) {{ throw 'Expected injected Python failure' }}
             if (Test-Path -LiteralPath $install) {{ throw 'Failed install left a final directory' }}
             New-Item -ItemType Directory -Path $install | Out-Null
             Set-Content -LiteralPath (Join-Path $install 'partial-install-marker.txt') -Value 'preserve-me'
-            & $installer -InstallDir $install -Python '{python312}' -Apply
+            & $installer -InstallDir $install -Python '{python_exe}' -Apply
             if ($LASTEXITCODE -ne 0) {{ throw 'Normal retry failed' }}
             $backups = @(Get-ChildItem -LiteralPath (Split-Path -Parent $install) -Directory -Filter '.towerscout-provider-previous-*')
             if ($backups.Count -ne 1) {{ throw 'Partial install backup missing' }}
@@ -113,33 +124,17 @@ class ProviderInstallerTest(unittest.TestCase):
             if ($LASTEXITCODE -ne 0) {{ throw 'Idempotent retry failed' }}
             'ok'
             """
-            encoded = __import__("base64").b64encode(ps_script.encode("utf-16le")).decode("ascii")
-            result = subprocess.run(
-                ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-EncodedCommand", encoded],
-                text=True,
-                capture_output=True,
-                cwd=ROOT,
-                timeout=180,
-                check=False,
-            )
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn("ok", result.stdout)
-
-            poisoned_env = dict(os.environ, PSModulePath=r"C:\Program Files\PowerShell\7\Modules")
-            child = subprocess.run(
-                [
-                    "cmd.exe", "/d", "/c",
-                    str(scripts / "install-podman-compose-provider.cmd"),
-                    "-InstallDir", str(install), "-Python", "missing-task105-python", "-Apply",
-                ],
-                text=True,
-                capture_output=True,
-                cwd=ROOT,
-                env=poisoned_env,
-                timeout=60,
-                check=False,
-            )
-            self.assertEqual(child.returncode, 0, child.stdout + child.stderr)
+                    encoded = __import__("base64").b64encode(ps_script.encode("utf-16le")).decode("ascii")
+                    result = subprocess.run(
+                        [shell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-EncodedCommand", encoded],
+                        text=True,
+                        capture_output=True,
+                        cwd=ROOT,
+                        timeout=180,
+                        check=False,
+                    )
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertIn("ok", result.stdout)
 
 
 if __name__ == "__main__":
