@@ -284,8 +284,8 @@ def test_wiki_orders_credentials_before_install_and_separates_daily_actions():
 def test_privacy_warning_precedes_user_export_actions():
     markdown = _read("docs/user-guide.md")
     html = _read("docs/user-guide.html")
-    assert markdown.index("Confirm that the results and their locations") < markdown.index("Use `Download results`")
-    assert html.index("<strong>Privacy:</strong>") < html.index("Download results")
+    assert markdown.index("Confirm that the results and their locations") < markdown.index("Select `Download CSV`")
+    assert html.index("<strong>Privacy:</strong>") < html.index("<strong>Download CSV</strong>")
 
 
 def test_novice_terminal_circle_and_podman_restart_instructions_are_complete():

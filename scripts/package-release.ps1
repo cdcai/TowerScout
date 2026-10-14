@@ -261,6 +261,7 @@ $releaseFiles = @(
     "docs\support\host-helper.md",
     "docs\support\oci-runtime-contract.md",
     "docs\release\release-asset-bundle-contract.md",
+    "docs\release\task105-candidate-notes.md",
     "webapp\asset_manifest.v1.json",
     "scripts\podman-compose-providers.v1.json",
     "scripts\lib\TowerScoutBootstrap.ps1",

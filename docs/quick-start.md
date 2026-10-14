@@ -3,7 +3,7 @@
 **Applies to**: The next documentation-aligned Windows release identified by
 the authoritative GitHub release record.
 
-**Last reviewed**: 2026-10-05.
+**Last reviewed**: 2026-10-14.
 
 **Audience**: People using TowerScout for the first time, including people who
 have not previously used PowerShell, Docker, Podman, GitHub Releases, container
@@ -115,14 +115,23 @@ python --version
 The package-local Compose provider is installed after the TowerScout
 Application Package is downloaded, verified, and extracted.
 
+If Docker Desktop and Podman Desktop are both installed, start only the engine
+you selected for this TowerScout run. If you use Docker first and later switch
+to Podman, wait for Docker Desktop to become ready, then quit Docker Desktop
+before starting Podman Desktop. If they collide at sign-in, quit both
+applications, start the chosen one, and check its machine
+or engine before retrying TowerScout. A Windows restart is safer than resetting
+either application. **Do not select “Reset to factory defaults”**: it can
+remove engine-managed data, including TowerScout's named volumes. See the
+[volume-preserving recovery steps](package-guide.md#docker-and-podman-coexistence).
+
 ### Optional NVIDIA GPU
 
 You may use CPU even if the computer has a GPU. For GPU processing:
 
 1. open Task Manager or Device Manager and record the exact NVIDIA GPU;
 2. run `nvidia-smi` in ordinary PowerShell;
-3. confirm the exact GPU, Windows driver, WSL, and engine combination appears
-   in the final release's tested-support list; and
+3. compare the exact GPU with the [tested GPU evidence](package-guide.md#tested-gpu-evidence), then confirm the final release's driver, WSL, and engine combination; and
 4. use the `-cuda128` Application Package.
 
 The CUDA 12.8 package expects Volta-or-newer NVIDIA hardware, but only listed
@@ -351,13 +360,14 @@ open PowerShell in the extracted Application Package folder and run:
 
 ```powershell
 .\scripts\install-podman-compose-provider.cmd -Apply
-podman compose version
 ```
 
 The helper downloads a pinned provider, verifies its SHA-256, and installs it
-under the extracted package. Ready means the version command succeeds using
-that approved provider. TowerScout rejects Docker Desktop's Compose executable
-for Podman.
+under the extracted package. It prints the selected package-local provider.
+After setup, `.\scripts\status.cmd -Engine podman -Port 5000` reports the
+provider TowerScout actually selected; use your chosen port if it differs.
+The global `podman compose version` command can resolve a different provider,
+including Docker Desktop's, so it is not TowerScout's readiness check.
 
 For Podman GPU, now follow the CDI preparation and `-VerifyOnly` procedure in
 [Podman GPU User Guide](podman-gpu-user-guide.md).

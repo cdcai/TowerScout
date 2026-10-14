@@ -444,7 +444,7 @@
   }
 
   function getDetectionWorkflowDescription(provider) {
-    return `${getProviderDisplayName(provider)} imagery and geocoding with the local TowerScout detection model`;
+    return `${getProviderDisplayName(provider)} imagery, configured reverse geocoding, and the local TowerScout detection model`;
   }
 
   function getActiveDetectionProvider() {
@@ -782,7 +782,8 @@
     disableProgress(time, processedTiles);
     window.TowerScoutLogger.info(
       "Detection request completed in " + time + " s using "
-      + getProviderDisplayName(getActiveDetectionProvider()) + " imagery/geocoding."
+      + getProviderDisplayName(getActiveDetectionProvider())
+      + " imagery. Addresses may come from another configured geocoding provider."
     );
   }
 

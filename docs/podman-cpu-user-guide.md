@@ -2,7 +2,7 @@
 
 **Applies to**: The exact documentation-aligned Windows release package named
 by the authoritative release record
-**Last reviewed**: 2026-10-05
+**Last reviewed**: 2026-10-14
 **Audience**: Windows users who choose Podman Desktop with CPU processing
 **Runtime scope**: Podman, CPU Application Package, CPU launch mode
 
@@ -55,7 +55,6 @@ wsl --status
 wsl --list --verbose
 podman --version
 podman machine list
-podman compose version
 ```
 
 If the Podman machine exists but is stopped, start it:
@@ -139,8 +138,12 @@ step 8 below; its helper does not exist before the package is extracted.
    ```powershell
    .\scripts\install-podman-compose-provider.cmd -Apply
    podman machine list
-   podman compose version
    ```
+
+   The installer prints the package-local provider it selected. The global
+   `podman compose version` command may use another provider. After setup,
+   run `.\scripts\status.cmd -Engine podman -Port 5000` (with your chosen
+   port) and check its `Podman Compose provider` line.
 
 9. In the PowerShell window, run:
 

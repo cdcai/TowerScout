@@ -59,20 +59,23 @@
    * Download helper - creates temporary anchor and triggers download
    * @param {string} filename - Name of file to download
    * @param {string} data - File content
+   * @param {string} mediaType - File media type
    */
-  function download(filename, data) {
+  function download(filename, data, mediaType) {
+    const blob = new Blob([data], { type: mediaType });
+    const elem = window.document.createElement('a');
+    const objectUrl = window.URL.createObjectURL(blob);
+    elem.href = objectUrl;
+    elem.download = filename;
     try {
-      const blob = new Blob([data], { type: 'text/csv' });
-      const elem = window.document.createElement('a');
-      elem.href = window.URL.createObjectURL(blob);
-      elem.download = filename;
       document.body.appendChild(elem);
       elem.click();
-      document.body.removeChild(elem);
-      window.TowerScoutLogger.debug(`✅ ${filename} downloaded successfully`);
-    } catch (error) {
-      showNotification(`Failed to download ${filename}: ${error.message}`, 'error');
-      throw error;
+      window.TowerScoutLogger.debug(`Download started for ${filename}`);
+    } finally {
+      if (elem.parentNode) {
+        elem.parentNode.removeChild(elem);
+      }
+      setTimeout(() => window.URL.revokeObjectURL(objectUrl), 1000);
     }
   }
 
@@ -242,9 +245,9 @@
         return;
       }
 
-      download("detections.csv", text);
+      download("detections.csv", text, 'text/csv;charset=utf-8');
       window.TowerScoutLogger.debug(`✅ CSV exported: ${exportedCount} detections`);
-      showNotification(`CSV exported successfully: ${exportedCount} detections`, 'success');
+      showNotification(`CSV download started: ${exportedCount} detections`, 'success');
 
     } catch (error) {
       console.error("❌ CSV export failed:", error);
@@ -348,9 +351,9 @@
         return;
       }
 
-      download("detections.kml", text);
+      download("detections.kml", text, 'application/vnd.google-earth.kml+xml');
       window.TowerScoutLogger.debug(`✅ KML exported: ${exportedCount} detections${skippedCount > 0 ? ` (${skippedCount} skipped)` : ''}`);
-      showNotification(`KML exported successfully: ${exportedCount} detections`, 'success');
+      showNotification(`KML download started: ${exportedCount} detections`, 'success');
 
     } catch (error) {
       console.error("❌ KML export failed:", error);

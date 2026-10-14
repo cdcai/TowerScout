@@ -92,7 +92,9 @@
           const usage = data.geocoding_usage;
           const usageElement = document.getElementById('apiUsage');
           if (usageElement) {
-            const limited = data.geocoding_limited ? " <span style='color:#f39c12'>(Geocoding rate limit reached)</span>" : "";
+            const limited = data.geocoding_limited
+              ? " <span style='color:#f39c12'>(Geocoding limit reached; some results may have coordinates without a street address)</span>"
+              : "";
             usageElement.innerHTML = `
               <small>
                 API Usage: Google ${usage.google_requests || 0}, Azure ${usage.azure_requests || 0}
