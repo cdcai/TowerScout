@@ -369,6 +369,12 @@ function Invoke-TowerScoutPodmanGpuEnablement {
             -Arguments @("machine", "ssh", $MachineName, "--", "nvidia-ctk", "cdi", "list") `
             -DryRun
         $steps += Invoke-TowerScoutPodmanGpuPlanStep `
+            -Name "image-pull-if-missing" `
+            -Description "Pull the GPU smoke image if it is not already local" `
+            -Arguments @("pull", $resolvedImage) `
+            -DryRun `
+            -Mutating
+        $steps += Invoke-TowerScoutPodmanGpuPlanStep `
             -Name "container-smoke" `
             -Description "Run a transient CDI GPU container smoke" `
             -Arguments @("run", "--rm", "--device", "nvidia.com/gpu=all", "--security-opt=label=disable", $resolvedImage, "nvidia-smi", "-L") `
@@ -454,6 +460,26 @@ function Invoke-TowerScoutPodmanGpuEnablement {
             Steps = $steps
             EvidenceDir = $EvidenceDir
         }
+    }
+
+    $imageExists = Invoke-TowerScoutPodmanGpuCommand `
+        -FileName "podman" `
+        -Arguments @("image", "exists", $resolvedImage) `
+        -TimeoutSeconds 20
+    if ($imageExists.ExitCode -eq 1) {
+        $pull = Invoke-TowerScoutPodmanGpuPlanStep `
+            -Name "image-pull" `
+            -Description "Pull the GPU smoke image before the bounded smoke" `
+            -Arguments @("pull", $resolvedImage) `
+            -Mutating `
+            -TimeoutSeconds 1800
+        $steps += $pull
+        if ($pull.Status -ne "ok") {
+            throw "Podman GPU image pull failed. Check image registry access and retry. $($pull.Message)"
+        }
+    }
+    elseif ($imageExists.ExitCode -ne 0) {
+        throw "Podman GPU image availability check failed. $($imageExists.StdErr)"
     }
 
     $smoke = Invoke-TowerScoutPodmanGpuPlanStep `

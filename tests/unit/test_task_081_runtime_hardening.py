@@ -82,13 +82,13 @@ def test_podman_compose_provider_installer_uses_isolated_venv_and_pinned_deps():
     requirements = {dependency["requirement"] for dependency in provider["dependencies"]}
     assert provider["requires_python"] == ">=3.9"
     assert requirements == {"python-dotenv==1.1.1", "PyYAML==6.0.2"}
-    assert "Join-Path $InstallDir \".venv\"" in installer
+    assert "Join-Path $stageDir \".venv\"" in installer
     assert "@(\"-m\", \"venv\", $venvDir)" in installer
     assert "\"pip\"" in installer
     assert "\"install\"" in installer
     assert "--only-binary" in installer
     assert "foreach ($dependency in @($provider.dependencies))" in installer
-    assert "\"%~dp0.venv\\Scripts\\podman-compose.exe\" %*" in installer
+    assert '"%~dp0.venv\\Scripts\\python.exe" -c "import podman_compose; podman_compose.main()" %*' in installer
     assert "System.IO.Compression.ZipFile" not in installer
     assert "podman_compose.py" not in installer
 
@@ -547,6 +547,14 @@ def test_podman_compose_provider_override_uses_env_file_and_rejects_docker_deskt
         . "{COMPOSE_LIB}"
         function Get-TowerScoutRepoRoot {{
             return "{temp_root}"
+        }}
+        function podman {{
+            return 'Docker Desktop Compose version 2.39.0'
+        }}
+
+        $globalProvider = podman compose version
+        if ($globalProvider -notmatch 'Docker Desktop') {{
+            throw 'Expected global Compose to resolve Docker Desktop for this regression.'
         }}
 
         $env:PODMAN_COMPOSE_PROVIDER = ""

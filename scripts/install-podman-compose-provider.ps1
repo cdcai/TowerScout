@@ -129,80 +129,101 @@ if ([string]::IsNullOrWhiteSpace($sourceUrl) -or [string]::IsNullOrWhiteSpace($e
     throw "Provider '$ProviderId' does not have a download URL and SHA-256 in the approved catalog."
 }
 
-if ((Test-Path -LiteralPath $InstallDir) -and -not $Force) {
-    throw "Install directory already exists: $InstallDir. Use -Force to replace it."
-}
-
+$managedInstall = Test-TowerScoutInstallerChildPath -Parent $managedInstallRoot -Child $InstallDir
+$existingWrapper = Join-Path $InstallDir "podman-compose.cmd"
 if (Test-Path -LiteralPath $InstallDir) {
-    if (-not (Test-TowerScoutInstallerChildPath -Parent $managedInstallRoot -Child $InstallDir)) {
-        throw "-Force replacement is only allowed inside the managed provider cache: $managedInstallRoot"
+    if (-not $managedInstall) {
+        throw "Existing provider directories may only be replaced inside the managed provider cache: $managedInstallRoot"
     }
-    Remove-Item -LiteralPath $InstallDir -Recurse -Force
-}
-New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
-
-$downloadPath = Join-Path $InstallDir ([System.IO.Path]::GetFileName($sourceUrl))
-Write-Host "Downloading approved provider package:"
-Write-Host $sourceUrl
-Invoke-WebRequest -UseBasicParsing -Uri $sourceUrl -OutFile $downloadPath
-
-$actualSha256 = (Get-FileHash -LiteralPath $downloadPath -Algorithm SHA256).Hash.ToLowerInvariant()
-if ($actualSha256 -ne $expectedSha256) {
-    throw "Downloaded provider package SHA-256 mismatch. Expected $expectedSha256 but got $actualSha256."
-}
-Write-Host "Provider package SHA-256 verified."
-
-$requiresPython = (Get-TowerScoutProviderObjectValue -InputObject $provider -Name "requires_python").Trim()
-if ([string]::IsNullOrWhiteSpace($requiresPython)) {
-    $requiresPython = ">=3.9"
-}
-Assert-TowerScoutInstallerPythonVersion -Python $Python -Requirement $requiresPython
-
-$venvDir = Join-Path $InstallDir ".venv"
-Invoke-TowerScoutInstallerCommand `
-    -FileName $Python `
-    -Arguments @("-m", "venv", $venvDir) `
-    -FailureMessage "Failed to create the provider virtual environment." | Out-Null
-
-$venvPython = Get-TowerScoutInstallerVenvPython -VenvDir $venvDir
-$dependencyRequirements = @()
-foreach ($dependency in @($provider.dependencies)) {
-    $requirement = (Get-TowerScoutProviderObjectValue -InputObject $dependency -Name "requirement").Trim()
-    if (-not [string]::IsNullOrWhiteSpace($requirement)) {
-        $dependencyRequirements += $requirement
+    if (-not $Force -and (Test-Path -LiteralPath $existingWrapper -PathType Leaf)) {
+        $existingCheck = Test-TowerScoutApprovedPodmanComposeProvider -ProviderPath $existingWrapper -Provider $provider
+        if ($existingCheck.Accepted) {
+            Set-TowerScoutPodmanComposeProviderEnv -ProviderPath $existingWrapper -RootPath $repoRoot -Apply:$Apply | Out-Null
+            return
+        }
     }
 }
 
-$pipInstallArguments = @(
-    "-m",
-    "pip",
-    "install",
-    "--disable-pip-version-check",
-    "--no-warn-script-location",
-    "--only-binary",
-    ":all:",
-    $downloadPath
-) + $dependencyRequirements
-Invoke-TowerScoutInstallerCommand `
-    -FileName $venvPython `
-    -Arguments $pipInstallArguments `
-    -FailureMessage "Failed to install the approved Podman Compose provider and its pinned runtime dependencies." | Out-Null
+$installParent = Split-Path -Parent $InstallDir
+New-Item -ItemType Directory -Force -Path $installParent | Out-Null
+$stageDir = Join-Path $installParent (".towerscout-provider-stage-" + [guid]::NewGuid().ToString("N"))
+$backupDir = ""
+try {
+    New-Item -ItemType Directory -Path $stageDir | Out-Null
+    $downloadPath = Join-Path $stageDir ([System.IO.Path]::GetFileName($sourceUrl))
+    Write-Host "Downloading approved provider package:"
+    Write-Host $sourceUrl
+    Invoke-WebRequest -UseBasicParsing -Uri $sourceUrl -OutFile $downloadPath
 
-$venvProviderPath = Join-Path $venvDir "Scripts\podman-compose.exe"
-if (-not (Test-Path -LiteralPath $venvProviderPath -PathType Leaf)) {
-    throw "Provider installation completed, but the expected virtual-environment executable was not found: $venvProviderPath"
-}
+    $actualSha256 = Get-TowerScoutProviderFileSha256 -Path $downloadPath
+    if ($actualSha256 -ne $expectedSha256) {
+        throw "Downloaded provider package SHA-256 mismatch. Expected $expectedSha256 but got $actualSha256."
+    }
+    Write-Host "Provider package SHA-256 verified."
 
-$wrapperPath = Join-Path $InstallDir "podman-compose.cmd"
-@"
+    $requiresPython = (Get-TowerScoutProviderObjectValue -InputObject $provider -Name "requires_python").Trim()
+    if ([string]::IsNullOrWhiteSpace($requiresPython)) {
+        $requiresPython = ">=3.9"
+    }
+    Assert-TowerScoutInstallerPythonVersion -Python $Python -Requirement $requiresPython
+
+    $venvDir = Join-Path $stageDir ".venv"
+    Invoke-TowerScoutInstallerCommand `
+        -FileName $Python `
+        -Arguments @("-m", "venv", $venvDir) `
+        -FailureMessage "Failed to create the provider virtual environment." | Out-Null
+
+    $venvPython = Get-TowerScoutInstallerVenvPython -VenvDir $venvDir
+    $dependencyRequirements = @()
+    foreach ($dependency in @($provider.dependencies)) {
+        $requirement = (Get-TowerScoutProviderObjectValue -InputObject $dependency -Name "requirement").Trim()
+        if (-not [string]::IsNullOrWhiteSpace($requirement)) {
+            $dependencyRequirements += $requirement
+        }
+    }
+
+    $pipInstallArguments = @(
+        "-m", "pip", "install", "--disable-pip-version-check",
+        "--no-warn-script-location", "--only-binary", ":all:", $downloadPath
+    ) + $dependencyRequirements
+    Invoke-TowerScoutInstallerCommand `
+        -FileName $venvPython `
+        -Arguments $pipInstallArguments `
+        -FailureMessage "Failed to install the approved Podman Compose provider and its pinned runtime dependencies." | Out-Null
+
+    $stageWrapper = Join-Path $stageDir "podman-compose.cmd"
+    @"
 @echo off
 set "TOWERSCOUT_PODMAN_COMPOSE_PROVIDER_HOME=%~dp0"
-"%~dp0.venv\Scripts\podman-compose.exe" %*
-"@ | Set-Content -LiteralPath $wrapperPath -Encoding ASCII
+"%~dp0.venv\Scripts\python.exe" -c "import podman_compose; podman_compose.main()" %*
+"@ | Set-Content -LiteralPath $stageWrapper -Encoding ASCII
 
-$check = Test-TowerScoutApprovedPodmanComposeProvider -ProviderPath $wrapperPath -Provider $provider
-if (-not $check.Accepted) {
-    throw "Installed provider did not pass the approved-provider check: $($check.Reason)"
+    $check = Test-TowerScoutApprovedPodmanComposeProvider -ProviderPath $stageWrapper -Provider $provider
+    if (-not $check.Accepted) {
+        throw "Installed provider did not pass the approved-provider check: $($check.Reason)"
+    }
+
+    if (Test-Path -LiteralPath $InstallDir) {
+        $backupDir = Join-Path $installParent (".towerscout-provider-previous-" + [guid]::NewGuid().ToString("N"))
+        Move-Item -LiteralPath $InstallDir -Destination $backupDir
+    }
+    try {
+        Move-Item -LiteralPath $stageDir -Destination $InstallDir
+    }
+    catch {
+        if ($backupDir -and (Test-Path -LiteralPath $backupDir) -and -not (Test-Path -LiteralPath $InstallDir)) {
+            Move-Item -LiteralPath $backupDir -Destination $InstallDir
+        }
+        throw
+    }
+}
+finally {
+    if (Test-Path -LiteralPath $stageDir) {
+        Remove-Item -LiteralPath $stageDir -Recurse -Force
+    }
 }
 
-Set-TowerScoutPodmanComposeProviderEnv -ProviderPath $wrapperPath -RootPath $repoRoot -Apply:$Apply | Out-Null
+if ($backupDir) {
+    Write-Host "Previous managed provider state was preserved at $backupDir"
+}
+Set-TowerScoutPodmanComposeProviderEnv -ProviderPath $existingWrapper -RootPath $repoRoot -Apply:$Apply | Out-Null

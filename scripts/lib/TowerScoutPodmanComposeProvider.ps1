@@ -34,6 +34,20 @@ function Get-TowerScoutProviderObjectValue {
     return [string] $InputObject.PSObject.Properties[$Name].Value
 }
 
+function Get-TowerScoutProviderFileSha256 {
+    param([Parameter(Mandatory = $true)][string] $Path)
+
+    $stream = [System.IO.File]::OpenRead($Path)
+    $hasher = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        return ([System.BitConverter]::ToString($hasher.ComputeHash($stream))).Replace("-", "").ToLowerInvariant()
+    }
+    finally {
+        $hasher.Dispose()
+        $stream.Dispose()
+    }
+}
+
 function Resolve-TowerScoutProviderCandidatePath {
     param(
         [Parameter(Mandatory = $true)]
@@ -150,7 +164,7 @@ function Test-TowerScoutApprovedPodmanComposeProvider {
 
     $expectedSha256 = (Get-TowerScoutProviderObjectValue -InputObject $Provider -Name "windows_amd64_sha256").Trim().ToLowerInvariant()
     if (-not [string]::IsNullOrWhiteSpace($expectedSha256)) {
-        $actualSha256 = (Get-FileHash -LiteralPath $resolvedPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        $actualSha256 = Get-TowerScoutProviderFileSha256 -Path $resolvedPath
         if ($actualSha256 -ne $expectedSha256) {
             return [pscustomobject]@{
                 Accepted = $false
@@ -362,6 +376,7 @@ function Set-TowerScoutPodmanComposeProviderEnv {
     Copy-Item -LiteralPath $envPath -Destination $backupPath
     Set-TowerScoutEnvSetting -EnvPath $envPath -Name "PODMAN_COMPOSE_PROVIDER" -Value $envProviderPath
     Write-Host "Updated PODMAN_COMPOSE_PROVIDER in .env."
+    Write-Host "Selected Podman Compose provider: $envProviderPath"
     Write-Host "Backup: $backupPath"
 
     return [pscustomobject]@{
