@@ -232,3 +232,16 @@ jobs:
           powershell.exe -NoProfile -ExecutionPolicy Bypass
           -File scripts/host-helper.ps1
           -SelfTest
+
+      - name: Setup Python 3.12 for Task-105 provider contract
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Verify PowerShell 7 and run provider installer contract
+        env:
+          TOWERSCOUT_REQUIRE_PWSH: '1'
+        run: |
+          Get-Command pwsh -ErrorAction Stop | Select-Object -ExpandProperty Source
+          python -m pip install pytest
+          python -m pytest --confcutdir=tests/unit tests/unit/test_task105_provider_installer.py -q -p no:cacheprovider
