@@ -237,11 +237,35 @@ async function testCancelCorrelatesWithTheActiveDetectionRequest() {
   );
 }
 
+async function testLateCompletedResponseAfterCancelIsDiscarded() {
+  let finishDetection;
+  const harness = load(async url => {
+    if (url === '/getobjects') {
+      return new Promise(resolve => { finishDetection = resolve; });
+    }
+    if (url === '/abort') {
+      return response(200, { status: 'cancelled', retryReady: true });
+    }
+    return response(200, { status: 'idle', retryReady: true });
+  });
+
+  const detection = harness.getObjects(false);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.ok(finishDetection, 'detection request was not started');
+  await harness.cancelRequest();
+  finishDetection(response(200, [{ id: 'stale-result' }]));
+  await detection;
+
+  assert.ok(harness.loggerMessages.some(message => message.includes('Ignoring stale detection response')));
+  assert.strictEqual(harness.elements.progress_div.style.display, 'none');
+}
+
 testReadyCancellationUnlocksProgressUi()
   .then(testPendingCancellationKeepsProgressUiBlocked)
   .then(testSuccessfulNonJsonCancellationResponseStaysPending)
   .then(testOlderCancelResponseCannotRestorePendingState)
   .then(testCancelCorrelatesWithTheActiveDetectionRequest)
+  .then(testLateCompletedResponseAfterCancelIsDiscarded)
   .then(() => {
     console.log('Detection cancellation recovery contract PASSED');
   })

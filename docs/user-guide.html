@@ -33,7 +33,7 @@
       <section class="doc-section" id="before">
         <h2>Before Using This Guide</h2>
         <p><strong>Applies to:</strong> The exact documentation-aligned Windows release. <strong>Last reviewed:</strong>
-          2026-10-05. <strong>Audience:</strong> Users after first setup.</p>
+          2026-10-14. <strong>Audience:</strong> Users after first setup.</p>
         <p>This guide applies to Docker CPU, Docker GPU, Podman CPU, and Podman GPU when the chosen path meets the final
           release's requirements. The user chooses the engine, processing mode, and map provider.</p>
         <ul>
@@ -127,12 +127,16 @@
           under the site's approved procedure. Export important work before stopping; internal sessions are not
           backups.</p>
         <ul>
-          <li><strong>Download results</strong> creates <code>detections.csv</code> and <code>detections.kml</code>.</li>
+          <li><strong>Download CSV</strong> starts one <code>detections.csv</code> download; <strong>Download KML</strong>
+              starts one <code>detections.kml</code> download. Select each separately and confirm the file appears.
+              A “download started” message does not prove the browser saved it.</li>
           <li><strong>Download dataset</strong> creates <code>dataset.zip</code> with tiles, labels, metadata, and manual
               additions.</li>
           <li><strong>Restore dataset</strong> reloads a prior <code>dataset.zip</code>; then verify provider, map,
               detections, and manual towers.</li>
         </ul>
+        <p>If geocoding reaches a limit or cannot find a street address, some results retain coordinates only. Map
+          imagery and address geocoding may use different configured providers.</p>
       </section>
 
       <section class="doc-section" id="resume">

@@ -14,19 +14,25 @@ Read in this order:
 4. [`decisions/022-cuda128-blackwell-ml-runtime.md`](./decisions/022-cuda128-blackwell-ml-runtime.md)
 5. [`decisions/023-unsigned-windows-package-support-boundary.md`](./decisions/023-unsigned-windows-package-support-boundary.md)
 6. [`decisions/024-rc5-security-gate-and-residual-boundary.md`](./decisions/024-rc5-security-gate-and-residual-boundary.md)
-7. [`context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2-verification.md`](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2-verification.md)
-8. [`context/status/Reprioritization Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md`](./context/status/Reprioritization%20Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md)
-9. [`task-backlog.md`](./task-backlog.md)
-10. [`requirements.md`](./requirements.md)
-11. [`design.md`](./design.md)
-12. [`completed-tasks.md`](./completed-tasks.md)
+7. [`decisions/025-two-host-final-candidate-qualification.md`](./decisions/025-two-host-final-candidate-qualification.md)
+8. [`tasks/active/TASK-105-final-release-correction-and-qualification.md`](./tasks/active/TASK-105-final-release-correction-and-qualification.md)
+9. [`context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2-verification.md`](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2-verification.md)
+10. [`context/status/Reprioritization Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md`](./context/status/Reprioritization%20Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md)
+11. [`task-backlog.md`](./task-backlog.md)
+12. [`requirements.md`](./requirements.md)
+13. [`design.md`](./design.md)
+14. [`completed-tasks.md`](./completed-tasks.md)
 
 The September 21 v2 prioritization and work plan control immediate development
-and acceptance as amended by ADR-022, ADR-023, and ADR-024. ADR-023 resolves
+and acceptance as amended by ADR-022, ADR-023, ADR-024, and ADR-025. ADR-023 resolves
 the Windows signing-policy choice by selecting an unsigned, explicitly
 narrower support boundary. ADR-024 owns the bounded RC5 dependency reduction,
-five-key expiring residual policy, and scan-before-push ordering. The
-verification record states the static-review boundary, and
+five-key expiring residual policy, and scan-before-push ordering. TASK-105 owns
+the RC9 independent-host findings and next `v0.1.3-rc.N` corrections. ADR-025
+sets exact-byte requalification on this host and the separate independent
+NVIDIA host, with CPU-only and Podman-without-Docker environments unclaimed.
+The verification record states
+the static-review boundary, and
 the post-Day-7 guide is future planning rather than today's task list. The older
 roadmap remains dated context. The Pilot plan still controls the immutable
 `v0.1.2` package and cdcai hold.

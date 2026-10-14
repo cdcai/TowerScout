@@ -2,7 +2,7 @@
 
 **Applies to**: The exact documentation-aligned Windows release package named
 by the authoritative release record
-**Last reviewed**: 2026-10-05
+**Last reviewed**: 2026-10-14
 **Audience**: Package users after first setup.
 
 **Runtime scope**: Docker CPU, Docker GPU, Podman CPU, and Podman GPU are
@@ -198,10 +198,15 @@ TowerScout supports several export paths.
 Confirm that the results and their locations may be stored in the destination
 folder before exporting them.
 
-Use `Download results` to download:
+Select `Download CSV` for `detections.csv` and `Download KML` for
+`detections.kml`. Each selection starts one browser download. If the browser
+asks where to save it, complete that prompt and confirm the file appears.
+Some browsers block additional automatic downloads, so choose each button
+separately. A “download started” message does not prove a file was saved.
 
-- `detections.csv`
-- `detections.kml`
+If a geocoding provider reaches its limit or cannot return a street address,
+some detections still have coordinates for review and export. The map imagery
+provider and the address provider can differ when configured fallback is used.
 
 These exports are useful for review, mapping, and sharing approved result
 summaries according to your site policy.

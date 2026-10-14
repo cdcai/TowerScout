@@ -1,6 +1,6 @@
 # TowerScout Current Technical Design
 
-**Last Updated**: October 8, 2026
+**Last Updated**: October 14, 2026
 **Scope**: Main-based Windows deployment delivery, four-profile runtime
 qualification, and cdcai handoff through October 2026
 **Archived Pre-Rebaseline Design**:
@@ -125,6 +125,52 @@ Task-097 owns:
 Task-097 must not silently expand the product UI to install Compose providers
 or modify Podman-machine trust.
 
+## Final Release Correction Boundary
+
+TASK-105 is the bounded correction and final-qualification layer discovered by
+RC9 independent-host testing. It does not reopen the ML migration, provider
+architecture, Task-087 launcher, or security baseline.
+
+The selected design is:
+
+1. Keep RC9 immutable as validation evidence.
+2. Make the Podman GPU smoke pull-aware so a large first pull is not governed
+   by a short readiness timeout, while a real CDI/device/container failure
+   still fails closed.
+3. Isolate shipped CMD wrappers from an incompatible inherited PowerShell
+   module path and use a compatible SHA-256 implementation. Provider
+   installation uses task-owned staging and promotes only verified complete
+   state, making ordinary retry safe.
+4. Treat TowerScout's package-selected Compose provider as authoritative;
+   global `podman compose version` output is not a package-readiness signal.
+5. Keep request-correlated cancellation. The frontend must discard responses
+   from cancelled/superseded requests even if a final native GPU batch finishes
+   before the server observes cancellation.
+6. Give CSV and KML separate explicit browser actions and correct media types;
+   do not report a second automatic download as successful when the browser
+   may block it.
+7. Document mixed-engine startup/recovery, rootless Podman and Python 3.12 as
+   tested boundaries, actual qualified GPUs, geocoding limits, and any retained
+   Windows-only ZIP behavior.
+8. Build both flavors from one accepted source and publish the next available
+   `v0.1.3-rc.N` identity as an immutable, non-Latest fork prerelease. Exact
+   public candidate bytes receive full acceptance. At adoption, the cdcai
+   owner and project lead select the official identity and authorize a
+   consistently rebuilt official image/package set. Official exact-byte and
+   affected runtime checks must pass before a stable/Latest claim; the fork
+   candidate is not relabeled or promoted as the official release.
+
+ADR-025 selects two-host final-candidate validation: the first Windows NVIDIA
+machine and the separate RC9 independent NVIDIA machine each run Docker CPU,
+Docker CUDA, Podman CPU, and Podman CUDA against exact corrected public bytes.
+CPU mode is explicit on both. The design does not claim CPU-only hardware or
+a Podman installation without Docker Desktop; mixed-engine coexistence and
+volume-preserving recovery remain part of the tested path.
+
+Any byte change after prerelease qualification creates a new identity and
+requires affected reruns. ADR-024 must be rechecked before each image dispatch
+or publication and cannot authorize activity after its October 31 expiry.
+
 ## Dependency Security Boundary
 
 Task-090 and Task-098 completed the 62-alert Trivy baseline classification,
@@ -228,6 +274,9 @@ ADR-023 unsigned package boundary
         |
         v
 TASK-091/092/093 qualification, packaged docs, and recovery
+        |
+        v
+TASK-105 RC9 findings + intended v0.1.3 exact-byte qualification
         |
         +--> TASK-094 only if pilot/support evidence justifies it
         |

@@ -489,19 +489,17 @@ class GeocodingService:
             GeocodingError: If all providers fail
         """
         fallback_provider = self.providers[0] if self.providers else GeocodingProvider.AZURE_MAPS
+        effective_preference = preferred_provider if preferred_provider is not None else self.preferred_provider
+        provider_order = self._get_provider_order(effective_preference)
 
         # Check rate limits
         if not self._check_rate_limit():
             self.logger.warning("Rate limit exceeded for geocoding request")
-            raise RateLimitError(GeocodingProvider.AZURE_MAPS)  # Use first provider for error
-        
-        # Use instance preference if no override provided
-        effective_preference = preferred_provider if preferred_provider is not None else self.preferred_provider
+            raise RateLimitError(provider_order[0] if provider_order else fallback_provider)
         
         self.logger.info(f"Reverse geocoding: {lat}, {lng} (preferred: {effective_preference})")
 
         # Determine provider order based on preference
-        provider_order = self._get_provider_order(effective_preference)
         last_error_message = None
         last_tls_failure = None
         

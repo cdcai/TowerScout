@@ -2,7 +2,7 @@
 
 **Applies to**: The exact documentation-aligned Windows release package named
 by the authoritative release record
-**Last reviewed**: 2026-10-05
+**Last reviewed**: 2026-10-14
 **Audience**: Windows users who choose Podman with NVIDIA GPU processing
 **Runtime scope**: Podman, CUDA 12.8 Application Package, GPU launch mode
 
@@ -76,7 +76,6 @@ wsl --list --verbose
 nvidia-smi
 podman --version
 podman machine list
-podman compose version
 ```
 
 If the Podman machine exists but is stopped, start it:
@@ -173,9 +172,13 @@ the CPU package or `-Gpu off`; do not force an architecture list.
    ```powershell
    .\scripts\install-podman-compose-provider.cmd -Apply
    podman machine list
-   podman compose version
    powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\enable-podman-gpu.ps1 -VerifyOnly
    ```
+
+   The installer prints the selected package-local provider. The global
+   `podman compose version` command may use another provider. After setup,
+   `.\scripts\status.cmd -Engine podman -Port 5000` (with your chosen port)
+   reports the provider TowerScout actually selected.
 
    If `-VerifyOnly` says CDI must be provisioned or refreshed, review its
    message and run the package helper without `-VerifyOnly` only when local
@@ -189,6 +192,11 @@ the CPU package or `-Gpu off`; do not force an architecture list.
    Continue only when the final check shows `nvidia.com/gpu=all`. Record
    `nvidia-ctk --version` inside the Podman machine if support later asks for
    the sanitized version information.
+
+   On a fresh machine, the helper may first pull a large CUDA image before its
+   short GPU container smoke. Allow the pull to finish. An image-download or
+   registry error is distinct from a CDI/device failure; record the sanitized
+   step name and retry only after the image-access problem is resolved.
 
 9. In the PowerShell window, run:
 

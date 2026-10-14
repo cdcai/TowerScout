@@ -5,7 +5,7 @@ and users of the TowerScout Windows package path.
 
 **Applies to**: The exact documentation-aligned Windows release package named
 by the authoritative release record
-**Last reviewed**: 2026-10-05
+**Last reviewed**: 2026-10-14
 **Audience**: First-line support, release validation, and package users
 **Runtime scope**: Users independently choose Docker or Podman, CPU or a
 compatible NVIDIA GPU, and Google Maps or Azure Maps. Each choice must meet
@@ -126,7 +126,6 @@ Useful Podman checks when you choose Podman:
 ```powershell
 podman --version
 podman machine list
-podman compose version
 ```
 
 Only the selected engine needs to pass its checks. If both Docker and Podman
@@ -614,6 +613,19 @@ For a non-default port:
 .\start.bat -Engine docker -Gpu off -Port 5001
 ```
 
+## Tested GPU Evidence
+
+RC9 evidence records CUDA 12.8 execution of both YOLO and EfficientNet on
+the NVIDIA RTX PRO 500 Blackwell Generation Laptop GPU (`sm_120`) on the first
+host and the NVIDIA T1000 (`sm_75`) on one independent host. Both Docker and
+rootless Podman GPU profiles ran without CPU fallback. The corrected Task-105
+candidate still requires exact-byte four-profile repetition on both available
+Windows NVIDIA hosts. CPU-only hardware and a Podman installation without
+Docker Desktop remain untested. This list does not qualify every driver,
+Windows build, WSL, engine, or toolkit combination for those GPU names. The
+downloaded package's
+`docs/release/task105-candidate-notes.md` records the current evidence boundary.
+
 ## Optional GPU Launch Boundary
 
 The release path now has separate CPU and CUDA Application Packages. The CPU
@@ -818,6 +830,23 @@ The helper installs the approved `podman-compose` provider into a package-local
 isolated Python environment, verifies pinned package hashes, backs up `.env`,
 and updates only `PODMAN_COMPOSE_PROVIDER`. Running the helper without
 `-Apply` prints the recommended `.env` setting without changing `.env`.
+An interrupted or failed install can be retried with the same `-Apply` command;
+the helper keeps prior managed state and validates the staged replacement
+before selecting it. The global `podman compose version` command can report a
+different provider. After setup, `.\scripts\status.cmd -Engine podman -Port 5000`
+(use the chosen port) reports TowerScout's selected provider.
+
+### Docker and Podman coexistence
+
+When both desktop applications are installed, start only the selected engine
+for the current run. For Docker, quit Podman Desktop, start Docker Desktop,
+wait until it is ready, then run Docker status/start. For Podman, quit Docker
+Desktop, start the recorded rootless Podman machine, then run Podman status/start
+with the same package, connection, project, and port. If the Docker pipe is
+contended after sign-in, quit both applications and restart the chosen one; a
+Windows reboot is an option if the pipe remains unavailable. Preserve the
+existing named volumes. Do not use `compose down -v`, prune, or **Reset to
+factory defaults** to recover from this collision.
 
 If Podman reports `rootlessport listen ... bind: address already in use` even
 when Windows shows the port as free, retry with a non-default package port.

@@ -36,7 +36,7 @@
         <h2>About These Instructions</h2>
         <p><strong>Applies to:</strong> The next documentation-aligned Windows release identified by the authoritative
           GitHub release record.</p>
-        <p><strong>Last reviewed:</strong> 2026-10-02.</p>
+        <p><strong>Last reviewed:</strong> 2026-10-14.</p>
         <p><strong>Audience:</strong> First-time users, including people unfamiliar with PowerShell, containers, API
           keys, or SHA-256.</p>
         <p class="callout"><strong>Draft:</strong> Final filenames, hashes, tested combinations, and known limitations
@@ -92,9 +92,17 @@ podman system connection list</code></pre>
           <a href="https://www.python.org/downloads/windows/">Python Windows downloads</a> if permitted, then run
           <code>python --version</code>.</p>
 
+        <p>If Docker Desktop and Podman Desktop are both installed, start only the selected engine for the current
+          run. If using Docker first, wait until it is ready and quit it before starting Podman Desktop. If they
+          collide at sign-in, quit both, then start the chosen one and wait for it to be ready. A Windows
+          restart is safer than a reset. <strong>Do not choose “Reset to factory defaults”</strong>; it can remove
+          TowerScout named volumes. Follow the <a href="package-guide.md#docker-and-podman-coexistence">volume-preserving
+          recovery steps</a>.</p>
+
         <h3>Optional NVIDIA GPU</h3>
         <p>Record the exact GPU from Task Manager or Device Manager, run <code>nvidia-smi</code>, and compare the GPU,
-          driver, WSL, and engine with the final tested-support list. Use the <code>-cuda128</code> package only when it
+          driver, WSL, and engine with the <a href="package-guide.md#tested-gpu-evidence">tested GPU
+          evidence</a> and final tested-support list. Use the <code>-cuda128</code> package only when it
           matches. Maxwell and Pascal must use CPU. Never install a Linux NVIDIA display driver inside WSL.</p>
         <p>Podman GPU additionally requires NVIDIA Container Toolkit and Container Device Interface (CDI) configuration
           inside the intended rootless machine. After verifying and extracting the package, follow the
@@ -216,8 +224,10 @@ compose.yaml</code></pre>
           type <code>powershell</code>, and press Enter. A command starting with <code>.\</code> runs a file from this
           folder. Keep the window open.</p>
         <p>Podman users then install and confirm the package-local Compose provider:</p>
-        <pre><code>.\scripts\install-podman-compose-provider.cmd -Apply
-podman compose version</code></pre>
+        <pre><code>.\scripts\install-podman-compose-provider.cmd -Apply</code></pre>
+        <p>The installer prints the package-local provider. After setup, use
+          <code>.\scripts\status.cmd -Engine podman -Port 5000</code> (or your chosen port) to check the provider
+          TowerScout selected. Global <code>podman compose version</code> can resolve a different provider.</p>
         <p>Podman GPU users must also complete the version-matched CDI preparation in the
           <a href="podman-gpu-user-guide.md">Podman GPU guide</a>. After extraction, run the package-local check below.
           The GPU helper is the guide's documented, limited <code>.ps1</code> exception:</p>

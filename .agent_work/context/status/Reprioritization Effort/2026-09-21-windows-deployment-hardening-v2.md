@@ -24,6 +24,13 @@ not as signed-environment passes. Final proof still requires a real browser-
 downloaded ZIP, authoritative SHA-256 comparison before extraction, ordinary-
 user wrapper execution, and the independent-host matrix.
 
+**Amended by [ADR-025](../../../decisions/025-two-host-final-candidate-qualification.md) (2026-10-14):**
+Run all four corrected-candidate profiles on this Windows NVIDIA machine and
+the separate RC9 independent NVIDIA machine. The extra CPU-only machine and
+Podman-without-Docker installation are no longer release gates. Preserve
+exact-byte, real-model, provider, recovery, persistence, security, and
+independent repetition requirements.
+
 **Assessed baseline:** `9276084d91807906c53e00060670692b27e38483`, September 21, 2026. Main may subsequently move; select and record the execution baseline once. Reassess changed files before adopting a newer revision.
 
 **Version/status:** This document and the v2 spec supersede the unversioned September 21 pair for the proposed deadline effort. Preserve the originals as history. This request authorizes documentation; it does not execute cleanup, change task status, close PRs, or deploy software. After implementation is authorized, continue within that scope without redundant per-task permission requests.
@@ -141,7 +148,7 @@ git grep -n -E 'PR.?67|Task.?087|TASK-087|launcher|IMPLEMENT' -- HANDOFF.md CONT
 
 **Produces:** baseline artifact inventory, host allocation, fixture contract, failure list, and Day-1 forecast. No new product behavior.
 
-- [ ] Reserve one CPU-only host and two different NVIDIA hosts where possible. Repeat CPU profiles on two suitable hosts, and GPU profiles on both NVIDIA hosts. Include a Podman installation without Docker Desktop. Record Windows build, RAM, free disk, GPU/VRAM/driver, WSL, engine/provider versions, Python prerequisite, endpoint policy, and anonymous host IDs. Unconfirmed access is a blocker, not an assumed resource.
+- [ ] Reserve this Windows NVIDIA host and the separate RC9 independent NVIDIA host. Repeat Docker CPU, Docker CUDA, Podman CPU, and Podman CUDA on each from the corrected exact downloads. Run CPU profiles in explicit CPU mode. Record Windows build, RAM, free disk, GPU/VRAM/driver, WSL, engine/provider versions, Python prerequisite, endpoint policy, and anonymous host IDs. CPU-only and Podman-without-Docker environments remain unqualified under ADR-025.
 - [ ] Assign an owner to asset/model access, approved Google/Azure accounts, TLS certificates, signing if policy requires it, builds, and independent testing. Confirm whether downloaded unsigned scripts can run under the claimed policy. The target may require organization-approved signing; determine this before building final ZIPs.
 - [ ] Select a new baseline candidate identifier and accepted main SHA. Obtain/build its CPU and CUDA images using the existing workflow and authorized publication route. Pin image digests; do not reuse a mutable tag or call an old `v0.1.2` ZIP evidence for current main. If builds consume Day 1, record the delay and perform the first package attempt as soon as available.
 - [ ] Locate the authorized asset ZIP, confirm its SHA256 and model contract, and build a real control ZIP using W09's existing package arguments. Record that packaging does not create the asset ZIP. Fail asset provenance early instead of secretly mounting the developer's models.
@@ -434,7 +441,7 @@ python -m pytest tests/unit/test_release_package_script.py tests/unit/test_relea
 
 **Files/evidence:** four-profile matrix, sanitized evidence index, tested support/rollback instructions, current board and public-doc status. Store raw sensitive evidence privately. **Consumes:** W09 immutable artifacts and W01 reserved machines/accounts.
 
-- [ ] For each profile, record first host and independent repeat host, artifact/download hashes, image digest, model/fixture/tool hashes, versions, declared settings, result and evidence reference. Example allocation: Docker CPU and Podman CPU on `cpu-a` plus explicit-CPU `gpu-a`; Docker NVIDIA and Podman NVIDIA on `gpu-a` plus `gpu-b`. Isolate projects/ports and do not run competing profiles simultaneously when that distorts resource measurements.
+- [ ] For each profile, record first host and independent repeat host, artifact/download hashes, image digest, model/fixture/tool hashes, versions, declared settings, result and evidence reference. Under ADR-025, run Docker CPU, Docker NVIDIA, Podman CPU, and Podman NVIDIA on both available NVIDIA-equipped hosts, using explicit CPU mode for the CPU profiles. Isolate projects/ports and do not run competing profiles simultaneously when that distorts resource measurements.
 - [ ] A tester follows only the shipped instructions on an ordinary account: download, verify, extract, setup with asset import, open UI, configure authorized provider, perform real map detection, review and export. No source checkout, developer model mount, preloaded application volumes, or undocumented manual repair is allowed in a fresh-install pass. Existing engine prerequisites can be installed through the documented approved procedure.
 - [ ] In every profile, run the external fixed combined probe, then the live Google/Azure workflow in the actual app process. Record both model devices and positive EN work for the fixed case, expected output comparisons, startup/warm performance and memory. Provider-dependent live counts may vary; assert valid terminal outcome/review/export rather than forcing the historical count 53.
 - [ ] On each host/profile exercise cancellation, a controlled recoverable error, and next-request success; stop/relaunch from a new shell and reboot. Confirm intended engine/target, assets, provider setup, sessions and export inputs persist. An explicit GPU-required run with CUDA unavailable must fail clearly rather than become a CPU pass.

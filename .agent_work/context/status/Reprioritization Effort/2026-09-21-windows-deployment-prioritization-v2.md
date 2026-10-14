@@ -18,6 +18,14 @@ specific allowlisting are outside the standard package claim. The Day-1 policy
 decision is therefore resolved, while a real browser-download test and all
 independent-host acceptance requirements remain in force.
 
+**Amended by [ADR-025](../../../decisions/025-two-host-final-candidate-qualification.md) (2026-10-14):**
+The final-candidate host allocation is this Windows NVIDIA machine plus the
+separate RC9 independent NVIDIA machine. Both repeat all four profiles using
+the exact corrected public bytes. The additional CPU-only machine and
+Podman-without-Docker installation below are superseded as release gates;
+those environments remain unqualified. All other acceptance and owner-
+authorization boundaries remain in force.
+
 **Version rule:** This pair supersedes the September 21 unversioned analysis/plan for the proposed deadline effort. Preserve those originals as history; do not execute their larger task list in addition to this one. Repository handoff files and skills still need the targeted alignment described in W00. Writing this revision does not change application behavior, task status, branches, PRs, or runtime state.
 
 ## 1. Decision and intended outcome
@@ -39,7 +47,13 @@ Seven days is a delivery target, not a verified duration. Machine access, approv
 | Podman CPU | Approved Compose provider and intended machine/connection; actual YOLO and EfficientNet work on CPU. |
 | Podman NVIDIA | Intended WSL2 machine, approved provider, NVIDIA CDI, both models on CUDA. |
 
-For each row, repeat the downloaded workflow on an independent suitable Windows computer. A practical allocation is one CPU-only machine plus two different NVIDIA machines: repeat CPU profiles on the CPU-only host and one GPU host in explicit CPU mode; repeat GPU profiles on both GPU hosts. Include a Podman environment without Docker Desktop. These machines and organizational access have not been confirmed by this document.
+For each row, repeat the downloaded workflow on an independent suitable
+Windows computer. ADR-025 selects two separate NVIDIA-equipped Windows
+machines for the corrected final candidate: run all four rows on each, with
+CPU profiles explicitly in CPU mode. The earlier proposal for an additional
+CPU-only machine and Podman without Docker Desktop is superseded. Record
+those untested environments as outside the final-candidate qualification
+claim.
 
 Every qualified row must demonstrate download/checksums, ordinary-account extraction including a path with spaces, setup/import, real model execution, Google and Azure workflow checks, review/export, cancellation/error recovery, a successful next request, and persistence across stop/relaunch and reboot. Shared-script failure scenarios may be exhaustively injected once per relevant engine and smoke-checked in the remaining profiles; do not repeat every artificial fault eight times without a reason.
 
