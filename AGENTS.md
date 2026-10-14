@@ -15,6 +15,9 @@ For Windows package distribution and execution-policy claims, also read
 For the active RC5 security correction and publication ordering, also read
 `.agent_work/decisions/024-rc5-security-gate-and-residual-boundary.md` and
 `.agent_work/tasks/active/TASK-104-rc5-security-gate-and-residual-disposition.md`.
+For the final RC9-finding correction and `v0.1.3-rc.N` candidate qualification, also
+read `.agent_work/decisions/025-two-host-final-candidate-qualification.md` and
+`.agent_work/tasks/active/TASK-105-final-release-correction-and-qualification.md`.
 
 Current delivery direction: qualify a new release from accepted `main` for
 Windows 11 Docker/Podman CPU/NVIDIA use. PR #67 and the Task-087 launcher
@@ -23,7 +26,10 @@ commits, reviews, and evidence; do not merge, reconcile, extend, or resume them
 during this delivery window.
 
 Task status comes from the active board. Acceptance comes from the v2
-prioritization document as amended by ADR-022, ADR-023, and ADR-024. Static checks, health endpoints, and mocked model tests
+prioritization document as amended by ADR-022, ADR-023, ADR-024, and ADR-025.
+ADR-025 requires four corrected-candidate profiles on this Windows NVIDIA host
+and the separate independent NVIDIA host; it does not claim CPU-only or
+Podman-without-Docker coverage. Static checks, health endpoints, and mocked model tests
 do not establish deployment readiness; record actual package, model, device,
 provider, persistence, recovery, and independent-host results.
 

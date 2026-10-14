@@ -1,16 +1,22 @@
 # TASK-097: Podman CPU/GPU Final Path Qualification
 
-**Status**: AT_RISK - final `rc4` Podman CPU/GPU package paths pass on the
-first host, including provider workflows, TLS repair, cancellation recovery,
-exports, persistence, reboot restoration, and real CUDA execution;
-independent-host proof remains
+**Status**: AT_RISK - final `rc4` and exact browser-downloaded RC9 Podman
+CPU/GPU package paths pass on the first host, including provider workflows,
+TLS repair, cancellation recovery, exports, persistence, manual retained-
+container reboot restoration, and real CUDA execution. One independent NVIDIA
+host passed both RC9 Podman profiles but confirmed a fresh CUDA-image pull
+timeout, PowerShell/provider-install retry defect, and misleading global
+provider check. TASK-105 owns those corrections and the ADR-025 corrected-
+candidate repeat on both available NVIDIA hosts
 **Priority**: HIGH
 **Type**: C (Runtime Qualification)
 
 ## Objective
 
-Qualify the exact release package on Podman CPU and NVIDIA GPU without Docker
-Desktop, using the approved Compose provider and intended Podman target.
+Qualify the exact release package on Podman CPU and NVIDIA GPU on both
+available Windows hosts with Docker Desktop closed during Podman runs, using
+the approved Compose provider and intended Podman target. ADR-025 excludes a
+Podman installation without Docker Desktop from the tested claim.
 
 ## Requirements
 
@@ -127,5 +133,6 @@ mounts each. Google and Azure detection plus controlled-error recovery, review
 navigation, and valid dataset ZIP export passed on both profiles with zero page
 errors. Podman CUDA completed a finite capability-12.0 kernel on `cuda:0`.
 
-**Remaining**: Repeat the final package matrix on the independent Windows
-host.
+**Remaining**: TASK-105 must correct the fresh Podman GPU and provider-install
+paths, then repeat exact intended final Podman CPU/CUDA packages on this host
+and the separate RC9 independent NVIDIA host under ADR-025.

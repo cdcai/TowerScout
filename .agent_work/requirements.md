@@ -1,6 +1,6 @@
 # TowerScout Requirements
 
-**Last Updated**: October 7, 2026
+**Last Updated**: October 14, 2026
 **Current Planning Horizon**: October 31, 2026 hard project end
 **Operational Closeout**: October 30, 2026
 **Current Delivery Requirements**:
@@ -150,17 +150,18 @@ Acceptance:
 - Any remaining limitation is documented and explicitly accepted before
   freeze.
 
-Current result (2026-10-06): the exact local `rc4` Docker CPU/CUDA and
-Podman CPU/CUDA packages pass setup, readiness, both provider workflows,
-cancellation recovery, export checks, provider TLS repair, and
-volume-preserving stop/relaunch and Windows reboot restoration on the first
-host. ADR-023 resolves policy/signing by choosing an unsigned, narrower support
-boundary. The documentation is included in the control ZIP and baked into the
-runtime image for in-app Help, so documentation alignment changes both final
-artifact identities. The preliminary `rc4` browser-download diagnostic passed
-on October 2 and informed the documentation content merged through PR #94 as
-`fc97b32`. A new documentation-aligned build, final exact-candidate
-browser-download, and independent-host evidence remain open.
+Current result (2026-10-14): exact browser-downloaded RC9 Docker CPU/CUDA and
+Podman CPU/CUDA pass the full first-host workflow and reboot persistence. One
+independent NVIDIA host also passed all four profiles with real CPU/CUDA model
+execution, both providers, matching detections, cancellation/retry, exports,
+relaunch, and reboot. That run exposed fresh Podman GPU provisioning,
+PowerShell/provider installation, mixed-engine startup, provider-check,
+export, and documentation/reproducibility findings now owned by TASK-105. The
+original v2 CPU-only and Podman-without-Docker allocation was not met.
+ADR-025 supersedes those extra host gates for the corrected final candidate:
+all four profiles must run on this Windows NVIDIA host and the separate RC9
+independent NVIDIA host using the exact new public bytes. RC9 is therefore
+strong validation evidence, not the final release package.
 
 ### RUNTIME-002: Podman Trust Separation
 
@@ -195,15 +196,62 @@ Acceptance:
 - After progress reports a terminal run with `retryReady=true`, the next real
   provider-backed detection succeeds without a container relaunch.
 
-Current result (2026-10-08): all four local `rc4` profiles passed the original
+Current result (2026-10-13): all four local `rc4` profiles passed the original
 cancellation contract. During exact browser-downloaded RC8 testing, Podman CPU
 reproduced an earlier request-ordering window four times: `/abort` returned
 idle/ready before the delayed `/getobjects` request registered, and the next
 request received `DETECTION_BUSY`. A bounded request-correlation/tombstone fix
 now passes focused backend/frontend tests and an isolated real Azure
 cancel-then-immediate-retry Podman CPU smoke layered on the exact RC8 runtime;
-the retry completed with 14 detections. Replacement-candidate exact-package
-Podman proof remains required before this requirement passes for final release.
+the retry completed with 14 detections. The exact browser-downloaded RC9 Podman
+CPU and Podman CUDA replacements then repeated the affected path successfully:
+each cancelled request produced zero detections, each overlay cleared, and each
+immediate retry completed with 14 real Azure detections without
+`DETECTION_BUSY`. Exact browser-downloaded RC9 Docker CPU and Docker CUDA then
+passed the same cancellation and immediate-retry path with zero cancelled-run
+detections and a 14-detection retry. All four first-host profiles and Docker/
+Podman reboot persistence now pass; independent-host repetition remains
+required before this requirement passes for the final release.
+
+### RUNTIME-004: Beginner-Safe Windows Runtime Bootstrap
+
+WHEN a user follows the shipped Podman or Docker installation path on a fresh
+Windows host, THE SYSTEM AND DOCUMENTATION SHALL distinguish prerequisite
+configuration, long first-time downloads, verified runtime readiness, and
+recoverable host-engine conflicts without directing the user toward destructive
+recovery.
+
+Acceptance:
+
+- A fresh Podman GPU image pull does not fail solely because it exceeds a
+  short container-smoke timeout; CDI/device failures still fail closed.
+- Package `.cmd` wrappers and provider installation work from Windows
+  PowerShell 5.1 and a PowerShell 7 parent without incompatible module lookup.
+- A failed package-local provider installation leaves no state that prevents a
+  normal documented retry, or safely identifies and replaces only its own
+  incomplete staging state.
+- Podman readiness reports the provider TowerScout selected rather than an
+  unrelated global Docker Desktop Compose provider.
+- Mixed Docker/Podman guidance warns against factory reset and provides a
+  volume-preserving startup/recovery sequence.
+
+### UX-EXPORT-001: Explicit Browser Exports
+
+WHEN a user exports TowerScout results, THE APPLICATION SHALL initiate each
+requested file through an explicit user action, use the correct filename and
+media type, and avoid claiming that a browser-blocked file was saved.
+
+Acceptance:
+
+- CSV and KML remain separate supported artifacts with explicit download
+  actions.
+- KML uses `application/vnd.google-earth.kml+xml`; CSV retains an appropriate
+  CSV media type.
+- Dataset ZIP export remains compatible.
+- Edge/Chrome behavior is exercised from the packaged application, and the
+  user guidance explains any browser download permission that remains needed.
+- Cancellation prevents a stale completed response from replacing the visible
+  results after the user has cancelled the run.
 
 ### SEC-001: Dependency Security Baseline And Release Gate
 
@@ -267,10 +315,11 @@ Current result:
 - PR #96 merged the TowerScout application `urllib3==2.8.0` correction as
   `b0725e7`. ADR-024/TASK-104 are the unique RC5 follow-up for the retained
   image scan: remove the unused Debian `gdal-bin` tree, keep the 396-key
-  baseline unchanged, and permit only the four exact pip-private/OpenSSL HIGH
-  records through an enforced exception expiring October 31, 2026. Local scan
-  qualification must pass before any registry login/push, and final CPU/CUDA,
-  browser-download, four-profile, and independent-host proof remains required.
+  baseline unchanged, and permit only the five exact pip-private/OpenSSL/Expat
+  HIGH records through an enforced exception expiring October 31, 2026. Local
+  scan qualification must pass before any registry login/push, and final
+  CPU/CUDA, browser-download, four-profile, and independent-host proof remains
+  required.
 
 ## Qualification And Handoff Requirements
 

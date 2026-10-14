@@ -2,7 +2,7 @@
 
 **Status**: IN_PROGRESS - RC9 independent-host evidence is accepted as a
 strong four-profile pass on one NVIDIA host, but its fresh-install findings and
-the remaining host allocation prevent a final release claim. Planning and
+the corrected-candidate two-host rerun prevent a final release claim. Planning and
 evidence intake are complete; bounded corrections are under local regression
 review and have not been merged or qualified as a final candidate.
 **Priority**: CRITICAL
@@ -21,8 +21,8 @@ the candidate name does not reserve or authorize `v0.1.3` final
 
 Resolve or explicitly disposition every RC9 independent-host finding, rebuild
 the CPU and CUDA 12.8 artifacts from one accepted `main` source, qualify the
-exact browser-downloaded package bytes, complete the required independent-host
-allocation, and prepare an evidence-backed final-candidate transfer packet for
+exact browser-downloaded package bytes, complete the ADR-025 two-host
+independent run, and prepare an evidence-backed final-candidate transfer packet for
 project handoff.
 
 RC9 remains an immutable validation prerelease and evidence baseline. It is not
@@ -74,9 +74,10 @@ public bytes and all required host/profile evidence.
 - BEFORE stable release, THE project SHALL pass the strict security gate while
   the ADR-024 residual policy is unexpired, or obtain a new written owner
   decision before any build or publication after October 31, 2026.
-- WHEN final-candidate readiness is claimed, THE project SHALL complete the v2 host
-  allocation, including a CPU-only Windows host, two different NVIDIA Windows
-  hosts, and a Podman environment without Docker Desktop installed.
+- WHEN final-candidate readiness is claimed, THE project SHALL complete the
+  ADR-025 host allocation: all four corrected-candidate profiles on this
+  Windows NVIDIA host and on the separate independent NVIDIA host. CPU-only
+  and Podman-without-Docker environments SHALL remain outside the tested claim.
 
 ## RC9 Finding Disposition
 
@@ -239,8 +240,9 @@ Every row must end as `fixed`, `verified_no_change`, or
 - [ ] Run the fixed combined-model probe, explicit CUDA-unavailable negative,
   required shared-script faults, and warm performance checks where the v2 gate
   requires them.
-- [ ] Repeat the required cells on a CPU-only Windows host, a second NVIDIA
-  Windows host, and a Podman environment without Docker Desktop installed.
+- [ ] Repeat all four corrected-candidate profiles on the separate RC9
+  independent NVIDIA Windows host, including explicit CPU mode for both CPU
+  profiles and focused browser checks for the changed export/cancel flows.
 - [ ] Require ordinary-account, path-with-spaces, Mark-of-the-Web-preserving
   extraction and shipped instructions. Record deviations as gaps, not passes.
 - [ ] Retain raw sensitive evidence privately; commit only sanitized summaries,
@@ -286,8 +288,9 @@ Every row must end as `fixed`, `verified_no_change`, or
 - [ ] The selected candidate control ZIPs bind the exact image digests and pass internal
   and external checksum verification.
 - [ ] Exact public browser-downloaded bytes pass all four profiles locally.
-- [ ] The CPU-only host, two distinct NVIDIA hosts, and Podman-without-Docker
-  allocation satisfy the v2 independent-host requirement.
+- [ ] This Windows NVIDIA host and the separate independent NVIDIA host each
+  pass all four exact-byte corrected-candidate profiles under ADR-025; the
+  CPU-only and Podman-without-Docker environments are not claimed as tested.
 - [ ] Both models execute on the required device; no CPU fallback passes a GPU
   profile.
 - [ ] Provider, TLS, persistence, recovery, export, cancellation, Help, and
@@ -316,8 +319,9 @@ Every row must end as `fixed`, `verified_no_change`, or
 
 - Confirm the next available `v0.1.3-rc.N` identity before immutable image
   dispatch.
-- Arrange or confirm access to the remaining CPU-only and second NVIDIA hosts;
-  ensure one required Podman run has no Docker Desktop installation.
+- Arrange the corrected-candidate run on this host and the separate RC9
+  independent NVIDIA host; record Docker/Podman coexistence on the available
+  machines and keep CPU-only/Podman-without-Docker claims out of the release.
 - Enter approved Google/Azure credentials during live tests when needed; no
   credentials enter repository evidence.
 - Separately authorize CPU/CUDA GHCR dispatches, fork GitHub prerelease
@@ -335,6 +339,17 @@ Every row must end as `fixed`, `verified_no_change`, or
 ---
 
 ## Implementation Log
+
+### 2026-10-14 - Owner narrows the host allocation
+
+The release owner directed final-candidate testing on this Windows machine
+and the prior RC9 independent Windows machine, following the same four-profile
+pattern. [ADR-025](../../decisions/025-two-host-final-candidate-qualification.md)
+supersedes the additional CPU-only host and Podman-without-Docker installation
+gates. This changes the prospective candidate claim only; the RC9 intake and
+earlier gate assessments below remain historical. Each host must test the
+corrected exact downloads. No candidate or stable readiness is inferred from
+the old RC9 results, and untested environments stay outside the claim.
 
 ### 2026-10-14 - Local correction checkpoint
 
@@ -392,7 +407,8 @@ package provider. Both Windows behavioral checks passed. Legacy installer and
 export documentation assertions were updated and passed as direct checks;
 the complete Python suite still requires `pytest` and app dependencies.
 
-**Host allocation**: The release owner reports that only this Windows machine
+**Host allocation at this checkpoint (superseded by ADR-025 above)**: The
+release owner reports that only this Windows machine
 and the previous RC9 independent NVIDIA host are available. These can support
 first-host and repeat independent-host work after publication, but cannot
 establish the required CPU-only Windows host or a Podman host without Docker

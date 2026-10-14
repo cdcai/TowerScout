@@ -15,8 +15,9 @@ Docker CPU/CUDA and Podman CPU/CUDA first-host acceptance passed on October
 13, including the affected cancel-then-immediate-retry path. Docker and Podman
 reboot persistence now pass. One independent NVIDIA host also passed all four
 profiles, but exposed beginner-path runtime/documentation/export findings and
-does not satisfy the remaining CPU-only, second-NVIDIA, or Podman-without-
-Docker allocation. TASK-105 owns the bounded corrections, the next immutable
+did not satisfy the original CPU-only/Podman-without-Docker allocation.
+ADR-025 now selects a corrected-candidate four-profile run on this machine
+and that independent NVIDIA host. TASK-105 owns the bounded corrections, the next immutable
 `v0.1.3-rc.N` final-candidate qualification, and the cdcai handoff packet.
 The Task-087 launcher
 redesign remains preserved and deferred, not a release gate.
@@ -40,6 +41,7 @@ stable/general release remain separately owner-gated.
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
 **Windows Package Policy**: [ADR-023](./decisions/023-unsigned-windows-package-support-boundary.md)
 **RC5 Security Boundary**: [ADR-024](./decisions/024-rc5-security-gate-and-residual-boundary.md)
+**Final-Candidate Host Allocation**: [ADR-025](./decisions/025-two-host-final-candidate-qualification.md)
 **Acceptance**: [Windows deployment prioritization v2](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-prioritization-v2.md)
 **Work Plan**: [Windows deployment hardening v2](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md)
 
@@ -174,8 +176,8 @@ stable/general release remain separately owner-gated.
   PowerShell 7 provider-install/hash failure and partial-retry defect,
   misleading provider check, browser export gap, and smaller documentation/
   reproducibility findings. Only Docker CPU received the complete click-by-
-  click UI workflow, and the required CPU-only host, second NVIDIA host, and
-  Podman-without-Docker environment remain open. RC9 therefore remains a
+  click UI workflow; the original CPU-only and Podman-without-Docker host
+  allocation had not been completed. RC9 therefore remains a
   validation prerelease and must not be promoted.
 - Exact browser-downloaded RC9 Podman CPU first-host acceptance passed from the
   CPU control ZIP at SHA-256
@@ -253,13 +255,15 @@ Current scope:
   build same-source CPU/CUDA 12.8 `v0.1.3-rc.N` candidate artifacts.
 - Publish the candidate as an immutable, non-Latest fork prerelease only after
   separate authorization, then validate the exact public bytes.
-- Complete the CPU-only, two-NVIDIA-host, and Podman-without-Docker allocation
-  before any final-candidate readiness claim or cdcai adoption recommendation.
+- Complete Docker CPU/CUDA and Podman CPU/CUDA on this Windows NVIDIA host and
+  the separate RC9 independent NVIDIA host using the corrected exact public
+  bytes before any final-candidate readiness claim or cdcai adoption
+  recommendation.
 
-The release owner currently has access only to this Windows host and the
-previous RC9 independent NVIDIA host. Corrected-candidate repeats on those
-machines can cover a bounded subset, but the CPU-only and Podman-without-
-Docker cells are unavailable. Keep the full readiness claim open.
+ADR-025 removes the extra CPU-only and Podman-without-Docker host gates. Those
+environments are not tested and must not be claimed. Both available hosts must
+still pass every required corrected-candidate profile and workflow; RC9
+results cannot stand in for the new bytes.
 
 ### **TASK-103: CUDA 12.8 Blackwell ML Runtime**
 
@@ -278,7 +282,7 @@ prerelease. Resume final browser-download plus independent-host evidence using
 only those exact public bytes. All four exact-browser-downloaded RC9 first-
 host profiles and reboot-persistence cells now pass, including the affected
 cancellation race. One independent NVIDIA host passed all four RC9 profiles,
-but TASK-105 corrections and the remaining host allocation are required for
+but TASK-105 corrections and the ADR-025 corrected-candidate two-host rerun are required for
 the intended final package
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
@@ -348,7 +352,7 @@ verified RC9 image/package pair, and the non-Latest RC9 prerelease is
 published. All four exact-browser-downloaded RC9 first-host and reboot-
 persistence profiles now pass. One independent NVIDIA host passed all four
 profiles with disclosed deviations and findings. TASK-105 owns the corrected
-exact-byte package and remaining CPU-only/second-NVIDIA allocation
+  exact-byte package and ADR-025 two-host four-profile rerun
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-091-owner-runnable-release-qualification.md`
 
@@ -376,15 +380,16 @@ browser-downloaded RC9 Podman CPU and Podman CUDA now repeat that path and the
 documented manual retained-container reboot recovery successfully with the
 Python 3.12 provider prerequisite and Docker Desktop closed. One independent
 NVIDIA host passed both Podman profiles but reproduced fresh-GPU-pull and
-provider-install/readiness defects; TASK-105 owns their correction and the
-remaining Podman-without-Docker host proof
+  provider-install/readiness defects; TASK-105 owns their correction and the
+  ADR-025 two-host Podman repeat
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-097-podman-final-path-qualification.md`
 
 Current scope:
 
-- Qualify Podman without Docker Desktop using the approved Compose provider and
-  documented Python prerequisite.
+- Qualify Podman on both available hosts with Docker Desktop closed, the
+  approved Compose provider, and documented Python prerequisite. Do not claim
+  Podman-without-Docker installation coverage.
 - Bind operations to the intended machine/connection and fail before mutation
   on a target mismatch.
 - Require CPU inference and NVIDIA CDI CUDA inference with no silent fallback.
@@ -497,9 +502,10 @@ and explicit authorization.
 14. [ ] Recheck ADR-024 before expiry, then obtain separate authorization for
     same-source `v0.1.3-rc.N` CPU/CUDA dispatch and non-Latest fork prerelease
     publication with `push_latest=false`.
-15. [ ] Validate exact browser-downloaded candidate bytes across all four
-    profiles and complete the CPU-only, second-NVIDIA, and Podman-without-
-    Docker independent allocation.
+15. [ ] Validate exact browser-downloaded corrected-candidate bytes across all
+    four profiles on this host and the separate RC9 independent NVIDIA host
+    under ADR-025; exclude CPU-only and Podman-without-Docker environments from
+    the tested claim.
 16. [ ] After final-candidate evidence reconciliation, prepare the cdcai
     transfer packet. At adoption, separately authorize the official identity,
     build/publication, exact-byte confirmation, and stable/Latest status;

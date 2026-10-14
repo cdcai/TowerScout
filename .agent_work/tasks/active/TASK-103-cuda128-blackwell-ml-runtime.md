@@ -14,8 +14,11 @@ correlation fix and exact Expat residual amendment are merged through PRs
 #105/#106. Same-source RC9 CPU/CUDA registry images now pass local and exact-
 published-digest security qualification, and their digest-pinned control ZIPs
 pass local integrity validation. The owner-authorized non-Latest RC9
-prerelease is published; final browser-download validation and independent-
-host evidence can resume
+prerelease is published. All four exact-browser-downloaded RC9 first-host
+profiles and Docker/Podman reboot persistence now pass. One independent
+NVIDIA host passed all four profiles but exposed release-blocking beginner-path
+findings. ADR-025 now requires both available hosts to repeat the corrected
+`v0.1.3-rc.N` candidate across all four profiles under TASK-105
 **Priority**: CRITICAL
 **Type**: C (ML Runtime Migration / Release Qualification)
 **Owner**: Release owner; active agent executes the authorized implementation
@@ -113,6 +116,30 @@ weakening model correctness, device, security, persistence, or recovery gates.
   prerelease.
 - [ ] Complete final browser-download and independent-host W10 acceptance
   cells before claiming release readiness.
+  - [x] Exact browser-downloaded RC9 Podman CPU first-host acceptance,
+    including cancel-then-immediate-retry, both live providers, managed Google
+    TLS repair, review/export, ZIP lookup, Help parity, and stop/relaunch.
+  - [x] Exact browser-downloaded RC9 Podman CUDA first-host acceptance,
+    including NVIDIA CDI, both real models on CUDA 12.8 without fallback,
+    cancel-then-immediate-retry, both live providers, managed Google TLS
+    repair, review/export, ZIP lookup, Help parity, and stop/relaunch.
+  - [x] Exact browser-downloaded RC9 Docker CPU first-host acceptance,
+    including cancel-then-immediate-retry, both live providers, managed Google
+    TLS repair, review/export, ZIP lookup, Help parity, and stop/relaunch.
+  - [x] Exact browser-downloaded RC9 Docker CUDA first-host acceptance,
+    including both models on CUDA 12.8/`sm_120` without fallback, cancel-then-
+    immediate-retry, both live providers, managed Google TLS repair,
+    review/export, ZIP lookup, Help parity, and stop/relaunch.
+  - [x] RC9 Docker CPU/CUDA reboot persistence with automatic restore, exact
+    identities, both providers, repaired TLS, and post-reboot live workflows.
+  - [x] RC9 Podman CPU/CUDA reboot persistence with retained-container manual
+    restore, exact identities, both providers, repaired TLS, and post-reboot
+    live workflows.
+  - [x] One RC9 independent NVIDIA host completed all four profiles with
+    sanitized supporting extracts.
+  - [ ] TASK-105 corrections and ADR-025 four-profile exact-byte repetition
+    on this host and the separate RC9 independent NVIDIA host. CPU-only and
+    Podman-without-Docker environments remain unclaimed.
 
 ### W10 Local First-Host Rehearsal - Started 2026-09-28
 
@@ -166,8 +193,13 @@ weakening model correctness, device, security, persistence, or recovery gates.
   disposition its findings for Task-092.
 - [x] Complete the documentation-aligned RC8 image/package rebuild and local
   integrity validation.
-- [ ] Publish the owner-approved exact RC8 assets, then complete final
-  exact-candidate browser-download and independent-host cells.
+- [x] Publish the owner-approved exact RC8 assets, preserve the RC8 Podman
+  cancellation defect evidence, and replace RC8 with the corrected RC9
+  candidate.
+- [x] Complete RC9 browser-download, reboot, and one independent-NVIDIA-host
+  four-profile run; preserve its findings and deviations.
+- [ ] Complete TASK-105 corrections and exact final-candidate-package
+  qualification on both ADR-025 hosts across all four profiles.
 
 ## Acceptance Boundary
 
