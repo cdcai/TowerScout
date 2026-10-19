@@ -1,7 +1,8 @@
 # Current Tasks - Final Candidate Build And Acceptance
 
 **Sprint Period**: October 5-October 16, 2026
-**Last Updated**: October 14, 2026
+**Last Updated**: October 19, 2026
+**Closeout Target**: October 30, 2026
 **Focus**: Qualify a dependable, downloadable Windows 11 application from
 accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Documentation
 content is frozen and merged through PR #94, and the project-state
@@ -17,8 +18,50 @@ reboot persistence now pass. One independent NVIDIA host also passed all four
 profiles, but exposed beginner-path runtime/documentation/export findings and
 did not satisfy the original CPU-only/Podman-without-Docker allocation.
 ADR-025 now selects a corrected-candidate four-profile run on this machine
-and that independent NVIDIA host. TASK-105 owns the bounded corrections, the next immutable
-`v0.1.3-rc.N` final-candidate qualification, and the cdcai handoff packet.
+and that independent NVIDIA host. TASK-105 corrections merged through PRs
+#109/#110 at accepted `main` `835cbb9`. The same-source `v0.1.3-rc5` CPU/CUDA
+images passed strict local and exact-digest gates, and the six-file GitHub
+prerelease is immutable and non-Latest. Browser-downloaded bytes and sidecars
+match all six published hashes; File Explorer extraction retained Mark of the
+Web and internal checksums passed. The owner freed disk space. Exact-package
+Docker CPU and CUDA setup, asset import, device selection, managed TLS repair,
+and fixed combined-model probes now pass on this host. The owner reports live
+Google/Azure detection on both Docker profiles; CSV, KML, and dataset downloads
+were independently found and parsed. The owner reports CUDA cancel/retry and
+browser ZIP lookup succeeded. Both Docker profiles passed shipped stop/relaunch
+with all eight named volumes, both provider configured states, assets, device
+policy, and managed TLS retained. The owner refreshed both browser sessions,
+downloaded and restored a dataset in each, and reported usable review state.
+Both Podman profiles passed exact-package setup, intended devices, real
+combined-model probes, provider setup, browser workflows, exports, and shipped
+stop/relaunch. The bidirectional engine switch preserved both RC5 Docker and
+Podman installations; dataset restore and review controls worked after each
+switch. After the Windows reboot, all four profiles retained their original
+volumes, configured providers, assets, correct devices and digests, and normal
+TLS. The owner restored datasets, used review controls, and downloaded new
+files in each; the new dataset ZIPs parsed cleanly. The Podman Windows client
+socket required one volume-preserving machine stop/start to recover. The
+owner subsequently confirmed CPU browser cancel/retry and public ZIP lookup
+on both engines, closing the remaining first-host browser cells. The
+independent four-profile RC5 operational report and extracts have now been
+reviewed: all 108 extract hashes/sizes and 61 JSON files verified. The owner
+confirms independent-host dataset download/restore passed and that model
+comparisons used the same public NYC area. Credit these functional results;
+the accepted finding dispositions and evidence-method reconciliation are
+recorded in the
+[RC5 intake](./tasks/active/TASK-105/RC5-INDEPENDENT-HOST-EVIDENCE-INTAKE-2026-10-16.md).
+The owner approved bounded candidate acceptance on October 19 for reviewed
+commit `33bd3a3`: the
+[accepted decision](./decisions/026-rc5-bounded-candidate-acceptance.md),
+[qualification matrix](./tasks/active/TASK-105/RC5-QUALIFICATION-CLOSEOUT-2026-10-19.md),
+[operations addendum](../docs/release/rc5-operations-addendum.md), and
+[cdcai handoff](../docs/release/task105-cdcai-handoff.md) credit the two-host
+functional results and document accepted short-path/Python/test-method
+exceptions. Fork branch publication and a draft PR are separately authorized;
+review/merge and official adoption remain pending. All six original browser
+assets, tag/source, immutable status, and
+release attestation were reverified unchanged on October 19. No new runtime
+test, image build, release-asset edit, or official publication follows from this closeout.
 The Task-087 launcher
 redesign remains preserved and deferred, not a release gate.
 
@@ -29,13 +72,17 @@ redesign remains preserved and deferred, not a release gate.
 **Preliminary Local RC5 Source**: `a24d369668d27240ed0baa184d071395455b9c95`
 **Accepted RC9 Replacement Source**:
 `b3431cf86d8a000462df487685104558ac7becd3`
-**Frozen Publishable Candidate Source**:
+**Historical RC9 Publishable Candidate Source**:
 `b3431cf86d8a000462df487685104558ac7becd3`. The same-source
 `v0.1.0-rc9` CPU and CUDA 12.8 images passed local and exact-published-digest
 security qualification with `push_latest=false`. The locally verified control
 packages bind only those exact pinned manifest digests. The owner-authorized
 non-Latest RC9 prerelease is published; every `latest` promotion and any
 stable/general release remain separately owner-gated.
+**Current RC5 Candidate Source**:
+`835cbb910573a931350c5b704d14496952d7ef87`, published as immutable non-Latest
+`v0.1.3-rc5`. The closeout review branch contains supplemental documentation
+and evidence, not an implicitly selected official release source.
 **Authoritative Branch**: `main`
 **Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
@@ -237,11 +284,59 @@ stable/general release remain separately owner-gated.
 
 ### **TASK-105: Final Release Correction And Qualification**
 
-**Status**: IN_PROGRESS - independent-host evidence intake and implementation
-plan complete; bounded runtime/frontend/documentation corrections are in
-draft PRs #109/#110. PR #109 exact-head CI passed; stacked PR #110 still
-needs CI against `main`. Accepted-main merge and final artifact qualification
-have not started
+**Status**: IN_PROGRESS - corrections merged through PRs #109/#110, and the
+same-source `v0.1.3-rc5` image/security and immutable publication gates passed.
+Exact browser-downloaded Docker CPU/CUDA installs, combined-model device probes,
+and owner-observed Google/Azure detection pass on this host. Export files were
+found and parsed; CUDA browser cancel/retry and ZIP lookup were owner-observed.
+Both Docker profiles passed shipped stop/relaunch and retained provider/asset/
+device/TLS state; the owner refreshed both and restored exported datasets.
+Exact browser-extracted Podman CPU/CUDA packages passed internal integrity,
+first image pulls, asset import, selected package-local Compose provider,
+guided normal-TLS repair, intended CPU/CUDA readiness, and fixed combined-model
+probes. Both Podman apps show Google/Azure configured and selected-provider
+geocoding works. The owner reports Google/Azure browser detection, result views,
+and CSV/KML/dataset controls work on both; three new export sets parsed cleanly.
+The owner also confirmed Podman CUDA cancel/retry and browser ZIP navigation.
+Both Podman profiles passed shipped stop/relaunch with their original eight
+volumes, provider settings, assets, device, and normal TLS retained. After
+refresh, the owner reported in-memory results cleared and previously downloaded
+datasets restored correctly. Two new post-restart export sets parsed cleanly.
+The shipped Podman stops, machine stop, Docker Desktop start, and shipped Docker
+starts then passed; both Docker profiles retained original volumes, configured
+providers, assets, devices, digests, and normal TLS. The owner confirmed Docker
+browser dataset restore, review, and new downloads; new exports parsed cleanly.
+The return switch to Podman passed runtime checks for both RC5 profiles and
+their original volumes. Older RC9 containers needed an explicit start after
+the Podman machine restart and are healthy again. The owner confirmed dataset
+restore and review controls work on both Podman profiles after the return
+switch. After a Windows reboot, both Docker profiles passed shipped startup,
+readiness, original eight volumes each, both providers, assets, device, exact
+digest, and normal TLS. The owner restored a dataset, used review controls, and
+downloaded new files in each; two dataset ZIPs parsed with clean CRCs. Docker
+Desktop then quit. The Podman machine reported running but its Windows client
+socket was unavailable; a normal machine stop/start restored the connection
+without changing containers or volumes. Both RC5 Podman profiles passed shipped
+startup, original eight volumes each, both providers, assets, device, exact
+digest, and normal TLS. The owner restored a dataset, used review controls, and
+downloaded new files in each; two dataset ZIPs parsed with clean CRCs. The two
+retained RC9 containers needed explicit start and returned healthy. This host's
+four-profile reboot-persistence gate now passes. Independent-host
+qualification remains open.
+The owner subsequently confirmed Podman CPU and Docker CPU browser
+cancel/retry excluded cancelled results, succeeded on retry, and navigated from
+a public ZIP lookup. Docker CPU/CUDA were restored through the shipped scripts
+after that check and are ready, healthy, with both providers configured,
+correct devices and digests, and eight named volumes each. The Podman machine
+is stopped for Docker coexistence.
+This host's default Python 3.14 caused the pinned provider install to fail;
+selecting installed Python 3.12 through the shipped
+helper succeeded on ordinary retry. This tested-prerequisite deviation is
+recorded in the task; the guide's default-`python` example remains a docs gap.
+**October 19 closeout**: Two-host functional evidence and accepted finding
+dispositions are consolidated in the RC5 closeout matrix. ADR-026 and the
+operations/handoff supplements are approved for fork draft-PR publication;
+review/merge, official cdcai adoption, and named maintenance custody are pending.
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-105-final-release-correction-and-qualification.md`
 

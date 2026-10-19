@@ -1,6 +1,6 @@
 # TowerScout Handoff Guide
 
-**Last Updated**: October 6, 2026
+**Last Updated**: October 19, 2026
 **Operational Closeout**: October 30, 2026
 **Hard Project End**: October 31, 2026
 
@@ -18,22 +18,31 @@ The cdcai owner selected a fix-first path:
 - Keep `cdcai/TowerScout` unchanged until owner qualification and explicit
   adoption approval.
 - Select the official cdcai tag and display title before the official build.
-- Treat PR #94 merge `fc97b32` as the accepted documentation-content source;
-  final image/package identities and independent-host qualification remain
-  open.
+- Treat `v0.1.3-rc5` at accepted source `835cbb9` as the current immutable,
+  non-Latest candidate. Two-host functional evidence and owner restore
+  confirmation have been reviewed; bounded acceptance was approved October 19
+  in reviewed commit `33bd3a3`. Official adoption remains pending.
+
+The current review packet is the
+[RC5 cdcai handoff](docs/release/task105-cdcai-handoff.md),
+[operations addendum](docs/release/rc5-operations-addendum.md), and
+[qualification closeout](.agent_work/tasks/active/TASK-105/RC5-QUALIFICATION-CLOSEOUT-2026-10-19.md).
+[ADR-026](.agent_work/decisions/026-rc5-bounded-candidate-acceptance.md) records
+the explicit short-path/Python restrictions and independent test-method
+reconciliation approved by the owner on October 19. Supplemental docs are not already
+inside RC5's immutable ZIPs or served Help. The receiving owner must accept
+maintenance duties, including the October 31 security-residual expiry.
 
 ## Immediate Delivery Direction
 
-Qualify a new Windows 11 release from accepted `main` using the existing
-PowerShell/Compose package path. The last locally qualified `rc4` source was
-`541622556fb7999ee4e88fb1e44f7797b9da34f5`. Preserve `rc4` for a preliminary
-browser-download diagnostic, but its pre-ADR-023 manuals cannot establish
-final acceptance. Because repository `docs/` is packaged in the control ZIP
-and baked into the runtime image for in-app Help, Task-092 alignment requires
-new documentation-aligned image and control-package identities before
-distribution. PR #67 and the Task-087 launcher redesign are
-preserved but deferred: do not merge, reconcile, extend, or repeatedly review
-them as prerequisites for deployment.
+Finish review of the RC5 bounded-acceptance and handoff packet. The candidate
+source/tag, six asset digests/sizes, original browser files, and release
+attestation were reverified unchanged on October 19. Existing `rc4`/RC9
+results remain historical. Source-document edits in this review do not change
+the published RC5 bytes. Since docs are also baked into images for served Help,
+the official cdcai source must incorporate accepted guidance before its new
+CPU/CUDA images and packages are built and qualified. PR #67 and the Task-087
+launcher redesign remain preserved and deferred.
 
 Read in this order:
 

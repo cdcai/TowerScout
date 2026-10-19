@@ -1,23 +1,237 @@
 # TASK-105: Final Release Correction And Qualification
 
-**Status**: IN_PROGRESS - RC9 independent-host evidence is accepted as a
-strong four-profile pass on one NVIDIA host, but its fresh-install findings and
-the corrected-candidate two-host rerun prevent a final release claim. Planning and
-evidence intake are complete; bounded corrections are under local regression
-review and have not been merged or qualified as a final candidate.
+**Status**: IN_PROGRESS - Task-105 corrections merged through PRs #109 and
+#110. The same-source CPU/CUDA `v0.1.3-rc5` images and immutable, non-Latest
+prerelease passed publication and integrity gates. Browser-downloaded integrity,
+File Explorer extraction, exact-package Docker CPU/CUDA installation, and
+combined-model device probes pass on the first host. Podman CPU/CUDA setup,
+combined-model probes, provider and browser workflows, exports, and shipped
+lifecycle checks pass. The bidirectional engine switch and dataset restore
+pass. All four first-host profiles now also pass reboot persistence, including
+dataset restore and new exports. Independent-host four-profile operational
+evidence has been reviewed; the owner confirms dataset restore and comparable
+same-area live-model testing. Final finding dispositions and qualification
+reconciliation were accepted October 19 under ADR-026 in reviewed commit
+`33bd3a3`. Fork draft-PR publication is authorized; review/merge, official
+adoption/qualification, and handoff remain open. Task-105 remains active.
 **Priority**: CRITICAL
 **Type**: C (Runtime Correction / Release Qualification / Handoff)
 **Estimated Effort**: 3-5 working days for implementation, review, builds, and
 first-host qualification, plus the availability of the remaining independent
 Windows hosts
 **Owner**: `J-Schulein` until handoff; `cdcai` thereafter
-**Working Candidate Identity**: The next unused `v0.1.3-rc.N`, selected only
-after checking GitHub releases/drafts, Git tags, and GHCR tags; publish only as
-an immutable, non-Latest fork prerelease
+**Working Candidate Identity**: `v0.1.3-rc5`, immutable and non-Latest, from
+accepted `main` `835cbb910573a931350c5b704d14496952d7ef87`
 **Official Release Identity**: Selected with the `cdcai` owner at adoption;
 the candidate name does not reserve or authorize `v0.1.3` final
 
+**RC5 publication checkpoint (2026-10-14)**: PR #109 merged as `08ac8ef` and
+PR #110 as `835cbb9`; accepted source is
+`835cbb910573a931350c5b704d14496952d7ef87`. Authorized CPU and CUDA
+publish runs `38609314677` and `38609372836` passed local and exact-published-
+digest security checks with baseline 396, candidate 79, five accepted residuals,
+zero blockers, and zero severity escalations. The pinned image digests are CPU
+`sha256:833dbe0d0097ffcc9e52dcf39d64f25cf503c3c9ffc806f55c42b60e452845d5`
+and CUDA
+`sha256:df0f30ac1bed4514d50c5b11eeac4ea64e38e6575bb209448fea4c53e5347890`.
+The clean-source control ZIP hashes are CPU
+`dfcc653eef4d0c9666604d6455797c123b757d92d4507ad1d451032f5cdd7a8f`
+and CUDA
+`c418e1948ed2719cd8c3678b612addccf468a139aafc97f99d3f4bd7676974d0`;
+the shared asset ZIP is
+`00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+All three sidecars and internal control-package checksums passed. The first
+publication reported `isImmutable=false`; with separate owner approval, that
+release and tag were removed, repository release immutability was enabled,
+and the identical six bytes were republished. GitHub now reports
+`isImmutable=true`, `isPrerelease=true`, and the accepted source tag; `v0.1.2`
+remains Latest. All six assets downloaded through GitHub CLI from the first
+publication matched its published sizes and SHA-256 values; the immutable
+replacement reports the same six hashes and sizes, and `gh release verify`
+validated GitHub's signed release attestation for the accepted source and all
+six assets. This is a public-byte
+integrity check, not the required browser-download/Mark-of-the-Web proof. The first-host
+Podman CPU `-VerifyOnly` rehearsal passed release manifest and both ZIP
+checksums, then stopped because C: had 11.65 GB free against the shipped
+15 GB minimum. After deduplicating task-owned staging, C: had 12.39 GB free.
+No runtime profile is credited as a pass from that rehearsal.
+
+**RC5 first-host checkpoint (2026-10-14)**: The owner freed space, then used a
+browser to download all six immutable release files. Every file's size and
+SHA-256 matched the current GitHub release record and the three sidecars;
+the downloaded ZIPs retained `ZoneId=3`. File Explorer extraction into a path
+with spaces retained `ZoneId=3` on the CPU/CUDA entry scripts and manifest.
+Both control folders passed release-manifest and 74 internal checksum checks.
+The exact CPU and CUDA packages passed `-VerifyOnly`, fresh Docker image pull,
+asset import and hash verification, and launch on ports 5315/5316 with their
+pinned digests and CPU/CUDA device policies. Docker CPU had a Google TLS error;
+the guided repair selected the previously approved host CA, applied normal TLS
+verification, and passed the shipped volume-preserving stop/start. The same CA
+and repair path passed for Docker CUDA. Invalid test keys reached Google and
+Azure over normally verified TLS in both profiles. The owner reports that
+Google and Azure are configured in Docker CPU. The fixed 12-tile combined
+YOLO/EfficientNet fixture passed in each image: 54 detections and expected
+outputs, with both models on CPU for CPU and CUDA for CUDA. The published CPU
+image also passed an explicit CUDA-required/unavailable negative probe.
+Private raw logs and probe JSON stay under ignored `dist/task105-rc5-evidence`.
+The owner then reported live Google and Azure model runs in both Docker CPU and
+CUDA browser sessions and successful download controls. The host's Downloads
+folder held two new parseable CSV files (38 and 44 rows), two valid KML files
+(24 placemarks each), and two dataset ZIPs (26 entries each, both CRC-clean).
+No exported coordinates or contents enter repository evidence. Both apps
+reported both provider-configured booleans, and a public-place forward geocode
+used the requested provider in each of the four app/provider combinations.
+A public ZIP lookup returned HTTP 200 and an invalid ZIP then valid retry gave
+HTTP 400 then 200 on both ports. The served app's four local Help pages were
+byte-identical to each profile's extracted package pages. Docker CUDA's full
+combined probe passed one warm-up and three measured runs at a 2.633402-second
+median, 4.71% faster than the earlier same-host RC4 baseline with identical
+fixture tile hashes and final normalized results. Its identity/kernel and
+injected-secondary-failure/clean-follow-up probes passed. Docker CPU's same
+one-warm-up/three-measured combined probe passed at a 49.606243-second median,
+1.21% faster than the earlier same-host RC4 baseline with identical fixture
+tile hashes and final normalized results. The owner reports CUDA browser
+cancel/retry and ZIP navigation succeeded. Both profiles then passed their
+shipped volume-preserving stop/start; readiness, exact digest, intended device,
+eight original named volumes, both provider configured booleans, asset checks,
+and Google/Azure normal TLS status persisted. The owner refreshed both browser
+sessions, found the review state usable, downloaded fresh dataset archives, and
+restored results through each app's `Restore Dataset` control. Three new ZIPs
+observed after relaunch opened and passed CRC checks (14 entries each); raw
+archive contents remain private. Reboot, Podman, and independent-host cells
+remain open; these Docker profiles are not yet full acceptance passes.
+
+The owner then extracted separate Podman CPU/CUDA copies using File Explorer
+from the same verified browser downloads, preserving `ZoneId=3` and a path
+with spaces. Both passed all 74 internal checksums and release manifests.
+Docker Desktop was closed before the rootless Podman runs. The fresh Podman
+CPU and CUDA images pulled successfully; the first CUDA pull completed without
+a false CDI timeout. Each package selected its verified package-local Compose
+provider, imported the asset bundle, and reached the intended CPU or CUDA
+device at the pinned digest. A guided CA repair used the same previously
+approved host CA as Docker, verified normal Google TLS, and survived shipped
+stop/start. The fixed 12-tile YOLO/EfficientNet probe passed on both Podman
+profiles with 54 detections, expected normalized results, and the intended
+device for both models. Podman CUDA also passed its Task-103 identity/kernel,
+one-warm-up/three-measured combined, and injected classifier failure followed
+by a clean run. Its four served Help pages were byte-identical to the exact
+extracted package pages. Normal Google/Azure TLS transport from both restarted
+containers passed without keys or disabled verification (Google HTTP 200,
+Azure HTTP 401 without credentials). The Podman CPU one-warm-up/three-measured
+combined probe passed at a 44.923575-second median; Podman CUDA's median was
+2.508349 seconds. All four Docker/Podman combined probes used the identical
+frozen tile hashes and passed their expected outputs. Browser workflows remain
+open, so neither Podman profile is yet a full
+acceptance pass.
+
+The host's default `python` resolves to Python 3.14.7. The shipped Podman
+Compose installer initially failed because the pinned PyYAML 6.0.2 wheel is
+not available for that interpreter. Installed Python 3.12.10 was then selected
+through the shipped helper's `-Python` option; an ordinary retry installed the
+approved package-local provider, with no force or manual deletion. The user
+guide calls for Python 3.12 but its example invokes the default `python` and
+does not show interpreter selection. This host-specific prerequisite deviation
+and documentation gap remain open for disposition; it is not a clean beginner
+default-path pass. Private provider logs and wheel evidence remain ignored.
+
+The owner configured both approved providers through each Podman app without
+sharing keys. Both `/api/config/status` responses show Google and Azure
+configured; a public-place forward geocode selected the requested provider in
+all four Podman app/provider combinations. Both public ZIP lookup endpoints
+returned HTTP 200 on retry after a 25-second first-request timeout while the
+apps were under initial-use workload. Direct browser model and export behavior
+then passed owner observation on both Podman profiles with
+Google and Azure: maps loaded, bounded model searches and result views worked,
+and the separate CSV/KML/dataset controls downloaded files. Three new CSVs
+(42, 43, and 43 data rows), three XML-valid KMLs (22, 31, and 27 placemarks),
+and three dataset ZIPs (26 entries each, CRC-clean) were independently found
+in Downloads. The exact association between these three export sets and the
+four app/provider searches was not collected; per-provider export coverage is
+not inferred. The owner confirmed Podman CUDA browser cancel/retry, with
+cancelled results excluded and a successful next request, and public ZIP
+navigation. Both Podman profiles then passed their shipped volume-preserving
+stop/start: the original eight named volumes in each, both provider configured
+booleans, assets, intended CPU/CUDA device, pinned digest, and normal
+Google/Azure TLS persisted. After refresh, the owner observed that the prior
+in-memory result view was no longer visible, as expected; restoring previously
+downloaded datasets worked without error. A new post-restart download from
+each app was then verified. Reboot remains open.
+The owner confirmed fresh post-restart downloads on both Podman apps; two new
+CSVs (29 data rows each), two XML-valid KMLs (13 and 10 placemarks), and two
+dataset ZIPs (14 entries each, CRC-clean) were independently found. Both RC5
+Podman containers stopped via their shipped scripts without volume removal.
+The rootless Podman machine stopped, Docker Desktop started cleanly, and both
+previously tested RC5 Docker packages restarted through their shipped scripts.
+Each Docker profile retained all eight named volumes created before the switch,
+both provider configured booleans, assets, intended device, exact digest, and
+normal Google/Azure TLS. The old RC9 Podman containers were still running
+before the machine stop and have `always` restart policy. The owner confirmed
+Docker CPU/CUDA browser dataset restore, review controls, and fresh downloads;
+two dataset ZIPs (27 entries each, CRC-clean), one XML-valid KML, and one CSV
+were independently found after the switch. Docker browser recovery passed.
+The shipped Docker stops and Docker Desktop quit then succeeded. The rootless
+Podman machine restarted; its RC9 containers did not auto-start despite the
+`always` policy, so the two existing containers were explicitly started and
+returned healthy without changing their volumes. The shipped RC5 Podman starts
+then passed. Each RC5 profile retained its exact original eight named volumes,
+both configured providers, assets, intended device, exact pinned digest,
+selected package-local Compose provider, and normal Google/Azure TLS. The
+owner refreshed both RC5 Podman apps and confirmed dataset restore and review
+controls work after the full engine round trip. At this checkpoint, reboot and
+independent-host qualification remained open.
+
+**RC5 first-host reboot checkpoint (2026-10-14)**: Windows rebooted after the
+bidirectional engine switch. Docker Desktop started cleanly, and both exact
+RC5 Docker packages started through their shipped scripts. CPU and CUDA each
+retained the original eight named volumes, both provider-configured booleans,
+assets, intended device, pinned digest, and normal Google/Azure TLS. The owner
+refreshed both apps, restored previously downloaded datasets, used the review
+controls, and downloaded new files without error. Two new dataset ZIPs (27
+entries each) opened and passed CRC checks. The shipped Docker stops and Docker
+Desktop quit succeeded. The rootless Podman machine appeared running, but its
+Windows client socket refused connections; a normal machine stop/start restored
+the connection without deleting containers or volumes. Both exact RC5 Podman
+packages then started through their shipped scripts, selected the intended
+CPU/CUDA devices and pinned digests, and retained their original eight named
+volumes, both configured providers, assets, and normal Google/Azure TLS. The
+owner refreshed both Podman apps, restored datasets, used review controls, and
+downloaded new files without error. Two new dataset ZIPs (27 entries each)
+opened and passed CRC checks. The two retained RC9 containers were explicitly
+started and returned healthy. This host's four-profile reboot-persistence gate
+passes. The Python 3.12 selection deviation remains recorded; no CPU-only or
+Podman-without-Docker claim follows from these results. The exact RC5
+independent-host four-profile run remains required.
+The owner then repeated browser cancel/retry and public ZIP lookup on the
+Podman CPU and Docker CPU apps. Both reported cancelled results excluded from
+the map/list, successful next search, and ZIP map navigation. The previously
+recorded CUDA checks cover the same changed behavior on both engines. Docker
+CPU/CUDA were restored via shipped scripts and finished ready and healthy,
+with the correct device/digest, both configured providers, and eight named
+volumes each. The Podman machine is stopped while Docker Desktop runs.
+
+**Independent-host clarification (2026-10-16)**: The owner confirms thorough
+dataset download/restore testing passed on the independent host, supplementing
+the supplied report's "not covered" entry. The repeated same-area NYC searches
+are credited as comparative live-model evidence. See the
+[RC5 evidence intake](./TASK-105/RC5-INDEPENDENT-HOST-EVIDENCE-INTAKE-2026-10-16.md)
+for verified artifact identities, extract integrity, provenance, test methods,
+and remaining finding dispositions. The real-model and restore results are
+credited without claiming a frozen-fixture benchmark absent from the packet.
+
 ## Objective
+
+**October 19 closeout review**: The
+[qualification matrix](./TASK-105/RC5-QUALIFICATION-CLOSEOUT-2026-10-19.md)
+reconciles the two-host results, owner restore confirmation, F1-F10/N1-N14
+dispositions, dated scans, and unchanged public identities.
+[ADR-026](../../decisions/026-rc5-bounded-candidate-acceptance.md) records the
+short-path/Python support restrictions and the explicit independent probe
+exception. The [operating addendum](../../../docs/release/rc5-operations-addendum.md)
+and [cdcai packet](../../../docs/release/task105-cdcai-handoff.md) are prepared
+for review. The owner approved bounded acceptance of reviewed commit `33bd3a3`
+and separately authorized this fork branch and draft PR. These are separate
+supplements, not changed RC5 bytes. Review/merge, cdcai adoption, and official
+build/publication remain pending actions.
 
 Resolve or explicitly disposition every RC9 independent-host finding, rebuild
 the CPU and CUDA 12.8 artifacts from one accepted `main` source, qualify the
@@ -210,39 +424,42 @@ Every row must end as `fixed`, `verified_no_change`, or
 
 ### Phase 5 - Freeze and publish the corrected final candidate
 
-- [ ] Freeze one accepted `main` source commit after both correction PRs merge.
-- [ ] Recheck ADR-024 residual versions, severities, fix availability, and
+- [x] Freeze one accepted `main` source commit after both correction PRs merge.
+- [x] Recheck ADR-024 residual versions, severities, fix availability, and
   expiry before dispatch. Any changed/new/expired finding blocks.
-- [ ] With separate owner authorization, dispatch CPU and CUDA 12.8 images with
+- [x] With separate owner authorization, dispatch CPU and CUDA 12.8 images with
   `push_latest=false`. Require local scan-before-login and exact-published-
   digest confirmation for both flavors.
-- [ ] Assemble clean-source, digest-pinned CPU and CUDA control ZIPs using the
+- [x] Assemble clean-source, digest-pinned CPU and CUDA control ZIPs using the
   selected `v0.1.3-rc.N` identity and reuse only the exact verified asset ZIP.
-- [ ] Verify authoritative sidecars, all internal checksums, manifests,
+- [x] Verify authoritative sidecars, all internal checksums, manifests,
   licenses/notices, forbidden-file inventory, Help parity, and package secret
   hygiene.
-- [ ] With separate owner authorization, publish the selected `v0.1.3-rc.N` as an
+- [x] With separate owner authorization, publish the selected `v0.1.3-rc.N` as an
   immutable, non-Latest GitHub prerelease. Do not upload mutable replacement
   assets.
 
 ### Phase 6 - Qualify the exact public bytes
 
-- [ ] On the first host, browser-download the six public assets and verify the
+- [x] On the first host, browser-download the six public assets and verify the
   release-page SHA-256 values before extraction.
 - [ ] Run the affected fresh-install tests first: Podman GPU with no local
   candidate image, provider installation from both shell parents, ordinary
   retry after an injected safe failure, selected-provider reporting, mixed-
   runtime recovery, exports, and late cancellation.
-- [ ] Complete the full Docker CPU, Docker CUDA, Podman CPU, and Podman CUDA
+- [x] Complete the full Docker CPU, Docker CUDA, Podman CPU, and Podman CUDA
   workflow against the exact downloaded packages: providers, managed TLS,
   ZIP lookup, real models/device, cancel/retry, controlled recovery, review,
   exports, stop/relaunch, and reboot.
-- [ ] Run the fixed combined-model probe, explicit CUDA-unavailable negative,
-  required shared-script faults, and warm performance checks where the v2 gate
-  requires them.
-- [ ] Repeat all four corrected-candidate profiles on the separate RC9
+- [x] Reconcile the fixed combined-model probe, CUDA-unavailable negative,
+  shared-script faults, and warm performance evidence: first-host exact-image
+  reports pass; independent evidence reuse is approved under ADR-026. No
+  independent frozen-fixture/warm report is claimed.
+- [x] Repeat all four corrected-candidate functional profiles on the separate RC9
   independent NVIDIA Windows host, including explicit CPU mode for both CPU
   profiles and focused browser checks for the changed export/cancel flows.
+  See the closeout matrix for the short-path deviations and formal-probe
+  evidence reuse separately approved by the owner under ADR-026.
 - [ ] Require ordinary-account, path-with-spaces, Mark-of-the-Web-preserving
   extraction and shipped instructions. Record deviations as gaps, not passes.
 - [ ] Retain raw sensitive evidence privately; commit only sanitized summaries,
@@ -250,12 +467,15 @@ Every row must end as `fixed`, `verified_no_change`, or
 
 ### Phase 7 - Final-candidate closeout and handoff
 
-- [ ] Reconcile every matrix cell to the exact selected candidate source, image
+- [x] Prepare reconciliation of every matrix cell to the exact selected candidate source, image
   digests, package hashes, asset hash, documentation, and evidence references.
-- [ ] Confirm the GitHub prerelease assets and tags have not changed since
+  The owner approved the acceptance exceptions under ADR-026 on October 19.
+- [x] Confirm the GitHub prerelease assets and tags have not changed since
   browser download. Any byte change requires new hashes and affected reruns.
-- [ ] Complete release notes, support/rollback instructions, maintenance
+- [x] Prepare release notes, support/rollback instructions, maintenance
   obligations, residual-expiry handoff, and cdcai transfer packet.
+  Draft-PR publication is authorized; review/merge and named maintenance-custodian
+  acceptance remain pending.
 - [ ] At adoption, have the `cdcai` owner and project lead select the official
   tag/title and authorize the official build and publication. Do not relabel
   or promote the fork candidate as the official release.
@@ -333,6 +553,10 @@ Every row must end as `fixed`, `verified_no_change`, or
 ## Evidence
 
 - [RC9 independent-host sanitized evidence intake](./TASK-105/RC9-INDEPENDENT-HOST-EVIDENCE-INTAKE-2026-10-14.md)
+- [RC5 independent-host run sheet](./TASK-105/RC5-INDEPENDENT-HOST-RUN-2026-10-14.md)
+- [RC5 independent-host evidence intake and owner clarification](./TASK-105/RC5-INDEPENDENT-HOST-EVIDENCE-INTAKE-2026-10-16.md)
+- [RC5 qualification closeout and finding dispositions](./TASK-105/RC5-QUALIFICATION-CLOSEOUT-2026-10-19.md)
+- [Accepted bounded candidate decision](../../decisions/026-rc5-bounded-candidate-acceptance.md)
 - RC9 source report and sanitized ZIP remain outside the repository under the
   release owner's evidence custody.
 
