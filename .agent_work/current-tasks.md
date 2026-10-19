@@ -57,9 +57,9 @@ commit `33bd3a3`: the
 [operations addendum](../docs/release/rc5-operations-addendum.md), and
 [cdcai handoff](../docs/release/task105-cdcai-handoff.md) credit the two-host
 functional results and document accepted short-path/Python/test-method
-exceptions. Fork branch publication and a draft PR are separately authorized;
-review/merge and official adoption remain pending. All six original browser
-assets, tag/source, immutable status, and
+exceptions. PR #111 merged this acceptance and handoff documentation into
+`main` as `2c86c12` on October 19; official adoption remains pending. All six
+original browser assets, tag/source, immutable status, and
 release attestation were reverified unchanged on October 19. No new runtime
 test, image build, release-asset edit, or official publication follows from this closeout.
 The Task-087 launcher
@@ -89,6 +89,7 @@ and evidence, not an implicitly selected official release source.
 **Windows Package Policy**: [ADR-023](./decisions/023-unsigned-windows-package-support-boundary.md)
 **RC5 Security Boundary**: [ADR-024](./decisions/024-rc5-security-gate-and-residual-boundary.md)
 **Final-Candidate Host Allocation**: [ADR-025](./decisions/025-two-host-final-candidate-qualification.md)
+**Exact RC5 Bounded Acceptance**: [ADR-026](./decisions/026-rc5-bounded-candidate-acceptance.md)
 **Acceptance**: [Windows deployment prioritization v2](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-prioritization-v2.md)
 **Work Plan**: [Windows deployment hardening v2](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md)
 
@@ -286,6 +287,12 @@ and evidence, not an implicitly selected official release source.
 
 **Status**: IN_PROGRESS - corrections merged through PRs #109/#110, and the
 same-source `v0.1.3-rc5` image/security and immutable publication gates passed.
+Two-host functional qualification is accepted under ADR-026, and PR #111
+merged the acceptance and handoff documentation as `2c86c12`. Official cdcai
+adoption, official-byte qualification, and named maintenance custody remain
+pending.
+
+**First-host checkpoint (October 14, before independent-host closeout)**:
 Exact browser-downloaded Docker CPU/CUDA installs, combined-model device probes,
 and owner-observed Google/Azure detection pass on this host. Export files were
 found and parsed; CUDA browser cancel/retry and ZIP lookup were owner-observed.
@@ -321,8 +328,8 @@ startup, original eight volumes each, both providers, assets, device, exact
 digest, and normal TLS. The owner restored a dataset, used review controls, and
 downloaded new files in each; two dataset ZIPs parsed with clean CRCs. The two
 retained RC9 containers needed explicit start and returned healthy. This host's
-four-profile reboot-persistence gate now passes. Independent-host
-qualification remains open.
+four-profile reboot-persistence gate passed. Independent-host evidence was
+subsequently reviewed and accepted in the October 19 closeout below.
 The owner subsequently confirmed Podman CPU and Docker CPU browser
 cancel/retry excluded cancelled results, succeeded on retry, and navigated from
 a public ZIP lookup. Docker CPU/CUDA were restored through the shipped scripts
@@ -334,9 +341,20 @@ selecting installed Python 3.12 through the shipped
 helper succeeded on ordinary retry. This tested-prerequisite deviation is
 recorded in the task; the guide's default-`python` example remains a docs gap.
 **October 19 closeout**: Two-host functional evidence and accepted finding
-dispositions are consolidated in the RC5 closeout matrix. ADR-026 and the
-operations/handoff supplements are approved for fork draft-PR publication;
-review/merge, official cdcai adoption, and named maintenance custody are pending.
+dispositions are consolidated in the RC5 closeout matrix. The owner-approved
+ADR-026 and operations/handoff supplements merged through PR #111 as
+`2c86c12`. Official cdcai adoption, official-byte qualification, and named
+maintenance custody remain pending.
+
+**October 19 post-merge verification**: Main CI run `39290490547` passed.
+Controller workflow `39290490621` initially stopped at an npm `ECONNRESET`
+during test-utility installation, before controller tests ran; its failed-job
+rerun passed, and all three controller/helper jobs are successful. The two
+PR #111 bot findings identify acceptance-guidance inconsistencies. The bounded
+follow-up adds ADR-026 to root guidance and replaces the stale independent-host
+status with the accepted closeout. The strict agent-work validator, 34 local
+document targets, acceptance/status consistency checks, and `git diff --check`
+passed for the two-file documentation correction.
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-105-final-release-correction-and-qualification.md`
 
@@ -357,8 +375,9 @@ Current scope:
 
 ADR-025 removes the extra CPU-only and Podman-without-Docker host gates. Those
 environments are not tested and must not be claimed. Both available hosts must
-still pass every required corrected-candidate profile and workflow; RC9
-results cannot stand in for the new bytes.
+still pass every required corrected-candidate profile and workflow, subject
+to ADR-026's approved evidence substitutions for exact `v0.1.3-rc5` only;
+RC9 results cannot stand in for the new bytes.
 
 ### **TASK-103: CUDA 12.8 Blackwell ML Runtime**
 
