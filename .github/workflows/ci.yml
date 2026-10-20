@@ -146,13 +146,8 @@ jobs:
         pytest tests/integration/ -v --cov=webapp --cov-append --cov-report=xml --cov-report=term-missing
       continue-on-error: true  # Don't fail build on integration test failures initially
     
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457 # v3
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-      continue-on-error: true
+    # Keep coverage in GitHub artifacts below. The receiving repository's
+    # selected-Actions policy does not allow the optional Codecov uploader.
 
     - name: Archive test results
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6

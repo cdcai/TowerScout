@@ -3,7 +3,7 @@
 This is the primary high-context guidance file for AI coding agents working in
 the TowerScout repository. It preserves project context, guardrails, and
 workflow guidance while reflecting the current repository state as of
-2026-09-22.
+2026-10-20. Dated sprint summaries below are historical context.
 
 ## Mission and Product Context
 
@@ -21,56 +21,25 @@ The project still carries public-health workflow expectations:
 
 ### Current State
 
-- The September 22-28 Windows deployment delivery week is the active planning
-  and execution lane.
-- Sprint 04 through Sprint 07 are completed background context.
-- Setup Wizard and Settings are implemented in the repo.
-- Detection progress, estimate/detect separation, and cancel handling are implemented in the repo.
-- `TASK-025` Docker-compatible / OCI containerization is merged on `main`: the repo now has a `Dockerfile`, Compose configuration, health/readiness endpoints, persistent runtime volume contract, release-package helper scripts, GHCR publish workflow, asset/TLS import helpers, and OCI runtime documentation.
-- The current release direction remains GitHub-first and engine-aware: GitHub
-  Releases are the normal user-facing release control plane, and a release ZIP
-  plus pinned GHCR image digest is the preferred package shape.
-- `TASK-071`, `TASK-072`, and `TASK-079` are complete enough to feed the stable-release closeout path. The current release contract uses distinct CPU and CUDA 12.8 image/package identities; both remain bounded by profile-specific Windows validation.
-- `TASK-066` has validated the digest-pinned Docker Desktop and Podman package runtime paths for CPU-default launch. Podman evidence is qualified: on the validation host, `podman compose` delegated to Docker Compose v5.1.3, and Podman source-build/base-image pulls from Docker Hub still fail TLS certificate verification inside the Podman VM.
-- `TASK-067` has closed the Flask route-test timeout/isolation gap with pytest timeout safeguards and isolated test runtime paths.
-- PR #46 has merged on `main` as `d148727`, closing the non-mutating Task-087 Gate 3 proof while keeping the helper control plane dark.
-- The fork-side `v0.1.2` release is published and passed the full Docker/Podman CPU/CUDA validation matrix with both Google and Azure providers. It is the frozen validated pilot baseline.
-- `TASK-088` is complete: the pilot was distributed, support coverage was confirmed, and release/evidence custody was recorded.
-- The cdcai owner selected a fix-first path. Keep `v0.1.2` immutable while the
-  fork develops `v0.1.3-rc.N` candidates.
-- `TASK-095` Phase A rebaselined the roadmap and `.agent_work`; Phase B
-  governance continues through handoff.
-- `TASK-090` and `TASK-098` are complete. PR #51 merged the qualified
-  dependency remediation as `e499b50`, post-merge CI passed, and Dependabot
-  reconciled on July 27 to eight documented non-blocking torch advisories.
-- `TASK-099` is complete for Dependabot alerts `#72-#75` and npm audit finding
-  `GHSA-5p4m-2wfm-xmqj`. PRs #68/#69 merged as `f460445`/`0133b50`; main CI
-  and root graph refresh passed, alert `#74` closed without dismissal, and
-  its August 11 closeout inventory contained the eight documented torch
-  residuals.
-- `TASK-101` delivered the Node 22 / Puppeteer 25.8.0 remediation for
-  high-severity development-transitive `extract-zip` alert `#76`. The finding
-  is not shipped in the product runtime. PR #72 passed final-head checks,
-  squash-merged as `0cc189c`, passed exact-main CI and Task-087 workflows, and
-  closed alert `#76` as fixed without dismissal. That security task is
-  complete on accepted `main`; its former downstream PR #67 gate is
-  superseded, not passed.
-- ADR-021 selects accepted `main` at `9276084d...` for the September 21 v2
-  Windows deployment effort. PR #67 and Task-087 launcher work are preserved
-  but deferred and are not release gates.
-- ADR-023 selects an unsigned Windows control package with a narrower support
-  boundary. Support the supplied process-scoped wrappers only where users/sites
-  permit them; do not claim trusted-publisher, WDAC/AppLocker, or organization-
-  allowlisted endpoint compatibility. Verify authoritative published hashes
-  before extraction and test the exact browser-downloaded package.
-- `TASK-096` browser Exit/helper work is deferred. `TASK-097` qualifies Podman
-  CPU/GPU through the existing command-based package path.
-- Docker CPU, Docker GPU, Podman CPU, and Podman GPU are required final-package
-  profiles, subject to their documented prerequisites.
-- `TASK-089` remains owner-gated. Do not change `cdcai/TowerScout` until the
-  final candidate is qualified and the owner explicitly approves adoption.
-- The project ends 2026-10-31, with operational closeout on 2026-10-30. Pilot
-  feedback remains in the project lead's external fillable Word document.
+- Read root `AGENTS.md` and `.agent_work/current-tasks.md` first. They own
+  current direction; historical summaries below do not reopen completed work.
+- Exact fork candidate `v0.1.3-rc5` has bounded acceptance under ADR-026.
+  Preserve its immutable bytes and the `v0.1.2` pilot.
+- Official cdcai adoption, new images/packages, affected qualification, wiki,
+  owner guidance, and handoff remain. The agreed release title is
+  `TowerScout v0.1.3 - First Official cdcai Release`, subject to identity checks.
+- Chris accepted ownership after October 30. Delivery targets October 27,
+  with October 28-30 reserved for support. Account access is not permission
+  to make unrelated remote changes.
+- ADR-022 through ADR-026 govern ML, unsigned Windows support, security,
+  two-host scope, and exact-candidate evidence exceptions. Fresh official
+  bytes require a delta review and the affected tests; static or mocked
+  checks do not establish runtime readiness.
+- The five exact security residuals expire October 31, 2026 at 23:59:59 UTC.
+  The ML bridge review is due January 31, 2027 or the earlier ADR-022 trigger.
+- Preserve Task-087/096 and PR #67 history; their launcher work is deferred.
+- Use the repository's existing focused skills. Check Git remotes and
+  authorization before acting on a fork, cdcai, registry, release, or wiki.
 
 ### Completed Sprint 04 Summary
 
@@ -123,32 +92,11 @@ Sprint 04 materially changed what an agent should assume about the project. The 
 
 ### Immediate Path Forward
 
-The current path is fix-first candidate development with feedback-gated cdcai
-adoption:
-
-1. Keep the six distributed `v0.1.2` release assets immutable.
-2. Task-095 Phase A is complete.
-3. Preserve the completed July Task-090/098 record and the eight documented
-   torch residuals for a future coordinated ML qualification cycle.
-4. Preserve Task-099's completed `aiohttp==3.14.3`, transitive
-   `ip-address==10.3.1`, and transitive `js-yaml==4.3.1` remediation plus its
-   eight-alert torch residual baseline.
-5. Preserve the passed PR #72/default-branch security result: squash commit
-   `0cc189c`, green exact-main checks, and alert `#76` fixed without dismissal.
-6. Preserve PR #67 and Task-087 history without merging, reconciling,
-   extending, resuming, or repeatedly reviewing that work this week.
-7. Execute W00-W10 in the September 21 v2 plan through the existing
-   PowerShell/Compose package path as amended by ADR-022 and ADR-023.
-8. Qualify Docker CPU, Docker NVIDIA, Podman CPU, and Podman NVIDIA before
-   making a full support claim; require both models on the selected device.
-9. Use `v0.1.3-rc.N` for immutable fork-side candidates; do not publish
-   `v0.1.3` final automatically.
-10. Keep Task-089 preparation reversible and cdcai unchanged.
-11. Select the official cdcai tag/title before the official build and execute
-   adoption only after owner qualification and approval.
-12. Treat Task-058/059 and Task-096 as deferred work behind all required gates.
-
-`TASK-026` CPU optimization and `TASK-029` multi-provider fallback remain follow-on backlog work unless release evidence makes them release-critical.
+Use the current board and `docs/release/task105-cdcai-handoff.md` for the
+reviewed-source, official-artifact, security, qualification, and receipt
+sequence. Prepare changes locally and review the complete diff before
+publication. Preserve pending local work and evidence when synchronizing.
+Do not substitute historical pilot results for changed official bytes.
 
 ### Important Status Correction
 
@@ -577,7 +525,8 @@ Current CI includes:
 - unit tests
 - integration tests as non-blocking
 - full Docker runtime-image build check on `main` as non-blocking
-- Codecov upload as non-blocking
+- coverage generation and GitHub artifact retention; optional Codecov upload
+  removed for the receiving repository's selected-Actions policy
 - Trivy security scan and SARIF upload as non-blocking
 
 Task-101 moved the frontend tooling baseline to Node `>=22.12.0`, using the
@@ -783,56 +732,16 @@ The original guidance benefited from explicitly naming recent completed work. Th
 - large-dataset performance investigation and quick wins
 - detection workflow stabilization with live browser validation
 
-## Current Path Forward
+## Maintainer workflow
 
-### Fix-First Priority Sequence
+For Chris's maintenance prompts and review checklist, use
+`docs/internal/owner-maintenance.md`. Use `docs/internal/repository-map.md`
+to locate documents. Existing setup/settings, provider switching, sessions,
+manual review, export/restore, and real-model device behavior are contracts
+to preserve when making a focused change.
 
-1. Keep `v0.1.2` immutable as the Pilot Package.
-2. Task-095 Phase A, Task-090, and Task-098 are complete.
-3. Preserve completed Task-099 evidence for the August Dependabot alerts and
-   later js-yaml npm audit finding, including the eight documented
-   non-blocking torch residuals and qualified ML pair.
-4. Preserve the passed PR #72/default-branch security result at `0cc189c`,
-   including alert `#76` fixed without dismissal.
-5. Preserve PR #67 and Task-087 evidence while keeping their launcher work
-   deferred outside this delivery window.
-6. Execute the v2 W00-W10 main-based plan, beginning with an early real package
-   attempt and evidence-selected bounded fixes.
-7. Qualify Docker CPU/NVIDIA and Podman CPU/NVIDIA with actual model execution
-   and independent-host reproduction.
-8. Start Task-058 only through a future scope decision after required gates
-   pass; keep Task-059 behind
-   Task-058 acceptance and schedule margin.
-9. Complete owner-runnable qualification, documentation, recovery, governance,
-   and handoff work.
-10. Select the official cdcai identity, build it consistently, and execute
-   Task-089 only after owner approval.
-
-### Practical Agent Takeaway
-
-An agent should leave with the following understanding:
-
-- the app is no longer missing setup/settings
-- the repo has a merged Docker-compatible / OCI container baseline and an
-  existing PowerShell/Compose release path
-- the release path uses a digest-pinned GHCR image and package-local asset import flow
-- `v0.1.2` remains immutable while new work uses `v0.1.3-rc.N` candidates
-- Docker CPU/GPU and Podman CPU/GPU are required final-candidate profiles
-- local/CI pytest timeout safeguards and Flask route-test isolation are merged through `TASK-067`
-- the non-mutating Task-087 Gate 3 proof is merged and the Tasks 090/098/099
-  scoped dependency-security gates passed; Task-101's PR #72/default-branch
-  security gate also passed and alert `#76` is fixed without dismissal
-- PR #67 and Task-087 launcher work are preserved but deferred and are not
-  release prerequisites
-- filesystem sessions and disk-backed config writes are real architectural constraints
-- Google and Azure workflows are both important
-- outbreak-investigation workflows are the highest-value legacy surface to preserve
-- Tasks 090, 098, and 099 remain complete; Task-099 owns the August dependency
-  disclosure evidence without reopening the earlier historical records
-- Task-101 completed alert `#76` remediation on accepted `main`; its former PR
-  #67 gate is superseded without rewriting Task-099's dated closeout
-- Task-089 execution remains blocked until final qualification and explicit
-  cdcai-owner adoption approval
+Historical security findings and old sprint priorities are evidence, not
+today's vulnerability inventory or automatic instructions to resume work.
 
 ## References
 

@@ -33,6 +33,11 @@ Use this as the primary skill for live smoke execution or smoke artifact triage.
 
 ## Inspect commands (read-only)
 
+Use the summary helper only on a sanitized copy. It prints error text,
+console messages, output tails, and network URLs; it is not a redactor.
+For private/raw runs, inspect counts and selected safe fields without sending
+the raw helper output to a shared transcript.
+
 ```bash
 python .agents/skills/towerscout-browser-provider-smoke-triage/scripts/summarize_browser_run.py .agent_work/context/analysis/browser-runs/<run-id>/summary.json
 git diff -- tests/frontend webapp/js/src/providers webapp/js/src/managers/ProviderStateManager.js

@@ -28,6 +28,10 @@ Read these files when they exist:
 
 - `.agent_work/current-tasks.md`
 - `.agent_work/task-backlog.md`
+- `.agent_work/decisions/024-rc5-security-gate-and-residual-boundary.md`
+- `.agent_work/decisions/025-two-host-final-candidate-qualification.md`
+- `.agent_work/decisions/026-rc5-bounded-candidate-acceptance.md`
+- `docs/release/task105-cdcai-handoff.md`
 - `docs/release/release-asset-bundle-contract.md`
 - `Dockerfile`
 - `compose.yaml`
@@ -37,6 +41,15 @@ Read these files when they exist:
 - `scripts/package-release.*`
 - `release-manifest.v1.json`
 - `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.md`, `MODEL_LICENSES.md`, `DATA_LICENSES.md`, `PROVIDER_TERMS.md`, `SOURCE.txt`, `SBOM.txt`
+
+## Candidate versus official release
+
+RC5 acceptance does not qualify rebuilt official images or renamed ZIPs.
+Record the source/artifact delta, fresh security checks, exact downloaded
+identities, affected runtime checks, and the basis for any evidence reuse.
+Check residual expiry at execution time; never extend the policy implicitly.
+Confirm the actual target repository, namespace, and authorized publication
+scope before any remote mutation. Preserve existing immutable artifacts.
 
 ## Required review areas
 

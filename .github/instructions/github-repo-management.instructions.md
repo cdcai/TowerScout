@@ -88,7 +88,9 @@ Examples:
 - Use `Squash and merge` as the default merge method.
 - Do not merge directly into `main`.
 - Use merge commits only when preserving branch topology is intentionally valuable.
-- Delete head branches after merge.
+- Delete a merged head branch only after checking that its commits and
+  required evidence are preserved and no other work depends on it. Deferred
+  or unmerged branches are not routine cleanup targets.
 
 ## Review And Validation Gate
 
@@ -99,7 +101,15 @@ For code-changing PRs to `main`:
 - require required CI checks to pass
 - require review conversations to be resolved
 
-Required checks should match the repo's real maintained baseline.
+Required checks should match the repo's real maintained baseline. These are
+review requirements, not proof that GitHub settings enforce them. Inspect the
+destination's actual protection/rulesets and checks. Do not change settings
+or treat missing enforcement as permission to skip review.
+
+For the one-time fork adoption, compare the whole source delta with cdcai
+and record provenance. A large historical adoption diff may be unavoidable;
+keep preparation corrections in focused commits and explain review groups.
+Do not rewrite or squash historical evidence solely to reduce the file count.
 
 Required:
 

@@ -181,3 +181,8 @@ Before October 30:
 - every code-scanning alert is dispositioned and no release-blocking
   critical/high dependency risk remains unresolved
 - no planned work depends on the outgoing developer after October 31
+
+## Maintainer navigation
+
+See the [repository map](docs/internal/repository-map.md) and
+[owner maintenance guide](docs/internal/owner-maintenance.md).

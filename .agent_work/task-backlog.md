@@ -1,6 +1,6 @@
 # Task Backlog - Main-Based Windows Delivery
 
-**Last Updated**: October 7, 2026
+**Last Updated**: October 20, 2026 (owner handoff preparation)
 **Current Decision**: [ADR-021](./decisions/021-main-based-windows-deployment-deadline.md)
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
 **Windows Package Policy**: [ADR-023](./decisions/023-unsigned-windows-package-support-boundary.md)
@@ -12,10 +12,24 @@ conditional, and follow-on work. Task-087/096 launcher work is preserved but is
 not a delivery prerequisite and has no automatic restart date. Task-087 PRs
 #64/#67 are closed without merge; any restart begins from then-current `main`.
 
+## Receiving-owner priorities
+
+Chris accepted ongoing ownership after October 30. The outgoing lead owns
+delivery preparation through closeout. The active board remains authoritative;
+these groups organize the handoff rather than closing tasks.
+
+| Priority | Owner / timing | Next action and completion condition |
+| --- | --- | --- |
+| Official delivery | Outgoing lead with Chris; target October 27 | Adopt reviewed source, pass official security/integrity/affected runtime checks, deliver wiki/video and owner packet, and record receipt. |
+| Security follow-up (TASK-104) | Outgoing lead prepares; Chris maintains after closeout | Review the five exact residuals before October 31, 2026 23:59:59 UTC expiry; retain a documented fix or disposition before any publication relying on them. Never automatically renew. |
+| ML bridge review (TASK-103) | Chris after closeout | Evaluate supported replacement and real-model/device regression evidence by January 31, 2027 or earlier ADR-022 trigger; record the decision. |
+| Future improvements below | Chris selects | Prioritize a demonstrated user need, define a small acceptance condition, and open a fresh task before implementation. No automatic restart of deferred work. |
+
 ## Selected On The Active Board
 
 | Task | Current outcome |
 | --- | --- |
+| `TASK-105` | Preserve accepted RC5 evidence; complete official adoption, changed-artifact qualification, and handoff under ADR-026 |
 | `TASK-104` | Remove unused Debian GDAL, enforce the exact five-key expiring residual policy, and make local security qualification precede registry publication |
 | `TASK-103` | CUDA 12.8 Blackwell bridge; rebuild documentation-aligned artifacts and complete final browser-download/independent-host qualification |
 | `TASK-095` | W00 direction, task-control, evidence, and eventual handoff alignment |
