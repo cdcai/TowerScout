@@ -75,10 +75,12 @@ step 8 below; its helper does not exist before the package is extracted.
 
 ## Install TowerScout
 
+Before extraction, follow the [short-folder and explicit Python requirements](quick-start.md#podman-folder-and-python-requirements). Use a package-root path of **80 characters or fewer** and **64-bit Python 3.12**. Run Python-selection commands one at a time; stop on errors or unless the version is 3.12 and bitness is 64 before running the installer. Keep an existing installation in its original folder; arrange relocation with support.
+
 1. Create a new working folder, for example:
 
    ```text
-   C:\Users\<you>\Documents\TowerScout
+   C:\Users\<you>\Documents\TS
    ```
 
 2. Open the [TowerScout GitHub Releases page](https://github.com/J-Schulein/TowerScout/releases)
@@ -136,7 +138,10 @@ step 8 below; its helper does not exist before the package is extracted.
    is ready:
 
    ```powershell
-   .\scripts\install-podman-compose-provider.cmd -Apply
+   py -3.12 --version
+   $tsPython312 = (& py -3.12 -c "import sys; print(sys.executable)").Trim()
+   & $tsPython312 -c "import sys, struct; print(sys.version); print(struct.calcsize('P') * 8)"
+   .\scripts\install-podman-compose-provider.cmd -Apply -Python "$tsPython312"
    podman machine list
    ```
 
@@ -232,7 +237,10 @@ If setup says no approved Podman Compose provider was found, run the verified
 package installer:
 
 ```powershell
-.\scripts\install-podman-compose-provider.cmd -Apply
+py -3.12 --version
+$tsPython312 = (& py -3.12 -c "import sys; print(sys.executable)").Trim()
+& $tsPython312 -c "import sys, struct; print(sys.version); print(struct.calcsize('P') * 8)"
+.\scripts\install-podman-compose-provider.cmd -Apply -Python "$tsPython312"
 ```
 
 If setup says the Podman machine is not running:

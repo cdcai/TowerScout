@@ -22,6 +22,10 @@ reading order. The accepted exact fork candidate is `v0.1.3-rc5`;
 acceptance and limitations. Changed official cdcai bytes need their own delta
 review, security/integrity checks, and affected qualification.
 
+[ADR-023](decisions/023-unsigned-windows-package-support-boundary.md) defines
+the unsigned Windows package boundary: use the supplied wrappers only where
+site policy permits them; signature-enforcing endpoints are not qualified.
+
 Chris accepted ownership, Administrative access, delivery direction and the
 proposed release name on October 20. Planned delivery is October 27; support
 runs October 28-30. Actual adoption, official publication and receipt remain

@@ -74,6 +74,7 @@ Confirm the exact release notes before approving the user's chosen path.
 Normal package use does not require a source checkout, Git, Conda, Node.js, or
 VS Code. Host Python 3.12 is required only to install the tested package-local
 Podman Compose provider.
+Use a package-root path of **80 characters or fewer** and select **64-bit Python 3.12** explicitly as described in the [Podman prerequisites](quick-start.md#podman-folder-and-python-requirements). Preserve configured installation paths and volumes; do not change machine-wide policy to bypass an installation failure.
 
 ## Required Download And Integrity Flow
 

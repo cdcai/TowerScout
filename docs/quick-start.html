@@ -24,6 +24,7 @@
       <a href="#safety">Unsigned-package safety</a>
       <a href="#download">Download four files</a>
       <a href="#verify">Verify both ZIPs</a>
+      <a href="#podman-folder-and-python-requirements">Podman prerequisites</a>
       <a href="#extract">Extract the app</a>
       <a href="#run-setup">Run setup</a>
       <a href="#provider">Configure a provider</a>
@@ -218,13 +219,38 @@ compose.yaml</code></pre>
           above it.</p>
       </section>
 
+      <section class="doc-section" id="podman-folder-and-python-requirements">
+        <h2>Podman Folder and Python Requirements</h2>
+        <p>Before installing the provider, use a short local package folder with a full path of
+          <strong>80 characters or fewer</strong>. This is an accepted operating restriction, not a universal
+          Windows limit or a guarantee. For a new installation, keep verified ZIPs in
+          <code>C:\Users\&lt;you&gt;\Documents\TS</code> and extract into <code>PC</code> (CPU) or
+          <code>PG</code> (CUDA). That child folder must contain <code>setup-towerscout.cmd</code> directly;
+          leave the Model &amp; Data ZIP beside it. Check the actual path, especially in redirected or synchronized folders.</p>
+        <p>From PowerShell in the extracted application folder, run:</p>
+        <pre><code>$PWD.Path
+($PWD.Path).Length</code></pre>
+        <p>If it exceeds 80, extract into a shorter permitted local folder before installing the provider.
+          If installation still fails, stop and contact support. Do not change machine-wide long-path or security settings.
+          Keep configured installations in their original folder with their project identity: relocation can select
+          different named volumes. Export a dataset and arrange any move with support; retain old configuration and volumes.</p>
+        <p>Select <strong>64-bit Python 3.12</strong> explicitly; the default <code>python</code> can select another version.
+          Run the commands below one at a time. Stop on errors or unless the version is 3.12 and bitness is 64 before
+          running the installer. If <code>py -3.12</code> is unavailable, obtain the approved executable's full path from
+          local IT, assign it to <code>$tsPython312</code>, and verify it with the same version/bitness command.
+          Quote paths containing spaces; do not substitute another Python version.</p>
+      </section>
+
       <section class="doc-section" id="run-setup">
         <h2>4. Run Setup For Your Choice</h2>
         <p><strong>Open this folder first:</strong> Open the extracted folder in File Explorer, click the address bar,
           type <code>powershell</code>, and press Enter. A command starting with <code>.\</code> runs a file from this
           folder. Keep the window open.</p>
         <p>Podman users then install and confirm the package-local Compose provider:</p>
-        <pre><code>.\scripts\install-podman-compose-provider.cmd -Apply</code></pre>
+        <pre><code>py -3.12 --version
+$tsPython312 = (&amp; py -3.12 -c "import sys; print(sys.executable)").Trim()
+&amp; $tsPython312 -c "import sys, struct; print(sys.version); print(struct.calcsize('P') * 8)"
+.\scripts\install-podman-compose-provider.cmd -Apply -Python "$tsPython312"</code></pre>
         <p>The installer prints the package-local provider. After setup, use
           <code>.\scripts\status.cmd -Engine podman -Port 5000</code> (or your chosen port) to check the provider
           TowerScout selected. Global <code>podman compose version</code> can resolve a different provider.</p>

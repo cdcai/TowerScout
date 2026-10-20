@@ -52,8 +52,10 @@ provider. A Podman GPU path additionally requires the exact release-qualified
 WSL2 Podman, NVIDIA host driver, NVIDIA Container Toolkit/CDI setup, and a
 readiness result with `selected_device=cuda`.
 
-Package users do not need Git, Python, Conda, Node.js, VS Code, or a source-code
-checkout for the package path. If both Docker and Podman are installed, the
+Package users do not need Git, Conda, Node.js, VS Code, or a source-code
+checkout. Docker does not require host Python; Podman provider installation
+requires explicitly selected 64-bit Python 3.12 and a package-root path of
+80 characters or fewer. Follow the [Podman prerequisites](../quick-start.md#podman-folder-and-python-requirements). If both Docker and Podman are installed, the
 launcher can choose Docker first. Use `-Engine podman` consistently when you
 choose Podman.
 
@@ -297,7 +299,8 @@ Podman support prerequisites:
 - An approved non-Docker-Desktop Compose provider is installed and can talk to
   the Podman socket.
 - If no approved provider is present, run
-  `scripts\install-podman-compose-provider.cmd -Apply` from the package root.
+  the [explicit Python selection and provider commands](../quick-start.md#step-5-finish-podman-preparation-if-chosen)
+  from the package root; do not rely on the default `python` on PATH.
   Running the helper without `-Apply` prints the recommended `.env` setting
   without changing `.env`.
 - If Docker Desktop's bundled Compose provider might be selected, set

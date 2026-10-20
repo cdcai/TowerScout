@@ -351,6 +351,37 @@ compose.yaml
 The `assets` folder starts empty. Do not put the Model & Data ZIP inside it;
 setup finds the ZIP in the parent download folder.
 
+### Podman Folder and Python Requirements
+
+Before installing the provider, use a short local package folder with a full
+path of **80 characters or fewer**. This is the accepted operating restriction,
+not a universal Windows limit or a guarantee that every folder works. For a
+new installation, keep the verified ZIPs in `C:\Users\<you>\Documents\TS` and
+extract the application into `PC` (CPU) or `PG` (CUDA). The child folder must
+contain `setup-towerscout.cmd` directly; leave the Model & Data ZIP beside it.
+Check the actual path, especially with redirected or synchronized folders.
+From PowerShell in the extracted application folder, run:
+
+```powershell
+$PWD.Path
+($PWD.Path).Length
+```
+
+If the length exceeds 80, extract again into a shorter permitted local folder
+before installing the provider. If installation still fails, stop and contact
+support. Do not change machine-wide long-path or security settings to proceed.
+Keep an existing configured installation's folder and project identity stable:
+moving it can select different named volumes. Export a dataset and arrange any
+relocation with support; retain the old configuration and volumes.
+
+Select **64-bit Python 3.12** explicitly. Installing 3.12 does not guarantee
+that `python` on PATH selects it. Run the commands below one at a time; stop
+on any error or unless the reported version is 3.12 and bitness is 64, before
+running the installer. If `py -3.12` is unavailable, obtain the approved Python
+installation's full executable path from local IT and assign it to
+`$tsPython312`; verify it with the same version/bitness command. Quote paths
+containing spaces. Do not substitute another Python version.
+
 ## Step 5: Finish Podman Preparation, If Chosen
 
 Skip this section for Docker.
@@ -359,7 +390,10 @@ With the rootless `podman-machine-default` running and Python 3.12 available,
 open PowerShell in the extracted Application Package folder and run:
 
 ```powershell
-.\scripts\install-podman-compose-provider.cmd -Apply
+py -3.12 --version
+$tsPython312 = (& py -3.12 -c "import sys; print(sys.executable)").Trim()
+& $tsPython312 -c "import sys, struct; print(sys.version); print(struct.calcsize('P') * 8)"
+.\scripts\install-podman-compose-provider.cmd -Apply -Python "$tsPython312"
 ```
 
 The helper downloads a pinned provider, verifies its SHA-256, and installs it

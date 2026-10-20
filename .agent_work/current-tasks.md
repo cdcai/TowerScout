@@ -488,8 +488,9 @@ Current scope:
 ### **TASK-092: Documentation Currentness And Information Architecture**
 
 **Status**: IN_PROGRESS - RC5 supplemental operating restrictions are accepted.
-Incorporate equivalent short-path/Python guidance into the official packaged
-Markdown/HTML and served Help; verify official links, first wiki publication,
+Short-path/Python guidance is now integrated into maintained manual and HTML
+sources ([October 20 verification](context/status/Handoff-Planning/2026-10-20-PODMAN-MANUAL-INTEGRATION.md)).
+Verify inclusion in official packages and served Help, official links, first wiki publication,
 final screenshots/video, and owner receipt. The supplement is not in immutable
 RC5 downloads. Chris confirmed ownership and access on October 20.
 **Priority**: HIGH
