@@ -328,7 +328,7 @@ records.
 For Windows policy, software installation, proxy, TLS, or managed-device
 problems, contact Local IT. For a reproducible TowerScout defect that contains
 no sensitive data, use the public
-[TowerScout issue tracker](https://github.com/J-Schulein/TowerScout/issues).
+[TowerScout issue tracker](https://github.com/cdcai/TowerScout/issues).
 It is not a private or guaranteed-response help desk.
 
 Include:

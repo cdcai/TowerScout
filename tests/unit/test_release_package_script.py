@@ -86,7 +86,8 @@ def test_package_release_rejects_dirty_source_by_default():
         shutil.rmtree(output_path, ignore_errors=True)
 
 
-def test_package_release_stages_digest_pinned_image():
+@pytest.mark.parametrize("image_repository", ["ghcr.io/cdcai/towerscout", "ghcr.io/j-schulein/towerscout"])
+def test_package_release_stages_digest_pinned_image(image_repository):
     package_id = f"pytest-digest-{uuid.uuid4().hex}"
     output_dir = Path(".agent_work") / "pytest-temp" / package_id
     output_path = REPO_ROOT / output_dir
@@ -99,7 +100,7 @@ def test_package_release_stages_digest_pinned_image():
             "-OutputDir",
             str(output_dir),
             "-Image",
-            "ghcr.io/j-schulein/towerscout:pytest-digest-cuda128",
+            f"{image_repository}:pytest-digest-cuda128",
             "-ImageDigest",
             digest,
             "-AssetBundleSha256",
@@ -120,10 +121,10 @@ def test_package_release_stages_digest_pinned_image():
             (stage_path / "release-manifest.v1.json").read_text(encoding="utf-8")
         )
         assert_manifest_schema(release_manifest)
-        assert f"TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout:pytest-digest-cuda128@{digest}" in env_example
+        assert f"TOWERSCOUT_IMAGE={image_repository}:pytest-digest-cuda128@{digest}" in env_example
         assert f"TOWERSCOUT_IMAGE_DIGEST={digest}" in env_example
         assert "TOWERSCOUT_PYTORCH_FLAVOR=cuda128" in env_example
-        assert f"Image: ghcr.io/j-schulein/towerscout:pytest-digest-cuda128@{digest}" in image_txt
+        assert f"Image: {image_repository}:pytest-digest-cuda128@{digest}" in image_txt
         assert "PyTorch flavor: cuda128" in image_txt
         assert release_manifest["track"] == "agpl-yolo"
         assert release_manifest["image_digest"] == digest

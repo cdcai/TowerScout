@@ -21,7 +21,7 @@ aids, not replacements for version-matched instructions.
 
 ### Download And Support Boundary
 
-Use the [Releases page](https://github.com/J-Schulein/TowerScout/releases).
+Use the [Releases page](https://github.com/cdcai/TowerScout/releases).
 Choose only an entry explicitly identified as the current supported final
 Windows release, with exact files, authoritative SHA-256 values, image digests,
 tested environments and limitations. If none is identified, stop. The published
@@ -45,11 +45,12 @@ stop and ask Local IT; see the [Local IT guide](docs/local-it-administrator-guid
 
 ## Provenance
 
-This repository is a fork of `cdcai/TowerScout`, which itself carries forward
-the original `TowerScout/TowerScout` project history. The 2026 Windows package,
-validation, and handoff work were developed on this fork. The cdcai owner will
-decide whether and when to adopt a validated release after reviewing its
-evidence and support boundary.
+TowerScout carries forward the original `TowerScout/TowerScout` project history.
+The 2026 Windows packaging, validation and handoff work was developed in
+`J-Schulein/TowerScout` for adoption into `cdcai/TowerScout`. Historical fork
+releases and their evidence retain their original identities. Official cdcai
+release availability and supported scope come from its verified release record;
+preparation of this source does not announce a published release.
 
 ## About TowerScout
 

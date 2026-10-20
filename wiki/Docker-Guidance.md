@@ -34,7 +34,7 @@ containers.
   `-cuda128` Application Package, and use `-Gpu on`.
 
 Then follow [Install And First Run](Install-And-First-Run) or the complete
-[Docker CPU guide](https://github.com/J-Schulein/TowerScout/blob/main/docs/docker-cpu-user-guide.md) / [Docker GPU guide](https://github.com/J-Schulein/TowerScout/blob/main/docs/docker-gpu-user-guide.md).
+[Docker CPU guide](https://github.com/cdcai/TowerScout/blob/main/docs/docker-cpu-user-guide.md) / [Docker GPU guide](https://github.com/cdcai/TowerScout/blob/main/docs/docker-gpu-user-guide.md).
 
 ## Common Docker Symptoms
 

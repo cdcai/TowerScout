@@ -34,7 +34,7 @@ if ([string]::IsNullOrWhiteSpace($Image)) {
     $Image = $env:TOWERSCOUT_IMAGE
 }
 if ([string]::IsNullOrWhiteSpace($Image)) {
-    $Image = "ghcr.io/j-schulein/towerscout:latest-cpu"
+    $Image = "ghcr.io/cdcai/towerscout:latest-cpu"
 }
 if ([string]::IsNullOrWhiteSpace($ImageDigest)) {
     $ImageDigest = $env:TOWERSCOUT_IMAGE_DIGEST

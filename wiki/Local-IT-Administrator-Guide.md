@@ -88,9 +88,9 @@ readiness state, and a non-secret error category. They must not contain keys,
 certificate details, uploaded files, datasets, or volume contents.
 
 The current public route is the
-[TowerScout issue tracker](https://github.com/J-Schulein/TowerScout/issues).
+[TowerScout issue tracker](https://github.com/cdcai/TowerScout/issues).
 It is not a private or guaranteed-response service. Local IT retains
 responsibility for organization-managed controls and sensitive evidence.
 
 For exact commands and data boundaries, use the version-matched
-[packaged Local IT guide](https://github.com/J-Schulein/TowerScout/blob/main/docs/local-it-administrator-guide.md).
+[packaged Local IT guide](https://github.com/cdcai/TowerScout/blob/main/docs/local-it-administrator-guide.md).

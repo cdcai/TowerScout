@@ -4,7 +4,7 @@
 > **Last reviewed:** 2026-10-02. **Publication state:** Local draft; the next
 > final release is not yet frozen or published.
 
-Use the [TowerScout Releases page](https://github.com/J-Schulein/TowerScout/releases)
+Use the [TowerScout Releases page](https://github.com/cdcai/TowerScout/releases)
 as the public download source. Choose only the entry whose notes identify it
 as the current supported final Windows release.
 

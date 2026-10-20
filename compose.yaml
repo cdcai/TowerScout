@@ -1,6 +1,6 @@
 services:
   towerscout:
-    image: ${TOWERSCOUT_IMAGE:-ghcr.io/j-schulein/towerscout:latest-cpu}
+    image: ${TOWERSCOUT_IMAGE:-ghcr.io/cdcai/towerscout:latest-cpu}
     ports:
       - "127.0.0.1:${TOWERSCOUT_PORT:-5000}:5000"
     environment:

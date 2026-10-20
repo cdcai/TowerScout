@@ -395,6 +395,16 @@ def test_podman_gpu_image_uses_package_template_digest_before_env_exists():
         if ($resolvedProcessEnv -ne "ghcr.io/j-schulein/towerscout:process-cuda128@sha256:{'d' * 64}") {{
             throw "process environment image should use only process environment digest: $resolvedProcessEnv"
         }}
+        $explicit = "ghcr.io/cdcai/towerscout:qualified-cuda128@{digest}"
+        if ((Get-TowerScoutPodmanGpuImage -Image $explicit) -ne $explicit) {{
+            throw "Explicit official image must override process and package settings."
+        }}
+        $env:TOWERSCOUT_IMAGE = ""
+        $env:TOWERSCOUT_IMAGE_DIGEST = ""
+        function Get-TowerScoutPodmanGpuEnvFileImage {{ return "" }}
+        if ((Get-TowerScoutPodmanGpuImage) -ne "ghcr.io/cdcai/towerscout:latest-cpu") {{
+            throw "Unconfigured fallback must use the official CPU namespace."
+        }}
         "ok"
         """
         result = _run_powershell(command)

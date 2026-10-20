@@ -63,7 +63,7 @@ Certificate selection and trust import are Local IT or advanced-user tasks:
    procedure. Open `docs\package-guide.md` inside the extracted TowerScout
    Application Package and find **Provider-Key Validation Or TLS Failure**.
    That file matches the installed release. An
-   [online preview](https://github.com/J-Schulein/TowerScout/blob/main/docs/package-guide.md#provider-key-validation-or-tls-failure)
+   [online preview](https://github.com/cdcai/TowerScout/blob/main/docs/package-guide.md#provider-key-validation-or-tls-failure)
    is also available, but `main` may describe a newer release.
 
 Do not disable TLS verification. If Local IT cannot confirm an approved
@@ -76,7 +76,7 @@ First use your organization's Local IT contact for Windows policy, software
 installation, proxy, firewall, TLS certificate, and managed-device issues.
 
 For a reproducible TowerScout defect that contains no sensitive data, use the
-[TowerScout GitHub issue tracker](https://github.com/J-Schulein/TowerScout/issues).
+[TowerScout GitHub issue tracker](https://github.com/cdcai/TowerScout/issues).
 The repository may transfer at handoff; use the issue link shown by the current
 repository. This is a public project record, not a staffed private help desk.
 Do not name an individual as permanent support.

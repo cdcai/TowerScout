@@ -79,7 +79,7 @@ Use a package-root path of **80 characters or fewer** and select **64-bit Python
 ## Required Download And Integrity Flow
 
 Use a normal browser and the public
-[TowerScout Releases page](https://github.com/J-Schulein/TowerScout/releases).
+[TowerScout Releases page](https://github.com/cdcai/TowerScout/releases).
 Select only the entry whose notes identify it as the current supported final
 Windows release.
 
@@ -200,7 +200,7 @@ provider URLs or response bodies, browser console/network traces, certificate
 thumbprints/issuer details, cached imagery, exported datasets, volume contents,
 or local user/host identifiers through public channels. Use an approved private
 handling path when deeper investigation is necessary. The current public route
-is the [TowerScout issue tracker](https://github.com/J-Schulein/TowerScout/issues),
+is the [TowerScout issue tracker](https://github.com/cdcai/TowerScout/issues),
 which is not a private or guaranteed-response help desk.
 
 ## Stop And Escalate

@@ -157,7 +157,7 @@ procedure.
 Ask Local IT about installation permission, WSL, endpoint policy, proxies,
 TLS inspection, certificates, drivers, or firewall rules. Report a
 non-sensitive TowerScout product defect in the
-[TowerScout public issue tracker](https://github.com/J-Schulein/TowerScout/issues).
+[TowerScout public issue tracker](https://github.com/cdcai/TowerScout/issues).
 The issue tracker is public and is not a private or guaranteed-response help
 desk.
 
@@ -169,7 +169,7 @@ numerically newer tag is not supported unless the authoritative release record
 explicitly says otherwise.
 
 A normal final release has two artifact groups. Open
-[TowerScout Releases](https://github.com/J-Schulein/TowerScout/releases) and
+[TowerScout Releases](https://github.com/cdcai/TowerScout/releases) and
 choose the identified final release.
 
 On GitHub Releases, download these files from the release `Assets` section,
@@ -346,7 +346,7 @@ The package `.env.example` should pin `TOWERSCOUT_IMAGE` to an immutable GHCR
 digest reference such as:
 
 ```text
-ghcr.io/j-schulein/towerscout:<release-version>-cpu@sha256:<digest>
+ghcr.io/cdcai/towerscout:<release-version>-cpu@sha256:<digest>
 ```
 
 `IMAGE.txt`, `.env.example`, and `release-manifest.v1.json` record the selected

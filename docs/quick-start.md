@@ -248,7 +248,7 @@ this download folder and later open it in the extracted application folder.
 ## Step 2: Download The Four Files
 
 Open the
-[TowerScout GitHub Releases page](https://github.com/J-Schulein/TowerScout/releases).
+[TowerScout GitHub Releases page](https://github.com/cdcai/TowerScout/releases).
 Select the entry whose notes identify it as the current supported final Windows
 release. If none does, stop. A draft, prerelease, source archive, branch, or
 numerically newer tag is not automatically supported.
@@ -627,7 +627,7 @@ Common safe actions:
 For Windows policy, software installation, proxy, TLS, or managed-device
 issues, contact Local IT. For a reproducible non-sensitive TowerScout defect,
 use the public
-[TowerScout issue tracker](https://github.com/J-Schulein/TowerScout/issues).
+[TowerScout issue tracker](https://github.com/cdcai/TowerScout/issues).
 It is not a private or guaranteed-response help desk.
 
 Include only release/package name, selected engine/mode/port, versions,

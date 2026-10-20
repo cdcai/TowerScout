@@ -85,7 +85,7 @@ fallback as GPU validation.
    C:\Users\<you>\Documents\TowerScout
    ```
 
-2. Open the [TowerScout GitHub Releases page](https://github.com/J-Schulein/TowerScout/releases)
+2. Open the [TowerScout GitHub Releases page](https://github.com/cdcai/TowerScout/releases)
    and select the entry whose notes identify it as the current supported final
    Windows release.
 
@@ -259,7 +259,7 @@ If status is `fatal`, stop. Record the release version, package filename,
 chosen GPU mode, status output, and a reviewed summary of recent logs. Ask
 Local IT about local policy, network, driver, or certificate problems. Report
 a non-sensitive product defect in the public
-[TowerScout issue tracker](https://github.com/J-Schulein/TowerScout/issues).
+[TowerScout issue tracker](https://github.com/cdcai/TowerScout/issues).
 That tracker is public and does not promise a response. Never post provider
 secrets, `.env`, raw screenshots, browser traces, exported datasets,
 certificate details, or unreviewed raw logs.

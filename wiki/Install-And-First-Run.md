@@ -26,7 +26,7 @@ again in the new application folder.
 
 ## 2. Download Four Files
 
-Open the [TowerScout Releases page](https://github.com/J-Schulein/TowerScout/releases)
+Open the [TowerScout Releases page](https://github.com/cdcai/TowerScout/releases)
 and select the release whose notes identify it as the current supported final
 Windows release. If no release says that, stop; a draft, prerelease, source
 archive, or numerically newer tag is not automatically the supported release.

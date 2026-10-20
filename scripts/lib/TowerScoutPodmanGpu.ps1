@@ -115,7 +115,7 @@ function Get-TowerScoutPodmanGpuImage {
         return $envFileImage
     }
 
-    return "ghcr.io/j-schulein/towerscout:latest-cpu"
+    return "ghcr.io/cdcai/towerscout:latest-cpu"
 }
 
 function Get-TowerScoutImageReferenceParts {

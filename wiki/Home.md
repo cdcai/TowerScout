@@ -46,7 +46,7 @@ versus GPU, or Google versus Azure for you.
 
 ## Where Exact Release Information Lives
 
-The [GitHub Releases page](https://github.com/J-Schulein/TowerScout/releases)
+The [GitHub Releases page](https://github.com/cdcai/TowerScout/releases)
 is the public download location. Its authoritative release record will identify the
 supported version, exact files, SHA-256 values, tested configurations, and
 known limitations.

@@ -63,7 +63,7 @@ information.
    C:\Users\<you>\Documents\TowerScout
    ```
 
-2. Open the [TowerScout GitHub Releases page](https://github.com/J-Schulein/TowerScout/releases)
+2. Open the [TowerScout GitHub Releases page](https://github.com/cdcai/TowerScout/releases)
    and select the entry whose notes identify it as the current supported final
    Windows release.
 
@@ -209,7 +209,7 @@ If status is `fatal`, stop. Record the release version, package filename,
 `IMAGE.txt`, status output, and a reviewed summary of recent logs. Ask Local IT
 about local policy, network, or certificate problems. For a non-sensitive
 TowerScout defect, use the public
-[TowerScout issue tracker](https://github.com/J-Schulein/TowerScout/issues).
+[TowerScout issue tracker](https://github.com/cdcai/TowerScout/issues).
 That public issue tracker is not a private or guaranteed-response support
 service. Never post provider secrets, `.env`, raw screenshots, browser network
 traces, exported datasets, certificate details, or unreviewed raw logs.

@@ -59,11 +59,11 @@ def test_compose_defaults_use_cpu_tag_restart_and_runtime_guards():
     env_example = ENV_EXAMPLE.read_text(encoding="utf-8")
     package_script = PACKAGE_SCRIPT.read_text(encoding="utf-8")
 
-    assert "ghcr.io/j-schulein/towerscout:latest-cpu" in compose
-    assert "ghcr.io/j-schulein/towerscout:latest-cpu" in env_example
-    assert 'ghcr.io/j-schulein/towerscout:latest-cpu' in package_script
-    assert "ghcr.io/j-schulein/towerscout:latest}" not in compose
-    assert "TOWERSCOUT_IMAGE=ghcr.io/j-schulein/towerscout:latest\n" not in env_example
+    assert "ghcr.io/cdcai/towerscout:latest-cpu" in compose
+    assert "ghcr.io/cdcai/towerscout:latest-cpu" in env_example
+    assert 'ghcr.io/cdcai/towerscout:latest-cpu' in package_script
+    assert "ghcr.io/cdcai/towerscout:latest}" not in compose
+    assert "TOWERSCOUT_IMAGE=ghcr.io/cdcai/towerscout:latest\n" not in env_example
     assert "restart: always" in compose
     assert "TOWERSCOUT_GPU_MODE: ${TOWERSCOUT_GPU_MODE:-off}" in compose
     assert "TOWERSCOUT_PILOT_MAX_TILES: ${TOWERSCOUT_PILOT_MAX_TILES:-100}" in compose

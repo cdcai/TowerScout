@@ -39,10 +39,10 @@ automatically.
 The four valid combinations are Docker CPU, Docker GPU, Podman CPU, and Podman
 GPU. Follow the matching package guide:
 
-- [Docker CPU](https://github.com/J-Schulein/TowerScout/blob/main/docs/docker-cpu-user-guide.md)
-- [Docker GPU](https://github.com/J-Schulein/TowerScout/blob/main/docs/docker-gpu-user-guide.md)
-- [Podman CPU](https://github.com/J-Schulein/TowerScout/blob/main/docs/podman-cpu-user-guide.md)
-- [Podman GPU](https://github.com/J-Schulein/TowerScout/blob/main/docs/podman-gpu-user-guide.md)
+- [Docker CPU](https://github.com/cdcai/TowerScout/blob/main/docs/docker-cpu-user-guide.md)
+- [Docker GPU](https://github.com/cdcai/TowerScout/blob/main/docs/docker-gpu-user-guide.md)
+- [Podman CPU](https://github.com/cdcai/TowerScout/blob/main/docs/podman-cpu-user-guide.md)
+- [Podman GPU](https://github.com/cdcai/TowerScout/blob/main/docs/podman-gpu-user-guide.md)
 
 ## 3. Choose Google Maps Or Azure Maps
 

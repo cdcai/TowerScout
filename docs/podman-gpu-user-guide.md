@@ -115,7 +115,7 @@ Before extraction, follow the [short-folder and explicit Python requirements](qu
    C:\Users\<you>\Documents\TS
    ```
 
-2. Open the [TowerScout GitHub Releases page](https://github.com/J-Schulein/TowerScout/releases)
+2. Open the [TowerScout GitHub Releases page](https://github.com/cdcai/TowerScout/releases)
    and select the entry whose notes identify it as the current supported final
    Windows release.
 
@@ -339,7 +339,7 @@ If status is `fatal`, stop. Record the release version, package filename,
 selected Compose provider, GPU/CDI result, status output, and a reviewed
 summary of recent logs. Ask Local IT about local policy, network, driver, or
 certificate problems. Report a non-sensitive product defect at
-[TowerScout issue tracker](https://github.com/J-Schulein/TowerScout/issues).
+[TowerScout issue tracker](https://github.com/cdcai/TowerScout/issues).
 That tracker is public and
 does not promise a response. Never post provider secrets, `.env`, raw
 screenshots, browser traces, exported datasets, certificate details, or

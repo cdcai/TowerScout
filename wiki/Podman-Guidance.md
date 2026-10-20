@@ -100,7 +100,7 @@ a successful small detection workflow.
   checks, then use the `-cuda128` package and `-Gpu on`.
 
 Follow [Install And First Run](Install-And-First-Run) or the complete
-[Podman CPU guide](https://github.com/J-Schulein/TowerScout/blob/main/docs/podman-cpu-user-guide.md) / [Podman GPU guide](https://github.com/J-Schulein/TowerScout/blob/main/docs/podman-gpu-user-guide.md).
+[Podman CPU guide](https://github.com/cdcai/TowerScout/blob/main/docs/podman-cpu-user-guide.md) / [Podman GPU guide](https://github.com/cdcai/TowerScout/blob/main/docs/podman-gpu-user-guide.md).
 
 After Windows restarts, Podman containers may remain stopped. Start the
 machine, then use the matching TowerScout start command. Do not change the

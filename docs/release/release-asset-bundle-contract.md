@@ -48,7 +48,7 @@ For a release version such as `<release-version>`, the expected artifacts are:
 | CPU control ZIP checksum | `towerscout-<release-version>-cpu.zip.sha256` | SHA-256 checksum for the full CPU control ZIP. |
 | CUDA control ZIP | `towerscout-<release-version>-cuda128.zip` | User-selectable NVIDIA GPU package with launcher, Compose, scripts, docs, manifest, and pinned CUDA 12.8 image metadata. |
 | CUDA control ZIP checksum | `towerscout-<release-version>-cuda128.zip.sha256` | SHA-256 checksum for the full CUDA control ZIP. |
-| GHCR image digest | `ghcr.io/j-schulein/towerscout@sha256:<digest>` | Immutable Linux/AMD64 runtime image referenced by each control ZIP. |
+| GHCR image digest | `ghcr.io/cdcai/towerscout@sha256:<digest>` | Immutable Linux/AMD64 runtime image referenced by each control ZIP. |
 | Asset ZIP | `towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip` | Shared release bundle containing model weights, ZIP-code data, and the asset manifest copy. |
 | Asset ZIP checksum | `towerscout-<release-version>-assets-towerscout-v1-assets-2026-05-05.zip.sha256` | SHA-256 checksum for the full asset ZIP. |
 
