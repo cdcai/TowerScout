@@ -52,7 +52,7 @@
 - `TASK-070`: restricted-network/offline package enhancements remain follow-up unless pilot needs make them release-critical.
 - V1 final completion waits for pilot/UAT results.
 
-**Retrospective**: See [SPRINT-06-RETROSPECTIVE-ANALYSIS-2026-07-02.md](./context/analysis/SPRINT-06-RETROSPECTIVE-ANALYSIS-2026-07-02.md).
+**Retrospective**: See [SPRINT-06-RETROSPECTIVE-ANALYSIS-2026-07-02.md](analysis/SPRINT-06-RETROSPECTIVE-ANALYSIS-2026-07-02.md).
 
 ### Sprint 06 Task Files
 
@@ -112,7 +112,7 @@ Task-local support folders for `TASK-065`, `TASK-069`, `TASK-084`, and `TASK-086
 - `TASK-065`: Release packaging and runtime support follow-through carried into Sprint 06 and is now complete.
 - Release-candidate validation, CI release gate tightening, and license/release policy review were completed during Sprint 06; Windows script portability and restricted-network package enhancements remain backlog watch items.
 
-**Retrospective**: See [SPRINT-05-RETROSPECTIVE-ANALYSIS-2026-05-08.md](./context/analysis/SPRINT-05-RETROSPECTIVE-ANALYSIS-2026-05-08.md).
+**Retrospective**: See [SPRINT-05-RETROSPECTIVE-ANALYSIS-2026-05-08.md](../2026-05/analysis/SPRINT-05-RETROSPECTIVE-ANALYSIS-2026-05-08.md).
 
 ### Sprint 05 Task Files
 

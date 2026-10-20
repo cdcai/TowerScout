@@ -6,45 +6,31 @@ handoff workspace. The organization contract is
 
 ## Current Sources
 
-Read in this order:
+1. [Current tasks](current-tasks.md): remaining delivery and acceptance work.
+2. [Owner backlog](task-backlog.md): dated maintenance and optional future work.
+3. [Owner maintenance guide](../docs/internal/owner-maintenance.md) and
+   [repository map](../docs/internal/repository-map.md): practical navigation.
+4. [Handoff navigation](context/status/Handoff-Planning/README.md): accepted
+   candidate, operating restrictions, official-delivery work, and dated history.
 
-1. [`current-tasks.md`](./current-tasks.md)
-2. [`context/status/Reprioritization Effort/2026-09-21-windows-deployment-prioritization-v2.md`](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-prioritization-v2.md)
-3. [`context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2.md`](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md)
-4. [`decisions/022-cuda128-blackwell-ml-runtime.md`](./decisions/022-cuda128-blackwell-ml-runtime.md)
-5. [`decisions/023-unsigned-windows-package-support-boundary.md`](./decisions/023-unsigned-windows-package-support-boundary.md)
-6. [`decisions/024-rc5-security-gate-and-residual-boundary.md`](./decisions/024-rc5-security-gate-and-residual-boundary.md)
-7. [`decisions/025-two-host-final-candidate-qualification.md`](./decisions/025-two-host-final-candidate-qualification.md)
-8. [`decisions/026-rc5-bounded-candidate-acceptance.md`](./decisions/026-rc5-bounded-candidate-acceptance.md)
-9. [`tasks/active/TASK-105-final-release-correction-and-qualification.md`](./tasks/active/TASK-105-final-release-correction-and-qualification.md)
-10. [`context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2-verification.md`](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2-verification.md)
-11. [`context/status/Reprioritization Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md`](./context/status/Reprioritization%20Effort/2026-09-21-post-day-7-backlog-and-handoff-guide.md)
-12. [`task-backlog.md`](./task-backlog.md)
-13. [`requirements.md`](./requirements.md)
-14. [`design.md`](./design.md)
-15. [`completed-tasks.md`](./completed-tasks.md)
+Acceptance remains defined by the September 21 v2
+[prioritization](context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-prioritization-v2.md)
+and [work plan](context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md),
+as amended by ADR-022 through ADR-026. Root AGENTS.md supplies the task-specific
+reading order. The accepted exact fork candidate is `v0.1.3-rc5`;
+[ADR-026](decisions/026-rc5-bounded-candidate-acceptance.md) records its bounded
+acceptance and limitations. Changed official cdcai bytes need their own delta
+review, security/integrity checks, and affected qualification.
 
-The September 21 v2 prioritization and work plan control immediate development
-and acceptance as amended by ADR-022, ADR-023, ADR-024, ADR-025, and ADR-026
-for exact `v0.1.3-rc5`. ADR-023 resolves
-the Windows signing-policy choice by selecting an unsigned, explicitly
-narrower support boundary. ADR-024 owns the bounded RC5 dependency reduction,
-five-key expiring residual policy, and scan-before-push ordering. TASK-105's
-RC9-finding corrections merged through PRs #109/#110, and PR #111 merged the
-owner-approved bounded RC5 acceptance and handoff documentation. ADR-025 sets
-exact-byte qualification on this host and the separate independent NVIDIA
-host, with CPU-only and Podman-without-Docker environments unclaimed. ADR-026
-accepts the two-host RC5 functional evidence with explicit evidence
-substitutions, short Podman paths, Python 3.12 selection, and known-issue
-dispositions. Follow its linked closeout record and operations addendum.
-Task-105 remains active for official adoption, official-byte qualification,
-and handoff; this acceptance does not automatically qualify changed candidates
-or official cdcai bytes or authorize publication.
-The verification record states
-the static-review boundary, and
-the post-Day-7 guide is future planning rather than today's task list. The older
-roadmap remains dated context. The Pilot plan still controls the immutable
-`v0.1.2` package and cdcai hold.
+Chris accepted ownership, Administrative access, delivery direction and the
+proposed release name on October 20. Planned delivery is October 27; support
+runs October 28-30. Actual adoption, official publication and receipt remain
+pending. Historical pilot plans explain earlier decisions; their old holds
+and dates do not override the current board or current authorization.
+
+Use [completed tasks](completed-tasks.md) for completed work and the existing
+archive for history. Deferred work stays deferred, even when its preserved
+record remains under `tasks/active/`; folder location alone is not status.
 
 ## Layout
 

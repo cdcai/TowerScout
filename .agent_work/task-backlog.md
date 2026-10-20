@@ -5,6 +5,7 @@
 **ML Runtime Amendment**: [ADR-022](./decisions/022-cuda128-blackwell-ml-runtime.md)
 **Windows Package Policy**: [ADR-023](./decisions/023-unsigned-windows-package-support-boundary.md)
 **RC5 Security Boundary**: [ADR-024](./decisions/024-rc5-security-gate-and-residual-boundary.md)
+**Candidate Acceptance**: [ADR-026](./decisions/026-rc5-bounded-candidate-acceptance.md)
 **Immediate Plan**: [September 21 v2 implementation plan](./context/status/Reprioritization%20Effort/2026-09-21-windows-deployment-hardening-v2.md)
 
 The active board controls selected work. This backlog holds deferred,
@@ -30,8 +31,8 @@ these groups organize the handoff rather than closing tasks.
 | Task | Current outcome |
 | --- | --- |
 | `TASK-105` | Preserve accepted RC5 evidence; complete official adoption, changed-artifact qualification, and handoff under ADR-026 |
-| `TASK-104` | Remove unused Debian GDAL, enforce the exact five-key expiring residual policy, and make local security qualification precede registry publication |
-| `TASK-103` | CUDA 12.8 Blackwell bridge; rebuild documentation-aligned artifacts and complete final browser-download/independent-host qualification |
+| `TASK-104` | Preserve merged security controls; run fresh official checks and record residual follow-up before expiry |
+| `TASK-103` | Preserve accepted CPU/CUDA bridge evidence; qualify affected official runtime and hand off ADR-022 maintenance review |
 | `TASK-095` | W00 direction, task-control, evidence, and eventual handoff alignment |
 | `TASK-091` | W01/W05/W09/W10 owner-runnable package and model qualification |
 | `TASK-097` | Podman CPU/GPU target, provider, CDI, and independent-host qualification |
@@ -88,7 +89,7 @@ and bulk historical cleanup.
 
 | Task | Boundary |
 | --- | --- |
-| `TASK-089` cdcai Adoption And Ownership Transfer | Local reversible preparation may continue. Publication, repository mutation, and final adoption require owner qualification and explicit authorization. |
+| `TASK-089` cdcai Adoption And Ownership Transfer | Ownership, access, direction and name agreed October 20; preparation active. Reviewed source adoption, package permissions, official qualification, publication and receipt remain. |
 
 ## Post-Day-7 Planning
 

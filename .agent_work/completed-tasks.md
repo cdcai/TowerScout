@@ -122,7 +122,7 @@ execution Task-099 blocked signing and candidate inclusion, not ongoing
 Task-087 non-release work.
 
 Retrospective:
-[`SPRINT-08-RETROSPECTIVE-ANALYSIS-2026-08-11.md`](./context/analysis/SPRINT-08-RETROSPECTIVE-ANALYSIS-2026-08-11.md)
+[`SPRINT-08-RETROSPECTIVE-ANALYSIS-2026-08-11.md`](context/archive/2026-08/analysis/SPRINT-08-RETROSPECTIVE-ANALYSIS-2026-08-11.md)
 
 ---
 
@@ -160,7 +160,7 @@ Key outcomes:
 - `TASK-095` begins in Sprint 08 with the Phase A roadmap/workspace rebaseline.
 
 Retrospective:
-[`SPRINT-07-RETROSPECTIVE-ANALYSIS-2026-07-23.md`](./context/analysis/SPRINT-07-RETROSPECTIVE-ANALYSIS-2026-07-23.md)
+[`SPRINT-07-RETROSPECTIVE-ANALYSIS-2026-07-23.md`](context/archive/2026-07/analysis/SPRINT-07-RETROSPECTIVE-ANALYSIS-2026-07-23.md)
 
 ---
 
@@ -179,7 +179,7 @@ Completed task files:
 
 Detailed task files remain in
 [`tasks/completed/`](./tasks/completed/). The Sprint 06 retrospective is
-[`SPRINT-06-RETROSPECTIVE-ANALYSIS-2026-07-02.md`](./context/analysis/SPRINT-06-RETROSPECTIVE-ANALYSIS-2026-07-02.md).
+[`SPRINT-06-RETROSPECTIVE-ANALYSIS-2026-07-02.md`](context/archive/2026-07/analysis/SPRINT-06-RETROSPECTIVE-ANALYSIS-2026-07-02.md).
 
 ---
 

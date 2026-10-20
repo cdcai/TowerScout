@@ -1,9 +1,22 @@
-# Current Tasks - Final Candidate Build And Acceptance
+# Current Tasks - Official Adoption And Handoff
 
-**Sprint Period**: October 5-October 16, 2026
-**Last Updated**: October 19, 2026
+**Delivery Period**: October 20-October 30, 2026
+**Last Updated**: October 20, 2026
 **Closeout Target**: October 30, 2026
-**Focus**: Qualify a dependable, downloadable Windows 11 application from
+**Delivery target**: October 27; support October 28-30.
+**Current focus**: Complete reviewed adoption into cdcai, official artifact
+qualification, wiki/video and owner delivery. Chris accepted ownership,
+Administrative access, delivery direction and the proposed v0.1.3 release
+name on October 20. Package permissions and actual delivery remain pending.
+See [handoff navigation](context/status/Handoff-Planning/README.md).
+
+## Qualification history through October 19
+
+The following narrative retains the candidate progression; older pending
+statements describe that sequence. Current task summaries below control
+remaining work, subject to the accepted decisions.
+
+**Historical focus**: Qualify a dependable, downloadable Windows 11 application from
 accepted `main` across Docker/Podman and CPU/NVIDIA profiles. Documentation
 content is frozen and merged through PR #94, and the project-state
 reconciliation is merged through PR #95. RC8 browser testing exposed a
@@ -289,7 +302,7 @@ and evidence, not an implicitly selected official release source.
 same-source `v0.1.3-rc5` image/security and immutable publication gates passed.
 Two-host functional qualification is accepted under ADR-026, and PR #111
 merged the acceptance and handoff documentation as `2c86c12`. Official cdcai
-adoption, official-byte qualification, and named maintenance custody remain
+adoption, official-byte qualification, and verified material receipt remain
 pending.
 
 **First-host checkpoint (October 14, before independent-host closeout)**:
@@ -360,83 +373,57 @@ passed for the two-file documentation correction.
 
 Current scope:
 
-- Resolve or explicitly disposition all ten RC9 independent-host findings.
-- Correct fresh Podman GPU provisioning, PowerShell/provider installation and
-  safe retry, selected-provider guidance, mixed-runtime recovery, exports,
-  geocoding wording, tested-support documentation, and bundle reproducibility.
-- Freeze one accepted source, pass the unexpired ADR-024 security gate, and
-  build same-source CPU/CUDA 12.8 `v0.1.3-rc.N` candidate artifacts.
-- Publish the candidate as an immutable, non-Latest fork prerelease only after
-  separate authorization, then validate the exact public bytes.
-- Complete Docker CPU/CUDA and Podman CPU/CUDA on this Windows NVIDIA host and
-  the separate RC9 independent NVIDIA host using the corrected exact public
-  bytes before any final-candidate readiness claim or cdcai adoption
-  recommendation.
+- Preserve the RC9 finding dispositions and exact RC5 acceptance under ADR-026.
+- Review the official source/artifact delta, incorporate accepted operating
+  restrictions into packaged and served documentation, and freeze official identities.
+- Pass fresh security and actual-download integrity checks and qualify affected
+  real-package, model, provider, persistence and recovery paths before recommendation.
+- Record official delivery and Chris's receipt with TASK-089.
 
-ADR-025 removes the extra CPU-only and Podman-without-Docker host gates. Those
-environments are not tested and must not be claimed. Both available hosts must
-still pass every required corrected-candidate profile and workflow, subject
-to ADR-026's approved evidence substitutions for exact `v0.1.3-rc5` only;
-RC9 results cannot stand in for the new bytes.
+ADR-026's approved evidence substitutions apply to exact `v0.1.3-rc5` only.
+Do not automatically carry acceptance to changed official bytes. CPU-only
+hardware and Podman-without-Docker remain unqualified under ADR-025; preserve
+the supported-host and unsigned-package boundaries.
+
 
 ### **TASK-103: CUDA 12.8 Blackwell ML Runtime**
 
-**Status**: IN_PROGRESS - local `rc4` images/packages pass G10, exact-digest
-W05, four-profile W09, and all first-host provider/recovery/review-export/
-controlled-error/reboot cells. ADR-023 resolves the unsigned support boundary,
-the bounded `rc4` browser-download Docker CPU diagnostic passed without a
-larger blocker, and its documentation findings are merged through PR #94.
-PR #95 then reconciled the accepted project state, and PR #96 merged the
-application urllib3 correction. RC8 Podman CPU exposed a reproducible
-pre-registration cancel-then-retry race. The bounded correction and five-key
-security policy are now merged through PRs #105/#106, and the same-source RC9
-CPU/CUDA exact-digest registry gates pass. Digest-pinned RC9 control ZIPs pass
-local integrity validation and are published in the non-Latest RC9 validation
-prerelease. Resume final browser-download plus independent-host evidence using
-only those exact public bytes. All four exact-browser-downloaded RC9 first-
-host profiles and reboot-persistence cells now pass, including the affected
-cancellation race. One independent NVIDIA host passed all four RC9 profiles,
-but TASK-105 corrections and the ADR-025 corrected-candidate two-host rerun are required for
-the intended final package
+**Status**: IN_PROGRESS - the CPU/CUDA 12.8 bridge is included in exact RC5's
+bounded two-host acceptance under ADR-026. Preserve earlier runtime evidence;
+official changed-artifact qualification and the ADR-022 maintenance obligation
+remain. The bridge review is due January 31, 2027 or an earlier ADR-022 trigger.
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-103-cuda128-blackwell-ml-runtime.md`
 
 Current scope:
 
-- Adopt torch 2.10.0/torchvision 0.25.0 with distinct `cpu` and `cuda128`
-  image/package identities under ADR-022.
-- Complete gates-v3, RGB input, recovery-message, source-build, CI/security,
-  documentation, governance, Podman, rollback, and compliance work.
-- Qualify rebased CPU/CUDA images with real models and preserve every run;
-  missing external cells remain blocked rather than inferred.
-- Preserve the accepted-baseline scan gate, comparator hardening, sanitized
-  evidence, and code-scanning disposition merged through PR #86.
-- Keep the confirmed `rc4` CPU/CUDA runtime evidence. The `rc4` images and
-  control ZIPs remain the regression baseline but are not the final
-  documentation-aligned distribution: repository `docs/` is copied into both
-  surfaces. The same-source RC9 image and package rebuild is complete. Do not
-  promote `latest` or publish a stable/general release without separate owner
-  authorization; the RC8 validation prerelease was separately authorized.
+- Preserve distinct CPU/CUDA identities, real-model/device results, accepted
+  security controls and historical qualification evidence.
+- Review and qualify affected runtime behavior in the official build; source
+  checks and healthy endpoints alone do not establish model/device readiness.
+- Hand off the ADR-022 bridge review and replacement decision to Chris with
+  the required real-model/device regression evidence.
+- Keep older rc4/RC8/RC9 records historical; exact RC5 acceptance does not
+  authorize stable publication or qualify a changed official artifact.
+
 
 ### **TASK-104: RC5 Security Gate And Residual Disposition**
 
-**Status**: IN_PROGRESS - ADR-024 implementation and local CPU/CUDA security,
-identity, Fiona/ZCTA, real-model/device, and live Azure/Google ZCTA-provider
-proof pass. PR #106 merged the exact five-key policy. Same-source RC9 CPU and
-CUDA 12.8 registry digests pass the strict local and exact-digest gates with no
-`latest` promotion, and their digest-pinned control ZIPs pass local integrity
-validation. The non-Latest RC9 package prerelease is published; final browser-
-download four-profile first-host and reboot acceptance now pass. One
-independent NVIDIA host also passed all four profiles; TASK-105 must repeat the
-strict security boundary for the corrected final source before publication
+**Status**: IN_PROGRESS - accepted RC5 has dated October 14 security results.
+Official cdcai builds require fresh local scan-before-push and exact-published-
+digest verification. Preserve the 396-key baseline and exact five residuals;
+their acceptance expires October 31, 2026 at 23:59:59 UTC. Prepare the security
+follow-up for Chris before closeout; no exception is extended by handoff.
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-104-rc5-security-gate-and-residual-disposition.md`
 
 Current scope:
 
 - Keep the 396-key accepted baseline unchanged.
-- Pin candidate bases/pip, remove Debian GDAL and its unused transitive tree,
-  and prove Fiona/ZCTA behavior through the bundled library.
+- Preserve merged base/pip pins and Debian GDAL removal; verify the official
+  build retains these controls and affected Fiona/ZCTA behavior.
+- Review the reconciled security-review custody note and its remaining identity
+  question; do not treat an old review as a fresh scan result.
 - Match only the exact pip-private urllib3, Bookworm OpenSSL, and Debian Expat
   records in the owner-approved, expiring residual file.
 - Build/load/scan locally before any push; verify registry config identity and
@@ -458,15 +445,10 @@ Current scope:
 
 ### **TASK-091: Owner-Runnable Release Qualification**
 
-**Status**: AT_RISK - historical `rc4` qualification and the preliminary
-browser-download diagnostic pass. RC8 browser acceptance then exposed the
-Podman cancellation race, so RC8 is superseded for final acceptance. The
-reviewed correction and exact security amendment are included in the locally
-verified RC9 image/package pair, and the non-Latest RC9 prerelease is
-published. All four exact-browser-downloaded RC9 first-host and reboot-
-persistence profiles now pass. One independent NVIDIA host passed all four
-profiles with disclosed deviations and findings. TASK-105 owns the corrected
-  exact-byte package and ADR-025 two-host four-profile rerun
+**Status**: IN_PROGRESS - exact fork `v0.1.3-rc5` has bounded two-host acceptance
+under ADR-026. Preserve the RC9 first-host and independent-intake history.
+Official cdcai source/artifact delta review, fresh security/integrity checks,
+affected real-package/profile qualification, and owner receipt remain.
 **Priority**: CRITICAL
 **Task File**: `.agent_work/tasks/active/TASK-091-owner-runnable-release-qualification.md`
 
@@ -477,8 +459,9 @@ Current scope:
 - Attempt an extracted real control-package setup immediately when verified
   package and asset ZIPs are available; do not substitute a source build.
 - Preserve `rc4` as the clearly labeled, non-qualifying browser-download
-  diagnostic and RC8 as defect-reproduction evidence. Run final acceptance
-  only against the exact browser-downloaded RC9 image/package identities.
+  diagnostic and RC8/RC9 as historical evidence. Bind official qualification
+  to exact browser-downloaded official packages and published image identities;
+  use ADR-026 only within its explicit RC5 boundary.
 - Extend truthful external combined-model qualification under W05, then bind
   W09/W10 evidence to exact ZIP hashes and image digests.
 - Report `pass`, `fail`, `blocked`, `not_run`, or justified `not_applicable`;
@@ -486,16 +469,10 @@ Current scope:
 
 ### **TASK-097: Podman CPU/GPU Final Path Qualification**
 
-**Status**: AT_RISK - the approved relative package-local provider passes from
-spaced paths on rootless Podman 6.0.2. Exact `rc4` CPU/CUDA startup, live
-Google/Azure workflows, cancellation/error recovery, review/export, restart,
-volume retention, and CUDA `sm_120` execution pass on the first host. Exact
-browser-downloaded RC9 Podman CPU and Podman CUDA now repeat that path and the
-documented manual retained-container reboot recovery successfully with the
-Python 3.12 provider prerequisite and Docker Desktop closed. One independent
-NVIDIA host passed both Podman profiles but reproduced fresh-GPU-pull and
-  provider-install/readiness defects; TASK-105 owns their correction and the
-  ADR-025 two-host Podman repeat
+**Status**: IN_PROGRESS - exact RC5 Podman CPU/CUDA evidence is accepted within
+ADR-026's two-host boundary and method exceptions. Preserve earlier defect and
+recovery records. Official changed-artifact checks and packaged short-path/
+Python guidance remain; Podman-without-Docker and rootful operation are unqualified.
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-097-podman-final-path-qualification.md`
 
@@ -510,15 +487,11 @@ Current scope:
 
 ### **TASK-092: Documentation Currentness And Information Architecture**
 
-**Status**: IN_PROGRESS - `rc4` and five review rounds are dispositioned;
-the frozen documentation is merged through PR #94. RC8 documentation-bearing
-packages were published, but RC8 is superseded for final acceptance by the
-Podman cancellation defect. The corrected same-source RC9 images pass exact-
-digest qualification and their published control ZIPs preserve the frozen
-documentation. First-host running-image Help validation passes. Independent
-testing selected focused coexistence, Podman setup/provider, export,
-geocoding, tested-support, and reproducibility corrections under TASK-105;
-the broad PR #94 content freeze otherwise remains intact
+**Status**: IN_PROGRESS - RC5 supplemental operating restrictions are accepted.
+Incorporate equivalent short-path/Python guidance into the official packaged
+Markdown/HTML and served Help; verify official links, first wiki publication,
+final screenshots/video, and owner receipt. The supplement is not in immutable
+RC5 downloads. Chris confirmed ownership and access on October 20.
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-092-documentation-currentness.md`
 
@@ -537,14 +510,11 @@ Current scope:
 
 ### **TASK-093: Persistent Data Lifecycle And Recovery Rehearsal**
 
-**Status**: IN_PROGRESS - exact `rc4` first-host cancellation/error recovery,
-review/export, volume-preserving stop/relaunch, and reboot persistence pass in
-all four profiles. Exact browser-downloaded RC9 Docker CPU/CUDA and Podman
-CPU/CUDA cancellation/error recovery, review/export, TLS/provider, ZIP
-lookup, Help, volume-preserving stop/relaunch, and Docker/Podman reboot
-persistence also pass. One independent NVIDIA host repeated the lifecycle but
-required manual safe recovery from a Docker/Podman startup collision;
-TASK-105 owns the guidance and final-candidate repetition
+**Status**: IN_PROGRESS - RC5 recovery, lifecycle, and restore evidence is credited
+within ADR-026's explicit method exceptions. Preserve historical RC9 reboot
+and recovery records. Review the official artifact delta, rerun affected
+recovery/persistence paths, and hand off tested dataset/volume/rollback
+boundaries without claiming an untested cross-version volume downgrade.
 **Priority**: HIGH
 **Task File**: `.agent_work/tasks/active/TASK-093-persistent-data-recovery.md`
 
@@ -572,9 +542,11 @@ Do not merge, reconcile, extend, resume, or repeatedly review those branches as
 a deployment prerequisite. The existing command-based lifecycle and TLS paths
 remain the release path; only bounded defects reproduced there are in scope.
 
-### **TASK-089: cdcai Adoption Preparation And Deferred Ownership Transfer**
+### **TASK-089: cdcai Adoption Preparation And Ownership Transfer**
 
-**Status**: BLOCKED / OWNER-GATED - local preparation only
+**Status**: IN_PROGRESS - ownership, Administrative access, delivery direction
+and proposed official release name confirmed October 20. Local preparation
+is underway; reviewed adoption and official qualification/publication remain.
 **Task File**: `.agent_work/tasks/active/TASK-089-cdcai-migration-execution.md`
 
 No cdcai mutation or external publication occurs without owner qualification
@@ -611,19 +583,14 @@ and explicit authorization.
 12. [x] Complete RC9 first-host and one independent-NVIDIA-host four-profile
     reproduction; preserve the reported deviations and findings rather than
     treating them as a final-release pass.
-13. [ ] Complete TASK-105 focused regressions, runtime/frontend corrections,
-    documentation alignment, review, and accepted-main merge.
-14. [ ] Recheck ADR-024 before expiry, then obtain separate authorization for
-    same-source `v0.1.3-rc.N` CPU/CUDA dispatch and non-Latest fork prerelease
-    publication with `push_latest=false`.
-15. [ ] Validate exact browser-downloaded corrected-candidate bytes across all
-    four profiles on this host and the separate RC9 independent NVIDIA host
-    under ADR-025; exclude CPU-only and Podman-without-Docker environments from
-    the tested claim.
-16. [ ] After final-candidate evidence reconciliation, prepare the cdcai
-    transfer packet. At adoption, separately authorize the official identity,
-    build/publication, exact-byte confirmation, and stable/Latest status;
-    otherwise report only the exact qualified candidate subset.
+13. [x] TASK-105 corrections merged through PRs #109/#110 at `835cbb9`.
+14. [x] Exact `v0.1.3-rc5` was published as an immutable non-Latest fork candidate after its dated security gates.
+15. [x] Two-host RC5 functional evidence received bounded acceptance under ADR-026 on October 19, with explicit method exceptions and installation restrictions.
+16. [x] Chris confirmed ownership, access, delivery direction and proposed official release name on October 20.
+17. [ ] Finish adoption review and permission checks, then execute the authorized cdcai PR/merge sequence.
+18. [ ] Freeze official identities, pass fresh security and official-byte/affected runtime qualification, and authorize public recommendation.
+19. [ ] Deliver wiki/video, owner guidance, backlog, report and private-material index; verify receipt by October 27.
+20. [ ] Complete support and handoff closeout October 28-30 without silently extending security exceptions.
 
 ## Runtime Coordination
 
