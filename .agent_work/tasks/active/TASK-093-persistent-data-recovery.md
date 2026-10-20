@@ -1,10 +1,28 @@
 # TASK-093: Persistent Data Lifecycle And Recovery Rehearsal
 
-**Status**: IN_PROGRESS - final `rc4` first-host stop/relaunch, controlled
-failure, cancellation recovery, and export persistence pass on all four
-profiles, including exact-candidate reboot; independent-host recovery remains
+**Status**: IN_PROGRESS - RC5 recovery, lifecycle, and restore evidence is credited
+within ADR-026's explicit method exceptions. Preserve historical RC9 reboot
+and recovery records. Review the official artifact delta, rerun affected
+recovery/persistence paths, and hand off tested dataset/volume/rollback
+boundaries without claiming an untested cross-version volume downgrade.
 **Priority**: HIGH
 **Type**: C (Reliability / Recovery)
+
+**Reconciled:** October 20, 2026. This update preserves previously local
+records; it is not a new test run. Exact `v0.1.3-rc5` bounded acceptance is
+recorded in [ADR-026](../../decisions/026-rc5-bounded-candidate-acceptance.md)
+and the [RC5 closeout](TASK-105/RC5-QUALIFICATION-CLOSEOUT-2026-10-19.md).
+Earlier dated statuses and remaining-gate statements below describe their
+recording dates; they do not supersede the current status above.
+
+## Historical status snapshot - October 14
+
+IN_PROGRESS - final `rc4` and exact browser-downloaded RC9 first-
+host stop/relaunch, controlled failure, cancellation recovery, export
+persistence, and Docker/Podman reboot restoration pass on all four profiles.
+One independent NVIDIA host repeated those outcomes but required manual Docker
+host-runtime recovery after a Docker/Podman startup collision. TASK-105 owns
+the safe coexistence guidance and corrected final-candidate repetition
 
 ## Objective
 
@@ -60,5 +78,7 @@ valid dataset ZIP export passed in every profile. Both CUDA profiles completed
 a finite `sm_120` kernel on `cuda:0`. No destructive volume operation was
 used.
 
-**Remaining**: Independent-host recovery remains required. Rollback rehearsal
-remains isolated from the active qualified profiles.
+**Historical remaining work at the October 14 update**: TASK-105 must verify the mixed-runtime safe recovery guidance
+and repeat recovery against the exact intended final bytes on the remaining
+independent host allocation. Rollback rehearsal remains isolated from active
+qualified profiles.

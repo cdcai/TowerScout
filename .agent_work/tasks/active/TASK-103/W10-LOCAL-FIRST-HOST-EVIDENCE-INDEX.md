@@ -1,6 +1,28 @@
 # Task-103 W10 Local First-Host Evidence Index
 
-**Recorded**: 2026-09-28; updated 2026-10-02
+## Current interpretation - October 20, 2026
+
+This index retains the previously local RC9-era record below in full.
+Its results concern the exact historical artifacts named there, not new
+official cdcai bytes. No runtime tests or security scans were repeated during
+this reconciliation.
+
+The current accepted fork candidate is `v0.1.3-rc5`, governed by
+[ADR-026](../../../decisions/026-rc5-bounded-candidate-acceptance.md) and the
+[RC5 closeout](../TASK-105/RC5-QUALIFICATION-CLOSEOUT-2026-10-19.md).
+[ADR-025](../../../decisions/025-two-host-final-candidate-qualification.md)
+replaced the earlier CPU-only/Podman-without-Docker allocation with two
+Windows NVIDIA hosts; the excluded environments remain unqualified.
+
+Below, phrases such as "current candidate", "still open", "remaining", and
+"required" describe the historical checkpoint date. They are not today's
+release requirements or publication status. RC9 independent-host findings
+led to TASK-105 corrections and subsequent RC5 acceptance; do not reopen
+resolved items solely because their earlier status is retained here.
+
+## Historical evidence snapshot - retained from local working copy
+
+**Recorded**: 2026-09-28; updated 2026-10-14
 **Host ID**: `FIRST-HOST-LOCAL`
 **Scope**: Same-machine first-host rehearsal only; this is not the independent
 host required for full W10 acceptance.
@@ -11,11 +33,15 @@ error followed by success, review/export, provider/TLS persistence,
 volume-preserving stop/relaunch and reboot, exact digest, and required CPU/CUDA
 device selection. ADR-023 resolves policy/signing by narrowing the standard
 support claim. The preliminary `rc4` browser-download Docker CPU diagnostic
-passed; final documentation-aligned image/package identities, browser-download
-proof, and independent-host repetition remain open.
-**Publication state**: An authenticated, non-public GitHub draft release holds
-the diagnostic assets. No public package release was published and no `latest`
-tag was promoted.
+passed. Documentation-aligned RC9 CPU/CUDA images and control ZIPs are now
+published in the non-Latest validation prerelease. All four exact browser-
+downloaded RC9 first-host profiles and Docker/Podman reboot persistence pass.
+One independent NVIDIA host also passed all four profiles, with the findings,
+deviations, and remaining host allocation transferred to TASK-105.
+**Publication state**: The old `rc4` diagnostic assets remain historical. The
+six exact RC9 assets are published in non-draft GitHub prerelease
+`v0.1.0-rc9`; stable `v0.1.2` remains Latest and no GHCR `latest` image tag was
+promoted.
 
 ## Superseded Pre-`rc3` Frozen Inputs
 
@@ -536,9 +562,490 @@ The remaining gates are explicit:
   see the
   [diagnostic record](../TASK-092/RC4-BROWSER-DOWNLOAD-DIAGNOSTIC-2026-10-02.md).
   It is diagnostic only.
-- Replacement package/browser download: `blocked` until the updated manuals
-  receive new documentation-aligned CPU/CUDA image and control-ZIP identities
-  plus authoritative published hashes.
+- Replacement package/browser download: `IN_PROGRESS`. Exact browser-
+  downloaded RC9 Docker CPU/CUDA and Podman CPU/CUDA first-host acceptance
+  and reboot persistence pass; independent-host RC9 cells remain.
 - Independent-host four-profile repetition: `blocked` pending an independent
   Windows computer.
-- Package publication and `latest` promotion: owner-gated and not performed.
+- RC9 prerelease publication: `PASS` for the non-Latest validation prerelease.
+  `latest` promotion and stable/general release remain owner-gated and were not
+  performed.
+
+## Exact Browser-Downloaded RC9 Podman CPU Acceptance
+
+**Recorded**: 2026-10-13
+**Scope**: `FIRST-HOST-LOCAL`, rootless Podman CPU only. This closes the RC8
+affected-profile repetition but does not establish full W10 or independent-host
+acceptance.
+
+### Bound identities and setup
+
+- CPU control ZIP SHA-256:
+  `66e674ef28d98835a981bd731bc7a86e7c6bdd07cb9ea964d47e4e9c63cfacfc`.
+- Shared asset ZIP SHA-256:
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+- CPU image digest:
+  `sha256:9d24cc71724953fba7e062b6ee71dac38f2ec413716a9b60bfaf8ad0be20c950`.
+- Source revision label:
+  `b3431cf86d8a000462df487685104558ac7becd3`.
+- All six browser downloads retained their Windows Internet-zone marker. The
+  CPU ZIP sidecar, all 73 internal checksum entries, manifest identities, and
+  the asset sidecar passed before setup.
+- Docker Desktop was closed. Rootless Podman 6.0.2 used the approved
+  package-local `podman-compose==1.5.0` provider installed with Python 3.12.
+- A stopped RC8 evidence container still reserved port 5000, so the supported
+  explicit port 5235 was used without deleting or modifying the RC8 container.
+
+### Runtime and workflow result
+
+- Setup imported and hash-verified both models and packaged ZCTA data. The
+  running container was healthy, loopback-bound to `127.0.0.1:5235`, selected
+  CPU with `torch==2.10.0+cpu`, used the exact RC9 digest, and retained exactly
+  eight mounts.
+- Azure configuration reached readiness `ready`. A real one-tile CPU workflow
+  returned 14 detections with both models exercised and zero page errors.
+- The affected cancellation test returned abort HTTP 200, zero cancelled-run
+  detections, a hidden progress overlay after cancellation, and an immediate
+  successful 14-detection retry. No `DETECTION_BUSY` response occurred.
+- Google initially reproduced the documented certificate-verification error.
+  The packaged dry-run selected one unambiguous trusted Windows CA, and the
+  packaged `-Apply` repair returned `google_tls_status=200` and
+  `google_tls_category=tls_ok`. Certificate subjects and thumbprints are not
+  retained. A volume-preserving stop/start kept Azure configuration and the
+  repaired trust bundle.
+- Google then saved successfully. A real one-tile CPU workflow returned eight
+  detections, used Google imagery/geocoding, exercised both models, and
+  reported zero page errors.
+- ZIP code `10038` returned HTTP 200 with nonempty polygon geometry from the
+  packaged ZCTA data.
+- The sanitized qualification runner retained SHA-256
+  `0ee0a785cf90bbf96dad45451dd5d00c34368d809a6ff207ab9670b37359070d`.
+  An intentional empty estimate returned HTTP 400, followed in the same
+  browser session by a real HTTP 200 detection. Review mode exposed detection
+  and tile navigation. Separate sessions produced nonempty CSV and KML
+  downloads plus a nonempty valid dataset ZIP containing all eight selected
+  Google detections.
+- The running `/docs/user-guide.html` returned HTTP 200 and matched the
+  package copy byte-for-byte at SHA-256
+  `3cf40281a8b1f771784e1e047e45390260ece37d63973a2d4e8487eadf8dc576`.
+  Its four internal links all returned HTTP 200.
+
+### Evidence safety and remaining gates
+
+Only sanitized status codes, counts, booleans, public artifact identities, and
+non-sensitive runtime facts are recorded here. Provider keys, certificate
+identities, AOI coordinates, raw browser/network logs, screenshots, and
+temporary export files were not retained. The two stock harness run folders
+were deleted after their safe facts were reduced into this record; the
+sanitized export runner removed its own temporary downloads.
+
+Verdict for exact-browser-downloaded RC9 Podman CPU first-host acceptance:
+`PASS`. Still open: RC9 Docker CPU, Docker CUDA, reboot persistence as required
+for the final candidate, and independent-host four-profile reproduction.
+
+## Exact Browser-Downloaded RC9 Podman CUDA Acceptance
+
+**Recorded**: 2026-10-13
+**Scope**: `FIRST-HOST-LOCAL`, rootless Podman CUDA 12.8. This completes the
+exact-browser-downloaded RC9 Podman CUDA first-host profile but does not
+establish Docker, reboot, or independent-host acceptance.
+
+### Bound identities and setup
+
+- CUDA control ZIP SHA-256:
+  `5157a3a396502e524b16dd5eda6cf46aa80521ba4409546af8625f1ca43cad10`.
+- Shared asset ZIP SHA-256:
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+- CUDA image digest:
+  `sha256:c2d99f178465a8cdc83430092554d98aeb181797ff330fba2661bc95a45d8287`.
+- Source revision label:
+  `b3431cf86d8a000462df487685104558ac7becd3`.
+- The downloaded ZIP sidecar, all 73 internal checksum entries, manifest
+  identities, and shared-asset sidecar passed before setup.
+- Rootless Podman 6.0.2 used the approved package-local
+  `podman-compose==1.5.0` provider. The package GPU helper provisioned and
+  verified NVIDIA CDI only in `podman-machine-default`; its exact-image
+  transient GPU smoke passed after the immutable image pull completed.
+- The supported explicit port 5236 was free and used without altering the
+  retained CPU or RC8 containers and volumes.
+
+### Runtime and workflow result
+
+- Setup imported and hash-verified both models and packaged ZCTA data. The
+  container is healthy and loopback-bound to `127.0.0.1:5236` at the exact RC9
+  digest.
+- Readiness reports `torch==2.10.0+cu128`, CUDA build `12.8`, cuDNN `91002`,
+  capability `sm_120`, the NVIDIA RTX PRO 500 Blackwell Generation Laptop GPU,
+  a successful CUDA kernel probe, and no fallback reason.
+- Azure configuration reached readiness `ready`. The affected cancellation
+  test returned abort HTTP 200 after 50 ms, produced zero cancelled-run
+  detections, hid the progress overlay, and immediately retried successfully.
+- The one-tile retry completed in 11.14 seconds with 14 detections, 14 selected
+  results, 14 addresses, six address groups, nine visible overlays, zero page
+  errors, and no `DETECTION_BUSY` marker.
+- Runtime logs bind this accepted request to `CUDA enabled` for YOLOv5 and
+  `EfficientNet loaded on cuda (policy=cuda, fallback=None)`. GPU memory was
+  allocated during the run; no CPU fallback message was present.
+- Google configuration first reproduced the documented `tls_ca_untrusted`
+  result. The packaged dry-run found three chain candidates with one uniquely
+  highest-ranked trusted Windows CA; no tie or manual selection was required.
+  The packaged `-Apply` path returned `google_tls_status=200` and
+  `google_tls_category=tls_ok` without retaining certificate identity.
+- As instructed by the helper, a package-pinned, volume-preserving Podman stop
+  and relaunch was then completed. The recreated app process selected
+  `/app/webapp/config/certs/towerscout-ca-bundle.pem` through both TLS bundle
+  environment variables, a keyless Google probe returned HTTP 200, Azure
+  configuration persisted, and the exact image digest, port, assets, and CUDA
+  device remained unchanged. A premature retry before this required relaunch
+  is not counted as acceptance evidence.
+- Google then saved successfully. A real one-tile Google workflow completed in
+  11.41 seconds with estimate HTTP 200, eight detections, eight selected
+  results, eight addresses, four address groups, five visible overlays, and
+  zero page errors. Runtime logs again bound both YOLOv5 and EfficientNet to
+  CUDA with no CPU fallback.
+- ZIP code `10038` returned HTTP 200 with a nonempty GeoJSON polygon from the
+  packaged ZCTA data.
+- The sanitized qualification runner remained byte-identical at SHA-256
+  `0ee0a785cf90bbf96dad45451dd5d00c34368d809a6ff207ab9670b37359070d`.
+  In three isolated sessions, an intentional empty estimate returned HTTP 400
+  and the immediate real request returned HTTP 200 with eight detections.
+  Review mode exposed detection and tile navigation. CSV and KML downloads were
+  nonempty, and the dataset response was a nonempty ZIP with a valid signature
+  and all eight selected inputs. Every session reported zero page errors and
+  removed its temporary download directory.
+- The running `/docs/user-guide.html` matched the extracted package copy
+  byte-for-byte at SHA-256
+  `3cf40281a8b1f771784e1e047e45390260ece37d63973a2d4e8487eadf8dc576`.
+  Its four internal targets - Quick Start, Local IT Administrator Guide,
+  Package Guide, and the documentation stylesheetâ€”all returned HTTP 200.
+- The final package-pinned stop/relaunch recreated only the container while
+  preserving the same eight named volumes. Both providers, the combined CA
+  paths, asset/config status, CUDA selection and kernel probe, exact image
+  digest, and `127.0.0.1:5236` binding persisted. A real post-relaunch Google
+  request again returned estimate HTTP 200, one tile, eight detections and
+  addresses, and zero page errors.
+
+### Evidence safety and remaining gates
+
+Only the safe facts above are retained. Provider keys, request URLs and bodies,
+AOI coordinates, console text, screenshots, certificate identities, and export
+payloads are not acceptance evidence. All three stock browser-run directories
+were removed after their safe facts were reduced into this record, and the
+sanitized runner removed its own temporary downloads.
+
+Verdict for exact-browser-downloaded RC9 Podman CUDA first-host acceptance:
+`PASS`. Still open: RC9 Docker CPU, Docker CUDA, reboot persistence as required
+for the final candidate, and independent-host four-profile reproduction.
+
+## Exact Browser-Downloaded RC9 Docker CPU Acceptance
+
+**Recorded**: 2026-10-13
+**Scope**: `FIRST-HOST-LOCAL`, Docker Desktop CPU. This completes the
+exact-browser-downloaded RC9 Docker CPU first-host profile but does not
+establish Docker CUDA, reboot, or independent-host acceptance.
+
+### Bound identities and setup
+
+- A fresh Docker-only extraction used CPU control ZIP SHA-256
+  `66e674ef28d98835a981bd731bc7a86e7c6bdd07cb9ea964d47e4e9c63cfacfc`;
+  all 73 internal checksum entries passed and no inherited `.env` existed.
+- The shared asset ZIP remained SHA-256
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+  Setup imported and hash-verified both real models and packaged ZCTA data.
+- The healthy container uses exact image digest
+  `sha256:9d24cc71724953fba7e062b6ee71dac38f2ec413716a9b60bfaf8ad0be20c950`,
+  is loopback-bound to `127.0.0.1:5237`, selects the CPU-only torch flavor,
+  and has exactly eight named mounts.
+
+### Azure result
+
+- Azure configuration reached readiness `ready`. The cancellation test
+  returned abort HTTP 202, produced zero cancelled-run detections, hid the
+  progress overlay, and immediately retried successfully.
+- The one-tile retry completed in 2.67 seconds with 14 detections, 14 selected
+  results, 14 addresses, zero page errors, and no `DETECTION_BUSY` marker.
+- Runtime logs bind this accepted request to `YOLOv5 using CPU` and
+  `EfficientNet loaded on cpu`, both with `policy=cpu` and `fallback=None`.
+  No CUDA-selection message was present.
+
+### Google TLS and provider result
+
+- Google configuration first reproduced the documented `tls_ca_untrusted`
+  result. The packaged dry-run found three chain candidates with one uniquely
+  highest-ranked trusted Windows CA; no tie or manual selection was required.
+- The packaged `-Apply` repair returned `google_tls_status=200` and
+  `google_tls_category=tls_ok`, rebuilt the combined bundle, and updated the
+  package `.env` without retaining certificate identity.
+- As required by the helper, a package-pinned Docker stop and relaunch then
+  recreated the container while preserving its volumes. Both TLS environment
+  variables selected `/app/webapp/config/certs/towerscout-ca-bundle.pem`; a
+  keyless Google probe returned HTTP 200, Azure configuration persisted, and
+  the exact image digest, CPU selection, and port remained unchanged.
+- Google then saved successfully. A real one-tile Google workflow completed
+  in 18.29 seconds with one estimate request, one detection request, eight
+  detections, eight selected results, eight addresses, five visible overlays,
+  and zero page errors. Runtime logs again bound both YOLOv5 and EfficientNet
+  to CPU with no CUDA-selection marker.
+
+### Functional, recovery, export, and Help result
+
+- ZIP code `10038` returned HTTP 200 with one nonempty GeoJSON feature and
+  polygon geometry from the packaged ZCTA data. An initial 30-second client
+  timeout was inconclusive; the immediate isolated retry completed normally
+  and is the accepted result.
+- The sanitized qualification runner remained byte-identical at SHA-256
+  `0ee0a785cf90bbf96dad45451dd5d00c34368d809a6ff207ab9670b37359070d`.
+  In three isolated sessions, an intentional empty estimate returned HTTP 400
+  and the immediate real request returned HTTP 200 with eight detections.
+  Review mode exposed detection and tile navigation. CSV and KML downloads
+  were nonempty, and the dataset response was a nonempty ZIP with a valid
+  signature and all eight selected inputs. Every session reported zero page
+  errors and removed its temporary download directory.
+- The running `/docs/user-guide.html` matched the extracted package copy
+  byte-for-byte at SHA-256
+  `3cf40281a8b1f771784e1e047e45390260ece37d63973a2d4e8487eadf8dc576`.
+  Quick Start, Local IT Administrator Guide, Package Guide, and the
+  documentation stylesheet all returned HTTP 200.
+
+### Stop/relaunch persistence result
+
+- The final package-pinned stop/relaunch recreated only the container while
+  preserving the same eight named volumes. Both providers, both combined-CA
+  environment paths, the exact image digest, CPU selection, readiness, and
+  `127.0.0.1:5237` binding persisted.
+- After Docker health returned to `healthy`, a real Google request again
+  completed one estimate request and one detection request with eight
+  detections, eight selected results, eight addresses, five visible overlays,
+  and zero page errors.
+
+Only safe status codes, counts, public identities, and runtime facts are
+retained. Provider keys, request URLs/bodies, AOI coordinates, console text,
+and screenshots are not acceptance evidence; the stock browser-run directory
+is removed after this record is written.
+
+Verdict for exact-browser-downloaded RC9 Docker CPU first-host acceptance:
+`PASS`. Still open at this point in the sequence: RC9 Docker CUDA, reboot
+persistence as required for the final candidate, and independent-host four-
+profile reproduction.
+
+## Exact Browser-Downloaded RC9 Docker CUDA Acceptance
+
+**Recorded**: 2026-10-13
+**Scope**: `FIRST-HOST-LOCAL`, Docker Desktop CUDA 12.8. This completes the
+exact-browser-downloaded RC9 Docker CUDA first-host profile but does not
+establish reboot or independent-host acceptance.
+
+### Bound identities and setup
+
+- A fresh Docker-only extraction used CUDA control ZIP SHA-256
+  `5157a3a396502e524b16dd5eda6cf46aa80521ba4409546af8625f1ca43cad10`;
+  its published sidecar and all 73 internal checksum entries passed, and no
+  inherited `.env` existed.
+- The shared asset ZIP remained SHA-256
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+  Setup imported and hash-verified the real models and packaged ZCTA data.
+- The healthy container uses exact image digest
+  `sha256:c2d99f178465a8cdc83430092554d98aeb181797ff330fba2661bc95a45d8287`
+  from source revision `b3431cf86d8a000462df487685104558ac7becd3`, is
+  loopback-bound to `127.0.0.1:5238`, and has exactly eight named mounts.
+
+### Device result
+
+- Readiness reports `torch==2.10.0+cu128`, CUDA build `12.8`, cuDNN `91002`,
+  capability `sm_120`, and the NVIDIA RTX PRO 500 Blackwell Generation Laptop
+  GPU.
+- CUDA architecture, kernel, matrix, convolution, and precision probes all
+  pass. Device policy and selected device are both `cuda`, with no fallback or
+  probe error. Readiness is correctly `setup_required` until a provider is
+  configured.
+
+### Azure result
+
+- Azure configuration reached readiness `ready`. The cancellation test
+  returned abort HTTP 202, produced zero cancelled-run detections, hid the
+  progress overlay, and immediately retried successfully.
+- The one-tile retry completed in 2.27 seconds with 14 detections, 14 selected
+  results, 14 addresses, nine visible overlays, zero page errors, and no
+  `DETECTION_BUSY` marker.
+- Runtime logs bind this accepted request to `CUDA enabled` for YOLOv5 and
+  `EfficientNet loaded on cuda (policy=cuda, fallback=None)`. No CPU fallback
+  marker was present.
+
+### Google TLS and provider result
+
+- Google configuration first reproduced the documented `tls_ca_untrusted`
+  result. The packaged dry-run found three chain candidates with one uniquely
+  highest-ranked trusted Windows CA; no tie or manual selection was required.
+- The packaged `-Apply` repair returned `google_tls_status=200` and
+  `google_tls_category=tls_ok`, rebuilt the combined bundle, and updated the
+  package `.env` without retaining certificate identity.
+- A package-pinned Docker stop and relaunch recreated the container while
+  preserving all eight volumes. Both TLS environment variables selected
+  `/app/webapp/config/certs/towerscout-ca-bundle.pem`; a keyless Google probe
+  returned HTTP 200, Azure configuration persisted, and the exact image
+  digest, CUDA 12.8 selection/kernel probe, local port, and no-fallback state
+  remained unchanged.
+- Google then saved successfully. A real one-tile Google workflow completed
+  in 9.37 seconds with one estimate request, one detection request, eight
+  detections, eight selected results, eight addresses, five visible overlays,
+  and zero page errors. Runtime logs again bound YOLOv5 and EfficientNet to
+  CUDA with no CPU fallback marker.
+
+### Functional, recovery, export, and Help result
+
+- ZIP code `10038` returned HTTP 200 with one nonempty GeoJSON feature and
+  polygon geometry from the packaged ZCTA data. The first client invocation
+  did not return a usable result to the orchestrator; the immediate isolated
+  bounded request completed normally and is the accepted result.
+- The sanitized qualification runner remained byte-identical at SHA-256
+  `0ee0a785cf90bbf96dad45451dd5d00c34368d809a6ff207ab9670b37359070d`.
+  In three isolated sessions, an intentional empty estimate returned HTTP 400
+  and the immediate real request returned HTTP 200 with eight detections.
+  Review mode exposed detection and tile navigation. CSV and KML downloads
+  were nonempty, and the dataset response was a nonempty ZIP with a valid
+  signature and all eight selected inputs. Every session reported zero page
+  errors and removed its temporary download directory.
+- The running `/docs/user-guide.html` matched the extracted package copy
+  byte-for-byte at SHA-256
+  `3cf40281a8b1f771784e1e047e45390260ece37d63973a2d4e8487eadf8dc576`.
+  Quick Start, Local IT Administrator Guide, Package Guide, and the
+  documentation stylesheet all returned HTTP 200.
+
+### Stop/relaunch persistence result
+
+- The final package-pinned stop/relaunch recreated only the container while
+  preserving the same eight named volumes. Both providers, both combined-CA
+  environment paths, the exact image digest, CUDA 12.8 selection/kernel probe,
+  readiness, no-fallback state, and `127.0.0.1:5238` binding persisted.
+- After Docker health returned to `healthy`, a real Google request completed
+  one estimate request and one detection request in 9.28 seconds with eight
+  detections, eight selected results, eight addresses, five visible overlays,
+  and zero page errors. Runtime logs again bound both models to CUDA with no
+  CPU fallback marker.
+
+Only safe status codes, counts, public identities, and runtime facts are
+retained. Provider keys, request URLs/bodies, AOI coordinates, console text,
+certificate identities, screenshots, and export payloads are not acceptance
+evidence. All stock browser-run directories were removed after their safe
+facts were reduced into this record, and the sanitized runner removed its own
+temporary downloads.
+
+Verdict for exact-browser-downloaded RC9 Docker CUDA first-host acceptance:
+`PASS`. All four exact-browser-downloaded RC9 first-host profiles now pass.
+Still open: final-candidate reboot persistence and independent-host four-
+profile reproduction.
+
+## Exact Browser-Downloaded RC9 Docker Reboot Persistence
+
+**Recorded**: 2026-10-13
+**Scope**: `FIRST-HOST-LOCAL`, Windows reboot with both exact RC9 Docker
+profiles active. This closes the Docker half of final-candidate reboot proof;
+Podman reboot persistence and independent-host reproduction remain.
+
+### Automatic restore result
+
+- Windows rebooted at approximately 13:54 local time. Docker Desktop restored
+  both package containers automatically after startup; neither package start
+  wrapper was rerun.
+- CPU and CUDA containers returned `healthy` and readiness `ready` with exact
+  image digests, source revision
+  `b3431cf86d8a000462df487685104558ac7becd3`, assets `ok`, both providers,
+  both combined-CA environment paths, loopback-only ports `5237` and `5238`,
+  and exactly eight named volumes per profile.
+- CPU again selected CPU with no fallback. CUDA again selected CUDA 12.8 on
+  `sm_120`, passed its CUDA kernel probe, and reported no fallback reason.
+
+### Post-reboot live-provider result
+
+- Docker CPU Google returned eight detections, eight selected results, eight
+  addresses, and five visible overlays; Azure returned 14 detections, 14
+  selected results, 14 addresses, and nine visible overlays.
+- Docker CUDA repeated the same Google and Azure result counts. All four runs
+  completed one estimate request and one detection request with zero page
+  errors.
+- Runtime logs bound CPU YOLOv5 and EfficientNet to CPU with no CUDA marker,
+  and bound CUDA YOLOv5 and EfficientNet to CUDA with no CPU fallback marker.
+
+Only the safe facts above are retained. Provider keys, request URLs and
+bodies, AOI coordinates, console text, screenshots, and raw browser/network
+artifacts are not acceptance evidence. All four post-reboot stock browser-run
+directories were deleted after reduction into this record.
+
+Verdict for exact-browser-downloaded RC9 Docker reboot persistence: `PASS`.
+
+## Exact Browser-Downloaded RC9 Podman Reboot Persistence
+
+**Recorded**: 2026-10-13
+**Scope**: `FIRST-HOST-LOCAL`, Windows reboot with both exact RC9 Podman
+containers retained in the documented stopped state. This closes the first-
+host final-candidate reboot matrix; independent-host reproduction remains.
+
+### Retention and manual restore result
+
+- Before reboot, the exact CPU and CUDA application containers were stopped
+  directly without removal. All 16 named volumes and both container identities
+  were retained; Docker Desktop remained closed.
+- Windows rebooted at approximately 14:36 local time. The default
+  `podman-machine-default` machine returned to `running`; Docker remained
+  unavailable. Both original application container IDs remained present and
+  stopped with eight volumes each.
+- The two exact RC9 pods were started manually with `podman pod start`; no
+  package setup, image pull, container recreation, or volume import occurred.
+  The unrelated `towerscout-task103` machine and older RC8 pod were untouched.
+- Both containers returned `healthy` and readiness `ready` with exact image
+  digests, assets `ok`, both providers, both combined-CA environment paths,
+  and their original CPU/CUDA device selections. CUDA 12.8 again passed its
+  kernel probe with no fallback reason.
+
+### Post-reboot live-provider result
+
+- Podman CPU Google returned eight detections, eight selected results, eight
+  addresses, and five visible overlays; Azure returned 14 detections, 14
+  selected results, 14 addresses, and nine visible overlays.
+- Podman CUDA repeated the same Google and Azure result counts. All four runs
+  completed one estimate request and one detection request with zero page
+  errors.
+- Runtime logs bound CPU YOLOv5 and EfficientNet to CPU with no CUDA marker,
+  and bound CUDA YOLOv5 and EfficientNet to CUDA with no CPU fallback marker.
+
+Only the safe facts above are retained. Provider keys, request URLs and
+bodies, AOI coordinates, console text, screenshots, and raw browser/network
+artifacts are not acceptance evidence. All four post-reboot stock browser-run
+directories were deleted after reduction into this record.
+
+Verdict for exact-browser-downloaded RC9 Podman reboot persistence: `PASS`.
+All first-host browser-download and reboot-persistence cells now pass; only
+independent-host four-profile reproduction remains open.
+
+## RC9 Independent NVIDIA Host Intake
+
+**Recorded**: 2026-10-14
+**Host ID**: `INDEP-HOST-01`
+**Verdict**: `PASS_WITH_RELEASE_BLOCKERS`
+
+The independently supplied report and sanitized extracts substantiate Docker
+CPU/CUDA and Podman CPU/CUDA setup, real model/device execution, Azure/Google
+workflows with matching detection fingerprints, cancellation/retry,
+controlled recovery, exports, stop/relaunch, and reboot against the exact RC9
+public identities.
+
+The sanitized evidence ZIP remains outside the repository. Its SHA-256 is
+`39a4052a5ac2bb99ba994453b39980b5688ecb0d8586e1827e811fb92c588145`.
+All 80 entries were readable, all 42 JSON files parsed, and all 78 index
+manifest rows matched byte lengths and hashes. A redacting scan found no
+provider keys, tokens, private keys, unredacted Windows user paths, or
+coordinate pairs.
+
+The run also reproduced a fresh Podman GPU image-pull timeout, a Docker/Podman
+login race, a PowerShell 7 provider-installer hashing failure, unsafe partial
+retry behavior, a misleading global provider check, browser multiple-download
+blocking, and smaller wording/reproducibility findings. Complete click-by-click
+UI execution was limited to Docker CPU. A CPU-only host, second NVIDIA host,
+and Podman installation without Docker Desktop remain required.
+
+The full sanitized intake, ten finding dispositions, correction plan, and
+next `v0.1.3-rc.N` candidate acceptance gates are recorded in
+`../TASK-105/RC9-INDEPENDENT-HOST-EVIDENCE-INTAKE-2026-10-14.md` and
+`../TASK-105-final-release-correction-and-qualification.md`. RC9 remains an
+immutable validation prerelease and is not eligible for stable/Latest
+promotion.

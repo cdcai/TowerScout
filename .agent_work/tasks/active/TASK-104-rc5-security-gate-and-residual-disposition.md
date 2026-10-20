@@ -1,6 +1,26 @@
 # TASK-104: RC5 Security Gate And Residual Disposition
 
-**Status**: IN_PROGRESS - implementation merged through PR #100 as `928a0f0`;
+**Status**: IN_PROGRESS - accepted RC5 has dated October 14 security results.
+Official cdcai builds require fresh local scan-before-push and exact-published-
+digest verification. Preserve the 396-key baseline and exact five residuals;
+their acceptance expires October 31, 2026 at 23:59:59 UTC. Prepare the security
+follow-up for Chris before closeout; no exception is extended by handoff.
+**Priority**: CRITICAL
+**Type**: C (Release Security / Container Publication)
+**Owner**: `J-Schulein` until handoff; `cdcai` thereafter
+**Decision**: [ADR-024](../../decisions/024-rc5-security-gate-and-residual-boundary.md)
+**Depends on**: TASK-103, PR #96 merge `b0725e750c1541e7cb60df881d3906f761657089`
+
+**Reconciled:** October 20, 2026. This update preserves previously local
+records; it is not a new test run. Exact `v0.1.3-rc5` bounded acceptance is
+recorded in [ADR-026](../../decisions/026-rc5-bounded-candidate-acceptance.md)
+and the [RC5 closeout](TASK-105/RC5-QUALIFICATION-CLOSEOUT-2026-10-19.md).
+Earlier dated statuses and remaining-gate statements below describe their
+recording dates; they do not supersede the current status above.
+
+## Historical status snapshot - October 14
+
+IN_PROGRESS - implementation merged through PR #100 as `928a0f0`;
 local CPU/CUDA identity, dependency, Fiona/ZCTA, real-model/device, Trivy, and
 SBOM proof passed after the required Windows/WSL restart. The isolated CUDA
 provider-backed detection-over-ZCTA cell also passed for Azure and Google
@@ -17,15 +37,18 @@ expiring residual, and PR #106 merged the bounded policy amendment. Fresh
 same-source RC9 CPU/CUDA publications now pass both local and exact-digest
 security gates with no `latest` promotion, and their digest-pinned packages
 pass local integrity validation. The owner-authorized non-Latest RC9 package
-prerelease is published; final browser-download and independent-host
-acceptance remain
-**Priority**: CRITICAL
-**Type**: C (Release Security / Container Publication)
-**Owner**: `J-Schulein` until handoff; `cdcai` thereafter
-**Decision**: [ADR-024](../../decisions/024-rc5-security-gate-and-residual-boundary.md)
-**Depends on**: TASK-103, PR #96 merge `b0725e750c1541e7cb60df881d3906f761657089`
+prerelease is published; exact browser-download four-profile first-host and
+reboot acceptance now pass. One independent NVIDIA host repeated all four
+profiles, but TASK-105 corrections require a new same-source CPU/CUDA build.
+The five-key policy remains binding and expires October 31, 2026
 
 ## Objective
+
+For the historical second-opinion review's custody and remaining
+package-path/identity question, see the
+[October 20 reconciliation note](TASK-103/SECURITY-REVIEW-CUSTODY-2026-10-20.md).
+Include its disposition in official security review; the historical report
+is not itself a current failing scan or a new publication approval.
 
 Remove the unused Debian GDAL dependency, enforce exact time-bounded residual
 matching, and prevent an unqualified image from being pushed before the local

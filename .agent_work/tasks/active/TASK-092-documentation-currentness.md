@@ -1,6 +1,25 @@
 # TASK-092: Documentation Currentness And Information Architecture
 
-**Status**: IN_PROGRESS - all five review rounds are dispositioned,
+**Status**: IN_PROGRESS - RC5 supplemental operating restrictions are accepted.
+Incorporate equivalent short-path/Python guidance into the official packaged
+Markdown/HTML and served Help; verify official links, first wiki publication,
+final screenshots/video, and owner receipt. The supplement is not in immutable
+RC5 downloads. Chris confirmed ownership and access on October 20.
+**Priority**: HIGH
+**Type**: C (Documentation / Release)
+**Child Work Plan**:
+[GitHub Wiki Information Architecture And Local IT Guide](./TASK-092/wiki-information-architecture.md)
+
+**Reconciled:** October 20, 2026. This update preserves previously local
+records; it is not a new test run. Exact `v0.1.3-rc5` bounded acceptance is
+recorded in [ADR-026](../../decisions/026-rc5-bounded-candidate-acceptance.md)
+and the [RC5 closeout](TASK-105/RC5-QUALIFICATION-CLOSEOUT-2026-10-19.md).
+Earlier dated statuses and remaining-gate statements below describe their
+recording dates; they do not supersede the current status above.
+
+## Historical status snapshot - October 14
+
+IN_PROGRESS - all five review rounds are dispositioned,
 `J-Schulein` approved the content freeze at `524ba37`, bounded post-freeze
 reproducibility corrections landed at `f8e191d`, and PR #94 merged as
 `fc97b32` with green post-merge CI. PR #95 merged the bounded project-state
@@ -9,14 +28,12 @@ RC8 documentation-bearing packages were published, but RC8 is superseded for
 final acceptance by the Podman cancellation defect. The corrected same-source
 RC9 CPU/CUDA images pass strict local and exact-published-digest qualification,
 and their digest-pinned control ZIPs preserve the frozen documentation and
-pass local integrity validation. The non-Latest RC9 prerelease is published;
-final screenshots/video, live permission verification, exact browser-
-downloaded package and running-
-image Help validation, and final W09/W10 gates remain
-**Priority**: HIGH
-**Type**: C (Documentation / Release)
-**Child Work Plan**:
-[GitHub Wiki Information Architecture And Local IT Guide](./TASK-092/wiki-information-architecture.md)
+pass local integrity validation. The non-Latest RC9 prerelease is published
+and its packaged Help passed first-host validation. Independent testing then
+exposed focused coexistence, Podman provisioning/provider, export, geocoding,
+tested-support, and reproducibility clarifications. The broad PR #94 freeze
+remains intact; TASK-105 owns only these evidence-selected corrections before
+the next `v0.1.3-rc.N` documentation/image/package freeze
 
 ## Objective
 

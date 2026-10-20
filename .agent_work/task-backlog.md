@@ -40,6 +40,12 @@ these groups organize the handoff rather than closing tasks.
 
 Tasks 068, 099, and 101 are completed and moved to the completed-task record.
 Task-101's former PR #67 integration gate is superseded, not passed.
+RC9 independent-host findings remain owned by TASK-105 and must not be
+duplicated as generic backlog work. Their current dispositions come from
+ADR-026 and the RC5 closeout: tested correction, verified no-change decision,
+or explicitly accepted limitation. Preserve each disposition; do not silently
+drop a finding or reopen it solely from an older status snapshot.
+
 
 ## Guidance Completed Through Task-092
 

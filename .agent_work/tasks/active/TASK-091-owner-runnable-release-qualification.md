@@ -1,6 +1,23 @@
 # TASK-091: Owner-Runnable Release Qualification
 
-**Status**: AT_RISK - local `rc4` CPU/CUDA W05, four-profile W09, and first-
+**Status**: IN_PROGRESS - exact fork `v0.1.3-rc5` has bounded two-host acceptance
+under ADR-026. Preserve the RC9 first-host and independent-intake history.
+Official cdcai source/artifact delta review, fresh security/integrity checks,
+affected real-package/profile qualification, and owner receipt remain.
+**Priority**: CRITICAL
+**Type**: C (Release Qualification / Handoff)
+**Owner**: Release owner; active agent executes bounded preparation and checks
+
+**Reconciled:** October 20, 2026. This update preserves previously local
+records; it is not a new test run. Exact `v0.1.3-rc5` bounded acceptance is
+recorded in [ADR-026](../../decisions/026-rc5-bounded-candidate-acceptance.md)
+and the [RC5 closeout](TASK-105/RC5-QUALIFICATION-CLOSEOUT-2026-10-19.md).
+Earlier dated statuses and remaining-gate statements below describe their
+recording dates; they do not supersede the current status above.
+
+## Historical status snapshot - October 14
+
+AT_RISK - local `rc4` CPU/CUDA W05, four-profile W09, and first-
 host provider/cancel/error/review-export/relaunch/reboot cells pass. ADR-023
 resolves policy/signing through an unsigned, narrower support boundary.
 The preliminary `rc4` browser-download Docker CPU diagnostic passed and its
@@ -10,10 +27,11 @@ browser testing exposed the Podman cancellation race and superseded those
 bytes for final acceptance. The reviewed correction and security amendment
 are included in the locally verified same-source RC9 images and digest-pinned
 control ZIPs. The non-Latest RC9 prerelease is published; exact browser-
-download testing and independent-host evidence remain
-**Priority**: CRITICAL
-**Type**: C (Release Qualification / Handoff)
-**Owner**: Release owner; active agent executes bounded preparation and checks
+download four-profile first-host and reboot acceptance now pass. One
+independent NVIDIA host passed all four profiles but produced release-blocking
+fresh-install findings and does not complete the required host allocation.
+TASK-105 owns the corrected `v0.1.3-rc.N` candidate and remaining exact-byte
+qualification
 
 ## Objective
 

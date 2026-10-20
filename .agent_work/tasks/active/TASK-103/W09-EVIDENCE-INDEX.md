@@ -1,29 +1,78 @@
 # Task-103 W09 Candidate Evidence Index
 
-**Recorded**: 2026-09-28; updated 2026-10-07
-**Verdict**: Local `rc4` artifact assembly PASS; exact-digest CPU/CUDA
-W05 PASS; first-host four-profile package startup and volume-preserving
-relaunch PASS. The local W10 provider/recovery matrix also passes, but overall
-release readiness remains AT_RISK. ADR-023 resolves policy/signing through an
-unsigned, narrower support boundary. The `rc4` preliminary browser-download
-diagnostic and the same-source documentation-aligned RC8 image/control-ZIP
-rebuild are complete. Final exact-RC8 browser-download and independent-host
-repetition remain required. Exact-`rc4` first-host reboot persistence remains
-valid regression evidence.
-**Publication state**: The RC8 control ZIPs, shared asset ZIP, and all three
-sidecars are published in non-draft GitHub prerelease `v0.1.0-rc8`. GitHub's
-recorded sizes/digests match the approved local files, and the tag resolves to
-the frozen source. The release is not Latest, and no image `latest` tag was
-promoted.
+## Current interpretation - October 20, 2026
 
-**Superseded RC4/RC3 context**: PR #92 (`cbb574f`) and PR #93 (`fba9dcb`)
+This index retains the previously local RC9-era record below in full.
+Its results concern the exact historical artifacts named there, not new
+official cdcai bytes. No runtime tests or security scans were repeated during
+this reconciliation.
+
+The current accepted fork candidate is `v0.1.3-rc5`, governed by
+[ADR-026](../../../decisions/026-rc5-bounded-candidate-acceptance.md) and the
+[RC5 closeout](../TASK-105/RC5-QUALIFICATION-CLOSEOUT-2026-10-19.md).
+[ADR-025](../../../decisions/025-two-host-final-candidate-qualification.md)
+replaced the earlier CPU-only/Podman-without-Docker allocation with two
+Windows NVIDIA hosts; the excluded environments remain unqualified.
+
+Below, phrases such as "current candidate", "still open", "remaining", and
+"required" describe the historical checkpoint date. They are not today's
+release requirements or publication status. RC9 independent-host findings
+led to TASK-105 corrections and subsequent RC5 acceptance; do not reopen
+resolved items solely because their earlier status is retained here.
+
+## Historical evidence snapshot - retained from local working copy
+
+**Recorded**: 2026-09-28; updated 2026-10-13
+**Verdict**: Same-source RC9 CPU/CUDA registry and package qualification PASS;
+exact-digest W05 PASS; all four exact browser-downloaded RC9 first-host
+profiles PASS, and RC9 Docker/Podman reboot persistence PASS. The local `rc4`
+four-profile and reboot matrix remains valid regression evidence, but overall
+release readiness remains AT_RISK pending independent-host repetition.
+ADR-023 resolves policy/signing through an unsigned, narrower support boundary.
+**Publication state**: The RC9 control ZIPs, shared asset ZIP, and all three
+sidecars are published in non-draft GitHub prerelease `v0.1.0-rc9`. GitHub's
+recorded sizes/digests match the approved local files, and the tag resolves to
+the frozen source. Stable `v0.1.2` remains Latest, and no GHCR image `latest`
+tag was promoted.
+
+**Superseded RC8/RC4/RC3 context**: RC8 reproduced the Podman CPU
+pre-registration cancellation race and is retained only as defect evidence.
+PR #92 (`cbb574f`) and PR #93 (`fba9dcb`)
 merged after the retained `rc3` artifacts were assembled. That produced the
 now-superseded `rc4` candidate from accepted `main` at
 `541622556fb7999ee4e88fb1e44f7797b9da34f5`. The `rc4` and `rc3` identities
 remain historical regression/qualification evidence only; they are not
-publication inputs. The RC8 inventory below is the sole current candidate.
+publication inputs. The RC9 inventory below is the sole current candidate.
 
-## Same-Source RC8 Local Package Inventory
+## Same-Source RC9 Candidate Inventory
+
+The current source is
+`b3431cf86d8a000462df487685104558ac7becd3`. Owner-authorized CPU run
+`37942033212` and CUDA 12.8 run `37942073914` qualified:
+
+- CPU image:
+  `ghcr.io/j-schulein/towerscout@sha256:9d24cc71724953fba7e062b6ee71dac38f2ec413716a9b60bfaf8ad0be20c950`.
+- CUDA 12.8 image:
+  `ghcr.io/j-schulein/towerscout@sha256:c2d99f178465a8cdc83430092554d98aeb181797ff330fba2661bc95a45d8287`.
+- CPU control ZIP: `towerscout-v0.1.0-rc9-cpu.zip`, 199812 bytes, SHA-256
+  `66e674ef28d98835a981bd731bc7a86e7c6bdd07cb9ea964d47e4e9c63cfacfc`.
+- CUDA control ZIP: `towerscout-v0.1.0-rc9-cuda128.zip`, 199840 bytes,
+  SHA-256
+  `5157a3a396502e524b16dd5eda6cf46aa80521ba4409546af8625f1ca43cad10`.
+- Shared asset ZIP: 800655295 bytes, SHA-256
+  `00599cc4fe9f2bdb4708c669d7c3d9a8a570a0c3b547bc5c317026196c7bacbb`.
+
+Both image workflows passed their local pre-login scan and exact-published-
+digest confirmation with baseline 396, candidate 79, accepted baseline 74,
+accepted residual 5, blocking 0, severity escalations 0, and resolved 322. Both
+package manifests, outer sidecars, all 73 internal checksums, and the focused
+  `7/7` package suite passed. All four exact browser-downloaded RC9 profiles
+  also pass the affected cancel-then-immediate-retry and broader provider,
+  review/export, persistence, ZIP-data, and Help cells recorded in the W10
+  index. Both CUDA profiles bind both real models to CUDA 12.8 on the `sm_120`
+  NVIDIA device with no CPU fallback.
+
+## Superseded Same-Source RC8 Local Package Inventory
 
 The final documentation-aligned image source is
 `7827c2af8ecb7d8b21d246b69e135807fa497fd2`. Owner-authorized CPU run
@@ -288,7 +337,14 @@ These items prevent a release-ready or full W09/W10 acceptance claim:
 - The ADR-023 manual changes are present in the published control-ZIP and OCI-
   image bytes because `Dockerfile` copies `docs/` for the in-app routes. Final
   acceptance must validate those exact browser-downloaded package bytes.
-- Browser-download and independent-host W10 reproduction are not complete.
+- Browser-download W10 first-host acceptance now passes for all four RC9
+  profiles, and Docker/Podman reboot persistence passes. One independent
+  NVIDIA host repeated all four profiles, but the run selected TASK-105
+  corrections and left the CPU-only, second-NVIDIA, and Podman-without-Docker
+  allocation incomplete.
 - Control-package publication was separately authorized and completed as the
-  non-Latest `v0.1.0-rc8` validation prerelease. Any `latest` promotion remains
+  non-Latest `v0.1.0-rc9` validation prerelease. Any `latest` promotion remains
   separately owner-gated.
+- RC9 remains immutable validation evidence. The corrected `v0.1.3-rc.N`
+  source/images/packages must receive new identities and repeat affected W09/
+  W10 gates under TASK-105.
