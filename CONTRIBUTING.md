@@ -21,7 +21,9 @@ prerequisites.
 3. Make bounded changes for one task or one task phase.
 4. Commit intentional checkpoints as stable slices land.
 5. Open a PR against `main`.
-6. Squash merge after validation and approval.
+6. Squash merge ordinary task PRs after validation and approval. For the
+   one-time cdcai adoption, explicitly review a history-preserving merge method
+   and provenance before merging; do not squash the fork history by default.
 
 For normal task work, update `main` before branching:
 
@@ -100,6 +102,10 @@ Before requesting review for a code-changing PR:
 - Required CI checks must pass before merge.
 - Resolve review conversations before merge.
 - Use `Squash and merge` by default.
+
+For the one-time cdcai adoption, follow the history-preservation review in the
+detailed policy below. These review requirements do not prove that GitHub
+branch settings enforce them; check the destination's actual rules and checks.
 
 ## Detailed Policy
 

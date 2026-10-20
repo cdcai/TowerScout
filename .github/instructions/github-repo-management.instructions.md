@@ -123,7 +123,14 @@ Advisory until explicitly promoted:
 - `mypy`
 - `bandit`
 - broader integration or browser suites that are still environment-sensitive or non-blocking
-- container image build checks and asset-backed release-package smoke until `TASK-066`/`TASK-067` promotes them
+- the full-image build step currently marked advisory in `ci.yml`; the separate
+  frontend-stage build is not advisory
+
+Read the current workflows to identify actual blocking steps. Completed
+TASK-066/TASK-067 records are historical decisions, not pending promotion work.
+An advisory PR check does not waive the accepted security, package or real-
+runtime requirements for a release. Do not infer publication readiness from
+the CI summary alone.
 
 Validation commands should be bounded. If a pytest module stalls during collection or a runtime smoke can wait indefinitely, split the command, add a timeout or explicit cleanup path, and record the gap instead of repeatedly running broad commands without diagnostics.
 

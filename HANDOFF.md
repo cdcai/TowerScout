@@ -1,10 +1,19 @@
 # TowerScout Handoff Guide
 
-**Last Updated**: October 19, 2026
+**Last Updated**: October 20, 2026
 **Operational Closeout**: October 30, 2026
-**Hard Project End**: October 31, 2026
+**Delivery Target**: October 27, 2026; support October 28-30
+**Outgoing Support Ends**: October 30, 2026
 
 ## Current State
+
+Chris confirmed ownership after project closeout, Administrative collaborator
+access, the delivery plan, and the proposed title
+`TowerScout v0.1.3 - First Official cdcai Release` on October 20.
+The destination for the adoption PR, image builds and wiki is cdcai/TowerScout.
+Tag availability and package permissions still need execution-time checks;
+actual adoption, publication, official qualification and material receipt remain
+pending. Use the [current board](.agent_work/current-tasks.md) for task status.
 
 The validated fork-side `v0.1.2` release is the immutable Pilot Package:
 
@@ -17,7 +26,7 @@ The cdcai owner selected a fix-first path:
 - Name fork candidates `v0.1.3-rc.N`.
 - Keep `cdcai/TowerScout` unchanged until owner qualification and explicit
   adoption approval.
-- Select the official cdcai tag and display title before the official build.
+- Recheck the agreed official tag/title before freezing the official build.
 - Treat `v0.1.3-rc5` at accepted source `835cbb9` as the current immutable,
   non-Latest candidate. Two-host functional evidence and owner restore
   confirmation have been reviewed; bounded acceptance was approved October 19
@@ -30,12 +39,15 @@ The current review packet is the
 [ADR-026](.agent_work/decisions/026-rc5-bounded-candidate-acceptance.md) records
 the explicit short-path/Python restrictions and independent test-method
 reconciliation approved by the owner on October 19. Supplemental docs are not already
-inside RC5's immutable ZIPs or served Help. The receiving owner must accept
-maintenance duties, including the October 31 security-residual expiry.
+inside RC5's immutable ZIPs or served Help. Chris has accepted maintenance
+ownership; delivery of the maintenance calendar and supporting materials still
+needs confirmed receipt. Security residuals expire October 31 at 23:59:59 UTC;
+that expiry is separate from the October 30 end of outgoing support.
 
 ## Immediate Delivery Direction
 
-Finish review of the RC5 bounded-acceptance and handoff packet. The candidate
+Complete the adoption review and official delivery using the accepted RC5
+bounded-acceptance and handoff packet. The candidate
 source/tag, six asset digests/sizes, original browser files, and release
 attestation were reverified unchanged on October 19. Existing `rc4`/RC9
 results remain historical. Source-document edits in this review do not change
@@ -45,6 +57,8 @@ CPU/CUDA images and packages are built and qualified. PR #67 and the Task-087
 launcher redesign remain preserved and deferred.
 
 Read in this order:
+
+Start with `.agent_work/current-tasks.md` and root `AGENTS.md`, then consult:
 
 1. `.agent_work/context/status/Reprioritization Effort/2026-09-21-windows-deployment-prioritization-v2.md`
 2. `.agent_work/context/status/Reprioritization Effort/2026-09-21-windows-deployment-hardening-v2.md`
@@ -60,7 +74,8 @@ The earlier October roadmap is retained as dated context:
 
 - `.agent_work/context/status/Handoff-Planning/2026-07-23-OCTOBER-FIX-FIRST-IMPLEMENTATION-ROADMAP.md`
 
-The current Pilot/cdcai hold is:
+The historical Pilot/cdcai hold is retained for context; the current board and
+October 20 agreements control remaining work:
 
 - `.agent_work/context/status/Handoff-Planning/PILOT-FEEDBACK-AND-CDC-AI-ADOPTION-PLAN.md`
 
@@ -85,7 +100,7 @@ The current Pilot/cdcai hold is:
   and handoff work
 - external Setup Guide and demo video refresh
 
-Task-058/059 are conditional stretch work and cannot displace required scope.
+Task-058/059 are deferred; they do not automatically restart during handoff.
 
 ## Reading `.agent_work`
 
@@ -169,7 +184,7 @@ release assets, SHA-256 sidecars, `webapp/asset_manifest.v1.json`, and
 
 ## Final Handoff Gate
 
-Before October 30:
+Target delivery by October 27, with final support/closeout October 28-30:
 
 - final candidate is qualified and accepted
 - official cdcai identity is selected and built consistently
@@ -180,7 +195,7 @@ Before October 30:
 - remaining tasks and risks are explicitly dispositioned
 - every code-scanning alert is dispositioned and no release-blocking
   critical/high dependency risk remains unresolved
-- no planned work depends on the outgoing developer after October 31
+- no planned work depends on the outgoing developer after October 30
 
 ## Maintainer navigation
 

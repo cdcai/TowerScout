@@ -2,6 +2,27 @@
 
 **Status:** Handoff draft; practice these steps with Chris before acceptance.
 
+## Handoff practice and receipt
+
+Use a 30-minute working session before final delivery. Chris already knows
+how to install and use the application; focus this session on maintaining it.
+
+1. **First 5 minutes:** Chris opens his repository and locates the current
+   release, owner backlog, maintenance dates and this guide.
+2. **Next 10 minutes:** Use the investigation prompt below on a small example.
+   Chris checks the repository/branch, reads the proposed change and explains
+   what evidence would be needed before accepting it.
+3. **Next 10 minutes:** Walk through the future-release and wiki prompts. Find
+   where the exact release identities, checks and publication destination are
+   recorded. Keep this a preparation exercise; publishing is a separate action.
+4. **Final 5 minutes:** Confirm Chris can access the delivered materials and
+   record remaining questions, responsible people and due dates.
+
+Completion means Chris can find the information and repeat the process, not
+just that the meeting took place. Record receipt separately from his already
+confirmed ownership agreement. The email/SharePoint destination remains to be
+selected. Outgoing support ends October 30, 2026.
+
 ## Start a maintenance task
 
 Open your approved local copy of cdcai/TowerScout in Codex. Confirm the
