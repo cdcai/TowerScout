@@ -1,12 +1,18 @@
 # Local IT Administrator Guide
 
 > **Audience:** Local IT, security, and workstation administrators. **Applies
-> to:** The next final Windows release. **Last reviewed:** 2026-10-02.
+> to:** The next final Windows release. **Last reviewed:** 2026-10-20.
 > **Publication state:** Local draft.
 
 The end user chooses Docker or Podman, CPU or a compatible NVIDIA GPU, and
 Google Maps or Azure Maps. Local IT confirms that the chosen prerequisites,
 network access, credential model, and unsigned-script boundary are permitted.
+
+For Docker, host Python is not required. The current tested Podman provider
+setup requires explicitly selected **64-bit Python 3.12** and a package-root
+path of **80 characters or fewer**. Follow [Podman Guidance](Podman-Guidance)
+for the short-folder check, Python selection, and selected-provider verification.
+These restrictions do not authorize moving an existing configured installation.
 
 ## Approval Checklist
 

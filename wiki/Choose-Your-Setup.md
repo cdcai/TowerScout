@@ -1,9 +1,15 @@
 # Choose Your Setup
 
 > **Audience:** New users and Local IT. **Applies to:** The next final Windows
-> release. **Last reviewed:** 2026-10-05. **Publication state:** Local draft.
+> release. **Last reviewed:** 2026-10-20. **Publication state:** Local draft.
 
 Make three separate choices. Choosing one item does not choose the others.
+
+For Docker, host Python is not required. The current tested Podman provider
+setup requires explicitly selected **64-bit Python 3.12** and a package-root
+path of **80 characters or fewer**. Follow [Podman Guidance](Podman-Guidance)
+for the short-folder check, Python selection, and selected-provider verification.
+These restrictions do not authorize moving an existing configured installation.
 
 ## 1. Choose Docker Or Podman
 

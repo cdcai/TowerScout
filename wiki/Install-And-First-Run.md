@@ -1,11 +1,17 @@
 # Install And First Run
 
 > **Audience:** New Windows users. **Applies to:** The next final Windows
-> release. **Last reviewed:** 2026-10-06. **Publication state:** Local draft;
+> release. **Last reviewed:** 2026-10-20. **Publication state:** Local draft;
 > final filenames and hashes will appear in the authoritative release record.
 
 This page keeps the first-use path continuous: prepare, download, verify,
 extract, start, configure one provider, try a small search, and stop safely.
+
+For Podman, use the [short-folder and Python preparation](Podman-Guidance)
+before installing the provider. Use `Documents\TS` with a short `PC` or `PG`
+extraction folder instead of the longer example below; the actual package-root
+path must be 80 characters or fewer. Keep the shared asset ZIP one folder above
+the extracted application. Do not move an existing configured installation.
 
 ## 1. Prepare A Working Folder
 
@@ -85,6 +91,9 @@ In File Explorer, right-click only the verified `-cpu.zip` or
 Open the new extracted folder. You should see `setup-towerscout.cmd`,
 `start.bat`, `scripts`, `docs`, Compose files, and an empty `assets` folder.
 The four downloaded files remain one folder above it.
+
+Before setup on Podman, complete [Select Python And Install The Provider](Podman-Guidance#select-python-and-install-the-provider).
+Explicitly select 64-bit Python 3.12; do not rely on default `python` selection.
 
 ## 5. Run Setup For Your Choice
 

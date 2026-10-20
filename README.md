@@ -4,71 +4,44 @@ TowerScout is a tool for identifying cooling towers from satellite and aerial im
 
 TowerScout Enterprise, a new program re-designed from the ground up to make better use of modern architectures and cloud computing resources, is now available: [TowerScout Enterprise](https://github.com/cdcai/TowerScout-Enterprise)
 
-## Install The Release Package
+## Start Here
 
-### Release Package Notice
+The TowerScout wiki is being prepared as the guided user handbook: choosing
+a setup, preparing map credentials, installing, using the application,
+troubleshooting, and finding Local IT help. **The wiki has not been published
+yet.** You can review its [draft home page](wiki/Home.md),
+[installation walkthrough](wiki/Install-And-First-Run.md), and
+[Podman guidance](wiki/Podman-Guidance.md) in this repository. Page-to-page
+wiki navigation will be verified during publication.
 
-The published `v0.1.2` package remains a historical pilot release. A newer
-package becomes the current supported release only when its GitHub release
-record names the exact downloads, public SHA-256 values, image digests,
-tested environments, and known limitations. On the Releases page, choose the
-entry whose notes call it the current supported final Windows release; do not
-treat a draft, prerelease, source archive, branch name, or numerically newer
-tag as supported by inference.
+For complete instructions now, use the [Quick Start](docs/quick-start.md).
+The release package includes offline manuals; in-app Help comes from the
+matching image. The wiki and demonstration video are navigation and learning
+aids, not replacements for version-matched instructions.
 
-Package users should not start by cloning this repository. If you received a
-TowerScout release package, start here instead:
+### Download And Support Boundary
 
-- [Quick Start](docs/quick-start.md)
-- [Full Package Guide](docs/package-guide.md)
-- [User Guide](docs/user-guide.md)
-- [Local IT Administrator Guide](docs/local-it-administrator-guide.md)
+Use the [Releases page](https://github.com/J-Schulein/TowerScout/releases).
+Choose only an entry explicitly identified as the current supported final
+Windows release, with exact files, authoritative SHA-256 values, image digests,
+tested environments and limitations. If none is identified, stop. The published
+`v0.1.2` remains a historical pilot; a newer tag or prerelease is not automatically
+supported. Use the release's **Assets**, not the green **Code** button or source
+archives. Verify both ZIPs against the authoritative release record's public
+SHA-256 values and their matching sidecars before extraction.
 
-Runtime-specific package guides:
+Choose Docker or Podman, CPU or a release-qualified NVIDIA GPU, and Google Maps
+or Azure Maps. Docker users do not need host Python. The tested Podman path
+requires explicitly selected **64-bit Python 3.12**, a short package-root path
+of **80 characters or fewer**, a rootless WSL 2 machine and the package-local
+Compose provider. Follow the Quick Start for the exact steps and restrictions.
 
-- [Docker CPU User Guide](docs/docker-cpu-user-guide.md)
-- [Docker GPU User Guide](docs/docker-gpu-user-guide.md)
-- [Podman CPU User Guide](docs/podman-cpu-user-guide.md)
-- [Podman GPU User Guide](docs/podman-gpu-user-guide.md)
-
-Release packages are published from the repository
-[Releases](https://github.com/J-Schulein/TowerScout/releases) page. Use the
-identified final release, download the files from its `Assets` section, and do
-not use the green GitHub `Code` button or automatic
-source-code ZIP/TAR.GZ downloads for the normal package workflow.
-
-The Windows package supports three independent user choices: Docker Desktop or
-Podman, CPU or a compatible NVIDIA GPU, and Google Maps or Azure Maps. Choose
-the CPU Application Package for CPU processing or the CUDA 12.8 Application
-Package for a release-listed NVIDIA configuration; both use the same Model &
-Data Package ZIP. Podman needs a rootless WSL 2 machine, 64-bit Python 3.12,
-and the package-local Compose provider. GPU use additionally needs the exact
-driver and selected-engine container path listed in the release notes. Docker
-users do not need Git, Python, Conda, Node.js, VS Code, or a source checkout.
-
-### Unsigned Windows Package Boundary
-
-TowerScout's Windows PowerShell scripts are intentionally not Authenticode-
-signed. The supported user entrypoints are the supplied `.cmd` and `.bat`
-wrappers. They use a process-scoped PowerShell execution-policy setting and do
-not change the computer's persistent policy.
-
-The standard package supports only workstations where the user and
-organization permit that wrapper path. Environments requiring a trusted
-publisher, WDAC/AppLocker approval, constrained-language approval, or other
-organization-specific allowlisting require site-administrator action and are
-not part of the standard support claim. Verify the ZIP's SHA-256 against the
-value displayed in the authoritative release record before extracting or
-unblocking it. Do not disable Defender/EDR or weaken machine-wide policy to run
-TowerScout; stop and contact the site administrator if Windows blocks it.
-
-The CUDA package has a Volta-or-newer architecture expectation, but a release
-supports only the exact GPU, Windows driver, WSL, engine, and toolkit
-combinations named in its release notes. Maxwell and Pascal must use the CPU
-package or `-Gpu off`. Use a current NVIDIA or OEM production Windows driver
-that lists the exact GPU; never install a Linux display driver inside WSL. The
-measured CUDA image is 14.4 GB, so GPU users should plan at least 35 GB free for
-package download, image pull/unpack, assets, and runtime data.
+The Windows scripts are intentionally **unsigned**. Supplied CMD/BAT wrappers
+use a process-scoped execution-policy setting without changing persistent
+policy. Use them only where your organization permits them; signature-enforcing
+or organization-allowlisted endpoints are outside the standard support claim.
+Do not disable endpoint protection or weaken machine-wide policy. If blocked,
+stop and ask Local IT; see the [Local IT guide](docs/local-it-administrator-guide.md).
 
 ## Provenance
 

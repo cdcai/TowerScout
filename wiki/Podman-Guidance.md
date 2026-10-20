@@ -1,7 +1,7 @@
 # Podman Guidance
 
 > **Audience:** Users who choose Podman and their Local IT staff. **Applies
-> to:** The next final Windows release. **Last reviewed:** 2026-10-05.
+> to:** The next final Windows release. **Last reviewed:** 2026-10-20.
 > **Publication state:** Local draft.
 
 Podman is one supported way to run TowerScout. On Windows it runs Linux
@@ -30,24 +30,68 @@ provider.
    podman system connection list
    ```
 
-5. Install 64-bit Python 3.12 for the tested package-local Compose-provider
-   path. Confirm `python --version` reports Python 3.12. Python is needed only
-   by this provider installer, not by TowerScout inside its container.
-6. Download and verify TowerScout, extract the Application Package, and then
-   run this from that extracted folder:
+5. Arrange **64-bit Python 3.12** for the package-local Compose provider.
+   TowerScout's application Python is inside its container; this host Python
+   prerequisite is specific to the current Podman provider setup. Docker users
+   do not need it. Installing 3.12 does not change which version `python` selects.
+6. Download and verify the Application Package and shared Model & Data ZIP,
+   then follow the short-folder and explicit Python steps below before setup.
 
-   ```powershell
-   .\scripts\install-podman-compose-provider.cmd -Apply
-   podman compose version
-   ```
+## Use A Short Package Folder
+
+For a new installation, keep the verified ZIPs in a short permitted local
+folder such as `C:\Users\<you>\Documents\TS`. Extract the application into
+`PC` (CPU) or `PG` (CUDA), with `setup-towerscout.cmd` directly in that child
+folder. Leave the Model & Data ZIP unextracted one folder above it.
+
+The full package-root path must be **80 characters or fewer**. This is an
+accepted operating restriction, not a universal Windows limit or a guarantee.
+Check the actual path, especially for redirected or synchronized folders.
+Open PowerShell in the extracted package folder and run:
+
+```powershell
+$PWD.Path
+($PWD.Path).Length
+```
+
+If it exceeds 80, extract into a shorter folder before installing the provider.
+If provider installation still fails, stop and contact support. Do not change
+machine-wide long-path or security settings. Keep configured installation
+folders and project identities stable: relocation can select different named
+volumes. Export a dataset and arrange a move with support; retain old volumes
+and configuration.
+
+## Select Python And Install The Provider
+
+Run these commands **one at a time** from the extracted package folder. Stop
+on any error or unless the version is 3.12 and bitness is 64 before running
+the installer:
+
+```powershell
+py -3.12 --version
+$tsPython312 = (& py -3.12 -c "import sys; print(sys.executable)").Trim()
+& $tsPython312 -c "import sys, struct; print(sys.version); print(struct.calcsize('P') * 8)"
+.\scripts\install-podman-compose-provider.cmd -Apply -Python "$tsPython312"
+```
+
+If `py -3.12` is unavailable, obtain the approved Python executable's full path
+from Local IT, assign it to `$tsPython312`, and verify it with the same
+version/bitness command. Quote paths containing spaces. Do not substitute a
+different Python version. A normal retry uses the same command without `-Force`.
 
 The helper downloads a pinned, hash-checked provider into the package's tools
-folder. TowerScout rejects Docker Desktop's bundled Compose executable for the
-Podman path.
+folder. TowerScout rejects Docker Desktop's bundled Compose executable for
+this path. After setup, check the provider TowerScout actually selected:
 
-Ready means the intended machine is running, the selected connection is its
-rootless user connection, and `podman compose version` succeeds with the
-approved provider. TowerScout checks this target before changing containers.
+```powershell
+.\scripts\status.cmd -Engine podman -Port 5000
+```
+
+Use your chosen port if different. Global `podman compose version` can report
+a different provider and is not TowerScout's readiness check. Confirm the
+intended rootless machine/connection, selected provider, assets and readiness;
+for GPU, also confirm the intended CUDA device. These checks do not replace
+a successful small detection workflow.
 
 ## CPU Or NVIDIA GPU
 

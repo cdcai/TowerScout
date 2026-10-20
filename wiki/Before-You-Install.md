@@ -1,7 +1,7 @@
 # Before You Install
 
 > **Audience:** New users and Local IT. **Applies to:** The next final Windows
-> release. **Last reviewed:** 2026-10-05. **Publication state:** Local draft.
+> release. **Last reviewed:** 2026-10-20. **Publication state:** Local draft.
 
 Use this page to decide whether the computer is ready and what to do when a
 requirement is missing. You do not need Docker and Podman; install one. You do
@@ -11,6 +11,12 @@ When this checklist says to open ordinary Windows PowerShell, select the
 Windows **Start** button, type `Windows PowerShell`, and open **Windows
 PowerShell**. Use the normal window; do not select **Run as administrator**
 unless a later step explicitly requires it.
+
+For Docker, host Python is not required. The current tested Podman provider
+setup requires explicitly selected **64-bit Python 3.12** and a package-root
+path of **80 characters or fewer**. Follow [Podman Guidance](Podman-Guidance)
+for the short-folder check, Python selection, and selected-provider verification.
+These restrictions do not authorize moving an existing configured installation.
 
 ## Computer Checklist
 
