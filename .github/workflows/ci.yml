@@ -19,6 +19,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      with:
+        fetch-depth: 0
+
+    # The original development fork retains its historical release references.
+    # Check the full proposed merge ancestry in the receiving repository.
+    - name: Verify adoption history exclusion
+      if: github.repository == 'cdcai/TowerScout'
+      run: python3 scripts/check_adoption_history.py
 
     # TASK-101: Puppeteer 25 requires the maintained Node 22.12+ baseline.
     - name: Set up Node 22

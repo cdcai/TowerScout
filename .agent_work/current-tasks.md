@@ -62,7 +62,7 @@ execution evidence. No official application adoption or publication occurred.
 
 **PR #4 audit remediation (October 21):** Findings 1, 2, 3, and 5 are selected
 for sequential correction and verification. Historical credential/data
-disposition remains open; licensing/history approval and final merge approval
+exclusion is verified locally and awaits remote replacement; licensing/history approval and final merge approval
 remain with Chris. See the [remediation record](tasks/active/TASK-089/PR4-AUDIT-REMEDIATION-2026-10-21.md).
 No official artifact publication or merge is authorized by this work.
 

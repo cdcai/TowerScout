@@ -16,8 +16,8 @@ separate authorization before replacing the remote PR branch.
 
 Starting PR head: `1d9c6d72413bc1b06b1450cfe21b244976bffbc9`.
 Starting cdcai base: `87ca90089473e1855f98968f75a17b5f8d0dd1cd`.
-Use the existing clean adoption worktree; preserve the unrelated dirty primary
-checkout. Keep the history-preserving topology, immutable releases, deferred
+Use an isolated filtered clone of the clean adoption worktree; preserve the
+unrelated dirty primary checkout. Keep the commit topology, immutable releases, deferred
 launcher work, ML dependencies/models, and 396-key security baseline intact.
 
 ## Acceptance and implementation sequence
@@ -45,7 +45,7 @@ actual updated head/base; earlier green checks cannot qualify later commits.
 
 ## Finding 1 - historical credential and data disposition
 
-**Status: OPEN - owner-selected history exclusion awaiting verification.**
+**Status: local exclusion verified; remote PR replacement and final approval pending.**
 
 The July 8 rotation record identifies the old 86-character Azure Maps key
 from historical TASK-024. SHA-256 prefix: `18f45c5be251`. See the archived
@@ -58,7 +58,7 @@ value in eight Azure URL query parameters. Its SHA-256 is
 `9af831074bba65da8237f993bba56a8a4ab55fb529bd3f7f5265b04eb3b70741`.
 The file also contains saved location/detection data and local paths. No
 credential or location is reproduced in this record. The file is absent from
-the current tree but remains reachable through the proposed merge history.
+the current tree but remained reachable through the original PR history.
 
 A read-only rescan of all 2,674 new-to-cdcai blobs found that exact value only
 in blob `12426b689e2ba62b721b397fa20e021ffdc59d85` (`contents.txt`, eight
@@ -66,12 +66,63 @@ occurrences). This bounded result does not establish that the value is active,
 revoked, synthetic, or that no other possible secret exists. No provider
 request was made with it, and no history or account was changed.
 
+The preceding scan describes the pre-remediation state. Following the lead's
+direction below, only the isolated incoming history was subsequently filtered.
+
 The outgoing lead directed: "We should remove/exclude that file from being
 included in cdcai's Git history." Prepare a bounded exclusion of historical
 root `contents.txt`, with per-commit tree comparisons and a reachable-object
 scan, while preserving original fork and release references. No revocation is
 asserted for this value. The cdcai merge hold remains until the filtered
 history is verified and the final PR source is approved.
+
+Local preparation used pinned git-filter-repo 2.47.0 in a non-hardlinked,
+single-branch clone without tags. Only root `contents.txt` was excluded from
+commits after cdcai base `87ca900`. Empty commits, merge parent order, commit
+messages, author/committer identities and timestamps were preserved. Verification
+against the original local checkpoint `79f00bd` found:
+
+- All 260 incoming commits retained; 213 commit IDs necessarily changed.
+- Four commit trees changed solely by removing `contents.txt`; every other
+  file's content and mode matched. Final working tree content was identical.
+- The 98 signatures on rewritten commit copies were removed, because they
+  cannot authenticate the rewritten content/ancestry. The original signed
+  commits and release tags remain untouched in the original fork/repositories.
+- Original cdcai base remains unchanged and is an ancestor of filtered
+  checkpoint `120c6bdc630103355e193813a74dfd82fc7cefe1`.
+- No root `contents.txt` history or excluded blob is reachable from that head.
+  All 2,690 incoming blobs and other new reachable Git objects were scanned;
+  the exact credential-like value had zero occurrences.
+- Original repository refs were byte-for-byte unchanged. The isolated clone's
+  local origin was removed to prevent an accidental push to the original checkout.
+
+The sanitized verification JSON and original-to-filtered commit map are retained
+under `output/handoff/pr4-remediation-security/` in the primary checkout.
+Commit-map SHA-256:
+`d55fdb9b02e746c01ad542548e10f9b510f8752398f03946320225d3e12ef5f0`.
+Historical release/source references in documentation continue to identify the
+original fork commits; do not relabel their evidence as filtered-source builds.
+
+The existing required `frontend-test` job now fetches complete history and runs
+`scripts/check_adoption_history.py` in cdcai. It rejects shallow evidence, any
+root `contents.txt` history, and the known blob even under another name. The
+original fork is intentionally excluded from this receiving-repository rule.
+Never merge the original fork's unfiltered ancestry back into cdcai; use reviewed
+patches/cherry-picks for later changes and keep this guard blocking. Fork PR #114
+cannot establish the receiving repository's history exclusion; PR #4 must run
+its own checks on the updated proposed merge.
+
+This prepares exclusion from future cdcai `main` ancestry. It does not revoke a
+credential or erase existing fork objects, cached GitHub views, or old PR refs.
+Those limits and signature consequences are described in GitHub's
+[history-removal guidance](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository).
+Do not claim that the unverified credential is unusable. The remote PR still
+has its original history until the narrowly scoped replacement is authorized.
+
+History guard and existing CI-ratchet contracts: **15 tests passed**. The guard
+also passed on the actual filtered clone and rejected the actual original
+adoption checkout without printing data. Agent-work validation and diff
+whitespace checks passed.
 
 Existing provider URL redaction and structured-error tests: **13 passed**
 using `tests/unit/test_provider_http.py` and
