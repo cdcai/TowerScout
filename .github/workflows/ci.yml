@@ -146,6 +146,16 @@ jobs:
       run: |
         pytest tests/unit/ -v --cov=webapp --cov-report=xml --cov-report=term-missing
     
+    - name: Run adoption integration regression contracts
+      timeout-minutes: 5
+      env:
+        GOOGLE_API_KEY: test_google_key_123
+        AZURE_MAPS_SUBSCRIPTION_KEY: test_azure_key_456
+        FLASK_SECRET_KEY: test_secret_key_for_sessions
+        FLASK_ENV: testing
+      run: |
+        pytest tests/integration/test_end_to_end.py::test_current_app_boot_and_core_route_surface tests/integration/test_geocoding_integration.py -v
+
     - name: Run integration tests
       timeout-minutes: 15
       env:

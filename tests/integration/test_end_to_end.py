@@ -39,9 +39,17 @@ def client():
     return app.test_client()
 
 
-def test_current_app_boot_and_core_route_surface(client, monkeypatch):
+@pytest.mark.parametrize("model_files", [(), ("newest.pt",)])
+def test_current_app_boot_and_core_route_surface(client, monkeypatch, tmp_path, model_files):
     monkeypatch.setenv("DEFAULT_MAP_PROVIDER", "azure")
-    _ensure_engine_catalog_loaded()
+    # Exercise real catalog discovery with synthetic metadata, not developer
+    # weights. Catalog listing must also work before an asset bundle is imported.
+    monkeypatch.setattr(towerscout, "YOLO_MODEL_DIR", tmp_path)
+    monkeypatch.setattr(towerscout, "engines", {})
+    monkeypatch.setattr(towerscout, "engine_default", None)
+    for name in model_files:
+        (tmp_path / name).write_bytes(b"synthetic catalog fixture; not model weights")
+    assert towerscout.load_model_catalog() is bool(model_files)
 
     root_response = client.get("/")
     providers_response = client.get("/getproviders")
@@ -61,8 +69,8 @@ def test_current_app_boot_and_core_route_surface(client, monkeypatch):
 
     assert engines_response.status_code == 200
     engines = json.loads(engines_response.data)
-    assert len(engines) >= 1
-    assert any(entry["id"] == "newest" for entry in engines)
+    assert engines == [{"id": name[:-3], "name": name[:-3]} for name in model_files]
+    assert towerscout.engine_default == ("newest" if model_files else None)
 
     assert google_key_response.status_code == 200
     assert google_key_response.get_json()["apiKey"] == "test_google_key_123"

@@ -72,6 +72,19 @@ def test_weekly_scan_is_scheduled() -> None:
     assert "cron: '23 9 * * 1'" in workflow
 
 
+def test_adoption_integration_regressions_block_both_python_jobs() -> None:
+    job = yaml.safe_load(_workflow())["jobs"]["test"]
+    assert len(job["strategy"]["matrix"]["python-version"]) == 2
+    assert not job.get("continue-on-error", False)
+    steps = {step.get("name"): step for step in job["steps"]}
+    gate = steps["Run adoption integration regression contracts"]
+    assert "if" not in gate
+    assert not gate.get("continue-on-error", False)
+    assert "test_end_to_end.py::test_current_app_boot_and_core_route_surface" in gate["run"]
+    assert "tests/integration/test_geocoding_integration.py" in gate["run"]
+    assert steps["Run integration tests"]["continue-on-error"] is True
+
+
 def test_frontend_high_severity_audit_is_blocking() -> None:
     workflow = _workflow()
 

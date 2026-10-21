@@ -212,7 +212,78 @@ Generated JavaScript syntax and source/bundle consistency checks passed. These
 are synthetic serialization checks, not a replacement for official-package
 browser and model qualification.
 
-## Remaining findings
-- Finding 5: pending advisory failure and review-conversation disposition,
-  then final-head checks. Review replies/publication have not been sent.
+## Finding 5 - integration evidence and review conversations
+
+**Status: local integration corrections passed; review replies, conversation
+resolution, and checks of the updated remote PR remain pending.**
+
+The same five integration failures were reproduced locally before correction.
+The corrections are confined to two test modules:
+
+- Route smoke now discovers synthetic catalog metadata in a temporary directory
+  and checks both empty and populated catalogs. It no longer assumes untracked
+  developer model weights exist in a CI checkout. The separate real-weight smoke
+  still skips when assets are absent; synthetic catalog bytes are never loaded.
+- Geocoding uses real Flask request contexts instead of patching the wrong
+  session binding, and private temporary caches prevent cross-test state.
+- Cache reads specify Azure, matching the existing provider-isolation contract;
+  Google cannot reuse those entries. The radius fixture is about 50 m away,
+  correctly between the tested 25 m and 100 m boundaries.
+- The successful Azure response fixture uses the current `addresses` schema;
+  exceptions can no longer silently make that success test pass.
+- Failure tests cover both structured empty-address service failures and the
+  actual application's coordinate-display fallback. Provider HTTP is mocked.
+
+All integration tests plus existing geocoding unit tests: **52 passed, 3 skipped**.
+The three skips are one real-model smoke without weights and two external host
+helper templates without a running helper. No new skips or expected-failure
+markers were introduced. The broader integration job remains advisory under
+existing policy; formatting, mypy, and Bandit were not broadly changed or waived.
+The ten deterministic route/geocoding regressions now also run as a separate
+blocking step in both existing Python jobs. These contracts plus the CI-ratchet
+tests passed: **21 tests**. This narrowly prevents the repaired failures from
+being hidden again by the broader advisory step.
+
+The full Windows Python 3.12 unit run reported **703 passed, 74 skipped,
+19 failed** in 136.98 seconds. All 19 failures are in the existing Task-087
+host-helper module: Windows antivirus rejects `TowerScoutHostHelper.ps1` with
+`ScriptContainedMaliciousContent`, causing direct or downstream assertions to
+fail. Its Git blob `8d6ba4ac3e0163efbbd5a741bc1f8f5a8b892fdc` is identical
+to the original remote PR head; neither helper code nor its tests were changed.
+No security protection was disabled and no workaround or launcher redesign was
+attempted. This is an observed local execution block, not an established false
+positive and not a passing full-suite result. The required Windows host-helper
+CI job remains intact and must pass on the updated PR; this endpoint-specific
+block remains disclosed for owner/IT assessment. The helper remains disabled
+by default. Existing normal-launch and Windows runtime/TLS tests passed in the
+same full run. Required fatal/syntax lint passed with zero findings.
+
+The two unresolved [first](https://github.com/cdcai/TowerScout/pull/4#discussion_r4339751002)
+and [second](https://github.com/cdcai/TowerScout/pull/4#discussion_r4341663108)
+review threads describe the same torch LOW advisory. The updated
+[dependency disposition](../TASK-103/DEPENDENCY-SECURITY-DISPOSITION.md) records
+primary-source revalidation and current source-path evidence. No ML dependency
+upgrade or alert dismissal is included.
+
+Proposed reply for each thread, not yet sent:
+
+> Reviewed CVE-2025-3000 against the current source and upstream advisory. It
+> remains present in torch 2.10.0; the reported fix is 2.13.0. The affected
+> operation is `torch.jit.script`. TowerScout has no call to that operation in
+> its application or vendored source, and the shipped, hash-verified `.pt`
+> model follows the PyTorch loader rather than the optional TorchScript branch.
+> The existing Task-103 dependency disposition and ADR-022 retain this visible
+> LOW finding as a time-limited compatibility-bridge risk. Reassess immediately
+> if scripting, model format, trust, or runtime dependencies change; the existing
+> review deadline and early-exit triggers remain in force. This is not a false
+> positive or a claim that the dependency is fixed. No alert dismissal or
+> vulnerability-gate relaxation is requested. See
+> `.agent_work/tasks/active/TASK-103/DEPENDENCY-SECURITY-DISPOSITION.md` and
+> `.agent_work/decisions/022-cuda128-blackwell-ml-runtime.md` in this PR.
+
+Resolve the conversations only after the disposition is published and reviewed.
+Retain the draft and final-approval hold. The old nine green required checks
+identify remote head `1d9c6d7`; they cannot qualify the corrected filtered head.
+
+## Remaining owner decision
 - Finding 4: deliberately unchanged; Chris's specific approval remains pending.

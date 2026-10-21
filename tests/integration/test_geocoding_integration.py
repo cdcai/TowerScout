@@ -10,6 +10,8 @@ Date: January 2026
 
 import unittest
 from unittest.mock import Mock, patch, MagicMock
+from flask import Flask
+from requests.exceptions import ConnectionError
 import json
 import tempfile
 import os
@@ -35,6 +37,14 @@ class TestGeocodingEndToEnd(unittest.TestCase):
         """Set up test fixtures."""
         if not GEOCODING_AVAILABLE:
             self.skipTest("Geocoding modules not available")
+
+        self.app = Flask(__name__)
+        self.app.secret_key = "synthetic-session-key"
+        self.cache_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.cache_dir.cleanup)
+        cache_path = patch('ts_geocache.get_geocoding_cache_dir', return_value=self.cache_dir.name)
+        cache_path.start()
+        self.addCleanup(cache_path.stop)
             
         self.test_detection_results = [
             {
@@ -49,7 +59,7 @@ class TestGeocodingEndToEnd(unittest.TestCase):
             }
         ]
 
-    @patch('ts_geocoding.requests.get')
+    @patch('ts_geocoding.provider_get')
     def test_detection_address_lookup_workflow(self, mock_get):
         """Test complete workflow from detection results to address lookup."""
         # Mock successful Azure Maps response
@@ -58,7 +68,7 @@ class TestGeocodingEndToEnd(unittest.TestCase):
         mock_response.raise_for_status = Mock()
         mock_response.json.return_value = {
             'summary': {'numResults': 1},
-            'results': [{
+            'addresses': [{
                 'address': {'freeformAddress': '123 Enterprise Building, Seattle, WA'},
                 'matchType': 'AddressPoint'
             }]
@@ -72,27 +82,21 @@ class TestGeocodingEndToEnd(unittest.TestCase):
         # Simulate the workflow from towerscout.py get_objects route
         detection_results = self.test_detection_results.copy()
         
-        with patch('flask.session', {}):
+        with self.app.test_request_context():
             for detection in detection_results:
                 if detection.get('class') == 0:  # Only geocode actual detections
                     # Calculate center coordinates
                     center_lat = (detection['y1'] + detection['y2']) / 2
                     center_lng = (detection['x1'] + detection['x2']) / 2
                     
-                    # Try geocoding
-                    try:
-                        result = service.reverse_geocode(center_lat, center_lng)
-                        detection['address'] = result.address
-                        detection['address_confidence'] = result.confidence
-                        detection['address_provider'] = result.provider.value
-                        
-                        # Cache result
-                        cache.put(center_lat, center_lng, result)
-                        
-                    except Exception as e:
-                        detection['address'] = f"Address unavailable - {center_lat:.6f}, {center_lng:.6f}"
-                        detection['address_confidence'] = 0.0
-                        detection['address_provider'] = "error"
+                    result = service.reverse_geocode(center_lat, center_lng)
+                    self.assertTrue(result.success)
+                    detection['address'] = result.address
+                    detection['address_confidence'] = result.confidence
+                    detection['address_provider'] = result.provider.value
+                    cache.put(center_lat, center_lng, result, provider=GeocodingProvider.AZURE_MAPS)
+
+        self.assertEqual(mock_get.call_count, len(detection_results))
         
         # Verify results
         for detection in detection_results:
@@ -101,11 +105,9 @@ class TestGeocodingEndToEnd(unittest.TestCase):
                 self.assertIn('address_confidence', detection)
                 self.assertIn('address_provider', detection)
                 
-                if 'Address unavailable' not in detection['address']:
-                    # Successful geocoding
-                    self.assertEqual(detection['address'], '123 Enterprise Building, Seattle, WA')
-                    self.assertEqual(detection['address_provider'], 'azure_maps')
-                    self.assertGreater(detection['address_confidence'], 0.0)
+                self.assertEqual(detection['address'], '123 Enterprise Building, Seattle, WA')
+                self.assertEqual(detection['address_provider'], 'azure_maps')
+                self.assertGreater(detection['address_confidence'], 0.0)
 
     def test_spatial_clustering_workflow(self):
         """Test spatial clustering reduces API calls for nearby detections."""
@@ -131,14 +133,11 @@ class TestGeocodingEndToEnd(unittest.TestCase):
         cache.put(nearby_detections[0]['lat'], nearby_detections[0]['lng'], test_result)
         
         # Check that nearby locations get cached result
-        for i, detection in enumerate(nearby_detections[1:], 1):
-            cached_result = cache.get(detection['lat'], detection['lng'])
-            
-            if i <= 2:  # Within clustering radius
-                self.assertIsNotNone(cached_result)
-                self.assertEqual(cached_result.address, test_result.address)
-            else:
-                self.assertIsNone(cached_result)  # Outside radius
+        for detection in nearby_detections[1:]:
+            cached_result = cache.get(detection['lat'], detection['lng'], provider=GeocodingProvider.AZURE_MAPS)
+            self.assertIsNotNone(cached_result)
+            self.assertEqual(cached_result.address, test_result.address)
+            self.assertIsNone(cache.get(detection['lat'], detection['lng'], provider=GeocodingProvider.GOOGLE_MAPS))
 
     def test_radius_parameter_integration(self):
         """Test radius parameter affects clustering behavior."""
@@ -149,7 +148,7 @@ class TestGeocodingEndToEnd(unittest.TestCase):
         ]
         
         base_lat, base_lng = 47.6205, -122.3493
-        nearby_lat, nearby_lng = 47.6206, -122.3494  # ~15m away
+        nearby_lat, nearby_lng = 47.62095, -122.3493  # ~50m away: between 25m and 100m
         
         test_result = GeocodingResult(
             address="Test Building, Seattle, WA",
@@ -161,13 +160,14 @@ class TestGeocodingEndToEnd(unittest.TestCase):
         
         for case in test_cases:
             with self.subTest(radius=case['radius']):
-                cache = GeocodingCache(clustering_radius_meters=case['radius'])
+                cache = GeocodingCache(cache_dir=os.path.join(self.cache_dir.name, str(case['radius'])),
+                                       clustering_radius_meters=case['radius'])
                 
                 # Store result for base location
                 cache.put(base_lat, base_lng, test_result)
                 
                 # Check nearby location
-                cached_result = cache.get(nearby_lat, nearby_lng)
+                cached_result = cache.get(nearby_lat, nearby_lng, provider=GeocodingProvider.AZURE_MAPS)
                 
                 if case['should_cluster']:
                     self.assertIsNotNone(cached_result, f"Should cluster at {case['radius']}m radius")
@@ -178,10 +178,7 @@ class TestGeocodingEndToEnd(unittest.TestCase):
         """Test API usage tracking for session display."""
         service = GeocodingService(azure_key="test_key", google_key="test_key")
         
-        # Mock session
-        test_session = {}
-        
-        with patch('flask.session', test_session):
+        with self.app.test_request_context():
             # Simulate successful request
             service._update_session_usage(GeocodingProvider.AZURE_MAPS, True)
             service._update_session_usage(GeocodingProvider.GOOGLE_MAPS, True)
@@ -199,19 +196,32 @@ class TestGeocodingEndToEnd(unittest.TestCase):
     def test_error_fallback_workflow(self):
         """Test graceful fallback when geocoding fails."""
         # Simulate complete geocoding failure
-        with patch('ts_geocoding.requests.get', side_effect=Exception("Network error")):
+        with patch('ts_geocoding.provider_get', side_effect=ConnectionError("Synthetic network error")) as provider_get:
             service = GeocodingService(azure_key="test_key", google_key="test_key")
             
             test_lat, test_lng = 47.6205, -122.3493
             
-            with patch('flask.session', {}):
+            with self.app.test_request_context():
                 result = service.reverse_geocode(test_lat, test_lng)
             
-            # Should have fallback coordinates
+            # The service returns structured failure; the application attaches
+            # coordinate text for display. Exercise both current boundaries.
             self.assertFalse(result.success)
-            self.assertIn("Address unavailable", result.address)
-            self.assertIn(str(test_lat), result.address)
-            self.assertIn(str(test_lng), result.address)
+            self.assertEqual(result.address, "")
+            self.assertEqual(result.coordinates, (test_lat, test_lng))
+            self.assertTrue(result.error_message)
+            self.assertEqual(provider_get.call_count, 2)
+
+            import towerscout
+            detections = [dict(self.test_detection_results[0])]
+            with self.app.test_request_context(), patch.object(towerscout, 'create_geocoding_service', return_value=service):
+                towerscout._attach_detection_addresses(detections, 'azure')
+            self.assertEqual(detections[0]['address_provider'], 'fallback')
+            self.assertEqual(detections[0]['address_confidence'], 0.0)
+            center_lat = (detections[0]['y1'] + detections[0]['y2']) / 2
+            center_lng = (detections[0]['x1'] + detections[0]['x2']) / 2
+            self.assertIn(f'{center_lat:.6f}', detections[0]['address'])
+            self.assertIn(f'{center_lng:.6f}', detections[0]['address'])
 
     def test_frontend_data_format(self):
         """Test that geocoded results match expected frontend format."""
@@ -246,6 +256,13 @@ class TestGeocodingEndToEnd(unittest.TestCase):
 
 class TestGeocodingConfiguration(unittest.TestCase):
     """Test geocoding configuration and environment variables."""
+
+    def setUp(self):
+        cache_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(cache_dir.cleanup)
+        cache_path = patch('ts_geocache.get_geocoding_cache_dir', return_value=cache_dir.name)
+        cache_path.start()
+        self.addCleanup(cache_path.stop)
 
     def test_environment_variable_loading(self):
         """Test loading configuration from environment variables."""

@@ -8,6 +8,31 @@ residuals according to the Task-103 implementation brief. The remaining
 advisory stays visible and is governed by ADR-022's bridge exit triggers; it is
 not silently dismissed or treated as permanent acceptance.
 
+## PR #4 revalidation - October 21, 2026
+
+Both current cdcai review threads report the same `CVE-2025-3000` against
+torch 2.10.0. GitHub's [reviewed advisory](https://github.com/advisories/GHSA-rrmf-rvhw-rf47)
+still lists LOW severity, affected versions through 2.12.1, and fix 2.13.0.
+The [upstream issue](https://github.com/pytorch/pytorch/issues/149623) and
+[fix](https://github.com/pytorch/pytorch/commit/b90c94991cdf8b87c8f7439f79518e0ef2c4ca4f)
+identify JIT compilation of bare container annotations as the failing operation.
+
+A fresh source review found no `torch.jit.script` call in `webapp/`, including
+vendored source. `ts_yolov5.py` verifies model trust before the local loader;
+the shipped `.pt` path selects `attempt_load`, not the optional `jit` branch
+in vendored `models/common.py`. EfficientNet similarly verifies its model
+before loading. This supports the existing bounded reachability disposition;
+it does not establish that every dependency path is vulnerability-free.
+The vulnerability remains present in the pinned package and visible in scans.
+
+Retain the existing ADR-022 bridge, owner, review date, and early-exit triggers.
+No runtime version, ignore rule, severity threshold, or security-alert state is
+changed by this revalidation. A torch upgrade requires separate CPU/CUDA and
+hardware qualification. Draft review replies are in the Task-089 remediation
+record; publication and conversation resolution remain pending.
+
+## Original baseline disposition
+
 GitHub code scanning reported one medium-security alert on PR #86: alert #215,
 `CVE-2025-3000`, affecting `torch==2.10.0`. Trivy rates this item LOW. The
 vulnerable operation is `torch.jit.script`; TowerScout does not call that API,
