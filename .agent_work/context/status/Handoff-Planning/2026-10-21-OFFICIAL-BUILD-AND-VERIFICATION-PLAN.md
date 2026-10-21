@@ -38,7 +38,8 @@ reviewed cdcai merge source and ADR-022 through ADR-026 at execution.
 | Four CPU defaults | Explicit image/digest precedence, environment-file resolution and clean unset fallback | Existing 63 selected static/mocked checks support source review, not deployment readiness |
 | Manuals/wiki/support destinations | Packaged Markdown/HTML and in-image Help parity; live official links; Podman short path and explicit Python 3.12 instructions | Fork rendering can inform layout; cdcai destinations require their own checks |
 | Rebuilt images/system dependencies | Fresh CPU/CUDA scans; exact-image model/device/provider checks | Unchanged Dockerfile/runtime code does not prove identical installed dependencies |
-| Unchanged application/model source at ca24d6f | Verify final source delta again; compare actual assets/dependencies and affected behavior | ADR-026 describes exact fork candidate acceptance; cite retained results only where the owner accepts a specific reuse rationale |
+| Pending PR #113: aiohttp/Pillow and runtime minimum | Verify resolved transitive dependencies, fresh scans, image decode/crop/RGB/resize, both model/device paths and provider download/cancel/retry/recovery | Prior unchanged-dependency wording applies only to ca24d6f; local tests and PR CI do not qualify new images |
+| Model weights and algorithms | Verify final source/asset delta and real combined-model results | ADR-026 describes exact fork candidate acceptance; reuse only with a specific accepted rationale |
 | Organization/governance/Codecov uploader removal | Link/task consistency and CI checks; allowlist and coverage-artifact review | No application behavior change inferred; no fresh runtime pass claimed |
 
 ## Proposed operational qualification

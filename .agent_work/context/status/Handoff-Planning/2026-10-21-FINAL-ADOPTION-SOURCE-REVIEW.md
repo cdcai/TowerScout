@@ -4,6 +4,11 @@
 bounded local checks below after corrections. Ready for a fork checkpoint push
 and PR-based remote validation; not approved for merge or official release.
 
+**Subsequent dependency review:** [PR #113 update](2026-10-21-PR113-DEPENDENCY-AND-ADOPTION-REVIEW.md) supersedes
+this snapshot for current readiness. Its aiohttp/Pillow changes require
+reviewed integration and affected qualification; the unchanged-runtime
+statement below applies only to the earlier checkpoint.
+
 ## Scope and baselines
 
 Refreshed upstream/main `3e2c65de3c1772ad67d5c14d5ff38eb5fa274631` and

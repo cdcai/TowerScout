@@ -2,8 +2,9 @@
 
 **Target:** cdcai/TowerScout:main.
 **Proposed source:** J-Schulein/TowerScout:chore/task-089-adoption-preparation.
-**Final head:** local source review complete; use the final checkpoint SHA and
-remote check results at PR creation. See [review](2026-10-21-FINAL-ADOPTION-SOURCE-REVIEW.md).
+**Final head:** pending reviewed PR #113 merge and integration. Its aiohttp
+and Pillow corrections pass blocking CI; the local combined rehearsal
+does not replace final adoption-head checks. See the [dependency review](2026-10-21-PR113-DEPENDENCY-AND-ADOPTION-REVIEW.md).
 
 ## Proposed title
 

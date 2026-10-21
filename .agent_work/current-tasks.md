@@ -28,6 +28,12 @@ current Issues/CI wording corrected. See the
 [review record](context/status/Handoff-Planning/2026-10-21-FINAL-ADOPTION-SOURCE-REVIEW.md).
 Remote final-head checks, cdcai adoption and official-byte qualification remain open.
 
+**Dependency follow-up:** PR #113 now includes aiohttp and Pillow security
+corrections. Blocking CI passes; review approval, fork merge and actual
+adoption integration remain pending. The local integration rehearsal
+passed 144 checks on repeat; its initial Windows loopback failure is
+retained in the [updated review](context/status/Handoff-Planning/2026-10-21-PR113-DEPENDENCY-AND-ADOPTION-REVIEW.md).
+
 ## Qualification history through October 19
 
 The following narrative retains the candidate progression; older pending
