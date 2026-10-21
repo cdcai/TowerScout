@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Maps Test - TowerScout</title>
+
+    <!-- Azure Maps Web SDK -->
+    <link href="https://atlas.microsoft.com/sdk/javascript/mapcontrol/3.0/atlas.min.css" rel="stylesheet" />
+    <script src="https://atlas.microsoft.com/sdk/javascript/mapcontrol/3.0/atlas.min.js"
+        onload="console.log('Azure Maps main SDK loaded')"></script>
+    <script src="https://atlas.microsoft.com/sdk/javascript/drawing/1.0/atlas-drawing.min.js"
+        onload="console.log('Azure Maps drawing SDK loaded')"></script>
+    <link rel="stylesheet" href="https://atlas.microsoft.com/sdk/javascript/drawing/1.0/atlas-drawing.min.css" />
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <style>
+        #azureMap {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #ccc;
+        }
+
+        .test-controls {
+            margin: 20px 0;
+        }
+
+        .log-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            font-family: monospace;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <h1 class="mt-3">Azure Maps Frontend Implementation Test</h1>
+        <p class="lead">This page tests the Azure Maps JavaScript implementation for TowerScout.</p>
+
+        <div class="test-controls">
+            <div class="form-group">
+                <label>
+                    <input type="radio" name="mapProvider" value="azure" checked> Azure Maps
+                </label>
+            </div>
+            <div class="btn-group">
+                <button id="initMap" class="btn btn-primary">Initialize Map</button>
+                <button id="testDrawing" class="btn btn-success">Test Drawing Tools</button>
+                <button id="testCoords" class="btn btn-info">Test Coordinates</button>
+                <button id="clearLog" class="btn btn-secondary">Clear Log</button>
+            </div>
+        </div>
+
+        <div id="azureMap"></div>
+
+        <div class="log-output" id="logOutput">
+            <strong>Test Log:</strong><br>
+            Ready to test Azure Maps implementation...
+        </div>
+    </div>
+
+    <!-- Include TowerScout JS -->
+    <script src="js/towerscout.js"></script>
+
+    <script>
+        // Test script for Azure Maps functionality
+        let azureMapInstance = null;
+        let drawingManager = null;
+
+        // Mock API key for testing (replace with real key)
+        const AZURE_API_KEY = 'WIA8Q~8v0OV7ggW-o0BtR7Ub20o2ByNnVrXHXb0i'; // From .env file
+
+        function log(message) {
+            const logOutput = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            logOutput.innerHTML += `<br>[${timestamp}] ${message}`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('logOutput').innerHTML = '<strong>Test Log:</strong><br>Log cleared...';
+        }
+
+        function checkAzureMapsLoaded() {
+            // Check if Azure Maps SDK is loaded
+            if (typeof atlas === 'undefined') {
+                log('ERROR: Azure Maps SDK (atlas) not loaded. Checking CDN connectivity...');
+
+                // Test CDN connectivity
+                fetch('https://atlas.microsoft.com/sdk/javascript/mapcontrol/3.0.0/atlas.min.js')
+                    .then(response => {
+                        if (response.ok) {
+                            log('CDN is accessible but script not loaded properly. Check script tags.');
+                        } else {
+                            log(`CDN returned status: ${response.status}`);
+                        }
+                    })
+                    .catch(error => {
+                        log(`CDN connectivity error: ${error.message}`);
+                    });
+                return false;
+            }
+
+            if (typeof atlas.Map === 'undefined') {
+                log('ERROR: Azure Maps Map class not available');
+                return false;
+            }
+
+            log('Azure Maps SDK loaded successfully');
+            return true;
+        }
+
+        function initializeMap() {
+            try {
+                log('Initializing Azure Maps...');
+
+                // Check if Azure Maps SDK is loaded
+                if (!checkAzureMapsLoaded()) {
+                    return;
+                }
+
+                // Initialize map with authentication
+                atlas.setAuthenticationOptions({
+                    authType: 'subscriptionKey',
+                    subscriptionKey: AZURE_API_KEY
+                });
+                log('Azure Maps authentication configured');
+
+                // Create AzureMap instance
+                azureMapInstance = new AzureMap();
+                log('AzureMap class instantiated successfully');
+
+                // Initialize the map
+                azureMapInstance.init('azureMap');
+                log('Map initialized successfully');
+
+                // Test drawing manager
+                if (azureMapInstance.drawingManager) {
+                    drawingManager = azureMapInstance.drawingManager;
+                    log('Drawing manager available');
+                } else {
+                    log('WARNING: Drawing manager not available');
+                }
+
+            } catch (error) {
+                log(`ERROR: ${error.message}`);
+                console.error('Map initialization error:', error);
+            }
+        }
+
+        function testDrawingTools() {
+            if (!azureMapInstance) {
+                log('ERROR: Map not initialized. Please initialize map first.');
+                return;
+            }
+
+            try {
+                log('Testing drawing tools...');
+
+                if (azureMapInstance.drawingManager) {
+                    log('Drawing manager is available');
+                    log('Current drawing mode: ' + azureMapInstance.drawingManager.getOptions().mode);
+
+                    // Test enabling polygon drawing
+                    azureMapInstance.drawingManager.setOptions({
+                        mode: 'draw-polygon'
+                    });
+                    log('Drawing mode set to polygon');
+
+                } else {
+                    log('ERROR: Drawing manager not available');
+                }
+
+            } catch (error) {
+                log(`ERROR: ${error.message}`);
+                console.error('Drawing tools test error:', error);
+            }
+        }
+
+        function testCoordinates() {
+            if (!azureMapInstance) {
+                log('ERROR: Map not initialized. Please initialize map first.');
+                return;
+            }
+
+            try {
+                log('Testing coordinate functions...');
+
+                // Test coordinate transformation
+                const testLat = 40.7128;
+                const testLng = -74.0060; // NYC coordinates
+
+                log(`Testing with coordinates: ${testLat}, ${testLng}`);
+
+                // Test if coordinate transformation methods exist
+                if (typeof azureMapInstance.latLngToPixel === 'function') {
+                    log('latLngToPixel method available');
+                } else {
+                    log('WARNING: latLngToPixel method not found');
+                }
+
+                if (typeof azureMapInstance.pixelToLatLng === 'function') {
+                    log('pixelToLatLng method available');
+                } else {
+                    log('WARNING: pixelToLatLng method not found');
+                }
+
+                // Test map center
+                if (azureMapInstance.map) {
+                    const center = azureMapInstance.map.getCamera().center;
+                    log(`Current map center: ${center[1]}, ${center[0]}`);
+                }
+
+            } catch (error) {
+                log(`ERROR: ${error.message}`);
+                console.error('Coordinate test error:', error);
+            }
+        }
+
+        // Event handlers
+        document.getElementById('initMap').addEventListener('click', initializeMap);
+        document.getElementById('testDrawing').addEventListener('click', testDrawingTools);
+        document.getElementById('testCoords').addEventListener('click', testCoordinates);
+        document.getElementById('clearLog').addEventListener('click', clearLog);
+
+        // Auto-initialize map on page load
+        window.addEventListener('load', function () {
+            log('Page loaded. Checking Azure Maps SDK...');
+
+            // Wait a moment for scripts to fully load
+            setTimeout(function () {
+                if (typeof atlas !== 'undefined') {
+                    log('Azure Maps SDK detected successfully. Click "Initialize Map" to test.');
+                } else {
+                    log('WARNING: Azure Maps SDK not detected. Check CDN connectivity or script loading.');
+                    log('Available global objects: ' + Object.getOwnPropertyNames(window).filter(name => name.includes('atlas') || name.includes('Azure')));
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+
+</html>

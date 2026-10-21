@@ -1,0 +1,7 @@
+interface:
+  display_name: 'TowerScout: Provider State Review'
+  short_description: Provider state review
+  default_prompt: Use $towerscout-provider-state-review to review this provider-switching
+    change.
+policy:
+  allow_implicit_invocation: true

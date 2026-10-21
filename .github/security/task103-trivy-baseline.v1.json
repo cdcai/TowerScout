@@ -1,0 +1,2025 @@
+{
+  "accepted_stage": "A",
+  "applicable_publish_flavors": [
+    "cpu",
+    "cuda128"
+  ],
+  "blocking_severities": [
+    "CRITICAL",
+    "HIGH"
+  ],
+  "created_utc": "2026-09-24T22:32:43Z",
+  "description": "Accepted pre-TASK-103 HIGH/CRITICAL Trivy finding keys; publishing blocks only additions.",
+  "finding_count": 396,
+  "findings": [
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2013-7445"
+    },
+    {
+      "package": "hdf5-helpers",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2018-11205"
+    },
+    {
+      "package": "libhdf5-103-1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2018-11205"
+    },
+    {
+      "package": "libhdf5-cpp-103-1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2018-11205"
+    },
+    {
+      "package": "libhdf5-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2018-11205"
+    },
+    {
+      "package": "libhdf5-fortran-102",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2018-11205"
+    },
+    {
+      "package": "libhdf5-hl-100",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2018-11205"
+    },
+    {
+      "package": "libhdf5-hl-cpp-100",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2018-11205"
+    },
+    {
+      "package": "libhdf5-hl-fortran-100",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2018-11205"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2019-19449"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2019-19814"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2021-3847"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2021-3864"
+    },
+    {
+      "package": "libldap-2.5-0",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2023-2953"
+    },
+    {
+      "package": "libaom-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2023-39616"
+    },
+    {
+      "package": "libaom3",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2023-39616"
+    },
+    {
+      "package": "zlib1g",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2023-45853"
+    },
+    {
+      "package": "zlib1g-dev",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2023-45853"
+    },
+    {
+      "package": "libtiff-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2023-52355"
+    },
+    {
+      "package": "libtiff6",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2023-52355"
+    },
+    {
+      "package": "libtiffxx6",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2023-52355"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2023-52452"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2023-52586"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2023-52624"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2023-52751"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2023-53218"
+    },
+    {
+      "package": "libaom-dev",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2023-6879"
+    },
+    {
+      "package": "libaom3",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2023-6879"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-21803"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-26669"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-26836"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-26913"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-26914"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-26944"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-35887"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-38570"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-38630"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-41045"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-41935"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-42118"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-42162"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-44941"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-44942"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-44951"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-46729"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-46811"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-46813"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-47691"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-50029"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-50217"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-50226"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-50282"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-53068"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-53147"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-53168"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-53179"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-53218"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-56538"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-56775"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-57900"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2024-57982"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-21927"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-21967"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-21969"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-21985"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-22039"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-23133"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-37750"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-37776"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-37777"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-37861"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-37952"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-37957"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-38069"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-38081"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-38182"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-38204"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-38248"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-38369"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-38582"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-38585"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-38595"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-38636"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-38722"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-38734"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-39744"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-39797"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-39810"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-39859"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-39952"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-40025"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-40354"
+    },
+    {
+      "package": "setuptools",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-47273"
+    },
+    {
+      "package": "libexpat1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-59375"
+    },
+    {
+      "package": "libexpat1-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-59375"
+    },
+    {
+      "package": "libheif-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-68431"
+    },
+    {
+      "package": "libheif1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-68431"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-68809"
+    },
+    {
+      "package": "libpython3.11-minimal",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-69534"
+    },
+    {
+      "package": "libpython3.11-stdlib",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-69534"
+    },
+    {
+      "package": "python3.11",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-69534"
+    },
+    {
+      "package": "python3.11-minimal",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-69534"
+    },
+    {
+      "package": "libncursesw6",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-69720"
+    },
+    {
+      "package": "libtinfo6",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-69720"
+    },
+    {
+      "package": "ncurses-base",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-69720"
+    },
+    {
+      "package": "ncurses-bin",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-69720"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-71068"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-71073"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2025-71152"
+    },
+    {
+      "package": "libsqlite3-0",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2025-7458"
+    },
+    {
+      "package": "libsqlite3-dev",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2025-7458"
+    },
+    {
+      "package": "libsqlite3-0",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-11822"
+    },
+    {
+      "package": "libsqlite3-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-11822"
+    },
+    {
+      "package": "libsqlite3-0",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-11824"
+    },
+    {
+      "package": "libsqlite3-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-11824"
+    },
+    {
+      "package": "libpython3.11-minimal",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-11940"
+    },
+    {
+      "package": "libpython3.11-stdlib",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-11940"
+    },
+    {
+      "package": "python3.11",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-11940"
+    },
+    {
+      "package": "python3.11-minimal",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-11940"
+    },
+    {
+      "package": "libcurl3-gnutls",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-12064"
+    },
+    {
+      "package": "libcurl4",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-12064"
+    },
+    {
+      "package": "libcurl4-openssl-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-12064"
+    },
+    {
+      "package": "libtiff-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-12912"
+    },
+    {
+      "package": "libtiff6",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-12912"
+    },
+    {
+      "package": "libtiffxx6",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-12912"
+    },
+    {
+      "package": "libperl5.36",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2026-13221"
+    },
+    {
+      "package": "perl",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2026-13221"
+    },
+    {
+      "package": "perl-base",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2026-13221"
+    },
+    {
+      "package": "perl-modules-5.36",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2026-13221"
+    },
+    {
+      "package": "libpython3.11-minimal",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-15308"
+    },
+    {
+      "package": "libpython3.11-stdlib",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-15308"
+    },
+    {
+      "package": "python3.11",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-15308"
+    },
+    {
+      "package": "python3.11-minimal",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-15308"
+    },
+    {
+      "package": "libsystemd0",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-16742"
+    },
+    {
+      "package": "libudev1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-16742"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-23171"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-23191"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-23208"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-23226"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-23327"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-23361"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-23447"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-23448"
+    },
+    {
+      "package": "jaraco.context",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-23949"
+    },
+    {
+      "package": "wheel",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-24049"
+    },
+    {
+      "package": "libexpat1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-25210"
+    },
+    {
+      "package": "libexpat1-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-25210"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-31432"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-31493"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-31527"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-31536"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-31568"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-31706"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-31729"
+    },
+    {
+      "package": "libheif-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-32740"
+    },
+    {
+      "package": "libheif1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-32740"
+    },
+    {
+      "package": "libheif-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-32741"
+    },
+    {
+      "package": "libheif1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-32741"
+    },
+    {
+      "package": "libheif-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-32882"
+    },
+    {
+      "package": "libheif1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-32882"
+    },
+    {
+      "package": "libpython3.11-minimal",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-3644"
+    },
+    {
+      "package": "libpython3.11-stdlib",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-3644"
+    },
+    {
+      "package": "python3.11",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-3644"
+    },
+    {
+      "package": "python3.11-minimal",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-3644"
+    },
+    {
+      "package": "libtiff-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-36849"
+    },
+    {
+      "package": "libtiff6",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-36849"
+    },
+    {
+      "package": "libtiffxx6",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-36849"
+    },
+    {
+      "package": "libheif-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-41071"
+    },
+    {
+      "package": "libheif1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-41071"
+    },
+    {
+      "package": "gzip",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-41992"
+    },
+    {
+      "package": "libperl5.36",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2026-42496"
+    },
+    {
+      "package": "perl",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2026-42496"
+    },
+    {
+      "package": "perl-base",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2026-42496"
+    },
+    {
+      "package": "perl-modules-5.36",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2026-42496"
+    },
+    {
+      "package": "libperl5.36",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-42497"
+    },
+    {
+      "package": "perl",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-42497"
+    },
+    {
+      "package": "perl-base",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-42497"
+    },
+    {
+      "package": "perl-modules-5.36",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-42497"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-43049"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-43125"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2026-43185"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-43198"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-43250"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-43490"
+    },
+    {
+      "package": "libexpat1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-45186"
+    },
+    {
+      "package": "libexpat1-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-45186"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-45893"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-45943"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-45957"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-46054"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-46068"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-46130"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-46181"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-46219"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-46241"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-46293"
+    },
+    {
+      "package": "libheif-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-47178"
+    },
+    {
+      "package": "libheif1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-47178"
+    },
+    {
+      "package": "libperl5.36",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-48962"
+    },
+    {
+      "package": "perl",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-48962"
+    },
+    {
+      "package": "perl-base",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-48962"
+    },
+    {
+      "package": "perl-modules-5.36",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-48962"
+    },
+    {
+      "package": "gdal-bin",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-49014"
+    },
+    {
+      "package": "gdal-data",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-49014"
+    },
+    {
+      "package": "gdal-plugins",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-49014"
+    },
+    {
+      "package": "libgdal-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-49014"
+    },
+    {
+      "package": "libgdal32",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-49014"
+    },
+    {
+      "package": "python3-gdal",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-49014"
+    },
+    {
+      "package": "libtiff-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-52490"
+    },
+    {
+      "package": "libtiff6",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-52490"
+    },
+    {
+      "package": "libtiffxx6",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-52490"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-52991"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53000"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53091"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53115"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53117"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53118"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53120"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53129"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53143"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53156"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53179"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53262"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53272"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53330"
+    },
+    {
+      "package": "bsdutils",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53613"
+    },
+    {
+      "package": "libblkid1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53613"
+    },
+    {
+      "package": "libmount1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53613"
+    },
+    {
+      "package": "libsmartcols1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53613"
+    },
+    {
+      "package": "libuuid1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53613"
+    },
+    {
+      "package": "mount",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53613"
+    },
+    {
+      "package": "util-linux",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53613"
+    },
+    {
+      "package": "util-linux-extra",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53613"
+    },
+    {
+      "package": "libacl1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-54369"
+    },
+    {
+      "package": "libperl5.36",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-57432"
+    },
+    {
+      "package": "perl",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-57432"
+    },
+    {
+      "package": "perl-base",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-57432"
+    },
+    {
+      "package": "perl-modules-5.36",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-57432"
+    },
+    {
+      "package": "libperl5.36",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-57433"
+    },
+    {
+      "package": "perl",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-57433"
+    },
+    {
+      "package": "perl-base",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-57433"
+    },
+    {
+      "package": "perl-modules-5.36",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-57433"
+    },
+    {
+      "package": "libglib2.0-0",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-58010"
+    },
+    {
+      "package": "libglib2.0-0",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-58011"
+    },
+    {
+      "package": "libglib2.0-0",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-58012"
+    },
+    {
+      "package": "libglib2.0-0",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-58013"
+    },
+    {
+      "package": "libglib2.0-0",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-58014"
+    },
+    {
+      "package": "libglib2.0-0",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-58015"
+    },
+    {
+      "package": "libglib2.0-0",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2026-58016"
+    },
+    {
+      "package": "libcurl3-gnutls",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-6276"
+    },
+    {
+      "package": "libcurl4",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-6276"
+    },
+    {
+      "package": "libcurl4-openssl-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-6276"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-63962"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-64017"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-64026"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-64305"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-64341"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-64348"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-64424"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-64556"
+    },
+    {
+      "package": "libexpat1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-66046"
+    },
+    {
+      "package": "libexpat1-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-66046"
+    },
+    {
+      "package": "libxml2",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2026-6653"
+    },
+    {
+      "package": "libxml2-dev",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2026-6653"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-68236"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-68409"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-68426"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-68470"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-72042"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-72098"
+    },
+    {
+      "package": "libpython3.11-minimal",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-7210"
+    },
+    {
+      "package": "libpython3.11-stdlib",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-7210"
+    },
+    {
+      "package": "python3.11",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-7210"
+    },
+    {
+      "package": "python3.11-minimal",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-7210"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-72130"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-72320"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-74268"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-74269"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-74345"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-74611"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-74752"
+    },
+    {
+      "package": "libxml2",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-74860"
+    },
+    {
+      "package": "libxml2-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-74860"
+    },
+    {
+      "package": "bsdutils",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-76642"
+    },
+    {
+      "package": "libblkid1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-76642"
+    },
+    {
+      "package": "libmount1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-76642"
+    },
+    {
+      "package": "libsmartcols1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-76642"
+    },
+    {
+      "package": "libuuid1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-76642"
+    },
+    {
+      "package": "mount",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-76642"
+    },
+    {
+      "package": "util-linux",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-76642"
+    },
+    {
+      "package": "util-linux-extra",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-76642"
+    },
+    {
+      "package": "bsdutils",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78408"
+    },
+    {
+      "package": "libblkid1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78408"
+    },
+    {
+      "package": "libmount1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78408"
+    },
+    {
+      "package": "libsmartcols1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78408"
+    },
+    {
+      "package": "libuuid1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78408"
+    },
+    {
+      "package": "mount",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78408"
+    },
+    {
+      "package": "util-linux",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78408"
+    },
+    {
+      "package": "util-linux-extra",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78408"
+    },
+    {
+      "package": "bsdutils",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78409"
+    },
+    {
+      "package": "libblkid1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78409"
+    },
+    {
+      "package": "libmount1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78409"
+    },
+    {
+      "package": "libsmartcols1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78409"
+    },
+    {
+      "package": "libuuid1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78409"
+    },
+    {
+      "package": "mount",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78409"
+    },
+    {
+      "package": "util-linux",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78409"
+    },
+    {
+      "package": "util-linux-extra",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78409"
+    },
+    {
+      "package": "bsdutils",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78410"
+    },
+    {
+      "package": "libblkid1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78410"
+    },
+    {
+      "package": "libmount1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78410"
+    },
+    {
+      "package": "libsmartcols1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78410"
+    },
+    {
+      "package": "libuuid1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78410"
+    },
+    {
+      "package": "mount",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78410"
+    },
+    {
+      "package": "util-linux",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78410"
+    },
+    {
+      "package": "util-linux-extra",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-78410"
+    },
+    {
+      "package": "gdal-bin",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8086"
+    },
+    {
+      "package": "gdal-data",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8086"
+    },
+    {
+      "package": "gdal-plugins",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8086"
+    },
+    {
+      "package": "libgdal-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8086"
+    },
+    {
+      "package": "libgdal32",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8086"
+    },
+    {
+      "package": "python3-gdal",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8086"
+    },
+    {
+      "package": "gdal-bin",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8087"
+    },
+    {
+      "package": "gdal-data",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8087"
+    },
+    {
+      "package": "gdal-plugins",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8087"
+    },
+    {
+      "package": "libgdal-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8087"
+    },
+    {
+      "package": "libgdal32",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8087"
+    },
+    {
+      "package": "python3-gdal",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8087"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-80951"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-81000"
+    },
+    {
+      "package": "libcurl3-gnutls",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8286"
+    },
+    {
+      "package": "libcurl4",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8286"
+    },
+    {
+      "package": "libcurl4-openssl-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8286"
+    },
+    {
+      "package": "libpython3.11-minimal",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8328"
+    },
+    {
+      "package": "libpython3.11-stdlib",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8328"
+    },
+    {
+      "package": "python3.11",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8328"
+    },
+    {
+      "package": "python3.11-minimal",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8328"
+    },
+    {
+      "package": "libperl5.36",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2026-8376"
+    },
+    {
+      "package": "perl",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2026-8376"
+    },
+    {
+      "package": "perl-base",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2026-8376"
+    },
+    {
+      "package": "perl-modules-5.36",
+      "severity": "CRITICAL",
+      "vulnerability_id": "CVE-2026-8376"
+    },
+    {
+      "package": "libcurl3-gnutls",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8458"
+    },
+    {
+      "package": "libcurl4",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8458"
+    },
+    {
+      "package": "libcurl4-openssl-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8458"
+    },
+    {
+      "package": "libxml2",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-86138"
+    },
+    {
+      "package": "libxml2-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-86138"
+    },
+    {
+      "package": "libxml2",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-86139"
+    },
+    {
+      "package": "libxml2-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-86139"
+    },
+    {
+      "package": "libxml2",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-86140"
+    },
+    {
+      "package": "libxml2-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-86140"
+    },
+    {
+      "package": "libxml2",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-86142"
+    },
+    {
+      "package": "libxml2-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-86142"
+    },
+    {
+      "package": "libxml2",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-86143"
+    },
+    {
+      "package": "libxml2-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-86143"
+    },
+    {
+      "package": "libxml2",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-86144"
+    },
+    {
+      "package": "libxml2-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-86144"
+    },
+    {
+      "package": "libx11-6",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-88806"
+    },
+    {
+      "package": "libx11-data",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-88806"
+    },
+    {
+      "package": "libx11-xcb1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-88806"
+    },
+    {
+      "package": "libcurl3-gnutls",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8927"
+    },
+    {
+      "package": "libcurl4",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8927"
+    },
+    {
+      "package": "libcurl4-openssl-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-8927"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89479"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89480"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89481"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89487"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89488"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89526"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89530"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89545"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89563"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89564"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89569"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89579"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89603"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89607"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89631"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89633"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89638"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89652"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89653"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89656"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89659"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89663"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89669"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89675"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89676"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89708"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89713"
+    },
+    {
+      "package": "linux-libc-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-89846"
+    },
+    {
+      "package": "libexpat1",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-93990"
+    },
+    {
+      "package": "libexpat1-dev",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-93990"
+    },
+    {
+      "package": "libperl5.36",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-9538"
+    },
+    {
+      "package": "perl",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-9538"
+    },
+    {
+      "package": "perl-base",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-9538"
+    },
+    {
+      "package": "perl-modules-5.36",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-9538"
+    },
+    {
+      "package": "msgpack",
+      "severity": "HIGH",
+      "vulnerability_id": "GHSA-6v7p-g79w-8964"
+    }
+  ],
+  "key_fields": [
+    "VulnerabilityID",
+    "PkgName"
+  ],
+  "policy": "task103-g10-no-new-high-critical",
+  "scanner": {
+    "database_updated_at": "2026-09-24T19:02:16.063941580Z",
+    "name": "Trivy",
+    "version": "0.69.3"
+  },
+  "schema_version": 1,
+  "sources": [
+    {
+      "artifact_name": "towerscout:main-9276084-cpu",
+      "image_id": "sha256:522541a6902381e16559e111cc3cab898bf109f99f97ea73a703239941301687",
+      "pytorch_flavor": "cpu",
+      "raw_report_sha256": "1009ef4489fadd22cffd422f580216e808dc555a2e46b076311750bb26d77afe",
+      "report_created_at": "2026-09-24T22:27:28.135222999Z",
+      "source_ref": "9276084d91807906c53e00060670692b27e38483"
+    },
+    {
+      "artifact_name": "towerscout:task091-355ca4c-cuda126",
+      "image_id": "sha256:52bcbd32f58cfbdee29884cfd63c166c29203280176ed41ce8060419d24ff112",
+      "pytorch_flavor": "cuda126",
+      "raw_report_sha256": "f7c9cfbc2e0a068eb2f596515c3083aa4dda35cd6e4cee89b122cd195de1417b",
+      "report_created_at": "2026-09-24T22:29:37.616381975Z",
+      "source_ref": "355ca4c14d72bdab9636191acff06cc80ac0e48f"
+    }
+  ]
+}

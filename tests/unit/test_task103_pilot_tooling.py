@@ -1,0 +1,335 @@
+"""TASK-103 pilot qualification tooling: probe helpers, reporting, and manifest builder."""
+
+import importlib.util
+import json
+import logging
+import os
+import shutil
+import subprocess
+import textwrap
+from pathlib import Path
+
+import pytest
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+PROBE_PATH = REPO_ROOT / "scripts" / "task103_pilot_probe.py"
+MANIFEST_PATH = REPO_ROOT / "scripts" / "task103_make_manifest.py"
+GATES_V1_PATH = REPO_ROOT / "scripts" / "task103_gates.v1.json"
+GATES_PATH = REPO_ROOT / "scripts" / "task103_gates.v2.json"
+HARNESS_PATH = REPO_ROOT / "scripts" / "task098-qualify-ml.ps1"
+
+
+def _load(path: Path, name: str):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+@pytest.fixture(scope="module")
+def probe():
+    return _load(PROBE_PATH, "task103_pilot_probe_test")
+
+
+@pytest.fixture(scope="module")
+def manifest_builder():
+    return _load(MANIFEST_PATH, "task103_make_manifest_test")
+
+
+@pytest.mark.parametrize(
+    ("arch", "capability", "expected"),
+    [
+        ("sm_75", (7, 5), True),
+        ("sm_90", (12, 0), False),
+        ("sm_120", (12, 0), True),
+        ("sm_120", (12, 1), True),
+        ("sm_86", (8, 9), True),
+        ("compute_90", (12, 0), True),
+        ("compute_90a", (12, 0), False),
+        ("compute_90a", (9, 0), True),
+        ("sm_100f", (10, 3), True),
+        ("sm_100f", (12, 0), False),
+        ("compute_100f", (12, 0), False),
+        ("sm_foo", (12, 0), None),
+    ],
+)
+def test_arch_code_rules_respect_suffix_restrictions(probe, arch, capability, expected):
+    assert probe.arch_code_covers_device(arch, *capability) is expected
+
+
+def test_arch_support_aggregates_known_and_unknown_entries(probe):
+    cu126 = ["sm_50", "sm_60", "sm_70", "sm_75", "sm_80", "sm_86", "sm_90"]
+    cu128 = ["sm_70", "sm_75", "sm_80", "sm_86", "sm_90", "sm_100", "sm_120"]
+    assert probe.arch_supported(cu126, 12, 0) is False
+    assert probe.arch_supported(cu126, 7, 5) is True
+    assert probe.arch_supported(cu128, 12, 0) is True
+    assert probe.arch_supported(["sm_foo"], 12, 0) is None
+    assert probe.arch_supported([], 12, 0) is None
+
+
+def test_counting_classifier_records_work_injection_and_forwarding(probe):
+    class Inner:
+        device_label = "cuda"
+        batch_size = 8
+
+        def classify(self, img, detections, **kwargs):
+            return {"candidate_count": 2, "batches": 1}
+
+    counting = probe.CountingClassifier(Inner(), inject_error_on_call=2)
+    assert counting.device_label == "cuda"
+    assert counting.batch_size == 8
+    counting.classify(None, [])
+    with pytest.raises(RuntimeError, match="injected"):
+        counting.classify(None, [])
+    counting.classify(None, [])
+    snapshot = counting.snapshot()
+    assert counting.injected is True
+    assert snapshot["calls"] == 3
+    assert snapshot["candidates"] == 4
+    assert snapshot["batches"] == 2
+    assert len(snapshot["errors"]) == 1
+
+
+def test_log_capture_counts_propagated_records_once(probe):
+    logger = logging.getLogger("task103.test.capture")
+    logger.propagate = True
+    capture = probe._attach_log_capture()
+    logger.addHandler(capture)
+    try:
+        logger.error("Secondary classifier failed: boom")
+        logger.warning("WARNING NMS time limit 2.1s exceeded")
+        logger.warning("unrelated warning")
+    finally:
+        logger.removeHandler(capture)
+        logging.getLogger().removeHandler(capture)
+        for other in logging.Logger.manager.loggerDict.values():
+            if isinstance(other, logging.Logger):
+                other.removeHandler(capture)
+    assert capture.counts == {"secondary_classifier_failed": 1, "nms_time_limit": 1}
+
+
+def test_main_always_writes_structured_failure_evidence(probe, tmp_path, monkeypatch):
+    def failing_phase(_args):
+        raise RuntimeError("no kernel image is available for execution on the device")
+
+    monkeypatch.setitem(probe.PHASES, "identity", failing_phase)
+    monkeypatch.setenv("TOWERSCOUT_DEVICE", "cuda")
+    output = tmp_path / "identity.json"
+
+    exit_code = probe.main(["--phase", "identity", "--output", str(output)])
+
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert exit_code == 1
+    assert report["ok"] is False
+    assert report["error"]["type"] == "RuntimeError"
+    assert "no kernel image" in report["error"]["message"]
+    assert report["profile"] == "cuda"
+
+
+def test_main_passes_only_when_every_check_passes(probe, tmp_path, monkeypatch):
+    monkeypatch.setitem(probe.PHASES, "startup", lambda _args: {"checks": {"a": True, "b": False}})
+    output = tmp_path / "startup.json"
+    assert probe.main(["--phase", "startup", "--output", str(output)]) == 1
+    monkeypatch.setitem(probe.PHASES, "startup", lambda _args: {"checks": {"a": True}})
+    assert probe.main(["--phase", "startup", "--output", str(output)]) == 0
+
+
+def _capture_report(gates):
+    tiles = gates["fixture"]["tiles"]
+    detection = {
+        "x1": 0.1, "y1": 0.1, "x2": 0.2, "y2": 0.2, "conf": 0.4,
+        "class": 0, "class_name": "ct", "secondary": 0.3,
+    }
+    results = [[] for _ in tiles]
+    results[2] = [detection]
+    return {
+        "phase": "combined",
+        "mode": "capture",
+        "ok": True,
+        "stage": "A",
+        "profile": "cpu",
+        "run_id": "run-a",
+        "tile_hashes_verified": True,
+        "tiles": [{"name": tile["name"], "sha256": tile["sha256"]} for tile in tiles],
+        "runs": [
+            {"index": 0, "warmup": True, "results": results, "en": {"candidates": 1, "batches": 1, "errors": []}},
+            {"index": 1, "warmup": False, "results": results, "en": {"candidates": 1, "batches": 1, "errors": []}},
+        ],
+    }
+
+
+def test_manifest_builder_uses_gates_tolerances_and_last_measured_run(manifest_builder):
+    gates = json.loads(GATES_PATH.read_text(encoding="utf-8"))
+    manifest = manifest_builder.build_manifest(gates, _capture_report(gates), "f" * 64)
+    assert manifest["flow"] == "combined-production"
+    assert manifest["tolerances"] == {
+        "coordinates": gates["tolerances"]["box"],
+        "confidence": gates["tolerances"]["conf"],
+        "secondary": gates["tolerances"]["secondary"],
+    }
+    assert manifest["minimum_secondary_candidates"] == 1
+    assert manifest["provenance"]["per_tile_counts"][2] == 1
+    assert [tile["path"] for tile in manifest["tiles"]] == [tile["name"] for tile in gates["fixture"]["tiles"]]
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda report: report.update(ok=False),
+        lambda report: report.update(mode="compare"),
+        lambda report: report.update(tile_hashes_verified=False),
+        lambda report: report["tiles"][0].update(sha256="0" * 64),
+        lambda report: report["runs"][0]["en"]["errors"].append("RuntimeError: boom"),
+        lambda report: report["runs"][1]["en"].update(candidates=0),
+    ],
+)
+def test_manifest_builder_refuses_untrustworthy_captures(manifest_builder, mutation):
+    gates = json.loads(GATES_PATH.read_text(encoding="utf-8"))
+    report = _capture_report(gates)
+    mutation(report)
+    with pytest.raises(ValueError):
+        manifest_builder.build_manifest(gates, report, "f" * 64)
+
+
+def test_gates_file_declares_every_pilot_threshold():
+    gates = json.loads(GATES_PATH.read_text(encoding="utf-8"))
+    assert gates["target_flavor"] == "cuda128"
+    assert gates["fixture"]["historical_count_vector"] == [0, 0, 13, 8, 0, 4, 6, 11, 2, 4, 5, 0]
+    assert len(gates["fixture"]["tiles"]) == 12
+    assert gates["memory"]["relative_max"] == 1.10
+    assert gates["performance"]["relative_max"] == 1.10
+    assert gates["precision"] == {"conv": "ieee", "matmul": "ieee", "applies_to_stages": ["B", "C"]}
+    assert set(gates["required_phases"]) == {"identity", "startup", "synthetic", "combined", "memory", "inject"}
+
+
+def test_gates_amendment_changes_only_the_fixture_definition():
+    v1 = json.loads(GATES_V1_PATH.read_text(encoding="utf-8"))
+    v2 = json.loads(GATES_PATH.read_text(encoding="utf-8"))
+    for key in ("tolerances", "memory", "performance", "precision", "identity", "models", "required_phases"):
+        assert v2[key] == v1[key], key
+    assert v2["amends"]["tolerances_changed"] is False
+    assert v2["fixture"]["set"] == "rgb-derived"
+    assert [t["source_sha256"] for t in v2["fixture"]["tiles"]] == [t["sha256"] for t in v1["fixture"]["tiles"]]
+    assert v2["fixture"]["palette_originals"] == v1["fixture"]["tiles"]
+
+
+def test_harness_pilot_mode_never_overwrites_and_keeps_legacy_contract():
+    harness = HARNESS_PATH.read_text(encoding="utf-8")
+    assert "evidence is never overwritten" in harness
+    assert "-EvidenceRoot must be outside the repository" in harness
+    assert "task103_pilot_probe.py" in harness
+    assert "[ValidatePattern('^cu1[0-9]{2}$')]" in harness
+    assert '"cuda" + $CudaWheelTag.Substring(2)' in harness
+    # the original Task-098 path is preserved for existing users
+    assert "Task-098 $Profile qualification passed." in harness
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell harness is Windows-only")
+@pytest.mark.parametrize("profile, expects_gpu", [("cuda", True), ("cpu", False)])
+def test_harness_pilot_mode_passes_exact_probe_arguments_to_docker(
+    tmp_path, profile, expects_gpu
+):
+    """Image identity stays cuda128 independently of the requested execution device."""
+    powershell = shutil.which("powershell.exe")
+    if powershell is None:
+        pytest.skip("Windows PowerShell not found")
+
+    sandbox = tmp_path / "TowerScout pilot sandbox"
+    scripts = sandbox / "scripts"
+    (sandbox / "webapp" / "model_params").mkdir(parents=True)
+    scripts.mkdir()
+    shutil.copy2(HARNESS_PATH, scripts / HARNESS_PATH.name)
+    for name in ("task103_pilot_probe.py", "task098_ml_qualification.py", "task091_combined_contract.py"):
+        (scripts / name).write_text("# stub\n", encoding="ascii")
+    fixture_dir = tmp_path / "fixture set with spaces"
+    fixture_dir.mkdir()
+    (fixture_dir / "fixture-manifest.json").write_text("{}", encoding="ascii")
+    evidence_root = tmp_path / "evidence root"
+    run_log = tmp_path / "docker-run-args.txt"
+    fake_bin = tmp_path / "fake-bin"
+    fake_bin.mkdir()
+    (fake_bin / "git.cmd").write_text(
+        textwrap.dedent(
+            """\
+            @echo off
+            if "%3"=="status" exit /b 0
+            if "%3"=="rev-parse" (
+              echo 0123456789abcdef0123456789abcdef01234567
+              exit /b 0
+            )
+            exit /b 2
+            """
+        ),
+        encoding="ascii",
+    )
+    image_json = (
+        '[{"Id":"sha256:feedface","Size":123,"Config":{"Labels":{'
+        '"org.opencontainers.image.revision":"0123456789abcdef0123456789abcdef01234567",'
+        '"org.towerscout.pytorch.flavor":"cuda128"}}}]'
+    )
+    (fake_bin / "docker.cmd").write_text(
+        textwrap.dedent(
+            f"""\
+            @echo off
+            if "%1"=="info" (
+              echo 29.8.0
+              exit /b 0
+            )
+            if "%1"=="version" (
+              echo 29.8.0
+              exit /b 0
+            )
+            if "%1"=="image" (
+              echo {image_json}
+              exit /b 0
+            )
+            if "%1"=="run" (
+              echo %*>>"{run_log}"
+              exit /b 0
+            )
+            exit /b 3
+            """
+        ),
+        encoding="ascii",
+    )
+    (fake_bin / "nvidia-smi.cmd").write_text("@echo off\necho Fake GPU, 999.99\n", encoding="ascii")
+    env = os.environ.copy()
+    env["PATH"] = f"{fake_bin}{os.pathsep}{env['PATH']}"
+
+    result = subprocess.run(
+        [
+            powershell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(scripts / HARNESS_PATH.name),
+            "-Image", "towerscout:fake-c", "-Profile", profile, "-CudaWheelTag", "cu128", "-Stage", "C",
+            "-TorchVersion", "2.10.0", "-TorchvisionVersion", "0.25.0",
+            "-EvidenceRoot", str(evidence_root),
+            "-FixtureManifest", str(fixture_dir / "fixture-manifest.json"),
+            "-Phases", "combined",
+        ],
+        cwd=sandbox,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    invocation = run_log.read_text(encoding="ascii")
+    assert "--fixture-manifest /fixtures/fixture-manifest.json" in invocation
+    assert "--phase combined --output /evidence/combined.json" in invocation
+    if expects_gpu:
+        assert "--gpus all" in invocation
+    else:
+        assert "--gpus all" not in invocation
+    assert f"TOWERSCOUT_DEVICE={profile}" in invocation
+    assert "TASK103_EXPECTED_CUDA_BUILD=12.8" in invocation
+    assert "TASK103_EXPECTED_WHEEL_TAG=cu128" in invocation
+    run_dirs = list((evidence_root / "runs").iterdir())
+    assert len(run_dirs) == 1 and "_C_cuda128_torch2-10-0_" in run_dirs[0].name
+    run = json.loads((run_dirs[0] / "run.json").read_text(encoding="utf-8-sig"))
+    assert run["profile"] == profile
+    assert run["flavor"] == "cuda128"
+    assert run["expected"]["cuda_build"] == "12.8"
+    assert run["expected"]["wheel_tag"] == "cu128"
+    assert run["phases"]["combined"]["exit_code"] == 0

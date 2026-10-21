@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Maps Initialization Test</title>
+
+    <!-- Azure Maps Web SDK -->
+    <link rel="stylesheet" href="https://atlas.microsoft.com/sdk/javascript/mapcontrol/3.0/atlas.min.css"
+        type="text/css" />
+    <link rel="stylesheet" href="https://atlas.microsoft.com/sdk/javascript/drawing/1.0/atlas-drawing.min.css"
+        type="text/css" />
+    <script src="https://atlas.microsoft.com/sdk/javascript/mapcontrol/3.0/atlas.min.js"
+        onload="console.log('Azure Maps main SDK loaded successfully')"></script>
+    <script src="https://atlas.microsoft.com/sdk/javascript/drawing/1.0/atlas-drawing.min.js"
+        onload="console.log('Azure Maps drawing SDK loaded successfully')"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        #map {
+            width: 600px;
+            height: 400px;
+            border: 1px solid #ccc;
+            margin: 20px 0;
+        }
+
+        .log {
+            background: #f0f0f0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+
+        .status {
+            padding: 5px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Azure Maps Initialization Diagnostic</h1>
+
+    <div id="status">
+        <div class="status" id="sdk-status">⏳ Checking Azure Maps SDK...</div>
+        <div class="status" id="auth-status">⏳ Setting up authentication...</div>
+        <div class="status" id="map-status">⏳ Creating map instance...</div>
+        <div class="status" id="ready-status">⏳ Waiting for map ready event...</div>
+    </div>
+
+    <div id="map"></div>
+
+    <h3>Diagnostic Log:</h3>
+    <div class="log" id="log">Initializing diagnostic test...</div>
+
+    <script>
+        const AZURE_API_KEY = 'WIA8Q~8v0OV7ggW-o0BtR7Ub20o2ByNnVrXHXb0i';
+        let map = null;
+
+        function updateStatus(element, status, message) {
+            const statusEl = document.getElementById(element);
+            statusEl.className = 'status ' + status;
+            statusEl.textContent = (status === 'success' ? '✅' : status === 'error' ? '❌' : '⚠️') + ' ' + message;
+        }
+
+        function log(message) {
+            const logEl = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logEl.innerHTML += `<br>[${timestamp}] ${message}`;
+            logEl.scrollTop = logEl.scrollHeight;
+            console.log(message);
+        }
+
+        function initializeDiagnostic() {
+            log('Starting Azure Maps initialization diagnostic...');
+
+            // Step 1: Check SDK availability
+            if (typeof atlas === 'undefined') {
+                updateStatus('sdk-status', 'error', 'Azure Maps SDK not loaded');
+                log('ERROR: atlas object is undefined - SDK not loaded properly');
+                return;
+            }
+
+            if (typeof atlas.Map === 'undefined') {
+                updateStatus('sdk-status', 'error', 'Azure Maps Map class not available');
+                log('ERROR: atlas.Map class is undefined');
+                return;
+            }
+
+            updateStatus('sdk-status', 'success', 'Azure Maps SDK loaded successfully');
+            log('SUCCESS: Azure Maps SDK is available');
+
+            // Step 2: Set up authentication
+            try {
+                atlas.setAuthenticationOptions({
+                    authType: 'subscriptionKey',
+                    subscriptionKey: AZURE_API_KEY
+                });
+                updateStatus('auth-status', 'success', 'Authentication configured');
+                log('SUCCESS: Authentication options set');
+            } catch (error) {
+                updateStatus('auth-status', 'error', 'Authentication setup failed');
+                log('ERROR: Authentication setup failed - ' + error.message);
+                return;
+            }
+
+            // Step 3: Create map instance
+            try {
+                log('Creating map instance...');
+                map = new atlas.Map('map', {
+                    center: [-74.006, 40.7128], // NYC coordinates [lng, lat]
+                    zoom: 10,
+                    style: 'satellite',
+                    authOptions: {
+                        authType: 'subscriptionKey',
+                        subscriptionKey: AZURE_API_KEY
+                    }
+                });
+
+                updateStatus('map-status', 'success', 'Map instance created');
+                log('SUCCESS: Map instance created');
+
+                // Step 4: Wait for map ready event
+                log('Waiting for map ready event...');
+                map.events.add('ready', function () {
+                    updateStatus('ready-status', 'success', 'Map is ready for use');
+                    log('SUCCESS: Map ready event fired - Azure Maps fully initialized!');
+
+                    // Test map functionality
+                    setTimeout(function () {
+                        log('Testing map functionality...');
+                        const center = map.getCamera().center;
+                        log('Current map center: [' + center[0].toFixed(4) + ', ' + center[1].toFixed(4) + ']');
+                        log('Azure Maps initialization test completed successfully!');
+                    }, 1000);
+                });
+
+                // Add error event handler
+                map.events.add('error', function (e) {
+                    updateStatus('ready-status', 'error', 'Map error occurred');
+                    log('ERROR: Map error event - ' + (e.error ? e.error.message : 'Unknown error'));
+                });
+
+                // Add timeout to detect if ready event never fires
+                setTimeout(function () {
+                    if (document.getElementById('ready-status').className.includes('success')) {
+                        return; // Already succeeded
+                    }
+                    updateStatus('ready-status', 'warning', 'Map ready event timeout (30s)');
+                    log('WARNING: Map ready event has not fired after 30 seconds - possible network or configuration issue');
+                }, 30000);
+
+            } catch (error) {
+                updateStatus('map-status', 'error', 'Map creation failed');
+                log('ERROR: Map creation failed - ' + error.message);
+            }
+        }
+
+        // Wait for DOM and scripts to load
+        window.addEventListener('load', function () {
+            log('Page loaded, waiting 2 seconds for scripts to settle...');
+            setTimeout(initializeDiagnostic, 2000);
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,74 @@
+# syntax=docker/dockerfile:1
+
+FROM node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392 AS frontend
+
+WORKDIR /src
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
+COPY webapp/build.js webapp/build.js
+COPY webapp/js webapp/js
+RUN npm run build
+
+
+FROM python:3.11-slim-bookworm@sha256:0a310eeecf4e1f5a0743f9a6520c90c88d089c903ca5fd283f501e3a805f5f89 AS runtime
+
+ARG PYTORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
+ARG TOWERSCOUT_PYTORCH_FLAVOR=cpu
+ARG TOWERSCOUT_TORCH_VERSION=2.10.0
+ARG TOWERSCOUT_TORCHVISION_VERSION=0.25.0
+ARG TOWERSCOUT_RELEASE_VERSION=container-local
+ARG TOWERSCOUT_SOURCE_REF=unknown
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    FLASK_ENV=production \
+    TOWERSCOUT_LAZY_MODEL_INIT=1 \
+    TOWERSCOUT_STARTUP_PRELOAD=0 \
+    TOWERSCOUT_PYTORCH_FLAVOR=${TOWERSCOUT_PYTORCH_FLAVOR} \
+    YOLO_CONFIG_DIR=/app/webapp/cache/ultralytics \
+    TOWERSCOUT_VERSION=${TOWERSCOUT_RELEASE_VERSION}
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        libgl1 \
+        libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY webapp/requirements.txt webapp/requirements.txt
+RUN --mount=type=secret,id=towerscout_build_ca,required=false \
+    if [ -f /run/secrets/towerscout_build_ca ]; then \
+        export PIP_CERT=/run/secrets/towerscout_build_ca; \
+    fi \
+    && python -m pip install --upgrade "pip==26.2.1" \
+    && python -m pip install --no-cache-dir \
+        "torch==${TOWERSCOUT_TORCH_VERSION}" \
+        "torchvision==${TOWERSCOUT_TORCHVISION_VERSION}" \
+        --index-url "${PYTORCH_INDEX_URL}" \
+    && grep -Ev '^(torch|torchvision)==' webapp/requirements.txt > /tmp/requirements-runtime.txt \
+    && python -m pip install --no-cache-dir -r /tmp/requirements-runtime.txt \
+    && rm /tmp/requirements-runtime.txt
+
+COPY webapp webapp
+COPY docs docs
+COPY --from=frontend /src/webapp/js/towerscout.js webapp/js/towerscout.js
+COPY LICENSE NOTICE THIRD_PARTY_NOTICES.md MODEL_LICENSES.md DATA_LICENSES.md PROVIDER_TERMS.md SOURCE.txt SBOM.txt release-manifest.v1.json ./
+
+LABEL org.opencontainers.image.title="TowerScout" \
+    org.opencontainers.image.description="TowerScout agpl-yolo runtime image; release-specific metadata is authoritative in the release control ZIP." \
+    org.opencontainers.image.version="${TOWERSCOUT_RELEASE_VERSION}" \
+    org.opencontainers.image.revision="${TOWERSCOUT_SOURCE_REF}" \
+    org.opencontainers.image.licenses="LicenseRef-TowerScout-agpl-yolo" \
+    org.towerscout.pytorch.flavor="${TOWERSCOUT_PYTORCH_FLAVOR}"
+
+WORKDIR /app/webapp
+
+EXPOSE 5000
+
+VOLUME ["/app/webapp/config", "/app/webapp/model_params", "/app/webapp/data", "/app/webapp/logs", "/app/webapp/flask_session", "/app/webapp/temp/session", "/app/webapp/uploads", "/app/webapp/cache"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD python -c "import json, urllib.request; data=json.load(urllib.request.urlopen('http://127.0.0.1:5000/api/health', timeout=3)); raise SystemExit(0 if data.get('status') == 'ok' else 1)"
+
+CMD ["python", "towerscout.py"]

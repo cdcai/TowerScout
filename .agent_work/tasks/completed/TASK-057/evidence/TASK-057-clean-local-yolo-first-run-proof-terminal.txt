@@ -1,0 +1,11 @@
+PROOF_MODEL_PATH c:\Users\bg90\TowerScout\webapp\model_params\yolov5\newest.pt
+PROOF_TORCH_HOME C:\Users\bg90\TowerScout\.agent_work\tmp\task057-proof-torchhome
+PROOF_MODEL_EXISTS True
+2026-04-13 15:48:16 - towerscout.ml - INFO - Initializing YOLOv5 detector with model: c:\Users\bg90\TowerScout\webapp\model_params\yolov5\newest.pt
+YOLOv5  2026-4-13 Python-3.12.5 torch-2.2.1+cpu CPU
+
+2026-04-13 15:48:26 - towerscout.ml - INFO - YOLOv5 model loaded successfully
+2026-04-13 15:48:26 - towerscout.ml - INFO - CUDA not available, using CPU
+PROOF_MODEL_TYPE DetectionModel
+PROOF_BATCH_SIZE 10
+PROOF_TORCH_HOME_CONTENT_COUNT 0

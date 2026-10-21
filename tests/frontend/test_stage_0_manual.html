@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stage 0 Mutation Test - TASK-038</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin: 0 0 10px 0;
+        }
+
+        .subtitle {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .test-section {
+            background: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-section h2 {
+            margin-top: 0;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .status {
+            padding: 12px 20px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status.pending {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .status.pass {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .status.fail {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .code {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .instructions {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin: 8px 0;
+        }
+
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        .icon {
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🧪 Stage 0 Mutation Test</h1>
+        <div class="subtitle">TASK-038: Frontend Code Quality & Refactoring - Array Mutation Validation</div>
+    </div>
+
+    <div class="instructions">
+        <strong>📋 Instructions:</strong>
+        <ol>
+            <li>Make sure TowerScout is running at <a href="http://localhost:5000"
+                    target="_blank">http://localhost:5000</a></li>
+            <li>Open the browser console (F12 → Console tab) in the TowerScout tab</li>
+            <li>Click the "Run All Tests" button below</li>
+            <li>Watch the test results appear</li>
+            <li>All tests should show ✅ PASS</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button id="runAllTests" onclick="runAllTests()">▶️ Run All Tests</button>
+        <button onclick="location.reload()" style="background: #6c757d; margin-left: 10px;">🔄 Reset</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Summary</h2>
+        <div id="summary" class="status pending">
+            <span class="icon">⏳</span>
+            <span>Ready to run tests</span>
+        </div>
+    </div>
+
+    <script>
+        const results = [];
+
+        function addResult(testName, passed, message) {
+            results.push({ testName, passed, message });
+            const resultsDiv = document.getElementById('results');
+            const icon = passed ? '✅' : '❌';
+            const statusClass = passed ? 'pass' : 'fail';
+            resultsDiv.innerHTML += `
+        <div class="status ${statusClass}">
+          <span class="icon">${icon}</span>
+          <div>
+            <strong>${testName}</strong><br>
+            <span style="font-weight: normal; opacity: 0.9;">${message}</span>
+          </div>
+        </div>
+      `;
+        }
+
+        function updateSummary() {
+            const total = results.length;
+            const passed = results.filter(r => r.passed).length;
+            const failed = total - passed;
+
+            const summaryDiv = document.getElementById('summary');
+
+            if (failed === 0) {
+                summaryDiv.className = 'status pass';
+                summaryDiv.innerHTML = `
+          <span class="icon">🎉</span>
+          <div>
+            <strong>All Tests Passed!</strong><br>
+            ${passed}/${total} tests successful - Stage 0 validation complete
+          </div>
+        `;
+            } else {
+                summaryDiv.className = 'status fail';
+                summaryDiv.innerHTML = `
+          <span class="icon">❌</span>
+          <div>
+            <strong>Some Tests Failed</strong><br>
+            ${passed}/${total} passed, ${failed} failed - Review errors above
+          </div>
+        `;
+            }
+        }
+
+        async function runAllTests() {
+            document.getElementById('runAllTests').disabled = true;
+            document.getElementById('results').innerHTML = '';
+            results.length = 0;
+
+            const summaryDiv = document.getElementById('summary');
+            summaryDiv.className = 'status info';
+            summaryDiv.innerHTML = '<span class="icon">🔄</span><span>Running tests...</span>';
+
+            // Open TowerScout in iframe (hidden) to access its globals
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = 'http://localhost:5000';
+            document.body.appendChild(iframe);
+
+            // Wait for iframe to load
+            await new Promise(resolve => {
+                iframe.onload = resolve;
+            });
+
+            // Wait a bit more for TowerScout to initialize
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+            const win = iframe.contentWindow;
+
+            // Test 1: Detection.resetAll() - Detection_detections.length = 0
+            try {
+                win.Detection_detections = [
+                    { id: 0, conf: 0.8 },
+                    { id: 1, conf: 0.9 },
+                    { id: 2, conf: 1.0 }
+                ];
+                const initialLength = win.Detection_detections.length;
+
+                win.Detection.resetAll();
+
+                const finalLength = win.Detection_detections.length;
+
+                if (finalLength === 0) {
+                    addResult(
+                        'Test 1: Detection.resetAll()',
+                        true,
+                        `Array cleared successfully: ${initialLength} → ${finalLength}`
+                    );
+                } else {
+                    addResult(
+                        'Test 1: Detection.resetAll()',
+                        false,
+                        `Array not cleared: ${initialLength} → ${finalLength} (expected 0)`
+                    );
+                }
+            } catch (error) {
+                addResult(
+                    'Test 1: Detection.resetAll()',
+                    false,
+                    `Error: ${error.message}`
+                );
+            }
+
+            // Test 2: Tile.resetAll() - Tile_tiles.length = 0
+            try {
+                win.Tile_tiles = [
+                    { id: 0 },
+                    { id: 1 },
+                    { id: 2 }
+                ];
+                const initialLength = win.Tile_tiles.length;
+
+                win.Tile.resetAll();
+
+                const finalLength = win.Tile_tiles.length;
+
+                if (finalLength === 0) {
+                    addResult(
+                        'Test 2: Tile.resetAll()',
+                        true,
+                        `Array cleared successfully: ${initialLength} → ${finalLength}`
+                    );
+                } else {
+                    addResult(
+                        'Test 2: Tile.resetAll()',
+                        false,
+                        `Array not cleared: ${initialLength} → ${finalLength} (expected 0)`
+                    );
+                }
+            } catch (error) {
+                addResult(
+                    'Test 2: Tile.resetAll()',
+                    false,
+                    `Error: ${error.message}`
+                );
+            }
+
+            // Test 3: Check for mutation pattern in Detection.resetAll
+            try {
+                const resetAllStr = win.Detection.resetAll.toString();
+                const hasMutation = resetAllStr.includes('.length = 0');
+
+                if (hasMutation) {
+                    addResult(
+                        'Test 3: Detection.resetAll() uses mutation pattern',
+                        true,
+                        'Function contains .length = 0 mutation (correct pattern)'
+                    );
+                } else {
+                    addResult(
+                        'Test 3: Detection.resetAll() uses mutation pattern',
+                        false,
+                        'Function missing .length = 0 pattern (still using reassignment?)'
+                    );
+                }
+            } catch (error) {
+                addResult(
+                    'Test 3: Detection.resetAll() mutation pattern',
+                    false,
+                    `Error: ${error.message}`
+                );
+            }
+
+            // Test 4: Check for mutation pattern in Tile.resetAll
+            try {
+                const resetAllStr = win.Tile.resetAll.toString();
+                const hasMutation = resetAllStr.includes('.length = 0');
+
+                if (hasMutation) {
+                    addResult(
+                        'Test 4: Tile.resetAll() uses mutation pattern',
+                        true,
+                        'Function contains .length = 0 mutation (correct pattern)'
+                    );
+                } else {
+                    addResult(
+                        'Test 4: Tile.resetAll() uses mutation pattern',
+                        false,
+                        'Function missing .length = 0 pattern (still using reassignment?)'
+                    );
+                }
+            } catch (error) {
+                addResult(
+                    'Test 4: Tile.resetAll() mutation pattern',
+                    false,
+                    `Error: ${error.message}`
+                );
+            }
+
+            // Test 5: AzureMap.clearAll() filtering
+            if (win.azureMap) {
+                try {
+                    win.Detection_detections = [
+                        { id: 0, conf: 0.8 },
+                        { id: 1, conf: 0.9 },
+                        { id: 2, conf: 1.0 }, // Manual
+                        { id: 3, conf: 0.7 },
+                        { id: 4, conf: 1.0 }  // Manual
+                    ];
+                    const initialLength = win.Detection_detections.length;
+                    const manualCount = win.Detection_detections.filter(d => d.conf === 1.0).length;
+
+                    win.azureMap.clearAll();
+
+                    const finalLength = win.Detection_detections.length;
+                    const expectedLength = initialLength - manualCount;
+
+                    if (finalLength === expectedLength) {
+                        addResult(
+                            'Test 5: AzureMap.clearAll() filtering',
+                            true,
+                            `Filtered correctly: ${initialLength} → ${finalLength} (removed ${manualCount} manual detections)`
+                        );
+                    } else {
+                        addResult(
+                            'Test 5: AzureMap.clearAll() filtering',
+                            false,
+                            `Wrong count: ${initialLength} → ${finalLength}, expected ${expectedLength}`
+                        );
+                    }
+                } catch (error) {
+                    addResult(
+                        'Test 5: AzureMap.clearAll() filtering',
+                        false,
+                        `Error: ${error.message}`
+                    );
+                }
+            } else {
+                addResult(
+                    'Test 5: AzureMap.clearAll() filtering',
+                    false,
+                    'Azure Maps not initialized - skipped'
+                );
+            }
+
+            // Test 6: GoogleMap.clearAll() filtering
+            if (win.googleMap) {
+                try {
+                    win.Detection_detections = [
+                        { id: 0, conf: 0.8 },
+                        { id: 1, conf: 1.0 }, // Manual
+                        { id: 2, conf: 0.9 }
+                    ];
+                    const initialLength = win.Detection_detections.length;
+                    const manualCount = win.Detection_detections.filter(d => d.conf === 1.0).length;
+
+                    win.googleMap.clearAll();
+
+                    const finalLength = win.Detection_detections.length;
+                    const expectedLength = initialLength - manualCount;
+
+                    if (finalLength === expectedLength) {
+                        addResult(
+                            'Test 6: GoogleMap.clearAll() filtering',
+                            true,
+                            `Filtered correctly: ${initialLength} → ${finalLength} (removed ${manualCount} manual detections)`
+                        );
+                    } else {
+                        addResult(
+                            'Test 6: GoogleMap.clearAll() filtering',
+                            false,
+                            `Wrong count: ${initialLength} → ${finalLength}, expected ${expectedLength}`
+                        );
+                    }
+                } catch (error) {
+                    addResult(
+                        'Test 6: GoogleMap.clearAll() filtering',
+                        false,
+                        `Error: ${error.message}`
+                    );
+                }
+            } else {
+                addResult(
+                    'Test 6: GoogleMap.clearAll() filtering',
+                    false,
+                    'Google Maps not initialized - skipped'
+                );
+            }
+
+            // Clean up
+            document.body.removeChild(iframe);
+
+            updateSummary();
+            document.getElementById('runAllTests').disabled = false;
+        }
+    </script>
+</body>
+
+</html>

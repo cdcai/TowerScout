@@ -1,0 +1,7 @@
+interface:
+  display_name: 'TowerScout: Browser Smoke Triage'
+  short_description: Browser smoke triage
+  default_prompt: Use $towerscout-browser-provider-smoke-triage to interpret this
+    browser smoke failure.
+policy:
+  allow_implicit_invocation: true

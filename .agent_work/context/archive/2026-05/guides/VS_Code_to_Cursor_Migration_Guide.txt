@@ -1,0 +1,330 @@
+CTowerScout Development Environment Migration: VS Code to Cursor
+================================================================
+
+This guide provides step-by-step instructions for migrating your TowerScout development 
+environment from Visual Studio Code to Cursor while preserving all project structure, 
+configurations, and development workflow.
+
+OVERVIEW
+--------
+Cursor is a VS Code fork designed specifically for AI-assisted development. It maintains 
+compatibility with VS Code extensions and configurations while adding AI coding features.
+Your TowerScout project structure will be preserved completely.
+
+PREREQUISITES
+-------------
+- Cursor installed on your system (download from cursor.sh)
+- Current VS Code workspace functional and backed up
+- Git repository in clean state
+- Python virtual environment activated
+
+MIGRATION STEPS
+===============
+
+STEP 1: BACKUP CURRENT ENVIRONMENT
+----------------------------------
+1. Create a backup of your entire TowerScout directory:
+   - Copy C:\Users\bg90\TowerScout to C:\Users\bg90\TowerScout_backup
+
+2. Export VS Code settings and extensions:
+   - Open VS Code Command Palette (Ctrl+Shift+P)
+   - Run "Settings Sync: Show Settings"
+   - Note your current settings sync status
+   - Export settings manually if needed:
+     * File > Preferences > Settings (gear icon) > Export Settings
+
+3. Document current extensions:
+   - Open Extensions view (Ctrl+Shift+X)
+   - Create list of installed extensions (especially TowerScout-specific ones)
+
+4. Backup workspace configuration:
+   - Copy .vscode/ directory contents (if exists)
+   - Note any workspace-specific launch configurations
+
+STEP 2: INSTALL AND CONFIGURE CURSOR
+------------------------------------
+1. Download Cursor from cursor.sh and install
+
+2. Initial Cursor setup:
+   - Launch Cursor for first time
+   - Sign in with GitHub/Google account for AI features
+   - Configure AI model preferences (Claude, GPT-4, etc.)
+
+3. Import VS Code settings (if using Settings Sync):
+   - Enable Settings Sync in Cursor
+   - Sign in with same account used in VS Code
+   - Allow settings/extensions to sync
+
+4. Manual settings migration (if not using sync):
+   - Copy settings.json from VS Code user directory to Cursor
+   - VS Code location: %APPDATA%\Code\User\settings.json
+   - Cursor location: %APPDATA%\Cursor\User\settings.json
+
+STEP 3: PROJECT STRUCTURE PRESERVATION
+--------------------------------------
+1. Close VS Code completely
+
+2. Open TowerScout project in Cursor:
+   - Launch Cursor
+   - File > Open Folder
+   - Select C:\Users\bg90\TowerScout
+
+3. Verify project structure integrity:
+   - Confirm all directories visible (.agent_work, webapp, tests, etc.)
+   - Check that hidden files are shown (.gitignore, .env, etc.)
+   - Verify flask_session and cache directories preserved
+
+4. Test file associations:
+   - Ensure .py files open with Python syntax highlighting
+   - Verify .md files render with markdown preview
+   - Check .ipynb notebooks open correctly
+
+STEP 4: DEVELOPMENT ENVIRONMENT SETUP
+-------------------------------------
+1. Configure Python interpreter:
+   - Open Command Palette (Ctrl+Shift+P)
+   - "Python: Select Interpreter"
+   - Choose your TowerScout virtual environment:
+     C:\Users\bg90\TowerScout\.venv\Scripts\python.exe
+
+2. Verify terminal integration:
+   - Open integrated terminal (Ctrl+`)
+   - Confirm it activates virtual environment automatically
+   - Test: python --version should show correct Python version
+
+3. Configure workspace settings:
+   - Create/update .vscode/settings.json in project root:
+   {
+     "python.pythonPath": ".venv/Scripts/python.exe",
+     "python.terminal.activateEnvironment": true,
+     "python.linting.enabled": true,
+     "python.linting.flake8Enabled": true,
+     "python.formatting.provider": "black",
+     "python.testing.pytestEnabled": true,
+     "python.testing.pytestPath": "pytest"
+   }
+
+STEP 5: EXTENSION MIGRATION
+---------------------------
+1. Essential Python extensions:
+   - Python (Microsoft) - Core Python support
+   - Python Debugger (Microsoft) - Debugging capabilities
+   - Pylance (Microsoft) - Language server
+   - Black Formatter - Code formatting
+   - autoDocstring - Documentation generation
+
+2. Web development extensions:
+   - HTML CSS Support
+   - JavaScript (ES6) code snippets
+   - Live Server (if needed for frontend testing)
+
+3. TowerScout-specific extensions:
+   - Jupyter - For Model/ notebooks
+   - GitLens - Enhanced git integration
+   - Thunder Client or REST Client - API testing
+   - Docker (if using containerization)
+
+4. AI coding enhancements (Cursor-specific):
+   - Cursor's built-in AI features are automatically available
+   - Configure AI model preferences in settings
+   - Set up custom AI instructions for TowerScout context
+
+STEP 6: TASK MANAGEMENT MIGRATION
+---------------------------------
+1. Preserve .agent_work structure:
+   - Verify all files in .agent_work/ directory are accessible
+   - Test navigation to current-tasks.md, design.md, requirements.md
+   - Confirm context/ subdirectories (guides/, analysis/, status/) intact
+
+2. Configure Cursor for task management:
+   - Set up file watchers for .md files in .agent_work/
+   - Configure markdown preview for documentation files
+   - Set up custom snippets for EARS notation and decision records
+
+3. Maintain spec-driven workflow:
+   - Verify access to task management files
+   - Test markdown editing and preview functionality
+   - Confirm git integration for task tracking
+
+STEP 7: AI CODING CONFIGURATION
+-------------------------------
+1. Configure Cursor AI for TowerScout:
+   - Open Cursor Settings > AI
+   - Set preferred model (Claude Sonnet 4 recommended for TowerScout)
+   - Configure context window size for large codebases
+
+2. Set up TowerScout-specific AI instructions:
+   - Create .cursorrules file in project root with TowerScout context
+   - Include key patterns, architecture notes, and security constraints
+   - Reference legacy feature requirements and ML model protection
+
+3. Configure AI code completion:
+   - Enable/disable autocomplete based on preference
+   - Set up custom keybindings for AI features
+   - Configure privacy settings for code context
+
+STEP 8: TESTING AND VALIDATION
+------------------------------
+1. Test core functionality:
+   - Run pytest from integrated terminal: pytest
+   - Verify all tests pass as expected
+   - Test debugging with breakpoints in webapp/towerscout.py
+
+2. Test development server:
+   - Navigate to webapp/ directory in terminal
+   - Run: python towerscout.py dev
+   - Verify server starts without errors
+   - Test in browser: http://localhost:5000
+
+3. Test AI coding features:
+   - Try AI code completion in a Python file
+   - Test AI chat for TowerScout-specific questions
+   - Verify AI understands project context
+
+4. Verify git integration:
+   - Test git status, add, commit from integrated terminal
+   - Verify GitLens features work correctly
+   - Test git graph and history visualization
+
+STEP 9: WORKFLOW OPTIMIZATION
+-----------------------------
+1. Configure custom keybindings:
+   - Set up shortcuts for common TowerScout operations
+   - Configure AI chat and completion keybindings
+   - Set up task management shortcuts
+
+2. Set up workspace templates:
+   - Create snippets for common TowerScout patterns
+   - Configure file templates for new modules
+   - Set up decision record templates
+
+3. Configure development workflow:
+   - Set up tasks.json for common operations (test, run, lint)
+   - Configure launch.json for debugging webapp
+   - Set up integrated terminal profiles
+
+STEP 10: FINAL VALIDATION
+-------------------------
+1. Complete functionality test:
+   - Create a small test polygon in TowerScout interface
+   - Run detection pipeline end-to-end
+   - Verify all components work correctly
+
+2. Documentation verification:
+   - Test markdown rendering in .agent_work files
+   - Verify decision records and requirements display correctly
+   - Test internal linking between documentation files
+
+3. Performance validation:
+   - Compare startup time between VS Code and Cursor
+   - Test large file handling (especially in Model/ directory)
+   - Verify AI features don't significantly impact performance
+
+TROUBLESHOOTING
+===============
+
+Common Issues and Solutions:
+
+1. Python interpreter not found:
+   - Manually select interpreter: Ctrl+Shift+P > "Python: Select Interpreter"
+   - Verify virtual environment is in correct location
+
+2. Extensions not working:
+   - Reinstall Python extensions one by one
+   - Check extension compatibility with Cursor
+   - Restart Cursor after installing extensions
+
+3. Terminal not activating virtual environment:
+   - Check terminal.integrated.env.windows settings
+   - Manually activate: source .venv/Scripts/activate (in Git Bash)
+   - Verify python.terminal.activateEnvironment is true
+
+4. AI features not working:
+   - Check internet connection
+   - Verify Cursor account is properly signed in
+   - Check AI model availability and rate limits
+
+5. Git integration issues:
+   - Verify git is in system PATH
+   - Check git credentials are properly configured
+   - Test git operations from external terminal first
+
+CURSOR-SPECIFIC FEATURES TO EXPLORE
+===================================
+
+1. AI Chat Integration:
+   - Ask AI about TowerScout architecture
+   - Get help with debugging ML model issues
+   - Request code improvements and optimizations
+
+2. AI Code Generation:
+   - Generate unit tests for new functions
+   - Create documentation comments
+   - Suggest code improvements
+
+3. AI-Assisted Refactoring:
+   - Improve code quality while preserving functionality
+   - Optimize performance bottlenecks
+   - Enhance error handling
+
+4. Context-Aware Suggestions:
+   - AI understands TowerScout domain (cooling towers, ML detection)
+   - Suggestions respect existing patterns and architecture
+   - AI learns from your coding style
+
+ROLLBACK PLAN
+=============
+
+If migration causes issues:
+
+1. Immediate rollback:
+   - Close Cursor
+   - Restore TowerScout_backup directory
+   - Reopen project in VS Code
+
+2. Partial rollback:
+   - Keep project in Cursor
+   - Use VS Code for specific tasks if needed
+   - Gradually transition over time
+
+3. Hybrid approach:
+   - Use both editors for different purposes
+   - Cursor for AI-assisted development
+   - VS Code for complex debugging or familiar workflows
+
+POST-MIGRATION RECOMMENDATIONS
+==============================
+
+1. Update documentation:
+   - Add note about Cursor usage to development setup guides
+   - Update any VS Code specific instructions
+   - Document AI coding workflow improvements
+
+2. Team considerations:
+   - Share migration experience with team members
+   - Document any TowerScout-specific Cursor configurations
+   - Create shared .cursorrules file for consistent AI behavior
+
+3. Continuous improvement:
+   - Monitor performance and productivity changes
+   - Collect feedback on AI coding features
+   - Iterate on AI instructions and configurations
+
+CONCLUSION
+==========
+
+This migration preserves your entire TowerScout development environment while adding 
+AI-powered coding capabilities. The project structure, task management system, and 
+development workflow remain intact. Cursor's AI features should enhance your productivity 
+while maintaining all the careful architectural decisions and security improvements 
+you've implemented in TowerScout.
+
+Key benefits of migration:
+- Preserved project structure and configurations
+- Enhanced AI-assisted development capabilities  
+- Maintained compatibility with existing workflow
+- Improved code generation and debugging support
+- Better context awareness for TowerScout domain
+
+The migration should be seamless, with the primary difference being the addition of 
+powerful AI coding features while retaining all familiar VS Code functionality.

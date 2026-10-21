@@ -1,0 +1,443 @@
+TOWERSCOUT DEVELOPMENT SETUP GUIDE
+=================================
+
+Last reviewed: 2026-04-09
+Audience: developers and technical contributors
+
+PURPOSE
+=======
+
+This guide reflects the current TowerScout repository state. It replaces older setup instructions that still assumed the `improvements` branch, manual `.env` editing as the primary setup path, and Sprint 02/03-era architecture.
+
+CURRENT REALITY CHECK
+=====================
+
+- Use `feature-sprint-05` for the current Sprint 05 task state, including the completed `TASK-051` runtime-dependency updates.
+- Use `feature-sprint-04-closeout` only if you explicitly need the pre-Sprint 05 closeout snapshot.
+- Setup Wizard and Settings are implemented. Normal provider-key setup can now happen in the browser.
+- Google Maps and Azure Maps are the supported setup paths. Bing remains legacy compatibility only.
+- Docker is not part of the active local development path. There is no `Dockerfile` in the repo today.
+- ZIP code shapefile data is already tracked in `webapp/data/tl_2025_us_zcta520/`. You should not need to download it separately.
+- Model weights are still not stored in git. You must provide them locally before the app can start successfully.
+
+SYSTEM REQUIREMENTS
+===================
+
+Recommended:
+- Windows 10/11, macOS, or Linux
+- Git 2.30+
+- Python 3.12 recommended, Python 3.11 also supported in CI
+- `pip` from the same Python installation
+- Node.js 16+ if you will rebuild frontend assets or run browser smoke tests
+- 10 GB+ free disk space
+- Reliable internet connection for dependency installation and live provider APIs
+- One valid Google Maps key or Azure Maps key for normal app usage
+
+Optional:
+- CUDA-capable GPU for faster detection
+- VS Code, Cursor, or another IDE
+
+NOT required for current local development:
+- Docker Desktop
+
+QUICK START
+===========
+
+1. Clone the repo and switch to the branch you need.
+2. Create a Python virtual environment.
+3. Install Python dependencies.
+4. Install Node dependencies only if you need frontend builds or browser tests.
+5. Download the two model weight files into `webapp/model_params/`.
+6. Start the app with `python towerscout.py dev`.
+7. Complete Setup Wizard in the browser if no provider key is already saved.
+
+STEP 1: CLONE THE REPOSITORY
+============================
+
+Typical clone:
+
+```bash
+git clone https://github.com/J-Schulein/TowerScout.git
+cd TowerScout
+```
+
+If you want the current Sprint 05 application state:
+
+```bash
+git checkout feature-sprint-05
+```
+
+If you need the Sprint 04 closeout application state instead:
+
+```bash
+git checkout feature-sprint-04-closeout
+```
+
+If you are continuing active development work, use the branch assigned to your task instead of assuming `improvements`.
+
+STEP 2: CREATE A PYTHON VIRTUAL ENVIRONMENT
+===========================================
+
+Windows PowerShell:
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+If Python 3.12 is not installed, replace `3.12` with `3.11`.
+
+macOS/Linux:
+
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+```
+
+STEP 3: INSTALL PYTHON DEPENDENCIES
+===================================
+
+From the repository root:
+
+```bash
+python -m pip install --upgrade pip
+pip install -r webapp/requirements.txt
+pip install -r requirements-dev.txt
+```
+
+Notes:
+- `webapp/requirements.txt` is the runtime dependency list.
+- `webapp/requirements.txt` now includes the current verified runtime gaps `psutil` and `tqdm`.
+- `webapp/requirements.txt` also explicitly includes `packaging`, `pandas`, and a pinned `ultralytics` version because the local YOLOv5 runtime imports those directly at runtime.
+- The Sprint 05 validated CPU baseline now pins `numpy==1.26.4` explicitly and keeps TowerScout on a NumPy 1 contract until a coordinated NumPy 2 migration is approved.
+- The runtime manifest now satisfies the local YOLOv5 runtime minimums for `Pillow` and `Requests`, so first detection should not auto-upgrade core packages in-process.
+- `requirements-dev.txt` adds pytest, linting, type-checking, and security tools.
+- TowerScout now loads YOLOv5 from its vendored local runtime snapshot under `webapp/vendor/yolov5_local/`.
+- YOLOv5 initialization no longer depends on Torch Hub cache state or first-run GitHub access.
+
+OPTIONAL: CUDA-ENABLED PYTORCH
+==============================
+
+CPU-only installs remain supported and are the default proof path for this repo.
+Installing `webapp/requirements.txt` gives the validated CPU baseline only.
+
+If you want GPU acceleration on a CUDA-compatible NVIDIA machine:
+- install a CUDA-enabled PyTorch build for `torch==2.2.1` and `torchvision==0.17.1`
+- use the official PyTorch install selector or previous-versions page to choose the correct CUDA wheel/index for your machine
+- after that install is present, TowerScout will use CUDA automatically when `torch.cuda.is_available()` is true
+
+Useful official references:
+- https://pytorch.org/get-started/locally/
+- https://pytorch.org/get-started/previous-versions/
+
+You do not need a separate TowerScout setting to enable CUDA.
+
+TLS NOTE
+========
+
+TowerScout now verifies TLS certificates by default for runtime network calls.
+
+If you are on a narrow local recovery path and must temporarily bypass certificate verification, set:
+
+```bash
+TOWERSCOUT_ALLOW_INSECURE_TLS=1
+```
+
+Use that only as a short-lived local exception. It is not part of the validated default runtime contract.
+
+STEP 4: INSTALL NODE DEPENDENCIES IF NEEDED
+===========================================
+
+You only need Node.js tooling if you will rebuild the frontend bundle or run browser-based smoke tests.
+
+```bash
+npm install
+```
+
+Current frontend tooling notes:
+- `package.json` requires Node.js `>=16.0.0`
+- the primary build command is `node webapp/build.js`
+- `npm run build` is an equivalent wrapper when your shell allows `npm`
+- browser smoke scripts use Puppeteer and expect a locally installed browser
+- `npm run test:stage-0` invokes `bash validate_stage_0.sh`, so Windows users need Git Bash or WSL for that one script
+- if Windows PowerShell blocks `npm.ps1`, use `npm.cmd run <script>` or call the underlying `node ...` command directly
+
+STEP 5: DOWNLOAD REQUIRED MODEL FILES
+=====================================
+
+The application expects both model files to exist locally before startup.
+
+Required files:
+- `webapp/model_params/yolov5/newest.pt`
+- `webapp/model_params/EN/b5_unweighted_best.pt`
+
+If the directories do not exist, create them first.
+
+Windows PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force webapp\model_params\yolov5
+New-Item -ItemType Directory -Force webapp\model_params\EN
+```
+
+macOS/Linux:
+
+```bash
+mkdir -p webapp/model_params/yolov5
+mkdir -p webapp/model_params/EN
+```
+
+Current download links referenced by the repo README:
+- YOLOv5 weights: https://drive.google.com/file/d/1EBxgqr6MrkAkEv1vJ2ftZiSjs6w865wf/view?usp=drive_link
+- EfficientNet weights: https://drive.google.com/file/d/1Cs3nXQddNf-Y0HYO8a5Yvm6mNB-Rx8HP/view?usp=drive_link
+
+Sanity check after download:
+- `newest.pt` is currently about 175 MB in the local workspace
+- `b5_unweighted_best.pt` is currently about 119 MB in the local workspace
+
+If either file is missing, TowerScout can fail before the server starts.
+
+STEP 6: CONFIGURE PROVIDER KEYS
+===============================
+
+Recommended path for normal local use:
+- Start the app first.
+- Open the browser.
+- Let Setup Wizard validate and save your Google or Azure key.
+
+Canonical config location:
+- `webapp/config/.env`
+
+Legacy path still recognized:
+- `webapp/.env`
+
+Important notes:
+- At least one valid provider key is required for normal use.
+- Setup Wizard saves Google/Azure keys and `DEFAULT_MAP_PROVIDER`.
+- Bing is not part of the new setup flow and should not be treated as the primary path.
+- If `FLASK_SECRET_KEY` is missing, the app can still boot for local work, but it uses a temporary in-memory secret and session state will not be stable across restarts.
+
+If you want to pre-seed configuration manually, copy the template to the canonical path:
+
+Windows PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force webapp\config
+Copy-Item webapp\.env.example webapp\config\.env
+```
+
+macOS/Linux:
+
+```bash
+mkdir -p webapp/config
+cp webapp/.env.example webapp/config/.env
+```
+
+Minimum useful manual values:
+
+```env
+AZURE_MAPS_SUBSCRIPTION_KEY=your_real_azure_key
+DEFAULT_MAP_PROVIDER=azure
+FLASK_SECRET_KEY=generate_a_random_secret_here
+FLASK_ENV=development
+FLASK_DEBUG=true
+```
+
+or
+
+```env
+GOOGLE_API_KEY=your_real_google_key
+DEFAULT_MAP_PROVIDER=google
+FLASK_SECRET_KEY=generate_a_random_secret_here
+FLASK_ENV=development
+FLASK_DEBUG=true
+```
+
+Generate a secret key if needed:
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+STEP 7: RUN THE APPLICATION
+===========================
+
+From the `webapp` directory:
+
+```bash
+cd webapp
+python towerscout.py dev
+```
+
+Expected behavior:
+- the app serves on `http://localhost:5000`
+- if no valid provider key is configured yet, Setup Wizard appears first
+- filesystem-backed sessions are stored in `webapp/flask_session`
+- temporary run data is stored in `webapp/temp/session`
+
+Current startup behavior worth knowing:
+- EfficientNet is loaded during startup unless `TOWERSCOUT_LAZY_MODEL_INIT` is enabled
+- YOLOv5 models are discovered from `webapp/model_params/yolov5/`
+- the default YOLO model is loaded on demand in `dev` mode
+- TowerScout loads YOLOv5 from the vendored local runtime under `webapp/vendor/yolov5_local/`
+- first YOLOv5 initialization no longer depends on Torch Hub cache state or GitHub reachability
+
+STEP 8: VERIFY THE INSTALLATION
+===============================
+
+Basic backend checks:
+
+```bash
+pytest tests/unit -v
+pytest tests/integration -v
+```
+
+Frontend bundle rebuild:
+
+```bash
+node webapp/build.js
+```
+
+Browser smoke test prerequisites:
+- TowerScout already running locally
+- Setup Wizard completed so the app is not in setup-required mode
+- `tests/frontend/detection-workflow.local.json` exists
+- the AOI in that file has been replaced with a safe local test area
+- Chrome or Edge is installed locally
+
+Browser smoke commands:
+
+```bash
+npm run test:browser:detect
+npm run test:browser:detect:google
+npm run test:browser:detect:azure
+```
+
+If Windows PowerShell blocks `npm`, use:
+- `npm.cmd run test:browser:detect`
+- `npm.cmd run test:browser:detect:google`
+- `npm.cmd run test:browser:detect:azure`
+
+The smoke harness will fail fast if:
+- the app is not reachable at `http://localhost:5000`
+- the app is still in setup-required mode
+- `tests/frontend/detection-workflow.local.json` is missing
+- no local Chrome or Edge executable is found
+
+Test command note:
+- A failing test is not automatically a setup problem. Some branch snapshots may still contain in-progress test failures unrelated to local environment setup.
+
+COMMON DEVELOPMENT COMMANDS
+===========================
+
+Run the app:
+
+```bash
+cd webapp
+python towerscout.py dev
+```
+
+Rebuild frontend bundle:
+
+```bash
+node webapp/build.js
+```
+
+Run unit tests:
+
+```bash
+pytest tests/unit -v
+```
+
+Run integration tests:
+
+```bash
+pytest tests/integration -v
+```
+
+Format Python:
+
+```bash
+black webapp tests
+```
+
+Lint Python:
+
+```bash
+flake8 webapp tests
+```
+
+Type-check Python:
+
+```bash
+mypy webapp --ignore-missing-imports --no-strict-optional
+```
+
+Security scan:
+
+```bash
+bandit -r webapp
+```
+
+TROUBLESHOOTING
+===============
+
+Problem: TowerScout crashes before the server starts
+- Most common cause: missing model files
+- Check for:
+  - `webapp/model_params/yolov5/newest.pt`
+  - `webapp/model_params/EN/b5_unweighted_best.pt`
+
+Problem: YOLOv5 load fails with a local runtime error
+- Re-run `pip install -r webapp/requirements.txt`
+- Confirm the repo still contains `webapp/vendor/yolov5_local/` and `webapp/model_params/yolov5/newest.pt`
+- This no longer depends on first-run GitHub access, so treat it as a local dependency or workspace issue
+
+Problem: CUDA is available on the machine but TowerScout still runs on CPU
+- Check which PyTorch build is installed
+- A CUDA-capable GPU alone is not enough; the Python environment also needs a CUDA-enabled PyTorch build for the pinned TowerScout versions
+- If `torch.cuda.is_available()` is false, TowerScout will correctly fall back to CPU
+
+Problem: Setup Wizard appears every time
+- Check `webapp/config/.env`
+- Make sure the saved provider key is real and not placeholder text
+- Restart the app after manual edits
+
+Problem: No providers are available
+- At least one valid Google or Azure key is required
+- Bing alone should not be treated as the expected path
+
+Problem: Session behavior resets after every restart
+- Add a stable `FLASK_SECRET_KEY` to `webapp/config/.env`
+
+Problem: Frontend changes do not appear
+- Rebuild the bundle with `node webapp/build.js`
+
+Problem: Browser smoke test says setup is still required
+- Complete Setup Wizard in the running app first
+
+Problem: Browser smoke test says fixture is missing
+- Copy `tests/frontend/detection-workflow.example.json` to `tests/frontend/detection-workflow.local.json`
+- Replace the placeholder AOI before running the harness
+
+Problem: Port 5000 is already in use
+- Stop the other process using port 5000, or free the port before restarting TowerScout
+
+Problem: You want to clear session and temp state during local debugging
+- stop the app
+- clear `webapp/flask_session/`
+- clear `webapp/temp/session/`
+- restart the app
+
+CURRENT PROJECT STATUS
+======================
+
+As of 2026-04-07, the setup guidance should assume:
+- Setup Wizard and Settings exist
+- config save/status/reset/performance endpoints exist
+- estimate-first detection flow exists
+- progress and cancel support exist
+- Google and Azure live workflows are active priorities
+- Docker work is still pending
+
+If this guide disagrees with an older repo document that still references `improvements`, manual-only `.env` setup, missing Setup Wizard support, or Sprint 02/03 known issues as current blockers, prefer this guide.

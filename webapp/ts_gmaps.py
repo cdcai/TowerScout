@@ -22,7 +22,7 @@ class GoogleMap(Map):
 
 
    def get_url(self, tile, zoom=19, size="640x640", sc=2, fmt="jpg", maptype="satellite"):
-      url = "http://maps.googleapis.com/maps/api/staticmap?"
+      url = "https://maps.googleapis.com/maps/api/staticmap?"
       url += "center=" + str(tile['lat_for_url']) + "," + str(tile['lng']) + \
                   "&zoom=" + str(zoom) +\
                   "&size=" + size + \

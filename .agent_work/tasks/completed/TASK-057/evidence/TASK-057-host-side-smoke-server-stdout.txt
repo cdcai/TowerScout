@@ -1,0 +1,14 @@
+2026-04-13 15:59:12 - towerscout.main - INFO - TowerScout starting
+2026-04-13 15:59:12 - towerscout.main - INFO - TowerScout environment bootstrap starting
+2026-04-13 15:59:12 - towerscout.main - INFO - Current working directory: C:\Users\bg90\TowerScout
+2026-04-13 15:59:12 - towerscout.main - INFO - Script directory: C:\Users\bg90\TowerScout\webapp
+2026-04-13 15:59:12 - towerscout.main - INFO - Active env path: C:\Users\bg90\TowerScout\webapp\config\.env
+2026-04-13 15:59:12 - towerscout.main - INFO - Env file exists: True
+2026-04-13 15:59:12 - towerscout.main - INFO - Loading .env from C:\Users\bg90\TowerScout\webapp\config\.env
+2026-04-13 15:59:12 - towerscout.main - INFO - GOOGLE_API_KEY configured: True
+2026-04-13 15:59:12 - towerscout.main - INFO - AZURE_MAPS_SUBSCRIPTION_KEY configured: True
+2026-04-13 15:59:12 - towerscout.main - INFO - BING_API_KEY configured: True
+2026-04-13 15:59:12 - towerscout.main - WARNING - BING_API_KEY not configured or contains placeholder text. Bing Maps provider will be unavailable.
+2026-04-13 15:59:12 - towerscout.ml - INFO - Torch CUDA: not available
+2026-04-13 15:59:12 - towerscout.ml - INFO - Secondary classifier lazy initialization enabled
+2026-04-13 15:59:12 - towerscout.api - INFO - Main page loaded at 2026-04-13 14:59:12.672476-05:00 EST

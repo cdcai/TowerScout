@@ -16,6 +16,9 @@ import math
 from shapely import geometry
 from shapely.geometry import Point, Polygon
 import json
+from ts_logging import get_api_logger
+
+logger = get_api_logger()
 
 
 #
@@ -30,8 +33,7 @@ def make_boundary(boundary):
     if boundary['kind'] == "polygon":
         return Polygon(boundary['points'])
     else:
-        print("Cannot parse polygon request:")
-        print(boundary)
+        logger.error("Cannot parse polygon request boundary=%s", boundary)
 
 
 def tileIntersectsPolygons(t, polygons):

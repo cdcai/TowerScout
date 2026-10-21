@@ -1,0 +1,130 @@
+TOWERSCOUT RC1 TESTER ISSUE REPORT FORM
+=======================================
+
+Last reviewed: 2026-06-16
+
+Use this form when TowerScout setup, startup, provider setup, detection, export,
+or shutdown does not work as expected. Paste the completed form into email or
+Teams. Keep it short; support will ask for more only if needed.
+
+DO NOT SEND
+===========
+
+- API keys or full `.env` files.
+- Private AOI screenshots, exact private addresses, or investigation data.
+- Raw logs, raw provider responses, browser network traces, tile/map URLs, or
+  exported datasets unless support explicitly approves reviewed/redacted copies.
+- Provider portal screenshots that show account, billing, quota, or key details.
+
+ISSUE SUMMARY
+=============
+
+Result:
+  [ ] BLOCKED - I cannot continue.
+  [ ] FAIL - TowerScout runs, but the required workflow failed.
+  [ ] PASS_WITH_NOTES - The workflow completed, but something was confusing.
+
+Guide and step number:
+
+What you clicked or the exact command you ran:
+
+What you expected to happen:
+
+What happened instead:
+
+Exact error text, if shown:
+
+Screenshot attached?
+  [ ] No
+  [ ] Yes, and I checked it does not show keys, private locations, provider
+      portals, raw logs, browser network traces, or sensitive data.
+
+SETUP DETAILS
+=============
+
+TowerScout package folder name:
+
+Release tag or release URL:
+
+Application Package variant used:
+  [ ] CPU default
+  [ ] CUDA 12.1 support-assigned
+  [ ] Unsure
+
+Engine used:
+  [ ] Docker Desktop
+  [ ] Podman
+  [ ] Unsure
+
+GPU mode, if any:
+  [ ] Not assigned / CPU mode
+  [ ] Support assigned GPU validation
+  [ ] I tried GPU without support assigning it
+  [ ] Unsure
+
+If support assigned Podman, did you run the provider helper?
+  [ ] Not assigned Podman
+  [ ] Yes: .\scripts\install-podman-compose-provider.cmd -Apply
+  [ ] No
+  [ ] Unsure
+
+Port shown in browser:
+  [ ] 5000
+  [ ] Other:
+  [ ] Unsure
+
+Did setup finish successfully?
+  [ ] Yes
+  [ ] No
+  [ ] Unsure
+
+Did Setup Wizard save the provider configuration?
+  [ ] Yes
+  [ ] No
+  [ ] Unsure
+
+Provider used:
+  [ ] Azure Maps
+  [ ] Google Maps
+  [ ] Neither yet
+  [ ] Unsure
+
+DETECTION DETAILS, IF THE ISSUE HAPPENED DURING DETECTION
+=========================================================
+
+Support-provided fixture name:
+
+Search text or location used:
+
+Shape and radius or boundary:
+
+Estimated tile count, if shown:
+
+Did the detection run start?
+  [ ] Yes
+  [ ] No
+  [ ] Unsure
+
+Did the review panel update?
+  [ ] Yes
+  [ ] No
+  [ ] Unsure
+
+WHAT YOU ALREADY TRIED
+======================
+
+Briefly list anything you tried after the issue appeared:
+
+SUPPORT MAY ASK FOR THESE LATER
+===============================
+
+Do not send these unless support asks.
+
+```powershell
+.\scripts\status.cmd -Engine docker
+.\scripts\logs.cmd -Engine docker -Tail 200
+Get-Content .\IMAGE.txt
+```
+
+If support assigned Podman, replace `-Engine docker` with `-Engine podman`.
+Send reviewed/redacted output only.

@@ -1,0 +1,20 @@
+TowerScout Corresponding Source Notice
+
+Release track: agpl-yolo
+
+This checked-in file is the generic source notice copied into the container
+image. Each generated TowerScout YOLO-enabled release control ZIP must record
+the exact source ref in its generated SOURCE.txt and release-manifest.v1.json.
+The control ZIP is authoritative for release-specific source metadata. The
+matching corresponding source must include:
+
+- TowerScout source code for the release ref.
+- Vendored Ultralytics YOLOv5 source under webapp/vendor/yolov5_local/.
+- TowerScout local YOLO patches and loader code.
+- Dockerfile, Compose files, launcher scripts, packaging scripts, requirements,
+  and asset import helpers.
+- Build, package, asset import, and run instructions.
+
+If this file is viewed inside a container image, use the image OCI labels and
+the published release control ZIP to identify the exact source ref, image
+digest, and artifact checksums.

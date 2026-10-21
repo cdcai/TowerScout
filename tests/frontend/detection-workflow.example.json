@@ -1,0 +1,18 @@
+{
+  "name": "Replace with a safe local AOI",
+  "baseUrl": "http://localhost:5000",
+  "center": [-74.008206, 40.710838],
+  "zoom": 19,
+  "polygon": [
+    [-74.00855, 40.71110],
+    [-74.00785, 40.71110],
+    [-74.00785, 40.71055],
+    [-74.00855, 40.71055],
+    [-74.00855, 40.71110]
+  ],
+  "expected": {
+    "minimumDetections": 1,
+    "estimateTimeoutMs": 30000,
+    "detectionTimeoutMs": 180000
+  }
+}

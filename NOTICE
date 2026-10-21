@@ -1,0 +1,39 @@
+TowerScout YOLO-Enabled Release Notice
+
+Release track: agpl-yolo
+
+TowerScout is a browser-served Flask application for identifying cooling
+towers from satellite and aerial imagery. The current YOLO-enabled release
+package and container image include TowerScout-authored code, third-party
+Python and JavaScript dependencies, Ultralytics YOLOv5 runtime source, and
+separately supplied model/data assets.
+
+Important release statement:
+
+TowerScout-authored code may be Apache-2.0 where ownership and relicensing
+authority are confirmed, but the full YOLO-enabled package/image is not an
+Apache-2.0-only distribution. Because the release includes Ultralytics YOLOv5
+AGPL-3.0 code and YOLO-derived detector weights, recipients must receive the
+corresponding source and license notices required for the AGPL-governed
+release track.
+
+Corresponding source for each release must include:
+
+- TowerScout source code for the exact release ref.
+- Vendored Ultralytics YOLOv5 source under webapp/vendor/yolov5_local/.
+- TowerScout local YOLO patches and loader code.
+- Dockerfile, Compose files, launcher scripts, packaging scripts, and import
+  helpers needed to rebuild and run the release.
+- Python and frontend dependency manifests.
+- Build, package, asset import, and run instructions.
+
+The release control ZIP is authoritative for release-specific source, image,
+checksum, SBOM-reference, and manifest metadata. It includes SOURCE.txt with
+the release source ref and source-location instructions. The package also
+includes release-manifest.v1.json, IMAGE.txt, SHA256SUMS.txt, SBOM.txt,
+MODEL_LICENSES.md, DATA_LICENSES.md, PROVIDER_TERMS.md, and
+THIRD_PARTY_NOTICES.md. The container image carries generic compliance notices
+and OCI labels for image/source identification.
+
+The source and license notices are also exposed from the local web application
+at /license when the app is running.

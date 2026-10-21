@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "description": "TASK-103 gates, amendment 3. Owner decision D-P1 (2026-09-24) and pilot lesson L8: GPU-profile memory is judged on total host+device footprint; relative gates require interleaved same-window runs.",
+  "target_flavor": "cuda128",
+  "reference": {
+    "outputs_stage": "A",
+    "outputs_profile": "cpu",
+    "note": "Per-detection reference outputs come from the stage-A (accepted main, torch 2.6.0) CPU combined capture on H-T1."
+  },
+  "fixture": {
+    "set": "rgb-derived",
+    "derivation": "PIL Image.open(p).convert('RGB').save(PNG, compress_level=6); lossless palette expansion",
+    "derivation_pillow_version": "12.3.0",
+    "tiles": [
+      {
+        "name": "tile_000.png",
+        "sha256": "a5a31d5e8ff6303146e8b52278d4a612581ff35947ec3bbdda6db6f7deb0aa63",
+        "source_sha256": "e3c972674f25ac25e2efd17b2d2fe2c41aefffad2c4747ee4ecfae8452e9e7fc"
+      },
+      {
+        "name": "tile_001.png",
+        "sha256": "cd7b04e551bb2812bb15564b4859bcf3af56302044973ccbd38119c47a949bbc",
+        "source_sha256": "c7797de0f9309405beda700ad834beb5efdd60cb3215220133d0f783cb4c732d"
+      },
+      {
+        "name": "tile_002.png",
+        "sha256": "2e6d90f315819b19e5831b3a733a1f20f4435dca4672241b7f5cef6876164020",
+        "source_sha256": "10c624a7479865526dad3b06f990426467dfe42fce7eef3c7ce02e03cf3bd1ad"
+      },
+      {
+        "name": "tile_003.png",
+        "sha256": "d947d39a33a3675aa28d09c254ccabe50cdc2e0a83dff2f8d756af9d3159605e",
+        "source_sha256": "11ff18b77bcc79858950edae372e820be2bf64a3e85eafc09222cbadc442f96f"
+      },
+      {
+        "name": "tile_004.png",
+        "sha256": "d4af8fc295a84aa43b766a13350590b62bcbc1d17f5b799e83d0b98d0b099e5a",
+        "source_sha256": "eba2ba2cca9fe9638eca5511d3d8f5605769d2a5982f8c55c8c51bc5db479af0"
+      },
+      {
+        "name": "tile_005.png",
+        "sha256": "d78c7c4ae8c0dc8ea3c08fd0256126199650d8b054433a17714aad0dfd49eccc",
+        "source_sha256": "ba356d015e5976bd91531b4367e69ad36d0c7f09dd34861f22bbb432d1bd0b8f"
+      },
+      {
+        "name": "tile_006.png",
+        "sha256": "76551ea3635bb44d623ef5a249aa11a024a5c9e761dce6df4cdc6af7fdf799e3",
+        "source_sha256": "ccfdba818379f5fba1bb243d42af9d42c36e3f0fc58046fc5c1ac3a5111e1ffa"
+      },
+      {
+        "name": "tile_007.png",
+        "sha256": "e80588913481eeaeb9d8a57249725a07088a67ca3c1207e6c9ead9e505afe47a",
+        "source_sha256": "94d4cfa5820d3819e5d7b64876443b173e7d208d7892c83626409494f949aaa8"
+      },
+      {
+        "name": "tile_008.png",
+        "sha256": "ed4f241e0b7f61816deca3cd12d80569d508d8ecda9359247929996a4a7c10f1",
+        "source_sha256": "20d2ea30376803e1084eb415a0fa8a04a6f9fc459d87d16e40211b77953741fe"
+      },
+      {
+        "name": "tile_009.png",
+        "sha256": "75fd664e351e98c2ad4468d36a2807a459152c84eb61f4048d57b78c9853ed91",
+        "source_sha256": "0921aa8d8f4d1df13e1418712869da4ce83ce5a2f06b35d5aa29c04b5e5a8363"
+      },
+      {
+        "name": "tile_010.png",
+        "sha256": "399e48eeb385b6038e53408b2ae61252f5cf03f024692794ddac10390b1ebeae",
+        "source_sha256": "928df690bfa68daa487eaed6255d5111d1e3c55375a0153f1557efcf1f41f9e5"
+      },
+      {
+        "name": "tile_011.png",
+        "sha256": "1b15234ccc917b57d653b5c417e5369caec3e766c5d764de3fc3b8b39e50001f",
+        "source_sha256": "6ebf7c0abfd496e272882c0c01890c4eb78c3e407c83235f7e89f17774fc5aff"
+      }
+    ],
+    "historical_count_vector": [
+      0,
+      0,
+      13,
+      8,
+      0,
+      4,
+      6,
+      11,
+      2,
+      4,
+      5,
+      0
+    ],
+    "historical_count_vector_note": "Applies only to the palette-mode originals run YOLO-only (--no-secondary); it is an informational continuity check, not a G7 gate for the RGB set.",
+    "palette_originals": [
+      {
+        "name": "tile_000.png",
+        "sha256": "e3c972674f25ac25e2efd17b2d2fe2c41aefffad2c4747ee4ecfae8452e9e7fc"
+      },
+      {
+        "name": "tile_001.png",
+        "sha256": "c7797de0f9309405beda700ad834beb5efdd60cb3215220133d0f783cb4c732d"
+      },
+      {
+        "name": "tile_002.png",
+        "sha256": "10c624a7479865526dad3b06f990426467dfe42fce7eef3c7ce02e03cf3bd1ad"
+      },
+      {
+        "name": "tile_003.png",
+        "sha256": "11ff18b77bcc79858950edae372e820be2bf64a3e85eafc09222cbadc442f96f"
+      },
+      {
+        "name": "tile_004.png",
+        "sha256": "eba2ba2cca9fe9638eca5511d3d8f5605769d2a5982f8c55c8c51bc5db479af0"
+      },
+      {
+        "name": "tile_005.png",
+        "sha256": "ba356d015e5976bd91531b4367e69ad36d0c7f09dd34861f22bbb432d1bd0b8f"
+      },
+      {
+        "name": "tile_006.png",
+        "sha256": "ccfdba818379f5fba1bb243d42af9d42c36e3f0fc58046fc5c1ac3a5111e1ffa"
+      },
+      {
+        "name": "tile_007.png",
+        "sha256": "94d4cfa5820d3819e5d7b64876443b173e7d208d7892c83626409494f949aaa8"
+      },
+      {
+        "name": "tile_008.png",
+        "sha256": "20d2ea30376803e1084eb415a0fa8a04a6f9fc459d87d16e40211b77953741fe"
+      },
+      {
+        "name": "tile_009.png",
+        "sha256": "0921aa8d8f4d1df13e1418712869da4ce83ce5a2f06b35d5aa29c04b5e5a8363"
+      },
+      {
+        "name": "tile_010.png",
+        "sha256": "928df690bfa68daa487eaed6255d5111d1e3c55375a0153f1557efcf1f41f9e5"
+      },
+      {
+        "name": "tile_011.png",
+        "sha256": "6ebf7c0abfd496e272882c0c01890c4eb78c3e407c83235f7e89f17774fc5aff"
+      }
+    ]
+  },
+  "models": {
+    "yolo_sha256": "27315e156d8370d51d9c2a3c047c4bf5cc0c8ae1521036bdf800b7a8a81554e6",
+    "efficientnet_sha256": "645113badfcd17a1f9b451aabb54bf80e115a4faaceb65e0ce3fc8dbfb108a5d"
+  },
+  "tolerances": {
+    "iou_match": 0.9,
+    "box": 0.0001,
+    "conf": 0.0001,
+    "secondary": 0.0001,
+    "repeat_determinism": 0.0001,
+    "en_synthetic_expected": 0.8266443,
+    "en_synthetic_tolerance": 0.0001,
+    "cross_profile_en_synthetic_max_delta": 1e-05
+  },
+  "memory": {
+    "relative_max": 1.1,
+    "min_device_free_bytes": 1073741824,
+    "gpu_profile_judgment": "total_footprint",
+    "total_footprint_definition": "peak host VmHWM bytes + torch.cuda.max_memory_reserved bytes, each from the same run; compared as one sum against 1.10 x the reference sum",
+    "cpu_profile_judgment": "host_only"
+  },
+  "method": {
+    "relative_gates_require": "interleaved same-window runs",
+    "min_runs_per_side": 3,
+    "no_concurrent_scans_or_builds": true
+  },
+  "performance": {
+    "relative_max": 1.1,
+    "warmup_discard": 1,
+    "measured_runs": 3,
+    "borderline_band": 0.03,
+    "borderline_extra_runs": 5
+  },
+  "precision": {
+    "conv": "ieee",
+    "matmul": "ieee",
+    "applies_to_stages": [
+      "B",
+      "C"
+    ]
+  },
+  "identity": {
+    "cuda_build_by_wheel_tag": {
+      "cu126": "12.6",
+      "cu128": "12.8",
+      "cpu": null
+    },
+    "target_arch_required": [
+      "sm_75",
+      "sm_120"
+    ]
+  },
+  "required_phases": [
+    "identity",
+    "startup",
+    "synthetic",
+    "combined",
+    "memory",
+    "inject"
+  ],
+  "amends": {
+    "file": "scripts/task103_gates.v2.json",
+    "reason": "D-P1: the +15% CUDA-mode host RSS is +108 MB loader fix + +150 MB CUDA 12.8 libraries while device reserved fell 375 MB (total -117 MB). Host-only relative judgment misrepresents GPU-profile footprint. L8: cross-window single-run drift up to 16% invalidates non-interleaved relative comparisons.",
+    "tolerances_changed": false
+  }
+}

@@ -1,0 +1,19 @@
+2026-04-13 16:04:58 - towerscout.main - INFO - TowerScout starting
+2026-04-13 16:04:58 - towerscout.main - INFO - TowerScout environment bootstrap starting
+2026-04-13 16:04:58 - towerscout.main - INFO - Current working directory: C:\Users\bg90\TowerScout\webapp
+2026-04-13 16:04:58 - towerscout.main - INFO - Script directory: C:\Users\bg90\TowerScout\webapp
+2026-04-13 16:04:58 - towerscout.main - INFO - Active env path: C:\Users\bg90\TowerScout\webapp\config\.env
+2026-04-13 16:04:58 - towerscout.main - INFO - Env file exists: True
+2026-04-13 16:04:58 - towerscout.main - INFO - Loading .env from C:\Users\bg90\TowerScout\webapp\config\.env
+2026-04-13 16:04:58 - towerscout.main - INFO - GOOGLE_API_KEY configured: True
+2026-04-13 16:04:58 - towerscout.main - INFO - AZURE_MAPS_SUBSCRIPTION_KEY configured: True
+2026-04-13 16:04:58 - towerscout.main - INFO - BING_API_KEY configured: True
+2026-04-13 16:04:58 - towerscout.main - WARNING - BING_API_KEY not configured or contains placeholder text. Bing Maps provider will be unavailable.
+2026-04-13 16:04:58 - towerscout.ml - INFO - Torch CUDA: not available
+2026-04-13 16:04:58 - towerscout.ml - INFO - Secondary classifier lazy initialization enabled
+2026-04-13 16:04:58 - towerscout.main - INFO - Loading zipcode data, this may take up to 10 seconds...
+2026-04-13 16:05:56 - towerscout.ml - INFO - Loading model: newest
+2026-04-13 16:05:56 - towerscout.ml - INFO - Initializing YOLOv5 detector with model: C:\Users\bg90\TowerScout\webapp\model_params\yolov5\newest.pt
+2026-04-13 16:05:59 - towerscout.ml - INFO - YOLOv5 model loaded successfully
+2026-04-13 16:05:59 - towerscout.ml - INFO - CUDA not available, using CPU
+2026-04-13 16:06:00 - towerscout.api - INFO - Main page loaded at 2026-04-13 15:06:00.437485-05:00 EST

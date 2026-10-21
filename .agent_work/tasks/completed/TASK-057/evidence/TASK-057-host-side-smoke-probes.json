@@ -1,0 +1,61 @@
+﻿{
+    "root":  {
+                 "status":  200,
+                 "contains_towerscout":  true
+             },
+    "getproviders":  {
+                         "status":  200,
+                         "json":  {
+                                      "value":  [
+                                                    {
+                                                        "id":  "azure",
+                                                        "name":  "Azure Maps"
+                                                    },
+                                                    {
+                                                        "id":  "google",
+                                                        "name":  "Google Maps"
+                                                    }
+                                                ],
+                                      "Count":  2
+                                  }
+                     },
+    "getengines":  {
+                       "status":  200,
+                       "json":  {
+                                    "value":  [
+                                                  {
+                                                      "id":  "newest",
+                                                      "name":  "newest"
+                                                  }
+                                              ],
+                                    "Count":  1
+                                }
+                   },
+    "api_config_status":  {
+                              "status":  200,
+                              "json":  {
+                                           "azure":  {
+                                                         "configured":  true,
+                                                         "preview":  "fWYV***********************************JHPM",
+                                                         "valid":  true
+                                                     },
+                                           "default_map_provider":  "azure",
+                                           "env_path":  "C:\\Users\\bg90\\TowerScout\\webapp\\config\\.env",
+                                           "google":  {
+                                                          "configured":  true,
+                                                          "preview":  "AIza*******************************LPUA",
+                                                          "valid":  true
+                                                      },
+                                           "needs_setup":  false
+                                       }
+                          },
+    "api_config_performance":  {
+                                   "status":  200,
+                                   "json":  {
+                                                "avg_tiles_per_second":  0.14,
+                                                "last_detection_timestamp":  "2026-04-13T14:03:33.893202",
+                                                "session_count":  5
+                                            }
+                               },
+    "process_id":  16064
+}

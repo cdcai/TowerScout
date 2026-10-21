@@ -1,0 +1,7 @@
+interface:
+  display_name: 'TowerScout: CI Quality Ratchet'
+  short_description: CI quality tightening
+  default_prompt: Use $towerscout-ci-quality-ratchet to suggest a safe CI tightening
+    plan.
+policy:
+  allow_implicit_invocation: true
