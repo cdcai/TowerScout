@@ -16,7 +16,8 @@ is underway; reviewed adoption and official qualification/publication remain.
 - [x] Publish and verify fork wiki rehearsal; [evidence and plan review](../../context/status/Handoff-Planning/2026-10-20-WIKI-REHEARSAL-AND-PLAN-REVIEW.md).
 - [x] Prepare detailed owner backlog and maintenance discussion brief (October 21).
 - [x] Read-only cdcai ancestry/admin/Actions allowlist review; see [findings](../../context/status/Handoff-Planning/2026-10-21-READINESS-AND-ADOPTION-REVIEW.md).
-- [ ] Complete final adoption diff/head review and owner acceptance of backlog/documentation.
+- [x] Complete bounded local source review and integrate approved PR #113; runtime/tests/configuration match the 144-test integration rehearsal.
+- [ ] Pass final adoption-head remote checks and obtain owner acceptance of backlog/documentation.
 - [x] Enable cdcai Issues following Chris's approval, conveyed October 21; setting independently verified. Final public support-link check remains part of publication verification.
 - [ ] Confirm registry creation/linkage/visibility and execution-time permissions.
 - [ ] Review and merge the adoption PR with applicable checks.
@@ -39,7 +40,8 @@ Accepted fork candidate results do not qualify new official bytes.
 Plan agreement and access do not assert that any remote operation occurred.
 
 The Markdown backlog remains the current maintained format. Private delivery
-is still undecided between approved email and SharePoint; receipt is pending.
+is staged locally for the outgoing lead's likely SharePoint upload; the final
+location and receipt remain pending, with no action requested from the lead now.
 Security exceptions expire October 31, 2026 at 23:59:59 UTC; handoff does not
 renew them. The ML bridge review is due January 31, 2027 or earlier ADR-022 trigger.
 

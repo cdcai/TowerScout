@@ -28,11 +28,13 @@ current Issues/CI wording corrected. See the
 [review record](context/status/Handoff-Planning/2026-10-21-FINAL-ADOPTION-SOURCE-REVIEW.md).
 Remote final-head checks, cdcai adoption and official-byte qualification remain open.
 
-**Dependency follow-up:** PR #113 now includes aiohttp and Pillow security
-corrections. Blocking CI passes; review approval, fork merge and actual
-adoption integration remain pending. The local integration rehearsal
-passed 144 checks on repeat; its initial Windows loopback failure is
-retained in the [updated review](context/status/Handoff-Planning/2026-10-21-PR113-DEPENDENCY-AND-ADOPTION-REVIEW.md).
+**Dependency follow-up:** The outgoing lead explicitly approved PR #113 in
+the conversation on October 21. Its tested head `2980f96` was squash-merged
+as `60ae1c9`, then integrated into the adoption branch at `8b49f74` with the
+two rehearsed documentation resolutions. Runtime/tests/configuration match
+the 144-test rehearsal. Post-merge and final adoption-head remote checks
+remain distinct from official-byte qualification. See the
+[updated review](context/status/Handoff-Planning/2026-10-21-PR113-DEPENDENCY-AND-ADOPTION-REVIEW.md).
 
 ## Qualification history through October 19
 

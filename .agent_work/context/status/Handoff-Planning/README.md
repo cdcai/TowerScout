@@ -26,7 +26,8 @@ Start with:
 ## Latest progress
 
 - [Dependency and adoption update](2026-10-21-PR113-DEPENDENCY-AND-ADOPTION-REVIEW.md):
-  PR #113 corrections and blocking CI pass; approval/merge/integration pending.
+  PR #113 approved, merged into the fork and integrated locally; final remote
+  checks and cdcai adoption review remain separate gates.
 
 - [Final adoption source review](2026-10-21-FINAL-ADOPTION-SOURCE-REVIEW.md):
   corrected findings, 63 passing focused checks, review limits and remote-CI sequence.

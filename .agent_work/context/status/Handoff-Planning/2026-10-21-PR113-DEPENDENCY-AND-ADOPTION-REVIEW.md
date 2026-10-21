@@ -1,10 +1,18 @@
 # PR #113 dependency and adoption review
 
 **Date:** October 21, 2026. **Tasks:** TASK-104 / TASK-089 / TASK-105.
-**Status:** corrected PR passes blocking CI; required review approval and merge
-remain pending. Adoption integration has been rehearsed locally, not applied
-to the preparation branch or cdcai. Earlier source-readiness snapshots do not
-cover these changed dependencies.
+**Current status:** owner approval was explicitly supplied in the conversation:
+"Alright, I approve PR 113." Exact head `2980f96` was rechecked and squash-merged
+to the fork as `60ae1c9b78499d033eddfd09cb663622c17287b3` at 17:04 UTC on
+October 21. The merge tree is identical to the approved PR tree. Integration
+commit `8b49f74` preserves fork-main ancestry and the two rehearsed documentation
+resolutions. Application, tests, scripts, configuration and agent skills match
+rehearsal `292ed93`; later differences are review/status documents only.
+No GitHub review is fabricated; the explicit conversational owner approval is
+the approval record. cdcai source adoption and official qualification remain open.
+
+The detailed results below retain their pre-merge recording context. The final
+PR descriptions and local execution receipt record subsequent remote checks.
 
 ## Reviewed correction
 
@@ -32,7 +40,9 @@ main-only condition. It is not a required PR build that was omitted by accident.
   This does not resume deferred launcher development.
 - Advisory integration reports five failures, 18 passes, three skips and one
   subtest pass on each Python version. The same failure summary occurred on
-  the aiohttp-only head before Pillow changed. Black, mypy and Bandit also
+  the aiohttp-only head before Pillow changed. A subsequent comparison with
+  accepted-main CI run 39293707555 confirmed the same four failed test cases
+  and radius subtest before either update. Black, mypy and Bandit also
   retain advisory failures in the raw logs; successful job labels do not mean
   every advisory command passed. No controls were relaxed.
 - Local resolved aiohttp set: 21 focused provider/redaction tests passed.
@@ -64,7 +74,7 @@ Original local documentation, immutable RC5 artifacts, security exceptions,
 deferred branches and cdcai source remain unchanged. No merge, cdcai PR,
 official build, image/release publication or wiki write occurred in this slice.
 
-## Remaining sequence
+## Sequence recorded before owner approval
 
 1. Obtain the required review approval for the concrete eight-file PR above.
    The repository management policy requires one approval; GitHub currently
