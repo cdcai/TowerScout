@@ -248,6 +248,9 @@ Acceptance:
 - KML uses `application/vnd.google-earth.kml+xml`; CSV retains an appropriate
   CSV media type.
 - Dataset ZIP export remains compatible.
+- CSV addresses and KML names/descriptions must round-trip quotes, commas,
+  ampersands, XML markup characters, line breaks, and Unicode through standard
+  parsers. Preserve existing selection, geometry, source labels, and fallbacks.
 - Edge/Chrome behavior is exercised from the packaged application, and the
   user guidance explains any browser download permission that remains needed.
 - Cancellation prevents a stale completed response from replacing the visible

@@ -3,6 +3,17 @@
 (function () {
   'use strict';
 
+  function quoteCsvText(value) {
+    return '"' + String(value).replace(/"/g, '""') + '"';
+  }
+
+  function escapeXmlText(value) {
+    // Character references preserve CR as well as XML metacharacters when a
+    // reader parses the document (literal CR would be normalized to LF).
+    const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;', '\r': '&#13;' };
+    return String(value).replace(/[&<>"'\r]/g, character => entities[character]);
+  }
+
   /**
    * Show user-friendly notification message
    * @param {string} message - Message to display
@@ -233,7 +244,7 @@
           det.getCenter()[1].toFixed(8),
           det.getCenter()[0].toFixed(8),
           getDistance(det.getCenter(), currentMap.getCenter()).toFixed(1),
-          ('"' + (det['address'] || 'Unknown') + '"'),
+          quoteCsvText(det['address'] || 'Unknown'),
           det['conf'].toFixed(2),
           source
         ].join(",") + "\n";
@@ -321,11 +332,12 @@
           }
 
           text += "    <Placemark>\n";
-          text += '      <name>' + (det.address || 'Unknown Location') + '</name>\n';
+          text += '      <name>' + escapeXmlText(det.address || 'Unknown Location') + '</name>\n';
 
           const tiles = providerManager.getTilesArrayDirect();
           const tileMeta = (tiles[det.tile] && tiles[det.tile].metadata) ? tiles[det.tile].metadata : '';
-          text += '      <description>P(' + det.conf.toFixed(2) + ') at ' + (det.address || 'Unknown') + ' ' + tileMeta + '</description>\n';
+          const description = 'P(' + det.conf.toFixed(2) + ') at ' + (det.address || 'Unknown') + ' ' + tileMeta;
+          text += '      <description>' + escapeXmlText(description) + '</description>\n';
           text += "      <styleUrl>#icon-1736-0F9D58</styleUrl>\n";
           text += '      <Point>\n';
           text += '        <altitudeMode>relativeToGround</altitudeMode>\n';

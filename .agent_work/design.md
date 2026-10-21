@@ -149,6 +149,10 @@ The selected design is:
 6. Give CSV and KML separate explicit browser actions and correct media types;
    do not report a second automatic download as successful when the browser
    may block it.
+   Serialize CSV address text with doubled embedded quotes. Escape KML name
+   and complete description text once as XML, including CR character references
+   to preserve line breaks through parsing. Keep helpers private to the export
+   module and regenerate the existing bundle without changing module order.
 7. Document mixed-engine startup/recovery, rootless Podman and Python 3.12 as
    tested boundaries, actual qualified GPUs, geocoding limits, and any retained
    Windows-only ZIP behavior.

@@ -187,8 +187,32 @@ Validation:
 Future Python/pip/urllib3 layout or scanner changes require a reviewed policy
 update; they do not silently widen this exact, temporary exception.
 
+## Finding 3 - CSV and KML serialization
+
+**Status: local correction and focused verification passed; remote checks pending.**
+
+Independent Python standard-library CSV and XML parsers reproduced both failures
+against the original JavaScript download handlers. CSV now doubles embedded
+quotes in address fields; KML escapes name and complete description text once,
+preserving carriage returns with character references. No detection selection,
+coordinate calculation, provenance label, download action, or dataset ZIP code
+was changed. The generated bundle was rebuilt and its diff contains only these
+source changes and the source fingerprint; build order remains unchanged.
+
+Two parser tests now cover quotes, commas, ampersands, angle brackets, apostrophes,
+CR/LF, Unicode, literal entity text, and `]]>`. They verify all six CSV rows,
+the three eligible KML placemarks, ML/manual provenance, unknown-address fallbacks,
+coordinates, and exclusion of unselected/below-threshold/outside-boundary KML
+records. These tests also execute the existing explicit-download assertions and
+are wired into the blocking frontend job.
+
+Both parser tests and six maintained frontend contracts passed (exports, global
+handlers, debug logging, setup wizard, cancel/recovery, provider-state manager).
+Generated JavaScript syntax and source/bundle consistency checks passed. These
+are synthetic serialization checks, not a replacement for official-package
+browser and model qualification.
+
 ## Remaining findings
-- Finding 3: pending serialization corrections and source/bundle verification.
 - Finding 5: pending advisory failure and review-conversation disposition,
   then final-head checks. Review replies/publication have not been sent.
 - Finding 4: deliberately unchanged; Chris's specific approval remains pending.

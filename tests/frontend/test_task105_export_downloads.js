@@ -74,4 +74,32 @@ assert.deepStrictEqual(clicks.map(click => click.filename), ['detections.csv', '
 assert.strictEqual(blobs[1].type, 'application/vnd.google-earth.kml+xml');
 assert.deepStrictEqual(revoked, ['blob:test-1', 'blob:test-2']);
 assert.strictEqual(notifications.length, 2);
-console.log('Task-105 explicit export downloads passed');
+// Exercise the real download handlers; Python's standard parsers independently
+// verify the emitted files when --serialization-fixture is requested.
+if (process.argv.includes('--serialization-fixture')) {
+  const special = 'A & B "Annex", <North> \'West\'\r\nMontréal ]]> &amp;';
+  const metadata = 'Satellite & aerial <imagery> "2026"\r\nProvider';
+  const detections = [
+    { ...detection, address: special },
+    { ...detection, idInTile: -1, address: 'Manual "tower", café' },
+    { ...detection, address: '' },
+    { ...detection, address: 'Unselected', selected: false },
+    { ...detection, address: 'Below threshold', conf: 0.1 },
+    { ...detection, address: 'Outside boundary', inside: false }
+  ];
+  context.Detection_detections = detections;
+  context.window.Detection_detections = detections;
+  context.providerManager.getDetectionsArrayDirect = () => detections;
+  context.providerManager.getTilesArrayDirect = () => [{ metadata }];
+  context.window.download_csv();
+  context.window.download_kml();
+  assert.strictEqual(clicks.length, 4);
+  assert.strictEqual(notifications.length, 4);
+  assert.strictEqual(revoked.length, 4);
+  console.log(JSON.stringify({
+    special, metadata,
+    csv: blobs[2].parts.join(''), kml: blobs[3].parts.join('')
+  }));
+} else {
+  console.log('Task-105 explicit export downloads passed');
+}
