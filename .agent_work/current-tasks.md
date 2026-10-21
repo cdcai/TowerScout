@@ -60,6 +60,12 @@ adoption-head checks and required-check enforcement are pending verification;
 PRs #4/#114 remain drafts. See the destination setup plan and PR receipts for
 execution evidence. No official application adoption or publication occurred.
 
+**PR #4 audit remediation (October 21):** Findings 1, 2, 3, and 5 are selected
+for sequential correction and verification. Historical credential/data
+disposition remains open; licensing/history approval and final merge approval
+remain with Chris. See the [remediation record](tasks/active/TASK-089/PR4-AUDIT-REMEDIATION-2026-10-21.md).
+No official artifact publication or merge is authorized by this work.
+
 ## Qualification history through October 19
 
 The following narrative retains the candidate progression; older pending

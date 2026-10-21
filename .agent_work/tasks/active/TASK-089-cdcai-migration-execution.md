@@ -47,6 +47,13 @@ location and receipt remain pending, with no action requested from the lead now.
 Security exceptions expire October 31, 2026 at 23:59:59 UTC; handoff does not
 renew them. The ML bridge review is due January 31, 2027 or earlier ADR-022 trigger.
 
+## PR #4 audit remediation - October 21
+
+The outgoing lead selected findings 1, 2, 3, and 5 for sequential correction.
+See [acceptance, evidence, and remaining holds](TASK-089/PR4-AUDIT-REMEDIATION-2026-10-21.md).
+Licensing/development-history approval and the final adoption merge remain
+separately owner-gated. Earlier successful CI does not qualify new fixes.
+
 ## Historical planning and implementation record - preserved
 
 Everything below records earlier task states. The current execution state
