@@ -1,3 +1,4 @@
+# Refresh the root dependency submission after the October 21 aiohttp/Pillow fixes.
 # Development dependencies for TowerScout testing and code quality
 # Keep this root manifest in dependency-graph refreshes; runtime dependencies remain in webapp/requirements.txt.
 
