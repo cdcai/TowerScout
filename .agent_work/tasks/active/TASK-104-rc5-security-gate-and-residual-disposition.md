@@ -44,6 +44,10 @@ The five-key policy remains binding and expires October 31, 2026
 
 ## Objective
 
+**October 21 adoption follow-up:** [PR #113 dependency correction](TASK-104/PR113-DEPENDENCY-CORRECTION-2026-10-21.md)
+tracks aiohttp remediation and the fresh Pillow security blocker. Combined
+remote checks, reviewed merge and official-byte qualification remain required.
+
 For the historical second-opinion review's custody and remaining
 package-path/identity question, see the
 [October 20 reconciliation note](TASK-103/SECURITY-REVIEW-CUSTODY-2026-10-20.md).

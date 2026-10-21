@@ -37,6 +37,10 @@ The project still carries public-health workflow expectations:
   checks do not establish runtime readiness.
 - The five exact security residuals expire October 31, 2026 at 23:59:59 UTC.
   The ML bridge review is due January 31, 2027 or the earlier ADR-022 trigger.
+- The October 21 dependency correction selects aiohttp 3.14.4 and Pillow
+  13.0.0, including the Pillow runtime minimum. Historical dependency pins
+  do not override the current manifest. See the TASK-104 PR #113 evidence;
+  changed dependencies require affected official-image qualification.
 - Preserve Task-087/096 and PR #67 history; their launcher work is deferred.
 - Use the repository's existing focused skills. Check Git remotes and
   authorization before acting on a fork, cdcai, registry, release, or wiki.
