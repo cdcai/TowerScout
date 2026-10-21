@@ -1,0 +1,256 @@
+name: Task-087 Production SetupWizard Puppeteer
+
+# Temporary destination setup: manually validate one reviewed adoption source.
+# Replace with normal PR/main triggers and default checkout during adoption.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  production-controller:
+    name: Production controller contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          repository: J-Schulein/TowerScout
+          ref: 8682b8e6b31a4425ab626da557f58bff97076de7
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+
+      - name: Install Puppeteer system dependencies
+        run: |
+          sudo apt-get update
+          PKGS="ca-certificates fonts-liberation libasound2 libatk1.0-0 libatk-bridge2.0-0 libcups2 libgtk-3-0 libnss3 libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libxss1"
+          echo "Checking available installable packages before install"
+          AVAILABLE=""
+          for p in $PKGS; do
+            # Use apt-cache policy to verify an installable candidate (not virtual-only)
+            CAND=$(apt-cache policy "$p" 2>/dev/null | awk '/Candidate:/ {print $2}') || CAND=""
+            if [ -n "$CAND" ] && [ "$CAND" != "(none)" ]; then
+              AVAILABLE="$AVAILABLE $p"
+            else
+              echo "Package not installable: $p (skipping)"
+            fi
+          done
+          if [ -n "$AVAILABLE" ]; then
+            sudo apt-get install -y --no-install-recommends $AVAILABLE
+          else
+            echo "No installable packages found; continuing"
+          fi
+
+      - name: Install Node dependencies (lockfile)
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
+        run: npm ci --no-audit --no-fund
+
+      - name: Install Playwright Chromium for Puppeteer
+        run: |
+          # Install Playwright and download Chromium with deps; this provides a reliable browser binary for CI
+          npx -y playwright@1.62.0 install --with-deps chromium
+          # Find the downloaded chromium binary and expose it to later steps for Puppeteer
+          CHROME_PATH=$(find $HOME/.cache/ms-playwright -type f -name "chrome*" -executable 2>/dev/null | head -n1 || true)
+          if [ -n "$CHROME_PATH" ]; then echo "PUPPETEER_EXECUTABLE_PATH=$CHROME_PATH" >> $GITHUB_ENV; fi
+
+      - name: Install lightweight test utilities
+        run: npm install --no-audit --no-fund --no-save http-server wait-on
+
+      - name: Prepare artifacts dir
+        run: mkdir -p test-artifacts
+
+      - name: Start static web server for tests
+        # Use a lightweight static server to avoid starting the full Python app in CI
+        run: npx http-server ./webapp -p 5000 -c-1 > test-artifacts/webserver.log 2>&1 &
+
+      - name: Wait for web server
+        run: |
+          # give background servers a short moment to bind, then wait longer
+          sleep 1
+          npx wait-on http://127.0.0.1:5000 --timeout 60000
+
+      - name: Diagnostics - capture webserver status
+        if: failure()
+        run: |
+          sleep 1
+          echo "-- process list (filtered) --"
+          ps aux | egrep 'http-server|node' | sed -n '1,200p' || true
+          echo "-- webserver.log head --"
+          test -f test-artifacts/webserver.log && head -n 200 test-artifacts/webserver.log || echo "(no webserver.log)"
+
+      - name: Run production SetupWizard POST/poll contract
+        env:
+          CI: true
+        run: node tests/frontend/test_provider_tls_live_post_poll_template.js 2>&1 | tee test-artifacts/test_provider_tls_live_post_poll_template.log
+
+      - name: Run production SetupWizard helper-unavailable contract
+        env:
+          CI: true
+        run: node tests/frontend/test_provider_tls_helper_unavailable_template.js 2>&1 | tee test-artifacts/test_provider_tls_helper_unavailable_template.log
+
+      - name: Run API helper timeout contract
+        run: node tests/frontend/test_api_helpers_timeout_contract.js 2>&1 | tee test-artifacts/test_api_helpers_timeout_contract.log
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: production-controller-contract-logs
+          path: test-artifacts
+
+  puppeteer-e2e:
+    name: Production controller e2e (simulated helper)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          repository: J-Schulein/TowerScout
+          ref: 8682b8e6b31a4425ab626da557f58bff97076de7
+          persist-credentials: false
+
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+
+      - name: Install Puppeteer system dependencies
+        run: |
+          sudo apt-get update
+          PKGS="ca-certificates fonts-liberation libasound2 libatk1.0-0 libatk-bridge2.0-0 libcups2 libgtk-3-0 libnss3 libx11-xcb1 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libxss1"
+          echo "Checking available installable packages before install"
+          AVAILABLE=""
+          for p in $PKGS; do
+            # Use apt-cache policy to verify an installable candidate (not virtual-only)
+            CAND=$(apt-cache policy "$p" 2>/dev/null | awk '/Candidate:/ {print $2}') || CAND=""
+            if [ -n "$CAND" ] && [ "$CAND" != "(none)" ]; then
+              AVAILABLE="$AVAILABLE $p"
+            else
+              echo "Package not installable: $p (skipping)"
+            fi
+          done
+          if [ -n "$AVAILABLE" ]; then
+            sudo apt-get install -y --no-install-recommends $AVAILABLE
+          else
+            echo "No installable packages found; continuing"
+          fi
+
+      - name: Install Node dependencies (lockfile)
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
+        run: npm ci --no-audit --no-fund
+
+      - name: Install Playwright Chromium for Puppeteer
+        run: |
+          npx -y playwright@1.62.0 install --with-deps chromium
+          CHROME_PATH=$(find $HOME/.cache/ms-playwright -type f -name "chrome*" -executable 2>/dev/null | head -n1 || true)
+          if [ -n "$CHROME_PATH" ]; then echo "PUPPETEER_EXECUTABLE_PATH=$CHROME_PATH" >> $GITHUB_ENV; fi
+
+      - name: Install lightweight test utilities
+        run: npm install --no-audit --no-fund --no-save http-server wait-on
+
+      - name: Prepare artifacts dir
+        run: mkdir -p test-artifacts
+
+      - name: Start services and wait (helper + webserver)
+        run: |
+          # Use repository script for robust startup checks (accept non-2xx HTTP responses)
+          bash ./scripts/ci_start_services.sh
+
+      - name: Diagnostics - capture helper and webserver status
+        if: failure()
+        run: |
+          sleep 1
+          echo "-- process list (filtered) --"
+          ps aux | egrep 'simulated_helper|http-server|node' | sed -n '1,200p' || true
+          echo "-- simulated_helper.log head --"
+          test -f test-artifacts/simulated_helper.log && head -n 200 test-artifacts/simulated_helper.log || echo "(no simulated_helper.log)"
+          echo "-- webserver.log head --"
+          test -f test-artifacts/webserver.log && head -n 200 test-artifacts/webserver.log || echo "(no webserver.log)"
+
+      - name: Run production SetupWizard POST/poll e2e
+        env:
+          CI: true
+          TEST_HELPER_BASE_URL: http://localhost:5001
+          E2E_USE_SERVER: '1'
+        run: node tests/frontend/test_provider_tls_live_post_poll_template.js 2>&1 | tee test-artifacts/test_provider_tls_live_post_poll_template_e2e.log
+
+      - name: Run production SetupWizard e2e from 127.0.0.1
+        env:
+          CI: true
+          TEST_WEB_URL: http://127.0.0.1:5000
+          TEST_HELPER_BASE_URL: http://127.0.0.1:5001
+          E2E_USE_SERVER: '1'
+        run: node tests/frontend/test_provider_tls_live_post_poll_template.js 2>&1 | tee test-artifacts/test_provider_tls_live_post_poll_127_e2e.log
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: puppeteer-e2e-logs
+          path: test-artifacts
+
+  windows-host-helper:
+    name: Windows host-helper contracts
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          repository: J-Schulein/TowerScout
+          ref: 8682b8e6b31a4425ab626da557f58bff97076de7
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: '3.11'
+
+      - name: Install focused test dependency
+        run: python -m pip install pytest
+
+      - name: Run Task-087 host-helper contracts
+        env:
+          PYTHONPATH: webapp
+        run: >-
+          python -m pytest
+          --confcutdir=tests/unit
+          tests/unit/test_task_087_host_helper.py
+          -q
+          -p no:cacheprovider
+
+      - name: Run host-helper self-test in Windows PowerShell
+        run: >-
+          powershell.exe -NoProfile -ExecutionPolicy Bypass
+          -File scripts/host-helper.ps1
+          -SelfTest
+
+      - name: Setup Python 3.12 for Task-105 provider contract
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Verify PowerShell 7 and run provider installer contract
+        env:
+          TOWERSCOUT_REQUIRE_PWSH: '1'
+        run: |
+          Get-Command pwsh -ErrorAction Stop | Select-Object -ExpandProperty Source
+          python -m pip install pytest
+          python -m pytest --confcutdir=tests/unit tests/unit/test_task105_provider_installer.py -q -p no:cacheprovider
