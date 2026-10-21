@@ -18,6 +18,16 @@ and the [RC5 closeout](TASK-105/RC5-QUALIFICATION-CLOSEOUT-2026-10-19.md).
 Earlier dated statuses and remaining-gate statements below describe their
 recording dates; they do not supersede the current status above.
 
+## October 21 package-location correction
+
+PR #4 audit finding 2 is corrected locally with an exact-image pip/urllib3
+inventory, matching Trivy package provenance, and all-image-gate integration.
+The focused 81-test suite, real RC5 CPU/CUDA inventory, injected extra-copy
+rejection, and both retained RC9 report replays pass. See the
+[remediation evidence](TASK-089/PR4-AUDIT-REMEDIATION-2026-10-21.md).
+Remote PR checks and fresh official-byte qualification remain required. No
+residual key or expiry is extended; the 396-key baseline remains unchanged.
+
 ## Historical status snapshot - October 14
 
 IN_PROGRESS - implementation merged through PR #100 as `928a0f0`;

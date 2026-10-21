@@ -213,3 +213,54 @@ def test_container_verify_is_read_only_and_fails_closed_on_exact_identity():
         "--accepted-residuals .github/security/task103-accepted-residuals.v1.json"
         in disposition
     )
+
+
+def test_pip_inventory_is_bound_to_the_scanned_image_before_publication():
+    workflow = yaml.safe_load((REPO_ROOT / ".github/workflows/container-publish.yml").read_text())
+    steps = workflow["jobs"]["publish"]["steps"]
+    boundary = next(step for step in steps if step.get("name") == "Verify local dependency and geospatial boundary")
+    assert boundary["env"]["LOCAL_IMAGE_ID"] == "${{ steps.build.outputs.local_image_id }}"
+    command = boundary["run"]
+    assert '--entrypoint python "$LOCAL_IMAGE_ID" -I -B -' in command
+    assert '--image-id "$LOCAL_IMAGE_ID" --source-ref "$GITHUB_SHA"' in command
+    assert '--flavor "$PYTORCH_FLAVOR"' in command
+    assert '--network none --read-only --user 0:0' in command
+    assert '--cap-drop ALL --cap-add DAC_OVERRIDE' in command
+    assert '< scripts/task104_urllib3_inventory.py > urllib3-inventory.json' in command
+    names = [step.get("name") for step in steps]
+    assert names.index(boundary["name"]) < names.index("Enforce local pre-publication security gate")
+    for step in steps:
+        if "task103_trivy_delta.py compare" in step.get("run", ""):
+            assert "--urllib3-inventory urllib3-inventory.json" in step["run"]
+            assert not step.get("continue-on-error", False)
+    uploads = [step for step in steps if "upload-artifact@" in step.get("uses", "")]
+    assert any("urllib3-inventory.json" in step["with"]["path"] for step in uploads)
+
+
+def test_existing_digest_verification_collects_fresh_bound_inventory():
+    workflow = yaml.safe_load((REPO_ROOT / ".github/workflows/container-verify.yml").read_text())
+    steps = workflow["jobs"]["verify"]["steps"]
+    inventory = next(step for step in steps if step.get("name") == "Verify exact-image pip inventory")
+    assert inventory["env"]["IMAGE_ID"] == "${{ steps.identity.outputs.image_id }}"
+    assert '--entrypoint python "$IMAGE_ID" -I -B -' in inventory["run"]
+    assert '--image-id "$IMAGE_ID" --source-ref "$EXPECTED_SOURCE_REF"' in inventory["run"]
+    assert '--flavor "$EXPECTED_FLAVOR"' in inventory["run"]
+    assert '--network none --read-only --user 0:0' in inventory["run"]
+    names = [step.get("name") for step in steps]
+    assert names.index("Verify exact published identity and labels") < names.index(inventory["name"])
+    assert names.index(inventory["name"]) < names.index("Confirm exact-digest findings against approved policy")
+    gate = next(step for step in steps if step.get("name") == "Confirm exact-digest findings against approved policy")
+    assert "--urllib3-inventory urllib3-inventory.json" in gate["run"]
+
+
+def test_required_docker_build_exercises_inventory_without_publication():
+    workflow = yaml.safe_load((REPO_ROOT / ".github/workflows/ci.yml").read_text())
+    build = workflow["jobs"]["build"]
+    assert build["name"] == "Full Docker build"
+    steps = build["steps"]
+    check = next(step for step in steps if step.get("name") == "Verify built-image pip inventory")
+    assert not check.get("continue-on-error", False)
+    assert not build.get("continue-on-error", False)
+    assert '--entrypoint python "$image_id" -I -B -' in check["run"]
+    assert '--image-id "$image_id" --source-ref "$GITHUB_SHA" --flavor cpu' in check["run"]
+    assert 'docker push' not in str(build)

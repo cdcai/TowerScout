@@ -275,6 +275,10 @@ Acceptance:
   ambiguous, and no-fix findings require evidence-backed disposition.
 - After the baseline is remediated, CI prevents new critical/high findings or
   requires an explicit time-bounded exception.
+- WHEN the pip-private urllib3 residual is applied, THE RELEASE GATE SHALL
+  require complete, exact-image package-location inventory plus matching
+  scanner provenance. Missing, mixed, extra, or unapproved locations and
+  mismatched image/source/flavor evidence fail closed.
 
 Current result:
 

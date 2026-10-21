@@ -175,7 +175,17 @@ jobs:
     
     - name: Build Docker image (local deployment test)
       run: |
-        docker build -t towerscout:test .
+        docker build --build-arg TOWERSCOUT_SOURCE_REF="$GITHUB_SHA" -t towerscout:test .
+
+    - name: Verify built-image pip inventory
+      run: |
+        set -euo pipefail
+        image_id="$(docker image inspect --format '{{.Id}}' towerscout:test)"
+        docker run --rm --pull never --network none --read-only --user 0:0 \
+          --cap-drop ALL --cap-add DAC_OVERRIDE --security-opt no-new-privileges \
+          -i --entrypoint python "$image_id" -I -B - \
+          --image-id "$image_id" --source-ref "$GITHUB_SHA" --flavor cpu \
+          < scripts/task104_urllib3_inventory.py
 
   security:
     runs-on: ubuntu-latest

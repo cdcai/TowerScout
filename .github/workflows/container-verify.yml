@@ -83,6 +83,21 @@ jobs:
           echo "source_ref=$source_label" >> "$GITHUB_STEP_SUMMARY"
           echo "pytorch_flavor=$flavor_label" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Verify exact-image pip inventory
+        shell: bash
+        env:
+          IMAGE_ID: '${{ steps.identity.outputs.image_id }}'
+          EXPECTED_SOURCE_REF: '${{ inputs.source_ref }}'
+          EXPECTED_FLAVOR: '${{ inputs.pytorch_flavor }}'
+        run: |
+          set -euo pipefail
+          docker run --rm --pull never --network none --read-only --user 0:0 \
+            --cap-drop ALL --cap-add DAC_OVERRIDE --security-opt no-new-privileges \
+            -i --entrypoint python "$IMAGE_ID" -I -B - \
+            --image-id "$IMAGE_ID" --source-ref "$EXPECTED_SOURCE_REF" \
+            --flavor "$EXPECTED_FLAVOR" \
+            < scripts/task104_urllib3_inventory.py > urllib3-inventory.json
+
       - name: Scan exact published digest with Trivy
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
@@ -115,6 +130,7 @@ jobs:
           python scripts/task103_trivy_delta.py compare \
             --baseline .github/security/task103-trivy-baseline.v1.json \
             --accepted-residuals .github/security/task103-accepted-residuals.v1.json \
+            --urllib3-inventory urllib3-inventory.json \
             --candidate image-trivy.json \
             --flavor '${{ inputs.pytorch_flavor }}' \
             --image '${{ steps.identity.outputs.pinned_ref }}' \
@@ -133,6 +149,7 @@ jobs:
             image-identity.json
             remote-manifest.json
             image-trivy.json
+            urllib3-inventory.json
             image-sbom.cdx.json
             image-scan-dispositions.md
             image-scan-delta.json

@@ -9,7 +9,16 @@ acceptance. It also recorded missing original scan inputs and inability to
 rescan the old candidate. Its verified/inferred/unverified labels belong to
 that dated review, not to this reconciliation.
 
-## Relationship to accepted work
+## October 21 correction
+
+The package-location gap below was reproduced during the PR #4 audit and is
+now corrected locally through exact-image filesystem inventory plus Trivy
+package provenance and path checks. See the
+[implementation and validation record](../TASK-089/PR4-AUDIT-REMEDIATION-2026-10-21.md).
+The October 20 observations remain dated history; the correction does not
+replace fresh official-image scans or extend any residual's expiry.
+
+## Relationship to accepted work as inspected October 20
 
 - Dependency provenance and proposed removal of unused GDAL are addressed
   by [ADR-024](../../../decisions/024-rc5-security-gate-and-residual-boundary.md)

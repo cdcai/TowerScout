@@ -10,11 +10,13 @@
       "compensating_controls": [
         "TowerScout imports urllib3 2.8.0 from the application environment.",
         "The publish workflow verifies the application and pip-private urllib3 versions before scanning.",
-        "The accepted record is limited to pip 26.2.1's private urllib3 2.7.0 package identity."
+        "The accepted record is limited to pip 26.2.1's private urllib3 2.7.0 package identity.",
+        "The comparator requires exact-image filesystem inventory and the matching Trivy embedded-SBOM package record; an extra or misplaced urllib3 copy fails closed."
       ],
       "expires_utc": "2026-10-31T23:59:59Z",
       "follow_up_task": "TASK-104",
       "installed_version": "2.7.0",
+      "location_policy": "pip-vendored-urllib3-v1",
       "package": "urllib3",
       "package_class": "lang-pkgs",
       "package_id": "urllib3@2.7.0",
@@ -32,11 +34,13 @@
       "compensating_controls": [
         "TowerScout imports urllib3 2.8.0 from the application environment.",
         "The publish workflow verifies the application and pip-private urllib3 versions before scanning.",
-        "The accepted record is limited to pip 26.2.1's private urllib3 2.7.0 package identity."
+        "The accepted record is limited to pip 26.2.1's private urllib3 2.7.0 package identity.",
+        "The comparator requires exact-image filesystem inventory and the matching Trivy embedded-SBOM package record; an extra or misplaced urllib3 copy fails closed."
       ],
       "expires_utc": "2026-10-31T23:59:59Z",
       "follow_up_task": "TASK-104",
       "installed_version": "2.7.0",
+      "location_policy": "pip-vendored-urllib3-v1",
       "package": "urllib3",
       "package_class": "lang-pkgs",
       "package_id": "urllib3@2.7.0",

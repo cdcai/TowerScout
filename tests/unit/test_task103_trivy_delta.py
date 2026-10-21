@@ -13,6 +13,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = REPO_ROOT / "scripts" / "task103_trivy_delta.py"
 IMAGE_ID = "sha256:" + "1" * 64
 ARTIFACT_ID = "sha256:" + "2" * 64
+SITE = "usr/local/lib/python3.11/site-packages"
+VENDOR_SBOM = f"{SITE}/pip/_vendor/bom.cdx.json"
 COMMITTED_RESIDUALS = (
     REPO_ROOT / ".github" / "security" / "task103-accepted-residuals.v1.json"
 )
@@ -109,12 +111,25 @@ def _scan(
             vulnerabilities.append(
                 {key: value for key, value in raw.items() if not key.startswith("_")}
             )
+        packages = []
+        for vulnerability in vulnerabilities:
+            if vulnerability["PkgName"] == "urllib3":
+                version = vulnerability["InstalledVersion"]
+                identifier = {"PURL": f"pkg:pypi/urllib3@{version}", "UID": f"test-{version}"}
+                vulnerability.setdefault("PkgIdentifier", identifier)
+                package = {
+                    "ID": vulnerability["PkgID"], "Name": "urllib3", "Version": version,
+                    "Identifier": identifier, "AnalyzedBy": "sbom",
+                }
+                if package not in packages:
+                    packages.append(package)
         results.append(
             {
                 "Target": target,
                 "Class": package_class,
                 "Type": package_type,
                 "Vulnerabilities": vulnerabilities,
+                "Packages": packages,
             }
         )
     return {
@@ -140,6 +155,7 @@ def _scan(
 
 def _residual(finding, *, expires="2099-12-31T23:59:59Z", flavors=None):
     return {
+        **({"location_policy": "pip-vendored-urllib3-v1"} if finding["_class"] == "lang-pkgs" else {}),
         "vulnerability_id": finding["VulnerabilityID"],
         "package": finding["PkgName"],
         "severity": finding["Severity"],
@@ -210,13 +226,32 @@ def _residual_file(tmp_path, *findings):
     )
 
 
-def _compare(tmp_path, baseline, scan, flavor="cpu", residuals=None):
+def _inventory(tmp_path, flavor="cpu"):
+    # Synthetic attestation fixture; filesystem collection is tested separately.
+    return _write(tmp_path / "inventory.json", {
+        "schema_version": 1, "location_policy": "pip-vendored-urllib3-v1",
+        "image_id": IMAGE_ID, "source_ref": "candidate-sha", "pytorch_flavor": flavor,
+        "scope": "image-root-excluding-dev-proc-sys",
+        "urllib3_directories": sorted([f"{SITE}/urllib3", f"{SITE}/pip/_vendor/urllib3",
+            f"{SITE}/pip-26.2.1.dist-info/licenses/src/pip/_vendor/urllib3"]),
+        "urllib3_notice_files": [f"{SITE}/pip-26.2.1.dist-info/licenses/src/pip/_vendor/urllib3/LICENSE.txt"],
+        "urllib3_distributions": [f"{SITE}/urllib3-2.8.0.dist-info"],
+        "urllib3_sbom_sources": [VENDOR_SBOM],
+        "pip_version": "26.2.1", "application_version": "2.8.0",
+        "application_module_version": "2.8.0", "vendored_module_version": "2.7.0",
+        "vendored_sbom_sha256": "a" * 64,
+    })
+
+
+def _compare(tmp_path, baseline, scan, flavor="cpu", residuals=None, inventory=None):
     markdown = tmp_path / f"{flavor}-dispositions.md"
     delta = tmp_path / f"{flavor}-delta.json"
     report = json.loads(Path(scan).read_text(encoding="utf-8"))
     residuals = residuals or _residual_file(tmp_path)
+    inventory = _inventory(tmp_path, flavor) if inventory is None else inventory
     result = _run(
         "compare",
+        *(["--urllib3-inventory", inventory] if inventory else []),
         "--baseline",
         baseline,
         "--accepted-residuals",
@@ -448,7 +483,7 @@ def test_compare_fails_closed_on_mismatched_or_unused_residual(tmp_path):
         residuals=_residual_file(tmp_path, residual),
     )
     assert result.returncode == 2
-    assert "did not match the candidate exactly" in result.stderr
+    assert "location_policy" in result.stderr
 
 
 def test_compare_fails_closed_on_duplicate_residual_key(tmp_path):
@@ -557,5 +592,99 @@ def test_compare_fails_closed_on_scanner_version_mismatch(tmp_path):
     result, markdown, delta = _compare(tmp_path, baseline, scan)
     assert result.returncode == 2
     assert "does not match baseline" in result.stderr
+    assert not markdown.exists()
+    assert not delta.exists()
+
+
+@pytest.mark.parametrize("include_expected_copy", [False, True])
+def test_pip_residual_rejects_same_version_at_unapproved_location(
+    tmp_path, include_expected_copy
+):
+    baseline = _baseline(tmp_path)
+    pip_private = _finding(
+        "CVE-NEW", "urllib3", installed="2.7.0",
+        package_class="lang-pkgs", package_type="python-pkg",
+    )
+    unexpected = copy.deepcopy(pip_private)
+    unexpected["PkgPath"] = "app/unapproved-copy/urllib3-2.7.0.dist-info/METADATA"
+    findings = [unexpected]
+    if include_expected_copy:
+        findings.append(pip_private)
+    candidate = _write(tmp_path / "candidate.json", _scan(*findings))
+    result, markdown, delta = _compare(
+        tmp_path, baseline, candidate,
+        residuals=_residual_file(tmp_path, _residual(pip_private)),
+    )
+    assert result.returncode == 2, result.stdout
+    assert not markdown.exists()
+    assert not delta.exists()
+
+
+@pytest.mark.parametrize("flavor", ["cpu", "cuda128"])
+def test_pip_residual_binds_inventory_and_records_evidence_hash(tmp_path, flavor):
+    baseline = _baseline(tmp_path)
+    finding = _finding("CVE-NEW", "urllib3", installed="2.7.0",
+                       package_class="lang-pkgs", package_type="python-pkg")
+    candidate = _write(tmp_path / "candidate.json", _scan(finding, flavor=flavor))
+    result, _, delta = _compare(tmp_path, baseline, candidate, flavor=flavor,
+                               residuals=_residual_file(tmp_path, _residual(finding)))
+    assert result.returncode == 0, result.stderr
+    assert len(json.loads(delta.read_text())["urllib3_inventory_sha256"]) == 64
+
+
+@pytest.mark.parametrize("mutation", [
+    "missing-proof", "wrong-image", "wrong-source", "wrong-flavor", "extra-directory",
+    "missing-packages", "wrong-analyzer", "missing-uid", "extra-package", "wrong-target",
+    "missing-pkgid-in-duplicate", "missing-version-in-duplicate", "malformed-path",
+    "missing-location-policy", "unknown-location-policy",
+])
+def test_pip_residual_fails_closed_on_incomplete_or_conflicting_evidence(tmp_path, mutation):
+    baseline = _baseline(tmp_path)
+    finding = _finding("CVE-NEW", "urllib3", installed="2.7.0",
+                       package_class="lang-pkgs", package_type="python-pkg")
+    report = _scan(finding)
+    python = report["Results"][1]
+    vulnerability = python["Vulnerabilities"][0]
+    proof_path = _inventory(tmp_path)
+    proof = json.loads(proof_path.read_text())
+    residual = _residual(finding)
+    if mutation == "missing-proof":
+        proof_path = False
+    elif mutation == "wrong-image":
+        proof["image_id"] = "sha256:" + "9" * 64
+    elif mutation == "wrong-source":
+        proof["source_ref"] = "other-source"
+    elif mutation == "wrong-flavor":
+        proof["pytorch_flavor"] = "cuda128"
+    elif mutation == "extra-directory":
+        proof["urllib3_directories"].append("app/extra/urllib3")
+    elif mutation == "missing-packages":
+        del python["Packages"]
+    elif mutation == "wrong-analyzer":
+        python["Packages"][0]["AnalyzedBy"] = "python-pkg"
+    elif mutation == "missing-uid":
+        vulnerability["PkgIdentifier"].pop("UID")
+    elif mutation == "extra-package":
+        extra = copy.deepcopy(python["Packages"][0])
+        extra["FilePath"] = "app/extra/urllib3-2.7.0.dist-info/METADATA"
+        python["Packages"].append(extra)
+    elif mutation == "wrong-target":
+        python["Target"] = "app/extra"
+    elif mutation in {"missing-pkgid-in-duplicate", "missing-version-in-duplicate"}:
+        extra = copy.deepcopy(vulnerability)
+        del extra["PkgID" if mutation == "missing-pkgid-in-duplicate" else "InstalledVersion"]
+        python["Vulnerabilities"].append(extra)
+    elif mutation == "malformed-path":
+        vulnerability["PkgPath"] = [VENDOR_SBOM]
+    elif mutation == "missing-location-policy":
+        del residual["location_policy"]
+    elif mutation == "unknown-location-policy":
+        residual["location_policy"] = "anywhere"
+    if proof_path:
+        _write(proof_path, proof)
+    candidate = _write(tmp_path / "candidate.json", report)
+    result, markdown, delta = _compare(tmp_path, baseline, candidate,
+        residuals=_residual_file(tmp_path, residual), inventory=proof_path)
+    assert result.returncode == 2, result.stdout
     assert not markdown.exists()
     assert not delta.exists()

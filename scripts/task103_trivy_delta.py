@@ -18,6 +18,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 
+from task104_urllib3_inventory import (
+    InventoryError, LOCATION_POLICY, VENDOR_SBOM, validate_inventory,
+)
+
 BLOCKING_SEVERITIES = frozenset({"HIGH", "CRITICAL"})
 SEVERITY_ORDER = {"UNKNOWN": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
 POLICY = "task103-g10-no-new-high-critical"
@@ -67,6 +71,7 @@ RESIDUAL_FINDING_FIELDS = frozenset(
         "package_id",
         "package_class",
         "package_type",
+        "location_policy",
         "applicable_publish_flavors",
         "expires_utc",
         "reason",
@@ -157,6 +162,33 @@ def _string_values(value: Any) -> list[str]:
     return [value] if value else []
 
 
+def _is_pip_sbom_source(result: dict[str, Any], vulnerability: dict[str, Any]) -> bool:
+    """Require Trivy's exact embedded-SBOM package record, not just its name."""
+    packages = result.get("Packages")
+    identifier = vulnerability.get("PkgIdentifier")
+    if not isinstance(packages, list) or not isinstance(identifier, dict):
+        return False
+    if not identifier.get("UID") or identifier.get("PURL") != "pkg:pypi/urllib3@2.7.0":
+        return False
+    matches = [
+        package for package in packages
+        if isinstance(package, dict) and package.get("Name") == "urllib3"
+        and package.get("Version") == "2.7.0"
+    ]
+    if len(matches) != 1:
+        return False
+    package = matches[0]
+    package_identifier = package.get("Identifier")
+    return (
+        isinstance(package_identifier, dict)
+        and package_identifier.get("UID") == identifier["UID"]
+        and package_identifier.get("PURL") == identifier["PURL"]
+        and package.get("ID") == "urllib3@2.7.0"
+        and package.get("AnalyzedBy") == "sbom"
+        and package.get("FilePath") in (None, "", VENDOR_SBOM)
+    )
+
+
 def _extract_findings(
     report: dict[str, Any], label: str
 ) -> dict[tuple[str, str], dict[str, Any]]:
@@ -216,6 +248,8 @@ def _extract_findings(
                     "severity": severity,
                     "targets": set(),
                     "package_ids": set(),
+                    "package_paths": set(),
+                    "pip_sbom_source": True,
                     "package_classes": set(),
                     "package_types": set(),
                     "installed_versions": set(),
@@ -227,11 +261,18 @@ def _extract_findings(
             ):
                 entry["severity"] = severity
             entry["targets"].add(target)
-            entry["package_ids"].update(_string_values(vulnerability.get("PkgID")))
+            package_path = vulnerability.get("PkgPath")
+            if package_path is not None and not isinstance(package_path, str):
+                raise InputError(f"{label} vulnerability PkgPath must be a string or null")
+            entry["package_paths"].add(package_path or "")
+            entry["pip_sbom_source"] &= _is_pip_sbom_source(result, vulnerability)
+            # Preserve missing identities: an incomplete duplicate must not be
+            # hidden by another record with a populated identity.
+            entry["package_ids"].update(_string_values(vulnerability.get("PkgID")) or [""])
             entry["package_classes"].add(package_class)
             entry["package_types"].add(package_type)
             entry["installed_versions"].update(
-                _string_values(vulnerability.get("InstalledVersion"))
+                _string_values(vulnerability.get("InstalledVersion")) or [""]
             )
             entry["fixed_versions"].update(
                 _string_values(vulnerability.get("FixedVersion"))
@@ -255,6 +296,7 @@ def _serializable_finding(finding: dict[str, Any], *, details: bool) -> dict[str
             {
                 "targets": sorted(finding["targets"]),
                 "package_ids": sorted(finding["package_ids"]),
+                "package_paths": sorted(finding["package_paths"]),
                 "package_classes": sorted(finding["package_classes"]),
                 "package_types": sorted(finding["package_types"]),
                 "installed_versions": sorted(finding["installed_versions"]),
@@ -412,6 +454,18 @@ def _accepted_residuals(
                 value.get("follow_up_task"), f"{label}.follow_up_task"
             ),
         }
+        location_policy = value.get("location_policy")
+        if normalized["package_class"] == "lang-pkgs":
+            if (
+                location_policy != LOCATION_POLICY
+                or package != "urllib3"
+                or normalized["installed_version"] != "2.7.0"
+                or normalized["package_type"] != "python-pkg"
+            ):
+                raise InputError(f"{label} requires the supported pip location_policy")
+            normalized["location_policy"] = location_policy
+        elif location_policy is not None:
+            raise InputError(f"{label} location_policy is only supported for pip urllib3")
         if flavor in flavors:
             accepted[key] = normalized
     return accepted
@@ -469,8 +523,16 @@ def _validate_candidate_identity(
 
 
 def _residual_matches(
-    candidate: dict[str, Any], residual: dict[str, Any]
+    candidate: dict[str, Any], residual: dict[str, Any], *, inventory_verified: bool = False
 ) -> bool:
+    if residual["package_class"] == "lang-pkgs" and not (
+        residual.get("location_policy") == LOCATION_POLICY
+        and inventory_verified
+        and candidate["targets"] == {"Python"}
+        and candidate["package_paths"] <= {"", VENDOR_SBOM}
+        and candidate["pip_sbom_source"]
+    ):
+        return False
     return (
         candidate["severity"] == residual["severity"]
         and candidate["installed_versions"] == {residual["installed_version"]}
@@ -589,6 +651,16 @@ def compare(args: argparse.Namespace) -> int:
     candidate = _extract_findings(report, "candidate Trivy scan")
     residual_doc = _load_json(args.accepted_residuals, "accepted residuals")
     residuals = _accepted_residuals(residual_doc, args.flavor)
+    inventory_verified = False
+    if any(value.get("location_policy") == LOCATION_POLICY for value in residuals.values()):
+        if args.urllib3_inventory is None:
+            raise InputError("pip residuals require --urllib3-inventory from the exact image")
+        inventory = _load_json(args.urllib3_inventory, "urllib3 inventory")
+        try:
+            validate_inventory(inventory, candidate_image_id, args.source_ref, args.flavor)
+        except InventoryError as exc:
+            raise InputError(str(exc)) from exc
+        inventory_verified = True
     baseline_keys = set(baseline)
     candidate_keys = set(candidate)
     new_keys = sorted(candidate_keys - baseline_keys)
@@ -602,7 +674,9 @@ def compare(args: argparse.Namespace) -> int:
     accepted_residual_keys = sorted(
         key
         for key in new_keys
-        if key in residuals and _residual_matches(candidate[key], residuals[key])
+        if key in residuals and _residual_matches(
+            candidate[key], residuals[key], inventory_verified=inventory_verified
+        )
     )
     unused_residual_keys = sorted(set(residuals) - set(accepted_residual_keys))
     if unused_residual_keys:
@@ -649,6 +723,9 @@ def compare(args: argparse.Namespace) -> int:
         "baseline_sha256": _sha256(args.baseline),
         "accepted_residuals_path": args.accepted_residuals.as_posix(),
         "accepted_residuals_sha256": _sha256(args.accepted_residuals),
+        "urllib3_inventory_sha256": (
+            _sha256(args.urllib3_inventory) if inventory_verified else None
+        ),
         "baseline_count": len(baseline),
         "candidate_count": len(candidate),
         "retained_count": len(baseline_keys & candidate_keys),
@@ -677,6 +754,7 @@ def compare(args: argparse.Namespace) -> int:
         f"- Baseline SHA-256: `{delta['baseline_sha256']}`",
         f"- Accepted residuals: `{args.accepted_residuals.as_posix()}`",
         f"- Accepted residuals SHA-256: `{delta['accepted_residuals_sha256']}`",
+        f"- Exact-image urllib3 inventory SHA-256: `{delta['urllib3_inventory_sha256'] or 'not required'}`",
         f"- Policy: block every unaccepted new CRITICAL/HIGH key and every severity escalation.",
         f"- Counts: baseline {len(baseline)}; candidate {len(candidate)}; "
         f"accepted baseline {accepted_baseline_count}; "
@@ -733,6 +811,7 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     check.add_argument("--baseline", required=True, type=Path)
     check.add_argument("--candidate", required=True, type=Path)
     check.add_argument("--accepted-residuals", required=True, type=Path)
+    check.add_argument("--urllib3-inventory", type=Path)
     check.add_argument("--flavor", required=True, choices=sorted(SUPPORTED_FLAVORS))
     check.add_argument("--image", required=True)
     check.add_argument("--expected-image-id", required=True)

@@ -238,6 +238,20 @@ The current security boundary is:
     rescans the exact published digest, and promotes `latest` only after that
     confirmation and separate owner authorization.
 
+### Exact pip-private location evidence
+
+Trivy's embedded-SBOM entry can omit `PkgPath`. The Task-104 inventory helper
+runs through isolated Python stdin inside the immutable candidate image,
+without network or user mounts, and traverses its filesystem excluding only
+`/dev`, `/proc`, and `/sys`. It verifies the exact application, pip-private,
+metadata, SBOM, and license-only paths. Directory-read failures stop the gate.
+The comparator binds this proof to the scan's image/source/flavor, retains its
+hash, and verifies the matching Trivy package UID/PURL/analyzer and all
+observed paths. Version/severity/expiry and baseline enforcement remain.
+Both publication and standalone verification require this proof; the existing
+required full Docker build exercises the helper before merge. See the
+[PR #4 correction evidence](tasks/active/TASK-089/PR4-AUDIT-REMEDIATION-2026-10-21.md).
+
 ## Task Dependency Flow
 
 ```text
