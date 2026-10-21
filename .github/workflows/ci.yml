@@ -1,0 +1,245 @@
+name: TowerScout CI/CD Testing Pipeline
+
+# Temporary destination setup: manually validate one reviewed adoption source.
+# Replace with normal PR/main triggers and default checkout during adoption.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  frontend-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      with:
+        repository: J-Schulein/TowerScout
+        ref: 8682b8e6b31a4425ab626da557f58bff97076de7
+        persist-credentials: false
+
+    # TASK-101: Puppeteer 25 requires the maintained Node 22.12+ baseline.
+    - name: Set up Node 22
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      with:
+        node-version: '22'
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+
+    - name: Install frontend dependencies
+      env:
+        PUPPETEER_SKIP_DOWNLOAD: 'true'
+      run: npm ci
+
+    - name: Audit frontend dependencies for high severity vulnerabilities
+      run: npm audit --audit-level=high
+
+    - name: Verify CommonJS Puppeteer compatibility
+      run: node -e "const puppeteer = require('puppeteer'); if (typeof puppeteer.launch !== 'function') process.exit(1); console.log('CommonJS Puppeteer load OK')"
+
+    - name: Rebuild frontend bundle
+      run: node webapp/build.js
+
+    - name: Verify committed bundle matches source
+      run: |
+        node webapp/build.js
+        git diff --exit-code -I "Build Date" webapp/js/towerscout.js
+
+    - name: Run setup wizard validation contract
+      run: node tests/frontend/test_setup_wizard_validation_contract.js
+
+    - name: Run detection cancellation recovery contract
+      run: node tests/frontend/test_detection_cancel_recovery_contract.js
+
+    - name: Run ProviderStateManager regression test
+      run: node tests/integration/test_task_064_provider_state_manager.js
+
+  frontend-container-build:
+    name: Docker frontend stage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      with:
+        repository: J-Schulein/TowerScout
+        ref: 8682b8e6b31a4425ab626da557f58bff97076de7
+        persist-credentials: false
+
+    # TASK-101: keep the maintained Node/Puppeteer builder contract blocking
+    # on pull requests without expanding this check to the full runtime image.
+    - name: Build Docker frontend stage
+      run: docker build --target frontend --tag towerscout-frontend:test .
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      matrix:
+        python-version: [3.11, 3.12]
+
+    steps:
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      with:
+        repository: J-Schulein/TowerScout
+        ref: 8682b8e6b31a4425ab626da557f58bff97076de7
+        persist-credentials: false
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+        cache-dependency-path: |
+          webapp/requirements.txt
+          requirements-dev.txt
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gdal-bin libgdal-dev
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install "torch==2.10.0" "torchvision==0.25.0" --index-url https://download.pytorch.org/whl/cpu
+        pip install -r webapp/requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Lint with flake8
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 webapp/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Treat all errors as warnings for now (can be made stricter later)
+        flake8 webapp/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    
+    - name: Format check with black
+      run: |
+        black --check --diff webapp/
+      continue-on-error: true  # Historical formatting drift is advisory until a dedicated repo-wide reformat pass lands
+    
+    - name: Type check with mypy
+      run: |
+        # Start with basic type checking, can be made stricter later
+        mypy webapp/ --ignore-missing-imports --no-strict-optional
+      continue-on-error: true  # Don't fail build on type errors initially
+    
+    - name: Security check with bandit
+      run: |
+        bandit -r webapp/ -f json -o bandit-report.json
+        bandit -r webapp/
+      continue-on-error: true  # Don't fail build on security warnings initially
+    
+    - name: Run unit tests
+      timeout-minutes: 20
+      env:
+        # Mock environment variables for testing
+        GOOGLE_API_KEY: test_google_key_123
+        AZURE_MAPS_SUBSCRIPTION_KEY: test_azure_key_456
+        FLASK_SECRET_KEY: test_secret_key_for_sessions
+        FLASK_ENV: testing
+      run: |
+        pytest tests/unit/ -v --cov=webapp --cov-report=xml --cov-report=term-missing
+    
+    - name: Run integration tests
+      timeout-minutes: 15
+      env:
+        # Mock environment variables for testing
+        GOOGLE_API_KEY: test_google_key_123
+        AZURE_MAPS_SUBSCRIPTION_KEY: test_azure_key_456
+        FLASK_SECRET_KEY: test_secret_key_for_sessions
+        FLASK_ENV: testing
+      run: |
+        pytest tests/integration/ -v --cov=webapp --cov-append --cov-report=xml --cov-report=term-missing
+      continue-on-error: true  # Don't fail build on integration test failures initially
+    
+    # Keep coverage in GitHub artifacts below. The receiving repository's
+    # selected-Actions policy does not allow the optional Codecov uploader.
+
+    - name: Archive test results
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+      if: always()
+      with:
+        name: test-results-${{ matrix.python-version }}
+        path: |
+          coverage.xml
+          bandit-report.json
+          .pytest_cache/
+        if-no-files-found: ignore
+
+  build:
+    name: Full Docker build
+    needs: [test, frontend-test, frontend-container-build, security]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      with:
+        repository: J-Schulein/TowerScout
+        ref: 8682b8e6b31a4425ab626da557f58bff97076de7
+        persist-credentials: false
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+    
+    - name: Build Docker image (local deployment test)
+      run: |
+        docker build -t towerscout:test .
+
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      with:
+        repository: J-Schulein/TowerScout
+        ref: 8682b8e6b31a4425ab626da557f58bff97076de7
+        persist-credentials: false
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        scanners: 'vuln'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        exit-code: '0'
+        version: 'v0.69.3'
+      continue-on-error: true
+
+    - name: Record pinned Trivy and vulnerability database versions
+      if: always()
+      shell: bash
+      run: |
+        set -o pipefail
+        trivy --version | tee trivy-version.txt
+        cat trivy-version.txt >> "$GITHUB_STEP_SUMMARY"
+      continue-on-error: true
+
+    # TASK-098 ratchet: block new or reintroduced critical/high dependency
+    # findings. The all-severity SARIF reporting path remains advisory below.
+    - name: Evaluate critical and high vulnerability gate
+      uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        scanners: 'vuln'
+        format: 'table'
+        severity: 'CRITICAL,HIGH'
+        exit-code: '1'
+        ignore-unfixed: 'false'
+        version: 'v0.69.3'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@b25d0ebf40e5b63ee81e1bd6e5d2a12b7c2aeb61 # v4
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+      continue-on-error: true
