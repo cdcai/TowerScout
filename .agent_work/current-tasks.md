@@ -42,6 +42,13 @@ No cdcai source merge or official publication occurred. Destination CI has not
 started at submission; the fork dependency graph still needs reconciliation.
 See the [submission receipt](context/status/Handoff-Planning/2026-10-21-ADOPTION-SUBMISSION-AND-CHECKS.md).
 
+**Destination-readiness correction:** The user authorized the setup-first
+sequence. PR #4 remains draft while a separate workflow setup, security and
+review protections, a blocking pre-merge full build, and stale dependency-graph
+reconciliation are prepared and verified. Fork checks at `e4adaf0` passed;
+new workflow changes require fresh checks. See the
+[destination setup plan](context/status/Handoff-Planning/2026-10-21-DESTINATION-SETUP-PLAN.md).
+
 ## Qualification history through October 19
 
 The following narrative retains the candidate progression; older pending

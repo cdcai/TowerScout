@@ -76,3 +76,5 @@ These historical records remain in place. Their commands, old security counts,
 and pending-work statements describe their dates and do not authorize current
 execution. Private material delivery and receiving-owner access must be
 confirmed separately; local planning drafts are not automatically public.
+
+Current setup-first sequence: [destination setup plan](2026-10-21-DESTINATION-SETUP-PLAN.md). Adoption draft #4 remains on hold for destination CI and protections.

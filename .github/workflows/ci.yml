@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch: {}
   schedule:
     - cron: '23 9 * * 1'
 
@@ -161,10 +162,10 @@ jobs:
         if-no-files-found: ignore
 
   build:
-    needs: test
+    name: Full Docker build
+    needs: [test, frontend-test, frontend-container-build, security]
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    if: github.ref == 'refs/heads/main'
     
     steps:
     - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
@@ -175,7 +176,6 @@ jobs:
     - name: Build Docker image (local deployment test)
       run: |
         docker build -t towerscout:test .
-      continue-on-error: true  # Advisory until Sprint 06 release gates decide whether image build should be merge-blocking
 
   security:
     runs-on: ubuntu-latest

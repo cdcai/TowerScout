@@ -116,6 +116,7 @@ Required:
 - lint checks the repo already treats as merge-blocking
 - current unit-test baseline
 - maintained smoke coverage relevant to the touched area
+- the full Docker image build, now blocking before merge as well as on main
 
 Advisory until explicitly promoted:
 
@@ -123,8 +124,6 @@ Advisory until explicitly promoted:
 - `mypy`
 - `bandit`
 - broader integration or browser suites that are still environment-sensitive or non-blocking
-- the full-image build step currently marked advisory in `ci.yml`; the separate
-  frontend-stage build is not advisory
 
 Read the current workflows to identify actual blocking steps. Completed
 TASK-066/TASK-067 records are historical decisions, not pending promotion work.
