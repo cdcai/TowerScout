@@ -27,6 +27,10 @@ acceptance remain
 
 ## Objective
 
+**October 21 adoption follow-up:** [PR #113 dependency correction](TASK-104/PR113-DEPENDENCY-CORRECTION-2026-10-21.md)
+tracks aiohttp remediation and the fresh Pillow security blocker. Combined
+remote checks, reviewed merge and official-byte qualification remain required.
+
 Remove the unused Debian GDAL dependency, enforce exact time-bounded residual
 matching, and prevent an unqualified image from being pushed before the local
 security gate passes. Preserve the accepted 396-key baseline unchanged.

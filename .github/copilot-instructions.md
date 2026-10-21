@@ -130,9 +130,11 @@ adoption:
 2. Task-095 Phase A is complete.
 3. Preserve the completed July Task-090/098 record and the eight documented
    torch residuals for a future coordinated ML qualification cycle.
-4. Preserve Task-099's completed `aiohttp==3.14.3`, transitive
-   `ip-address==10.3.1`, and transitive `js-yaml==4.3.1` remediation plus its
-   eight-alert torch residual baseline.
+4. Preserve Task-099's completed remediation and its eight-alert torch
+   residual baseline as historical evidence. The current runtime manifest
+   supersedes its `aiohttp==3.14.3` pin with `aiohttp==3.14.4` for the October
+   security follow-up; retain the transitive `ip-address==10.3.1` and
+   `js-yaml==4.3.1` history.
 5. Preserve the passed PR #72/default-branch security result: squash commit
    `0cc189c`, green exact-main checks, and alert `#76` fixed without dismissal.
 6. Preserve PR #67 and Task-087 history without merging, reconciling,

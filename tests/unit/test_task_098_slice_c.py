@@ -122,7 +122,7 @@ def _run_fetch(url, directory, filename, *, max_retries=0):
 def test_aiohttp_security_pin_is_exact():
     requirements = REQUIREMENTS_FILE.read_text(encoding="utf-8").splitlines()
 
-    assert "aiohttp==3.14.3" in requirements
+    assert "aiohttp==3.14.4" in requirements
 
 
 def test_urllib3_security_pin_is_exact():

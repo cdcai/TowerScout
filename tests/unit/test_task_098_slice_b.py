@@ -36,9 +36,9 @@ def test_slice_b_dependency_pins_are_consistent():
     requirements = REQUIREMENTS_FILE.read_text(encoding="utf-8").splitlines()
     yolo_runtime = YOLO_RUNTIME_FILE.read_text(encoding="utf-8")
 
-    assert "Pillow==12.3.0" in requirements
+    assert "Pillow==13.0.0" in requirements
     assert "waitress==3.0.2" in requirements
-    assert "'pillow': {'min_version': '12.3.0'}" in yolo_runtime
+    assert "'pillow': {'min_version': '13.0.0'}" in yolo_runtime
 
 
 def test_waitress_loopback_request_and_disconnect_contract():
