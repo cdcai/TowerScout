@@ -12,6 +12,9 @@ The fixed source supplies the tests/scripts that do not yet exist on cdcai
 main. Credentials are not persisted by checkout. There is no arbitrary source
 input, package-write permission, registry login or image push. The full Docker
 build is blocking and produces a runner-local CPU-default image only.
+Security reports are retained as artifacts instead of uploaded to code scanning,
+so results from the pinned source are not attributed to the setup commit. The
+setup workflows need only contents:read and no security-events write permission.
 
 ## What a successful setup run means
 
