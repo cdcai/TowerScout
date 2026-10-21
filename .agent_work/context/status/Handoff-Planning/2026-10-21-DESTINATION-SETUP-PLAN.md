@@ -1,7 +1,9 @@
 # Destination setup before adoption - October 21, 2026
 
-**Tasks:** TASK-089 / TASK-104. **State:** implementation authorized; setup and
-adoption merges remain separately reviewed. cdcai main is still `3e2c65d`.
+**Tasks:** TASK-089 / TASK-104. **State:** setup PR #5 merged as `87ca900`
+with Chris's approval relayed by the user. Destination setup validation passed;
+updated adoption-head validation and required-check enforcement remain pending.
+Application adoption PR #4 remains draft and requires separate approval.
 
 ## Sequence correction
 
@@ -51,10 +53,16 @@ secret scanning and push protection. Keep the selected-Actions allowlist,
 read-only default workflow token and external-contributor approval policy.
 Disable unneeded workflow-created PR approval capability.
 
-Protect main with one independent approval, stale-approval dismissal,
-conversation resolution, no force-push/deletion and administrator enforcement.
-Chris Edens (`wcedens`) has administrator access and is an eligible reviewer
-of J-Schulein's PR. Do not invent an approval or merge around that protection.
+The initial rule required one independent GitHub approval. On October 21,
+2026, the user authorized using Chris's verbal approval instead. Verified
+cdcai main now requires zero approving GitHub reviews and does not require
+independent approval of the latest push. The PR requirement, stale-review
+dismissal, conversation resolution, no force-push/deletion and administrator
+enforcement remain. Record the user's confirmation of Chris's approval and
+approved scope before a cdcai merge; do not invent approval or a GitHub review.
+The settings change itself approves no merge. The before/after receipt is
+`output/handoff/destination-readiness-audit/review-policy-amendment.json`
+in the original local workspace.
 Required status checks must be added after real destination executions make
 their exact names available; do not claim the intermediate rule enforces CI.
 No linear-history rule: the adoption must retain historical ancestry.
@@ -100,3 +108,34 @@ The execution receipt/PR descriptions must record actual results. Setup merge,
 fork graph-refresh merge, adoption merge, official publication and release
 qualification are separate checkpoints. Historical candidate evidence and
 Chris/manager packet separation remain preserved.
+
+## October 21 execution and adoption integration
+
+Chris's approval for the exact setup PR #5 was relayed by the user. The merge
+`87ca900` preserves the approved setup tree. The pre-adoption ZIP checksum was
+reverified before merge; the Git mirror and settings audit remain preserved.
+Destination runs `39669780901` and `39669784666` passed all nine jobs, including
+the full Docker build, while checking out exact fork source `8682b8e`.
+Each Python job passed 586 unit tests with 162 skipped and five subtests passed.
+The same five advisory integration failures and formatting/type/Bandit findings
+remain. Setup runs are not acceptance of the updated adoption PR or release.
+
+Fork PR #115 merged as `55b3330`. Post-merge runs `39661712534` and
+`39661712581` passed, including the real full build. Native graph run
+`39661728819` refreshed both root and webapp submissions. GitHub now reports
+aiohttp 3.14.4 and Pillow 13.0.0; alerts #77/#78/#79 are fixed without dismissal.
+The separate Low torch alert #58 remains open.
+
+The authorized integration brings both main revisions into preparation without
+rewriting history. Restore the two temporary setup workflows to the exact
+normal reviewed workflows from `8682b8e`, remove `.github/CI-SETUP.md`, and
+preserve PR #115's two manifest comments. No runtime/dependency version change
+is intended. Fresh fork and cdcai PR checks on the resulting head/base are
+required. Configure the nine observed job names with GitHub Actions provenance
+and up-to-date-branch enforcement; record the actual settings readback and
+required-check results separately before claiming this checkpoint complete.
+
+Keep fork PR #114 draft: it supplies the already-pushed preparation branch to
+cdcai PR #4, and its official image defaults precede publication. Merging fork
+main is not a prerequisite. No application adoption, image/release/wiki
+publication or independent qualification is implied by this integration.

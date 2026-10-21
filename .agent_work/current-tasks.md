@@ -49,6 +49,17 @@ reconciliation are prepared and verified. Fork checks at `e4adaf0` passed;
 new workflow changes require fresh checks. See the
 [destination setup plan](context/status/Handoff-Planning/2026-10-21-DESTINATION-SETUP-PLAN.md).
 
+**Latest October 21 execution:** Chris-approved setup PR #5 merged as
+`87ca900`; all nine cdcai setup jobs passed against pinned source `8682b8e`.
+Fork PR #115 merged as `55b3330`; post-merge CI passed, both dependency graph
+submissions refreshed, and aiohttp alerts #77/#78/#79 are fixed. The separate
+Low torch alert remains open. Earlier pending statements above describe their
+dated checkpoints. Preparation now incorporates both main revisions, restores
+normal PR workflows, and records the authorized verbal-approval policy. Fresh
+adoption-head checks and required-check enforcement are pending verification;
+PRs #4/#114 remain drafts. See the destination setup plan and PR receipts for
+execution evidence. No official application adoption or publication occurred.
+
 ## Qualification history through October 19
 
 The following narrative retains the candidate progression; older pending

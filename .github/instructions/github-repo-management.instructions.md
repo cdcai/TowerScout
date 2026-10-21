@@ -97,7 +97,11 @@ Examples:
 For code-changing PRs to `main`:
 
 - require PR review
-- require 1 approval
+- require approval before merge; for cdcai/TowerScout, the user authorized
+  Chris's verbal approval instead of a mandatory GitHub approving review
+  on October 21, 2026. Record the user's confirmation and approved scope in
+  the merge evidence; never imply that a GitHub review occurred. Other
+  repositories retain the one-approval policy.
 - require required CI checks to pass
 - require review conversations to be resolved
 
