@@ -1,4 +1,7 @@
-# Adoption PR draft - not submitted
+# Adoption PR preparation text
+
+**Submitted:** [cdcai draft PR #4](https://github.com/cdcai/TowerScout/pull/4).
+This file retains the preparation text; the live PR and [submission receipt](2026-10-21-ADOPTION-SUBMISSION-AND-CHECKS.md) record current execution status.
 
 **Target:** cdcai/TowerScout:main.
 **Proposed source:** J-Schulein/TowerScout:chore/task-089-adoption-preparation.

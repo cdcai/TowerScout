@@ -36,6 +36,12 @@ the 144-test rehearsal. Post-merge and final adoption-head remote checks
 remain distinct from official-byte qualification. See the
 [updated review](context/status/Handoff-Planning/2026-10-21-PR113-DEPENDENCY-AND-ADOPTION-REVIEW.md).
 
+**Adoption submission:** Fork validation PR #114 passed at `25c2e86`, and
+[cdcai draft PR #4](https://github.com/cdcai/TowerScout/pull/4) is open.
+No cdcai source merge or official publication occurred. Destination CI has not
+started at submission; the fork dependency graph still needs reconciliation.
+See the [submission receipt](context/status/Handoff-Planning/2026-10-21-ADOPTION-SUBMISSION-AND-CHECKS.md).
+
 ## Qualification history through October 19
 
 The following narrative retains the candidate progression; older pending

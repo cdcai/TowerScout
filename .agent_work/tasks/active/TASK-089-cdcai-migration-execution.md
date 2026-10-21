@@ -20,7 +20,9 @@ is underway; reviewed adoption and official qualification/publication remain.
 - [ ] Pass final adoption-head remote checks and obtain owner acceptance of backlog/documentation.
 - [x] Enable cdcai Issues following Chris's approval, conveyed October 21; setting independently verified. Final public support-link check remains part of publication verification.
 - [ ] Confirm registry creation/linkage/visibility and execution-time permissions.
-- [ ] Review and merge the adoption PR with applicable checks.
+- [x] Push preparation to the fork and pass draft validation PR #114 at `25c2e86`.
+- [x] Open [cdcai adoption draft #4](https://github.com/cdcai/TowerScout/pull/4); source merge remains pending.
+- [ ] Review and approve the final adoption head/checks, then merge using the agreed history-preserving method.
 - [ ] Build official artifacts and pass fresh security, actual-download integrity and affected runtime checks.
 - [ ] Publish and verify wiki/video, then make the qualified release publicly recommended.
 - [ ] Deliver private evidence, owner guide and maintenance calendar; record Chris's receipt.

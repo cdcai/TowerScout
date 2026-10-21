@@ -25,6 +25,9 @@ Start with:
 
 ## Latest progress
 
+- [Adoption submission and checks](2026-10-21-ADOPTION-SUBMISSION-AND-CHECKS.md):
+  fork #114 validated; cdcai draft #4 open; merge/official qualification pending.
+
 - [Dependency and adoption update](2026-10-21-PR113-DEPENDENCY-AND-ADOPTION-REVIEW.md):
   PR #113 approved, merged into the fork and integrated locally; final remote
   checks and cdcai adoption review remain separate gates.
@@ -37,7 +40,7 @@ Start with:
 
 - [Wednesday readiness/adoption review](2026-10-21-READINESS-AND-ADOPTION-REVIEW.md).
 - [Official build and verification plan](2026-10-21-OFFICIAL-BUILD-AND-VERIFICATION-PLAN.md).
-- [Adoption PR draft](2026-10-21-ADOPTION-PR-DRAFT.md), not submitted.
+- [Adoption PR text](2026-10-21-ADOPTION-PR-DRAFT.md); [cdcai draft #4](https://github.com/cdcai/TowerScout/pull/4) is submitted.
 - [Chris decisions and Friday agenda](2026-10-21-CHRIS-DECISIONS-AND-FRIDAY-AGENDA.md), not sent.
 
 - [Chris security follow-up brief](2026-10-20-CHRIS-SECURITY-FOLLOWUP-BRIEF.md):
