@@ -234,6 +234,9 @@ Acceptance:
   unrelated global Docker Desktop Compose provider.
 - Mixed Docker/Podman guidance warns against factory reset and provides a
   volume-preserving startup/recovery sequence.
+- Release control ZIPs exclude deferred host-helper listener/worker code and
+  entrypoints. Retain shared session cleanup and manual TLS repair dependencies.
+  A stale helper-review setting must not prevent normal package launch or stop.
 
 ### UX-EXPORT-001: Explicit Browser Exports
 

@@ -389,6 +389,10 @@ $hostHelperReviewEnabled = (
 . "$PSScriptRoot\lib\TowerScoutCompose.ps1"
 . "$PSScriptRoot\lib\TowerScoutHostHelperState.ps1"
 $repoRoot = Get-TowerScoutRepoRoot
+if ($hostHelperReviewEnabled -and -not (Test-Path -LiteralPath "$PSScriptRoot\lib\TowerScoutHostHelper.ps1" -PathType Leaf)) {
+    Write-Warning "The deferred host helper is not included in this package. Continuing with normal startup."
+    $hostHelperReviewEnabled = $false
+}
 if ($hostHelperReviewEnabled) {
     . "$PSScriptRoot\lib\TowerScoutHostHelper.ps1"
 }

@@ -224,6 +224,9 @@ function Copy-ReleaseItem {
     Copy-Item -LiteralPath $source -Destination $destination
 }
 
+# Deferred Task-087 listener/worker entrypoints and TowerScoutHostHelper.ps1
+# remain in source history only. The shared state module is still required by
+# normal launch/stop cleanup; manual certificate repair remains supported.
 $releaseFiles = @(
     "setup-towerscout.cmd",
     "bootstrap.cmd",
@@ -267,7 +270,6 @@ $releaseFiles = @(
     "scripts\lib\TowerScoutBootstrap.ps1",
     "scripts\lib\TowerScoutCertificateStore.ps1",
     "scripts\lib\TowerScoutCompose.ps1",
-    "scripts\lib\TowerScoutHostHelper.ps1",
     "scripts\lib\TowerScoutHostHelperState.ps1",
     "scripts\lib\TowerScoutPodmanComposeProvider.ps1",
     "scripts\lib\TowerScoutPodmanGpu.ps1",
@@ -276,9 +278,6 @@ $releaseFiles = @(
     "scripts\enable-podman-gpu.ps1",
     "scripts\install-podman-compose-provider.cmd",
     "scripts\install-podman-compose-provider.ps1",
-    "scripts\host-helper.cmd",
-    "scripts\host-helper.ps1",
-    "scripts\host-helper-worker.ps1",
     "scripts\launch.ps1",
     "scripts\start.cmd",
     "scripts\start.ps1",

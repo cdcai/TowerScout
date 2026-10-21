@@ -96,6 +96,19 @@ def test_frontend_high_severity_audit_is_blocking() -> None:
     assert "continue-on-error" not in audit
 
 
+def test_release_archive_contracts_block_the_existing_windows_job() -> None:
+    job = yaml.safe_load(_task_087_puppeteer_workflow())["jobs"]["windows-host-helper"]
+    assert job["name"] == "Windows host-helper contracts"
+    assert not job.get("continue-on-error", False)
+    steps = {step.get("name"): step for step in job["steps"]}
+    gate = steps["Verify release archive and helper exclusion contracts"]
+    assert "if" not in gate
+    assert not gate.get("continue-on-error", False)
+    assert "tests/unit/test_release_package_script.py" in gate["run"]
+    assert "Run Task-087 host-helper contracts" in steps
+    assert "Run host-helper self-test in Windows PowerShell" in steps
+
+
 def test_task_101_main_ci_uses_node_22_and_commonjs_smoke() -> None:
     workflow = _workflow()
 

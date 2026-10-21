@@ -217,6 +217,14 @@ jobs:
       - name: Install focused test dependency
         run: python -m pip install pytest
 
+      - name: Verify release archive and helper exclusion contracts
+        run: >-
+          python -m pytest
+          --confcutdir=tests/unit
+          tests/unit/test_release_package_script.py
+          -q
+          -p no:cacheprovider
+
       - name: Run Task-087 host-helper contracts
         env:
           PYTHONPATH: webapp

@@ -287,3 +287,71 @@ identify remote head `1d9c6d7`; they cannot qualify the corrected filtered head.
 
 ## Remaining owner decision
 - Finding 4: deliberately unchanged; Chris's specific approval remains pending.
+
+## Follow-up: exclude deferred helper executables and re-review prepared update
+
+The lead requested identification/exclusion of unused helper instances and a
+second review of the prepared update before approving publication. The bounded
+local correction excludes these four source files from the control ZIP list:
+
+- `scripts/host-helper.cmd` (wrapper)
+- `scripts/host-helper.ps1` (listener entrypoint)
+- `scripts/host-helper-worker.ps1` (worker)
+- `scripts/lib/TowerScoutHostHelper.ps1` (deferred execution/control module)
+
+Their Git source, history, tests, deferred branches and reviews remain intact.
+`TowerScoutHostHelperState.ps1` remains a required normal launch/stop dependency
+for stale-session and bridge-environment cleanup. `TowerScoutCertificateStore.ps1`
+and the manual repair/import scripts remain required by supported TLS repair.
+The Dockerfile does not copy the Windows scripts directory, so no container
+layer exclusion or ML runtime change is needed. Backend/frontend gates remain
+disabled and continue to report the helper as unavailable.
+
+The dependency review found one additional issue to correct: an inherited
+`TOWERSCOUT_HOST_HELPER_REVIEW_ENABLED=1` would otherwise make extracted launch
+or stop dot-source the now-excluded module and fail. Both scripts now detect
+the absent module, warn, and take the normal cleanup/Compose path. A stale
+controlled-operation flag cannot suppress shutdown cleanup in that case.
+Source checkouts containing the helper retain their existing review behavior;
+this does not revive Task-087. Package guide, helper support reference and
+example-environment comments now agree with this package boundary.
+
+Validation of this bounded follow-up:
+
+- **8 packaging tests passed**, including actual CPU/CUDA ZIP generation,
+  outer SHA-256 sidecars, every internal file checksum, exact exclusions,
+  retained manual TLS dependencies and archive manifests.
+- Extracted ZIP scripts in a path containing spaces reached a fake Docker
+  Compose engine for launch and stop with review flags both off and on. They
+  preserved its deliberately nonzero exit code and cleared seeded stale state.
+  These are synthetic behavior contracts, not successful live startup or
+  downloaded release qualification. No real engine, provider or user state was
+  touched. Fixture images use synthetic digests and allow dirty source explicitly.
+- A new blocking step runs packaging contracts within the existing required
+  Windows job; its name and original helper tests/self-test remain unchanged.
+- The focused history, security, CI, TLS/launcher and helper run reported
+  **103 passed, 5 failed, 18 deselected**. The five failures re-entered the
+  unchanged helper module and reproduced `ScriptContainedMaliciousContent`.
+  No new application failure was observed; this is not an all-green result.
+  Earlier full-suite evidence (703/74/19) remains recorded above.
+- The complete integration/geocoding rerun remained **52 passed, 3 skipped**.
+  Both independent export parser tests and the explicit download contract
+  passed again. The blocking history guard passed.
+
+Second-review disposition:
+
+| Finding | Local result | Remaining requirement |
+| --- | --- | --- |
+| 1: investigation history | Bounded exclusion and preserved original refs remain suitable. | Approve remote branch replacement; verify new cdcai merge ancestry. Old refs/caches and credential revocation are not addressed by this rewrite. |
+| 2: security exceptions | Exact-image inventory and strict matcher remain suitable; baseline, five identities and expiry remain unchanged. | Fresh CI and later scans of the new official CPU/CUDA images. |
+| 3: exports | Parser-verified serialization remains suitable; selection/model behavior unchanged. | Fresh required frontend checks and later official-package qualification. |
+| 5: integration/review | Corrected tests and blocking regression gates remain suitable. Helper distribution issue now corrected locally. | Fresh required CI, published/reviewed security dispositions and resolved conversations. Retained helper source still has a local antivirus execution block. |
+
+No further local correction was identified in this re-review. The prepared
+update is suitable to publish **for review and fresh CI after authorization**;
+it is not yet merge-ready. The remote draft source/base were rechecked and
+remain the starting IDs recorded above. Earlier green checks cannot qualify
+these changes. Chris's licensing/history and final merge approvals, fresh
+required checks, and subsequent official-byte qualification remain separate.
+No push, PR edit/reply, conversation resolution, merge, official build or
+publication occurred during this follow-up.

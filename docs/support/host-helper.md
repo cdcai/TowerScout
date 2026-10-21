@@ -1,25 +1,28 @@
 # TowerScout Host Helper
 
-**Applies to**: Task-087 helper scaffolding shipped with the current release baseline
-**Last reviewed**: 2026-07-27
+**Applies to**: Deferred Task-087 source code and its exclusion from release control packages
+**Last reviewed**: 2026-10-21
 **Audience**: Release maintainers, support staff, and reviewers of the Task-087 control plane
 
 ## What it is
 
-TowerScout ships package-local Windows host-helper scaffolding intended for a
+TowerScout retains Windows host-helper source code intended for a
 future guided "repair TLS trust and restart" flow. The helper exists because a
 browser app running inside the TowerScout container cannot safely inspect the
 Windows certificate store or execute trusted host-side restart commands by
 itself.
 
-The packaged helper code is designed to mediate a very small allowlisted set of
+The deferred helper code is designed to mediate a very small allowlisted set of
 TowerScout-owned host actions such as provider TLS repair and restart, while
 preserving the selected runtime profile.
 
 ## Current release status
 
-The host-helper control plane is shipped **disabled** in the current release
-baseline.
+The host-helper listener, worker, and entrypoints are **excluded from release
+control ZIPs**. Their source and tests remain in Git for deferred Task-087 work.
+Local antivirus blocked execution of the unchanged helper module during the
+PR #4 audit. Excluding unused executables avoids distributing that module; it
+does not certify compatibility with every endpoint's security policy.
 
 Two independent gates keep the browser-triggered mutation path dark:
 
@@ -27,11 +30,12 @@ Two independent gates keep the browser-triggered mutation path dark:
 - Frontend browser-mutation gate: `webapp/js/src/setup-wizard.js` and the built
   `webapp/js/towerscout.js`
 
-The Windows launcher also leaves the review transport disabled unless
-`TOWERSCOUT_HOST_HELPER_REVIEW_ENABLED=1` is explicitly set for that launch.
-Because all release-facing gates remain off, the supported release path is
-still the manual script workflow documented in the Quick Start and Package
-Guide:
+The Windows launcher leaves the review transport disabled. In an extracted
+release package, an inherited `TOWERSCOUT_HOST_HELPER_REVIEW_ENABLED=1` setting
+produces a warning and continues through normal startup or shutdown with stale
+helper state cleared. It cannot enable the excluded helper. The supported TLS
+repair path remains the manual script workflow documented in the Quick Start
+and Package Guide:
 
 ```powershell
 .\scripts\repair-provider-tls.cmd -Provider google -Engine docker -Gpu off -Apply
@@ -41,7 +45,7 @@ Guide:
 
 ## Security model
 
-The shipped helper scaffolding is intended to follow these constraints when it
+The deferred helper scaffolding is intended to follow these constraints when it
 is eventually enabled:
 
 - package-local only
@@ -61,22 +65,32 @@ The helper command map is limited to TowerScout-owned scripts such as repair,
 stop, and start operations. The goal is support-safe orchestration, not general
 host command execution.
 
-## Files shipped with the package
+## Package boundary
 
-Current package/runtime support files include:
+These executable files remain in the source repository but are excluded from
+the release control ZIP:
 
 - `scripts/host-helper.cmd`
 - `scripts/host-helper.ps1`
 - `scripts/host-helper-worker.ps1`
 - `scripts/lib/TowerScoutHostHelper.ps1`
+
+The package retains these shared libraries:
+
 - `scripts/lib/TowerScoutHostHelperState.ps1`
 - `scripts/lib/TowerScoutCertificateStore.ps1`
 
-These files being present does **not** mean the browser helper flow is active.
+Normal launch and stop use the state library to clear stale session metadata
+and bridge environment values. Manual TLS repair and CA import use the
+certificate-store library. Removing these dependencies would break supported
+operations. Neither library starts the deferred helper listener by itself.
+The container image does not copy the Windows `scripts` directory.
 
 ## Review-only transport checkpoint
 
-The source tree includes an opt-in Gate 3 review path. When a maintainer sets
+The source tree retains an opt-in Gate 3 review path for deferred work. It is
+not available in the release ZIP or supported as an end-user workflow. In a
+source checkout with the helper files present, when a maintainer sets
 `TOWERSCOUT_HOST_HELPER_REVIEW_ENABLED=1` before using the Windows launcher,
 the launcher creates a per-launch helper session, starts the visible
 loopback-only PowerShell helper directly, retains its process handle through
@@ -107,8 +121,8 @@ default is false, and the browser mutation constant remains false.
 
 ## What enabling would require
 
-Enabling the browser-triggered helper path is later Task-087 work and requires
-more than code presence in the package.
+Enabling the browser-triggered helper path is deferred Task-087 work and would
+require a separately reviewed change to the package boundary.
 
 Minimum gates before release exposure:
 
@@ -117,5 +131,6 @@ Minimum gates before release exposure:
 - explicit review of lifecycle cleanup, restart behavior, and rollback evidence
 - confirmation that the documented manual fallback remains intact
 
-Until those gates pass, treat the host helper as shipped scaffolding rather
-than a supported end-user feature.
+Until those gates pass, retain the helper as deferred source code and keep its
+executables out of release control packages. Do not disable endpoint protection
+to run it.

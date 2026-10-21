@@ -3,6 +3,8 @@ import subprocess
 import uuid
 import os
 import json
+import hashlib
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -15,6 +17,12 @@ from release_manifest_contract import (
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PACKAGE_SCRIPT = REPO_ROOT / "scripts" / "package-release.ps1"
+DEFERRED_HELPER_FILES = (
+    "scripts/host-helper.cmd",
+    "scripts/host-helper.ps1",
+    "scripts/host-helper-worker.ps1",
+    "scripts/lib/TowerScoutHostHelper.ps1",
+)
 
 pytestmark = pytest.mark.skipif(
     os.name != "nt",
@@ -166,7 +174,8 @@ def test_package_release_stages_digest_pinned_image(image_repository):
         assert (stage_path / "scripts" / "lib" / "TowerScoutPodmanGpu.ps1").is_file()
         assert (stage_path / "scripts" / "lib" / "TowerScoutCertificateStore.ps1").is_file()
         assert (stage_path / "scripts" / "lib" / "TowerScoutHostHelperState.ps1").is_file()
-        assert (stage_path / "scripts" / "host-helper-worker.ps1").is_file()
+        for excluded in DEFERRED_HELPER_FILES:
+            assert not (stage_path / excluded).exists()
         assert (stage_path / "scripts" / "repair-provider-tls.cmd").is_file()
         assert (stage_path / "scripts" / "repair-provider-tls.ps1").is_file()
         for relative_path in [
@@ -293,5 +302,136 @@ def test_package_release_rejects_unknown_pytorch_flavor():
         assert "PytorchFlavor must be one of: cpu, cuda128" in (
             result.stderr + result.stdout
         )
+    finally:
+        shutil.rmtree(output_path, ignore_errors=True)
+
+
+@pytest.mark.parametrize("flavor", ["cpu", "cuda128"])
+def test_control_zip_excludes_deferred_helper_and_preserves_launch_stop(
+    tmp_path, flavor
+):
+    """Exercise real archive bytes with a fake engine, not release qualification."""
+    package_id = f"pytest-archive-{uuid.uuid4().hex}-{flavor}"
+    output_dir = Path(".agent_work") / "pytest-temp" / package_id
+    output_path = REPO_ROOT / output_dir
+    try:
+        result = _run_package_release(
+            "-Version",
+            package_id,
+            "-OutputDir",
+            str(output_dir),
+            "-Image",
+            f"ghcr.io/cdcai/towerscout:{package_id}",
+            "-ImageDigest",
+            "sha256:" + "1" * 64,
+            "-PytorchFlavor",
+            flavor,
+            "-AllowDirtySource",
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+        zip_path = output_path / f"towerscout-{package_id}.zip"
+        checksum, filename = (
+            zip_path.with_suffix(".zip.sha256").read_text().strip().split("  ", 1)
+        )
+        assert filename == zip_path.name
+        assert hashlib.sha256(zip_path.read_bytes()).hexdigest() == checksum
+
+        package_root = tmp_path / "TowerScout extracted package"
+        with zipfile.ZipFile(zip_path) as archive:
+            files = {
+                item.filename.replace("\\", "/"): item
+                for item in archive.infolist()
+                if not item.is_dir()
+            }
+            assert not set(DEFERRED_HELPER_FILES).intersection(files)
+            required_files = {
+                "scripts/lib/TowerScoutHostHelperState.ps1",
+                "scripts/lib/TowerScoutCertificateStore.ps1",
+                "scripts/repair-provider-tls.cmd",
+                "scripts/repair-provider-tls.ps1",
+                "scripts/import-tls-ca.cmd",
+                "scripts/import-tls-ca.ps1",
+                ".env.example",
+            }
+            assert required_files.issubset(files)
+            recorded = {}
+            for line in (
+                archive.read(files["SHA256SUMS.txt"]).decode("ascii").splitlines()
+            ):
+                digest, relative = line.split("  ", 1)
+                recorded[relative] = digest
+                assert (
+                    hashlib.sha256(archive.read(files[relative])).hexdigest() == digest
+                )
+            assert set(recorded) == set(files) - {"SHA256SUMS.txt"}
+            manifest = json.loads(archive.read(files["release-manifest.v1.json"]))
+            assert_manifest_schema(manifest)
+            assert manifest["pytorch_flavor"] == flavor
+            archive.extractall(package_root)
+
+        fake_bin = tmp_path / "fake-bin"
+        fake_bin.mkdir()
+        (fake_bin / "docker.cmd").write_text(
+            "@echo off\n"
+            'echo %*>>"%TOWERSCOUT_TEST_ENGINE_LOG%"\n'
+            'if "%1"=="info" exit /b 0\n'
+            'if "%1"=="compose" if "%2"=="version" (\n'
+            "  echo Docker Compose version v2.39.4\n"
+            "  exit /b 0\n"
+            ")\n"
+            'if "%1"=="compose" exit /b 7\n'
+            'if "%1"=="inspect" exit /b 1\n'
+            "exit /b 0\n",
+            encoding="ascii",
+        )
+        env = os.environ.copy()
+        env["PATH"] = f"{fake_bin}{os.pathsep}{env['PATH']}"
+        env["TOWERSCOUT_TEST_ENGINE_LOG"] = str(tmp_path / "engine.log")
+        state_dir = package_root / ".towerscout-runtime" / "host-helper"
+        state_dir.mkdir(parents=True)
+        for review_enabled in ("0", "1"):
+            for script_name, arguments in (
+                ("launch.ps1", ["-Gpu", "off", "-TimeoutSeconds", "5", "-NoBrowser"]),
+                ("stop.ps1", []),
+            ):
+                for name in (
+                    "session-prior.json",
+                    "token-prior.secret",
+                    "operation-prior.json",
+                ):
+                    (state_dir / name).write_text(
+                        "synthetic stale state", encoding="ascii"
+                    )
+                env["TOWERSCOUT_HOST_HELPER_REVIEW_ENABLED"] = review_enabled
+                env["TOWERSCOUT_HOST_HELPER_ENABLED"] = "1"
+                env["TOWERSCOUT_HOST_HELPER_CONTROLLED_OPERATION"] = "1"
+                env["TOWERSCOUT_HOST_HELPER_SESSION_ID"] = "prior"
+                env["TOWERSCOUT_HOST_HELPER_SESSION_KEY"] = "synthetic-prior-key"
+                run = subprocess.run(
+                    [
+                        "powershell.exe",
+                        "-NoProfile",
+                        "-ExecutionPolicy",
+                        "Bypass",
+                        "-File",
+                        str(package_root / "scripts" / script_name),
+                        "-Engine",
+                        "docker",
+                        *arguments,
+                    ],
+                    cwd=package_root,
+                    env=env,
+                    text=True,
+                    capture_output=True,
+                    timeout=30,
+                    check=False,
+                )
+                assert run.returncode == 7, run.stdout + run.stderr
+                assert not list(state_dir.iterdir())
+                if review_enabled == "1":
+                    assert "host helper is not included in this package" in run.stdout
+        engine_log = (tmp_path / "engine.log").read_text()
+        assert "up -d" in engine_log
+        assert "down --remove-orphans" in engine_log
     finally:
         shutil.rmtree(output_path, ignore_errors=True)

@@ -65,7 +65,10 @@ for sequential correction and verification. The bounded history exclusion,
 security matcher, export serialization, and integration-test corrections are
 prepared locally. Remote replacement, current-head checks, and review replies
 remain pending. The local full-suite run also records an antivirus block on
-the unchanged deferred host helper. Licensing/history approval and final merge approval
+the unchanged deferred host helper. Follow-up package preparation excludes its
+four unused executable files, retains shared cleanup/manual TLS dependencies,
+and guards stale helper opt-in settings; actual archive contracts passed.
+Licensing/history approval and final merge approval
 remain with Chris. See the [remediation record](tasks/active/TASK-089/PR4-AUDIT-REMEDIATION-2026-10-21.md).
 No official artifact publication or merge is authorized by this work.
 

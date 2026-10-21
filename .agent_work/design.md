@@ -133,6 +133,15 @@ architecture, Task-087 launcher, or security baseline.
 
 The selected design is:
 
+For PR #4's package exclusion, retain the deferred helper source and tests in
+Git but omit its four execution files from the explicit release file list.
+Keep `TowerScoutHostHelperState.ps1` for normal launch/stop cleanup, and keep
+the manual certificate-import/repair path. Launch and stop treat a requested
+review helper whose module is absent as unavailable, clear stale bridge state,
+and continue the normal path. Do not weaken endpoint protection or turn on
+the browser helper gates. Verify the actual ZIP inventory and extracted scripts
+using synthetic engine commands before claiming package compatibility.
+
 1. Keep RC9 immutable as validation evidence.
 2. Make the Podman GPU smoke pull-aware so a large first pull is not governed
    by a short readiness timeout, while a real CDI/device/container failure

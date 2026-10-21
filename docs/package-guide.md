@@ -974,8 +974,9 @@ The final package requires normal TLS verification. Use the CA import workflow
 with Local IT or stop; do not disable certificate verification.
 
 The current provider TLS repair path is the guided script workflow above. The
-package now ships host-helper scaffolding for a future browser-triggered repair
-flow, but that control plane remains disabled in the current release baseline;
+package excludes the deferred host-helper listener, worker, and entrypoints.
+Shared cleanup and manual certificate repair remain available. The future
+browser-triggered repair flow remains disabled;
 see [docs/support/host-helper.md](support/host-helper.md).
 
 ### Restricted Networks
