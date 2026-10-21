@@ -8,11 +8,13 @@ TowerScout Enterprise, a new program re-designed from the ground up to make bett
 
 The TowerScout wiki is being prepared as the guided user handbook: choosing
 a setup, preparing map credentials, installing, using the application,
-troubleshooting, and finding Local IT help. **The wiki has not been published
-yet.** You can review its [draft home page](wiki/Home.md),
+troubleshooting, and finding Local IT help. **The official cdcai wiki is not yet published.** A
+[fork preview](https://github.com/J-Schulein/TowerScout/wiki) is available for
+review; it is not official release documentation. You can review its [draft home page](wiki/Home.md),
 [installation walkthrough](wiki/Install-And-First-Run.md), and
-[Podman guidance](wiki/Podman-Guidance.md) in this repository. Page-to-page
-wiki navigation will be verified during publication.
+[Podman guidance](wiki/Podman-Guidance.md) in this repository. The fork preview
+publication and page navigation have been checked; official cdcai publication
+and verification remain pending.
 
 For complete instructions now, use the [Quick Start](docs/quick-start.md).
 The release package includes offline manuals; in-app Help comes from the

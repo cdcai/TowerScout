@@ -23,6 +23,22 @@ Start with:
 5. [Owner maintenance guide](../../../../docs/internal/owner-maintenance.md)
    and [repository map](../../../../docs/internal/repository-map.md).
 
+## Latest progress
+
+- [Wednesday readiness/adoption review](2026-10-21-READINESS-AND-ADOPTION-REVIEW.md).
+- [Official build and verification plan](2026-10-21-OFFICIAL-BUILD-AND-VERIFICATION-PLAN.md).
+- [Adoption PR draft](2026-10-21-ADOPTION-PR-DRAFT.md), not submitted.
+- [Chris decisions and Friday agenda](2026-10-21-CHRIS-DECISIONS-AND-FRIDAY-AGENDA.md), not sent.
+
+- [Chris security follow-up brief](2026-10-20-CHRIS-SECURITY-FOLLOWUP-BRIEF.md):
+  proposed actions and decisions before the October 31 exception expiry.
+
+- [Tuesday follow-up decisions](2026-10-20-TUESDAY-FOLLOWUP-DECISIONS.md):
+  model development, SharePoint staging, user-owned credentials and Friday meeting.
+
+- [Fork wiki rehearsal and transition-plan review](2026-10-20-WIKI-REHEARSAL-AND-PLAN-REVIEW.md):
+  verified fork publication, Tuesday follow-ups and remaining delivery schedule.
+
 ## Acceptance sources retained
 
 - [September v2 prioritization](../Reprioritization%20Effort/2026-09-21-windows-deployment-prioritization-v2.md).

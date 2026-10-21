@@ -1,8 +1,10 @@
 # TASK-092: Documentation Currentness And Information Architecture
 
 **Status**: IN_PROGRESS - RC5 supplemental operating restrictions are accepted.
-Incorporate equivalent short-path/Python guidance into the official packaged
-Markdown/HTML and served Help; verify official links, first wiki publication,
+Short-path/Python guidance is integrated into maintained Markdown/HTML sources.
+The fork wiki rehearsal is published and verified; see the
+[October 20 record](../../context/status/Handoff-Planning/2026-10-20-WIKI-REHEARSAL-AND-PLAN-REVIEW.md).
+Verify inclusion in official packages and served Help, official cdcai links/wiki,
 final screenshots/video, and owner receipt. The supplement is not in immutable
 RC5 downloads. Chris confirmed ownership and access on October 20.
 **Priority**: HIGH

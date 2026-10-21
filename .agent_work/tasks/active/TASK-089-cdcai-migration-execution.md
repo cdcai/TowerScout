@@ -13,7 +13,11 @@ is underway; reviewed adoption and official qualification/publication remain.
 - [x] Repository Administrative access verified October 20.
 - [x] Destination agreed: cdcai/TowerScout for adoption PR, builds and wiki.
 - [x] Proposed tag/title agreed: `v0.1.3`, `TowerScout v0.1.3 - First Official cdcai Release`; recheck availability before publication.
-- [ ] Complete reviewed adoption diff, owner backlog and documentation.
+- [x] Publish and verify fork wiki rehearsal; [evidence and plan review](../../context/status/Handoff-Planning/2026-10-20-WIKI-REHEARSAL-AND-PLAN-REVIEW.md).
+- [x] Prepare detailed owner backlog and maintenance discussion brief (October 21).
+- [x] Read-only cdcai ancestry/admin/Actions allowlist review; see [findings](../../context/status/Handoff-Planning/2026-10-21-READINESS-AND-ADOPTION-REVIEW.md).
+- [ ] Complete final adoption diff/head review and owner acceptance of backlog/documentation.
+- [ ] Resolve disabled Issues versus prepared public support links before publication.
 - [ ] Confirm registry creation/linkage/visibility and execution-time permissions.
 - [ ] Review and merge the adoption PR with applicable checks.
 - [ ] Build official artifacts and pass fresh security, actual-download integrity and affected runtime checks.

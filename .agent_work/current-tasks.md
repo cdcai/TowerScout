@@ -1,7 +1,7 @@
 # Current Tasks - Official Adoption And Handoff
 
 **Delivery Period**: October 20-October 30, 2026
-**Last Updated**: October 20, 2026
+**Last Updated**: October 21, 2026
 **Closeout Target**: October 30, 2026
 **Delivery target**: October 27; support October 28-30.
 **Current focus**: Complete reviewed adoption into cdcai, official artifact
@@ -9,6 +9,18 @@ qualification, wiki/video and owner delivery. Chris accepted ownership,
 Administrative access, delivery direction and the proposed v0.1.3 release
 name on October 20. Package permissions and actual delivery remain pending.
 See [handoff navigation](context/status/Handoff-Planning/README.md).
+
+**October 20 update:** Fork wiki rehearsal completed (14 pages plus sidebar).
+Tuesday is substantially complete with documented follow-ups; official cdcai
+publication and delivery remain pending. See the
+[rehearsal and plan review](context/status/Handoff-Planning/2026-10-20-WIKI-REHEARSAL-AND-PLAN-REVIEW.md).
+
+**October 21 update:** Tuesday preparation is documented, with detailed owner
+backlog and security discussion materials. Read-only cdcai checks confirm
+ancestry/admin/Actions allowlist; Issues are disabled and package publication
+is not yet proven. Wednesday PR/build review drafts are ready locally; no
+cdcai writes or official acceptance. See the
+[readiness review](context/status/Handoff-Planning/2026-10-21-READINESS-AND-ADOPTION-REVIEW.md).
 
 ## Qualification history through October 19
 
@@ -490,7 +502,7 @@ Current scope:
 **Status**: IN_PROGRESS - RC5 supplemental operating restrictions are accepted.
 Short-path/Python guidance is now integrated into maintained manual and HTML
 sources ([October 20 verification](context/status/Handoff-Planning/2026-10-20-PODMAN-MANUAL-INTEGRATION.md)).
-Verify inclusion in official packages and served Help, official links, first wiki publication,
+Verify inclusion in official packages and served Help, official links, official cdcai wiki publication (fork rehearsal complete),
 final screenshots/video, and owner receipt. The supplement is not in immutable
 RC5 downloads. Chris confirmed ownership and access on October 20.
 **Priority**: HIGH
