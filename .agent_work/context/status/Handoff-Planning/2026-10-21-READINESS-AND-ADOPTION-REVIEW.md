@@ -5,9 +5,12 @@
 
 ## Tuesday closure and Wednesday progress
 
-Tuesday's preparation is complete: ownership/access/destination/name decisions,
-approved organization pass, a detailed owner backlog, credential responsibility,
-private evidence staging, video feasibility and a maintenance discussion brief.
+Tuesday's core preparation documents are drafted and checked: ownership/access/
+destination/name decisions, approved organization pass, a detailed owner backlog,
+credential responsibility, independent-host evidence staging, video feasibility
+and a maintenance discussion brief. This does not close every Tuesday substep:
+detailed maintenance agreement, distribution of the action list, actual package
+publishing verification and remaining evidence-retention classification are open.
 Chris's detailed security understanding/decision is still a receiving-owner
 acceptance item, not established by his general awareness. Effective package
 publication permissions remain an execution gate. No claim that all delivery
@@ -79,10 +82,10 @@ or owner-approved merge-method decision.
 
 The original workspace's private staging folder now includes owner task cards,
 maintenance calendar and receipt checklist, the Docker/CPU demo script, a
-leadership-report working narrative with explicit evidence gaps, and copies of
-this review/PR/build/agenda package. An HTML source reader is available under
+copies of this review/PR/build/agenda package. The leadership-report narrative
+and evidence outline are separate manager deliverables, outside Chris's packet. An HTML source reader is available under
 `output/handoff/Chris-SharePoint-Handoff-DRAFT/04-Owner-And-Closeout-Drafts/REVIEW.html`.
-These are review drafts, not finalized report, recorded video or owner acceptance.
+These are review drafts, not a recorded video or owner acceptance.
 
 GitHub returned zero check runs for ca24d6f on October 21. Do not report green
 remote CI for that checkpoint. Final-head applicable checks remain a prerequisite
@@ -96,3 +99,14 @@ work is complete diff/security review and final-head checks, resolution of the
 support setting, private evidence-retention inventory beyond the independent-host
 packet, and incorporation of owner decisions. Official build/publication follows
 only the reviewed and authorized execution sequence.
+
+## Subsequent approved setting change - October 21
+
+The outgoing lead conveyed Chris's explicit approval to enable Issues.
+Confirmed exact repository cdcai/TowerScout, changed only has_issues to true,
+and independently reread the repository API to verify it remained true.
+User support destination: https://github.com/cdcai/TowerScout/issues .
+This closes the disabled-Issues setting item. Earlier read-only findings above
+remain a historical snapshot. No issue was created, no source was pushed or
+merged, and no build/release/wiki was published by this action. Current support
+wording and anonymous link behavior still belong in final documentation review.

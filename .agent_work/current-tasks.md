@@ -17,10 +17,16 @@ publication and delivery remain pending. See the
 
 **October 21 update:** Tuesday preparation is documented, with detailed owner
 backlog and security discussion materials. Read-only cdcai checks confirm
-ancestry/admin/Actions allowlist; Issues are disabled and package publication
-is not yet proven. Wednesday PR/build review drafts are ready locally; no
-cdcai writes or official acceptance. See the
+ancestry/admin/Actions allowlist. Chris subsequently approved enabling Issues;
+that setting change is applied and verified. Package publication is not yet
+proven. Wednesday PR/build review drafts are ready locally; no source adoption
+or official acceptance. See the
 [readiness review](context/status/Handoff-Planning/2026-10-21-READINESS-AND-ADOPTION-REVIEW.md).
+
+**Final local source review:** 63 focused checks passed; archive links and
+current Issues/CI wording corrected. See the
+[review record](context/status/Handoff-Planning/2026-10-21-FINAL-ADOPTION-SOURCE-REVIEW.md).
+Remote final-head checks, cdcai adoption and official-byte qualification remain open.
 
 ## Qualification history through October 19
 
@@ -602,7 +608,7 @@ and explicit authorization.
 16. [x] Chris confirmed ownership, access, delivery direction and proposed official release name on October 20.
 17. [ ] Finish adoption review and permission checks, then execute the authorized cdcai PR/merge sequence.
 18. [ ] Freeze official identities, pass fresh security and official-byte/affected runtime qualification, and authorize public recommendation.
-19. [ ] Deliver wiki/video, owner guidance, backlog, report and private-material index; verify receipt by October 27.
+19. [ ] Deliver wiki/video, owner guidance, backlog and private-material index to Chris; verify receipt by October 27. Deliver the leadership report separately to the outgoing lead's manager.
 20. [ ] Complete support and handoff closeout October 28-30 without silently extending security exceptions.
 
 ## Runtime Coordination

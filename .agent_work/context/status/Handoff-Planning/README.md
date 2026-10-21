@@ -25,6 +25,12 @@ Start with:
 
 ## Latest progress
 
+- [Final adoption source review](2026-10-21-FINAL-ADOPTION-SOURCE-REVIEW.md):
+  corrected findings, 63 passing focused checks, review limits and remote-CI sequence.
+
+- [Tuesday re-review and audience correction](2026-10-21-TUESDAY-REVIEW-CORRECTIONS.md):
+  verified preparation scope, open substeps and separate manager report.
+
 - [Wednesday readiness/adoption review](2026-10-21-READINESS-AND-ADOPTION-REVIEW.md).
 - [Official build and verification plan](2026-10-21-OFFICIAL-BUILD-AND-VERIFICATION-PLAN.md).
 - [Adoption PR draft](2026-10-21-ADOPTION-PR-DRAFT.md), not submitted.

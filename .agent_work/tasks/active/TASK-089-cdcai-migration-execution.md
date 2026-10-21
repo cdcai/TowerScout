@@ -17,12 +17,13 @@ is underway; reviewed adoption and official qualification/publication remain.
 - [x] Prepare detailed owner backlog and maintenance discussion brief (October 21).
 - [x] Read-only cdcai ancestry/admin/Actions allowlist review; see [findings](../../context/status/Handoff-Planning/2026-10-21-READINESS-AND-ADOPTION-REVIEW.md).
 - [ ] Complete final adoption diff/head review and owner acceptance of backlog/documentation.
-- [ ] Resolve disabled Issues versus prepared public support links before publication.
+- [x] Enable cdcai Issues following Chris's approval, conveyed October 21; setting independently verified. Final public support-link check remains part of publication verification.
 - [ ] Confirm registry creation/linkage/visibility and execution-time permissions.
 - [ ] Review and merge the adoption PR with applicable checks.
 - [ ] Build official artifacts and pass fresh security, actual-download integrity and affected runtime checks.
 - [ ] Publish and verify wiki/video, then make the qualified release publicly recommended.
-- [ ] Deliver private evidence, owner guide, leadership report and maintenance calendar; record Chris's receipt.
+- [ ] Deliver private evidence, owner guide and maintenance calendar; record Chris's receipt.
+- [ ] Deliver the separate leadership report to the outgoing lead's manager; it is not part of Chris's handoff packet.
 
 The agreed approach is rebuild under cdcai ownership, not a registry-copy
 decision still awaiting selection. Exact official source and artifact

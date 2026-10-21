@@ -8,6 +8,7 @@ reviewed cdcai merge source and ADR-022 through ADR-026 at execution.
 
 1. Review the final adoption PR and agree a history-preserving merge. Check
    remote heads, tag/release availability, support destination and permissions.
+   Issues enablement is approved/applied; verify the public link at publication.
 2. Record the exact accepted cdcai merge SHA. Proposed official tag/title remain
    `v0.1.3` / `TowerScout v0.1.3 - First Official cdcai Release`.
    If validation requires corrections after publication, use a new approved

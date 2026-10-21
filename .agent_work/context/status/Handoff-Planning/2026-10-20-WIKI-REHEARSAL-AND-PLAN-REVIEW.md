@@ -35,7 +35,8 @@ Delivery target remains October 27; October 28-30 remains the support buffer.
 Reviewed the Tuesday section of the local *TowerScout transition and closeout
 plan* (`output/docx/towerscout-detailed-transition-plan.docx`) and its shared
 source `output/handoff/build_transition_plan.py`, including later milestones.
-The original plan remains the schedule baseline; this record supplies actual
+The original plan remains the schedule baseline; the October 21 audience correction
+separates the manager leadership report from Chris's packet. This record supplies actual
 status without overwriting user checkmarks or rewriting historical plans.
 
 | Planned action | Assessment | Evidence / remaining action |

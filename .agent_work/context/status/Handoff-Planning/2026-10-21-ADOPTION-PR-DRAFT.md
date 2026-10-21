@@ -2,7 +2,8 @@
 
 **Target:** cdcai/TowerScout:main.
 **Proposed source:** J-Schulein/TowerScout:chore/task-089-adoption-preparation.
-**Final head:** pending documentation checkpoint and complete review.
+**Final head:** local source review complete; use the final checkpoint SHA and
+remote check results at PR creation. See [review](2026-10-21-FINAL-ADOPTION-SOURCE-REVIEW.md).
 
 ## Proposed title
 
@@ -24,14 +25,16 @@ resuming it. The optional Codecov upload was removed; local coverage generation
 and the existing artifact path remain.
 
 Validation: exact fork v0.1.3-rc5 bounded acceptance is documented in ADR-026.
-The preparation checkpoint has 63 selected static/mocked checks from October 20,
+The preparation delta passed 63 selected checks again on October 21 (23.19 seconds),
 strict task validation, and a verified 14-page fork wiki rehearsal. October 21
 read-only checks confirmed cdcai ancestry, administrative access, enabled Actions
 and allowlist compatibility. These are not new official-image/package acceptance.
-Add final-head CI and review results before submitting/merging.
+Add the final source-review results before submission and final-head CI before merge.
+A preparation-branch push alone does not trigger the main-only push workflow;
+use a PR targeting main for CI, or explicitly approved validation dispatches.
 
-Remaining official delivery: resolve support links while cdcai Issues are disabled;
-agree merge/build identities; verify package publication/public access; build and
+Chris approved enabling cdcai Issues; the setting is now applied and verified.
+Remaining official delivery: verify public support links, agree merge/build identities; verify package publication/public access; build and
 qualify exact official artifacts; publish wiki/video separately; complete owner
 practice and receipt. Current security exceptions expire October 31, 2026 at
 23:59:59 UTC. Neither this PR nor its merge promotes Latest or renews exceptions.

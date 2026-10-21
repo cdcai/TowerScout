@@ -56,23 +56,23 @@
 
 ### Sprint 06 Task Files
 
-- [TASK-065 release packaging runtime support](./tasks/completed/TASK-065-release-packaging-runtime-support.md)
-- [TASK-066 release candidate validation gate](./tasks/completed/TASK-066-release-candidate-validation-gate.md)
-- [TASK-067 CI release gate tightening](./tasks/completed/TASK-067-ci-release-gate-tightening.md)
-- [TASK-069 license and release policy review](./tasks/completed/TASK-069/)
-- [TASK-071 end-user release docs](./tasks/completed/TASK-071-end-user-release-docs.md)
-- [TASK-072 release asset bundle contract](./tasks/completed/TASK-072-release-asset-bundle-contract.md)
-- [TASK-073 clean-machine UAT plan](./tasks/completed/TASK-073-clean-machine-uat-plan.md)
-- [TASK-074 runtime prerequisite preflight](./tasks/completed/TASK-074-runtime-prerequisite-preflight.md)
-- [TASK-075 single GPU-capable package](./tasks/completed/TASK-075-single-gpu-capable-package.md)
-- [TASK-079 RC1 reliability fixes](./tasks/completed/TASK-079-rc1-reliability-fixes.md)
-- [TASK-080 UAT user guide process simplification](./tasks/completed/TASK-080-uat-user-guide-process-simplification.md)
-- [TASK-081 RC3 runtime hardening and Podman independence](./tasks/completed/TASK-081-rc3-runtime-hardening-podman-independence.md)
-- [TASK-082 RC4 docs package organization](./tasks/completed/TASK-082-rc4-docs-package-organization.md)
-- [TASK-083 RC5 Podman independence GPU release](./tasks/completed/TASK-083-rc5-podman-independence-gpu-release.md)
-- [TASK-084 GA packaging hardening and Podman provider onboarding](./tasks/completed/TASK-084-ga-packaging-hardening-and-podman-provider-onboarding.md)
-- [TASK-085 dataset ZIP restore path traversal hardening](./tasks/completed/TASK-085-dataset-zip-restore-path-traversal-hardening.md)
-- [TASK-086 provider TLS auto-repair and setup triage](./tasks/completed/TASK-086-provider-tls-auto-repair-and-setup-triage.md)
+- [TASK-065 release packaging runtime support](../../../tasks/completed/TASK-065-release-packaging-runtime-support.md)
+- [TASK-066 release candidate validation gate](../../../tasks/completed/TASK-066-release-candidate-validation-gate.md)
+- [TASK-067 CI release gate tightening](../../../tasks/completed/TASK-067-ci-release-gate-tightening.md)
+- [TASK-069 license and release policy review](../../../tasks/completed/TASK-069)
+- [TASK-071 end-user release docs](../../../tasks/completed/TASK-071-end-user-release-docs.md)
+- [TASK-072 release asset bundle contract](../../../tasks/completed/TASK-072-release-asset-bundle-contract.md)
+- [TASK-073 clean-machine UAT plan](../../../tasks/completed/TASK-073-clean-machine-uat-plan.md)
+- [TASK-074 runtime prerequisite preflight](../../../tasks/completed/TASK-074-runtime-prerequisite-preflight.md)
+- [TASK-075 single GPU-capable package](../../../tasks/completed/TASK-075-single-gpu-capable-package.md)
+- [TASK-079 RC1 reliability fixes](../../../tasks/completed/TASK-079-rc1-reliability-fixes.md)
+- [TASK-080 UAT user guide process simplification](../../../tasks/completed/TASK-080-uat-user-guide-process-simplification.md)
+- [TASK-081 RC3 runtime hardening and Podman independence](../../../tasks/completed/TASK-081-rc3-runtime-hardening-podman-independence.md)
+- [TASK-082 RC4 docs package organization](../../../tasks/completed/TASK-082-rc4-docs-package-organization.md)
+- [TASK-083 RC5 Podman independence GPU release](../../../tasks/completed/TASK-083-rc5-podman-independence-gpu-release.md)
+- [TASK-084 GA packaging hardening and Podman provider onboarding](../../../tasks/completed/TASK-084-ga-packaging-hardening-and-podman-provider-onboarding.md)
+- [TASK-085 dataset ZIP restore path traversal hardening](../../../tasks/completed/TASK-085-dataset-zip-restore-path-traversal-hardening.md)
+- [TASK-086 provider TLS auto-repair and setup triage](../../../tasks/completed/TASK-086-provider-tls-auto-repair-and-setup-triage.md)
 
 Task-local support folders for `TASK-065`, `TASK-069`, `TASK-084`, and `TASK-086` are preserved under `tasks/completed/`.
 
@@ -116,16 +116,16 @@ Task-local support folders for `TASK-065`, `TASK-069`, `TASK-084`, and `TASK-086
 
 ### Sprint 05 Task Files
 
-- [TASK-051 runtime dependency audit and decision gate](./tasks/completed/TASK-051-runtime-dependency-audit-and-decision-gate.md)
-- [TASK-055 YOLO Torch Hub pinned-ref hardening](./tasks/completed/TASK-055-yolo-torch-hub-pinned-ref-hardening.md)
-- [TASK-056 first-run reliability and runtime determinism hardening](./tasks/completed/TASK-056-first-run-reliability-and-runtime-determinism-hardening.md)
-- [TASK-057 local YOLO runtime ownership and offline readiness](./tasks/completed/TASK-057-local-yolo-runtime-ownership-and-offline-readiness.md)
-- [TASK-052 current integration smoke-test baseline](./tasks/completed/TASK-052-current-integration-smoke-test-baseline.md)
-- [TASK-062 pre-Docker runtime cleanup and YOLO loader hardening](./tasks/completed/TASK-062-pre-docker-runtime-cleanup-and-yolo-loader-hardening.md)
-- [TASK-063 pre-Docker release hardening](./tasks/completed/TASK-063-pre-docker-release-hardening.md)
-- [TASK-064 runtime responsiveness and inference baseline](./tasks/completed/TASK-064-runtime-responsiveness-inference-baseline.md)
-- [TASK-025 Docker / OCI containerization](./tasks/completed/TASK-025-docker-containerization.md)
-- [TASK-054 local launch UX](./tasks/completed/TASK-054-local-launch-ux.md)
+- [TASK-051 runtime dependency audit and decision gate](../../../tasks/completed/TASK-051-runtime-dependency-audit-and-decision-gate.md)
+- [TASK-055 YOLO Torch Hub pinned-ref hardening](../../../tasks/completed/TASK-055-yolo-torch-hub-pinned-ref-hardening.md)
+- [TASK-056 first-run reliability and runtime determinism hardening](../../../tasks/completed/TASK-056-first-run-reliability-and-runtime-determinism-hardening.md)
+- [TASK-057 local YOLO runtime ownership and offline readiness](../../../tasks/completed/TASK-057-local-yolo-runtime-ownership-and-offline-readiness.md)
+- [TASK-052 current integration smoke-test baseline](../../../tasks/completed/TASK-052-current-integration-smoke-test-baseline.md)
+- [TASK-062 pre-Docker runtime cleanup and YOLO loader hardening](../../../tasks/completed/TASK-062-pre-docker-runtime-cleanup-and-yolo-loader-hardening.md)
+- [TASK-063 pre-Docker release hardening](../../../tasks/completed/TASK-063-pre-docker-release-hardening.md)
+- [TASK-064 runtime responsiveness and inference baseline](../../../tasks/completed/TASK-064-runtime-responsiveness-inference-baseline.md)
+- [TASK-025 Docker / OCI containerization](../../../tasks/completed/TASK-025-docker-containerization.md)
+- [TASK-054 local launch UX](../../../tasks/completed/TASK-054-local-launch-ux.md)
 
 ---
 
@@ -170,7 +170,7 @@ Task-local support folders for `TASK-065`, `TASK-069`, `TASK-084`, and `TASK-086
 **Priority**: CRITICAL
 **Estimated Effort**: 40-50 hours (5-7 days)
 **Actual Effort**: Approximately 40-48 hours (5 phases completed)
-**Task File**: [TASK-046-setup-wizard-settings-screen.md](./tasks/TASK-046-setup-wizard-settings-screen.md)
+**Task File**: [TASK-046-setup-wizard-settings-screen.md](../../../tasks/completed/TASK-046-setup-wizard-settings-screen.md)
 
 **Objective**: Implement first-launch Setup Wizard and in-app Settings Screen for seamless API key management without manual .env file editing
 
@@ -1283,7 +1283,7 @@ Building on TASK-041's ProviderStateManager foundation, this task addressed the 
 - Exceptional memory performance (decreased 0.7% in stress testing)
 - 5 critical issues resolved through architectural improvements
 
-**Sprint Retrospective**: See [SPRINT-01-RETROSPECTIVE.md](context/archive/2026-05/status/SPRINT-01-RETROSPECTIVE.md)
+**Sprint Retrospective**: See [SPRINT-01-RETROSPECTIVE.md](../2026-05/status/SPRINT-01-RETROSPECTIVE.md)
 
 ### **TASK-041: Implement Deep Dive Priority 2 (State Management & Memory Cleanup)** ✅
 **Status**: ✅ COMPLETE
