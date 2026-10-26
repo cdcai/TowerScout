@@ -1,0 +1,19 @@
+# Podman GPU overlay. Requires a WSL2 Podman machine with NVIDIA CDI
+# provisioning from scripts/enable-podman-gpu.ps1.
+services:
+  towerscout:
+    environment:
+      TOWERSCOUT_DEVICE: ${TOWERSCOUT_DEVICE:-auto}
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
+      NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES:-compute,utility}
+    devices:
+      - nvidia.com/gpu=all
+    security_opt:
+      - label=disable
+    # Fallback form if a future provider cannot pass the short CDI device form:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: cdi
+    #           device_ids: ["nvidia.com/gpu=all"]

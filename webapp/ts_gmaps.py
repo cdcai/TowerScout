@@ -5,8 +5,8 @@
 # TowerScout Team:
 # Karen Wong, Gunnar Mein, Thaddeus Segura, Jia Lu
 #
-# Licensed under CC-BY-NC-SA-4.0
-# (see LICENSE.TXT in the root of the repository for details)
+# Licensed under CC-BY-NC-SA-4.0 OR AGPL-3.0-only
+# (see LICENSE and licenses/TowerScout-APPLICATION-GRANT.md at the repository root)
 #
 
 #
@@ -22,7 +22,7 @@ class GoogleMap(Map):
 
 
    def get_url(self, tile, zoom=19, size="640x640", sc=2, fmt="jpg", maptype="satellite"):
-      url = "http://maps.googleapis.com/maps/api/staticmap?"
+      url = "https://maps.googleapis.com/maps/api/staticmap?"
       url += "center=" + str(tile['lat_for_url']) + "," + str(tile['lng']) + \
                   "&zoom=" + str(zoom) +\
                   "&size=" + size + \

@@ -1,0 +1,297 @@
+{
+  "description": "Project-owner-approved exact residuals: four existing records renewed through January 31, 2027 and eight separately approved CVE-2026-53615 records only through November 5, 2026. Resolved Expat is removed. Other findings, changed identities/severities, unused entries and expired acceptance fail closed; the 396-key baseline is unchanged. Publication requires separate authorization.",
+  "findings": [
+    {
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "approved_by": "Project owner",
+      "compensating_controls": [
+        "TowerScout imports urllib3 2.8.0 from the application environment.",
+        "The publish workflow verifies the application and pip-private urllib3 versions before scanning.",
+        "The accepted record is limited to pip 26.2.2's private urllib3 2.7.0 package identity.",
+        "The comparator requires exact-image filesystem inventory and the matching Trivy embedded-SBOM package record; an extra or misplaced urllib3 copy fails closed.",
+        "The project owner reviews weekly under TASK-107 and immediately on an upstream fix, changed identity/severity, supported-path exposure change, or failed gate; January 31, 2027 is the expiry cap, not an automatic retention period.",
+        "The application does not invoke pip or install model dependencies automatically. Pip remains active during controlled HTTPS dependency installation; this is bounded acceptance, not a claim that pip is unreachable."
+      ],
+      "expires_utc": "2027-01-31T23:59:59Z",
+      "follow_up_task": "TASK-107",
+      "installed_version": "2.7.0",
+      "location_policy": "pip-vendored-urllib3-v1",
+      "package": "urllib3",
+      "package_class": "lang-pkgs",
+      "package_id": "urllib3@2.7.0",
+      "package_type": "python-pkg",
+      "reason": "Trivy inventories pip's private vendored copy through pip's CycloneDX metadata; TowerScout's importable HTTP dependency is fixed at urllib3 2.8.0.",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-97687"
+    },
+    {
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "approved_by": "Project owner",
+      "compensating_controls": [
+        "TowerScout imports urllib3 2.8.0 from the application environment.",
+        "The publish workflow verifies the application and pip-private urllib3 versions before scanning.",
+        "The accepted record is limited to pip 26.2.2's private urllib3 2.7.0 package identity.",
+        "The comparator requires exact-image filesystem inventory and the matching Trivy embedded-SBOM package record; an extra or misplaced urllib3 copy fails closed.",
+        "The project owner reviews weekly under TASK-107 and immediately on an upstream fix, changed identity/severity, supported-path exposure change, or failed gate; January 31, 2027 is the expiry cap, not an automatic retention period.",
+        "The application does not invoke pip or install model dependencies automatically. Pip remains active during controlled HTTPS dependency installation; this is bounded acceptance, not a claim that pip is unreachable."
+      ],
+      "expires_utc": "2027-01-31T23:59:59Z",
+      "follow_up_task": "TASK-107",
+      "installed_version": "2.7.0",
+      "location_policy": "pip-vendored-urllib3-v1",
+      "package": "urllib3",
+      "package_class": "lang-pkgs",
+      "package_id": "urllib3@2.7.0",
+      "package_type": "python-pkg",
+      "reason": "Trivy inventories pip's private vendored copy through pip's CycloneDX metadata; TowerScout's importable HTTP dependency is fixed at urllib3 2.8.0.",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-97689"
+    },
+    {
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "approved_by": "Project owner",
+      "compensating_controls": [
+        "TowerScout exposes HTTPS client workflows and no DTLS listener or DTLS peer workflow.",
+        "A package-version or severity change invalidates this acceptance.",
+        "The candidate remains blocked by any additional new HIGH or CRITICAL key.",
+        "The project owner reviews weekly under TASK-107 and immediately on an upstream fix, changed identity/severity, supported-path exposure change, or failed gate; January 31, 2027 is the expiry cap, not an automatic retention period."
+      ],
+      "expires_utc": "2027-01-31T23:59:59Z",
+      "follow_up_task": "TASK-107",
+      "installed_version": "3.0.22-1~deb12u1",
+      "package": "libssl3",
+      "package_class": "os-pkgs",
+      "package_id": "libssl3@3.0.22-1~deb12u1",
+      "package_type": "debian",
+      "reason": "CVE-2026-84782 affects DTLS retransmission behavior; TowerScout has no supported DTLS workflow and Debian Bookworm has no fixed package available for this candidate.",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-84782"
+    },
+    {
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "approved_by": "Project owner",
+      "compensating_controls": [
+        "TowerScout exposes HTTPS client workflows and no DTLS listener or DTLS peer workflow.",
+        "A package-version or severity change invalidates this acceptance.",
+        "The candidate remains blocked by any additional new HIGH or CRITICAL key.",
+        "The project owner reviews weekly under TASK-107 and immediately on an upstream fix, changed identity/severity, supported-path exposure change, or failed gate; January 31, 2027 is the expiry cap, not an automatic retention period."
+      ],
+      "expires_utc": "2027-01-31T23:59:59Z",
+      "follow_up_task": "TASK-107",
+      "installed_version": "3.0.22-1~deb12u1",
+      "package": "openssl",
+      "package_class": "os-pkgs",
+      "package_id": "openssl@3.0.22-1~deb12u1",
+      "package_type": "debian",
+      "reason": "CVE-2026-84782 affects DTLS retransmission behavior; TowerScout has no supported DTLS workflow and Debian Bookworm has no fixed package available for this candidate.",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-84782"
+    },
+    {
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "approved_by": "Project owner",
+      "compensating_controls": [
+        "Bounded supported-path review found no TowerScout disk-partition probing caller or raw-block-device mapping; standard Compose profiles do not enable privileged mode or SYS_ADMIN.",
+        "No block devices were present in isolated default CPU/CUDA containers. This is bounded exposure evidence, not proof of unexploitable code.",
+        "Retain Debian 12 and its required libraries; do not force-remove essential dependencies or mix Debian suites.",
+        "The project owner owns TASK-107 review weekly and immediately on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change, or failed gate.",
+        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires November 5, 2026; no automatic extension or January renewal applies."
+      ],
+      "expires_utc": "2026-11-05T23:59:59Z",
+      "follow_up_task": "TASK-107",
+      "installed_version": "1:2.38.1-5+deb12u3",
+      "package": "bsdutils",
+      "package_class": "os-pkgs",
+      "package_id": "bsdutils@1:2.38.1-5+deb12u3",
+      "package_type": "debian",
+      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation.",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53615"
+    },
+    {
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "approved_by": "Project owner",
+      "compensating_controls": [
+        "Bounded supported-path review found no TowerScout disk-partition probing caller or raw-block-device mapping; standard Compose profiles do not enable privileged mode or SYS_ADMIN.",
+        "No block devices were present in isolated default CPU/CUDA containers. This is bounded exposure evidence, not proof of unexploitable code.",
+        "Retain Debian 12 and its required libraries; do not force-remove essential dependencies or mix Debian suites.",
+        "The project owner owns TASK-107 review weekly and immediately on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change, or failed gate.",
+        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires November 5, 2026; no automatic extension or January renewal applies."
+      ],
+      "expires_utc": "2026-11-05T23:59:59Z",
+      "follow_up_task": "TASK-107",
+      "installed_version": "2.38.1-5+deb12u3",
+      "package": "libblkid1",
+      "package_class": "os-pkgs",
+      "package_id": "libblkid1@2.38.1-5+deb12u3",
+      "package_type": "debian",
+      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation.",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53615"
+    },
+    {
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "approved_by": "Project owner",
+      "compensating_controls": [
+        "Bounded supported-path review found no TowerScout disk-partition probing caller or raw-block-device mapping; standard Compose profiles do not enable privileged mode or SYS_ADMIN.",
+        "No block devices were present in isolated default CPU/CUDA containers. This is bounded exposure evidence, not proof of unexploitable code.",
+        "Retain Debian 12 and its required libraries; do not force-remove essential dependencies or mix Debian suites.",
+        "The project owner owns TASK-107 review weekly and immediately on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change, or failed gate.",
+        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires November 5, 2026; no automatic extension or January renewal applies."
+      ],
+      "expires_utc": "2026-11-05T23:59:59Z",
+      "follow_up_task": "TASK-107",
+      "installed_version": "2.38.1-5+deb12u3",
+      "package": "libmount1",
+      "package_class": "os-pkgs",
+      "package_id": "libmount1@2.38.1-5+deb12u3",
+      "package_type": "debian",
+      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation.",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53615"
+    },
+    {
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "approved_by": "Project owner",
+      "compensating_controls": [
+        "Bounded supported-path review found no TowerScout disk-partition probing caller or raw-block-device mapping; standard Compose profiles do not enable privileged mode or SYS_ADMIN.",
+        "No block devices were present in isolated default CPU/CUDA containers. This is bounded exposure evidence, not proof of unexploitable code.",
+        "Retain Debian 12 and its required libraries; do not force-remove essential dependencies or mix Debian suites.",
+        "The project owner owns TASK-107 review weekly and immediately on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change, or failed gate.",
+        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires November 5, 2026; no automatic extension or January renewal applies."
+      ],
+      "expires_utc": "2026-11-05T23:59:59Z",
+      "follow_up_task": "TASK-107",
+      "installed_version": "2.38.1-5+deb12u3",
+      "package": "libsmartcols1",
+      "package_class": "os-pkgs",
+      "package_id": "libsmartcols1@2.38.1-5+deb12u3",
+      "package_type": "debian",
+      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation.",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53615"
+    },
+    {
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "approved_by": "Project owner",
+      "compensating_controls": [
+        "Bounded supported-path review found no TowerScout disk-partition probing caller or raw-block-device mapping; standard Compose profiles do not enable privileged mode or SYS_ADMIN.",
+        "No block devices were present in isolated default CPU/CUDA containers. This is bounded exposure evidence, not proof of unexploitable code.",
+        "Retain Debian 12 and its required libraries; do not force-remove essential dependencies or mix Debian suites.",
+        "The project owner owns TASK-107 review weekly and immediately on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change, or failed gate.",
+        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires November 5, 2026; no automatic extension or January renewal applies."
+      ],
+      "expires_utc": "2026-11-05T23:59:59Z",
+      "follow_up_task": "TASK-107",
+      "installed_version": "2.38.1-5+deb12u3",
+      "package": "libuuid1",
+      "package_class": "os-pkgs",
+      "package_id": "libuuid1@2.38.1-5+deb12u3",
+      "package_type": "debian",
+      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation.",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53615"
+    },
+    {
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "approved_by": "Project owner",
+      "compensating_controls": [
+        "Bounded supported-path review found no TowerScout disk-partition probing caller or raw-block-device mapping; standard Compose profiles do not enable privileged mode or SYS_ADMIN.",
+        "No block devices were present in isolated default CPU/CUDA containers. This is bounded exposure evidence, not proof of unexploitable code.",
+        "Retain Debian 12 and its required libraries; do not force-remove essential dependencies or mix Debian suites.",
+        "The project owner owns TASK-107 review weekly and immediately on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change, or failed gate.",
+        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires November 5, 2026; no automatic extension or January renewal applies."
+      ],
+      "expires_utc": "2026-11-05T23:59:59Z",
+      "follow_up_task": "TASK-107",
+      "installed_version": "2.38.1-5+deb12u3",
+      "package": "mount",
+      "package_class": "os-pkgs",
+      "package_id": "mount@2.38.1-5+deb12u3",
+      "package_type": "debian",
+      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation.",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53615"
+    },
+    {
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "approved_by": "Project owner",
+      "compensating_controls": [
+        "Bounded supported-path review found no TowerScout disk-partition probing caller or raw-block-device mapping; standard Compose profiles do not enable privileged mode or SYS_ADMIN.",
+        "No block devices were present in isolated default CPU/CUDA containers. This is bounded exposure evidence, not proof of unexploitable code.",
+        "Retain Debian 12 and its required libraries; do not force-remove essential dependencies or mix Debian suites.",
+        "The project owner owns TASK-107 review weekly and immediately on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change, or failed gate.",
+        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires November 5, 2026; no automatic extension or January renewal applies."
+      ],
+      "expires_utc": "2026-11-05T23:59:59Z",
+      "follow_up_task": "TASK-107",
+      "installed_version": "2.38.1-5+deb12u3",
+      "package": "util-linux",
+      "package_class": "os-pkgs",
+      "package_id": "util-linux@2.38.1-5+deb12u3",
+      "package_type": "debian",
+      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation.",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53615"
+    },
+    {
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "approved_by": "Project owner",
+      "compensating_controls": [
+        "Bounded supported-path review found no TowerScout disk-partition probing caller or raw-block-device mapping; standard Compose profiles do not enable privileged mode or SYS_ADMIN.",
+        "No block devices were present in isolated default CPU/CUDA containers. This is bounded exposure evidence, not proof of unexploitable code.",
+        "Retain Debian 12 and its required libraries; do not force-remove essential dependencies or mix Debian suites.",
+        "The project owner owns TASK-107 review weekly and immediately on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change, or failed gate.",
+        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires November 5, 2026; no automatic extension or January renewal applies."
+      ],
+      "expires_utc": "2026-11-05T23:59:59Z",
+      "follow_up_task": "TASK-107",
+      "installed_version": "2.38.1-5+deb12u3",
+      "package": "util-linux-extra",
+      "package_class": "os-pkgs",
+      "package_id": "util-linux-extra@2.38.1-5+deb12u3",
+      "package_type": "debian",
+      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation.",
+      "severity": "HIGH",
+      "vulnerability_id": "CVE-2026-53615"
+    }
+  ],
+  "policy": "task103-g10-time-bounded-residuals",
+  "schema_version": 1
+}

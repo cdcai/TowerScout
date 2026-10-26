@@ -1,9 +1,13 @@
 name: TowerScout CI/CD Testing Pipeline
 
-# Temporary destination setup: manually validate one reviewed adoption source.
-# Replace with normal PR/main triggers and default checkout during adoption.
 on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch: {}
+  schedule:
+    - cron: '23 9 * * 1'
 
 permissions:
   contents: read
@@ -16,9 +20,14 @@ jobs:
     steps:
     - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
-        repository: J-Schulein/TowerScout
-        ref: 8682b8e6b31a4425ab626da557f58bff97076de7
         persist-credentials: false
+        fetch-depth: 0
+
+    # The original development fork retains its historical release references.
+    # Check the full proposed merge ancestry in the receiving repository.
+    - name: Verify adoption history exclusion
+      if: github.repository == 'cdcai/TowerScout'
+      run: python3 scripts/check_adoption_history.py
 
     # TASK-101: Puppeteer 25 requires the maintained Node 22.12+ baseline.
     - name: Set up Node 22
@@ -53,6 +62,13 @@ jobs:
     - name: Run detection cancellation recovery contract
       run: node tests/frontend/test_detection_cancel_recovery_contract.js
 
+    - name: Verify export downloads and parsed CSV/KML contents
+      run: |
+        python3 tests/frontend/verify_export_serialization.py
+        node tests/frontend/test_task106_export_selection.js
+        node tests/frontend/test_task106_restore_safety.js
+        node tests/frontend/test_task106_followup.js
+
     - name: Run ProviderStateManager regression test
       run: node tests/integration/test_task_064_provider_state_manager.js
 
@@ -64,8 +80,6 @@ jobs:
     steps:
     - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
-        repository: J-Schulein/TowerScout
-        ref: 8682b8e6b31a4425ab626da557f58bff97076de7
         persist-credentials: false
 
     # TASK-101: keep the maintained Node/Puppeteer builder contract blocking
@@ -83,8 +97,6 @@ jobs:
     steps:
     - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
-        repository: J-Schulein/TowerScout
-        ref: 8682b8e6b31a4425ab626da557f58bff97076de7
         persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
@@ -103,7 +115,7 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        python -m pip install --upgrade pip
+        python scripts/bootstrap-pip.py
         pip install "torch==2.10.0" "torchvision==0.25.0" --index-url https://download.pytorch.org/whl/cpu
         pip install -r webapp/requirements.txt
         pip install -r requirements-dev.txt
@@ -143,6 +155,16 @@ jobs:
       run: |
         pytest tests/unit/ -v --cov=webapp --cov-report=xml --cov-report=term-missing
 
+    - name: Run adoption integration regression contracts
+      timeout-minutes: 5
+      env:
+        GOOGLE_API_KEY: test_google_key_123
+        AZURE_MAPS_SUBSCRIPTION_KEY: test_azure_key_456
+        FLASK_SECRET_KEY: test_secret_key_for_sessions
+        FLASK_ENV: testing
+      run: |
+        pytest tests/integration/test_end_to_end.py::test_current_app_boot_and_core_route_surface tests/integration/test_geocoding_integration.py -v
+
     - name: Run integration tests
       timeout-minutes: 15
       env:
@@ -178,8 +200,6 @@ jobs:
     steps:
     - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
-        repository: J-Schulein/TowerScout
-        ref: 8682b8e6b31a4425ab626da557f58bff97076de7
         persist-credentials: false
 
     - name: Set up Docker Buildx
@@ -187,18 +207,27 @@ jobs:
 
     - name: Build Docker image (local deployment test)
       run: |
-        docker build -t towerscout:test .
+        docker build --build-arg TOWERSCOUT_SOURCE_REF="$GITHUB_SHA" -t towerscout:test .
+
+    - name: Verify built-image pip inventory
+      run: |
+        set -euo pipefail
+        image_id="$(docker image inspect --format '{{.Id}}' towerscout:test)"
+        docker run --rm --pull never --network none --read-only --user 0:0 \
+          --cap-drop ALL --cap-add DAC_OVERRIDE --security-opt no-new-privileges \
+          -i --entrypoint python "$image_id" -I -B - \
+          --image-id "$image_id" --source-ref "$GITHUB_SHA" --flavor cpu \
+          < scripts/task104_urllib3_inventory.py
 
   security:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
       contents: read
+      security-events: write
     steps:
     - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       with:
-        repository: J-Schulein/TowerScout
-        ref: 8682b8e6b31a4425ab626da557f58bff97076de7
         persist-credentials: false
 
     - name: Run Trivy vulnerability scanner
@@ -236,15 +265,9 @@ jobs:
         ignore-unfixed: 'false'
         version: 'v0.69.3'
 
-    # The checked-out source differs from this temporary workflow commit.
-    # Preserve the report without attributing it to the wrong Security-tab SHA.
-    - name: Archive pinned-source security evidence
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4, dereferenced commit
       if: always()
       with:
-        name: bootstrap-security-evidence
-        path: |
-          trivy-results.sarif
-          trivy-version.txt
-        if-no-files-found: warn
+        sarif_file: 'trivy-results.sarif'
       continue-on-error: true

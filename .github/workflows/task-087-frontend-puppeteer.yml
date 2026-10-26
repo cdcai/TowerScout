@@ -1,8 +1,11 @@
 name: Task-087 Production SetupWizard Puppeteer
 
-# Temporary destination setup: manually validate one reviewed adoption source.
-# Replace with normal PR/main triggers and default checkout during adoption.
 on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches:
+      - main
   workflow_dispatch: {}
 
 permissions:
@@ -21,8 +24,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
-          repository: J-Schulein/TowerScout
-          ref: 8682b8e6b31a4425ab626da557f58bff97076de7
           persist-credentials: false
 
       - name: Setup Node.js
@@ -117,8 +118,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
-          repository: J-Schulein/TowerScout
-          ref: 8682b8e6b31a4425ab626da557f58bff97076de7
           persist-credentials: false
 
 
@@ -204,6 +203,9 @@ jobs:
           path: test-artifacts
 
   windows-host-helper:
+    # Retain the receiving repository's required-check identity until its owner
+    # approves a rename. The deferred listener suite/self-test are removed;
+    # this job verifies supported Windows package/provider behavior only.
     name: Windows host-helper contracts
     runs-on: windows-latest
     timeout-minutes: 20
@@ -214,8 +216,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
-          repository: J-Schulein/TowerScout
-          ref: 8682b8e6b31a4425ab626da557f58bff97076de7
           persist-credentials: false
 
       - name: Setup Python
@@ -224,23 +224,22 @@ jobs:
           python-version: '3.11'
 
       - name: Install focused test dependency
-        run: python -m pip install pytest
+        run: |
+          python scripts/bootstrap-pip.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip install pytest
 
-      - name: Run Task-087 host-helper contracts
-        env:
-          PYTHONPATH: webapp
+      - name: Verify release archive and helper exclusion contracts
         run: >-
           python -m pytest
           --confcutdir=tests/unit
-          tests/unit/test_task_087_host_helper.py
+          tests/unit/test_release_package_script.py
+          tests/unit/test_podman_gpu_enablement.py
+          tests/unit/test_task_081_runtime_hardening.py
+          tests/unit/test_task106_tls_selection.py
+          tests/unit/test_task106_tls_import_transaction.py
           -q
           -p no:cacheprovider
-
-      - name: Run host-helper self-test in Windows PowerShell
-        run: >-
-          powershell.exe -NoProfile -ExecutionPolicy Bypass
-          -File scripts/host-helper.ps1
-          -SelfTest
 
       - name: Setup Python 3.12 for Task-105 provider contract
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -252,5 +251,7 @@ jobs:
           TOWERSCOUT_REQUIRE_PWSH: '1'
         run: |
           Get-Command pwsh -ErrorAction Stop | Select-Object -ExpandProperty Source
+          python scripts/bootstrap-pip.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -m pip install pytest
           python -m pytest --confcutdir=tests/unit tests/unit/test_task105_provider_installer.py -q -p no:cacheprovider

@@ -5,50 +5,251 @@
 # TowerScout Team:
 # Karen Wong, Gunnar Mein, Thaddeus Segura, Jia Lu
 #
-# Licensed under CC-BY-NC-SA-4.0
-# (see LICENSE.TXT in the root of the repository for details)
+# Additional application grant: AGPL-3.0-only; prior CC permissions retained.
+# See licenses/TowerScout-APPLICATION-GRANT.md, LICENSE, NOTICE,
+# THIRD_PARTY_NOTICES.md, MODEL_LICENSES.md, DATA_LICENSES.md, and
+# PROVIDER_TERMS.md in the root of the repository for details.
 #
 
 # import basic functionality
 from ts_yolov5 import YOLOv5_Detector
 from ts_en import EN_Classifier
 import ts_imgutil
-from ts_bmaps import BingMap
 from ts_gmaps import GoogleMap
+from ts_azure_maps import AzureMaps
 from ts_zipcode import Zipcode_Provider
 from ts_events import ExitEvents
 import ts_maps
-from flask import Flask, render_template, send_from_directory, request, session, Response
+from flask import Flask, render_template, send_from_directory, request, session, Response, jsonify, abort as flask_abort
 from flask_session import Session
+from werkzeug.datastructures import FileStorage
+from PIL import Image
 from waitress import serve
 import json
-import torch
+import html
+import time
 import os
+import math
+import re
+from pathlib import Path
+import secrets
+from urllib.parse import urlsplit
+from ts_validation import (
+    TowerScoutValidator, ValidationError, rate_limiter,
+    validate_detection_request, validate_zipcode_request
+)
+from ts_errors import (
+    TowerScoutError, ConfigurationError, MapProviderError,
+    NetworkError
+)
+from ts_logging import (
+    get_main_logger, get_maps_logger, get_ml_logger, 
+    get_api_logger
+)
+from ts_performance import PerformanceMetrics
+import ts_config
+import ts_device
+import ts_host_helper
+import ts_runtime
+from ts_assets import AssetManifestError, verify_trusted_model
+from ts_provider_http import (
+    classify_provider_response,
+    provider_get,
+    redact_provider_url,
+)
 from shutil import rmtree
 import zipfile
-import ssl
+from ts_dataset import DatasetFormatError, validate_contents, check_zip_directory
 import asyncio
-import time
+from dotenv import load_dotenv
+from ts_progress import DetectionProgressTracker
+from ts_paths import (
+    CSS_DIR,
+    DOCS_DIR,
+    IMG_DIR,
+    JS_DIR,
+    get_base_dir,
+    get_en_model_dir,
+    get_flask_session_dir,
+    get_map_cache_dir,
+    get_model_params_dir,
+    get_session_tmp_root,
+    get_temp_dir,
+    get_upload_dir,
+    get_yolov5_model_dir,
+)
+
+# Initialize logging before startup diagnostics so first-run messages stay structured.
+logger = get_main_logger()
+api_logger = get_api_logger()
+ml_logger = get_ml_logger()
+maps_logger = get_maps_logger()
+logger.info("TowerScout starting")
+
+# Load environment variables from config/.env if available, otherwise legacy .env
+script_dir = get_base_dir()
+env_path = ts_config.ensure_env_file()
+COMPLIANCE_NOTICE_FILES = (
+    "LICENSE",
+    "licenses/Apache-2.0.txt",
+    "licenses/AGPL-3.0.txt",
+    "licenses/CC-BY-NC-SA-4.0.txt",
+    "licenses/TowerScout-APPLICATION-GRANT.md",
+    "licenses/jQuery-MIT.txt",
+    "licenses/SyntheticData-MIT.txt",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md",
+    "MODEL_LICENSES.md",
+    "DATA_LICENSES.md",
+    "PROVIDER_TERMS.md",
+    "SOURCE.txt",
+    "SBOM.txt",
+    "release-manifest.v1.json",
+)
+# Keep this allowlist synchronized with Settings Resource Links in
+# webapp/templates/towerscout.html, docs staged by scripts/package-release.ps1,
+# and route assertions in tests/unit/test_flask_routes.py.
+PUBLIC_DOC_FILES = {
+    "project-overview.html",
+    "project-overview.md",
+    "docker-cpu-user-guide.md",
+    "docker-gpu-user-guide.md",
+    "local-it-administrator-guide.html",
+    "local-it-administrator-guide.md",
+    "podman-cpu-user-guide.md",
+    "podman-gpu-user-guide.md",
+    "quick-start.html",
+    "quick-start.md",
+    "package-guide.md",
+    "towerscout-docs.css",
+    "user-guide.html",
+    "user-guide.md",
+    "towerscout-user-guide.html",
+    "towerscout-user-guide.md",
+    "v1-rc1-package-guide.md",
+    "v1-rc1-quick-start.html",
+    "v1-rc1-quick-start.md",
+}
+
+logger.info("TowerScout environment bootstrap starting")
+logger.info("Current working directory: %s", os.getcwd())
+logger.info("Script directory: %s", script_dir)
+logger.info("Active env path: %s", env_path)
+logger.info("Env file exists: %s", env_path.exists())
+
+if env_path.exists():
+    logger.info("Loading .env from %s", env_path)
+    load_dotenv(env_path, override=False)
+else:
+    logger.info("No explicit env file found; using default load_dotenv() behavior")
+    load_dotenv()
+
+# Debug: Check if keys are loaded
+google_key = os.getenv('GOOGLE_API_KEY', '')
+azure_key = os.getenv('AZURE_MAPS_SUBSCRIPTION_KEY', '')
+bing_key = os.getenv('BING_API_KEY', '')
+
+logger.info("GOOGLE_API_KEY configured: %s", bool(google_key))
+logger.info("AZURE_MAPS_SUBSCRIPTION_KEY configured: %s", bool(azure_key))
+logger.info("BING_API_KEY configured: %s", bool(bing_key))
+
 import tempfile
+from ts_geocoding import create_geocoding_service, GeocodingError, RateLimitError
+from ts_geocache import create_geocoding_cache
+
+# Map proxy configuration
+MAP_PROXY_CONFIG = {
+    'google': {
+        'tiles': {'rate_limit': (1000, 3600), 'cache_ttl': 86400},  # 1000/hour, 24hr cache
+        'static': {'rate_limit': (500, 3600), 'cache_ttl': 43200}   # 500/hour, 12hr cache
+    },
+    'azure': {
+        'search': {'rate_limit': (100, 3600), 'cache_ttl': 3600},   # 100/hour, 1hr cache  
+        'tiles': {'rate_limit': (1000, 3600), 'cache_ttl': 86400}   # 1000/hour, 24hr cache
+    }
+}
+
+# Create cache directory
+MAP_CACHE_DIR = get_map_cache_dir()
+UPLOAD_DIR = get_upload_dir()
+MODEL_PARAMS_DIR = get_model_params_dir()
+YOLO_MODEL_DIR = get_yolov5_model_dir()
+EN_MODEL_DIR = get_en_model_dir()
 from PIL import Image, ImageDraw
-import torch
 import threading
 import gc
 import datetime
 import sys
-from functools import reduce 
 
 dev = 0
 
 MAX_TILES = 100000
 MAX_TILES_SESSION = 100000
 
+
+def _get_positive_int_env(name, default):
+    value = os.getenv(name, "").strip()
+    if not value:
+        return default
+    try:
+        parsed = int(value)
+    except ValueError:
+        return default
+    if parsed <= 0:
+        return default
+    return parsed
+
+
+def get_detection_tile_limit():
+    base_limit = _get_positive_int_env("TOWERSCOUT_MAX_TILES", MAX_TILES)
+    pilot_limit = _get_positive_int_env("TOWERSCOUT_PILOT_MAX_TILES", None)
+    if pilot_limit is None:
+        return base_limit
+    return min(base_limit, pilot_limit)
+
+
+def get_session_tile_limit():
+    return _get_positive_int_env("TOWERSCOUT_MAX_TILES_SESSION", MAX_TILES_SESSION)
+
+
+def _format_tile_limit_error(tile_count, tile_limit):
+    return (
+        f"The selected search area contains {tile_count} tile(s), which exceeds "
+        f"the current pilot limit of {tile_limit} tile(s). Select a smaller area "
+        "or ask support before running a larger validation."
+    )
+
 engines = {}
 
 engine_default = None
 engine_lock = threading.Lock()
+detection_job_lock = threading.Lock()
+DETECTION_REQUEST_ID_HEADER = 'X-TowerScout-Detection-Request-Id'
+DETECTION_REQUEST_ID_PATTERN = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$')
+CANCELLATION_PENDING_MESSAGE = (
+    'Cancellation is still pending while the current model step finishes. '
+    'TowerScout will enable detection when the run stops.'
+)
 
 exit_events = ExitEvents()
+secondary_en = None
+secondary_en_lock = threading.Lock()
+LAZY_MODEL_INIT = os.getenv('TOWERSCOUT_LAZY_MODEL_INIT', '').strip().lower() in ('1', 'true', 'yes', 'on')
+STARTUP_PRELOAD_ENV_VAR = "TOWERSCOUT_STARTUP_PRELOAD"
+progress_tracker = DetectionProgressTracker()
+SESSION_TMP_ROOT = get_session_tmp_root()
+SESSION_ID_KEY = "ts_session_id"
+
+
+def ensure_yolo_config_dir() -> str | None:
+    configured_dir = os.getenv("YOLO_CONFIG_DIR", "").strip()
+    if not configured_dir:
+        return None
+    os.makedirs(configured_dir, exist_ok=True)
+    return configured_dir
+
+
+ensure_yolo_config_dir()
 
 # on-demand instantiate YOLOv5 model
 def get_engine(e):
@@ -64,11 +265,31 @@ def get_engine(e):
         gc.collect(generation=2)
 
         if engines[e]['engine'] is None:
-            print(" loading model:", engines[e]['name'])
+            ml_logger.info(f"Loading model: {engines[e]['name']}")
             engines[e]['engine'] = YOLOv5_Detector(
-                'model_params/yolov5/'+engines[e]['file'])
+                str(YOLO_MODEL_DIR / engines[e]['file']))
 
         return engines[e]['engine']
+
+
+def _engine_loaded(e):
+    if e is None:
+        e = engine_default
+    return e in engines and engines[e].get('engine') is not None
+
+
+def _estimate_model_initialization_overhead(e):
+    if _engine_loaded(e):
+        return 0.0
+
+    configured_value = os.getenv('TOWERSCOUT_ESTIMATE_COLD_MODEL_SECONDS', '12.0')
+    try:
+        return max(0.0, float(configured_value))
+    except (TypeError, ValueError):
+        api_logger.warning(
+            "TOWERSCOUT_ESTIMATE_COLD_MODEL_SECONDS must be numeric; using 12.0"
+        )
+        return 12.0
 
 
 def find_model(m):
@@ -79,9 +300,28 @@ def find_model(m):
 
 
 def get_custom_models():
-    for f in os.listdir("./model_params/yolov5"):
+    for f in os.listdir(YOLO_MODEL_DIR):
         if f.endswith(".pt") and not find_model(f):
             add_model(f)
+
+
+def should_preload_startup_assets() -> bool:
+    configured_value = os.getenv(STARTUP_PRELOAD_ENV_VAR, "").strip().lower()
+    if not configured_value:
+        return True
+    return configured_value not in {"0", "false", "no", "off"}
+
+
+def load_model_catalog() -> bool:
+    global engine_default
+    get_custom_models()
+    if not engines:
+        engine_default = None
+        logger.warning("No YOLO model weights found in %s.", YOLO_MODEL_DIR)
+        return False
+
+    engine_default = sorted(engines.items(), key=lambda x: -x[1]['ts'])[0][0]
+    return True
 
 
 def add_model(m):
@@ -93,7 +333,7 @@ def add_model(m):
         'name': mid,
         'file': m,
         'engine': None,
-        'ts': os.path.getmtime("./model_params/yolov5/"+m)
+        'ts': os.path.getmtime(YOLO_MODEL_DIR / m)
     }
 
 
@@ -102,26 +342,1147 @@ def add_model(m):
 providers = {
     'google': {'id': 'google', 'name': 'Google Maps'},
     'bing': {'id': 'bing', 'name': 'Bing Maps'},
+    'azure': {'id': 'azure', 'name': 'Azure Maps'},
 }
 
+# Load API keys from environment variables
+def load_api_keys(allow_missing=False):
+    """Load and validate API keys from environment variables."""
+    google_key = os.getenv('GOOGLE_API_KEY', '')
+    bing_key = os.getenv('BING_API_KEY', '')
+    azure_key = os.getenv('AZURE_MAPS_SUBSCRIPTION_KEY', '')
+    
+    # Check for placeholder text and treat as missing
+    placeholder_patterns = [
+        'your_google_maps_api_key_here',
+        'your_bing_maps_api_key_here', 
+        'your_azure_maps_subscription_key_here',
+        'your_google_api_key',
+        'your_bing_maps_',
+        'your_azure_maps_'
+    ]
+    
+    # Validate Google API key
+    if google_key and not any(placeholder in google_key.lower() for placeholder in placeholder_patterns):
+        # Valid Google key
+        pass
+    else:
+        logger.warning("GOOGLE_API_KEY not configured or contains placeholder text. Google Maps provider will be unavailable.")
+        google_key = ""
+    
+    # Validate Bing API key  
+    if bing_key and not any(placeholder in bing_key.lower() for placeholder in placeholder_patterns):
+        # Valid Bing key
+        pass
+    else:
+        logger.warning("BING_API_KEY not configured or contains placeholder text. Bing Maps provider will be unavailable.")
+        bing_key = ""
+        
+    # Validate Azure API key
+    if azure_key and not any(placeholder in azure_key.lower() for placeholder in placeholder_patterns):
+        # Valid Azure key
+        pass
+    else:
+        logger.warning("AZURE_MAPS_SUBSCRIPTION_KEY not configured or contains placeholder text. Azure Maps provider will be unavailable.")
+        azure_key = ""
+    
+    setup_required = not google_key and not azure_key
+
+    # At least one provider must be configured with a valid key unless setup mode is allowed
+    if setup_required and not allow_missing:
+        raise ConfigurationError(
+            "At least one map provider API key is required",
+            missing_config="GOOGLE_API_KEY or AZURE_MAPS_SUBSCRIPTION_KEY",
+            user_message="Map provider API keys are required. Please configure Google Maps or Azure Maps."
+        )
+    
+    return google_key, bing_key, azure_key, setup_required
+
+
+def refresh_runtime_config():
+    """Reload runtime environment variables and refresh global key state."""
+    global google_api_key, bing_api_key, azure_api_key, needs_setup
+
+    ts_config.reload_runtime_environment(env_path)
+    google_api_key, bing_api_key, azure_api_key, needs_setup = load_api_keys(allow_missing=True)
+    app.config['SETUP_REQUIRED'] = needs_setup
+    return needs_setup
+
+# Load API keys with degraded setup mode support
+google_api_key, bing_api_key, azure_api_key, needs_setup = load_api_keys(allow_missing=True)
+if needs_setup:
+    logger.warning("Application booting in setup-required mode. Map and detection features will remain blocked until configuration is completed.")
+
 # other global variables
-google_api_key = ""
-bing_api_key = ""
 loop = asyncio.new_event_loop()
 asyncio.set_event_loop(loop)
 
-# prepare uploads directory
-if not os.path.isdir("./uploads"):
-    os.mkdir("./uploads")
-for f in os.listdir("./uploads"):
-    os.remove(os.path.join("./uploads", f))
+# Uploads are durable user data. Startup/replacement must not delete them.
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-print("Torch cuda:", "is" if torch.cuda.is_available() else "is not", "available")
-ssl._create_default_https_context = ssl._create_unverified_context
+ml_runtime = ts_device.build_runtime_diagnostics()
+ml_logger.info(
+    "ML runtime startup diagnostics: policy=%s selected_device=%s torch=%s cuda_build=%s cuda_available=%s fallback=%s "
+    "gpu_capability=%s arch_supported=%s cudnn=%s fp32_conv=%s fp32_matmul=%s precision_ok=%s "
+    "kernel_probe_ok=%s probe_error=%s",
+    ml_runtime.get("requested_policy"),
+    ml_runtime.get("selected_device"),
+    ml_runtime.get("torch_version"),
+    ml_runtime.get("torch_cuda_build"),
+    ml_runtime.get("torch_cuda_available"),
+    ml_runtime.get("fallback_reason"),
+    ml_runtime.get("cuda_device_capability"),
+    ml_runtime.get("cuda_arch_supported"),
+    ml_runtime.get("cudnn_version"),
+    ml_runtime.get("cuda_fp32_conv"),
+    ml_runtime.get("cuda_fp32_matmul"),
+    ml_runtime.get("cuda_precision_ok"),
+    ml_runtime.get("cuda_kernel_probe_ok"),
+    ml_runtime.get("cuda_probe_error"),
+)
+
+
+def get_secondary_classifier():
+    global secondary_en
+    with secondary_en_lock:
+        if secondary_en is None:
+            ml_logger.info("Loading EfficientNet secondary classifier")
+            secondary_en = EN_Classifier()
+    return secondary_en
+
+
+def _get_session_run_id():
+    session_id = session.get(SESSION_ID_KEY)
+    if not session_id:
+        session_id = f"session-{secrets.token_hex(16)}"
+        session[SESSION_ID_KEY] = session_id
+    return session_id
+
+
+def _get_detection_request_id():
+    request_id = request.headers.get(DETECTION_REQUEST_ID_HEADER, '').strip()
+    if not request_id:
+        return None
+    if DETECTION_REQUEST_ID_PATTERN.fullmatch(request_id) is None:
+        return None
+    return request_id
+
+
+def _register_detection_run(
+    session_id,
+    provider,
+    engine,
+    tile_count,
+    run_token=None,
+    status='running',
+    phase='preparing_tiles',
+    title='Preparing tiles',
+    detail='Starting detection request...',
+    counts=None,
+    client_request_id=None,
+):
+    return progress_tracker.start(
+        session_id,
+        run_token,
+        provider=provider,
+        engine=engine,
+        tile_count=tile_count,
+        status=status,
+        phase=phase,
+        title=title,
+        detail=detail,
+        counts=counts,
+        client_request_id=client_request_id,
+    )
+
+
+def _update_detection_run(session_id, status=None, run_token=None, **fields):
+    return progress_tracker.update(session_id, run_token=run_token, status=status, **fields)
+
+
+def _mark_detection_run_cancel_requested(session_id, client_request_id=None):
+    return progress_tracker.mark_cancel_requested(
+        session_id,
+        client_request_id=client_request_id,
+    )
+
+
+def _consume_pending_detection_cancellation(session_id, client_request_id):
+    return progress_tracker.consume_pending_cancellation(
+        session_id,
+        client_request_id,
+    )
+
+
+def _finish_detection_run(session_id, status, run_token=None, **fields):
+    return progress_tracker.finish(session_id, status, run_token=run_token, **fields)
+
+
+def _get_detection_progress_state(session_id):
+    return progress_tracker.get(session_id)
+
+
+def _serialize_detection_progress_state(progress_state):
+    public_state = dict(progress_state)
+    public_state.pop('run_token', None)
+    public_state.pop('expires_at', None)
+    return public_state
+
+
+def _cleanup_session_tmpdir():
+    tmpdirname = session.get('tmpdirname')
+    if tmpdirname:
+        rmtree(tmpdirname, ignore_errors=True, onerror=None)
+        api_logger.info("Cleaned up session temp dir %s", tmpdirname)
+        del session['tmpdirname']
+
+
+def _make_session_tmpdir():
+    for _ in range(10):
+        candidate = os.path.join(SESSION_TMP_ROOT, f"session-{secrets.token_hex(6)}")
+        try:
+            os.makedirs(candidate)
+            return candidate
+        except FileExistsError:
+            continue
+
+    raise RuntimeError("Unable to create writable session temp directory")
+
+
+def _format_tile_filter_detail(candidate_tiles, retained_tiles):
+    return (
+        f"Retained {retained_tiles} of {candidate_tiles} candidate tile(s) "
+        "after viewport and polygon filtering."
+    )
+
+
+def _format_download_detail(tile_count):
+    return f"Downloading imagery for {tile_count} tile(s)."
+
+
+def _format_model_detail(batches_completed, total_batches, tiles_processed, total_tiles):
+    if total_batches <= 0 or total_tiles <= 0:
+        return "Running model detection..."
+    return (
+        f"Processed {tiles_processed}/{total_tiles} tile(s) across "
+        f"{batches_completed}/{total_batches} model batches."
+    )
+
+
+def _format_filtering_detail(raw_detections, inside_count=None, outside_count=None, retained_count=None):
+    if inside_count is None or outside_count is None or retained_count is None:
+        return f"Applying boundary and duplicate filtering to {raw_detections} raw detection(s)."
+    return (
+        f"Retained {retained_count} of {raw_detections} raw detection(s) "
+        f"({inside_count} inside boundary, {outside_count} outside)."
+    )
+
+
+def _format_geocoding_detail(processed_count, total_count):
+    return f"Resolved {processed_count}/{total_count} detection address(es)."
+
+
+def _format_finalizing_detail(detection_count, tile_record_count):
+    return (
+        f"Preparing {detection_count} detection(s) and "
+        f"{tile_record_count} tile record(s) for display."
+    )
+
+
+def _parse_detection_request(form_data):
+    validated_data = validate_detection_request(form_data.to_dict())
+    bounds_dict = validated_data['bounds']
+
+    return {
+        'bounds': f"{bounds_dict['lat1']},{bounds_dict['lng1']},{bounds_dict['lat2']},{bounds_dict['lng2']}",
+        'engine': validated_data['engine'],
+        'provider': validated_data['provider'],
+        'polygons': validated_data['polygons'],
+        'estimate': validated_data.get('estimate')
+    }
+
+
+def _create_map_provider(provider):
+    api_logger.debug(
+        "Initializing map provider '%s' (google=%s, azure=%s)",
+        provider,
+        bool(google_api_key),
+        bool(azure_api_key),
+    )
+
+    if provider == "google" and google_api_key:
+        api_logger.info("Google Maps provider initialized")
+        return GoogleMap(google_api_key)
+    if provider == "azure" and azure_api_key:
+        api_logger.info("Azure Maps provider initialized")
+        return AzureMaps(azure_api_key)
+
+    api_logger.error("Map provider '%s' not available or not configured", provider)
+    raise MapProviderError(
+        f"Map provider '{provider}' not available or not configured",
+        error_code="MAP_PROVIDER_UNAVAILABLE",
+        user_message=f"The {provider} map service is not available. Please try a different provider."
+    )
+
+
+def _build_tiles_for_request(map_provider, bounds, polygons, crop_tiles):
+    api_logger.debug(
+        "Building tiles for bounds=%s crop_tiles=%s polygon_count=%s",
+        bounds,
+        crop_tiles,
+        len(polygons),
+    )
+
+    tiles, nx, ny, meters, h, w = map_provider.make_tiles(
+        bounds,
+        crop_tiles=crop_tiles,
+        max_candidate_tiles=TowerScoutValidator.MAX_CANDIDATE_TILES,
+    )
+    candidate_tiles = len(tiles)
+    api_logger.info("Created %s candidate tile(s) (%s x %s)", len(tiles), nx, ny)
+
+    tiles = [t for t in tiles if ts_maps.check_tile_against_bounds(t, bounds)]
+    viewport_tiles = len(tiles)
+    tiles = [t for t in tiles if ts_imgutil.tileIntersectsPolygons(t, polygons)]
+    for i, tile in enumerate(tiles):
+        tile['id'] = i
+    api_logger.debug("Retained %s tile(s) after viewport and polygon filtering", len(tiles))
+
+    return tiles, nx, ny, meters, h, w, {
+        'candidate_tiles': candidate_tiles,
+        'viewport_tiles': viewport_tiles,
+        'retained_tiles': len(tiles)
+    }
+
+
+def _get_geocoding_clustering_radius():
+    clustering_radius = 50.0
+    env_radius = os.getenv('GEOCODING_CLUSTERING_RADIUS', '')
+    if env_radius:
+        try:
+            clustering_radius = float(env_radius)
+        except ValueError:
+            clustering_radius = 50.0
+    return clustering_radius
+
+
+def _detection_center(detection):
+    return (
+        (detection['y1'] + detection['y2']) / 2,
+        (detection['x1'] + detection['x2']) / 2
+    )
+
+
+def _format_coordinate_address(lat, lng):
+    return f"Coordinates: {lat:.6f}, {lng:.6f}"
+
+
+def _detection_iou(first, second):
+    left = max(first['x1'], second['x1'])
+    right = min(first['x2'], second['x2'])
+    top = min(first['y1'], second['y1'])
+    bottom = max(first['y2'], second['y2'])
+
+    if right <= left or top <= bottom:
+        return 0.0
+
+    intersection = (right - left) * (top - bottom)
+    first_area = max(0.0, first['x2'] - first['x1']) * max(0.0, first['y1'] - first['y2'])
+    second_area = max(0.0, second['x2'] - second['x1']) * max(0.0, second['y1'] - second['y2'])
+    union = first_area + second_area - intersection
+    if union <= 0:
+        return 0.0
+    return intersection / union
+
+
+def _detections_overlap(first, second):
+    if first.get('class') != 0 or second.get('class') != 0:
+        return False
+
+    first_center_lat, first_center_lng = _detection_center(first)
+    second_center_lat, second_center_lng = _detection_center(second)
+    center_distance_m = ts_maps.get_distance(
+        first_center_lng, first_center_lat,
+        second_center_lng, second_center_lat
+    )
+    iou = _detection_iou(first, second)
+    return iou >= 0.35 or center_distance_m <= 3.0
+
+
+def _dedupe_detection_results(results):
+    if len(results) <= 1:
+        return results
+
+    ordered_results = sorted(
+        results,
+        key=lambda detection: (
+            0 if detection.get('inside') else 1,
+            -float(detection.get('conf', 0.0)),
+            -float(detection.get('secondary', 0.0)),
+            detection.get('y1', 0.0),
+            detection.get('x1', 0.0),
+        )
+    )
+
+    deduped = []
+    removed = 0
+    for candidate in ordered_results:
+        if any(_detections_overlap(candidate, kept) for kept in deduped):
+            removed += 1
+            continue
+        deduped.append(candidate)
+
+    if removed:
+        api_logger.info("Removed %s duplicate detection(s) before geocoding", removed)
+
+    return deduped
+
+
+def _should_reverse_geocode_detection(detection):
+    """Return whether a detection should spend provider/cache geocoding work."""
+    return detection.get('class') == 0 and detection.get('inside', True)
+
+
+def _attach_detection_addresses(results, provider, perf_metrics=None, progress_callback=None):
+    session['geocoding_limited'] = False
+    if not results:
+        return
+
+    geocoding_total = sum(1 for detection in results if _should_reverse_geocode_detection(detection))
+    geocoding_skipped_non_tower = sum(1 for detection in results if detection.get('class') != 0)
+    geocoding_skipped_outside = sum(
+        1
+        for detection in results
+        if detection.get('class') == 0 and not detection.get('inside', True)
+    )
+
+    api_logger.info(
+        "Starting address lookup for %s eligible detection(s) out of %s retained detection(s)",
+        geocoding_total,
+        len(results),
+    )
+    if perf_metrics:
+        perf_metrics.start_phase('geocoding')
+    address_start_time = time.time()
+
+    clustering_radius = _get_geocoding_clustering_radius()
+    geocoding_service = create_geocoding_service(
+        azure_key=azure_api_key,
+        google_key=google_api_key,
+        preferred_provider=provider
+    )
+    geocoding_cache = create_geocoding_cache(clustering_radius_meters=clustering_radius)
+    geocoding_processed = 0
+    geocoding_cache_hits = 0
+    geocoding_cache_misses = 0
+    geocoding_provider_calls = 0
+
+    def record_phase(phase_name, started_at):
+        if perf_metrics and hasattr(perf_metrics, "add_phase_duration"):
+            perf_metrics.add_phase_duration(phase_name, time.time() - started_at)
+
+    if progress_callback is not None:
+        progress_callback(0, geocoding_total)
+
+    for detection in results:
+        if detection.get('class') != 0:
+            detection['address'] = ""
+            detection['address_confidence'] = 0.0
+            detection['address_provider'] = "none"
+            continue
+
+        center_lat, center_lng = _detection_center(detection)
+        if not detection.get('inside', True):
+            detection['address'] = _format_coordinate_address(center_lat, center_lng)
+            detection['address_confidence'] = 0.0
+            detection['address_provider'] = "outside_boundary"
+            continue
+
+        try:
+            cache_lookup_start = time.time()
+            cached_result = geocoding_cache.get(center_lat, center_lng, provider=provider)
+            record_phase('geocoding_cache_lookup', cache_lookup_start)
+            if cached_result:
+                geocoding_cache_hits += 1
+                detection['address'] = cached_result.address
+                detection['address_confidence'] = cached_result.confidence
+                detection['address_provider'] = cached_result.provider.value
+                geocoding_processed += 1
+                if progress_callback is not None and (
+                    geocoding_processed % 10 == 0 or geocoding_processed == geocoding_total
+                ):
+                    progress_callback(geocoding_processed, geocoding_total)
+                continue
+
+            geocoding_cache_misses += 1
+            geocoding_provider_calls += 1
+            provider_request_start = time.time()
+            try:
+                geocoding_result = geocoding_service.reverse_geocode(center_lat, center_lng, provider)
+            finally:
+                record_phase('geocoding_provider_request', provider_request_start)
+
+            if geocoding_result.success and geocoding_result.address:
+                detection['address'] = geocoding_result.address
+                detection['address_confidence'] = geocoding_result.confidence
+                detection['address_provider'] = geocoding_result.provider.value
+                cache_store_start = time.time()
+                geocoding_cache.put(center_lat, center_lng, geocoding_result, provider=provider)
+                record_phase('geocoding_cache_store', cache_store_start)
+            else:
+                detection['address'] = _format_coordinate_address(center_lat, center_lng)
+                detection['address_confidence'] = 0.0
+                detection['address_provider'] = "fallback"
+                api_logger.warning(
+                    "Geocoding returned no address for %.6f, %.6f: %s",
+                    center_lat,
+                    center_lng,
+                    geocoding_result.error_message,
+                )
+        except RateLimitError as e:
+            session['geocoding_limited'] = True
+            detection['address'] = _format_coordinate_address(center_lat, center_lng)
+            detection['address_confidence'] = 0.0
+            detection['address_provider'] = "rate_limited"
+            api_logger.warning("Geocoding rate limited for %.6f, %.6f: %s", center_lat, center_lng, e)
+        except GeocodingError as e:
+            detection['address'] = _format_coordinate_address(center_lat, center_lng)
+            detection['address_confidence'] = 0.0
+            detection['address_provider'] = "fallback"
+            api_logger.warning("Geocoding failed for %.6f, %.6f: %s", center_lat, center_lng, e)
+        except Exception as e:
+            detection['address'] = _format_coordinate_address(center_lat, center_lng)
+            detection['address_confidence'] = 0.0
+            detection['address_provider'] = "error"
+            api_logger.error("Unexpected geocoding error for %.6f, %.6f: %s", center_lat, center_lng, e)
+
+        geocoding_processed += 1
+        if progress_callback is not None and (
+            geocoding_processed % 10 == 0 or geocoding_processed == geocoding_total
+        ):
+            progress_callback(geocoding_processed, geocoding_total)
+
+    try:
+        usage = geocoding_service.get_session_usage()
+        session['geocoding_usage'] = {
+            'google_requests': usage.google_requests,
+            'azure_requests': usage.azure_requests,
+            'total_requests': usage.total_requests,
+            'successful_requests': usage.successful_requests,
+            'failed_requests': usage.failed_requests
+        }
+        if perf_metrics:
+            perf_metrics.geocoding_api_calls = usage.total_requests
+    except Exception as e:
+        api_logger.warning("Could not store geocoding usage: %s", e)
+
+    if perf_metrics and hasattr(perf_metrics, "set_runtime_metadata"):
+        perf_metrics.set_runtime_metadata(
+            geocoding_eligible_count=geocoding_total,
+            geocoding_skipped_non_tower_count=geocoding_skipped_non_tower,
+            geocoding_skipped_outside_boundary_count=geocoding_skipped_outside,
+            geocoding_cache_hits=geocoding_cache_hits,
+            geocoding_cache_misses=geocoding_cache_misses,
+            geocoding_provider_calls=geocoding_provider_calls,
+            geocoding_cache_radius_meters=clustering_radius,
+        )
+
+    if perf_metrics:
+        perf_metrics.end_phase('geocoding')
+    address_time = time.time() - address_start_time
+    api_logger.info(
+        "Address lookup completed in %.2f seconds (eligible=%s, cache_hits=%s, provider_calls=%s, skipped_outside=%s)",
+        address_time,
+        geocoding_total,
+        geocoding_cache_hits,
+        geocoding_provider_calls,
+        geocoding_skipped_outside,
+    )
+
+
+def _run_detection_request(session_id=None, client_request_id=None):
+    session_id = session_id or _get_session_run_id()
+    run_token = f"{session_id}:{secrets.token_hex(8)}"
+    api_logger.debug("Processing detection request for session %s", session_id)
+
+    if 'tiles' not in session:
+        session['tiles'] = 0
+
+    session_tile_limit = get_session_tile_limit()
+    if session['tiles'] > session_tile_limit:
+        return jsonify({'error': 'Tile limit for this session exceeded. Please close browser to continue.'}), 400
+
+    start = time.time()
+
+    tmpdirname = None
+    request_loop = None
+    run_registered = False
+    run_succeeded = False
+    exit_event_allocated = False
+    perf_metrics = None
+
+    try:
+        api_logger.debug(
+            "Validating detection request with form keys=%s polygons_snippet=%s",
+            list(request.form.keys()),
+            request.form.get('polygons', '')[:200],
+        )
+
+        request_context = _parse_detection_request(request.form)
+        bounds = request_context['bounds']
+        engine = request_context['engine']
+        provider = request_context['provider']
+        polygons = request_context['polygons']
+
+        exit_events.alloc(run_token)
+        exit_event_allocated = True
+        _register_detection_run(
+            session_id,
+            provider,
+            engine,
+            0,
+            run_token=run_token,
+            status='running',
+            phase='preparing_tiles',
+            title='Preparing tiles',
+            detail='Validating the detection request and building search tiles...',
+            client_request_id=client_request_id,
+        )
+        run_registered = True
+
+        if _consume_pending_detection_cancellation(session_id, client_request_id):
+            exit_events.signal(run_token)
+
+        def cancelled_response(detail):
+            api_logger.info("Detection cancelled for session %s: %s", session_id, detail)
+            if run_registered:
+                _finish_detection_run(
+                    session_id,
+                    'cancelled',
+                    run_token=run_token,
+                    phase='cancelled',
+                    title='Detection cancelled',
+                    detail=detail,
+                    cancel_requested=True,
+                )
+            return Response("[]", mimetype='application/json')
+
+        api_logger.info(
+            "Incoming detection request session=%s provider=%s engine=%s polygon_count=%s bounds=%s",
+            session_id,
+            provider,
+            engine,
+            len(polygons),
+            bounds,
+        )
+
+        crop_tiles = True
+        perf_metrics = PerformanceMetrics(str(session_id))
+        perf_metrics.detection_engine = engine
+        perf_metrics.map_provider = provider
+        perf_metrics.crop_tiles = crop_tiles
+
+        if exit_events.query(run_token):
+            return cancelled_response('Detection was cancelled before tile preparation finished.')
+
+        map_provider = _create_map_provider(provider)
+        tiles, _nx, _ny, _meters, _h, _w, tile_stats = _build_tiles_for_request(
+            map_provider,
+            bounds,
+            polygons,
+            crop_tiles
+        )
+
+        perf_metrics.tile_count = len(tiles)
+        _update_detection_run(
+            session_id,
+            run_token=run_token,
+            tile_count=len(tiles),
+            status='running',
+            phase='tiles_filtered',
+            title='Filtering tiles',
+            detail=_format_tile_filter_detail(
+                tile_stats['candidate_tiles'],
+                tile_stats['retained_tiles']
+            ),
+            counts=tile_stats,
+        )
+        perf_metrics.estimate_processing_time(
+            len(tiles),
+            fixed_overhead_seconds=_estimate_model_initialization_overhead(engine),
+        )
+        session['last_detection_provider'] = provider
+        api_logger.info(
+            "Detection estimate for session %s: %s tile(s), ~%.1f seconds",
+            session_id,
+            len(tiles),
+            perf_metrics.estimated_time_seconds,
+        )
+
+        if exit_events.query(run_token):
+            return cancelled_response('Detection was cancelled after tile preparation.')
+
+        tile_limit = get_detection_tile_limit()
+        if len(tiles) > tile_limit:
+            message = _format_tile_limit_error(len(tiles), tile_limit)
+            api_logger.warning(
+                "Detection request for session %s exceeds tile limit %s with %s tile(s)",
+                session_id,
+                tile_limit,
+                len(tiles),
+            )
+            _finish_detection_run(
+                session_id,
+                'error',
+                run_token=run_token,
+                phase='error',
+                title='Detection blocked',
+                detail=message,
+                cancel_requested=False,
+                counts=tile_stats,
+                tile_count=len(tiles),
+            )
+            return jsonify({
+                'error': message,
+                'tileCount': len(tiles),
+                'tileLimit': tile_limit,
+                'blockedByTileLimit': True,
+            }), 400
+
+        perf_metrics.start_phase('model_initialization')
+        det = get_engine(engine)
+        perf_metrics.end_phase('model_initialization')
+        if hasattr(perf_metrics, "set_runtime_metadata"):
+            perf_metrics.set_runtime_metadata(
+                model_batch_size=getattr(det, 'batch_size', None),
+                model_device=getattr(det, 'device_label', None),
+            )
+        if exit_events.query(run_token):
+            return cancelled_response('Detection was cancelled before model initialization finished.')
+
+        session['tiles'] += len(tiles)
+
+        _cleanup_session_tmpdir()
+        tmpdirname = _make_session_tmpdir()
+        tmpfilename = os.path.basename(tmpdirname)
+        api_logger.info("Creating session temp dir %s", tmpdirname)
+        session['tmpdirname'] = tmpdirname
+
+        if exit_events.query(run_token):
+            return cancelled_response('Detection was cancelled before imagery download started.')
+
+        _update_detection_run(
+            session_id,
+            run_token=run_token,
+            phase='downloading_imagery',
+            title='Downloading imagery',
+            detail=_format_download_detail(len(tiles)),
+            counts={
+                'imagery_tiles_total': len(tiles),
+                'imagery_tiles_downloaded': 0,
+            },
+        )
+        request_loop = asyncio.new_event_loop()
+        perf_metrics.start_phase('tile_download')
+        try:
+            meta = map_provider.get_sat_maps(tiles, request_loop, tmpdirname, tmpfilename)
+        except (MapProviderError, NetworkError) as error:
+            perf_metrics.end_phase('tile_download')
+            successful_tiles = int(error.details.get('successful_tile_count', 0))
+            failed_tiles = int(
+                error.details.get(
+                    'failed_tile_count',
+                    max(1, len(tiles) - successful_tiles),
+                )
+            )
+            maps_logger.error(
+                "Imagery download failed for session %s after %s/%s tile(s): %s",
+                session_id,
+                successful_tiles,
+                len(tiles),
+                error,
+            )
+            _finish_detection_run(
+                session_id,
+                'error',
+                run_token=run_token,
+                phase='error',
+                title='Imagery download failed',
+                detail=(
+                    f"Downloaded {successful_tiles}/{len(tiles)} tile(s) before the imagery phase failed. "
+                    f"{error.message}"
+                ),
+                cancel_requested=False,
+                counts={
+                    'imagery_tiles_total': len(tiles),
+                    'imagery_tiles_downloaded': successful_tiles,
+                    'imagery_tiles_failed': failed_tiles,
+                },
+                tile_count=len(tiles),
+            )
+            if isinstance(error, NetworkError):
+                payload = error.to_dict()
+                support_action = error.details.get('support_action')
+                repair_command = error.details.get('repair_command')
+                message_parts = [error.user_message or error.message]
+                if support_action:
+                    message_parts.append(support_action)
+                elif repair_command:
+                    message_parts.append(f"Suggested command: {repair_command}")
+                payload['error'] = f"Imagery download failed: {' '.join(message_parts)}"
+                return jsonify(payload), 502
+            return jsonify({'error': f'Imagery download failed: {error.message}'}), 502
+        else:
+            perf_metrics.end_phase('tile_download')
+        session['metadata'] = meta
+        api_logger.info("Retrieved imagery for %s tile(s)", len(tiles))
+        perf_metrics.map_api_calls = len(tiles)
+
+        if exit_events.query(run_token):
+            return cancelled_response('Detection was cancelled during imagery download.')
+
+        missing_tile_filenames = []
+        for i, tile in enumerate(tiles):
+            filename = os.path.join(tmpdirname, tmpfilename + str(i) + ".jpg")
+            tile['filename'] = filename
+            if not os.path.exists(filename):
+                missing_tile_filenames.append(filename)
+
+        if missing_tile_filenames:
+            downloaded_tiles = len(tiles) - len(missing_tile_filenames)
+            api_logger.error(
+                "Imagery phase for session %s completed without %s expected file(s): %s",
+                session_id,
+                len(missing_tile_filenames),
+                missing_tile_filenames[:5],
+            )
+            _finish_detection_run(
+                session_id,
+                'error',
+                run_token=run_token,
+                phase='error',
+                title='Imagery download failed',
+                detail=(
+                    f"Expected {len(tiles)} downloaded tile file(s) but only found "
+                    f"{downloaded_tiles} on disk."
+                ),
+                cancel_requested=False,
+                counts={
+                    'imagery_tiles_total': len(tiles),
+                    'imagery_tiles_downloaded': downloaded_tiles,
+                    'imagery_tiles_failed': len(missing_tile_filenames),
+                },
+                tile_count=len(tiles),
+            )
+            return jsonify({
+                'error': (
+                    "Imagery download failed: required tile files were missing after the "
+                    "download phase completed."
+                )
+            }), 502
+
+        batch_size = max(1, getattr(det, 'batch_size', 1))
+        model_batches_total = math.ceil(len(tiles) / batch_size) if len(tiles) > 0 else 0
+
+        def update_model_progress(
+            batches_completed,
+            batches_total,
+            tiles_processed,
+            tiles_total,
+        ):
+            _update_detection_run(
+                session_id,
+                run_token=run_token,
+                phase='running_model',
+                title='Running model detection',
+                detail=_format_model_detail(
+                    batches_completed,
+                    batches_total,
+                    tiles_processed,
+                    tiles_total,
+                ),
+                counts={
+                    'imagery_tiles_total': len(tiles),
+                    'imagery_tiles_downloaded': len(tiles),
+                    'model_batches_completed': batches_completed,
+                    'model_batches_total': batches_total,
+                    'model_tiles_processed': tiles_processed,
+                    'model_tiles_total': tiles_total,
+                },
+            )
+
+        update_model_progress(0, model_batches_total, 0, len(tiles))
+
+        perf_metrics.start_phase('model_detection')
+        model_start_time = time.time()
+        secondary_load_start = time.time()
+        secondary_classifier = get_secondary_classifier()
+        perf_metrics.add_phase_duration('model_secondary_classifier_load', time.time() - secondary_load_start)
+        results_raw = det.detect(
+            tiles,
+            exit_events,
+            run_token,
+            crop_tiles=crop_tiles,
+            secondary=secondary_classifier,
+            perf_metrics=perf_metrics,
+            progress_callback=update_model_progress,
+        )
+        perf_metrics.actual_model_time_seconds = time.time() - model_start_time
+        perf_metrics.end_phase('model_detection')
+        perf_metrics.update_memory_usage()
+
+        if exit_events.query(run_token):
+            return cancelled_response('Detection was cancelled during model inference.')
+
+        for tile in tiles:
+            if meta:
+                filename = os.path.join(tmpdirname, tmpfilename + str(tile['id']) + ".meta.txt")
+                with open(filename) as file_handle:
+                    tile['metadata'] = map_provider.get_date(file_handle.read())
+            else:
+                tile['metadata'] = ""
+
+        session['detections'] = make_persistable_tile_results(tiles)
+
+        results = []
+        raw_detection_count = 0
+        result_conversion_start = time.time()
+        api_logger.info(
+            "Starting detection post-processing for %s tile result(s)",
+            len(results_raw),
+        )
+        for result, tile in zip(results_raw, tiles):
+            tile_detection_count = len(result)
+            raw_detection_count += tile_detection_count
+
+            if tile_detection_count > 0:
+                api_logger.debug(
+                    "Tile %s produced %s detection(s)",
+                    tile.get('id', '?'),
+                    tile_detection_count,
+                )
+
+            for i, obj in enumerate(result):
+                obj['x1'] = tile['lng'] - 0.5 * tile['w'] + obj['x1'] * tile['w']
+                obj['x2'] = tile['lng'] - 0.5 * tile['w'] + obj['x2'] * tile['w']
+                obj['y1'] = tile['lat'] + 0.5 * tile['h'] - obj['y1'] * tile['h']
+                obj['y2'] = tile['lat'] + 0.5 * tile['h'] - obj['y2'] * tile['h']
+                obj['tile'] = tile['id']
+                obj['id_in_tile'] = i
+                obj['selected'] = obj.get('secondary', 0.0) >= 0.35
+
+            results += result
+
+        perf_metrics.add_phase_duration('model_coordinate_conversion', time.time() - result_conversion_start)
+        api_logger.info(
+            "Detection complete: %s detection(s) across %s tile(s)",
+            len(results),
+            len(results_raw),
+        )
+        perf_metrics.detection_count = len(results)
+        if results:
+            total_confidence = sum(result.get('conf', 0) for result in results)
+            perf_metrics.avg_confidence = total_confidence / len(results)
+
+        _update_detection_run(
+            session_id,
+            run_token=run_token,
+            phase='filtering_results',
+            title='Filtering detections',
+            detail=_format_filtering_detail(raw_detection_count),
+            counts={'raw_detections': raw_detection_count},
+        )
+
+        inside_count = 0
+        outside_count = 0
+        boundary_filter_start = time.time()
+        for result in results:
+            result['inside'] = ts_imgutil.resultIntersectsPolygons(
+                result['x1'],
+                result['y1'],
+                result['x2'],
+                result['y2'],
+                polygons
+            ) and ts_maps.check_bounds(result['x1'], result['y1'], result['x2'], result['y2'], bounds)
+            if result['inside']:
+                inside_count += 1
+            else:
+                outside_count += 1
+
+        perf_metrics.add_phase_duration('model_boundary_filtering', time.time() - boundary_filter_start)
+        api_logger.info(
+            "Boundary filtering complete: inside=%s outside=%s",
+            inside_count,
+            outside_count,
+        )
+        dedupe_start = time.time()
+        results = _dedupe_detection_results(results)
+        perf_metrics.add_phase_duration('model_duplicate_filtering', time.time() - dedupe_start)
+        retained_detection_count = len(results)
+        _update_detection_run(
+            session_id,
+            run_token=run_token,
+            phase='filtering_results',
+            title='Filtering detections',
+            detail=_format_filtering_detail(
+                raw_detection_count,
+                inside_count=inside_count,
+                outside_count=outside_count,
+                retained_count=retained_detection_count,
+            ),
+            counts={
+                'raw_detections': raw_detection_count,
+                'inside_detections': inside_count,
+                'outside_detections': outside_count,
+                'retained_detections': retained_detection_count,
+                'duplicate_detections_removed': max(0, raw_detection_count - retained_detection_count),
+            },
+        )
+
+        geocoding_total = sum(1 for detection in results if _should_reverse_geocode_detection(detection))
+
+        def update_geocoding_progress(processed_count, total_count):
+            _update_detection_run(
+                session_id,
+                run_token=run_token,
+                phase='geocoding',
+                title='Reverse geocoding detections',
+                detail=_format_geocoding_detail(processed_count, total_count),
+                counts={
+                    'geocoding_processed': processed_count,
+                    'geocoding_total': total_count,
+                },
+            )
+
+        try:
+            update_geocoding_progress(0, geocoding_total)
+            _attach_detection_addresses(
+                results,
+                provider,
+                perf_metrics=perf_metrics,
+                progress_callback=update_geocoding_progress,
+            )
+        except Exception as error:
+            api_logger.warning("Address lookup initialization failed: %s", error)
+            for detection in results:
+                if detection.get('class') == 0:
+                    center_lat, center_lng = _detection_center(detection)
+                    detection['address'] = _format_coordinate_address(center_lat, center_lng)
+                    detection['address_confidence'] = 0.0
+                    detection['address_provider'] = "error"
+                else:
+                    detection['address'] = ""
+                    detection['address_confidence'] = 0.0
+                    detection['address_provider'] = "none"
+            update_geocoding_progress(geocoding_total, geocoding_total)
+
+        tile_results = []
+        for tile in tiles:
+            tile_results.append({
+                'x1': tile['lng'] - 0.5 * tile['w'],
+                'y1': tile['lat'] + 0.5 * tile['h'],
+                'x2': tile['lng'] + 0.5 * tile['w'],
+                'y2': tile['lat'] - 0.5 * tile['h'],
+                'class': 1,
+                'class_name': 'tile',
+                'conf': 1,
+                'metadata': tile['metadata'],
+                'url': tile.get('provider_url_redacted') or redact_provider_url(tile.get('url')),
+                'id': tile.get('id', -1),
+                'selected': True
+            })
+
+        selected_count = sum(1 for entry in results if entry.get('selected'))
+        _update_detection_run(
+            session_id,
+            run_token=run_token,
+            phase='finalizing',
+            title='Finalizing results',
+            detail=_format_finalizing_detail(len(results), len(tile_results)),
+            counts={
+                'retained_detections': len(results),
+                'selected_detections': selected_count,
+                'tile_records': len(tile_results),
+            },
+        )
+        api_logger.info(
+            "Detection request complete: %s detection(s), %s selected, elapsed %.2f seconds",
+            len(results),
+            selected_count,
+            time.time() - start,
+        )
+
+        perf_metrics.detections_selected = selected_count
+        perf_metrics.finalize()
+
+        from ts_performance import get_performance_logger
+        get_performance_logger().log_metrics(perf_metrics)
+
+        results_json = json.dumps(tile_results + results)
+        session['results'] = results_json
+        _finish_detection_run(
+            session_id,
+            'completed',
+            run_token=run_token,
+            phase='complete',
+            title='Detection complete',
+            detail=(
+                f"Returned {len(results)} detection(s) across "
+                f"{len(tiles)} processed tile(s)."
+            ),
+            cancel_requested=False,
+            counts={
+                'retained_detections': len(results),
+                'selected_detections': selected_count,
+                'tile_records': len(tile_results),
+            },
+            tile_count=len(tiles),
+        )
+        run_succeeded = True
+        return Response(results_json, mimetype='application/json')
+    except ValidationError as error:
+        api_logger.error("Validation error: %s", error.message)
+        if run_registered:
+            _finish_detection_run(
+                session_id,
+                'error',
+                run_token=run_token,
+                phase='error',
+                title='Detection failed',
+                detail=f'Validation error: {error.message}',
+                cancel_requested=False,
+            )
+        return jsonify({'error': f'Validation error: {error.message}'}), 400
+    except Exception as error:
+        api_logger.error("Detection pipeline failed: %s", error, exc_info=True)
+        if run_registered:
+            _finish_detection_run(
+                session_id,
+                'error',
+                run_token=run_token,
+                phase='error',
+                title='Detection failed',
+                detail=f'Detection pipeline error: {str(error)}',
+                cancel_requested=False,
+            )
+        return jsonify({'error': f'Detection pipeline error: {str(error)}'}), 500
+    finally:
+        if request_loop is not None:
+            try:
+                request_loop.close()
+            except Exception as loop_error:
+                api_logger.warning("Failed to close request event loop: %s", loop_error)
+        if exit_event_allocated:
+            exit_events.free(run_token)
+        if not run_succeeded and session.get('tmpdirname') == tmpdirname:
+            _cleanup_session_tmpdir()
 
 
 # EfficientNet secondary classifier
-secondary_en = EN_Classifier()
+if not LAZY_MODEL_INIT:
+    secondary_en = EN_Classifier()
+else:
+    ml_logger.info("Secondary classifier lazy initialization enabled")
 
 
 # variable for zipcode provider
@@ -132,61 +1493,339 @@ zipcode_provider = None
 def start_zipcodes():
     global zipcode_provider
     with zipcode_lock:
-        print("instantiating zipcode frame, could take 10 seconds ...")
+        logger.info("Loading zipcode data, this may take up to 10 seconds...")
         zipcode_provider = Zipcode_Provider()
 
 
 # Flask boilerplate stuff
 app = Flask(__name__)
-# session = Session()
-app.config['UPLOAD_FOLDER'] = "uploads"
-# configure server-sise session
+# The shipped Compose/launcher path binds IPv4 loopback. Keep an exact host
+# allowlist; IPv6 literals are outside this supported transport contract.
+app.config['TRUSTED_HOSTS'] = ['localhost', '127.0.0.1']
+
+
+def _get_max_request_body_size() -> int:
+    configured_value = os.getenv('TOWERSCOUT_MAX_REQUEST_BODY_BYTES', '').strip()
+    if not configured_value:
+        return TowerScoutValidator.MAX_FILE_SIZE
+
+    try:
+        max_bytes = int(configured_value)
+    except ValueError:
+        logger.warning(
+            "Invalid TOWERSCOUT_MAX_REQUEST_BODY_BYTES=%s; using default %s",
+            configured_value,
+            TowerScoutValidator.MAX_FILE_SIZE,
+        )
+        return TowerScoutValidator.MAX_FILE_SIZE
+
+    if max_bytes <= 0:
+        logger.warning(
+            "TOWERSCOUT_MAX_REQUEST_BODY_BYTES must be positive; using default %s",
+            TowerScoutValidator.MAX_FILE_SIZE,
+        )
+        return TowerScoutValidator.MAX_FILE_SIZE
+
+    return max_bytes
+
+
+MAX_REQUEST_BODY_SIZE = _get_max_request_body_size()
+TowerScoutValidator.MAX_FILE_SIZE = MAX_REQUEST_BODY_SIZE
+MODEL_UPLOAD_ENABLED = os.getenv('TOWERSCOUT_ENABLE_MODEL_UPLOAD', '').strip().lower() in {'1', 'true', 'yes', 'on'}
+MODEL_UPLOAD_KEY_ENV_VAR = 'TOWERSCOUT_MODEL_UPLOAD_KEY'
+MODEL_UPLOAD_KEY_HEADER = 'X-TowerScout-Model-Upload-Key'
+MODEL_UPLOAD_KEY_MIN_LENGTH = 32
+MODEL_UPLOAD_KEY_MAX_LENGTH = 512
+
+
+def _get_configured_model_upload_key():
+    configured_key = os.getenv(MODEL_UPLOAD_KEY_ENV_VAR, '').strip()
+    if MODEL_UPLOAD_KEY_MIN_LENGTH <= len(configured_key) <= MODEL_UPLOAD_KEY_MAX_LENGTH:
+        return configured_key
+    return None
+
+# Configure Flask from environment variables
+if os.getenv('FLASK_ENV', 'development').lower() == 'testing':
+    app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY') or secrets.token_hex(32)
+elif os.getenv('TOWERSCOUT_DISABLE_SECRET_PERSISTENCE', '').strip().lower() in {'1', 'true', 'yes', 'on'}:
+    app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY') or secrets.token_hex(32)
+    logger.warning("Persistent FLASK_SECRET_KEY handling disabled by TOWERSCOUT_DISABLE_SECRET_PERSISTENCE.")
+else:
+    try:
+        app.config['SECRET_KEY'] = ts_config.ensure_persistent_flask_secret_key()
+        logger.info("FLASK_SECRET_KEY loaded from persistent runtime configuration.")
+    except Exception as secret_error:
+        app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY') or secrets.token_hex(32)
+        logger.error(
+            "Failed to persist FLASK_SECRET_KEY. Falling back to process-local secret: %s",
+            secret_error,
+            exc_info=True,
+        )
+
+app.config['UPLOAD_FOLDER'] = str(UPLOAD_DIR)
+app.config['MAX_CONTENT_LENGTH'] = MAX_REQUEST_BODY_SIZE
+app.config['FLASK_ENV'] = os.getenv('FLASK_ENV', 'development')
+app.config['DEBUG'] = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
+app.config['SETUP_REQUIRED'] = needs_setup
+
+# Configure server-side session
 SESSION_TYPE = 'filesystem'
 SESSION_PERMANENT = False
+SESSION_FILE_DIR = str(get_flask_session_dir())
 app.config.from_object(__name__)
 Session(app)
 
+# Flask Error Handlers
+@app.errorhandler(TowerScoutError)
+def handle_towerscout_error(error):
+    """Handle all TowerScout custom exceptions with structured responses."""
+    api_logger.error(f"TowerScout error: {error.message}", exc_info=True)
+    payload = error.to_dict()
+    if isinstance(error, NetworkError):
+        payload = ts_host_helper.enrich_provider_tls_repair_payload(
+            payload,
+            include_start_authorization=(
+                request.endpoint == 'validate_api_key_endpoint'
+            ),
+        )
+    response = jsonify(payload)
+    if isinstance(error, ValidationError):
+        response.status_code = 400
+    elif isinstance(error, NetworkError):
+        response.status_code = 502
+    elif isinstance(error, ConfigurationError):
+        response.status_code = 400
+    else:
+        response.status_code = 500
+    return response
+
+@app.errorhandler(ValidationError)
+def handle_validation_error(error):
+    """Handle validation errors with 400 status code."""
+    api_logger.warning(f"Validation error: {error.message}")
+    if hasattr(error, 'to_dict'):
+        response = jsonify(error.to_dict())
+    else:
+        # Handle legacy ValidationError format
+        response = jsonify({
+            "error": True,
+            "type": "ValidationError",
+            "message": str(error),
+            "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
+        })
+    response.status_code = 400
+    return response
+
+@app.errorhandler(500)
+def handle_internal_error(error):
+    """Handle internal server errors with structured response."""
+    api_logger.error(f"Internal server error: {error}", exc_info=True)
+    response = jsonify({
+        "error": True,
+        "type": "InternalServerError",
+        "message": "An internal error occurred. Please try again or contact support.",
+        "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
+    })
+    response.status_code = 500
+    return response
+
+@app.errorhandler(404)
+def handle_not_found(error):
+    """Handle 404 errors with structured response."""
+    api_logger.warning("404: requested resource was not found")
+    response = jsonify({
+        "error": True,
+        "type": "NotFoundError", 
+        "message": "The requested resource was not found.",
+        "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
+    })
+    response.status_code = 404
+    return response
+
+def _local_request_origin(value, *, allow_path=False):
+    """Normalize an HTTP origin without trusting suffixes, userinfo or forwarded headers."""
+    try:
+        parsed = urlsplit(value)
+        if (parsed.scheme not in ('http', 'https') or not parsed.hostname
+                or parsed.username is not None or parsed.password is not None
+                or parsed.fragment or (not allow_path and (parsed.query or parsed.path not in ('', '/')))):
+            return None
+        port = parsed.port
+        return parsed.scheme, parsed.hostname.lower(), port if port is not None else (443 if parsed.scheme == 'https' else 80)
+    except ValueError:
+        return None
+
+
+@app.before_request
+def enforce_local_request_boundary():
+    """Protect loopback browser access while preserving headerless local CLI probes."""
+    expected = _local_request_origin(request.host_url)
+    origin = request.headers.get('Origin')
+    foreign_origin = origin is not None and _local_request_origin(origin) != expected
+    cross_site = request.headers.get('Sec-Fetch-Site', '').lower() in ('cross-site', 'same-site')
+    referer = request.headers.get('Referer')
+    foreign_form = (origin is None and request.method not in ('GET', 'HEAD', 'OPTIONS')
+                    and referer is not None and _local_request_origin(referer, allow_path=True) != expected)
+    if foreign_origin or cross_site or foreign_form:
+        return jsonify({'error': True, 'message': 'This request must originate from the TowerScout application.'}), 403
+
+
+@app.before_request
+def log_request_info():
+    """Log incoming request information."""
+    api_logger.debug("Request: %s %s from %s", request.method, request.path, request.remote_addr)
+
+@app.after_request
+def log_response_info(response):
+    """Log outgoing response information."""
+    api_logger.debug("Response: %s for %s", response.status_code, request.path)
+    return response
+
 # route for js code
-
-
-@app.route('/site/')
-def send_site_index():
-    return send_site('index.html')
-
-
-@app.route('/site/<path:path>')
-def send_site(path):
-    # print("site page requested:",path)
-    return send_from_directory('../TowerScoutSite', path)
-
-# route for images
 
 
 @app.route('/js/<path:path>')
 def send_js(path):
-    return send_from_directory('js', path)
+    return send_from_directory(str(JS_DIR), path)
 
 # route for images
 @app.route('/img/<path:path>')
 def send_img(path):
-    return send_from_directory('img', path)
+    return send_from_directory(str(IMG_DIR), path)
 
 # route for custom images
 @app.route('/uploads/<path:path>')
 def send_upload(path):
-    return send_from_directory('uploads', path)
-
-# route for custom images
-@app.route('/rm/uploads/<path:path>')
-def remove_upload(path):
-    os.remove('uploads/'+path)
-    print(" upload deleted")
-    return "ok"
+    if path != session.get('custom_upload'):
+        flask_abort(404)
+    return send_from_directory(str(UPLOAD_DIR), path)
 
 # route for js code
 @app.route('/css/<path:path>')
 def send_css(path):
-    return send_from_directory('css', path)
+    return send_from_directory(str(CSS_DIR), path)
+
+
+@app.route('/docs/')
+def send_docs_index():
+    return send_docs('quick-start.html')
+
+
+@app.route('/docs/<path:path>')
+def send_docs(path):
+    normalized_path = str(path).replace("\\", "/")
+    if normalized_path != normalized_path.strip("/") or "/" in normalized_path:
+        flask_abort(404)
+    if normalized_path not in PUBLIC_DOC_FILES:
+        flask_abort(404)
+    return send_from_directory(str(DOCS_DIR), normalized_path)
+
+
+def _load_release_license_notice_sections():
+    repo_root = script_dir.parent
+    sections = []
+    for relative_path in COMPLIANCE_NOTICE_FILES:
+        notice_path = repo_root / relative_path
+        if not notice_path.is_file():
+            continue
+        try:
+            notice_text = notice_path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            notice_text = notice_path.read_text(encoding="utf-8", errors="replace")
+        sections.append((relative_path, notice_text.strip()))
+
+    yolo_license_path = script_dir / "vendor" / "yolov5_local" / "LICENSE"
+    if yolo_license_path.is_file():
+        try:
+            yolo_license_text = yolo_license_path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            yolo_license_text = yolo_license_path.read_text(
+                encoding="utf-8",
+                errors="replace",
+            )
+        sections.append(("webapp/vendor/yolov5_local/LICENSE", yolo_license_text.strip()))
+
+    if not sections:
+        sections.append((
+            "Missing notices",
+            "TowerScout release license notices are missing from this runtime. "
+            "Use the release package SOURCE.txt and THIRD_PARTY_NOTICES.md.",
+        ))
+
+    return sections
+
+
+def _format_release_license_notice_text(sections):
+    return "\n\n".join(
+        f"===== {title} =====\n{text}"
+        for title, text in sections
+    )
+
+
+@app.route('/license.txt')
+def release_license_notice_text():
+    """Expose release source and license notices as plain text."""
+    return Response(
+        _format_release_license_notice_text(_load_release_license_notice_sections()),
+        mimetype="text/plain; charset=utf-8",
+    )
+
+
+@app.route('/license')
+def release_license_notice():
+    """Expose release source and license notices from the local browser app."""
+    sections = _load_release_license_notice_sections()
+    section_nav = "\n".join(
+        f'<a href="#notice-{index}">{html.escape(title)}</a>'
+        for index, (title, _text) in enumerate(sections)
+    )
+    section_html = "\n".join(
+        "<section class=\"doc-section\" id=\"notice-{index}\">"
+        "<h2>{title}</h2>"
+        "<pre class=\"notice-block\"><code>{text}</code></pre>"
+        "</section>".format(
+            index=index,
+            title=html.escape(title),
+            text=html.escape(text),
+        )
+        for index, (title, text) in enumerate(sections)
+    )
+
+    page = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TowerScout Source/licenses</title>
+  <link rel="stylesheet" href="/docs/towerscout-docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <p class="eyebrow">TowerScout release-candidate package</p>
+    <h1>Source/licenses</h1>
+    <p class="lead">Packaged source, license, provider, model, data, SBOM, release manifest, and third-party notices for this local TowerScout runtime.</p>
+  </header>
+
+  <div class="doc-frame">
+    <nav class="doc-nav" aria-label="Source and license notice sections">
+      <h2>Notices</h2>
+      {section_nav}
+    </nav>
+
+    <main class="doc-main">
+      <section class="doc-section">
+        <h2>Release Notice</h2>
+        <p>The YOLO-enabled package/image is not Apache-2.0-only. It is distributed with AGPL-3.0 obligations because it includes Ultralytics YOLOv5 runtime source and YOLO-derived detector weights.</p>
+        <p>The release control ZIP is authoritative for release-specific source, image digest, checksum, SBOM, and manifest metadata.</p>
+        <p>Plain-text combined notices are available at <a href="/license.txt">/license.txt</a>.</p>
+      </section>
+      {section_html}
+    </main>
+  </div>
+</body>
+</html>"""
+
+    return Response(page, mimetype="text/html; charset=utf-8")
 
 # main page route
 
@@ -216,24 +1855,34 @@ def map_func():
     if dev == 1:
         session['tiles'] = 0
 
+    session['needs_setup'] = needs_setup
+
     # init default engine
     # get_engine(None)
 
     # check for compatible browser
     offset = datetime.timezone(datetime.timedelta(hours=-5))  # Atlanta / CDC
-    print("Main page loaded:", datetime.datetime.now(offset), "EST")
-    print("Browser:", request.user_agent.string)
+    api_logger.info(f"Main page loaded at {datetime.datetime.now(offset)} EST")
+    api_logger.debug(f"Browser: {request.user_agent.string}")
     # if not request.user_agent.browser in ['chrome','firefox']:
     #     return render_template('incompatible.html')
 
-    # clean out any temp dirs
-    if "tmpdirname" in session:
-        rmtree(session['tmpdirname'], ignore_errors=True, onerror=None)
-        del session['tmpdirname']
+    # Navigation/reload must not delete the current session's export inputs.
 
-    # now render the map.html template, inserting the key
+    # now render the map.html template, inserting the keys and available providers
+    available_providers = []
+    if google_api_key:
+        available_providers.append('google')
+    if bing_api_key:
+        available_providers.append('bing')
+    if azure_api_key:
+        available_providers.append('azure')
+    
     return render_template('towerscout.html',
-                           google_map_key=google_api_key, bing_map_key=bing_api_key, dev=dev)
+                           available_providers=available_providers,
+                           needs_setup=needs_setup,
+                           model_upload_enabled=MODEL_UPLOAD_ENABLED,
+                           dev=dev)
 
 
 # cache control
@@ -250,21 +1899,760 @@ def add_header(response):
 
 @app.route('/getengines')
 def get_engines():
-    print("engines requested")
+    api_logger.debug("Engines API endpoint requested")
     sorted_engines = sorted(engines.items(),key=lambda x:-x[1]['ts'])
     result = json.dumps([{'id': k, 'name': v['name']} for (k, v) in sorted_engines ])
     return result
 
 # retrieve available map providers
 
+@app.route('/debug-azure-maps')
+def debug_azure_maps():
+    """Debug page for Azure Maps initialization issues"""
+    if os.getenv("TOWERSCOUT_ENABLE_DEBUG_AZURE_MAPS", "").strip().lower() not in ("1", "true", "yes", "on"):
+        flask_abort(404)
+    api_logger.debug("Azure Maps debug page requested")
+    return send_from_directory(str(script_dir), 'debug_azure_maps.html')
+
+@app.route('/getazurekey')
+def get_azure_key():
+    """Provide Azure Maps subscription key for frontend authentication"""
+    api_logger.info("Azure Maps key API endpoint requested - Key available: %s", bool(azure_api_key))
+    
+    if not azure_api_key:
+        api_logger.error("Azure Maps API key not available for frontend")
+        response = jsonify({
+            "error": True,
+            "message": "Azure Maps API key not configured"
+        })
+        response.status_code = 400
+        return response
+    
+    api_logger.info("Returning configured Azure subscription key to frontend")
+    
+    return jsonify({
+        "subscriptionKey": azure_api_key
+    })
+
+@app.route('/getgooglekey')
+def get_google_key():
+    """Provide Google Maps API key for frontend authentication"""
+    api_logger.info("Google Maps key API endpoint requested - Key available: %s", bool(google_api_key))
+    
+    if not google_api_key:
+        api_logger.error("Google Maps API key not available for frontend")
+        response = jsonify({
+            "error": True,
+            "message": "Google Maps API key not configured"
+        })
+        response.status_code = 400
+        return response
+    
+    api_logger.info("Returning configured Google API key to frontend")
+    
+    return jsonify({
+        "apiKey": google_api_key
+    })
 
 @app.route('/getproviders')
 def get_providers():
-    print("map providers requested")
-    result = json.dumps([{'id': k, 'name': v['name']}
-                         for (k, v) in providers.items()])
-    # print(result)
+    api_logger.debug("Map providers API endpoint requested")
+    
+    # Return providers with Azure first (default provider from .env)
+    available_providers = []
+    
+    # Check .env DEFAULT_MAP_PROVIDER setting and prioritize it
+    default_provider = os.getenv('DEFAULT_MAP_PROVIDER', 'azure').lower()
+    
+    if default_provider == 'azure' and azure_api_key:
+        available_providers.append({'id': 'azure', 'name': 'Azure Maps'})
+        if google_api_key:
+            available_providers.append({'id': 'google', 'name': 'Google Maps'})
+    elif default_provider == 'google' and google_api_key:
+        available_providers.append({'id': 'google', 'name': 'Google Maps'})
+        if azure_api_key:
+            available_providers.append({'id': 'azure', 'name': 'Azure Maps'})
+    else:
+        # Fallback order: Azure first, then Google
+        if azure_api_key:
+            available_providers.append({'id': 'azure', 'name': 'Azure Maps'})
+        if google_api_key:
+            available_providers.append({'id': 'google', 'name': 'Google Maps'})
+    
+    result = json.dumps(available_providers)
     return result
+
+
+def _get_client_ip():
+    # TowerScout is published directly on loopback and has no trusted reverse
+    # proxy in its supported runtime contract. Do not trust caller-controlled
+    # forwarding headers for security or rate-limiting decisions.
+    return request.remote_addr or '127.0.0.1'
+
+
+def _mask_key_preview(key: str) -> str:
+    if not key:
+        return ""
+    if len(key) <= 8:
+        return "*" * len(key)
+    return f"{key[:4]}{'*' * max(len(key) - 8, 4)}{key[-4:]}"
+
+
+@app.route('/api/health', methods=['GET'])
+def get_health():
+    """Return cheap process liveness for container engines and launchers."""
+    return jsonify(ts_runtime.build_health_payload())
+
+
+@app.route('/api/readiness', methods=['GET'])
+def get_readiness():
+    """Return redacted structured runtime readiness for launchers and support."""
+    payload = ts_runtime.build_readiness_payload()
+    status_code = 503 if payload.get('state') == 'fatal' else 200
+    return jsonify(payload), status_code
+
+
+@app.route('/api/config/validate-key', methods=['POST'])
+def validate_api_key_endpoint():
+    """Validate a Google or Azure API key with a minimal provider request."""
+    client_ip = _get_client_ip()
+    if not rate_limiter.is_allowed(f"config-validate:{client_ip}", max_requests=10, window_seconds=300):
+        return jsonify({'error': 'Rate limit exceeded. Please wait before trying again.'}), 429
+
+    data = request.get_json(silent=True) or {}
+    provider = TowerScoutValidator.validate_provider(data.get('provider'))
+    key = TowerScoutValidator.sanitize_string(data.get('key', ''), max_length=512)
+
+    result = ts_config.validate_api_key(provider, key)
+    return jsonify(result)
+
+
+@app.route('/api/config/save-keys', methods=['POST'])
+def save_api_keys():
+    """Validate and persist API key configuration without restarting the app."""
+    client_ip = _get_client_ip()
+    if not rate_limiter.is_allowed(f"config-save:{client_ip}", max_requests=5, window_seconds=300):
+        return jsonify({'error': 'Rate limit exceeded. Please wait before trying again.'}), 429
+
+    data = request.get_json(silent=True) or {}
+    google_input = TowerScoutValidator.sanitize_string(str(data.get('google_api_key', '')).strip(), max_length=512)
+    azure_input = TowerScoutValidator.sanitize_string(str(data.get('azure_maps_subscription_key', '')).strip(), max_length=512)
+    requested_default_provider = data.get('default_map_provider')
+    default_provider_was_provided = requested_default_provider is not None and str(requested_default_provider).strip() != ''
+    fallback_default_provider = str(os.getenv('DEFAULT_MAP_PROVIDER', 'azure')).strip().lower()
+    default_provider_input = str(
+        requested_default_provider if default_provider_was_provided else fallback_default_provider
+    ).strip().lower()
+    default_provider = TowerScoutValidator.validate_provider(default_provider_input)
+
+    merged_google = google_input or os.getenv('GOOGLE_API_KEY', '')
+    merged_azure = azure_input or os.getenv('AZURE_MAPS_SUBSCRIPTION_KEY', '')
+
+    validation_results = {}
+    if merged_google and not ts_config.is_placeholder(merged_google):
+        try:
+            validation_results['google'] = ts_config.validate_api_key('google', merged_google)
+        except NetworkError as error:
+            validation_results['google'] = ts_host_helper.enrich_provider_tls_repair_payload(
+                {
+                    **error.to_dict(),
+                    'valid': False,
+                    'provider': 'google',
+                },
+                include_start_authorization=True,
+            )
+
+    if merged_azure and not ts_config.is_placeholder(merged_azure):
+        try:
+            validation_results['azure'] = ts_config.validate_api_key('azure', merged_azure)
+        except NetworkError as error:
+            validation_results['azure'] = ts_host_helper.enrich_provider_tls_repair_payload(
+                {
+                    **error.to_dict(),
+                    'valid': False,
+                    'provider': 'azure',
+                },
+                include_start_authorization=True,
+            )
+
+    if not validation_results:
+        return jsonify({
+            'success': False,
+            'message': 'At least one valid API key is required to save configuration.'
+        }), 400
+
+    valid_providers = {
+        provider for provider, result in validation_results.items()
+        if result.get('valid') is True
+    }
+    if not valid_providers:
+        return jsonify({
+            'success': False,
+            'message': 'At least one valid API key is required to save configuration.',
+            'validation_results': validation_results,
+        }), 400
+
+    derived_default_provider = False
+    if default_provider_was_provided:
+        if default_provider not in valid_providers:
+            return jsonify({
+                'success': False,
+                'message': (
+                    f"The requested default_map_provider ({default_provider}) did not validate. "
+                    "Select a provider that validates successfully before saving."
+                ),
+                'default_map_provider': default_provider,
+                'validation_results': validation_results,
+            }), 400
+    elif len(valid_providers) == 1:
+        default_provider = next(iter(valid_providers))
+        derived_default_provider = True
+    elif default_provider not in valid_providers:
+        return jsonify({
+            'success': False,
+            'message': (
+                f"default_map_provider was not provided and the fallback default ('{default_provider}') "
+                "did not validate. Select or configure a provider that validates successfully before saving."
+            ),
+            'default_map_provider': default_provider,
+            'validation_results': validation_results,
+        }), 400
+
+    updates = {
+        'DEFAULT_MAP_PROVIDER': default_provider,
+    }
+    if 'google' in valid_providers:
+        updates['GOOGLE_API_KEY'] = merged_google
+    if 'azure' in valid_providers:
+        updates['AZURE_MAPS_SUBSCRIPTION_KEY'] = merged_azure
+
+    ts_config.update_env_file(updates)
+    refresh_runtime_config()
+    session['needs_setup'] = needs_setup
+
+    return jsonify({
+        'success': True,
+        'message': 'Configuration updated successfully.',
+        'needs_setup': needs_setup,
+        'default_map_provider': default_provider,
+        'default_map_provider_derived': derived_default_provider,
+        'persisted_providers': sorted(valid_providers),
+        'validation_results': validation_results,
+    })
+
+
+@app.route('/api/config/status', methods=['GET'])
+def get_config_status():
+    """Return current configuration status for setup and settings flows."""
+    status = ts_config.get_env_status()
+    status['google']['preview'] = _mask_key_preview(os.getenv('GOOGLE_API_KEY', ''))
+    status['azure']['preview'] = _mask_key_preview(os.getenv('AZURE_MAPS_SUBSCRIPTION_KEY', ''))
+    status['needs_setup'] = needs_setup
+    return jsonify(status)
+
+
+@app.route('/api/config/tls-status', methods=['GET'])
+def get_provider_tls_status():
+    """Return provider TLS reachability status without using user API keys."""
+    requested_provider = request.args.get('provider')
+    if requested_provider:
+        provider = TowerScoutValidator.validate_provider(requested_provider)
+        payload = ts_config.check_provider_tls_status(provider)
+        response = jsonify(ts_host_helper.enrich_provider_tls_repair_payload(payload))
+        response.headers['Cache-Control'] = 'no-store, private'
+        response.headers['Pragma'] = 'no-cache'
+        return response
+
+    response = jsonify({
+        'google': ts_host_helper.enrich_provider_tls_repair_payload(
+            ts_config.check_provider_tls_status('google')
+        ),
+        'azure': ts_host_helper.enrich_provider_tls_repair_payload(
+            ts_config.check_provider_tls_status('azure')
+        ),
+    })
+    response.headers['Cache-Control'] = 'no-store, private'
+    response.headers['Pragma'] = 'no-cache'
+    return response
+
+
+@app.route('/api/config/provider-tls-repair-status-authorization', methods=['POST'])
+def get_provider_tls_repair_status_authorization():
+    """Issue a short-lived, operation-bound helper polling credential."""
+    client_ip = _get_client_ip()
+    if not rate_limiter.is_allowed(
+        f"provider-tls-repair-status-authorization:{client_ip}",
+        max_requests=30,
+        window_seconds=300,
+    ):
+        response = jsonify({
+            'state': 'rate_limited',
+            'message': 'Wait before refreshing host repair status.',
+        })
+        response.status_code = 429
+        response.headers['Cache-Control'] = 'no-store, private'
+        response.headers['Pragma'] = 'no-cache'
+        return response
+
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        response = jsonify({
+            'state': 'rejected_bad_request',
+            'message': 'A JSON object is required.',
+        })
+        response.status_code = 400
+        response.headers['Cache-Control'] = 'no-store, private'
+        response.headers['Pragma'] = 'no-cache'
+        return response
+    provider = TowerScoutValidator.validate_provider(data.get('provider'))
+    operation_id = TowerScoutValidator.sanitize_string(
+        data.get('operation_id', ''),
+        max_length=32,
+    ).strip().lower()
+    if not re.fullmatch(r'[a-f0-9]{32}', operation_id):
+        response = jsonify({
+            'state': 'rejected_unknown_operation',
+            'message': 'The host repair operation id was invalid.',
+        })
+        response.status_code = 400
+        response.headers['Cache-Control'] = 'no-store, private'
+        response.headers['Pragma'] = 'no-cache'
+        return response
+
+    bridge = ts_host_helper.build_operation_status_bridge(
+        provider,
+        operation_id,
+    )
+    if bridge is None:
+        response = jsonify({
+            'state': 'helper_unavailable',
+            'message': 'Host repair status authorization is unavailable.',
+        })
+        response.status_code = 404
+        response.headers['Cache-Control'] = 'no-store, private'
+        response.headers['Pragma'] = 'no-cache'
+        return response
+    response = jsonify(bridge)
+    response.headers['Cache-Control'] = 'no-store, private'
+    response.headers['Pragma'] = 'no-cache'
+    return response
+
+
+@app.route('/api/config/reset-session', methods=['POST'])
+def reset_session():
+    """Clear Flask session state and temporary files used by the current session."""
+    tmpdirname = session.get('tmpdirname')
+    if tmpdirname:
+        rmtree(tmpdirname, ignore_errors=True, onerror=None)
+
+    session.clear()
+    session['needs_setup'] = needs_setup
+
+    return jsonify({
+        'success': True,
+        'message': 'Session data and temporary files cleared.'
+    })
+
+
+@app.route('/api/config/performance', methods=['GET'])
+def get_performance_stats():
+    """Return recent performance summary derived from existing performance logs."""
+    return jsonify(ts_config.get_recent_performance_stats())
+
+# Forward geocoding API for address search
+@app.route('/api/geocode/forward', methods=['POST'])
+def forward_geocode():
+    """Convert address to coordinates using available providers"""
+    try:
+        # Rate limiting check
+        client_ip = _get_client_ip()
+        if not rate_limiter.is_allowed(f"geocode-forward:{client_ip}", max_requests=30, window_seconds=600):  # 10 minutes
+            return jsonify({'error': 'Rate limit exceeded. Please wait before trying again.'}), 429
+            
+        data = request.get_json()
+        if not data or 'query' not in data:
+            return jsonify({'error': 'Missing query parameter'}), 400
+            
+        query = TowerScoutValidator.validate_search_query(data['query'])
+        preferred_provider = str(data.get('provider', 'auto')).strip().lower() or 'auto'
+        if preferred_provider not in {'auto', 'azure', 'google'}:
+            preferred_provider = 'auto'
+        
+        # Import geocoding service
+        from ts_geocoding import GeocodingService
+        
+        # Initialize geocoding with available API keys
+        geocoding = GeocodingService(
+            azure_key=azure_api_key,
+            google_key=google_api_key,
+            preferred_provider=preferred_provider
+        )
+        
+        # Perform forward geocoding with provider preference
+        results = geocoding.forward_geocode_unified(query, preferred_provider)
+        
+        if not results:
+            return jsonify({'error': 'No results found for query'}), 404
+            
+        # Return standardized geocoding results. Keep all provider identifiers
+        # as strings so Flask does not try to serialize enum objects.
+        result_payloads = [result.to_dict() for result in results]
+        return jsonify({
+            'success': True,
+            'results': result_payloads,
+            'provider_used': result_payloads[0].get('provider') if result_payloads else None
+        })
+        
+    except ValidationError as e:
+        api_logger.warning(f"Geocoding validation error: {e}")
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        api_logger.error(f"Geocoding error: {e}")
+        return jsonify({'error': 'Internal geocoding error'}), 500
+
+@app.route('/api/geocode/reverse', methods=['POST'])
+def reverse_geocode():
+    """Convert coordinates to address using available providers"""
+    try:
+        # Rate limiting check
+        client_ip = _get_client_ip()
+        if not rate_limiter.is_allowed(f"geocode-reverse:{client_ip}", max_requests=30, window_seconds=600):  # 10 minutes
+            return jsonify({'error': 'Rate limit exceeded. Please wait before trying again.'}), 429
+            
+        data = request.get_json()
+        if not data or 'lat' not in data or 'lng' not in data:
+            return jsonify({'error': 'Missing lat/lng parameters'}), 400
+            
+        lat = float(data['lat'])
+        lng = float(data['lng'])
+        
+        # Validate coordinates
+        if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
+            return jsonify({'error': 'Invalid coordinates'}), 400
+        
+        preferred_provider = data.get('provider', 'auto')
+        
+        # Import geocoding service
+        from ts_geocoding import GeocodingService, GeocodingError
+        
+        # Initialize geocoding with available API keys
+        geocoding = GeocodingService(
+            azure_key=azure_api_key,
+            google_key=google_api_key
+        )
+        
+        # Check cache first
+        from ts_geocache import GeocodingCache
+        cache = GeocodingCache()
+        cached_result = cache.get(lat, lng, provider=preferred_provider)
+        
+        if cached_result:
+            api_logger.info(f"Cache hit for reverse geocode: {lat}, {lng}")
+            return jsonify({
+                'success': True,
+                'address': cached_result.address,
+                'provider': cached_result.provider.value,
+                'confidence': cached_result.confidence,
+                'cached': True
+            })
+        
+        # Perform reverse geocoding
+        try:
+            result = geocoding.reverse_geocode(lat, lng, preferred_provider)
+
+            if result.success and result.address:
+                cache.put(lat, lng, result, provider=preferred_provider)
+                return jsonify({
+                    'success': True,
+                    'address': result.address,
+                    'provider': result.provider.value,
+                    'confidence': result.confidence,
+                    'cached': False
+                })
+
+            return jsonify({
+                'success': False,
+                'address': _format_coordinate_address(lat, lng),
+                'provider': 'fallback',
+                'confidence': result.confidence,
+                'cached': False,
+                'error': result.error_message or 'No address found'
+            })
+        except RateLimitError as e:
+            api_logger.warning(f"Geocoding rate limited for {lat}, {lng}: {e}")
+            return jsonify({
+                'success': False,
+                'address': _format_coordinate_address(lat, lng),
+                'provider': 'rate_limited',
+                'confidence': 0.0,
+                'cached': False,
+                'error': str(e),
+                'error_type': e.__class__.__name__
+            })
+        except (GeocodingError, NetworkError) as e:
+            api_logger.warning(f"Geocoding failed for {lat}, {lng}: {e}")
+            # Return coordinates as fallback
+            return jsonify({
+                'success': False,
+                'address': _format_coordinate_address(lat, lng),
+                'provider': 'fallback',
+                'confidence': 0.0,
+                'cached': False,
+                'error': getattr(e, 'user_message', None) or str(e),
+                'error_type': e.__class__.__name__
+            })
+        
+    except ValueError as e:
+        api_logger.warning(f"Invalid coordinate values: {e}")
+        return jsonify({'error': 'Invalid coordinate format'}), 400
+    except Exception as e:
+        api_logger.error(f"Reverse geocoding error: {e}")
+        return jsonify({'error': 'Internal geocoding error'}), 500
+
+# Unified map proxy endpoints
+@app.route('/api/maps/<provider>/<service>', methods=['GET'])
+def map_proxy(provider, service):
+    """Unified proxy for all map services to hide API keys from client"""
+    try:
+        # Validate provider and service
+        if provider not in MAP_PROXY_CONFIG:
+            return jsonify({'error': f'Unknown provider: {provider}'}), 400
+        if service not in MAP_PROXY_CONFIG[provider]:
+            return jsonify({'error': f'Unknown service {service} for provider {provider}'}), 400
+            
+        config = MAP_PROXY_CONFIG[provider][service]
+        
+        # Rate limiting check with service-specific limits
+        client_ip = _get_client_ip()
+        max_requests, window_seconds = config['rate_limit']
+        if not rate_limiter.is_allowed(
+            f"map-{provider}-{service}:{client_ip}",
+            max_requests=max_requests,
+            window_seconds=window_seconds,
+        ):
+            return jsonify({'error': f'Rate limit exceeded for {provider}/{service}. Please wait before trying again.'}), 429
+            
+        # Validate and sanitize request parameters
+        params = {}
+        for key, value in request.args.items():
+            if key in ['z', 'x', 'y', 'zoom', 'width', 'height', 'format', 'limit']:  # Numeric params
+                try:
+                    params[key] = int(value) if key in ['z', 'x', 'y', 'zoom', 'width', 'height', 'limit'] else value
+                except ValueError:
+                    return jsonify({'error': f'Invalid numeric parameter: {key}'}), 400
+            elif key in ['center', 'size', 'maptype', 'style', 'query', 'api-version', 'tilesetId', 'countrySet', 'lat', 'lon']:  # String params
+                if len(value) > 1000:  # Prevent excessively long parameters
+                    return jsonify({'error': f'Parameter {key} too long'}), 400
+                params[key] = str(value)
+            else:
+                return jsonify({'error': f'Unauthorized parameter: {key}'}), 400
+                
+        # Generate cache key
+        cache_key = f"{provider}_{service}_{hash(str(sorted(params.items())))}"
+        cache_file = os.path.join(MAP_CACHE_DIR, f"{cache_key}.cache")
+        
+        # Check cache
+        if os.path.exists(cache_file):
+            cache_age = time.time() - os.path.getmtime(cache_file)
+            if cache_age < config['cache_ttl']:
+                maps_logger.debug(f"Cache hit for {provider}/{service}")
+                with open(cache_file, 'rb') as f:
+                    cached_data = f.read()
+                return Response(cached_data, headers={'Content-Type': _get_content_type(service)})
+                
+        # Route to appropriate provider handler
+        if provider == 'google':
+            response_data = _handle_google_proxy(service, params)
+        elif provider == 'azure':
+            response_data = _handle_azure_proxy(service, params)
+        else:
+            return jsonify({'error': f'Provider {provider} not implemented'}), 500
+            
+        # Cache successful responses
+        if response_data:
+            try:
+                with open(cache_file, 'wb') as f:
+                    f.write(response_data)
+                maps_logger.debug(f"Cached response for {provider}/{service}")
+            except Exception as cache_error:
+                maps_logger.warning(f"Failed to cache response: {cache_error}")
+                
+        return Response(response_data, headers={'Content-Type': _get_content_type(service)})
+        
+    except ValidationError as e:
+        api_logger.warning(f"Map proxy validation error: {e}")
+        return jsonify({'error': str(e)}), 400
+    except NetworkError as e:
+        api_logger.warning(
+            "Map proxy network/provider error for %s/%s. category=%s",
+            provider,
+            service,
+            e.details.get("category"),
+        )
+        return jsonify(e.to_dict()), 502
+    except MapProviderError as e:
+        api_logger.warning("Map proxy provider error for %s/%s: %s", provider, service, e.message)
+        return jsonify(e.to_dict()), 502
+    except Exception as e:
+        api_logger.error(f"Map proxy error for {provider}/{service}: {e}")
+        return jsonify({'error': f'Internal map proxy error for {provider}/{service}'}), 500
+
+
+def _get_content_type(service):
+    """Get appropriate content type for service response"""
+    if service in ['tiles', 'static']:
+        return 'image/png'
+    elif service == 'search':
+        return 'application/json'
+    else:
+        return 'application/octet-stream'
+
+
+def _handle_google_proxy(service, params):
+    """Handle Google Maps API proxying"""
+    if not google_api_key:
+        raise Exception("Google API key not configured")
+        
+    # Log proxy request
+    maps_logger.info(f"Google Maps proxy request: service={service}, params={len(params)} parameters")
+        
+    if service == 'tiles':
+        # Google Maps tile service
+        url = f"https://maps.googleapis.com/maps/api/staticmap"
+        params['key'] = google_api_key
+        maps_logger.debug(f"Google tiles request: {url} with {len(params)} params")
+    elif service == 'static':
+        # Google static maps
+        url = f"https://maps.googleapis.com/maps/api/staticmap"
+        params['key'] = google_api_key
+        maps_logger.debug(f"Google static request: {url} with {len(params)} params")
+    else:
+        raise Exception(f"Unknown Google service: {service}")
+        
+    response = provider_get(
+        'google',
+        url,
+        params=params,
+        timeout=30,
+        purpose=f"Google Maps proxy {service}",
+    )
+    maps_logger.info("Google API response: status=%s, size=%s bytes", response.status_code, len(response.content))
+
+    if response.status_code != 200:
+        category = classify_provider_response('google', response)
+        maps_logger.error("Google API error: status=%s category=%s", response.status_code, category)
+        raise NetworkError(
+            "Google Maps proxy request returned a non-success status",
+            url=redact_provider_url(url, params),
+            details={
+                "provider": "google",
+                "category": category,
+                "status_code": response.status_code,
+            },
+        )
+
+    return response.content
+
+
+def _handle_azure_proxy(service, params):
+    """Handle Azure Maps API proxying with secure authentication and comprehensive error handling"""
+    if not azure_api_key:
+        raise Exception("Azure Maps API key not configured")
+        
+    # Log proxy request
+    maps_logger.info(f"Azure Maps proxy request: service={service}, params={len(params)} parameters")
+        
+    if service == 'search':
+        # Azure Maps Search API - Use address search for better geocoding results
+        url = f"https://atlas.microsoft.com/search/address/json"
+        
+        # Build Azure Maps Search API parameters
+        search_params = {
+            'subscription-key': azure_api_key,
+            'api-version': '1.0',
+            'query': params.get('query', ''),
+            'limit': min(int(params.get('limit', 5)), 20),  # Cap at 20 results for performance
+            'countrySet': params.get('countrySet', 'US')  # Default to US
+        }
+        
+        # Add optional geospatial bias if provided
+        if 'lat' in params and 'lon' in params:
+            try:
+                lat = float(params['lat'])
+                lon = float(params['lon']) 
+                if -90 <= lat <= 90 and -180 <= lon <= 180:
+                    search_params['lat'] = lat
+                    search_params['lon'] = lon
+                else:
+                    maps_logger.warning(f"Invalid coordinates provided: lat={lat}, lon={lon}")
+            except (ValueError, TypeError):
+                maps_logger.warning(f"Invalid coordinate format: lat={params.get('lat')}, lon={params.get('lon')}")
+        
+        maps_logger.debug(f"Azure search request: {url} with query='{search_params['query']}', limit={search_params['limit']}")
+        
+    elif service == 'tiles':
+        # Azure Maps Raster Tile Service for satellite imagery
+        url = f"https://atlas.microsoft.com/map/tile"
+        
+        # Build Azure Maps tile parameters
+        search_params = {
+            'subscription-key': azure_api_key,
+            'api-version': '2.0',
+            'tilesetId': params.get('tilesetId', 'microsoft.imagery'),  # Satellite imagery
+            'zoom': max(1, min(int(params.get('zoom', 19)), 22)),  # Clamp zoom level
+            'x': int(params.get('x', 0)),
+            'y': int(params.get('y', 0))
+        }
+        
+        maps_logger.debug(f"Azure tiles request: {url} for tile z={search_params['zoom']}, x={search_params['x']}, y={search_params['y']}")
+        
+    else:
+        raise Exception(f"Unknown Azure service: {service}")
+        
+    response = provider_get(
+        'azure',
+        url,
+        params=search_params,
+        timeout=30,
+        purpose=f"Azure Maps proxy {service}",
+    )
+    maps_logger.info("Azure API response: status=%s, size=%s bytes", response.status_code, len(response.content))
+
+    if response.status_code == 404 and service == 'tiles':
+        maps_logger.warning(
+            "Azure tile not found: zoom=%s, x=%s, y=%s",
+            search_params.get('zoom'),
+            search_params.get('x'),
+            search_params.get('y'),
+        )
+        raise MapProviderError(
+            "Requested map tile is not available",
+            provider="azure",
+            api_response_code=response.status_code,
+            user_message="Requested map tile is not available at this zoom level or location.",
+        )
+    if response.status_code != 200:
+        category = classify_provider_response('azure', response)
+        maps_logger.error("Azure API error: status=%s category=%s", response.status_code, category)
+        raise NetworkError(
+            "Azure Maps proxy request returned a non-success status",
+            url=redact_provider_url(url, search_params),
+            details={
+                "provider": "azure",
+                "category": category,
+                "status_code": response.status_code,
+            },
+        )
+
+    if len(response.content) == 0:
+        maps_logger.warning("Azure API returned empty response for %s", service)
+        raise MapProviderError(
+            "Azure Maps returned an empty response",
+            provider="azure",
+            user_message="Azure Maps returned an empty response.",
+        )
+
+    return response.content
 
 # zipcode boundary lookup
 
@@ -272,227 +2660,203 @@ def get_providers():
 @app.route('/getzipcode')
 def get_zipcode():
     global zipcode_provider
-    zipcode = request.args.get("zipcode")
-    print("zipcode requested:", zipcode)
+    
+    # Input validation
+    try:
+        validated_data = validate_zipcode_request(request.args.to_dict())
+        zipcode = validated_data['zipcode']
+    except ValidationError as e:
+        return jsonify({'error': f'Validation error: {e.message}'}), 400
+    except Exception:
+        return jsonify({'error': 'Invalid zipcode format'}), 400
+        
+    api_logger.debug(f"Zipcode requested: {zipcode}")
     with zipcode_lock:
         if zipcode_provider is None:
-            print("instantiating zipcode frame, could take 10 seconds ...")
+            logger.info("Loading zipcode data, this may take up to 10 seconds...")
             zipcode_provider = Zipcode_Provider()
-        print("looking up zipcode ...")
+        api_logger.debug("Looking up zipcode...")
         return zipcode_provider.zipcode_polygon(zipcode)
+
+
+@app.route('/api/detection/estimate', methods=['POST'])
+def estimate_detection_tiles():
+    session_id = _get_session_run_id()
+    api_logger.debug("Estimating tiles for session %s", session_id)
+
+    if 'tiles' not in session:
+        session['tiles'] = 0
+
+    session_tile_limit = get_session_tile_limit()
+    if session['tiles'] > session_tile_limit:
+        return jsonify({
+            'tileCount': -1,
+            'estimatedSeconds': 0.0
+        })
+
+    client_ip = _get_client_ip()
+    if not rate_limiter.is_allowed(f"detection-estimate:{client_ip}", max_requests=30, window_seconds=60):
+        return jsonify({'error': 'Rate limit exceeded. Please try again later.'}), 429
+
+    try:
+        api_logger.debug("Validating estimate request with form keys=%s", list(request.form.keys()))
+        request_context = _parse_detection_request(request.form)
+        bounds = request_context['bounds']
+        engine = request_context['engine']
+        provider = request_context['provider']
+        polygons = request_context['polygons']
+        crop_tiles = True
+
+        api_logger.info(
+            "Incoming estimate request session=%s provider=%s engine=%s polygon_count=%s bounds=%s",
+            session_id,
+            provider,
+            engine,
+            len(polygons),
+            bounds,
+        )
+
+        perf_metrics = PerformanceMetrics(str(session_id))
+        perf_metrics.detection_engine = engine
+        perf_metrics.map_provider = provider
+        perf_metrics.crop_tiles = crop_tiles
+
+        map_provider = _create_map_provider(provider)
+        tiles, _nx, _ny, _meters, _h, _w, _tile_stats = _build_tiles_for_request(
+            map_provider,
+            bounds,
+            polygons,
+            crop_tiles
+        )
+
+        perf_metrics.tile_count = len(tiles)
+        perf_metrics.estimate_processing_time(
+            len(tiles),
+            fixed_overhead_seconds=_estimate_model_initialization_overhead(engine),
+        )
+        session['last_detection_provider'] = provider
+
+        api_logger.info(
+            "Estimate complete for session %s: %s tile(s), ~%.1f seconds",
+            session_id,
+            len(tiles),
+            perf_metrics.estimated_time_seconds,
+        )
+        tile_limit = get_detection_tile_limit()
+        blocked_by_limit = len(tiles) > tile_limit
+        response_payload = {
+            'tileCount': len(tiles),
+            'estimatedSeconds': round(perf_metrics.estimated_time_seconds, 2),
+            'tileLimit': tile_limit,
+            'blockedByTileLimit': blocked_by_limit,
+        }
+        if blocked_by_limit:
+            response_payload['message'] = _format_tile_limit_error(len(tiles), tile_limit)
+        return jsonify(response_payload)
+    except ValidationError as e:
+        api_logger.error("Validation error: %s", e.message)
+        return jsonify({'error': f'Validation error: {e.message}'}), 400
+    except Exception as e:
+        api_logger.error("Tile estimate failed: %s", e, exc_info=True)
+        return jsonify({'error': f'Tile estimate error: {str(e)}'}), 500
+
+
+@app.route('/api/detection/progress', methods=['GET'])
+def get_detection_progress():
+    session_id = _get_session_run_id()
+    progress_state = _serialize_detection_progress_state(
+        _get_detection_progress_state(session_id)
+    )
+    # A terminal progress record is published before get_objects() returns and
+    # releases the process-wide admission lock.  Keep retry readiness tied to
+    # the actual shared slot so clients cannot race that final cleanup window.
+    progress_state['retryReady'] = not detection_job_lock.locked()
+    response = jsonify(progress_state)
+    response.headers['Cache-Control'] = 'no-store'
+    return response
 
 # abort route
 
-@app.route('/abort', methods=['get'])
+@app.route('/abort', methods=['POST'])
 def abort():
-    print(" aborting", id(session))
-    exit_events.signal(id(session))
-    return "ok"
+    session_id = _get_session_run_id()
+    client_request_id = _get_detection_request_id()
+    api_logger.info(f"Aborting session {session_id}")
+    run_state = _mark_detection_run_cancel_requested(
+        session_id,
+        client_request_id=client_request_id,
+    )
+    retry_ready = not detection_job_lock.locked()
+    if run_state is None:
+        payload = {
+            'status': 'idle',
+            'retryReady': retry_ready,
+        }
+        if retry_ready:
+            return jsonify(payload)
+        payload['message'] = CANCELLATION_PENDING_MESSAGE
+        return jsonify(payload), 202
+
+    run_status = run_state.get('status', 'cancel_requested')
+    if run_status in {'completed', 'cancelled', 'error'}:
+        if retry_ready:
+            return jsonify({
+                'status': run_status,
+                'retryReady': True,
+            })
+        return jsonify({
+            'status': run_status,
+            'retryReady': False,
+            'message': CANCELLATION_PENDING_MESSAGE,
+        }), 202
+
+    if run_state.get('run_token'):
+        exit_events.signal(run_state['run_token'])
+
+    return jsonify({
+        'status': run_status,
+        'retryReady': False,
+        'message': CANCELLATION_PENDING_MESSAGE,
+    }), 202
 
 # detection route
 
 @app.route('/getobjects', methods=['POST'])
 def get_objects():
-    print(" session:", id(session))
+    client_ip = _get_client_ip()
+    if not rate_limiter.is_allowed(f"detection:{client_ip}", max_requests=30, window_seconds=60):
+        return jsonify({
+            'error': 'Rate limit exceeded. Please try again later.',
+            'code': 'RATE_LIMITED',
+        }), 429
+    session_id = _get_session_run_id()
+    client_request_id = _get_detection_request_id()
+    if _consume_pending_detection_cancellation(session_id, client_request_id):
+        return Response("[]", mimetype='application/json')
+    if not detection_job_lock.acquire(blocking=False):
+        return jsonify({
+            'error': 'Detection is already running.',
+            'code': 'DETECTION_BUSY',
+        }), 429
+    try:
+        if _consume_pending_detection_cancellation(session_id, client_request_id):
+            return Response("[]", mimetype='application/json')
+        if client_request_id is None:
+            return _run_detection_request()
+        return _run_detection_request(
+            session_id=session_id,
+            client_request_id=client_request_id,
+        )
+    finally:
+        detection_job_lock.release()
 
-    # check whether this session is over its limit
-    if 'tiles' not in session:
-        session['tiles'] = 0
 
-    # print("tiles queried in session:", session['tiles'])
-    if session['tiles'] > MAX_TILES_SESSION:
-        return "-1"
-
-    # start time, get params
-    start = time.time()
-    bounds = request.form.get("bounds")
-    engine = request.form.get("engine")
-    provider = request.form.get("provider")
-    polygons = request.form.get("polygons")
-    
-    print("incoming detection request:")
-    print(" bounds:", bounds)
-    print(" engine:", engine)
-    print(" map provider:", provider)
-    # print(" polygons:", polygons)
-    
-    # cropping
-    crop_tiles = True
-
-    # make the polygons
-    polygons = json.loads(polygons)
-    # print(" parsed polygons:", polygons)
-    polygons = [ts_imgutil.make_boundary(p) for p in polygons]
-    # print(" Shapely polygons:", polygons)
-
-    # get the proper detector
-    det = get_engine(engine)
-
-    # empty results
-    results = []
-
-    # create a map provider object
-    map = None
-    if provider == "bing":
-        map = BingMap(bing_api_key)
-    elif provider == "google":
-        map = GoogleMap(google_api_key)
-    if map is None:
-        print(" could not instantiate map provider:", provider)
-
-    # divide the map into 640x640 parts
-    tiles, nx, ny, meters, h, w = map.make_tiles(bounds, crop_tiles=crop_tiles)
-    # print(f" {len(tiles)} tiles, {nx} x {ny}, {meters} x {meters} m")
-    # print(" Tile centers:")
-    # for c in tiles:
-    #   print("  ",c)
-
-    tiles = [t for t in tiles if ts_maps.check_tile_against_bounds(t, bounds)]
-    tiles = [t for t in tiles if ts_imgutil.tileIntersectsPolygons(t, polygons)]
-    for i, tile in enumerate(tiles):
-        tile['id'] = i
-    print(" tiles left after viewport and polygon filter:", len(tiles))
-
-    if request.form.get("estimate") == "yes":
-        # reset abort flag
-        exit_events.alloc(id(session))  # todo: might leak some of these
-        print(" returning number of tiles")
-        print()
-        # + ("" if len(tiles) > MAX_TILES else " (exceeds limit)")
-        return str(len(tiles))
-
-    if len(tiles) > MAX_TILES:
-        print(" ---> request contains too many tiles")
-        exit_events.free(id(session))
-        return "[]"
-    else:
-        # tally the new request
-        session['tiles'] += len(tiles)
-
-    # main processing:
-    # first, clean out the old tempdir
-    if "tmpdirname" in session:
-        rmtree(session['tmpdirname'], ignore_errors=True, onerror=None)
-        print("cleaned up tmp dir", session['tmpdirname'])
-        del session['tmpdirname']
-
-    # make a new tempdir name and attach to session
-    tmpdir = tempfile.TemporaryDirectory()
-    tmpdirname = tmpdir.name
-    tmpfilename = tmpdirname[tmpdirname.rindex("\\")+1:]
-    print("creating tmp dir", tmpdirname)
-    session['tmpdirname'] = tmpdirname
-    # tmpdir.cleanup()  # yeah this is asinine but I need the tmpdir to survive to I will create it manually next
-    print("created tmp dir", tmpdirname)
-
-    # retrieve tiles and metadata if available
-    meta = map.get_sat_maps(tiles, loop, tmpdirname, tmpfilename)
-    session['metadata'] = meta
-    print(" asynchronously retrieved", len(tiles), "files")
-
-    # check for abort
-    if exit_events.query(id(session)):
-        print(" client aborted request.")
-        exit_events.free(id(session))
-        return "[]"
-
-    # augment tiles with retrieved filenames
-    for i, tile in enumerate(tiles):
-        tile['filename'] = tmpdirname+"/"+tmpfilename+str(i)+".jpg"
-
-    # detect all towers
-    results_raw = det.detect(tiles, exit_events, id(session), crop_tiles=crop_tiles, secondary=secondary_en)
-    # abort if signaled
-    if exit_events.query(id(session)):
-        print(" client aborted request.")
-        exit_events.free(id(session))
-        return "[]"
-
-    # read metadata if present
-    for tile in tiles:
-        if meta:
-            filename = tmpdirname+"/"+tmpfilename+str(tile['id'])+".meta.txt"
-            with open(filename) as f:
-                tile['metadata'] = map.get_date(f.read())
-                # print(" metadata: "+tile['metadata'])
-                f.close
-        else:
-            tile['metadata'] = ""
-
-    # record some results in session for later saving if desired
-    session['detections'] = make_persistable_tile_results(tiles)
-
-    # post-process the results
-    results = []
-    for result, tile in zip(results_raw, tiles):
-        # adjust xyxy normalized results to lat, long pairs
-        for i, object in enumerate(result):
-            # object['conf'] *= map.checkCutOffs(object) # used to do this before we started cropping
-            object['x1'] = tile['lng'] - 0.5*tile['w'] + object['x1']*tile['w']
-            object['x2'] = tile['lng'] - 0.5*tile['w'] + object['x2']*tile['w']
-            object['y1'] = tile['lat'] + 0.5*tile['h'] - object['y1']*tile['h']
-            object['y2'] = tile['lat'] + 0.5*tile['h'] - object['y2']*tile['h']
-            object['tile'] = tile['id']
-            object['id_in_tile'] = i
-            object['selected'] = object['secondary'] >= 0.35
-
-            # print(" output:",str(object))
-        results += result
-
-    # mark results out of bounds or polygon
-    for o in results:
-        o['inside'] = ts_imgutil.resultIntersectsPolygons(o['x1'], o['y1'], o['x2'], o['y2'], polygons) and \
-            ts_maps.check_bounds(o['x1'], o['y1'], o['x2'], o['y2'], bounds)
-        #print("in " if o['inside'] else "out ", end="")
-
-    # sort the results by lat, long, conf
-    results.sort(key=lambda x: x['y1']*2*180+2*x['x1']+x['conf'])
-
-    # coaslesce neighboring (in list) towers that are closer than 1 m for x1, y1
-    
-    if len(results) > 1:
-        i = 0
-        while i < len(results)-1:
-            if ts_maps.get_distance(results[i]['x1'], results[i]['y1'],
-                                    results[i+1]['x1'], results[i+1]['y1']) < 1:
-                print(" removing 1 duplicate result")
-                results.remove(results[i+1])
-            else:
-                i += 1
-    
-
-    # prepend a pseudo-result for each tile, for debugging
-    tile_results = []
-    for tile in tiles:
-        tile_results.append({
-            'x1': tile['lng'] - 0.5*tile['w'],
-            'y1': tile['lat'] + 0.5*tile['h'],
-            'x2': tile['lng'] + 0.5*tile['w'],
-            'y2': tile['lat'] - 0.5*tile['h'],
-            'class': 1,
-            'class_name': 'tile',
-            'conf': 1,
-            'metadata': tile['metadata'],
-            'url': tile['url'],
-            'selected': True
-        })
-
-    # all done
-    selected = str(reduce(lambda a,e: a+(e['selected']),results, 0))
-    print(" request complete," + str(len(results)) +" detections (" + selected +" selected), elapsed time: ", (time.time()-start))
-    results = tile_results+results
-    print()
-
-    exit_events.free(id(session))
-    results = json.dumps(results)
-    session['results'] = results
-    return results
 
 def cleanup_temp_directory():
     # Cleanup the tempdir at the end of the session or application
     if "tmpdir_obj" in session:
         tmpdir = session['tmpdir_obj']
-        print("Cleaning up tmp dir", tmpdir.name)
+        api_logger.info("Cleaning up tmp dir %s", tmpdir.name)
         tmpdir.cleanup()
         del session['tmpdir_obj']
         del session['tmpdirname']
@@ -502,31 +2866,68 @@ def allowed_extension(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg'}
 
 # detection route for provided images
-@ app.route('/getobjectscustom', methods=['POST'])
+@app.route('/api-usage', methods=['GET'])
+def get_api_usage():
+    """Return current session's API usage statistics for frontend display."""
+    try:
+        usage_data = {
+            'geocoding_usage': session.get('geocoding_usage', {
+                'google_requests': 0,
+                'azure_requests': 0,
+                'total_requests': 0,
+                'successful_requests': 0,
+                'failed_requests': 0
+            }),
+            'geocoding_limited': session.get('geocoding_limited', False)
+        }
+        return jsonify(usage_data)
+    except Exception as e:
+        logger = get_api_logger()
+        logger.error(f"Failed to get API usage: {e}")
+        return jsonify({'error': 'Failed to retrieve API usage'}), 500
+
+
+@app.route('/getobjectscustom', methods=['POST'])
 def get_objects_custom():
     start = time.time()
-    engine = request.form.get("engine")
-    print("incoming custom image detection request:")
-    print(" engine:", engine)
+    
+    # Rate limiting
+    client_ip = _get_client_ip()
+    if not rate_limiter.is_allowed(f"custom-image:{client_ip}", max_requests=10, window_seconds=60):
+        return jsonify({'error': 'Rate limit exceeded for image uploads'}), 429
+    
+    # Input validation
+    try:
+        engine = TowerScoutValidator.validate_engine(request.form.get('engine'))
+        
+        if 'image' not in request.files:
+            raise ValidationError("No image file provided")
+            
+        file = TowerScoutValidator.validate_image_file(request.files['image'])
+    except ValidationError as e:
+        return jsonify({'error': f'Validation error: {e.message}'}), 400
+    except Exception:
+        return jsonify({'error': 'Invalid request data'}), 400
 
-    # upload the file
-    if request.method != 'POST':
-        print(" --- POST requests only please")
-        return None
+    if not detection_job_lock.acquire(blocking=False):
+        return jsonify({
+            'error': 'Detection is already running.',
+            'code': 'DETECTION_BUSY',
+        }), 429
+    try:
+        return _run_custom_image_detection(start, engine, file)
+    finally:
+        detection_job_lock.release()
 
-    # check if the post request has the file part
-    if 'image' not in request.files:
-        print(" --- no file part in request")
-        return None
 
-    file = request.files['image']
-    if file.filename == '':
-        print(' --- no selected image file')
-        return None
-
-    if not file or not allowed_extension(file.filename):
-        print(" --- invalid file or extension:", file.filename)
-        return None
+def _run_custom_image_detection(start, engine, file):
+    session_id = _get_session_run_id()
+    api_logger.info(
+        "Incoming custom image detection request session=%s engine=%s file=%s",
+        session_id,
+        engine,
+        file.filename,
+    )
 
     # get the proper detector
     det = get_engine(engine)
@@ -535,36 +2936,52 @@ def get_objects_custom():
     results = []
 
     # filename = secure_filename(file.filename)
-    filename = file.filename
-    file.save("uploads/" + filename)
-    print(" uploaded file ")
-    results = det.detect([{'filename':"uploads/"+filename}],exit_events, id(session), crop_tiles=False)
-
-    # draw result bounding boxes on image
-    objects = 0
-    with Image.open("uploads/" + filename) as im:
-        for result in results:
-            for object in result:
-                drawResult(object, im)
-                objects += 1
-        im.save("uploads/" + filename, quality=95)
-    print(" done drawing results.")
+    filename = secrets.token_hex(16) + Path(file.filename).suffix.lower()
+    upload_path = UPLOAD_DIR / filename
+    created = False
+    try:
+        with upload_path.open('xb') as output:
+            created = True
+            file.save(output)
+        results = det.detect([{'filename': str(upload_path)}], exit_events, session_id, crop_tiles=False)
+        objects = 0
+        with Image.open(upload_path) as im:
+            for result in results:
+                for object in result:
+                    drawResult(object, im)
+                    objects += 1
+            im.save(upload_path, quality=95)
+    except Exception:
+        if created:
+            upload_path.unlink(missing_ok=True)
+        raise
+    previous = session.get('custom_upload')
+    session['custom_upload'] = filename
+    # Only this session's previously generated image is eligible for cleanup.
+    if isinstance(previous, str) and re.fullmatch(r'[0-9a-f]{32}\.(?:jpg|jpeg|png|gif|bmp|webp|tif|tiff)', previous):
+        (UPLOAD_DIR / previous).unlink(missing_ok=True)
+    api_logger.info("Finished drawing %s custom detection result(s)", objects)
 
     # all done
-    print(" custom request complete,", objects,
-          " objects, elapsed time: ", (time.time()-start))
+    api_logger.info(
+        "Custom image detection complete: %s object(s), elapsed %.2f seconds",
+        objects,
+        time.time() - start,
+    )
 
     results = json.dumps(results)
     session['results'] = results
     cleanup_temp_directory()
-    return results
+    response = Response(results, mimetype='application/json')
+    response.headers['X-TowerScout-Upload-URL'] = '/uploads/' + filename
+    return response
 
 
 #
 # pillow helper function to draw
 #
 def drawResult(r, im):
-    print(" drawing ...")
+    api_logger.debug("Drawing custom detection result bounding box")
     draw = ImageDraw.Draw(im)
     draw.rectangle([
         im.size[0]*r['x1'],
@@ -578,35 +2995,83 @@ def drawResult(r, im):
 # upload a new model
 @ app.route('/uploadmodel', methods=['POST'])
 def upload_model():
-    print("uploading model:")
+    api_logger.info("Model upload requested")
 
-    # upload the file
-    if request.method != 'POST':
-        print(" --- POST requests only please")
-        return None
+    if not MODEL_UPLOAD_ENABLED:
+        api_logger.warning("Model upload rejected because TOWERSCOUT_ENABLE_MODEL_UPLOAD is not enabled")
+        return jsonify({
+            'error': 'Model upload is disabled for this release. Install trusted model files through the configured model volume or enable the local-admin upload override.'
+        }), 403
 
-    # check if the post request has the file part
-    if 'model' not in request.files:
-        print(" --- no file part in request")
-        return None
+    configured_key = _get_configured_model_upload_key()
+    if configured_key is None:
+        api_logger.warning(
+            "Model upload rejected because TOWERSCOUT_MODEL_UPLOAD_KEY is not securely configured"
+        )
+        return jsonify({
+            'error': 'Model upload is enabled but no valid Model Upload Key is configured.'
+        }), 503
+    
+    # Rate limiting (stricter for model uploads)
+    client_ip = request.remote_addr or "unknown"
+    if not rate_limiter.is_allowed(f"model-upload:{client_ip}", max_requests=5, window_seconds=300):
+        return jsonify({'error': 'Rate limit exceeded for model uploads'}), 429
 
-    file = request.files['model']
+    provided_key = request.headers.get(MODEL_UPLOAD_KEY_HEADER, '')
+    key_matches = (
+        len(provided_key) <= MODEL_UPLOAD_KEY_MAX_LENGTH
+        and secrets.compare_digest(
+            provided_key.encode('utf-8'),
+            configured_key.encode('utf-8'),
+        )
+    )
+    if not key_matches:
+        api_logger.warning("Model upload rejected because authorization failed")
+        return jsonify({'error': 'Model upload authorization failed.'}), 403
+    
+    # Input validation
+    try:
+        if 'model' not in request.files:
+            raise ValidationError("No model file provided")
+            
+        file = TowerScoutValidator.validate_model_file(request.files['model'])
+    except ValidationError as e:
+        return jsonify({'error': f'Validation error: {e.message}'}), 400
+    except Exception:
+        return jsonify({'error': 'Invalid request data'}), 400
+
     if file.filename == '':
-        print(' --- no selected model file')
+        api_logger.warning("Model upload request did not include a selected filename")
         return None
 
     if not file or not file.filename.endswith(".pt"):
-        print(" --- invalid file or extension:", file.filename)
+        api_logger.warning(
+            "Model upload request had invalid file or extension filename=%s",
+            file.filename,
+        )
         return None
 
     # filename = secure_filename(file.filename)
     filename = file.filename
-    file.save("model_params/"+("EN" if filename.startswith("b5") else "yolov5")+"/" + filename)
-    print(" uploaded file!")
+    target_dir = EN_MODEL_DIR if filename.startswith("b5") else YOLO_MODEL_DIR
+    target_path = target_dir / filename
+    pending_path = target_dir / f".{filename}.{secrets.token_hex(8)}.pending"
+    try:
+        file.save(str(pending_path))
+        verify_trusted_model(pending_path)
+        pending_path.replace(target_path)
+    except AssetManifestError as e:
+        pending_path.unlink(missing_ok=True)
+        api_logger.warning("Model upload rejected by trusted-file verification: %s", e)
+        return jsonify({'error': f'Model trust validation error: {e}'}), 400
+    except Exception:
+        pending_path.unlink(missing_ok=True)
+        raise
+    api_logger.info("Uploaded trusted model file to %s", target_path)
 
     add_model(filename)
 
-    print(" installed model", file.filename)
+    ml_logger.info("Installed uploaded model %s", file.filename)
 
     return "ok"
 
@@ -614,10 +3079,20 @@ def upload_model():
 # download results as dataset for formal training /testing
 @ app.route('/getdataset', methods=['POST'])
 def send_dataset():
-    print("Dataset requested")
+    api_logger.info("Dataset export requested")
 
-    include = json.loads(request.form.get("include"))
-    additions = json.loads(request.form.get("additions"))
+    # Validate JSON fields
+    try:
+        include = TowerScoutValidator.validate_json_field(request.form.get("include"), "include")
+        additions = TowerScoutValidator.validate_json_field(request.form.get("additions"), "additions")
+        api_logger.debug(
+            "Dataset export payload include_count=%s additions_count=%s addition_tile_ids=%s",
+            len(include),
+            len(additions),
+            [a.get('tile') for a in additions],
+        )
+    except ValidationError as e:
+        return jsonify({'error': f'Validation error: {e.message}'}), 400
     tiles = session['detections']
     meta = session['metadata']
 
@@ -626,43 +3101,89 @@ def send_dataset():
     # print(" last result:", json.dumps(tiles))
 
     # filter to keep only "included" (i.e. selected and meeting threshold) detections
-    keep_detections = set([])
     keep_detection_ids = set([])
+    keep_detection_refs = set([])
     for inclusion in include:
         try:
-            keep_detections.add(
-                tiles[inclusion['tile']]['detections'][inclusion['detection']])
+            matched_tile = _find_tile_by_session_index(tiles, inclusion.get('tile'))
+            if matched_tile is None:
+                raise KeyError(f"tile {inclusion.get('tile')} not found in session")
+
+            detection_index = inclusion['detection']
+            if type(detection_index) is not int or not 0 <= detection_index < len(matched_tile['detections']):
+                raise ValueError('invalid detection index')
+
+            detection_ref = _normalize_detection_ref(
+                inclusion.get('tile'),
+                inclusion.get('detection')
+            )
+            if detection_ref is not None:
+                keep_detection_refs.add(detection_ref)
             # if the absolute tile id was also included,
             if 'id' in inclusion:
                 keep_detection_ids.add(inclusion['id'])
         except:
-            print(" invalid inclusion:", inclusion)
-    print(" writing labels ...")
+            api_logger.warning("Skipping invalid dataset inclusion %s", inclusion)
+    api_logger.info("Writing dataset labels for export")
 
     # write files and records which ones had detections
     filenames = []
+    api_logger.debug(
+        "Preparing dataset labels tile_count=%s manual_additions=%s",
+        len(tiles),
+        len(additions),
+    )
+    
     for i, tile in enumerate(tiles):
-        filenames += write_labels(i, tile,
-                                  keep_detections, additions, not meta)
+        # Use tile's actual ID (stored as 'index') for matching with additions
+        tile_id = tile.get('index', i)  # Fallback to enumeration index if 'index' not present
+        api_logger.debug(
+            "Writing labels for session_tile=%s session_index=%s resolved_tile_id=%s",
+            i,
+            tile.get('index', 'MISSING'),
+            tile_id,
+        )
+        filenames += write_labels(tile_id, tile, keep_detection_refs, additions)
 
     # write a contents file so we can load this again some time
-    write_contents_file(session["tmpdirname"], tiles, keep_detection_ids, additions, meta)
+    write_contents_file(
+        session["tmpdirname"],
+        tiles,
+        keep_detection_refs,
+        keep_detection_ids,
+        additions,
+        meta
+    )
 
-    print(" zipping data ...")
+    api_logger.info("Zipping dataset export archive")
     zipdir(session['tmpdirname'], filenames)
-    print(" done.")
-    print()
-    return send_from_directory('temp', "dataset.zip")
+    api_logger.info("Dataset export archive ready")
+    return send_from_directory(str(get_temp_dir()), "dataset.zip")
 
 
 # adapted from
 # https://stackoverflow.com/questions/1855095/how-to-create-a-zip-archive-of-a-directory-in-python
 
 def zipdir(path, filenames):
-    zipf = zipfile.ZipFile('temp/dataset.zip', 'w', zipfile.ZIP_DEFLATED)
+    # TASK-033 Phase 3: Ensure temp directory exists and use proper paths
+    temp_dir = get_temp_dir()
+    zip_path = temp_dir / 'dataset.zip'
+    zipf = zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED)
+    
+    # TASK-036: Add README.txt to dataset export
+    readme_path = os.path.join(os.path.dirname(__file__), 'DATASET_README.txt')
+    if os.path.exists(readme_path):
+        zipf.write(readme_path, 'README.txt')
+        api_logger.info("Added README.txt to dataset export archive")
+    else:
+        api_logger.warning("DATASET_README.txt not found; skipping README in dataset export")
+    
     for root, dirs, files in os.walk(path):
         for file in files:
-            print(" compressing file", file)
+            # Export one canonical README, never a restored documentation copy.
+            if file.casefold() == 'readme.txt':
+                continue
+            api_logger.debug("Compressing dataset export file %s", file)
             # select the right folder
             if file.endswith("contents.txt"):
                 folder = "."
@@ -671,7 +3192,7 @@ def zipdir(path, filenames):
             elif file.endswith(".zip"):
                 continue
             elif os.path.join(root, file) in filenames:
-                if file.endswith(".jpg"):
+                if file.rsplit('.', 1)[-1].lower() in TowerScoutValidator.ALLOWED_IMAGE_EXTENSIONS:
                     folder = "train/images"
                 elif file.endswith(".xml"):
                     folder = "train/labels-xml"
@@ -684,6 +3205,28 @@ def zipdir(path, filenames):
     zipf.close()
 
 
+def _normalize_detection_ref(tile_id, detection_id):
+    """Build a stable lookup key for ML detections across export and restore."""
+    try:
+        return (int(tile_id), int(detection_id))
+    except (TypeError, ValueError):
+        return None
+
+
+def _find_tile_by_session_index(tiles, tile_id):
+    """Resolve a persisted tile identifier back to the current session tile record."""
+    tile_ref = _normalize_detection_ref(tile_id, 0)
+    if tile_ref is None:
+        return None
+
+    normalized_tile_id = tile_ref[0]
+    for fallback_index, tile in enumerate(tiles):
+        if int(tile.get('index', fallback_index)) == normalized_tile_id:
+            return tile
+
+    return None
+
+
 # get a portion of the tiles in serializable form to attach to the session
 def make_persistable_tile_results(tiles):
     return [{
@@ -691,54 +3234,71 @@ def make_persistable_tile_results(tiles):
         'labelfilename': tile['filename'][0:-4]+".txt",
         'detections':tile['detections'],
         'metadata':tile['metadata'],
-        'url':tile['url'],
+        'url': tile.get('provider_url_redacted') or redact_provider_url(tile.get('url')),
         'index':tile['id'],
     } for tile in tiles]
 
 
 # write out the detections as label files (to download the dataset)
 # returns the names of img and label if detections were present, otherwise empty list
-def write_labels(tile_id, tile, keep, additions, double_res):
+def write_labels(tile_id, tile, keep_refs, additions):
+    # Historical re-exports can already contain an inverted metadata flag.
+    # XML coordinates must describe the actual image, including non-square tiles.
+    with Image.open(tile['filename']) as image:
+        width, height = image.size
     empty = True
     # print(" attempting to write file ", tile['labelfilename'], "...")
 
-    with open(tile['labelfilename'], "w") as f:
-        print(" writing file ", f.name, "...")
-        for detection in tile['detections']:
-            if detection in keep:
+    with open(tile['labelfilename'], "w", encoding="utf-8") as f:
+        api_logger.debug("Writing dataset label file %s", f.name)
+        manual_towers_written = 0
+        for index, detection in enumerate(tile['detections']):
+            if (tile_id, index) in keep_refs:
                 # print("", detection)
-                f.write(detection)
+                f.write(detection.rstrip() + '\n')
                 empty = False
         for a in additions:
+            api_logger.debug(
+                "Checking manual addition for tile_id=%s addition_tile=%s match=%s",
+                tile_id,
+                a.get('tile'),
+                a.get('tile') == tile_id,
+            )
             if a['tile'] == tile_id:
                 f.write(" ".join(["0", str(a['centerx']), str(
                     a['centery']), str(a['w']), str(a['h'])])+"\n")
                 empty = False
+                manual_towers_written += 1
+        if manual_towers_written > 0:
+            api_logger.info(
+                "Wrote %s manual tower(s) to tile_id=%s",
+                manual_towers_written,
+                tile_id,
+            )
 
     # write xml labels for augmentation pipeline
     name = tile['labelfilename'][:-3]+"xml"
-    size = 1280 if double_res else 640
 
-    with open(name, "w") as f:
-        print(" writing file ", f.name, "...")
+    with open(name, "w", encoding="utf-8") as f:
+        api_logger.debug("Writing dataset XML label file %s", f.name)
         xml = "<annotation>\n"
         xml += "<size>\n"
-        xml += "  <width>"+str(size)+"</width>\n"
-        xml += "  <height>"+str(size)+"</height>\n"
+        xml += "  <width>"+str(width)+"</width>\n"
+        xml += "  <height>"+str(height)+"</height>\n"
         xml += "  <depth>3</depth>\n"
         xml += "</size>\n"
         f.write(xml)
-        for detection in tile['detections']:
-            if detection in keep:
+        for index, detection in enumerate(tile['detections']):
+            if (tile_id, index) in keep_refs:
                 # print("", detection)
-                xml = xml_from_label(detection, size)
+                xml = xml_from_label(detection, width, height)
                 f.write(xml)
                 empty = False
         for a in additions:
             if a['tile'] == tile_id:
                 label = " ".join(["0", str(a['centerx']), str(
                     a['centery']), str(a['w']), str(a['h'])])
-                xml = xml_from_label(label, size)
+                xml = xml_from_label(label, width, height)
                 f.write(xml)
                 empty = False
         xml = "</annotation>\n"
@@ -748,12 +3308,14 @@ def write_labels(tile_id, tile, keep, additions, double_res):
 
 
 # convert YOLOv5-style object label to roboflow XML:
-def xml_from_label(label, size):
-    x = [float(x) for x in label.split(" ")]
-    xmin = int((x[1]-0.5*x[3])*size)
-    xmax = int((x[1]+0.5*x[3])*size)
-    ymin = int((x[2]-0.5*x[4])*size)
-    ymax = int((x[2]+0.5*x[4])*size)
+def xml_from_label(label, width, height=None):
+    if height is None:
+        height = width
+    x = [float(x) for x in label.split()]
+    xmin = int((x[1]-0.5*x[3])*width)
+    xmax = int((x[1]+0.5*x[3])*width)
+    ymin = int((x[2]-0.5*x[4])*height)
+    ymax = int((x[2]+0.5*x[4])*height)
 
    
     xml = "<object>\n"
@@ -768,23 +3330,49 @@ def xml_from_label(label, size):
     return xml
 
 
-def write_contents_file(tmpdirname, tiles, keep_ids, additions, meta):
-    with open(tmpdirname+"/contents.txt", "w") as f:
+def write_contents_file(tmpdirname, tiles, keep_refs, keep_ids, additions, meta):
+    with open(tmpdirname+"/contents.txt", "w", encoding="utf-8") as f:
         f.write("[")
         f.write(json.dumps(tiles))
         f.write(",")
         # if we got information about which ids were still selected, filter the result before recording
-        if len(keep_ids) > 0:
-            print(" filtering results for", len(keep_ids), "selections")
+        # An empty stable selection is authoritative, including manual-only
+        # exports. None is reserved for the legacy absolute-id caller.
+        if keep_refs is not None or len(keep_ids) > 0:
+            if keep_refs is not None:
+                api_logger.debug(
+                    "Filtering dataset contents for %s stable selections",
+                    len(keep_refs),
+                )
+            else:
+                api_logger.debug(
+                    "Filtering dataset contents for %s legacy selections",
+                    len(keep_ids),
+                )
             results = json.loads(session['results'])
             tile_count = 0
 
             # first, write write current results that are checked (i.e. in keep_ids)
             for i, result in enumerate(results):
                 if result['class_name'] != 'tile':
-                    result['selected'] = (i-tile_count in keep_ids)
-                    print("", i-tile_count, "included" if (i-tile_count)
-                          in keep_ids else "not included")
+                    result_ref = _normalize_detection_ref(
+                        result.get('tile'),
+                        result.get('id_in_tile')
+                    )
+                    if keep_refs is not None and result_ref is not None:
+                        result['selected'] = result_ref in keep_refs
+                        api_logger.debug(
+                            "Stable detection ref %s %s",
+                            result_ref,
+                            "included" if result_ref in keep_refs else "not included",
+                        )
+                    else:
+                        result['selected'] = (i-tile_count in keep_ids)
+                        api_logger.debug(
+                            "Legacy detection index %s %s",
+                            i - tile_count,
+                            "included" if (i - tile_count) in keep_ids else "not included",
+                        )
                 else:
                     tile_count += 1
 
@@ -792,21 +3380,176 @@ def write_contents_file(tmpdirname, tiles, keep_ids, additions, meta):
             session['results'] = json.dumps(results)
         
         # now, process additions, and add them to the session results
-        # todo!!! Fix the restore bug. Note: Send more lat/long, id_in_tile info from client
-        print("Session results before additions: ", session['results'])
-        print("JSON version of additions:", json.dumps(additions))
+        # TASK-033 Phase 3: Convert additions back to full detection objects with lat/long
+        api_logger.debug(
+            "Preparing dataset contents with manual additions count=%s",
+            len(additions),
+        )
         if len(additions) > 0:
-            # make every this:
-            #
-            # {"tile": 0, "centerx": 0.9099609375, "centery": 0.6593624174477392, "w": 0.034375, "h": 0.037459364023982526}
-            # 
-            # into this:
-            #
-            # {"x1": -74.00627583990182, "y1": 40.71050060528311, "x2": -74.0062392291362, "y2": 40.71042470437244, 
-            #  "conf": 1.0, "class": 0, "class_name": "ct", "secondary": 1..0, 
-            #  "tile": 1, "id_in_tile": 11, "selected": true, "inside": true}
+            # Convert each addition from normalized tile coordinates to lat/long
+            # Input: {"tile": 0, "centerx": 0.91, "centery": 0.66, "w": 0.034, "h": 0.037}
+            # Output: {"x1": lat, "y1": lng, "x2": lat, "y2": lng, "conf": 1.0, "class": 0, 
+            #          "class_name": "ct", "secondary": 1.0, "tile": 0, "id_in_tile": -1, 
+            #          "selected": true, "inside": true}
+            
+            manual_provider = session.get('last_detection_provider', 'auto')
 
-            pass # todo!!!
+            # Initialize geocoding service and cache for manual tower address lookup
+            geocoding_service = None
+            geocoding_cache = None
+            try:
+                geocoding_service = create_geocoding_service(
+                    azure_key=azure_api_key,
+                    google_key=google_api_key,
+                    preferred_provider=manual_provider
+                )
+                geocoding_cache = create_geocoding_cache(clustering_radius_meters=50.0)
+            except Exception as geocode_init_error:
+                api_logger.warning(
+                    "Manual tower geocoding unavailable; coordinate fallback will be used: %s",
+                    geocode_init_error,
+                )
+            
+            results = json.loads(session['results'])
+            
+            for addition in additions:
+                tile_id = addition['tile']
+                # Find the corresponding tile to get its geographic bounds
+                tile = None
+                for t in tiles:
+                    if t.get('index', -1) == tile_id:
+                        tile = t
+                        break
+                
+                if tile is None:
+                    api_logger.warning("Could not find tile %s for manual addition", tile_id)
+                    continue
+                
+                # Get tile geographic bounds from results (tiles are at start of results array)
+                tile_result = None
+                for r in results:
+                    if r.get('class_name') == 'tile' and r.get('id') == tile_id:
+                        tile_result = r
+                        break
+                
+                if tile_result is None:
+                    api_logger.warning(
+                        "Could not find tile result %s for manual addition",
+                        tile_id,
+                    )
+                    continue
+                
+                # Convert normalized coordinates to lat/lng
+                # Tile bounds: x1=lng_west, y1=lat_north, x2=lng_east, y2=lat_south
+                tile_x1 = tile_result['x1']  # west longitude
+                tile_y1 = tile_result['y1']  # north latitude
+                tile_x2 = tile_result['x2']  # east longitude
+                tile_y2 = tile_result['y2']  # south latitude
+                
+                tile_width = tile_x2 - tile_x1
+                tile_height = tile_y1 - tile_y2  # Note: y1 > y2 (north > south)
+                
+                # Calculate detection bounds in lat/lng
+                center_lng = tile_x1 + (addition['centerx'] * tile_width)
+                center_lat = tile_y1 - (addition['centery'] * tile_height)  # Subtract because y increases downward
+                
+                half_width_lng = (addition['w'] * tile_width) / 2
+                half_height_lat = (addition['h'] * tile_height) / 2
+                
+                detection_x1 = center_lng - half_width_lng  # west
+                detection_y1 = center_lat + half_height_lat  # north
+                detection_x2 = center_lng + half_width_lng  # east
+                detection_y2 = center_lat - half_height_lat  # south
+                
+                # TASK-033 Phase 3: Reverse geocode manual tower location (with caching for performance)
+                try:
+                    if geocoding_service is None or geocoding_cache is None:
+                        raise GeocodingError("Manual tower geocoding is unavailable")
+
+                    # Try cache first for performance
+                    cached_result = geocoding_cache.get(center_lat, center_lng, provider=manual_provider)
+                    if cached_result:
+                        manual_address = cached_result.address
+                        manual_addr_conf = cached_result.confidence
+                        manual_addr_provider = cached_result.provider.value
+                        api_logger.debug(
+                            "Manual tower address resolved from cache tile=%s",
+                            tile_id,
+                        )
+                    else:
+                        # Geocode and cache result
+                        geocoding_result = geocoding_service.reverse_geocode(center_lat, center_lng, manual_provider)
+                        if geocoding_result.success and geocoding_result.address:
+                            manual_address = geocoding_result.address
+                            manual_addr_conf = geocoding_result.confidence
+                            manual_addr_provider = geocoding_result.provider.value
+                            
+                            # Cache the result for future restorations
+                            geocoding_cache.put(center_lat, center_lng, geocoding_result, provider=manual_provider)
+                            api_logger.debug(
+                                "Manual tower reverse geocoded tile=%s provider=%s",
+                                tile_id,
+                                manual_addr_provider,
+                            )
+                        else:
+                            manual_address = _format_coordinate_address(center_lat, center_lng)
+                            manual_addr_conf = 0.0
+                            manual_addr_provider = "fallback"
+                            api_logger.warning(
+                                "Manual tower geocoding returned no address tile=%s error=%s",
+                                tile_id,
+                                geocoding_result.error_message,
+                            )
+                except RateLimitError as e:
+                    api_logger.warning("Geocoding rate limited for manual tower tile=%s: %s", tile_id, e)
+                    manual_address = _format_coordinate_address(center_lat, center_lng)
+                    manual_addr_conf = 0.0
+                    manual_addr_provider = "rate_limited"
+                except GeocodingError as e:
+                    api_logger.warning("Reverse geocoding failed for manual tower tile=%s: %s", tile_id, e)
+                    manual_address = _format_coordinate_address(center_lat, center_lng)
+                    manual_addr_conf = 0.0
+                    manual_addr_provider = "fallback"
+                except Exception as geocode_error:
+                    api_logger.error(
+                        "Unexpected geocoding error for manual tower tile=%s: %s",
+                        tile_id,
+                        geocode_error,
+                        exc_info=True,
+                    )
+                    manual_address = _format_coordinate_address(center_lat, center_lng)
+                    manual_addr_conf = 0.0
+                    manual_addr_provider = "error"
+                
+                # Create detection object (TASK-033 Phase 3: Include all required fields)
+                detection = {
+                    "x1": detection_x1,
+                    "y1": detection_y1,
+                    "x2": detection_x2,
+                    "y2": detection_y2,
+                    "conf": 1.0,
+                    "class": 0,
+                    "class_name": "ct",
+                    "secondary": 1.0,
+                    "tile": tile_id,
+                    "id_in_tile": -1,  # Mark as manual addition
+                    "selected": True,
+                    "inside": addition.get('inside', True) is True,
+                    "address": manual_address,
+                    "address_confidence": manual_addr_conf,
+                    "address_provider": manual_addr_provider
+                }
+                
+                results.append(detection)
+                api_logger.info(
+                    "Added manual tower to results tile=%s lat=%.6f lng=%.6f",
+                    tile_id,
+                    center_lat,
+                    center_lng,
+                )
+            
+            # Update session results with additions
+            session['results'] = json.dumps(results)
 
         # write the whole "current result set", modified selections, additions and all
         f.write(session['results'])
@@ -819,74 +3562,239 @@ def write_contents_file(tmpdirname, tiles, keep_ids, additions, meta):
 # upload dataset for further editing:
 #
 
+class UnsafeDatasetArchiveError(ValueError):
+    """Raised when a dataset ZIP member cannot be safely restored."""
+
+
+class DatasetExpansionError(ValueError):
+    """Raised before a dataset can exceed the bounded restore budget."""
+
+
+MAX_DATASET_MEMBER_BYTES = 64 * 1024 * 1024
+MAX_DATASET_METADATA_BYTES = 8 * 1024 * 1024
+MAX_DATASET_EXPANDED_BYTES = 512 * 1024 * 1024
+MAX_DATASET_MEMBERS = 1000
+
+
+def _validate_dataset_expansion(zipf):
+    entries = zipf.infolist()
+    if len(entries) > MAX_DATASET_MEMBERS:
+        raise DatasetExpansionError('too many archive members')
+    if any(entry.file_size > MAX_DATASET_MEMBER_BYTES for entry in entries):
+        raise DatasetExpansionError('archive member exceeds expanded size limit')
+    if sum(entry.file_size for entry in entries) > MAX_DATASET_EXPANDED_BYTES:
+        raise DatasetExpansionError('archive exceeds total expanded size limit')
+
+
+def _validate_dataset_zip_member_name(member_name):
+    """Validate a ZIP member name before it participates in restore paths."""
+    name = str(member_name)
+    if not name:
+        raise UnsafeDatasetArchiveError("empty ZIP member name")
+    if "\x00" in name:
+        raise UnsafeDatasetArchiveError("ZIP member contains a null byte")
+    if "\\" in name:
+        raise UnsafeDatasetArchiveError("ZIP member uses backslash path separators")
+    if ":" in name:
+        raise UnsafeDatasetArchiveError("ZIP member contains a drive or scheme prefix")
+    if name.startswith("/"):
+        raise UnsafeDatasetArchiveError("ZIP member uses an absolute path")
+
+    parts = name.split("/")
+    for index, part in enumerate(parts):
+        if part == "" and index == len(parts) - 1 and name.endswith("/"):
+            continue
+        if part in ("", ".", ".."):
+            raise UnsafeDatasetArchiveError("ZIP member contains an unsafe path segment")
+
+
+def _validate_dataset_zip_member_names(member_names):
+    for member_name in member_names:
+        _validate_dataset_zip_member_name(member_name)
+
+
+def _resolve_dataset_restore_target(tmpdirname, relative_name):
+    """Resolve an adapted dataset member path under the session temp directory."""
+    _validate_dataset_zip_member_name(relative_name)
+
+    base_dir = os.path.abspath(tmpdirname)
+    target_path = os.path.abspath(
+        os.path.join(base_dir, *str(relative_name).split("/"))
+    )
+    if os.path.commonpath([base_dir, target_path]) != base_dir:
+        raise UnsafeDatasetArchiveError("resolved dataset path escapes session temp directory")
+
+    return target_path
+
+
 @app.route('/uploaddataset', methods=['POST'])
 def upload_dataset():
-    print("Dataset upload")
+    api_logger.info("Dataset upload requested")
+    
+    # Rate limiting (more lenient for local development/testing)
+    # TASK-033 Phase 3: Increased limit for manual verification testing
+    client_ip = _get_client_ip()
+    if not rate_limiter.is_allowed(f"dataset-upload:{client_ip}", max_requests=10, window_seconds=60):
+        return jsonify({'error': 'Rate limit exceeded for dataset uploads'}), 429
+    
+    # Input validation
+    try:
+        if 'dataset' not in request.files:
+            raise ValidationError("No dataset file provided")
+            
+        file = TowerScoutValidator.validate_dataset_file(request.files['dataset'])
+    except ValidationError as e:
+        api_logger.warning("Dataset upload validation failed: %s", e.message)
+        return jsonify({'error': f'Validation error: {e.message}'}), 400
+    except Exception as e:
+        api_logger.error("Unexpected dataset upload validation error: %s", e, exc_info=True)
+        return jsonify({'error': 'Invalid request data'}), 400
 
-    # make a temp dir as usual
-    # first, clean out the old tempdir
-    if "tmpdirname" in session:
-        rmtree(session['tmpdirname'], ignore_errors=True, onerror=None)
-        print(" cleaned up tmp dir", session['tmpdirname'])
-        del session['tmpdirname']
+    # Restore into a new owned directory; keep the current review/export inputs
+    # until the complete replacement has been validated and parsed.
+    previous_tmpdirname = session.get('tmpdirname')
+    tmpdirname = None
+    restored = False
+    try:
+        tmpdirname = _make_session_tmpdir()
+        api_logger.info("Creating dataset temp dir %s", tmpdirname)
 
-    # make a new tempdir name and attach to session
-    tmpdirname = tempfile.mkdtemp()
-    print(" creating tmp dir", tmpdirname)
-    session['tmpdirname'] = tmpdirname
+        # TASK-033 Phase 3: Use os.path.join and os.path.basename for cross-platform compatibility
+        filename = os.path.join(tmpdirname, file.filename)
+        file.save(filename)
+        new_stem = os.path.basename(tmpdirname)
 
-    # check if the post request has the file part
-    if 'dataset' not in request.files:
-        print(" --- no file part in request")
-        return None
+        # unzip dataset.zip
+        # - "empty" tiles and labels right into "."
+        # - "train" combine "images" and "labels" folders into "."
+        # content.txt in "."
+        check_zip_directory(filename, MAX_DATASET_MEMBERS)
+        with zipfile.ZipFile(filename) as zipf:
+            # read previous results and tiles from content.txt and add to session
+            # print(" zip contents:")
+            filenames = zipf.namelist()
+            _validate_dataset_zip_member_names(filenames)
+            _validate_dataset_expansion(zipf)
+            
+            # TASK-036: Skip root-level files (README.txt, contents.txt) when finding old_stem
+            # Only use files in subfolders to extract the dataset prefix
+            subfolder_files = [f for f in filenames if "/" in f and not f.endswith("/")]
+            if not subfolder_files:
+                api_logger.warning("Dataset ZIP did not contain any subfolder files")
+                return jsonify({"error": "Invalid dataset structure: no subfolder files found"}), 400
+            
+            old_stem = subfolder_files[0][:subfolder_files[0].index("/")]
+            files = adapt_filenames(filenames, old_stem, new_stem)
+            # Old exports can contain both the canonical root README and a
+            # restored copy under empty/. Neither is session data. All names
+            # and expansion budgets were validated above, including these files.
+            ignored_readmes = {'README.txt', f'{old_stem}/empty/README.txt'}
+            members = [(info, name) for info, name in zip(zipf.infolist(), files)
+                       if info.filename not in ignored_readmes]
+            # Flattening must not overwrite metadata, another member, or the
+            # uploaded archive. Bound JSON before extraction/parsing as well.
+            targets = [os.path.normcase(os.path.abspath(
+                _resolve_dataset_restore_target(tmpdirname, name)))
+                for info, name in members if not info.is_dir()]
+            if len(targets) != len(set(targets)) or os.path.normcase(os.path.abspath(filename)) in targets:
+                raise DatasetFormatError('Ambiguous dataset archive paths')
+            for info, name in members:
+                if name == 'contents.txt' and info.file_size > MAX_DATASET_METADATA_BYTES:
+                    raise DatasetFormatError('Dataset metadata exceeds the 8 MiB restore limit')
+            # print(files)
+            extracted_files = set()
+            for info, f_new in members:
+                f_zip = info.filename
+                if info.is_dir():
+                    continue
+                api_logger.debug("Restoring dataset archive member %s to %s", f_zip, f_new)
+                if not f_zip.endswith(".xml"):
+                    target_path = _resolve_dataset_restore_target(tmpdirname, f_new)
+                    target_parent = os.path.dirname(target_path)
+                    if target_parent != os.path.abspath(tmpdirname):
+                        os.makedirs(target_parent, exist_ok=True)
+                    with zipf.open(f_zip) as f:
+                        with open(target_path, "wb") as f_target:
+                            api_logger.debug("Writing restored dataset file %s", target_path)
+                            for chunk in iter(lambda: f.read(1024 * 1024), b''):
+                                f_target.write(chunk)
+                    extracted_files.add(os.path.abspath(target_path))
 
-    file = request.files['dataset']
-    if file.filename == '':
-        print(' --- no selected dataset file')
-        return None
+        # process contents file
+        api_logger.info("Parsing restored contents.txt in %s", tmpdirname)
+        contents_file = os.path.join(tmpdirname, "contents.txt")
+        
+        if not os.path.exists(contents_file):
+            api_logger.warning("contents.txt not found in restored dataset")
+            return jsonify({"error": "Invalid dataset: contents.txt missing"}), 400
+        
+        with open(contents_file, 'rb') as f:
+            metadata_bytes = f.read(MAX_DATASET_METADATA_BYTES + 1)
+        if len(metadata_bytes) > MAX_DATASET_METADATA_BYTES:
+            raise DatasetFormatError('Dataset metadata exceeds the 8 MiB restore limit')
+        results = json.loads(metadata_bytes.decode('utf-8'))
+        
+        # Validate results structure
+        if not isinstance(results, list) or len(results) < 3:
+            api_logger.warning(
+                "Invalid contents.txt structure type=%s len=%s",
+                type(results),
+                len(results) if isinstance(results, list) else 'N/A',
+            )
+            return jsonify({"error": "Invalid dataset format: contents.txt structure invalid"}), 400
 
-    if not file or not file.filename.endswith(".zip"):
-        print(" --- invalid file or extension:", file.filename)
-        return None
+        results = validate_contents(results)
+        restored_tiles = adapt_tiles(
+            results[0], tmpdirname, old_stem, new_stem)
+        _validate_restored_tile_files(restored_tiles, tmpdirname, extracted_files)
+        restored_results = json.dumps(results[1])
+        # Retain only normalized metadata and consumed image/label inputs.
+        with open(contents_file, 'w', encoding='utf-8') as f:
+            json.dump(results, f)
+        os.remove(filename)
+        session['tmpdirname'] = tmpdirname
+        session['detections'] = restored_tiles
+        session['results'] = restored_results
+        # Every supported writer stores the inverse of the session metadata flag.
+        session['metadata'] = not results[2]
+        restored = True
+        if previous_tmpdirname and previous_tmpdirname != tmpdirname:
+            rmtree(previous_tmpdirname, ignore_errors=True, onerror=None)
+        # print("Results:", results[1])
+        # return previous results
+        api_logger.info("Dataset restore completed successfully")
 
-    filename = tmpdirname + "/" + file.filename
-    file.save(filename)
-    new_stem = tmpdirname[tmpdirname.rindex("/")+1:]
-
-    # unzip dataset.zip
-    # - "empty" tiles and labels right into "."
-    # - "train" combine "images" and "labels" folders into "."
-    # content.txt in "."
-    with zipfile.ZipFile(filename) as zipf:
-        # read previous results and tiles from content.txt and add to session
-        # print(" zip contents:")
-        filenames = zipf.namelist()
-        old_stem = filenames[0][:filenames[0].index("/")]
-        files = adapt_filenames(filenames, old_stem, new_stem)
-        # print(files)
-        for f_zip, f_new in zip(zipf.namelist(), files):
-            print(" processing",f_zip,"to:",f_new)
-            if not f_zip.endswith(".xml"):
-                with zipf.open(f_zip) as f:
-                    with open(tmpdirname+"/"+f_new, "wb") as f_target:
-                        print(" writing", tmpdirname+"/"+f_new)
-                        f_target.write(f.read())
-
-    # process contents file
-    results = []
-    print("parsing contents.txt in", tmpdirname)
-    with open(tmpdirname+"/contents.txt") as f:
-        results = json.loads(f.read())
-
-    session['detections'] = adapt_tiles(
-        results[0], tmpdirname, old_stem, new_stem)
-    session['results'] = json.dumps(results[1])
-    session['metadata'] = results[2]
-    # print("Results:", results[1])
-    # return previous results
-    print(" dataset restored.")
-
-    return session['results']
+        # TASK-033 Phase 3: Return JSON response, not plain text string
+        # Frontend expects parsed JSON array, not a JSON string
+        return jsonify(results[1])
+    
+    except DatasetFormatError as e:
+        # These messages are fixed application text, never archive contents.
+        api_logger.warning('Dataset restore rejected: %s', e)
+        return jsonify({'error': str(e)}), 400
+    except UnicodeDecodeError:
+        return jsonify({'error': 'Invalid dataset: contents.txt must be UTF-8'}), 400
+    except DatasetExpansionError as e:
+        api_logger.warning("Dataset ZIP expansion rejected: %s", e)
+        return jsonify({'error': 'Dataset ZIP exceeds restore size limits'}), 400
+    except zipfile.BadZipFile as e:
+        api_logger.warning("Invalid dataset ZIP file: %s", e)
+        return jsonify({'error': 'Invalid ZIP file format'}), 400
+    except json.JSONDecodeError as e:
+        api_logger.warning("Invalid JSON in dataset contents.txt: %s", e)
+        return jsonify({'error': 'Invalid dataset: corrupted contents.txt'}), 400
+    except KeyError as e:
+        api_logger.warning("Missing required field in restored dataset: %s", e)
+        return jsonify({'error': f'Invalid dataset: missing field {str(e)}'}), 400
+    except UnsafeDatasetArchiveError as e:
+        api_logger.warning("Unsafe dataset ZIP member rejected: %s", e)
+        return jsonify({'error': 'Invalid dataset ZIP path'}), 400
+    except Exception as e:
+        api_logger.error("Unexpected error during dataset upload: %s", e, exc_info=True)
+        return jsonify({'error': 'Failed to process dataset'}), 500
+    finally:
+        if tmpdirname and tmpdirname != previous_tmpdirname and not restored:
+            rmtree(tmpdirname, ignore_errors=True, onerror=None)
 
 # carefully unravel the zip structure we created in the dataset, and make it all flat
 
@@ -896,6 +3804,13 @@ def adapt_filenames(filenames, old_stem, new_stem):
     # print("old_dir",old_dir)
     results = []
     for f in filenames:
+        # TASK-036: Handle root-level files (README.txt, contents.txt)
+        # These don't have the old_stem prefix
+        if "/" not in f:
+            # Root-level file - keep as-is
+            results.append(f)
+            continue
+        
         f = f[len(old_stem)+1:]  # strip old dir name
         # print("stripped:",f)
         if f.startswith("empty/"):
@@ -917,34 +3832,75 @@ def adapt_filenames(filenames, old_stem, new_stem):
 def adapt_tiles(tiles, tmpdirname, old_stem, new_stem):
     for t in tiles:
         # print("before", t['filename'], t['labelfilename'])
-        name = t['filename'][t['filename'].rindex("/")+1:]
-        t['filename'] = tmpdirname + "/" + new_stem + name[len(old_stem):]
-        t['labelfilename'] = tmpdirname + "/" + \
-            new_stem + name[len(old_stem):][0:-4]+".txt"
+        # TASK-033 Phase 3: Use os.path.basename for cross-platform compatibility
+        name = os.path.basename(t['filename'].replace('\\', '/'))
+        if name.startswith(old_stem):
+            name = new_stem + name[len(old_stem):]
+        # TASK-033 Phase 3: Use os.path.join for cross-platform compatibility
+        t['filename'] = _resolve_dataset_restore_target(tmpdirname, name)
+        t['labelfilename'] = _resolve_dataset_restore_target(tmpdirname, os.path.splitext(name)[0] + ".txt")
         # print("after", t['filename'], t['labelfilename'])
     return tiles
 
 
+def _validate_restored_tile_files(tiles, tmpdirname, extracted_files):
+    """Validate all image/output mappings before replacing the current review.
+
+    Case-fold paths on both platforms so a restored dataset is portable to
+    Windows. Existing label files may be rewritten; no two tile records may
+    share an image, label or XML destination, or overwrite reserved metadata.
+    """
+    def key(path):
+        return os.path.abspath(path).casefold()
+
+    claimed = {key(os.path.join(tmpdirname, name)) for name in ('contents.txt', 'README.txt')}
+    for tile in tiles:
+        image_path = tile['filename']
+        outputs = (image_path, tile['labelfilename'], tile['labelfilename'][:-3] + 'xml')
+        for path in outputs:
+            if key(path) in claimed or os.path.isdir(path) or os.path.islink(path):
+                raise DatasetFormatError('Invalid or conflicting dataset tile file mapping')
+            claimed.add(key(path))
+        if os.path.abspath(image_path) not in extracted_files or not os.path.isfile(image_path):
+            raise DatasetFormatError('Dataset tile image is missing')
+        try:
+            if image_path.rsplit('.', 1)[-1].lower() not in TowerScoutValidator.ALLOWED_IMAGE_EXTENSIONS:
+                raise ValidationError('unsupported tile image extension')
+            with open(image_path, 'rb') as stream:
+                # The historical downloader writes provider bytes to .jpg
+                # without transcoding. Validate their actual image format,
+                # preserving valid PNG/TIFF bytes under a legacy JPEG name.
+                image_format = TowerScoutValidator._detect_image_format(stream.read(16))
+                extension = {'JPEG': 'jpg', 'PNG': 'png', 'TIFF': 'tiff'}.get(image_format)
+                if extension is None:
+                    raise ValidationError('unsupported tile image content')
+                TowerScoutValidator.validate_image_file(
+                    FileStorage(stream=stream, filename='tile.' + extension))
+        except ValidationError:
+            # Do not echo untrusted filenames or decoder diagnostics.
+            raise DatasetFormatError('Invalid dataset tile image') from None
+
+
 if __name__ == '__main__':
-    # read maps api key (not in source code due to security reasons)
-    # has to be an api key with access to maps, staticmaps and places
-    # todo: deploy CDC-owned key in final version
-    with open('apikey.txt') as f:
-        google_api_key = f.readline().split()[0]
-        bing_api_key = f.readline().split()[0]
-        f.close
+    # API keys are now loaded from environment variables at module level
     # app.run(debug = True)
     # app.secret_key = 'super secret key'
     # app.config['SESSION_TYPE'] = 'filesystem'
-    get_custom_models()
-    engine_default = sorted(engines.items(),key=lambda x:-x[1]['ts'])[0][0]
+    model_catalog_available = load_model_catalog()
 
 
     if len(sys.argv) <= 1 or sys.argv[1] != 'dev':
-        start_zipcodes()
-        get_engine(engine_default)
+        if should_preload_startup_assets():
+            start_zipcodes()
+            if model_catalog_available:
+                get_engine(engine_default)
+        else:
+            logger.info(
+                "Startup asset preload disabled by %s; readiness will report asset state.",
+                STARTUP_PRELOAD_ENV_VAR,
+            )
     else:
         dev = 1
 
-    serve(app, host='0.0.0.0', port=5000)
-    print("Web app running at http://localhost:5000/")
+    logger.info("Starting Waitress server on http://localhost:5000/")
+    serve(app, host='0.0.0.0', port=5000, max_request_body_size=MAX_REQUEST_BODY_SIZE)

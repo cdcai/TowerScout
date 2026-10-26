@@ -1,0 +1,124 @@
+TOWERSCOUT ISSUE REPORT FORM
+=======================================
+
+Last reviewed: 2026-10-25
+
+Use this form when TowerScout setup, startup, provider setup, detection, export,
+or shutdown does not work as expected. Submit the sanitized form at https://github.com/cdcai/TowerScout/issues. This is a PUBLIC issue tracker. Use only public test fixtures and sanitized diagnostics. No private reporting service is promised here.
+
+DO NOT SEND
+===========
+
+- API keys or full `.env` files.
+- Private AOI screenshots, exact private addresses, or investigation data.
+- Raw logs, raw provider responses, browser network traces, tile/map URLs, or
+  exported datasets. A request from a commenter does not make public posting safe.
+- Provider portal screenshots that show account, billing, quota, or key details.
+
+ISSUE SUMMARY
+=============
+
+Result:
+  [ ] BLOCKED - I cannot continue.
+  [ ] FAIL - TowerScout runs, but the required workflow failed.
+  [ ] PASS_WITH_NOTES - The workflow completed, but something was confusing.
+
+Guide and step number:
+
+What you clicked or the command structure (remove private paths, names and values):
+
+What you expected to happen:
+
+What happened instead:
+
+Sanitized error category/message (no location, account, key or raw response):
+
+Screenshot attached?
+  [ ] No
+  [ ] Yes, and I checked it does not show keys, private locations, provider
+      portals, raw logs, browser network traces, or sensitive data.
+
+SETUP DETAILS
+=============
+
+TowerScout package folder name:
+
+Release tag or release URL:
+
+Application Package variant used:
+  [ ] CPU default
+  [ ] CUDA 12.8 support-assigned
+  [ ] Unsure
+
+Engine used:
+  [ ] Docker Desktop
+  [ ] Podman
+  [ ] Unsure
+
+GPU mode, if any:
+  [ ] Not assigned / CPU mode
+  [ ] Support assigned GPU validation
+  [ ] I tried GPU without support assigning it
+  [ ] Unsure
+
+If support assigned Podman, did you run the provider helper?
+  [ ] Not assigned Podman
+  [ ] Yes: .\scripts\install-podman-compose-provider.cmd -Apply
+  [ ] No
+  [ ] Unsure
+
+Port shown in browser:
+  [ ] 5000
+  [ ] Other:
+  [ ] Unsure
+
+Did setup finish successfully?
+  [ ] Yes
+  [ ] No
+  [ ] Unsure
+
+Did Setup Wizard save the provider configuration?
+  [ ] Yes
+  [ ] No
+  [ ] Unsure
+
+Provider used:
+  [ ] Azure Maps
+  [ ] Google Maps
+  [ ] Neither yet
+  [ ] Unsure
+
+DETECTION DETAILS, IF THE ISSUE HAPPENED DURING DETECTION
+=========================================================
+
+Public reproducible fixture identifier (leave blank for a private investigation):
+
+Geometry type only: rectangle / circle / polygon / multiple (no coordinates or private search text):
+
+Estimated tile count, if shown:
+
+Did the detection run start?
+  [ ] Yes
+  [ ] No
+  [ ] Unsure
+
+Did the review panel update?
+  [ ] Yes
+  [ ] No
+  [ ] Unsure
+
+WHAT YOU ALREADY TRIED
+======================
+
+Briefly list anything you tried after the issue appeared:
+
+ADDITIONAL DIAGNOSTICS AND SECURITY REPORTS
+===========================================
+
+Do not attach raw logs or investigations here. Reproduce with a public fixture
+and report the minimal sanitized error category, version, engine and device.
+If sensitive information is necessary, use your established organizational
+security/support channel and agree on a private transfer method first. For a
+security concern, do not post exploit details, credentials or private data in
+public issues. You may post a sanitized request for a private reporting contact.
+GitHub private vulnerability reporting is not assumed enabled.

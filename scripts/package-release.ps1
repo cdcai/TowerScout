@@ -1,0 +1,597 @@
+param(
+    [string] $Version = "local",
+
+    [string] $OutputDir = "dist",
+
+    [string] $Image = "",
+
+    [string] $ImageDigest = "",
+
+    [string] $AssetBundleSha256 = "",
+
+    [string] $AssetBundleVersion = "",
+
+    [string] $PytorchFlavor = "",
+
+    [switch] $AllowMutableImage,
+
+    [switch] $AllowMissingSourceRef,
+
+    [switch] $AllowDirtySource,
+
+    [switch] $NoZip,
+
+    [switch] $Force
+)
+
+$ErrorActionPreference = "Stop"
+
+if ($Version -notmatch "^[A-Za-z0-9][A-Za-z0-9._-]*$") {
+    throw "Version must contain only letters, numbers, dots, underscores, and hyphens, and must start with a letter or number."
+}
+
+if ([string]::IsNullOrWhiteSpace($Image)) {
+    $Image = $env:TOWERSCOUT_IMAGE
+}
+if ([string]::IsNullOrWhiteSpace($Image)) {
+    $Image = "ghcr.io/cdcai/towerscout:latest-cpu"
+}
+if ([string]::IsNullOrWhiteSpace($ImageDigest)) {
+    $ImageDigest = $env:TOWERSCOUT_IMAGE_DIGEST
+}
+
+$digestPattern = "sha256:[0-9a-f]{64}"
+$sha256Pattern = "[0-9a-f]{64}"
+if ([string]::IsNullOrWhiteSpace($ImageDigest) -and $Image -match "@($digestPattern)$") {
+    $ImageDigest = $Matches[1]
+}
+
+if ([string]::IsNullOrWhiteSpace($ImageDigest)) {
+    if (-not $AllowMutableImage) {
+        throw "Release packaging requires -ImageDigest with sha256:<64 lowercase hex>. Use -AllowMutableImage only for local validation packages."
+    }
+}
+elseif ($ImageDigest -notmatch "^$digestPattern$") {
+    throw "ImageDigest must match sha256:<64 lowercase hex>."
+}
+
+if (-not [string]::IsNullOrWhiteSpace($AssetBundleSha256)) {
+    $AssetBundleSha256 = $AssetBundleSha256.Trim().ToLowerInvariant()
+    if ($AssetBundleSha256 -match "^sha256:($sha256Pattern)$") {
+        $AssetBundleSha256 = $Matches[1]
+    }
+    elseif ($AssetBundleSha256 -notmatch "^$sha256Pattern$") {
+        throw "AssetBundleSha256 must match <64 lowercase hex> or sha256:<64 lowercase hex>."
+    }
+}
+
+if (($Image -match "@($digestPattern)$") -and -not [string]::IsNullOrWhiteSpace($ImageDigest) -and $Matches[1] -ne $ImageDigest) {
+    throw "Image already contains digest $($Matches[1]), which does not match -ImageDigest $ImageDigest."
+}
+
+$supportedPytorchFlavors = @("cpu", "cuda128")
+if ([string]::IsNullOrWhiteSpace($PytorchFlavor)) {
+    $PytorchFlavor = $env:TOWERSCOUT_PYTORCH_FLAVOR
+}
+if ([string]::IsNullOrWhiteSpace($PytorchFlavor)) {
+    $imageWithoutDigest = $Image -replace "@$digestPattern$", ""
+    # Infer any cpu/cuda<digits> tag suffix; an unsupported CUDA flavor is
+    # rejected by the allow-list below instead of silently becoming cpu.
+    if ($imageWithoutDigest -match "[-:](cpu|cuda\d+)$") {
+        $PytorchFlavor = $Matches[1]
+    }
+    else {
+        $PytorchFlavor = "cpu"
+    }
+}
+$PytorchFlavor = $PytorchFlavor.Trim().ToLowerInvariant()
+if ($PytorchFlavor -notin $supportedPytorchFlavors) {
+    throw "PytorchFlavor must be one of: $($supportedPytorchFlavors -join ', ')."
+}
+
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+
+$sourceRef = ""
+try {
+    $gitOutput = & git -C $repoRoot rev-parse HEAD 2>$null
+    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($gitOutput)) {
+        $sourceRef = ($gitOutput | Select-Object -First 1).Trim()
+    }
+}
+catch {
+    $sourceRef = ""
+}
+
+if ([string]::IsNullOrWhiteSpace($sourceRef)) {
+    if (-not $AllowMissingSourceRef) {
+        throw "Release packaging requires a git source ref. Use -AllowMissingSourceRef only for local validation packages."
+    }
+    Write-Warning "Creating a local-validation package without a source ref. Do not use this package as a release artifact."
+}
+
+$gitStatusChecked = $false
+$dirtyEntries = @()
+try {
+    $gitStatusOutput = & git -C $repoRoot status --porcelain 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        $gitStatusChecked = $true
+        $dirtyEntries = @($gitStatusOutput | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    }
+}
+catch {
+    $gitStatusChecked = $false
+}
+
+if (-not $gitStatusChecked) {
+    if (-not $AllowDirtySource) {
+        throw "Release packaging requires git working-tree status. Use -AllowDirtySource only for local validation packages."
+    }
+    Write-Warning "Creating a local-validation package without git dirty-tree verification."
+}
+elseif ($dirtyEntries.Count -gt 0) {
+    if (-not $AllowDirtySource) {
+        throw "Release packaging requires a clean git working tree. Commit or stash changes, or use -AllowDirtySource only for local validation packages."
+    }
+    Write-Warning "Creating a local-validation package from a dirty working tree. Do not use this package as a release artifact."
+}
+
+$outputPath = Join-Path $repoRoot $OutputDir
+if (-not (Test-Path -LiteralPath $outputPath -PathType Container)) {
+    New-Item -ItemType Directory -Path $outputPath | Out-Null
+}
+
+$outputRoot = (Resolve-Path -LiteralPath $outputPath).Path
+$packageName = "towerscout-$Version"
+$stagePath = Join-Path $outputRoot $packageName
+$zipPath = Join-Path $outputRoot "$packageName.zip"
+
+function Get-TowerScoutDefaultAssetBundleVersion {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $PackageVersion
+    )
+
+    $candidate = ([string] $PackageVersion).Trim()
+    if ($candidate -match '^(?<base>.+)-(?:cpu|cuda\d+)$') {
+        return $Matches['base']
+    }
+
+    return $candidate
+}
+
+if ([string]::IsNullOrWhiteSpace($AssetBundleVersion)) {
+    $AssetBundleVersion = Get-TowerScoutDefaultAssetBundleVersion -PackageVersion $Version
+}
+else {
+    $AssetBundleVersion = $AssetBundleVersion.Trim()
+}
+if ($AssetBundleVersion -notmatch "^[A-Za-z0-9][A-Za-z0-9._-]*$") {
+    throw "AssetBundleVersion must contain only letters, numbers, dots, underscores, and hyphens, and must start with a letter or number."
+}
+
+function Test-ChildPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $Parent,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Child
+    )
+
+    $parentFull = [System.IO.Path]::GetFullPath($Parent).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+    $childFull = [System.IO.Path]::GetFullPath($Child)
+    return $childFull.StartsWith($parentFull + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+if (Test-Path -LiteralPath $stagePath) {
+    if (-not $Force) {
+        throw "Package staging directory already exists: $stagePath. Use -Force or choose a different -Version/-OutputDir."
+    }
+    if (-not (Test-ChildPath -Parent $outputRoot -Child $stagePath)) {
+        throw "Refusing to remove staging directory outside the output root: $stagePath"
+    }
+    Remove-Item -LiteralPath $stagePath -Recurse -Force
+}
+
+if ((Test-Path -LiteralPath $zipPath) -and -not $NoZip) {
+    if (-not $Force) {
+        throw "Package zip already exists: $zipPath. Use -Force or choose a different -Version/-OutputDir."
+    }
+    if (-not (Test-ChildPath -Parent $outputRoot -Child $zipPath)) {
+        throw "Refusing to remove zip outside the output root: $zipPath"
+    }
+    Remove-Item -LiteralPath $zipPath -Force
+}
+
+New-Item -ItemType Directory -Path $stagePath | Out-Null
+
+function Copy-ReleaseItem {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $RelativePath
+    )
+
+    $source = Join-Path $repoRoot $RelativePath
+    if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
+        throw "Required release file not found: $RelativePath"
+    }
+
+    $destination = Join-Path $stagePath $RelativePath
+    $destinationDir = Split-Path -Parent $destination
+    if (-not (Test-Path -LiteralPath $destinationDir -PathType Container)) {
+        New-Item -ItemType Directory -Path $destinationDir | Out-Null
+    }
+    Copy-Item -LiteralPath $source -Destination $destination
+}
+
+# Deferred Task-087 listener/worker entrypoints and TowerScoutHostHelper.ps1
+# remain in source history only. The shared state module is still required by
+# normal launch/stop cleanup; manual certificate repair remains supported.
+$releaseFiles = @(
+    "setup-towerscout.cmd",
+    "bootstrap.cmd",
+    "start.bat",
+    "compose.yaml",
+    "compose.gpu.yaml",
+    "compose.gpu.podman.yaml",
+    ".env.example",
+    "LICENSE",
+    "licenses\Apache-2.0.txt",
+    "licenses\AGPL-3.0.txt",
+    "licenses\CC-BY-NC-SA-4.0.txt",
+    "licenses\TowerScout-APPLICATION-GRANT.md",
+    "licenses\jQuery-MIT.txt",
+    "licenses\SyntheticData-MIT.txt",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md",
+    "MODEL_LICENSES.md",
+    "DATA_LICENSES.md",
+    "PROVIDER_TERMS.md",
+    "docs\docker-cpu-user-guide.md",
+    "docs\docker-gpu-user-guide.md",
+    "docs\local-it-administrator-guide.md",
+    "docs\local-it-administrator-guide.html",
+    "docs\quick-start.md",
+    "docs\quick-start.html",
+    "docs\package-guide.md",
+    "docs\podman-cpu-user-guide.md",
+    "docs\podman-gpu-user-guide.md",
+    "docs\user-guide.md",
+    "docs\user-guide.html",
+    "docs\project-overview.md",
+    "docs\project-overview.html",
+    "docs\towerscout-docs.css",
+    "docs\v1-rc1-quick-start.md",
+    "docs\v1-rc1-quick-start.html",
+    "docs\v1-rc1-package-guide.md",
+    "docs\towerscout-user-guide.md",
+    "docs\towerscout-user-guide.html",
+    "docs\support\oci-quick-start.md",
+    "docs\support\host-helper.md",
+    "docs\support\oci-runtime-contract.md",
+    "docs\release\release-asset-bundle-contract.md",
+    "docs\release\release-notes.md",
+    "docs\maintenance.md",
+    "docs\adr\023-unsigned-windows-package-support-boundary.md",
+    "docs\security\dependency-security-disposition.md",
+    "docs\support\issue-report-form.txt",
+    "webapp\asset_manifest.v1.json",
+    "scripts\podman-compose-providers.v1.json",
+    "scripts\lib\TowerScoutBootstrap.ps1",
+    "scripts\lib\TowerScoutCertificateStore.ps1",
+    "scripts\lib\TowerScoutCompose.ps1",
+    "scripts\lib\TowerScoutHostHelperState.ps1",
+    "scripts\lib\TowerScoutPodmanComposeProvider.ps1",
+    "scripts\lib\TowerScoutPodmanGpu.ps1",
+    "scripts\setup-towerscout.ps1",
+    "scripts\bootstrap.ps1",
+    "scripts\enable-podman-gpu.ps1",
+    "scripts\install-podman-compose-provider.cmd",
+    "scripts\install-podman-compose-provider.ps1",
+    "scripts\bootstrap-pip.py",
+    "scripts\launch.ps1",
+    "scripts\start.cmd",
+    "scripts\start.ps1",
+    "scripts\stop.cmd",
+    "scripts\stop.ps1",
+    "scripts\logs.cmd",
+    "scripts\logs.ps1",
+    "scripts\status.cmd",
+    "scripts\status.ps1",
+    "scripts\import-assets.cmd",
+    "scripts\import-assets.ps1",
+    "scripts\import-tls-ca.cmd",
+    "scripts\import-tls-ca.ps1",
+    "scripts\repair-provider-tls.cmd",
+    "scripts\repair-provider-tls.ps1"
+)
+
+foreach ($file in $releaseFiles) {
+    Copy-ReleaseItem -RelativePath $file
+}
+
+$assetDir = Join-Path $stagePath "assets"
+New-Item -ItemType Directory -Path $assetDir | Out-Null
+@"
+TowerScout assets are distributed separately from the release control package.
+
+Recommended first setup from the package root:
+
+setup-towerscout.cmd
+
+The setup command checks prerequisites, finds the Model & Data Package ZIP if
+it is beside the extracted application package or in the parent TowerScout UAT
+folder, verifies checksum sidecars, rejects unsafe or nested ZIP layouts,
+imports assets with hash verification, and starts TowerScout.
+
+Optional validation tracks:
+
+setup-towerscout.cmd -Engine podman
+setup-towerscout.cmd -Gpu auto
+
+If Podman reports that no approved Compose provider is present:
+
+scripts\install-podman-compose-provider.cmd -Apply
+
+Advanced support fallback when an explicit path is needed:
+
+bootstrap.cmd -AssetZip <path-to-asset-zip>
+
+Manual fallback: place the extracted asset bundle here before running
+scripts\import-assets.cmd:
+
+assets\model_params\
+assets\data\
+assets\asset_manifest.v1.json
+
+Then run:
+
+scripts\import-assets.cmd -Source assets
+
+For release-candidate or support validation, use:
+
+scripts\import-assets.cmd -Source assets -VerifyHashes
+
+YOLO detector weights are treated as YOLO-derived/AGPL-governed for this
+release track unless separate written model terms say otherwise. See
+MODEL_LICENSES.md, DATA_LICENSES.md, and THIRD_PARTY_NOTICES.md.
+The EfficientNet classifier weights retain CC-BY-NC-SA-4.0, including its
+noncommercial and share-alike conditions. The full text is in
+licenses\CC-BY-NC-SA-4.0.txt.
+"@ | Set-Content -LiteralPath (Join-Path $assetDir "README.txt") -Encoding ASCII
+
+$effectiveImage = $Image
+if (-not [string]::IsNullOrWhiteSpace($ImageDigest)) {
+    if ($Image -notmatch "@sha256:") {
+        $effectiveImage = "$Image@$ImageDigest"
+    }
+    else {
+        $effectiveImage = $Image
+    }
+}
+elseif ($AllowMutableImage) {
+    Write-Warning "Creating a local-validation package with a mutable image reference. Do not use this package as a release artifact."
+}
+
+$assetManifestVersion = ""
+$assetManifestPath = Join-Path $repoRoot "webapp\asset_manifest.v1.json"
+if (Test-Path -LiteralPath $assetManifestPath -PathType Leaf) {
+    try {
+        $assetManifest = Get-Content -LiteralPath $assetManifestPath -Raw | ConvertFrom-Json
+        $assetManifestVersion = [string] $assetManifest.manifest_version
+    }
+    catch {
+        $assetManifestVersion = ""
+    }
+}
+
+$assetBundleName = ""
+$assetBundleSha256Sidecar = ""
+if (-not [string]::IsNullOrWhiteSpace($assetManifestVersion)) {
+    $assetBundleName = "towerscout-$AssetBundleVersion-assets-$assetManifestVersion.zip"
+    $assetBundleSha256Sidecar = "$assetBundleName.sha256"
+}
+
+$controlZipSha256Sidecar = ""
+if (-not $NoZip) {
+    $controlZipSha256Sidecar = "$packageName.zip.sha256"
+}
+
+@"
+TowerScout release image
+
+Version: $Version
+Image: $effectiveImage
+Image digest: $ImageDigest
+PyTorch flavor: $PytorchFlavor
+Generated UTC: $((Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"))
+
+Release packages pin TOWERSCOUT_IMAGE to an immutable digest reference.
+If Image digest is blank, this package was generated with -AllowMutableImage and is suitable for local validation only.
+"@ | Set-Content -LiteralPath (Join-Path $stagePath "IMAGE.txt") -Encoding ASCII
+
+$envSource = Join-Path $stagePath ".env.example"
+$envLines = Get-Content -LiteralPath $envSource
+$envLines = $envLines | ForEach-Object {
+    if ($_ -match "^TOWERSCOUT_IMAGE=") {
+        "TOWERSCOUT_IMAGE=$effectiveImage"
+    }
+    elseif ($_ -match "^TOWERSCOUT_IMAGE_DIGEST=") {
+        "TOWERSCOUT_IMAGE_DIGEST=$ImageDigest"
+    }
+    elseif ($_ -match "^TOWERSCOUT_PYTORCH_FLAVOR=") {
+        "TOWERSCOUT_PYTORCH_FLAVOR=$PytorchFlavor"
+    }
+    else {
+        $_
+    }
+}
+$envLines | Set-Content -LiteralPath $envSource -Encoding ASCII
+
+$sourceRepository = "https://github.com/cdcai/TowerScout"
+$sourceUrl = ""
+$sourceArchiveUrl = ""
+$sourceState = "local-validation"
+if ($gitStatusChecked -and $dirtyEntries.Count -eq 0 -and $sourceRef -cmatch '^[0-9a-f]{40}$') {
+    $sourceUrl = "$sourceRepository/tree/$sourceRef"
+    $sourceArchiveUrl = "$sourceRepository/archive/$sourceRef.tar.gz"
+    $sourceState = "clean-commit"
+}
+
+@"
+TowerScout corresponding source notice
+
+Version: $Version
+Release track: agpl-yolo
+Source ref: $sourceRef
+Source state: $sourceState
+Source repository: $sourceRepository
+Source URL: $sourceUrl
+Source download: $sourceArchiveUrl
+Generated UTC: $((Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"))
+
+The YOLO-enabled release package and image must have matching corresponding
+source available for the exact release ref. The source must include:
+
+- TowerScout source code.
+- Vendored Ultralytics YOLOv5 source under webapp/vendor/yolov5_local/.
+- TowerScout local YOLO patches and loader code.
+- Dockerfile, Compose files, launcher scripts, packaging scripts, requirements,
+  and asset import helpers.
+- Build, package, asset import, and run instructions.
+
+If source state is local-validation, this package is not a release artifact.
+Its source ref, if present, identifies the parent commit and does not identify
+uncommitted changes. No exact source URL is claimed for those package bytes.
+For a clean commit, verify public access to the source URL/download before
+publication. Make complete matching corresponding source available without
+charge alongside the release, including required dependency source and notices.
+A source URL or SBOM alone does not fulfill that requirement.
+"@ | Set-Content -LiteralPath (Join-Path $stagePath "SOURCE.txt") -Encoding ASCII
+
+@"
+TowerScout SBOM reference
+
+Version: $Version
+Release track: agpl-yolo
+Image: $effectiveImage
+PyTorch flavor: $PytorchFlavor
+Generated UTC: $((Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"))
+
+The container publication workflow generates image-sbom.cdx.json in CycloneDX
+format for the exact published image digest. Retain the matching CPU/CUDA
+workflow artifacts with the release and identify their image digests in the
+release evidence. This local packaging command does not generate that SBOM.
+Confirm coverage of Python and OS packages, frontend dependencies and vendored
+YOLOv5 source; supplement the SBOM where necessary before publication.
+
+This file is a release-package reference, not the generated SBOM itself.
+"@ | Set-Content -LiteralPath (Join-Path $stagePath "SBOM.txt") -Encoding ASCII
+
+$manifest = [ordered]@{
+    schema_version       = 1
+    track                = "agpl-yolo"
+    release_version      = $Version
+    release_statement    = "Project-controlled application code has the additional AGPL-3.0-only grant in licenses/TowerScout-APPLICATION-GRANT.md; prior grants and third-party terms remain effective, and the EfficientNet classifier weights retain CC-BY-NC-SA-4.0."
+    generated_utc        = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+    image                = $effectiveImage
+    image_digest         = $ImageDigest
+    pytorch_flavor       = $PytorchFlavor
+    asset_manifest       = "webapp/asset_manifest.v1.json"
+    compliance_files     = @(
+        "LICENSE",
+        "licenses/Apache-2.0.txt",
+        "licenses/AGPL-3.0.txt",
+        "licenses/CC-BY-NC-SA-4.0.txt",
+        "licenses/TowerScout-APPLICATION-GRANT.md",
+        "licenses/jQuery-MIT.txt",
+        "licenses/SyntheticData-MIT.txt",
+        "NOTICE",
+        "THIRD_PARTY_NOTICES.md",
+        "MODEL_LICENSES.md",
+        "DATA_LICENSES.md",
+        "PROVIDER_TERMS.md",
+        "SOURCE.txt",
+        "SBOM.txt",
+        "IMAGE.txt",
+        "SHA256SUMS.txt"
+    )
+    release_artifacts    = [ordered]@{
+        control_zip                  = if ($NoZip) { "" } else { "$packageName.zip" }
+        control_zip_sha256           = ""
+        control_zip_sha256_sidecar   = $controlZipSha256Sidecar
+        control_zip_sha256_reason    = if ($NoZip) { "No control ZIP was generated because -NoZip was used." } else { "Published in the adjacent control ZIP .sha256 sidecar instead of embedded in the ZIP manifest." }
+        image                        = $effectiveImage
+        image_digest                 = $ImageDigest
+        pytorch_flavor               = $PytorchFlavor
+        asset_manifest               = "webapp/asset_manifest.v1.json"
+        asset_bundle                 = $assetBundleName
+        asset_bundle_release_version = $AssetBundleVersion
+        asset_bundle_sha256          = $AssetBundleSha256
+        asset_bundle_sha256_sidecar  = $assetBundleSha256Sidecar
+        asset_bundle_sha256_reason   = if ([string]::IsNullOrWhiteSpace($AssetBundleSha256)) { "Provide -AssetBundleSha256 from the Model & Data Package checksum sidecar during release assembly." } else { "" }
+        package_contents_sha256      = "SHA256SUMS.txt"
+    }
+    corresponding_source = [ordered]@{
+        source_ref     = $sourceRef
+        source_state   = $sourceState
+        repository_url = $sourceRepository
+        source_url     = $sourceUrl
+        archive_url    = $sourceArchiveUrl
+        source_offer   = "See SOURCE.txt."
+        required_paths = @(
+            "webapp/vendor/yolov5_local/",
+            "webapp/ts_yolov5_local.py",
+            "webapp/ts_yolov5.py",
+            "Dockerfile",
+            "compose.yaml",
+            "compose.gpu.yaml",
+            "compose.gpu.podman.yaml",
+            "scripts/",
+            "webapp/requirements.txt",
+            "package-lock.json"
+        )
+    }
+    runtime_components   = [ordered]@{
+        yolo = [ordered]@{
+            name                      = "Ultralytics YOLOv5"
+            license                   = "AGPL-3.0"
+            vendored_path             = "webapp/vendor/yolov5_local"
+            validated_upstream_commit = "1d62daa3c6b8ec15fdb319c0a2e341d8b56ec86c"
+        }
+    }
+    sbom                 = [ordered]@{
+        reference = "SBOM.txt"
+        status    = "The container publication workflow generates an exact-digest CycloneDX SBOM. Retain the matching CPU/CUDA artifacts with the release; SBOM.txt is a reference, not the SBOM."
+    }
+    revocation           = [ordered]@{
+        notes = "Revoke and replace the release if the ZIP, image digest, model/data assets, source ref, SBOM, or notices are defective."
+    }
+}
+$manifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $stagePath "release-manifest.v1.json") -Encoding ASCII
+
+$checksumPath = Join-Path $stagePath "SHA256SUMS.txt"
+$stageFullPath = [System.IO.Path]::GetFullPath($stagePath).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+$filesToHash = Get-ChildItem -LiteralPath $stagePath -Recurse -File |
+Where-Object { $_.FullName -ne $checksumPath } |
+Sort-Object FullName
+
+$checksumLines = foreach ($file in $filesToHash) {
+    $relative = [System.IO.Path]::GetFullPath($file.FullName).Substring($stageFullPath.Length).Replace("\", "/")
+    $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+    "$hash  $relative"
+}
+$checksumLines | Set-Content -LiteralPath $checksumPath -Encoding ASCII
+
+if (-not $NoZip) {
+    Compress-Archive -Path (Join-Path $stagePath "*") -DestinationPath $zipPath
+    $zipHash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
+    "$zipHash  $packageName.zip" | Set-Content -LiteralPath (Join-Path $outputRoot "$packageName.zip.sha256") -Encoding ASCII
+}
+
+Write-Host "Package staged at: $stagePath"
+if (-not $NoZip) {
+    Write-Host "Package zip: $zipPath"
+}
+Write-Host "Image: $effectiveImage"
+Write-Host "PyTorch flavor: $PytorchFlavor"

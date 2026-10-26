@@ -1,0 +1,7 @@
+interface:
+  display_name: 'TowerScout: Agent Work Hygiene'
+  short_description: Task tracking hygiene
+  default_prompt: Use $towerscout-agent-work-hygiene to check these task-tracking
+    updates.
+policy:
+  allow_implicit_invocation: true

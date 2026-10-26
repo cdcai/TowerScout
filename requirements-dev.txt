@@ -1,0 +1,24 @@
+# Refresh the root dependency submission after the October 21 aiohttp/Pillow fixes.
+# Development dependencies for TowerScout testing and code quality
+# Keep this root manifest in dependency-graph refreshes; runtime dependencies remain in webapp/requirements.txt.
+
+# Testing framework
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-mock>=3.10.0
+pytest-timeout>=2.3.1
+
+# Documentation review bundle rendering
+markdown-it-py==4.2.0
+
+# Code quality
+black>=22.0.0
+flake8>=5.0.0
+isort>=5.10.0
+
+# Type checking
+mypy>=1.0.0
+
+# Security scanning
+bandit>=1.7.0
+safety>=2.0.0

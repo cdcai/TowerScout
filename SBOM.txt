@@ -1,0 +1,25 @@
+TowerScout SBOM Reference
+
+Release track: agpl-yolo
+
+This checked-in file records TowerScout's SBOM expectation and current release
+posture. It is not the generated SBOM itself.
+
+The manual container publication workflow generates a CycloneDX SBOM for the
+exact published image digest and uploads it with the exact-digest Trivy report
+and written finding dispositions. Release maintainers must retain that SBOM
+with the image metadata and reference it from the control-package evidence.
+This checked-in file remains a policy/reference document, not the generated
+SBOM itself.
+
+At minimum, a release-specific SBOM should cover:
+
+- Python packages from webapp/requirements.txt.
+- Frontend packages from package-lock.json.
+- OS packages installed in the container image.
+- Vendored Ultralytics YOLOv5 source under webapp/vendor/yolov5_local/.
+
+The generated release control ZIP is authoritative for release-specific image,
+checksum, and source metadata and includes `SHA256SUMS.txt`, `IMAGE.txt`, and
+`release-manifest.v1.json` so reviewers can match a separately generated SBOM
+to the package and image digest.

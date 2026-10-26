@@ -1,0 +1,7 @@
+interface:
+  display_name: 'TowerScout: Skill Router'
+  short_description: Skill routing
+  default_prompt: Use $towerscout-skill-router to choose the primary skill and optional
+    secondary checks for this task.
+policy:
+  allow_implicit_invocation: true

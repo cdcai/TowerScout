@@ -1,3 +1,6 @@
+# Adapted from debidatta/syndata-generation, dataset_generator.py.
+# Copyright (c) 2017 Debidatta Dwibedi. MIT license; see
+# ../licenses/SyntheticData-MIT.txt. TowerScout retains local adaptations.
 import argparse
 import glob
 import sys

@@ -6,8 +6,8 @@
 # TowerScout Team:
 # Karen Wong, Gunnar Mein, Thaddeus Segura, Jia Lu
 #
-# Licensed under CC-BY-NC-SA-4.0
-# (see LICENSE.TXT in the root of the repository for details)
+# Licensed under CC-BY-NC-SA-4.0 OR AGPL-3.0-only
+# (see LICENSE and licenses/TowerScout-APPLICATION-GRANT.md at the repository root)
 #
 */
 
@@ -487,4 +487,39 @@ ul, #myUL {
 
 .active {
     display: block;
+}
+
+.modal-overlay {
+    padding: 12px;
+}
+
+.modal-container.setup-wizard,
+.modal-container.settings-screen {
+    width: 100%;
+}
+
+.modal-container.setup-wizard {
+    padding: 18px;
+}
+
+.wizard-progress {
+    grid-template-columns: 1fr;
+}
+
+.wizard-actions,
+.key-input-group {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.wizard-repair-confirmation {
+    align-items: flex-start;
+}
+
+.settings-content {
+    padding: 16px 18px 20px;
+}
+
+.modal-header {
+    padding: 18px 18px 0;
 }
