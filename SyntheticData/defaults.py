@@ -1,3 +1,6 @@
+# Adapted from debidatta/syndata-generation/defaults.py.
+# Copyright (c) 2017 Debidatta Dwibedi. MIT License; see ../licenses/SyntheticData-MIT.txt.
+# TowerScout modifies generation parameters; notice reconciled October 25, 2026.
 # Paths
 # Fill this according to own setup
 BACKGROUND_DIR = 'data_dir/backgrounds/'

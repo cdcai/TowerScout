@@ -1,0 +1,7 @@
+interface:
+  display_name: 'TowerScout: Container Windows Runtime'
+  short_description: Container runtime review
+  default_prompt: Use $towerscout-container-windows-runtime to review this launcher
+    update.
+policy:
+  allow_implicit_invocation: true

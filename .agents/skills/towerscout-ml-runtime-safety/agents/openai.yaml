@@ -1,0 +1,6 @@
+interface:
+  display_name: 'TowerScout: ML Runtime Safety'
+  short_description: ML runtime safety
+  default_prompt: Use $towerscout-ml-runtime-safety to review this EfficientNet change.
+policy:
+  allow_implicit_invocation: true

@@ -5,8 +5,8 @@
 # TowerScout Team:
 # Karen Wong, Gunnar Mein, Thaddeus Segura, Jia Lu
 #
-# Licensed under CC-BY-NC-SA-4.0
-# (see LICENSE.TXT in the root of the repository for details)
+# Licensed under CC-BY-NC-SA-4.0 OR AGPL-3.0-only
+# (see LICENSE and licenses/TowerScout-APPLICATION-GRANT.md at the repository root)
 #
 
 # events class: An alert mechanism we need to abort server jobs

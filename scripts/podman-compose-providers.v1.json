@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "providers": [
+    {
+      "id": "podman-compose-pypi-1.5.0",
+      "display_name": "podman-compose 1.5.0 from PyPI",
+      "version": "1.5.0",
+      "license": "GPL-2.0-only",
+      "requires_python": ">=3.9",
+      "source_url": "https://files.pythonhosted.org/packages/41/4b/75ab5c151b9d170fdae0048a6f6528535aff848140c007f408af9ac555d6/podman_compose-1.5.0-py3-none-any.whl",
+      "package_sha256": "f0b9d35f4da1b309172adf208a5cb7a882b532a834c2202666c1988b6f147546",
+      "dependencies": [
+        {
+          "name": "python-dotenv",
+          "version": "1.1.1",
+          "requirement": "python-dotenv==1.1.1"
+        },
+        {
+          "name": "PyYAML",
+          "version": "6.0.2",
+          "requirement": "PyYAML==6.0.2"
+        }
+      ],
+      "windows_amd64_sha256": "",
+      "allowed_executable_names": [
+        "podman-compose",
+        "podman-compose.exe",
+        "podman-compose.cmd"
+      ],
+      "disallowed_path_patterns": [
+        "(?i)\\\\Docker\\\\Docker\\\\resources\\\\bin\\\\docker-compose(\\.exe)?$",
+        "(?i)Docker Desktop"
+      ],
+      "required_commands": [
+        {
+          "arguments": ["version"],
+          "expected_output_pattern": "(?i)podman-compose\\s+version\\s+1\\.5\\.0"
+        }
+      ]
+    },
+    {
+      "id": "docker-compose-standalone-5.1.4",
+      "display_name": "Standalone Docker Compose v5.1.4",
+      "version": "5.1.4",
+      "license": "Apache-2.0",
+      "source_url": "",
+      "package_sha256": "",
+      "windows_amd64_sha256": "",
+      "allowed_executable_names": [
+        "docker-compose",
+        "docker-compose.exe"
+      ],
+      "disallowed_path_patterns": [
+        "(?i)\\\\Docker\\\\Docker\\\\resources\\\\bin\\\\docker-compose(\\.exe)?$",
+        "(?i)Docker Desktop"
+      ],
+      "required_commands": [
+        {
+          "arguments": ["version"],
+          "expected_output_pattern": "(?i)Docker Compose version v?5\\.1\\.4"
+        }
+      ]
+    }
+  ]
+}

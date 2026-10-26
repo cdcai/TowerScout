@@ -1,22 +1,131 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+
+# Testing
+.pytest_cache/
+pytest-cache-files-*/
+.agent_work/pytest-cache-files-*/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+test/
+test-artifacts/
+tests/__pycache__/
+tests/**/__pycache__/
+
+# Node.js / NPM
+node_modules/
+package-lock.json
+!package-lock.json
+npm-debug.log
+yarn.lock
+.npm
+tests/frontend/detection-workflow.local.json
+
+# Flask
+instance/
+.webassets-cache
+flask_session/
+webapp/flask_session/*
+
+# Logs
+*.log
+logs/
+artifacts/
+webapp/logs/*
+
+# Cache files
+cache/
+*.cache
+webapp/cache/**/*.cache
+
+# Environment variables (contains secrets)
+.env
+webapp/.env
+webapp/config/.env
+webapp/config/.env.backup.*
+webapp/config/.env.lock
+.env.*
+*.env
+!.env.example
+apikey.txt
+webapp/apikey.txt
+
+# Model weights (large files)
+model_params/
+webapp/model_params/*
+*.pt
+*.pth
+*.onnx
+yolov5s.pt
+webapp/yolov5s.pt
+yolov5/*
+
+# IDE
+.vscode/
+.vscode*
+.idea/
+*.swp
+*.swo
+*~
+workspace.code-workspace
+
+# OS
+.DS_Store
+*.DS_Store
+Thumbs.db
+.ipynb_checkpoints*
+
+# Uploads and temporary files
+uploads/*
+contents.txt
+webapp/uploads/*
+!uploads/.gitkeep
+temp/*
+webapp/temp/*
+webapp/tmp*/
+*.tmp
+*.bak
+tmp/
+webapp/tmp.py
+.towerscout-runtime/
+
+# Local analysis artifacts
+.worktrees/
+.agent_work/context/analysis/browser-runs/
+.agent_work/tasks/completed/TASK-053/evidence/browser-runs/
+.agent_work/tmp/
+.agent_work/pytest-temp/
+.agent_work/pytest-basetemp-*/
+.agent_work/pytest-task087-*/
+.agent_work/scripts/__pycache__/
+.pytest-task087-*/
+.task087-pytest-*/
+.tmp-task087-*/
+tools/podman-compose-provider/
+
+# Data files
 data/*
 data.yaml
-*.DS_Store
-.DS_Store
-.ipynb_checkpoints*
-.vscode*
-webapp/apikey.txt
 webapp/data/*
-webapp/__pycache__/*
-webapp/model_params/*
-webapp/temp/*
-webapp/tmp.py
-webapp/uploads/*
-webapp/yolov5s.pt
-webapp/flask_session/*
-towerscout.pem
-workspace.code-workspace
-test/*
 train/*
-yolov5/*
+
+# Deployment
+towerscout.pem
 hosting/connect-tc.sh
-.DS_Store
+
+# GitHub repo policy and workflow files are intentionally tracked
+
+# Private working records and generated handoff material
+.agent_work/
+output/
+outputs/
+# Local TLS import concurrency lock (no certificate material).
+.tls-import.lock

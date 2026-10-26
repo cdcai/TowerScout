@@ -1,0 +1,7 @@
+interface:
+  display_name: 'TowerScout: Secret and Provider Key Safety'
+  short_description: Secret safety scan
+  default_prompt: Use $towerscout-secret-and-provider-key-safety before I commit these
+    artifacts.
+policy:
+  allow_implicit_invocation: true

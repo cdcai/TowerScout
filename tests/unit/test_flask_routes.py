@@ -1,0 +1,1323 @@
+"""
+Current Flask route smoke and contract tests for TowerScout.
+
+TASK-052 replaces stale route coverage that still targeted removed endpoints and
+the pre-Sprint 05 detection contract.
+"""
+
+import json
+import io
+import shutil
+import uuid
+import zipfile
+from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
+from PIL import Image
+
+from ts_errors import NetworkError
+import towerscout
+from towerscout import SESSION_ID_KEY, app
+
+MODEL_UPLOAD_KEY = "route-test-model-upload-key-1234567890"
+
+
+def _ensure_engine_catalog_loaded():
+    if towerscout.engines:
+        return
+
+    towerscout.get_custom_models()
+    if not towerscout.engines:
+        towerscout.engines["newest"] = {
+            "id": "newest",
+            "name": "newest",
+            "file": "newest.pt",
+            "engine": None,
+            "ts": 0,
+        }
+    if towerscout.engines and towerscout.engine_default is None:
+        towerscout.engine_default = sorted(
+            towerscout.engines.items(),
+            key=lambda item: -item[1]["ts"],
+        )[0][0]
+
+
+@pytest.fixture
+def client():
+    app.config["TESTING"] = True
+    app.config["SECRET_KEY"] = "test_secret_key"
+    return app.test_client()
+
+
+@pytest.mark.parametrize('requested_path', ['keep.txt', '..%2Foutside.txt'])
+def test_retired_upload_deletion_route_cannot_remove_files(client, tmp_path, monkeypatch, requested_path):
+    uploads = tmp_path / 'uploads'
+    uploads.mkdir()
+    inside = uploads / 'keep.txt'
+    outside = tmp_path / 'outside.txt'
+    inside.write_text('keep', encoding='utf-8')
+    outside.write_text('keep', encoding='utf-8')
+    monkeypatch.setattr(towerscout, 'UPLOAD_DIR', uploads)
+    response = client.get('/rm/uploads/' + requested_path)
+    assert response.status_code == 404
+    assert inside.read_text(encoding='utf-8') == 'keep'
+    assert outside.read_text(encoding='utf-8') == 'keep'
+
+
+@pytest.mark.parametrize('host', [
+    'attacker.example', 'localhost.attacker.example', '127.0.0.1.attacker.example',
+    '[::1]:5000', '[::2]', '127.1', '2130706433', 'localhost:0',
+    'localhost:65536', 'localhost:abc', 'user@localhost', 'localhost,attacker.example',
+])
+def test_local_request_rejects_untrusted_host_before_returning_keys(client, host):
+    response = client.get('/getgooglekey', headers={'Host': host})
+    assert response.status_code == 400
+    assert b'test_google_key_123' not in response.data
+
+
+@pytest.mark.parametrize('headers', [
+    {'Origin': 'https://attacker.example'},
+    {'Origin': 'null'},
+    {'Origin': 'http://localhost:9999'},
+    {'Origin': 'http://localhost.attacker.example'},
+    {'Sec-Fetch-Site': 'cross-site'},
+    {'Sec-Fetch-Site': 'same-site'},
+    {'Referer': 'https://attacker.example/form'},
+])
+def test_local_request_rejects_foreign_mutation_before_provider_work(client, monkeypatch, headers):
+    validate = Mock(return_value={'valid': True})
+    monkeypatch.setattr(towerscout.ts_config, 'validate_api_key', validate)
+    response = client.post('/api/config/validate-key', headers=headers,
+                           json={'provider': 'google', 'key': 'synthetic-key'})
+    assert response.status_code == 403
+    validate.assert_not_called()
+
+
+@pytest.mark.parametrize('base_url', ['http://localhost', 'http://localhost:5000', 'http://127.0.0.1:5235'])
+def test_local_request_preserves_loopback_health_provider_and_setup(client, monkeypatch, base_url):
+    validate = Mock(return_value={'valid': True})
+    monkeypatch.setattr(towerscout.ts_config, 'validate_api_key', validate)
+    monkeypatch.setattr(towerscout.rate_limiter, 'is_allowed', lambda *a, **k: True)
+    assert client.get('/api/health', base_url=base_url).status_code == 200
+    assert client.get('/getgooglekey', base_url=base_url,
+                      headers={'Origin': base_url}).status_code == 200
+    response = client.post('/api/config/validate-key', base_url=base_url,
+                           headers={'Origin': base_url, 'Sec-Fetch-Site': 'same-origin'},
+                           json={'provider': 'google', 'key': 'synthetic-key'})
+    assert response.status_code == 200
+    validate.assert_called_once_with('google', 'synthetic-key')
+
+
+def test_local_request_preserves_headerless_command_line_provider_validation(client, monkeypatch):
+    validate = Mock(return_value={'valid': True})
+    monkeypatch.setattr(towerscout.ts_config, 'validate_api_key', validate)
+    monkeypatch.setattr(towerscout.rate_limiter, 'is_allowed', lambda *a, **k: True)
+    assert client.post('/api/config/validate-key', json={
+        'provider': 'google', 'key': 'synthetic-key'}).status_code == 200
+    validate.assert_called_once()
+
+
+def test_legacy_bing_key_does_not_bypass_supported_provider_setup(monkeypatch):
+    monkeypatch.setenv('GOOGLE_API_KEY', '')
+    monkeypatch.setenv('AZURE_MAPS_SUBSCRIPTION_KEY', '')
+    monkeypatch.setenv('BING_API_KEY', 'synthetic-legacy-key')
+    assert towerscout.load_api_keys(allow_missing=True)[3] is True
+
+
+def test_unconfigured_supported_provider_raises_actionable_error(monkeypatch):
+    monkeypatch.setattr(towerscout, 'google_api_key', '')
+    with pytest.raises(towerscout.MapProviderError) as result:
+        towerscout._create_map_provider('google')
+    assert result.value.error_code == 'MAP_PROVIDER_UNAVAILABLE'
+
+
+@pytest.mark.parametrize('path', ['/site/', '/site/index.html', '/site/assets/css/style.css'])
+def test_retired_research_website_is_not_served(client, path):
+    assert client.get(path).status_code == 404
+
+
+def test_index_route_renders_towerscout_shell(client):
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert b"TowerScout" in response.data
+    assert b"/license" in response.data
+    assert b"/docs/quick-start.html" in response.data
+    assert b"/docs/project-overview.html" in response.data
+    assert b"/docs/user-guide.html" in response.data
+    assert b"/docs/local-it-administrator-guide.html" in response.data
+    assert b"https://pubmed.ncbi.nlm.nih.gov/38906615/" in response.data
+    assert b"sciencedirect.com/science/article/pii/S2589750024000943" not in response.data
+    assert b"Documentation Placeholder" not in response.data
+    assert b"Video Guide Placeholder" not in response.data
+
+
+def test_license_route_exposes_release_notices(client):
+    response = client.get("/license")
+
+    assert response.status_code == 200
+    assert response.mimetype == "text/html"
+    assert b"TowerScout Source/licenses" in response.data
+    assert b"/license.txt" in response.data
+    assert b"THIRD_PARTY_NOTICES.md" in response.data
+    assert b"Ultralytics YOLOv5" in response.data
+    assert b"AGPL-3.0" in response.data
+    assert b"SOURCE.txt" in response.data
+    assert b"SBOM.txt" in response.data
+    assert b"release-manifest.v1.json" in response.data
+    assert b"GNU AFFERO GENERAL PUBLIC LICENSE" in response.data
+    assert b"licenses/Apache-2.0.txt" in response.data
+    assert b"APPENDIX: How to apply the Apache License to your work." in response.data
+    assert b"licenses/CC-BY-NC-SA-4.0.txt" in response.data
+    assert b"Attribution-NonCommercial-ShareAlike 4.0 International" in response.data
+    assert b"licenses/TowerScout-APPLICATION-GRANT.md" in response.data
+    assert b"AGPL-3.0-only" in response.data
+    assert b"licenses/jQuery-MIT.txt" in response.data
+    assert b"Copyright JS Foundation and other contributors" in response.data
+
+
+def test_license_text_route_exposes_plain_text_notices(client):
+    response = client.get("/license.txt")
+
+    assert response.status_code == 200
+    assert response.mimetype == "text/plain"
+    assert b"THIRD_PARTY_NOTICES.md" in response.data
+    assert b"Ultralytics YOLOv5" in response.data
+    assert b"AGPL-3.0" in response.data
+    assert b"SOURCE.txt" in response.data
+    assert b"SBOM.txt" in response.data
+    assert b"release-manifest.v1.json" in response.data
+    assert b"GNU AFFERO GENERAL PUBLIC LICENSE" in response.data
+    assert b"licenses/Apache-2.0.txt" in response.data
+    assert b"APPENDIX: How to apply the Apache License to your work." in response.data
+    assert b"licenses/CC-BY-NC-SA-4.0.txt" in response.data
+    assert b"Attribution-NonCommercial-ShareAlike 4.0 International" in response.data
+    assert b"licenses/TowerScout-APPLICATION-GRANT.md" in response.data
+    assert b"AGPL-3.0-only" in response.data
+    assert b"licenses/jQuery-MIT.txt" in response.data
+    assert b"Copyright JS Foundation and other contributors" in response.data
+
+
+def test_docs_routes_expose_package_local_docs(client):
+    index_response = client.get("/docs/")
+    quick_start_response = client.get("/docs/quick-start.html")
+    overview_response = client.get("/docs/project-overview.html")
+    docker_cpu_response = client.get("/docs/docker-cpu-user-guide.md")
+    docker_gpu_response = client.get("/docs/docker-gpu-user-guide.md")
+    podman_cpu_response = client.get("/docs/podman-cpu-user-guide.md")
+    podman_gpu_response = client.get("/docs/podman-gpu-user-guide.md")
+    user_guide_response = client.get("/docs/user-guide.html")
+    local_it_response = client.get("/docs/local-it-administrator-guide.html")
+    package_guide_response = client.get("/docs/package-guide.md")
+    css_response = client.get("/docs/towerscout-docs.css")
+
+    assert index_response.status_code == 200
+    assert index_response.mimetype == "text/html"
+    assert b"TowerScout Quick Start" in index_response.data
+    assert b"About These Instructions" in index_response.data
+    assert b"Make Three Independent Choices" in index_response.data
+    assert quick_start_response.status_code == 200
+    assert b"Google Cloud Console" in quick_start_response.data
+    assert b"Azure portal" in quick_start_response.data
+
+    assert overview_response.status_code == 200
+    assert overview_response.mimetype == "text/html"
+    assert b"Project Overview" in overview_response.data
+    assert b"Beginner Requirements" in overview_response.data
+    assert b"source checkout" in overview_response.data
+    assert docker_cpu_response.status_code == 200
+    assert b"TowerScout Docker CPU User Guide" in docker_cpu_response.data
+    assert docker_gpu_response.status_code == 200
+    assert b"TowerScout Docker GPU User Guide" in docker_gpu_response.data
+    assert podman_cpu_response.status_code == 200
+    assert b"TowerScout Podman CPU User Guide" in podman_cpu_response.data
+    assert podman_gpu_response.status_code == 200
+    assert b"TowerScout Podman GPU User Guide" in podman_gpu_response.data
+
+    assert user_guide_response.status_code == 200
+    assert user_guide_response.mimetype == "text/html"
+    assert b"User Guide" in user_guide_response.data
+    assert b"Before Using This Guide" in user_guide_response.data
+    assert b"The user chooses the engine, processing mode, and map provider" in user_guide_response.data
+    assert b"Stop When Finished Or Resume Later" in user_guide_response.data
+    assert local_it_response.status_code == 200
+    assert local_it_response.mimetype == "text/html"
+    assert b"Local IT Administrator Guide" in local_it_response.data
+    assert b"process-scoped execution-policy" in local_it_response.data
+    assert package_guide_response.status_code == 200
+    assert b"TowerScout Package Guide" in package_guide_response.data
+    assert b"Users independently choose Docker or Podman" in package_guide_response.data
+    assert b"compatible NVIDIA GPU" in package_guide_response.data
+    assert b"Google Maps or Azure Maps" in package_guide_response.data
+
+    assert css_response.status_code == 200
+    assert "text/css" in css_response.content_type
+
+
+def test_legacy_doc_paths_are_compatibility_stubs(client):
+    quick_start_response = client.get("/docs/v1-rc1-quick-start.html")
+    user_guide_response = client.get("/docs/towerscout-user-guide.html")
+    package_guide_response = client.get("/docs/v1-rc1-package-guide.md")
+
+    assert quick_start_response.status_code == 200
+    assert b"Quick Start Has Moved" in quick_start_response.data
+    assert b"/docs/quick-start.html" in quick_start_response.data
+    assert user_guide_response.status_code == 200
+    assert b"User Guide Has Moved" in user_guide_response.data
+    assert b"/docs/user-guide.html" in user_guide_response.data
+    assert package_guide_response.status_code == 200
+    assert b"Package Guide Has Moved" in package_guide_response.data
+    assert b"docs/package-guide.md" in package_guide_response.data
+
+
+@pytest.mark.parametrize("path", sorted(towerscout.PUBLIC_DOC_FILES))
+def test_each_public_doc_is_served(client, path):
+    response = client.get(f"/docs/{path}")
+
+    assert response.status_code == 200
+    assert response.data
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "../README.md",
+        "..%2FREADME.md",
+        "codex-skills/README.md",
+        "support/oci-quick-start.md",
+        "project-overview.html/",
+        "project-overview.html/../user-guide.html",
+        "project-overview.html%5C..%5Cuser-guide.html",
+    ],
+)
+def test_docs_route_rejects_non_public_docs(client, path):
+    response = client.get(f"/docs/{path}")
+
+    assert response.status_code == 404
+
+
+def test_provider_and_key_routes_match_current_boot_contract(client, monkeypatch):
+    monkeypatch.setenv("DEFAULT_MAP_PROVIDER", "azure")
+    _ensure_engine_catalog_loaded()
+
+    providers_response = client.get("/getproviders")
+    google_key_response = client.get("/getgooglekey")
+    azure_key_response = client.get("/getazurekey")
+    engines_response = client.get("/getengines")
+
+    assert providers_response.status_code == 200
+    providers = json.loads(providers_response.data)
+    assert [entry["id"] for entry in providers] == ["azure", "google"]
+
+    assert google_key_response.status_code == 200
+    assert google_key_response.get_json()["apiKey"] == "test_google_key_123"
+
+    assert azure_key_response.status_code == 200
+    assert azure_key_response.get_json()["subscriptionKey"] == "test_azure_key_456"
+
+    assert engines_response.status_code == 200
+    engines = json.loads(engines_response.data)
+    assert len(engines) >= 1
+    assert any(entry["id"] == "newest" for entry in engines)
+
+
+def test_health_and_readiness_routes_match_container_contract(client):
+    health_response = client.get("/api/health")
+
+    assert health_response.status_code == 200
+    assert health_response.get_json() == {
+        "status": "ok",
+        "service": "towerscout",
+    }
+
+    with patch.object(
+        towerscout.ts_runtime,
+        "build_readiness_payload",
+        return_value={
+            "state": "ready",
+            "components": {},
+            "version": {},
+            "runtime": {},
+            "recovery": [],
+        },
+    ):
+        readiness_response = client.get("/api/readiness")
+
+    assert readiness_response.status_code == 200
+    assert readiness_response.get_json()["state"] == "ready"
+
+
+def test_readiness_route_uses_503_for_fatal_state(client):
+    with patch.object(
+        towerscout.ts_runtime,
+        "build_readiness_payload",
+        return_value={
+            "state": "fatal",
+            "components": {},
+            "version": {},
+            "runtime": {},
+            "recovery": ["Check container volume permissions."],
+        },
+    ):
+        readiness_response = client.get("/api/readiness")
+
+    assert readiness_response.status_code == 503
+    assert readiness_response.get_json()["state"] == "fatal"
+
+
+def test_startup_preload_switch_supports_asset_light_container_start(monkeypatch):
+    monkeypatch.delenv(towerscout.STARTUP_PRELOAD_ENV_VAR, raising=False)
+    assert towerscout.should_preload_startup_assets() is True
+
+    monkeypatch.setenv(towerscout.STARTUP_PRELOAD_ENV_VAR, "0")
+    assert towerscout.should_preload_startup_assets() is False
+
+    monkeypatch.setenv(towerscout.STARTUP_PRELOAD_ENV_VAR, "false")
+    assert towerscout.should_preload_startup_assets() is False
+
+    monkeypatch.setenv(towerscout.STARTUP_PRELOAD_ENV_VAR, "1")
+    assert towerscout.should_preload_startup_assets() is True
+
+
+def test_model_catalog_handles_empty_asset_volume(monkeypatch):
+    original_engines = dict(towerscout.engines)
+    original_default = towerscout.engine_default
+    empty_model_dir = (
+        Path(".agent_work")
+        / "pytest-temp"
+        / f"task025-empty-models-{uuid.uuid4().hex}"
+    )
+    empty_model_dir.mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(towerscout, "YOLO_MODEL_DIR", empty_model_dir)
+    towerscout.engines.clear()
+    try:
+        assert towerscout.load_model_catalog() is False
+        assert towerscout.engine_default is None
+        assert towerscout.engines == {}
+    finally:
+        towerscout.engines.clear()
+        towerscout.engines.update(original_engines)
+        towerscout.engine_default = original_default
+        shutil.rmtree(empty_model_dir, ignore_errors=True)
+
+
+def test_ensure_yolo_config_dir_creates_config_path(monkeypatch):
+    config_dir = (
+        Path(".agent_work")
+        / "pytest-temp"
+        / f"task025-yolo-config-{uuid.uuid4().hex}"
+    )
+    monkeypatch.setenv("YOLO_CONFIG_DIR", str(config_dir))
+
+    try:
+        assert towerscout.ensure_yolo_config_dir() == str(config_dir)
+        assert config_dir.is_dir()
+    finally:
+        shutil.rmtree(config_dir, ignore_errors=True)
+
+
+def test_config_status_and_session_reset_routes_match_current_contract(client):
+    with client.session_transaction() as sess:
+        sess["custom_key"] = "custom_value"
+        sess["tmpdirname"] = "C:\\nonexistent\\towerscout-test"
+
+    status_response = client.get("/api/config/status")
+    performance_response = client.get("/api/config/performance")
+    reset_response = client.post("/api/config/reset-session")
+
+    assert status_response.status_code == 200
+    status_payload = status_response.get_json()
+    assert status_payload["needs_setup"] is False
+    assert status_payload["google"]["configured"] is True
+    assert status_payload["azure"]["configured"] is True
+    assert status_payload["default_map_provider"] in {"azure", "google"}
+    assert status_payload["google"]["preview"].startswith("test")
+    assert status_payload["azure"]["preview"].startswith("test")
+
+    assert performance_response.status_code == 200
+    performance_payload = performance_response.get_json()
+    assert set(performance_payload) == {
+        "avg_tiles_per_second",
+        "session_count",
+        "last_detection_timestamp",
+    }
+
+    assert reset_response.status_code == 200
+    assert reset_response.get_json()["success"] is True
+    with client.session_transaction() as sess:
+        assert sess["needs_setup"] is False
+        assert "custom_key" not in sess
+
+
+def test_validate_key_route_reports_actionable_network_failure(client):
+    validation_error = NetworkError(
+        "google validation request failed",
+        user_message=(
+            "TowerScout could not reach Google Maps from the local server. "
+            "Check internet or proxy access, then try again. If this is a managed network, "
+            "contact support without sending API keys or raw network traces."
+        ),
+        details={
+            "provider": "google",
+            "category": "provider_validation_network",
+            "support_action": "Confirm local/container network access to the provider validation endpoints.",
+        },
+    )
+
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch.object(
+        towerscout.ts_config,
+        "validate_api_key",
+        side_effect=validation_error,
+    ):
+        response = client.post(
+            "/api/config/validate-key",
+            json={"provider": "google", "key": "AIzaSyEXAMPLE1234567890abcdefghijklmno"},
+        )
+
+    assert response.status_code == 502
+    payload = response.get_json()
+    assert "TowerScout could not reach Google Maps" in payload["message"]
+    assert "without sending API keys or raw network traces" in payload["message"]
+    assert payload["details"]["provider"] == "google"
+    assert payload["details"]["category"] == "provider_validation_network"
+    assert "AIzaSyEXAMPLE1234567890abcdefghijklmno" not in json.dumps(payload)
+
+
+def test_save_keys_allows_valid_default_provider_when_other_provider_needs_tls_repair(client):
+    google_tls_error = NetworkError(
+        "google validation request failed TLS verification",
+        user_message="TowerScout could not verify the Google Maps TLS certificate.",
+        details={
+            "provider": "google",
+            "category": "tls_ca_untrusted",
+            "support_action": "Run scripts\\repair-provider-tls.cmd for Google Maps.",
+            "repair_command": "scripts\\repair-provider-tls.cmd -Provider google",
+        },
+    )
+
+    def validate_provider(provider, _key):
+        if provider == "google":
+            raise google_tls_error
+        return {
+            "valid": True,
+            "provider": "azure",
+            "category": "tls_ok",
+            "message": "Azure Maps subscription key validated successfully.",
+        }
+
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch.object(
+        towerscout.ts_config,
+        "validate_api_key",
+        side_effect=validate_provider,
+    ), patch.object(towerscout.ts_config, "update_env_file") as mock_update, patch.object(
+        towerscout,
+        "refresh_runtime_config",
+        return_value=False,
+    ):
+        response = client.post(
+            "/api/config/save-keys",
+            json={
+                "google_api_key": "google-test-key",
+                "azure_maps_subscription_key": "azure-test-key",
+                "default_map_provider": "azure",
+            },
+        )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["success"] is True
+    assert payload["persisted_providers"] == ["azure"]
+    assert payload["validation_results"]["google"]["details"]["category"] == "tls_ca_untrusted"
+    assert payload["validation_results"]["azure"]["valid"] is True
+    mock_update.assert_called_once()
+    updates = mock_update.call_args.args[0]
+    assert updates == {
+        "DEFAULT_MAP_PROVIDER": "azure",
+        "AZURE_MAPS_SUBSCRIPTION_KEY": "azure-test-key",
+    }
+
+
+def test_save_keys_rejects_invalid_selected_default_provider(client):
+    google_tls_error = NetworkError(
+        "google validation request failed TLS verification",
+        user_message="TowerScout could not verify the Google Maps TLS certificate.",
+        details={"provider": "google", "category": "tls_ca_untrusted"},
+    )
+
+    def validate_provider(provider, _key):
+        if provider == "google":
+            raise google_tls_error
+        return {"valid": True, "provider": "azure", "category": "tls_ok"}
+
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch.object(
+        towerscout.ts_config,
+        "validate_api_key",
+        side_effect=validate_provider,
+    ), patch.object(towerscout.ts_config, "update_env_file") as mock_update:
+        response = client.post(
+            "/api/config/save-keys",
+            json={
+                "google_api_key": "google-test-key",
+                "azure_maps_subscription_key": "azure-test-key",
+                "default_map_provider": "google",
+            },
+        )
+
+    assert response.status_code == 400
+    payload = response.get_json()
+    assert payload["success"] is False
+    assert "default_map_provider" in payload["message"]
+    assert payload["validation_results"]["google"]["details"]["category"] == "tls_ca_untrusted"
+    assert payload["validation_results"]["azure"]["valid"] is True
+    mock_update.assert_not_called()
+
+
+def test_save_keys_derives_default_provider_when_omitted_and_one_provider_validates(client, monkeypatch):
+    monkeypatch.setenv("DEFAULT_MAP_PROVIDER", "azure")
+    monkeypatch.delenv("AZURE_MAPS_SUBSCRIPTION_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+
+    def validate_provider(provider, _key):
+        if provider == "google":
+            return {"valid": True, "provider": "google", "category": "tls_ok"}
+        raise AssertionError(f"Unexpected provider validation: {provider}")
+
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch.object(
+        towerscout.ts_config,
+        "validate_api_key",
+        side_effect=validate_provider,
+    ), patch.object(towerscout.ts_config, "update_env_file") as mock_update, patch.object(
+        towerscout,
+        "refresh_runtime_config",
+        return_value=False,
+    ):
+        response = client.post(
+            "/api/config/save-keys",
+            json={
+                "google_api_key": "google-test-key",
+            },
+        )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["success"] is True
+    assert payload["default_map_provider"] == "google"
+    assert payload["default_map_provider_derived"] is True
+    assert payload["persisted_providers"] == ["google"]
+    mock_update.assert_called_once()
+    updates = mock_update.call_args.args[0]
+    assert updates == {
+        "DEFAULT_MAP_PROVIDER": "google",
+        "GOOGLE_API_KEY": "google-test-key",
+    }
+
+
+def test_provider_tls_status_route_uses_keyless_provider_probe(client):
+    with patch.object(
+        towerscout.ts_config,
+        "check_provider_tls_status",
+        return_value={"provider": "google", "reachable": True, "category": "tls_ok"},
+    ) as mock_status:
+        response = client.get("/api/config/tls-status?provider=google")
+
+    assert response.status_code == 200
+    assert response.get_json()["category"] == "tls_ok"
+    assert "no-store" in response.headers["Cache-Control"]
+    mock_status.assert_called_once_with("google")
+
+
+def test_provider_tls_status_route_never_issues_start_authorization(
+    client,
+    monkeypatch,
+):
+    monkeypatch.setenv("TOWERSCOUT_HOST_HELPER_ENABLED", "1")
+    monkeypatch.setenv("TOWERSCOUT_HOST_HELPER_PORT", "50123")
+    monkeypatch.setenv("TOWERSCOUT_HOST_HELPER_SESSION_ID", "a" * 32)
+    monkeypatch.setenv("TOWERSCOUT_HOST_HELPER_SESSION_KEY", "A" * 43)
+    monkeypatch.setattr(
+        towerscout.ts_host_helper,
+        "PROVIDER_TLS_REPAIR_CAPABILITY_ENABLED",
+        True,
+    )
+    payload = {
+        "provider": "google",
+        "category": "tls_ca_untrusted",
+        "repairable": True,
+    }
+
+    with patch.object(
+        towerscout.ts_config,
+        "check_provider_tls_status",
+        return_value=payload,
+    ):
+        response = client.get("/api/config/tls-status?provider=google")
+
+    assert response.status_code == 200
+    bridge = response.get_json()["helper_bridge"]
+    assert bridge["provider_tls_repair_capability"] is True
+    assert "operation_authorization" not in bridge
+
+
+def test_validate_key_error_can_issue_start_authorization(client, monkeypatch):
+    monkeypatch.setenv("TOWERSCOUT_HOST_HELPER_ENABLED", "1")
+    monkeypatch.setenv("TOWERSCOUT_HOST_HELPER_PORT", "50123")
+    monkeypatch.setenv("TOWERSCOUT_HOST_HELPER_SESSION_ID", "a" * 32)
+    monkeypatch.setenv("TOWERSCOUT_HOST_HELPER_SESSION_KEY", "A" * 43)
+    monkeypatch.setattr(
+        towerscout.ts_host_helper,
+        "PROVIDER_TLS_REPAIR_CAPABILITY_ENABLED",
+        True,
+    )
+    tls_error = NetworkError(
+        "google validation request failed TLS verification",
+        user_message="Google Maps TLS verification failed.",
+        details={
+            "provider": "google",
+            "category": "tls_ca_untrusted",
+            "repairable": True,
+        },
+    )
+
+    with patch.object(
+        towerscout.rate_limiter,
+        "is_allowed",
+        return_value=True,
+    ), patch.object(
+        towerscout.ts_config,
+        "validate_api_key",
+        side_effect=tls_error,
+    ):
+        response = client.post(
+            "/api/config/validate-key",
+            json={"provider": "google", "key": "google-test-key"},
+        )
+
+    assert response.status_code == 502
+    authorization = response.get_json()["details"]["helper_bridge"][
+        "operation_authorization"
+    ]
+    assert authorization["operation_type"] == "provider_tls_repair"
+    assert authorization["operation_token"].startswith("v1.")
+
+
+def test_rate_limit_identity_ignores_untrusted_forwarded_for(client):
+    with patch.object(
+        towerscout.rate_limiter,
+        "is_allowed",
+        return_value=False,
+    ) as mock_allowed:
+        response = client.post(
+            "/api/config/validate-key",
+            json={"provider": "google", "key": "google-test-key"},
+            environ_overrides={
+                "REMOTE_ADDR": "127.0.0.9",
+                "HTTP_X_FORWARDED_FOR": "203.0.113.99",
+            },
+        )
+
+    assert response.status_code == 429
+    assert mock_allowed.call_args.args[0] == "config-validate:127.0.0.9"
+
+
+def test_repairable_validation_adds_review_only_helper_bridge(client, monkeypatch):
+    monkeypatch.setenv("TOWERSCOUT_HOST_HELPER_ENABLED", "1")
+    monkeypatch.setenv("TOWERSCOUT_HOST_HELPER_PORT", "50123")
+    monkeypatch.setenv("TOWERSCOUT_HOST_HELPER_SESSION_ID", "a" * 32)
+    monkeypatch.setenv("TOWERSCOUT_HOST_HELPER_SESSION_KEY", "A" * 43)
+    tls_error = NetworkError(
+        "google validation request failed TLS verification",
+        user_message="TowerScout could not verify the Google Maps TLS certificate.",
+        details={
+            "provider": "google",
+            "category": "tls_ca_untrusted",
+            "repairable": True,
+            "helper_available": False,
+            "repair_command": (
+                ".\\scripts\\repair-provider-tls.cmd "
+                "-Provider google -Engine docker -Gpu off"
+            ),
+        },
+    )
+
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch.object(
+        towerscout.ts_config,
+        "validate_api_key",
+        side_effect=tls_error,
+    ):
+        response = client.post(
+            "/api/config/validate-key",
+            json={"provider": "google", "key": "google-test-key"},
+        )
+
+    assert response.status_code == 502
+    payload = response.get_json()
+    details = payload["details"]
+    assert details["helper_available"] is False
+    assert details["helper_bridge"]["base_url"] == "http://127.0.0.1:50123"
+    assert details["helper_bridge"]["provider_tls_repair_capability"] is False
+    assert "operation_authorization" not in details["helper_bridge"]
+    assert details["repair_command"].startswith(
+        ".\\scripts\\repair-provider-tls.cmd"
+    )
+    assert "helper_token" not in str(payload).lower()
+
+
+def test_provider_tls_repair_status_authorization_is_operation_bound(client, monkeypatch):
+    monkeypatch.setenv("TOWERSCOUT_HOST_HELPER_ENABLED", "1")
+    monkeypatch.setenv("TOWERSCOUT_HOST_HELPER_PORT", "50123")
+    monkeypatch.setenv("TOWERSCOUT_HOST_HELPER_SESSION_ID", "a" * 32)
+    monkeypatch.setenv("TOWERSCOUT_HOST_HELPER_SESSION_KEY", "A" * 43)
+    monkeypatch.setattr(
+        towerscout.ts_host_helper,
+        "PROVIDER_TLS_REPAIR_CAPABILITY_ENABLED",
+        True,
+    )
+
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True):
+        response = client.post(
+            "/api/config/provider-tls-repair-status-authorization",
+            json={"provider": "azure", "operation_id": "b" * 32},
+        )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["base_url"] == "http://127.0.0.1:50123"
+    assert payload["operation_id"] == "b" * 32
+    assert payload["status_authorization"]["scope"] == "operation_status"
+    assert payload["status_authorization"]["authorization"].startswith("v1.")
+    assert "no-store" in response.headers["Cache-Control"]
+
+
+def test_provider_tls_repair_status_authorization_rejects_invalid_operation(
+    client,
+):
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True):
+        response = client.post(
+            "/api/config/provider-tls-repair-status-authorization",
+            json={"provider": "google", "operation_id": "../invalid"},
+        )
+
+    assert response.status_code == 400
+    assert response.get_json()["state"] == "rejected_unknown_operation"
+    assert "no-store" in response.headers["Cache-Control"]
+
+
+def test_provider_tls_repair_status_authorization_rate_limit_is_not_cached(client):
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=False):
+        response = client.post(
+            "/api/config/provider-tls-repair-status-authorization",
+            json={"provider": "google", "operation_id": "b" * 32},
+        )
+
+    assert response.status_code == 429
+    assert response.get_json()["state"] == "rate_limited"
+    assert "no-store" in response.headers["Cache-Control"]
+
+
+@pytest.mark.parametrize("payload", [[], "not-an-object", 7, None])
+def test_provider_tls_repair_status_authorization_requires_json_object(
+    client,
+    payload,
+):
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True):
+        response = client.post(
+            "/api/config/provider-tls-repair-status-authorization",
+            json=payload,
+        )
+
+    assert response.status_code == 400
+    assert response.get_json()["state"] == "rejected_bad_request"
+    assert "no-store" in response.headers["Cache-Control"]
+
+
+def test_key_routes_do_not_log_key_previews(client, monkeypatch):
+    google_key = "AIzaSyEXAMPLE1234567890abcdefghijklmno"
+    azure_key = "azure-key-example-value-that-should-not-be-logged"
+    monkeypatch.setattr(towerscout, "google_api_key", google_key)
+    monkeypatch.setattr(towerscout, "azure_api_key", azure_key)
+
+    with patch.object(towerscout.api_logger, "info") as mock_info:
+        google_response = client.get("/getgooglekey")
+        azure_response = client.get("/getazurekey")
+
+    assert google_response.status_code == 200
+    assert azure_response.status_code == 200
+    logged_args = " ".join(str(call.args) for call in mock_info.call_args_list)
+    assert google_key not in logged_args
+    assert azure_key not in logged_args
+    assert "starts with" not in logged_args
+
+
+def test_detection_progress_defaults_to_idle(client):
+    response = client.get("/api/detection/progress")
+
+    assert response.status_code == 200
+    assert "no-store" in response.headers["Cache-Control"]
+    assert response.get_json() == {
+        "status": "idle",
+        "phase": "idle",
+        "title": "No active detection",
+        "detail": "No tower-detection run is currently active.",
+        "counts": {},
+        "cancel_requested": False,
+        "tile_count": 0,
+        "retryReady": True,
+    }
+
+
+def test_abort_route_marks_current_run_cancel_requested(client):
+    session_id = "session-test-abort"
+    run_token = f"{session_id}:run-token"
+
+    with client.session_transaction() as sess:
+        sess[SESSION_ID_KEY] = session_id
+
+    towerscout.progress_tracker.start(
+        session_id,
+        run_token,
+        provider="google",
+        engine="newest",
+        phase="running_model",
+        title="Running model detection",
+        detail="Processing tiles...",
+        tile_count=4,
+    )
+
+    try:
+        with patch.object(towerscout.exit_events, "signal") as mock_signal:
+            response = client.post("/abort")
+
+        assert response.status_code == 202
+        assert response.get_json() == {
+            "status": "cancel_requested",
+            "retryReady": False,
+            "message": (
+                "Cancellation is still pending while the current model step "
+                "finishes. TowerScout will enable detection when the run stops."
+            ),
+        }
+        mock_signal.assert_called_once_with(run_token)
+
+        progress_response = client.get("/api/detection/progress")
+        assert progress_response.status_code == 200
+        assert progress_response.get_json()["status"] == "cancel_requested"
+        assert progress_response.get_json()["retryReady"] is True
+    finally:
+        towerscout.progress_tracker.clear(session_id, run_token=run_token)
+
+
+def test_abort_route_reports_terminal_run_ready_without_signalling(client):
+    session_id = "session-test-abort-terminal"
+    run_token = f"{session_id}:run-token"
+
+    with client.session_transaction() as sess:
+        sess[SESSION_ID_KEY] = session_id
+
+    towerscout.progress_tracker.start(
+        session_id,
+        run_token,
+        provider="google",
+        engine="newest",
+    )
+    towerscout.progress_tracker.finish(
+        session_id,
+        "cancelled",
+        run_token=run_token,
+        phase="cancelled",
+        title="Detection cancelled",
+        detail="The run stopped.",
+        cancel_requested=True,
+    )
+
+    try:
+        with patch.object(towerscout.exit_events, "signal") as mock_signal:
+            response = client.post("/abort")
+
+        assert response.status_code == 200
+        assert response.get_json() == {
+            "status": "cancelled",
+            "retryReady": True,
+        }
+        mock_signal.assert_not_called()
+    finally:
+        towerscout.progress_tracker.clear(session_id, run_token=run_token)
+
+
+def test_terminal_run_stays_pending_until_detection_slot_is_released(client):
+    session_id = "session-test-abort-terminal-busy"
+    run_token = f"{session_id}:run-token"
+
+    with client.session_transaction() as sess:
+        sess[SESSION_ID_KEY] = session_id
+
+    towerscout.progress_tracker.start(
+        session_id,
+        run_token,
+        provider="google",
+        engine="newest",
+    )
+    towerscout.progress_tracker.finish(
+        session_id,
+        "cancelled",
+        run_token=run_token,
+        phase="cancelled",
+        title="Detection cancelled",
+        detail="The run stopped.",
+        cancel_requested=True,
+    )
+    assert towerscout.detection_job_lock.acquire(blocking=False)
+
+    try:
+        with patch.object(towerscout.exit_events, "signal") as mock_signal:
+            abort_response = client.post("/abort")
+            progress_response = client.get("/api/detection/progress")
+
+        assert abort_response.status_code == 202
+        assert abort_response.get_json()["status"] == "cancelled"
+        assert abort_response.get_json()["retryReady"] is False
+        assert progress_response.status_code == 200
+        assert progress_response.get_json()["status"] == "cancelled"
+        assert progress_response.get_json()["retryReady"] is False
+        mock_signal.assert_not_called()
+    finally:
+        towerscout.detection_job_lock.release()
+        towerscout.progress_tracker.clear(session_id, run_token=run_token)
+
+
+def test_getobjects_post_invalid_self_intersecting_polygon(client):
+    response = client.post(
+        "/getobjects",
+        data={
+            "bounds": "37.7,-122.5,37.8,-122.4",
+            "engine": "yolo",
+            "provider": "google",
+            "polygons": json.dumps(
+                [[
+                    [-122.5, 37.7],
+                    [-122.4, 37.8],
+                    [-122.5, 37.8],
+                    [-122.4, 37.7],
+                    [-122.5, 37.7],
+                ]]
+            ),
+            "estimate": "yes",
+        },
+    )
+
+    assert response.status_code == 400
+    payload = response.get_json()
+    message = payload.get("error") or payload.get("message", "")
+    assert "self-intersection" in message.lower()
+
+
+def test_estimate_detection_tiles_accepts_tile_stats_return_value(client):
+    with patch(
+        "towerscout._parse_detection_request",
+        return_value={
+            "bounds": "37.7,-122.5,37.8,-122.4",
+            "engine": "newest",
+            "provider": "azure",
+            "polygons": [[[-122.5, 37.7], [-122.4, 37.7], [-122.4, 37.8], [-122.5, 37.8]]],
+            "estimate": "yes",
+        },
+    ), patch("towerscout._create_map_provider", return_value=Mock()), patch(
+        "towerscout._build_tiles_for_request",
+        return_value=(
+            [{"id": 0}, {"id": 1}],
+            1,
+            2,
+            10.0,
+            640,
+            640,
+            {
+                "candidate_tiles": 2,
+                "viewport_tiles": 2,
+                "retained_tiles": 2,
+            },
+        ),
+    ):
+        response = client.post(
+            "/api/detection/estimate",
+            data={
+                "bounds": "37.7,-122.5,37.8,-122.4",
+                "engine": "newest",
+                "provider": "azure",
+                "polygons": "[]",
+                "estimate": "yes",
+            },
+        )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["tileCount"] == 2
+    assert "estimatedSeconds" in payload
+
+
+def test_uploadmodel_saves_valid_model_into_runtime_directory(client, monkeypatch):
+    model_dir = Path("C:/virtual-models")
+    validated_file = Mock()
+    validated_file.filename = "custom-model.pt"
+    monkeypatch.setattr(towerscout, "YOLO_MODEL_DIR", model_dir)
+    monkeypatch.setattr(towerscout, "EN_MODEL_DIR", model_dir)
+    monkeypatch.setattr(towerscout, "MODEL_UPLOAD_ENABLED", True)
+    monkeypatch.setenv("TOWERSCOUT_MODEL_UPLOAD_KEY", MODEL_UPLOAD_KEY)
+    monkeypatch.setattr(towerscout.secrets, "token_hex", lambda _length: "uploadtoken")
+
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch.object(
+        towerscout.TowerScoutValidator,
+        "validate_model_file",
+        return_value=validated_file,
+    ), patch("towerscout.verify_trusted_model"), patch(
+        "pathlib.Path.replace"
+    ), patch("towerscout.add_model") as mock_add_model:
+        response = client.post(
+            "/uploadmodel",
+            data={"model": (io.BytesIO(b"fake-model-weights"), "upload.pt")},
+            content_type="multipart/form-data",
+            headers={"X-TowerScout-Model-Upload-Key": MODEL_UPLOAD_KEY},
+        )
+
+    assert response.status_code == 200
+    assert response.data == b"ok"
+    validated_file.save.assert_called_once_with(
+        str(model_dir / ".custom-model.pt.uploadtoken.pending")
+    )
+    mock_add_model.assert_called_once_with("custom-model.pt")
+
+
+def test_uploadmodel_disabled_by_default_blocks_model_upload(client, monkeypatch):
+    monkeypatch.setattr(towerscout, "MODEL_UPLOAD_ENABLED", False)
+
+    response = client.post(
+        "/uploadmodel",
+        data={"model": (io.BytesIO(b"fake-model-weights"), "upload.pt")},
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 403
+    assert b"Model upload is disabled" in response.data
+
+
+def test_getdataset_exports_archive_with_current_session_contract(client):
+    session_tmpdir = "session-temp"
+    with client.session_transaction() as sess:
+        sess["tmpdirname"] = session_tmpdir
+        sess["detections"] = [{"index": 0, "detections": ["det-0"]}]
+        sess["metadata"] = []
+
+    with patch("towerscout.write_labels", return_value=[f"{session_tmpdir}/tile0.jpg"]) as mock_write_labels, patch(
+        "towerscout.write_contents_file"
+    ) as mock_write_contents, patch("towerscout.zipdir") as mock_zipdir, patch(
+        "towerscout.send_from_directory",
+        side_effect=lambda directory, filename: app.response_class(
+            response=json.dumps({"directory": directory, "filename": filename}),
+            status=200,
+            mimetype="application/json",
+        ),
+    ):
+        response = client.post(
+            "/getdataset",
+            data={
+                "include": json.dumps([{"tile": 0, "detection": 0}]),
+                "additions": json.dumps([]),
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.get_json()["filename"] == "dataset.zip"
+    mock_write_labels.assert_called_once()
+    mock_write_contents.assert_called_once()
+    mock_zipdir.assert_called_once_with(session_tmpdir, [f"{session_tmpdir}/tile0.jpg"])
+
+
+def test_uploaddataset_restores_contents_into_session(client, tmp_path):
+    previous = tmp_path / 'previous'
+    previous.mkdir()
+    (previous / 'old.jpg').write_bytes(b'previous')
+    restored = tmp_path / 'restored'
+    restored.mkdir()
+    results = [{'class': 1, 'class_name': 'tile', 'id': 0,
+                'x1': 1, 'x2': 2, 'y1': 2, 'y2': 1, 'conf': 1}]
+    data = [[{'index': 0, 'filename': 'old/tile.jpg', 'detections': []}], results, False]
+    archive = _dataset_zip_bytes({'old/train/images/tile.jpg': _dataset_image_bytes(),
+                                 'contents.txt': json.dumps(data)})
+    with client.session_transaction() as state:
+        state.update(tmpdirname=str(previous), results='previous')
+    with patch.object(towerscout.rate_limiter, 'is_allowed', return_value=True), patch(
+        'towerscout._make_session_tmpdir', return_value=str(restored)
+    ):
+        response = client.post('/uploaddataset', data={'dataset': (archive, 'dataset.zip')})
+    assert response.status_code == 200
+    assert response.json == results
+    assert not previous.exists()
+    assert not (restored / 'dataset.zip').exists()
+    assert (restored / 'tile.jpg').read_bytes() == _dataset_image_bytes()
+    with client.session_transaction() as state:
+        assert state['tmpdirname'] == str(restored)
+        assert state['detections'][0]['filename'] == str(restored / 'tile.jpg')
+        assert json.loads(state['results']) == results
+        assert state['metadata'] is True
+
+
+def _dataset_image_bytes():
+    stream = io.BytesIO()
+    with Image.new('RGB', (8, 8), 'white') as image:
+        image.save(stream, format='JPEG')
+    return stream.getvalue()
+
+
+def _dataset_zip_bytes(entries):
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, "w") as zipf:
+        for name, payload in entries.items():
+            zipf.writestr(name, payload)
+    archive.seek(0)
+    return archive
+
+
+@pytest.mark.parametrize(
+    "unsafe_member",
+    [
+        "../contents.txt",
+        "/absolute/evil.jpg",
+        "C:/evil.jpg",
+        "legacy-stem/train/images/../evil.jpg",
+        "legacy-stem/train/images/./evil.jpg",
+    ],
+)
+def test_uploaddataset_rejects_unsafe_zip_member_paths(client, tmp_path, unsafe_member):
+    restore_dir = tmp_path / "restore-session"
+    restore_dir.mkdir()
+    outside_target = tmp_path / "evil.jpg"
+    contents_json = json.dumps(
+        [
+            [{"index": 0, "filename": "legacy-stem/tile-0.jpg", "detections": []}],
+            [{"id": "restored-1", "lat": 1.0, "lng": 2.0}],
+            {"provider": "google"},
+        ]
+    )
+    archive = _dataset_zip_bytes(
+        {
+            "legacy-stem/train/images/tile-0.jpg": _dataset_image_bytes(),
+            "contents.txt": contents_json,
+            unsafe_member: "unsafe",
+        }
+    )
+
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch(
+        "towerscout._make_session_tmpdir",
+        return_value=str(restore_dir),
+    ):
+        response = client.post(
+            "/uploaddataset",
+            data={"dataset": (archive, "dataset.zip")},
+            content_type="multipart/form-data",
+        )
+
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "Invalid dataset ZIP path"}
+    assert not outside_target.exists()
+
+
+def test_dataset_zip_member_validation_rejects_backslash_paths():
+    with pytest.raises(towerscout.UnsafeDatasetArchiveError):
+        towerscout._validate_dataset_zip_member_name(r"legacy-stem\train\images\evil.jpg")
+
+
+def test_uploaddataset_restores_valid_export_zip_without_path_escape(client, tmp_path):
+    restore_dir = tmp_path / "restore-session"
+    restore_dir.mkdir()
+    restored_results = [{"class": 1, "class_name": "tile", "id": 0, "x1": 1.0, "x2": 2.0, "y1": 2.0, "y2": 1.0, "conf": 1.0, "metadata": "Synthetic date"}]
+    restored_metadata = False
+    contents_json = json.dumps(
+        [
+            [{"index": 0, "filename": "legacy-stem/tile-0.jpg", "detections": []}],
+            restored_results,
+            restored_metadata,
+        ]
+    )
+    archive = _dataset_zip_bytes(
+        {
+            "README.txt": "dataset readme",
+            "legacy-stem/train/images/tile-0.jpg": _dataset_image_bytes(),
+            "legacy-stem/train/labels/tile-0.txt": "0 0.1 0.2 0.3 0.4",
+            "contents.txt": contents_json,
+        }
+    )
+
+    with patch.object(towerscout.rate_limiter, "is_allowed", return_value=True), patch(
+        "towerscout._make_session_tmpdir",
+        return_value=str(restore_dir),
+    ):
+        response = client.post(
+            "/uploaddataset",
+            data={"dataset": (archive, "dataset.zip")},
+            content_type="multipart/form-data",
+        )
+
+    assert response.status_code == 200
+    assert response.get_json() == restored_results
+    assert (restore_dir / "tile-0.jpg").read_bytes() == _dataset_image_bytes()
+    assert (restore_dir / "tile-0.txt").read_text(encoding="utf-8") == "0 0.1 0.2 0.3 0.4"
+    normalized = json.loads((restore_dir / "contents.txt").read_text(encoding="utf-8"))
+    assert normalized[1:] == json.loads(contents_json)[1:]
+    assert normalized[0][0]['filename'] == str(restore_dir / 'tile-0.jpg')
+    assert normalized[0][0]['labelfilename'] == str(restore_dir / 'tile-0.txt')
+    assert not (restore_dir / 'dataset.zip').exists()
+    with client.session_transaction() as sess:
+        assert sess["tmpdirname"] == str(restore_dir)
+        assert json.loads(sess["results"]) == restored_results
+        assert sess["metadata"] is (not restored_metadata)
+
+
+def test_dataset_expansion_limit_preserves_previous_session(client, tmp_path, monkeypatch):
+    previous = tmp_path / 'previous'
+    previous.mkdir()
+    original = previous / 'keep.txt'
+    original.write_text('keep', encoding='utf-8')
+    monkeypatch.setattr(towerscout, 'MAX_DATASET_MEMBER_BYTES', 32, raising=False)
+    with client.session_transaction() as saved:
+        saved['tmpdirname'] = str(previous)
+        saved['results'] = 'previous-results'
+    archive = _dataset_zip_bytes({'legacy/train/images/big.jpg': 'A'*4096, 'contents.txt': '[]'})
+    with patch.object(towerscout.rate_limiter, 'is_allowed', return_value=True):
+        response = client.post('/uploaddataset', data={'dataset':(archive,'dataset.zip')}, content_type='multipart/form-data')
+    assert response.status_code == 400
+    assert original.read_text(encoding='utf-8') == 'keep'
+    with client.session_transaction() as saved:
+        assert saved['tmpdirname'] == str(previous)
+        assert saved['results'] == 'previous-results'
+
+
+@pytest.mark.parametrize('contents', ['not JSON', '[]'])
+def test_failed_restore_keeps_previous_review_and_removes_staging(client, tmp_path, monkeypatch, contents):
+    previous = tmp_path / 'previous'
+    previous.mkdir()
+    (previous / 'keep.txt').write_text('keep', encoding='utf-8')
+    staging = tmp_path / 'staging'
+    staging.mkdir()
+    monkeypatch.setattr(towerscout, '_make_session_tmpdir', lambda: str(staging))
+    with client.session_transaction() as saved:
+        saved['tmpdirname'] = str(previous)
+        saved['results'] = 'previous-results'
+    archive = _dataset_zip_bytes({'legacy/train/images/a.jpg':'synthetic-image', 'contents.txt':contents})
+    with patch.object(towerscout.rate_limiter, 'is_allowed', return_value=True):
+        response = client.post('/uploaddataset', data={'dataset':(archive,'dataset.zip')}, content_type='multipart/form-data')
+    assert response.status_code == 400
+    assert (previous / 'keep.txt').read_text(encoding='utf-8') == 'keep'
+    assert not staging.exists()
+    with client.session_transaction() as saved:
+        assert saved['tmpdirname'] == str(previous)
+        assert saved['results'] == 'previous-results'
+
+
+@pytest.mark.parametrize('member_limit,total_limit,count_limit', [(10,100,10),(100,10,10),(100,100,1)])
+def test_dataset_budget_checks_expanded_member_total_and_count(monkeypatch, member_limit, total_limit, count_limit):
+    monkeypatch.setattr(towerscout, 'MAX_DATASET_MEMBER_BYTES', member_limit)
+    monkeypatch.setattr(towerscout, 'MAX_DATASET_EXPANDED_BYTES', total_limit)
+    monkeypatch.setattr(towerscout, 'MAX_DATASET_MEMBERS', count_limit)
+    with zipfile.ZipFile(_dataset_zip_bytes({'a':'a'*8,'b':'b'*12})) as archive:
+        with pytest.raises(towerscout.DatasetExpansionError):
+            towerscout._validate_dataset_expansion(archive)

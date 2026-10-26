@@ -1,0 +1,7 @@
+interface:
+  display_name: 'TowerScout: Release Compliance Review'
+  short_description: Release compliance
+  default_prompt: Use $towerscout-release-compliance-review to check these release
+    notice changes.
+policy:
+  allow_implicit_invocation: true

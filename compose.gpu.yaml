@@ -1,0 +1,13 @@
+services:
+  towerscout:
+    environment:
+      TOWERSCOUT_DEVICE: ${TOWERSCOUT_DEVICE:-auto}
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
+      NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES:-compute,utility}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

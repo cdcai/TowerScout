@@ -1,0 +1,55 @@
+TowerScout YOLO-Enabled Release Licensing
+
+This file states the licenses for the TowerScout YOLO-enabled release track.
+Individual third-party notices remain in force.
+
+TowerScout application and supporting material:
+
+The project-controlled application code, supporting code and accompanying
+documentation identified in
+licenses/TowerScout-APPLICATION-GRANT.md is additionally licensed under the
+GNU Affero General Public License, version 3 (AGPL-3.0-only). This includes
+inherited CC-marked application code, modifications and extracted modules.
+Recipients may use this code under AGPL-3.0 without also applying the CC
+noncommercial/share-alike conditions to that AGPL-licensed use.
+
+Previously granted CC-BY-NC-SA-4.0 permissions remain available as an
+alternative, and existing Apache-2.0 grants remain effective where applicable.
+The October 25, 2026 scope clarification covers project-controlled build,
+launcher, packaging, CI/test/development support and accompanying documentation.
+It does not supply an otherwise unconfirmed Apache-2.0 grant. This additional grant does not newly
+license inherited CC material under Apache-2.0. Preserve author attribution.
+Complete terms, warranty disclaimers and limitations of liability are in
+licenses/AGPL-3.0.txt, licenses/Apache-2.0.txt and
+licenses/CC-BY-NC-SA-4.0.txt. Third-party code, model weights, data and provider
+services are outside this additional application grant.
+
+YOLO-enabled distribution:
+
+The current detector runtime includes Ultralytics YOLOv5 source code vendored
+under webapp/vendor/yolov5_local/. That source is governed by the GNU Affero
+General Public License, Version 3.0, as shown in
+webapp/vendor/yolov5_local/LICENSE and licenses/AGPL-3.0.txt. The YOLO-enabled package and container
+image are therefore distributed with AGPL-3.0 obligations. Do not describe the
+full YOLO-enabled runtime distribution as Apache-2.0-only.
+
+Model and data assets:
+
+Model weights and ZIP-code data are governed by the model and data terms in
+MODEL_LICENSES.md and DATA_LICENSES.md. The YOLO detector weights are treated
+as YOLO-derived/AGPL-governed for this release track unless a separate written
+model license or permission record says otherwise.
+The EfficientNet classifier weights retain CC-BY-NC-SA-4.0, including its
+noncommercial and share-alike conditions. See MODEL_LICENSES.md and the full
+text in licenses/CC-BY-NC-SA-4.0.txt. The application grant does not relicense
+those weights or make the complete model-enabled distribution unrestricted.
+
+Provider terms:
+
+Google Maps, Azure Maps, and any other provider APIs are external services.
+Their terms are not granted by this repository license. See PROVIDER_TERMS.md.
+
+Release notices:
+
+See NOTICE and THIRD_PARTY_NOTICES.md for the source offer, third-party
+attribution, and package-level compliance notes.

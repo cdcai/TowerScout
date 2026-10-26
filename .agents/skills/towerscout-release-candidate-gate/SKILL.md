@@ -1,0 +1,125 @@
+---
+name: towerscout-release-candidate-gate
+description: 'Primary skill for TowerScout release-candidate or pilot package validation:
+  release manifests, checksums, asset bundle, pinned image digest, health/readiness
+  checks, and RC evidence. Use compliance/docs/container skills only as secondary
+  checks when those files are specifically changed.'
+---
+
+# TowerScout Release Candidate Gate
+
+Use this skill when a task touches release packaging, asset bundle contracts, release manifests, checksums, pinned image digests, RC validation evidence, or full clean-machine release validation.
+
+## Goal
+
+Prove that the current branch can produce a TowerScout V1 RC or pilot release package that is usable, supportable, and internally consistent with the current release posture.
+
+## Routing rule
+
+Use exactly one TowerScout skill as the primary skill for a task. Add secondary skills only when their specific files or risk surfaces are touched. If the task spans several areas and the primary skill is not obvious, use `$towerscout-skill-router` first.
+
+## Primary versus secondary
+
+This is the primary skill for whole-package release validation. Use the compliance, docs, container runtime, secret safety, and agent-work hygiene skills as secondary checks only when their specific files or evidence surfaces are changed.
+
+## First read
+
+Read these files when they exist:
+
+- `docs/maintenance.md`
+- `docs/release/release-asset-bundle-contract.md`
+- `Dockerfile`
+- `compose.yaml`
+- `compose.build.yaml`
+- `scripts/launch.ps1`
+- `scripts/lib/TowerScoutCompose.ps1`
+- `scripts/package-release.*`
+- `release-manifest.v1.json`
+- `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.md`, `MODEL_LICENSES.md`, `DATA_LICENSES.md`, `PROVIDER_TERMS.md`, `SOURCE.txt`, `SBOM.txt`
+
+## Candidate versus official release
+
+RC5 acceptance does not qualify rebuilt official images or renamed ZIPs.
+Record the source/artifact delta, fresh security checks, exact downloaded
+identities, affected runtime checks, and the basis for any evidence reuse.
+Check residual expiry at execution time; never extend the policy implicitly.
+Confirm the actual target repository, namespace, and authorized publication
+scope before any remote mutation. Preserve existing immutable artifacts.
+
+## Required review areas
+
+1. Release package shape: confirm package docs, Compose files, launch scripts, `.env.example`, manifest, checksums, and license/source notices are included or intentionally omitted.
+2. Image identity: confirm release use references a pinned GHCR digest, not only a mutable tag.
+3. Asset bundle contract: confirm asset docs match actual runtime paths for `model_params/`, `data/`, `asset_manifest.v1.json`, and import helpers.
+4. Runtime readiness: confirm `/api/health` and `/api/readiness` remain compatible with launchers and support scripts.
+5. Setup and validation path: confirm Setup Wizard, provider key validation, restart persistence, and a bounded detection path can be validated.
+6. Evidence hygiene: summarize evidence with commands, timestamps, environment, pass/fail, and redacted excerpts.
+7. Unsigned Windows boundary: confirm manuals state that packaged PowerShell
+   scripts are unsigned, the supplied wrappers use a process-scoped setting,
+   signature-enforcing managed endpoints are outside the standard claim, and
+   official release-page SHA-256 values are checked before extraction.
+
+## Inspect commands (read-only)
+
+Identify the current release package directory or ZIP before summarizing it; do not assume a fixed RC folder name.
+
+```bash
+git diff --check
+python .agents/skills/towerscout-release-candidate-gate/scripts/summarize_release_package.py dist/<package-dir-or-zip>
+python .agents/skills/towerscout-release-candidate-gate/scripts/check_release_manifest.py release-manifest.v1.json .
+```
+
+Inspect each helper's exit status and findings; warning-only output is not a
+blocking gate unless the caller enforces it.
+
+## Build/update generated files (mutating)
+
+Run only when the task is to assemble or refresh a release package.
+
+```bash
+scripts/package-release.cmd -Version <version> -OutputDir dist -Image <pinned-image-reference> -ImageDigest <sha256:digest> -PytorchFlavor <cpu|cuda128> -AssetBundleVersion <version> -AssetBundleSha256 <sha256>
+```
+
+Final evidence requires a real ZIP from clean tracked source. `-NoZip`,
+`-Force`, or a source build does not qualify a downloadable release.
+
+## Validation commands
+
+```bash
+python -m pytest tests/unit/test_release_package_script.py tests/unit/test_release_manifest_schema.py tests/unit/test_flask_routes.py -q -p no:cacheprovider
+python -m pytest tests/unit/test_license_notices.py tests/unit/test_container_publish_workflow.py -q -p no:cacheprovider
+```
+
+## Runtime validation commands
+
+Run only in an environment where Docker/Podman service startup is intended.
+
+```bash
+docker build -t towerscout:test .
+docker compose -f compose.yaml -f compose.build.yaml -p <test-owned-project> up -d --build
+curl -f http://localhost:5000/api/health
+curl -f http://localhost:5000/api/readiness
+docker compose -f compose.yaml -f compose.build.yaml -p <test-owned-project> down
+```
+
+Clean up only a verified test-owned project; never run unconditional `down` or
+volume deletion against an ambiguous installation.
+
+On Windows or a Windows validation host:
+
+```powershell
+.\start.bat -Engine podman -Port 5000 -NoBrowser -TimeoutSeconds 180
+scripts\status.cmd -Engine podman -Port 5000
+scripts\logs.cmd -Engine podman -Tail 200
+scripts\stop.cmd -Engine podman
+```
+
+Under ADR-023, bypass-based wrapper execution is valid only for the explicitly
+claimed unsigned support profile. It does not prove compatibility with a
+signature-enforcing or organization-allowlisted managed endpoint. Final proof
+must begin with the exact browser-downloaded package and its downloaded-file
+marker; a locally assembled ZIP is insufficient.
+
+## Output format
+
+Return a short RC gate report with overall status, commands run, release-blocking findings, non-blocking follow-ups, files inspected, evidence summary, and validation gaps.

@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "track": "agpl-yolo",
+  "release_version": "template",
+  "release_statement": "Project-controlled application code has the additional AGPL-3.0-only grant in licenses/TowerScout-APPLICATION-GRANT.md; prior grants and third-party terms remain effective, and the EfficientNet classifier weights retain CC-BY-NC-SA-4.0.",
+  "generated_utc": "",
+  "image": "",
+  "image_digest": "",
+  "pytorch_flavor": "cpu",
+  "asset_manifest": "webapp/asset_manifest.v1.json",
+  "compliance_files": [
+    "LICENSE",
+    "licenses/Apache-2.0.txt",
+    "licenses/AGPL-3.0.txt",
+    "licenses/CC-BY-NC-SA-4.0.txt",
+    "licenses/TowerScout-APPLICATION-GRANT.md",
+    "licenses/jQuery-MIT.txt",
+    "licenses/SyntheticData-MIT.txt",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md",
+    "MODEL_LICENSES.md",
+    "DATA_LICENSES.md",
+    "PROVIDER_TERMS.md",
+    "SOURCE.txt",
+    "SBOM.txt",
+    "IMAGE.txt",
+    "SHA256SUMS.txt"
+  ],
+  "runtime_components": {
+    "yolo": {
+      "name": "Ultralytics YOLOv5",
+      "license": "AGPL-3.0",
+      "vendored_path": "webapp/vendor/yolov5_local",
+      "validated_upstream_commit": "1d62daa3c6b8ec15fdb319c0a2e341d8b56ec86c"
+    }
+  },
+  "release_artifacts": {
+    "control_zip": "",
+    "control_zip_sha256": "",
+    "control_zip_sha256_sidecar": "",
+    "control_zip_sha256_reason": "Template manifest does not identify a generated control ZIP.",
+    "image": "",
+    "image_digest": "",
+    "pytorch_flavor": "cpu",
+    "asset_manifest": "webapp/asset_manifest.v1.json",
+    "asset_bundle": "",
+    "asset_bundle_sha256": "",
+    "asset_bundle_sha256_sidecar": "",
+    "asset_bundle_sha256_reason": "Template manifest does not identify a generated asset bundle.",
+    "package_contents_sha256": "SHA256SUMS.txt"
+  },
+  "corresponding_source": {
+    "source_ref": "",
+    "source_state": "template",
+    "repository_url": "https://github.com/cdcai/TowerScout",
+    "source_url": "",
+    "archive_url": "",
+    "source_offer": "See SOURCE.txt in the generated release package.",
+    "required_paths": [
+      "webapp/vendor/yolov5_local/",
+      "webapp/ts_yolov5_local.py",
+      "webapp/ts_yolov5.py",
+      "Dockerfile",
+      "compose.yaml",
+      "compose.gpu.podman.yaml",
+      "scripts/",
+      "webapp/requirements.txt",
+      "package-lock.json"
+    ]
+  },
+  "sbom": {
+    "reference": "SBOM.txt",
+    "status": "The container publication workflow generates a CycloneDX SBOM for the exact published image digest. Retain that workflow artifact with the release evidence; SBOM.txt is the package policy/reference pointer."
+  },
+  "revocation": {
+    "notes": "If the ZIP, image digest, model/data asset, source ref, or license notices are defective, revoke the affected release artifact and publish corrected artifacts with new checksums."
+  }
+}

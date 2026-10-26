@@ -1,0 +1,28 @@
+TowerScout Corresponding Source Notice
+
+Release track: agpl-yolo
+
+Source repository: https://github.com/cdcai/TowerScout
+
+This checked-in notice describes the source distribution. Container builds
+replace it with a notice identifying the supplied build source ref. Generated
+control ZIPs record their source ref and source URL in SOURCE.txt and
+release-manifest.v1.json. Local validation builds are not published releases.
+The matching corresponding source must include:
+
+- TowerScout source code for the release ref.
+- Vendored Ultralytics YOLOv5 source under webapp/vendor/yolov5_local/.
+- TowerScout local YOLO patches and loader code.
+- Dockerfile, Compose files, launcher scripts, packaging scripts, requirements,
+  and asset import helpers.
+- Build, package, asset import, and run instructions.
+
+Release maintainers must make the complete matching corresponding source
+available to recipients without charge alongside the release, verify access
+to its exact commit/download URL, and retain required dependency source and
+notices. A repository address or SBOM alone is not corresponding source.
+Do not publish a release while matching source access is unavailable.
+
+If this file is viewed inside a container image, use the image OCI labels and
+the published release control ZIP to identify the exact source ref, image
+digest, and artifact checksums.

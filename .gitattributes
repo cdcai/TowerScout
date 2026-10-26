@@ -1,0 +1,47 @@
+# TowerScout Git Attributes - UTF-8 Encoding
+# Ensures consistent file handling across platforms
+
+# Default for all text files - UTF-8 encoding, LF line endings
+* text=auto eol=lf
+
+# Documentation and configuration files - explicit UTF-8
+*.md text eol=lf working-tree-encoding=UTF-8
+*.txt text eol=lf working-tree-encoding=UTF-8
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Source code - UTF-8 with LF
+*.py text eol=lf diff=python
+*.js text eol=lf
+*.ts text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.xml text eol=lf
+
+# Config files - explicit UTF-8
+*.env text eol=lf
+*.ini text eol=lf
+*.conf text eol=lf
+.editorconfig text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# Shell scripts - LF required
+*.sh text eol=lf
+
+# Binary files - never modify
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.pt binary
+*.pth binary
+*.h5 binary
+*.pkl binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.pdf binary

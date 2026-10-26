@@ -1,0 +1,6 @@
+interface:
+  display_name: 'TowerScout: End User Docs Check'
+  short_description: User docs review
+  default_prompt: Use $towerscout-end-user-docs-check to review this pilot quick start.
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,6 @@
+interface:
+  display_name: 'TowerScout: Frontend Bundle Guard'
+  short_description: Frontend bundle safety
+  default_prompt: Use $towerscout-frontend-bundle-guard after these JS changes.
+policy:
+  allow_implicit_invocation: true
