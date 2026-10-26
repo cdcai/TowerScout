@@ -24,7 +24,7 @@ def test_committed_residual_policy_is_exact_and_time_bounded():
     document = json.loads(COMMITTED_RESIDUALS.read_text(encoding="utf-8"))
     assert document["schema_version"] == 1
     assert document["policy"] == "task103-g10-time-bounded-residuals"
-    assert len(document["findings"]) == 12
+    assert len(document["findings"]) == 10
     identities = {
         (
             item["vulnerability_id"],
@@ -55,20 +55,6 @@ def test_committed_residual_policy_is_exact_and_time_bounded():
     assert identities == {
         ("CVE-2026-97687", "urllib3@2.7.0", "lang-pkgs", "python-pkg", "HIGH"),
         ("CVE-2026-97689", "urllib3@2.7.0", "lang-pkgs", "python-pkg", "HIGH"),
-        (
-            "CVE-2026-84782",
-            "libssl3@3.0.22-1~deb12u1",
-            "os-pkgs",
-            "debian",
-            "HIGH",
-        ),
-        (
-            "CVE-2026-84782",
-            "openssl@3.0.22-1~deb12u1",
-            "os-pkgs",
-            "debian",
-            "HIGH",
-        ),
     } | util_linux_identities
     assert all(
         item["applicable_publish_flavors"] == ["cpu", "cuda128"]
@@ -106,12 +92,12 @@ def test_util_linux_expiry_blocks_even_while_old_renewals_remain_valid(
         item for item in old_only["findings"]
         if item["vulnerability_id"] != "CVE-2026-53615"
     ]
-    assert len(gate._accepted_residuals(old_only, flavor)) == 4
+    assert len(gate._accepted_residuals(old_only, flavor)) == 2
     if expired:
         with pytest.raises(gate.InputError, match="expired at 2026-11-05"):
             gate._accepted_residuals(document, flavor)
     else:
-        assert len(gate._accepted_residuals(document, flavor)) == 12
+        assert len(gate._accepted_residuals(document, flavor)) == 10
 
 
 def _finding(

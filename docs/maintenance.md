@@ -29,7 +29,7 @@ GPU fallback to CPU is a failure. Expand affected coverage after relevant change
 
 ## Security and publication
 
-Retain the unchanged 396-key security baseline. The October 22 owner-approved renewal retains only four existing exact residual identities in `.github/security/task103-accepted-residuals.v1.json`; the resolved Expat entry is removed.
+Retain the unchanged 396-key security baseline. Two pip-private urllib3 identities remain from the October 22 owner-approved renewal in `.github/security/task103-accepted-residuals.v1.json`; the resolved Expat and OpenSSL entries are removed.
 The project owner owns the renewed acceptance and TASK-107 review, with a hard expiry of January 31, 2027 at 23:59:59 UTC.
 Review weekly, immediately when a fix or relevant exposure/identity change appears, and again during the week of January 25. Remove resolved entries and requalify affected artifacts; do not automatically retain exceptions until expiry or extend them beyond it.
 The project owner separately approved eight exact CVE-2026-53615 Debian 12 records through **November 5, 2026 at 23:59:59 UTC**, with TASK-107 weekly and immediate-change review. This earlier deadline is independent of the January renewal and blocks publication when it expires. See [the dependency disposition](security/dependency-security-disposition.md) for the exact records and controls. Neither approval authorizes publication or substitutes for final qualification.
@@ -37,10 +37,11 @@ Scan locally before registry login/push, then verify identity and rescan the exa
 Initial validation publication stays non-Latest. Recommendation and promotion require separate authorization after qualification.
 Before stable/Latest promotion, prepare and review a path that promotes the exact
 qualified digest. A new build with the same source is not the qualified artifact.
-Configure the `official-release` environment with independent required reviewers, self-review prevention,
-and a custom deployment branch policy allowing only `main`. The publishing preflight reads these settings
-and fails before building if the environment or protections are missing. Verify administrator bypass policy
-and assign workflow/security code ownership through the receiving owner's approved repository settings.
+Configure the `official-release` environment with a custom deployment branch policy allowing only `main`.
+Required reviewers and self-review prevention are not publication prerequisites. The publishing preflight
+reads the environment and branch policy and fails before building if either is missing or permits another ref.
+Keep manual publication authorization, existing main-branch protections and scoped package-write permissions.
+Workflow/security code ownership remains a separate receiving-maintainer governance follow-up.
 Supply the exact approved main SHA as `source_sha` at dispatch; the workflow rejects a different source.
 Publication after expiry requires a valid new decision or remediation; expiry does not disable installed copies.
 The torch 2.10.0/torchvision 0.25.0 bridge needs review by January 31, 2027 or earlier on its security/compatibility triggers.

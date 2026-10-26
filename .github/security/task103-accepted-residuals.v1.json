@@ -60,52 +60,6 @@
       ],
       "approved_by": "Project owner",
       "compensating_controls": [
-        "TowerScout exposes HTTPS client workflows and no DTLS listener or DTLS peer workflow.",
-        "A package-version or severity change invalidates this acceptance.",
-        "The candidate remains blocked by any additional new HIGH or CRITICAL key.",
-        "The project owner reviews weekly under TASK-107 and immediately on an upstream fix, changed identity/severity, supported-path exposure change, or failed gate; January 31, 2027 is the expiry cap, not an automatic retention period."
-      ],
-      "expires_utc": "2027-01-31T23:59:59Z",
-      "follow_up_task": "TASK-107",
-      "installed_version": "3.0.22-1~deb12u1",
-      "package": "libssl3",
-      "package_class": "os-pkgs",
-      "package_id": "libssl3@3.0.22-1~deb12u1",
-      "package_type": "debian",
-      "reason": "CVE-2026-84782 affects DTLS retransmission behavior; TowerScout has no supported DTLS workflow and Debian Bookworm has no fixed package available for this candidate.",
-      "severity": "HIGH",
-      "vulnerability_id": "CVE-2026-84782"
-    },
-    {
-      "applicable_publish_flavors": [
-        "cpu",
-        "cuda128"
-      ],
-      "approved_by": "Project owner",
-      "compensating_controls": [
-        "TowerScout exposes HTTPS client workflows and no DTLS listener or DTLS peer workflow.",
-        "A package-version or severity change invalidates this acceptance.",
-        "The candidate remains blocked by any additional new HIGH or CRITICAL key.",
-        "The project owner reviews weekly under TASK-107 and immediately on an upstream fix, changed identity/severity, supported-path exposure change, or failed gate; January 31, 2027 is the expiry cap, not an automatic retention period."
-      ],
-      "expires_utc": "2027-01-31T23:59:59Z",
-      "follow_up_task": "TASK-107",
-      "installed_version": "3.0.22-1~deb12u1",
-      "package": "openssl",
-      "package_class": "os-pkgs",
-      "package_id": "openssl@3.0.22-1~deb12u1",
-      "package_type": "debian",
-      "reason": "CVE-2026-84782 affects DTLS retransmission behavior; TowerScout has no supported DTLS workflow and Debian Bookworm has no fixed package available for this candidate.",
-      "severity": "HIGH",
-      "vulnerability_id": "CVE-2026-84782"
-    },
-    {
-      "applicable_publish_flavors": [
-        "cpu",
-        "cuda128"
-      ],
-      "approved_by": "Project owner",
-      "compensating_controls": [
         "Bounded supported-path review found no TowerScout disk-partition probing caller or raw-block-device mapping; standard Compose profiles do not enable privileged mode or SYS_ADMIN.",
         "No block devices were present in isolated default CPU/CUDA containers. This is bounded exposure evidence, not proof of unexploitable code.",
         "Retain Debian 12 and its required libraries; do not force-remove essential dependencies or mix Debian suites.",

@@ -4,6 +4,8 @@ aiohttp==3.14.4
 certifi==2026.10.19
 cryptography==50.0.0
 efficientnet_pytorch==0.7.1
+# Pin torch's locking dependency to the fixed, compatibility-tested version.
+filelock==4.2.1
 fiona==1.10.1
 Flask==3.1.3
 # Host parsing is security-sensitive; qualify this version with loopback tests.
@@ -14,6 +16,8 @@ numpy==1.26.4
 packaging==25.0
 pandas==2.3.3
 Pillow==13.0.0
+# Preserve the accepted ultralytics dependency while correcting filelock/OpenSSL.
+polars==2.0.0
 psutil==7.1.3
 Requests==2.33.1
 seaborn==0.13.2
