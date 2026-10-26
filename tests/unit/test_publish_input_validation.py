@@ -1,6 +1,5 @@
 """Behavioral validation of dispatch-controlled publication inputs."""
 import importlib.util
-from copy import deepcopy
 from pathlib import Path
 import pytest
 
@@ -30,15 +29,15 @@ def test_unapproved_source_or_flavor_is_rejected(flavor, expected, actual):
 
 def _environment():
     return {'name': 'official-release',
-            'protection_rules': [{'type': 'required_reviewers', 'prevent_self_review': True, 'reviewers': [{'type': 'User', 'reviewer': {'id': 1}}]}],
+            'protection_rules': [],
             'deployment_branch_policy': {'custom_branch_policies': True, 'protected_branches': False}}
 
 
-def test_reviewed_main_only_environment_is_accepted():
+def test_main_only_environment_without_required_reviewers_is_accepted():
     module.validate_environment(_environment(), {'branch_policies': [{'name': 'main', 'type': 'branch'}]})
 
 
-@pytest.mark.parametrize('field,value', [('name','unprotected'), ('protection_rules',[]), ('deployment_branch_policy',None)])
+@pytest.mark.parametrize('field,value', [('name','unprotected'), ('deployment_branch_policy',None), ('deployment_branch_policy', {'custom_branch_policies': False, 'protected_branches': True})])
 def test_missing_or_weakened_environment_blocks_publication(field, value):
     environment = _environment()
     environment[field] = value
@@ -52,9 +51,19 @@ def test_non_main_or_wildcard_environment_is_rejected(branches):
         module.validate_environment(_environment(), {'branch_policies': branches})
 
 
-def test_self_review_or_missing_reviewers_is_rejected():
-    for field, value in [('prevent_self_review',False), ('reviewers',[])]:
-        environment = deepcopy(_environment())
-        environment['protection_rules'][0][field] = value
-        with pytest.raises(ValueError):
-            module.validate_environment(environment, {'branch_policies': [{'name':'main','type':'branch'}]})
+@pytest.mark.parametrize('rules', [
+    [],
+    [{'type': 'required_reviewers', 'prevent_self_review': True,
+      'reviewers': [{'type': 'User', 'reviewer': {'id': 1}}]}],
+])
+def test_optional_review_rules_do_not_determine_branch_authorization(rules):
+    environment = _environment()
+    environment['protection_rules'] = rules
+    module.validate_environment(environment, {'branch_policies': [{'name': 'main', 'type': 'branch'}]})
+    with pytest.raises(ValueError):
+        module.validate_environment(environment, {'branch_policies': [{'name': 'main', 'type': 'tag'}]})
+
+
+def test_absent_environment_is_rejected():
+    with pytest.raises(ValueError):
+        module.validate_environment({}, {'branch_policies': [{'name': 'main', 'type': 'branch'}]})

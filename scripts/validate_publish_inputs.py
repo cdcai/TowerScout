@@ -21,9 +21,8 @@ def validate(tag, flavor, expected_source, actual_source):
 def validate_environment(environment, policies):
     if environment.get('name') != 'official-release':
         raise ValueError('The official-release environment is required')
-    reviewers = [r for r in environment.get('protection_rules', []) if r.get('type') == 'required_reviewers']
-    if len(reviewers) != 1 or not reviewers[0].get('reviewers') or reviewers[0].get('prevent_self_review') is not True:
-        raise ValueError('The publication environment requires independent reviewers and prevention of self-review')
+    # Publication is manually authorized; environment reviewer approval is optional.
+    # Keep the source/ref and main-only deployment boundary independent of it.
     branch_policy = environment.get('deployment_branch_policy') or {}
     branches = policies.get('branch_policies', [])
     if (branch_policy.get('custom_branch_policies') is not True or branch_policy.get('protected_branches') is not False

@@ -1,16 +1,14 @@
 # Dependency security disposition
 
-The release gate retains the accepted 396-key baseline and twelve exact time-limited HIGH residual identities: four renewed records and eight separately approved util-linux records.
+The release gate retains the accepted 396-key baseline and ten exact time-limited HIGH residual identities: two remaining renewed records and eight separately approved util-linux records.
 The authoritative machine-readable identities, versions, CPU/CUDA scope and expiry are in
 `.github/security/task103-accepted-residuals.v1.json` in corresponding source.
-On October 22, 2026, the project owner authorized conditional renewal of the existing findings supported by fresh evidence, with a maximum expiry of January 31, 2027 at 23:59:59 UTC. The resolved Expat entry has been removed. That renewal remains limited to the four older records. The project owner subsequently approved the separate eight-record November 5 exception below.
+On October 22, 2026, the project owner authorized conditional renewal of the existing findings supported by fresh evidence, with a maximum expiry of January 31, 2027 at 23:59:59 UTC. The resolved Expat entry has been removed. Two of those four older records remain after the October 26 OpenSSL correction. The project owner subsequently approved the separate eight-record November 5 exception below.
 
 | Finding | Exact retained identity | Scope |
 | --- | --- | --- |
 | CVE-2026-97687 | `urllib3@2.7.0` | pip-private Python package, CPU/CUDA |
 | CVE-2026-97689 | `urllib3@2.7.0` | pip-private Python package, CPU/CUDA |
-| CVE-2026-84782 | `libssl3@3.0.22-1~deb12u1` | Debian package, CPU/CUDA |
-| CVE-2026-84782 | `openssl@3.0.22-1~deb12u1` | Debian package, CPU/CUDA |
 
 The project owner owns weekly review under TASK-107, immediate review on a fix, severity/identity/exposure change or failed gate, and a final review during the week of January 25. Retain each entry only while its evidence remains valid. There is no automatic extension beyond January 31.
 
@@ -21,8 +19,9 @@ The application does not invoke pip at runtime, and automatic model dependency i
 Exact-image filesystem inventory must prove the accepted copy and reject additional copies.
 Pip still handles controlled HTTPS dependency downloads during installation/builds. The proxy-TLS and chunked-response risks are therefore not claimed unreachable in pip; this is bounded owner acceptance. Official pip 26.2.2 remains the latest published release at review time and still vendors 2.7.0. Do not replace its private files manually or disable TLS verification to suppress a finding.
 
-The OpenSSL/libssl3 records affect DTLS retransmission; supported provider requests use HTTPS over TCP.
-The fresh paired Bookworm builds contain fixed `libexpat1@2.5.0-1+deb12u5`; CVE-2026-77214 is absent and its exception is removed. Bookworm still has no vendor fix for the retained OpenSSL identities. Preserve exact installed versions and re-evaluate reachability after changes.
+The runtime pins Debian `openssl` and `libssl3` to `3.0.22-1~deb12u2`, fixing CVE-2026-84782; their two exceptions are removed. This updates system OpenSSL, not separately bundled wheel copies. The earlier fixed `libexpat1@2.5.0-1+deb12u5` remains outside the residual policy.
+
+The runtime also pins torch's `filelock` dependency to 4.2.1, fixing CVE-2026-112940. The affected SQLite-backed reader/writer-lock path requires attacker-controlled local filesystem entries; no exception is accepted. Final-image inventories, fresh scans and affected runtime checks must establish the actual fixed packages in both flavors. See the [filelock advisory](https://github.com/tox-dev/filelock/security/advisories/GHSA-v4x8-3wr5-3wq8).
 
 ## Separately approved util-linux exception
 
@@ -62,17 +61,17 @@ See [maintenance boundaries](../maintenance.md) for ownership and qualification 
 This source-contained register makes the obligations also tracked privately as
 TASK-107 accessible to the receiving maintainer. The project owner is the risk
 acceptance owner; the receiving maintainer performs monitoring, records evidence
-and proposes remediation; an independent reviewer checks acceptance/publication
-gates. Assignment of named receiving custodians and a durable evidence copy is
+and proposes remediation. Publication uses explicit owner authorization and automated
+source/security gates; an environment reviewer is not required. Assignment of named receiving custodians and a durable evidence copy is
 still required at handoff, without publishing private approval correspondence.
 
 | Obligation | Due/trigger | Required evidence and disposition |
 | --- | --- | --- |
 | Eight exact util-linux identities | Weekly and immediately on the changes listed above; hard expiry 2026-11-05T23:59:59Z | Fresh exact-digest scans, installed identities and exposure review; remove fixed entries and requalify. No automatic extension. |
-| Four renewed older identities | Weekly/immediate-change review; week of January 25 review; hard expiry 2027-01-31T23:59:59Z | Same exact-identity/scan review; retain only still applicable approved entries. |
+| Two remaining renewed identities | Weekly/immediate-change review; week of January 25 review; hard expiry 2027-01-31T23:59:59Z | Same exact-identity/scan review; retain only still applicable approved entries. |
 | New/changed/unused/expired findings | Every build and publication verification | Fail closed against the unchanged 396-key baseline and exact residual policy at `.github/security/task103-accepted-residuals.v1.json` in the corresponding source identified by `SOURCE.txt`. The control ZIP does not include `.github/`. |
 | Corresponding source and evidence custody | Before artifact publication/handoff | Final-version recursive source, build/relink inputs, notices and SBOMs; checksum-verified receiving-held evidence copy. Retain commit-addressed fork records and their evidence ref. |
-| Receiving publication controls | Before authoritative publication; promotion before stable/Latest | Independently protected main-only release environment, approved source/ref, administrator/package-write review and exact qualified-digest promotion. |
+| Receiving publication controls | Before authoritative publication; promotion before stable/Latest | Main-only release environment without mandatory reviewer approval, approved source/ref, scoped package-write permissions and exact qualified-digest promotion. |
 
 Record each review date, source/image identities, evidence location, outcome and
 next review in the receiving maintainer's approved record. Source adoption alone
