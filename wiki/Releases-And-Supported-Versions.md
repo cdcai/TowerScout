@@ -1,27 +1,50 @@
 # Releases And Supported Versions
 
-> **Audience:** All users. **Applies to:** Public TowerScout releases.
-> **Last reviewed:** 2026-10-02. **Publication state:** Source-contained guidance; GitHub wiki publication is separate; the next
-> final release is not yet frozen or published.
+> **Applies to:** [supported release v0.1.3-rc.1](https://github.com/cdcai/TowerScout/releases/tag/v0.1.3-rc.1). **Guide updated:** 2026-10-28.
 
-Use the [TowerScout Releases page](https://github.com/cdcai/TowerScout/releases)
-as the public download source. Choose only the entry whose notes identify it
-as the current supported final Windows release.
+The [official release record](https://github.com/cdcai/TowerScout/releases/tag/v0.1.3-rc.1)
+identifies `v0.1.3-rc.1` as the supported Windows release. The original tag and
+filenames identify the exact tested downloads. The `rc` name does not override
+that support statement; keep downloaded filenames unchanged.
 
-For that entry, confirm:
+## What To Download
 
-- it is not labeled **Draft** or **Pre-release** for ordinary end-user use;
-- its notes name the exact supported Windows, engine, CPU/GPU, provider, and
-  known-limitation scope;
-- it lists one CPU and one CUDA Application Package plus the shared Model &
-  Data Package and matching checksum files;
-- it displays authoritative SHA-256 values for both ZIPs; and
-- the Application Package manifest names a digest-pinned container image.
+Download one CPU or CUDA 12.8 Application Package ZIP, the shared Model & Data
+ZIP, and both checksum files. Before extraction, compare each ZIP's calculated
+SHA-256 with its sidecar and the value displayed in the official release notes.
 
-GitHub's automatic source archives are for source review, not package
-installation. A mutable image tag, sidecar downloaded beside a ZIP, or newer
-version number alone does not establish the supported release identity.
+GitHub's automatic source archives and the optional source/license materials
+are for source review and license obligations. They are not installation packages.
 
-The published fork-side `v0.1.2` pilot remains historical and immutable.
-Use the exact qualified official package identities from the authoritative
-release record. Historical candidate results do not qualify newly built bytes.
+## Tested Configurations
+
+**Both Docker and Podman are qualified and supported**, with CPU and NVIDIA
+CUDA execution, for the tested Windows 11 configurations. The release reports
+validation on two NVIDIA-equipped hosts covering both imagery providers,
+exports, recovery, and restart persistence.
+
+The scope of those results has these limits:
+
+- CPU mode was tested explicitly on the two NVIDIA-equipped computers.
+  CPU-only hardware was not separately qualified.
+- Podman was tested on computers that also had Docker Desktop installed.
+  A Podman installation without Docker Desktop installed was not separately
+  qualified. Docker Desktop is closed while Podman runs; it is not the engine
+  used for that TowerScout session.
+- Signature-enforcing endpoints are outside the unsigned package's standard
+  qualification.
+
+These are limits of the recorded test coverage. See [Before You Install](Before-You-Install)
+and the engine/GPU pages for preparation and checks. Export a dataset before
+stopping; [restore it](Everyday-Commands#save-results-and-restore-a-review) if
+live results do not reappear.
+
+## Previous Versions And Future Updates
+
+Earlier pilots remain historical. Use the supported release record to choose
+installation files and to find exact source, image, checksum, and support
+information.
+
+New installation packages or container images need their own identities and
+affected qualification. The support statement for these downloads does not
+automatically apply to a new build.

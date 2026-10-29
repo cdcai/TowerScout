@@ -1,37 +1,28 @@
 # Demo Video And Written Walkthrough
 
-> **Audience:** New users and trainers. **Applies to:** The next final Windows
-> release. **Last reviewed:** 2026-10-02. **Publication state:** Source-contained guidance; GitHub wiki publication is separate;
-> final screenshots and video are intentionally pending the frozen candidate.
+> **Applies to:** [supported release v0.1.3-rc.1](https://github.com/cdcai/TowerScout/releases/tag/v0.1.3-rc.1). **Guide updated:** 2026-10-28.
 
-The written instructions are the complete path. A video is optional and must
-never be the only explanation.
+## Watch The Demo
+
+See TowerScout in use in this recorded demonstration (about **5 minutes
+50 seconds**). Select Play in the video below. You can also
+[open the video directly](https://github.com/user-attachments/assets/b5b764a5-c293-4b5a-b4f1-30fe5da6cf3c).
+
+https://github.com/user-attachments/assets/b5b764a5-c293-4b5a-b4f1-30fe5da6cf3c
 
 ## Written Walkthrough
 
-1. Use [Before You Install](Before-You-Install) to prepare the computer.
-2. Make the three decisions on [Choose Your Setup](Choose-Your-Setup).
-3. Obtain one credential using
-   [Google And Azure API Credentials](Google-And-Azure-API-Credentials).
-4. Follow [Install And First Run](Install-And-First-Run) from download through
-   a small search and normal stop.
-5. Save the non-secret setup record from [Everyday Commands](Everyday-Commands).
+Follow these pages for the supported release's setup and everyday steps.
 
-## Final Visuals Required Before Publication
+1. Read [Before You Install](Before-You-Install) and [Choose Your Setup](Choose-Your-Setup).
+2. Prepare one provider credential using [Google And Azure API Credentials](Google-And-Azure-API-Credentials).
+3. Follow [Install And First Run](Install-And-First-Run): download the supported packages/checksums, verify, extract, set up and configure one provider.
+4. Try a small non-sensitive detection and review the results. Follow
+   [Save Results And Restore A Review](Everyday-Commands#save-results-and-restore-a-review)
+   for separate CSV, KML, and dataset downloads. Keep the dataset ZIP for later restoration.
+5. Follow [Everyday Commands](Everyday-Commands) to stop/reopen. Restore the saved dataset if live results do not reappear.
+6. Use [Troubleshooting And Safe Support](Troubleshooting-And-Safe-Support) and the package's versioned Help when needed.
 
-After the exact candidate is frozen, add a small set of annotated,
-privacy-safe screenshots showing:
-
-- the correct GitHub release and four downloads;
-- the download folder before verification;
-- the extracted Application Package folder;
-- the Setup Wizard provider field using a fabricated/redacted key;
-- `setup_required` versus `ready`;
-- a small non-sensitive search, results review, and export; and
-- the matching stop and reopen commands.
-
-Every image needs useful alternative text. A final video must name its exact
-release/package/image identity, have captions and a transcript, contain no
-real key or sensitive location, and be replaced or clearly marked stale when
-the workflow changes. Until those checks pass, do not publish a placeholder as
-if it were a working final video.
+The video supplements these instructions and the offline manuals. Use the
+written guidance for the supported release when a video step differs or when
+the video is unavailable.

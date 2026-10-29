@@ -25,7 +25,7 @@ def _read(relative_path: str) -> str:
     return (ROOT / relative_path).read_text(encoding="utf-8")
 
 
-def test_required_wiki_draft_pages_and_sidebar_are_complete():
+def test_required_wiki_pages_and_sidebar_are_complete():
     sidebar = _read("wiki/_Sidebar.md")
 
     for filename in WIKI_PAGES:
@@ -33,8 +33,10 @@ def test_required_wiki_draft_pages_and_sidebar_are_complete():
         assert path.is_file(), filename
         text = path.read_text(encoding="utf-8")
         normalized = " ".join(text.split())
-        assert "Last reviewed" in normalized, filename
-        assert "Publication state" in text, filename
+        assert "**Applies to:**" in normalized, filename
+        assert "**Guide updated:**" in normalized, filename
+        assert "https://github.com/cdcai/TowerScout/releases/tag/" in text, filename
+        assert "Publication state" not in text, filename
         assert path.stem in sidebar or filename == "Home.md", filename
 
 
@@ -43,10 +45,18 @@ def test_wiki_keeps_release_and_package_authority_explicit():
     install = _read("wiki/Install-And-First-Run.md")
     releases = _read("wiki/Releases-And-Supported-Versions.md")
 
-    assert "release record" in home
+    release_url = "https://github.com/cdcai/TowerScout/releases/tag/"
+    for text in (home, install, releases):
+        assert release_url in text
+        assert "final release is not yet frozen or published" not in text.lower()
     assert "versioned `docs` folder" in home
-    assert "authoritative release record" in install
-    assert "final release is not yet frozen or published" in releases.lower()
+    assert "shown on the release page" in install
+    assert install.index("Compare every displayed hash") < install.index(
+        "## 4. Extract The Application Package"
+    )
+    assert "supported Windows release" in releases
+    assert "## Tested Configurations" in releases
+    assert "SHA-256" in releases
 
 
 def test_local_it_guide_is_packaged_and_exposed_in_app():

@@ -1,17 +1,16 @@
 # Install And First Run
 
-> **Audience:** New Windows users. **Applies to:** The next final Windows
-> release. **Last reviewed:** 2026-10-20. **Publication state:** Source-contained guidance; GitHub wiki publication is separate;
-> final filenames and hashes will appear in the authoritative release record.
+> **Applies to:** [supported release v0.1.3-rc.1](https://github.com/cdcai/TowerScout/releases/tag/v0.1.3-rc.1). **Guide updated:** 2026-10-28.
 
 This page keeps the first-use path continuous: prepare, download, verify,
 extract, start, configure one provider, try a small search, and stop safely.
 
 For Podman, use the [short-folder and Python preparation](Podman-Guidance)
-before installing the provider. Use `Documents\TS` with a short `PC` or `PG`
-extraction folder instead of the longer example below; the actual package-root
-path must be 80 characters or fewer. Keep the shared asset ZIP one folder above
-the extracted application. Do not move an existing configured installation.
+before installing the provider. Use `Documents\TowerScout` as the download
+folder for either engine. For Podman, extract into its short `PC` (CPU) or `PG`
+(GPU) child folder and check that the actual package-root path is 80 characters
+or fewer. Keep the shared asset ZIP one folder above the extracted application.
+Do not move an existing configured installation.
 
 ## 1. Prepare A Working Folder
 
@@ -27,8 +26,7 @@ again in the new application folder.
 ## 2. Download Four Files
 
 Open the [TowerScout Releases page](https://github.com/cdcai/TowerScout/releases)
-and select the release whose notes identify it as the current supported final
-Windows release. If no release says that, stop; a draft, prerelease, source
+and select [the supported v0.1.3-rc.1 release](https://github.com/cdcai/TowerScout/releases/tag/v0.1.3-rc.1). Its original tag and filenames are retained. If no release says that, stop; a draft, prerelease, source
 archive, or numerically newer tag is not automatically the supported release.
 
 In GitHub's **Assets** list, download exactly four files:
@@ -62,16 +60,21 @@ For the CPU package:
 ```powershell
 $appZip = Get-ChildItem -File "*-cpu.zip"
 $assetZip = Get-ChildItem -File "*-assets-*.zip"
-Get-FileHash -Algorithm SHA256 -LiteralPath $appZip.FullName
+Get-FileHash -Algorithm SHA256 -LiteralPath $appZip.FullName | Format-List
 Get-Content -LiteralPath ($appZip.FullName + ".sha256")
-Get-FileHash -Algorithm SHA256 -LiteralPath $assetZip.FullName
+Get-FileHash -Algorithm SHA256 -LiteralPath $assetZip.FullName | Format-List
 Get-Content -LiteralPath ($assetZip.FullName + ".sha256")
 ```
 
-For the NVIDIA GPU package, change only the first line to:
+For the NVIDIA GPU package, use this block instead:
 
 ```powershell
 $appZip = Get-ChildItem -File "*-cuda128.zip"
+$assetZip = Get-ChildItem -File "*-assets-*.zip"
+Get-FileHash -Algorithm SHA256 -LiteralPath $appZip.FullName | Format-List
+Get-Content -LiteralPath ($appZip.FullName + ".sha256")
+Get-FileHash -Algorithm SHA256 -LiteralPath $assetZip.FullName | Format-List
+Get-Content -LiteralPath ($assetZip.FullName + ".sha256")
 ```
 
 Compare every displayed hash character-for-character with the matching value
@@ -85,41 +88,66 @@ on the Application Package ZIP if Windows shows that checkbox. Do not use
 ## 4. Extract The Application Package
 
 In File Explorer, right-click only the verified `-cpu.zip` or
-`-cuda128.zip`, select **Extract All**, and extract it inside
-`Documents\TowerScout`. Do not extract the Model & Data ZIP.
+`-cuda128.zip`, and select **Extract All**.
+
+- **Docker:** extract inside `Documents\TowerScout` using the ZIP's default
+  folder name.
+- **Podman CPU:** set the extraction folder to `Documents\TowerScout\PC`.
+- **Podman GPU:** set the extraction folder to `Documents\TowerScout\PG`.
+
+Use the full Documents location shown by File Explorer when selecting the
+destination. Do not extract the Model & Data ZIP.
 
 Open the new extracted folder. You should see `setup-towerscout.cmd`,
-`start.bat`, `scripts`, `docs`, Compose files, and an empty `assets` folder.
-The four downloaded files remain one folder above it.
+`start.bat`, `scripts`, `docs`, Compose files, and an `assets` folder containing
+`README.txt`. The four downloaded files remain one folder above it. For Podman,
+verify that `setup-towerscout.cmd` is directly inside `PC` or `PG`; avoid an
+extra nested package folder.
 
 Before setup on Podman, complete [Select Python And Install The Provider](Podman-Guidance#select-python-and-install-the-provider).
 Explicitly select 64-bit Python 3.12; do not rely on default `python` selection.
 
 ## 5. Run Setup For Your Choice
 
-Make sure Docker Desktop is running, or your Podman machine and package-local
-Compose provider are ready. In the extracted folder, click the File Explorer
+Start the chosen engine. For Docker, wait until Docker Desktop is running.
+For Podman, use the intended running machine and package-local Compose
+provider, with Docker Desktop closed. If switching engines, first follow
+[Switch Between Docker And Podman](Podman-Guidance#switch-between-docker-and-podman).
+
+In the extracted folder, click the File Explorer
 address bar, type `powershell`, and press **Enter**. Commands beginning with
 `.\` mean "run this file from the folder I am currently in."
 
 Paste exactly one setup command:
 
+### Docker CPU
+
 ```powershell
-# Docker CPU
 .\setup-towerscout.cmd -Engine docker -Gpu off
+```
 
-# Docker NVIDIA GPU
+### Docker NVIDIA GPU
+
+```powershell
 .\setup-towerscout.cmd -Engine docker -Gpu on
+```
 
-# Podman CPU
+### Podman CPU
+
+```powershell
 .\setup-towerscout.cmd -Engine podman -Gpu off
+```
 
-# Podman NVIDIA GPU, after the CDI check passes
+### Podman NVIDIA GPU
+
+Use this only after the CDI check in [NVIDIA GPU Setup](NVIDIA-GPU-Setup) passes.
+
+```powershell
 .\setup-towerscout.cmd -Engine podman -Gpu on
 ```
 
-The lines beginning with `#` are labels, not commands. Copy only the command
-under your choice. Keep the window open. Setup verifies package information,
+Copy only the command for your chosen engine and processing mode. Each code
+block's copy button copies that one command. Keep the window open. Setup verifies package information,
 imports the Model & Data ZIP, downloads the digest-pinned container image,
 starts TowerScout, and normally opens `http://localhost:5000`.
 
@@ -132,10 +160,11 @@ troubleshooting page.
 
 In the Setup Wizard:
 
-1. paste the Google or Azure credential you prepared;
-2. validate it;
-3. select that provider as the default; and
-4. save setup.
+1. select **Get Started** and paste the Google or Azure credential you prepared;
+2. select **Validate Keys**;
+3. select that provider on **Choose Default Detection Provider** and choose **Next**;
+4. select **Save Configuration** on **Performance Guidance**; and
+5. select **Start Using TowerScout**.
 
 Do not include the key in a screenshot or support message. If validation
 reports a certificate or TLS problem such as `CERTIFICATE_VERIFY_FAILED`, stop
@@ -157,8 +186,9 @@ a command unless Local IT has reviewed and approved the diagnostic result.
 4. Select **Find towers** and wait for the progress display to finish.
 5. Review the map and detection list. Zero detections can be a valid result; it
    does not by itself mean installation failed.
-6. If the result matters, export it before closing the browser or stopping the
-   application.
+6. Save important work before closing the browser or stopping the application.
+   Follow [Save Results And Restore A Review](Everyday-Commands#save-results-and-restore-a-review)
+   for the separate CSV, KML, and dataset actions.
 
 A successful first use means TowerScout reaches `ready`, the map loads, the
 small detection request finishes without an error, and the review area updates.
@@ -170,12 +200,19 @@ qualification work, not an end-user prerequisite.
 From PowerShell in the extracted application folder, stop with the engine you
 chose:
 
+### Docker
+
 ```powershell
 .\scripts\stop.cmd -Engine docker
+```
+
+### Podman
+
+```powershell
 .\scripts\stop.cmd -Engine podman
 ```
 
-Use only one line. Normal stop keeps engine-specific **named volumes**,
+Run only the command for your engine. Normal stop keeps engine-specific **named volumes**,
 engine-managed storage containing configuration, imported assets, sessions,
 temporary review data, caches, and logs. Docker and Podman have separate
 storage. Export important results before stopping; do not treat internal

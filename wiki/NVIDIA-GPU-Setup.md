@@ -1,13 +1,11 @@
 # NVIDIA GPU Setup
 
-> **Audience:** Users choosing GPU processing and their Local IT staff.
-> **Applies to:** The next final Windows release. **Last reviewed:**
-> 2026-10-02. **Publication state:** Source-contained guidance; GitHub wiki publication is separate; the final tested GPU matrix
-> belongs in the release record.
+> **Applies to:** [supported release v0.1.3-rc.1](https://github.com/cdcai/TowerScout/releases/tag/v0.1.3-rc.1). **Guide updated:** 2026-10-28.
 
-GPU processing is optional. CPU remains a supported choice on any otherwise
-eligible computer. Use the GPU path only when the exact computer meets the
-final release's tested requirements.
+GPU processing is optional. CPU mode remains a supported option
+within the [tested configurations](Releases-And-Supported-Versions#tested-configurations).
+Use the GPU path after checking the architecture, approved Windows driver,
+WSL, and container integration below.
 
 ## Check Eligibility
 
@@ -16,12 +14,15 @@ final release's tested requirements.
 2. In ordinary Windows PowerShell, run `nvidia-smi` and record the displayed
    driver version. Do not post its full output if it includes local machine
    details.
-3. Compare the GPU and driver with the final TowerScout release's tested-
-   support list.
+3. Confirm that your organization's approved Windows driver supports that GPU
+   and CUDA on WSL 2. The release reports two-host qualification; it does not
+   publish a complete GPU/driver compatibility matrix. Ask support about a
+   different configuration rather than treating the architecture name as proof
+   of qualification.
 
 The CUDA 12.8 Application Package has a Volta-or-newer architecture
 expectation. Maxwell and Pascal are unsupported and must use the CPU package.
-An architecture expectation is not proof that an unlisted GPU/driver/engine
+An architecture expectation is not proof that every GPU/driver/engine
 combination was tested.
 
 ## Windows And WSL Driver Rule
@@ -31,7 +32,7 @@ the exact GPU. NVIDIA documents that the Windows driver supplies CUDA to WSL.
 Do not install a Linux NVIDIA display driver inside WSL; it can overwrite the
 WSL-provided driver and break GPU access.
 
-Official reference: [NVIDIA CUDA on WSL guidance](https://docs.nvidia.com/cuda/cuda-quick-start-guide/).
+Official reference: [NVIDIA CUDA on WSL guidance](https://docs.nvidia.com/cuda/wsl-user-guide/index.html).
 
 ## Docker GPU
 
@@ -50,9 +51,16 @@ is the one direct PowerShell-script exception:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\enable-podman-gpu.ps1 -VerifyOnly
 ```
 
-If verification says CDI must be provisioned or refreshed, review the planned
-change and run the apply form only on a computer where you are allowed to
-install the NVIDIA Container Toolkit inside the Podman machine:
+If verification says CDI must be provisioned or refreshed, display the planned
+commands without applying them:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\enable-podman-gpu.ps1 -DryRun
+```
+
+Review that plan with Local IT or support. Only after approval to install the
+NVIDIA Container Toolkit and update CDI inside the intended Podman machine,
+run the apply form:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\enable-podman-gpu.ps1
