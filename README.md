@@ -1,123 +1,116 @@
 # TowerScout
 
-Qualification uses two NVIDIA-equipped Windows hosts with explicit CPU mode. CPU-only hardware and Podman without Docker Desktop installed are outside the tested claim.
-
-TowerScout is a tool for identifying cooling towers from satellite and aerial imagery.  Cooling towers are potential sources of _Legionella_ bacteria, which causes Legionnaires' disease.  TowerScout has been utilized in over 12 investigations of outbreaks of Legionnaires' disease across 8 states since 2021.  It can be used after outbreaks to identify potential sources of _Legionella_, and it can be used before outbreaks to build and update a registry of cooling towers to aid future investigations.
-
-TowerScout Enterprise, a new program re-designed from the ground up to make better use of modern architectures and cloud computing resources, is now available: [TowerScout Enterprise](https://github.com/cdcai/TowerScout-Enterprise)
+TowerScout helps public health teams find and review possible cooling towers in
+satellite and aerial imagery. It can support Legionnaires' disease outbreak
+investigations and the development of cooling-tower registries. All detections
+require human review.
 
 ## Start Here
 
-The official wiki is prepared separately from source adoption. Until publication is verified, use the
-versioned guides in `docs/` and the reviewable [wiki drafts](wiki/Home.md). Packaged instructions remain available offline.
+- **[Watch the Demo](https://github.com/cdcai/TowerScout/wiki/Demo-Video-And-Written-Walkthrough#watch-the-demo)** — see TowerScout in use in about six minutes.
+- **[Read the User Guide](https://github.com/cdcai/TowerScout/wiki)** — choose your setup, install TowerScout, and learn the everyday workflow.
+- **[Download TowerScout for Windows](https://github.com/cdcai/TowerScout/releases/tag/v0.1.3-rc.1)** — get the supported release and its installation packages.
 
-For complete instructions now, use the [Quick Start](docs/quick-start.md).
-The release package includes offline manuals; in-app Help comes from the
-matching image. The wiki and demonstration video are navigation and learning
-aids, not replacements for version-matched instructions.
+### Download And Install
 
-### Download And Support Boundary
+Follow [Install And First Run](https://github.com/cdcai/TowerScout/wiki/Install-And-First-Run)
+for package selection, SHA-256 checksum verification, and setup. Choose
+[Docker or Podman, CPU or NVIDIA GPU processing, and Google Maps or Azure Maps](https://github.com/cdcai/TowerScout/wiki/Choose-Your-Setup).
+See [supported configurations](https://github.com/cdcai/TowerScout/wiki/Releases-And-Supported-Versions#tested-configurations)
+for requirements and test coverage.
 
-Use the [Releases page](https://github.com/cdcai/TowerScout/releases).
-Choose only an entry explicitly identified as the current supported final
-Windows release, with exact files, authoritative SHA-256 values, image digests,
-tested environments and limitations. If none is identified, stop. The published
-`v0.1.2` remains a historical development-fork pilot (not a cdcai release); a newer tag or prerelease is not automatically
-supported. Use the release's **Assets**, not the green **Code** button or source
-archives. Verify both ZIPs against the authoritative release record's public
-SHA-256 values and their matching sidecars before extraction.
+The supplied Windows scripts are **unsigned**. Use them only where your
+organization permits them. If policy blocks installation or startup, stop and
+consult [Local IT](https://github.com/cdcai/TowerScout/wiki/Local-IT-Administrator-Guide).
 
-Choose Docker or Podman, CPU or a release-qualified NVIDIA GPU, and Google Maps
-or Azure Maps. Docker users do not need host Python. The tested Podman path
-requires explicitly selected **64-bit Python 3.12**, a short package-root path
-of **80 characters or fewer**, a rootless WSL 2 machine and the package-local
-Compose provider. Follow the Quick Start for the exact steps and restrictions.
-
-The Windows scripts are intentionally **unsigned**. Supplied CMD/BAT wrappers
-use a process-scoped execution-policy setting without changing persistent
-policy. Use them only where your organization permits them; signature-enforcing
-or organization-allowlisted endpoints are outside the standard support claim.
-Do not disable endpoint protection or weaken machine-wide policy. If blocked,
-stop and ask Local IT; see the [Local IT guide](docs/local-it-administrator-guide.md).
-
-## Provenance
-
-TowerScout carries forward the original `TowerScout/TowerScout` project history.
-The 2026 Windows packaging, validation and handoff work was developed in
-the development fork for adoption into `cdcai/TowerScout`. Historical fork
-releases and their evidence retain their original identities. Official cdcai
-release availability and supported scope come from its verified release record;
-preparation of this source does not announce a published release.
-
-## About TowerScout
-
-The [Centers for Disease Control and Prevention](https://cdc.gov) have [procedures](https://www.cdc.gov/legionella/health-depts/environmental-inv-resources/id-cooling-towers.html) for identifying cooling towers during investigation of an outbreak of Legionnaires' disease, which can be significantly sped up by using TowerScout.  TowerScout has been used in more than 12 investigations of outbreaks of Legionnaires' disease across 8 states since 2021.  In 2021, TowerScout was the [Hal Varian Award Winner](https://www.ischool.berkeley.edu/programs/mids/capstone/varianaward) for the [Master of Information and Data Science Program (MIDS)](https://www.ischool.berkeley.edu/programs/mids) in the [School of Information](https://ischool.berkeley.edu) at [UC Berkeley](https://berkeley.edu).
-
-TowerScout has been used by local health departments:
-- The Utah Department of Health and Human Services (DHHS) used TowerScout for [detecting cooling towers](https://gis.utah.gov/blog/2023-07-04-cooling-tower-update/) in aerial imagery.
-- The Los Angeles County Enterprise GIS (eGIS) team and Department of Public Health used TowerScout to build an initial dataset of likely cooling tower locations across the County.  The work was the [2023 NACo Achievement Award Winner, Information Technology (Best in Category)](https://www.naco.org/resources/award-programs/towerscout-adaptation-%E2%80%93-automated-image-analysis-identify-cooling-towers).
-
-## TowerScout Team
-
-Karen K Wong,
-Jia Lu,
-Gunnar Mein,
-Thaddeus Segura.  
-Fred Nugen,
-Alberto Todeschini, 
-Elizabeth J Hannapel, 
-Jasen M Kunz,
-Troy Ritter, 
-Jessica C Smith, and
-Chris Edens helped guide the project.
+The application package includes offline manuals, and the running app provides
+version-matched Help. For assistance, see
+[Troubleshooting And Safe Support](https://github.com/cdcai/TowerScout/wiki/Troubleshooting-And-Safe-Support).
 
 ## Features
 
 ### Automated Detection
-- **Machine Learning Pipeline**: YOLOv5 object detection + EfficientNet classification
-- **Multi-Provider Support**: Google Maps and Azure Maps satellite imagery
-- **Batch Processing**: Efficiently process large geographic areas tile-by-tile
-- **Confidence Scoring**: Adjustable thresholds for detection sensitivity
+
+- **Machine Learning Pipeline**: YOLOv5 object detection followed by EfficientNet classification.
+- **Imagery Providers**: Google Maps and Azure Maps satellite imagery.
+- **Tile Processing**: Process a selected search area tile by tile.
+- **Confidence Scores**: Review model confidence scores and adjust the review threshold.
 
 ### Manual Tower Addition
-- **Interactive Drawing**: Add cooling towers manually via polygon drawing tool
-- **Visual Distinction**: Manual towers display with purple borders and "✋ Manual" badges
-- **Automatic Geocoding**: Addresses automatically retrieved and cached for performance
-- **Dataset Integration**: Manual towers included in all export formats (CSV, KML, YOLO)
-- **Dataset Restoration**: Import/export datasets to preserve manual towers across sessions
-- **Provider Lock**: Prevents imagery mismatch by locking provider selection after detections
 
-### Export & Analysis
-- **CSV Export**: Detection lists with addresses, confidence scores, and coordinates for epidemiological tracking
-- **KML Export**: Google Earth compatible files for geographic visualization
-- **YOLO Format**: Training dataset exports with normalized coordinates for ML model improvement
-- **Flexible Filtering**: Export subsets based on confidence thresholds or manual selection
+- **Interactive Drawing**: Add missed tower candidates with the polygon drawing tool after a detection run.
+- **Visual Distinction**: Manual additions display with purple borders and "✋ Manual" badges.
+- **Automatic Geocoding**: Retrieve addresses and cache them for later use.
+- **Dataset Integration**: Include manual additions in CSV, KML, and YOLO exports under each format's export rules.
+- **Dataset Restoration**: Save and restore datasets to continue a review later.
+- **Provider Lock**: Keep imagery and detections together by locking provider selection after a run.
 
-### Search & Navigation
-- **Address Search**: Find locations by street address, city, or neighborhood
-- **Zipcode Search**: Define search areas by postal code boundaries
-- **Custom Polygons**: Draw complex search areas with interactive polygon tool
-- **Circular Search**: Radius-based search around specific coordinates
-- **Tile Estimation**: Preview processing time before running detection (~100 tiles ≈ 30 seconds)
+### Export And Analysis
 
-### Data Validation
-- **Interactive Review**: Click towers in list to highlight on map (bidirectional)
-- **False Positive Removal**: Uncheck detections to exclude from exports
-- **Tile-by-Tile Review**: Systematic review mode for accuracy verification
-- **Cross-Provider Validation**: Compare detections across different imagery sources
+- **CSV Export**: Save detection rows with addresses, confidence scores, coordinates, and selection, boundary, and threshold flags.
+- **KML Export**: Save selected results that meet the confidence and boundary rules for viewing in geographic software such as Google Earth.
+- **YOLO Format**: Export selected annotations that meet the confidence threshold across full imagery tiles for model-development work.
+- **Dataset Export**: Save imagery, labels, metadata, and manual additions for later restoration.
+
+CSV retains detection rows with their review flags; unchecking a detection does
+not remove its CSV row. See the [export instructions](docs/user-guide.md#export-results)
+for each format's selection and boundary rules.
+
+### Search And Navigation
+
+- **Address Search**: Find locations by street address, city, or neighborhood.
+- **ZIP Code Search**: Define a search area using postal-code boundaries.
+- **Custom Polygons**: Draw a search area on the map.
+- **Circular Search**: Define a search radius around a location.
+- **Tile Estimation**: Preview the number of imagery tiles before running detection.
+
+### Review And Validation
+
+- **Interactive Review**: Select a detection in the list to highlight it on the map, or select it on the map to find it in the list.
+- **Selection Review**: Mark detections as selected or unselected before exporting results.
+- **Tile-by-Tile Review**: Examine imagery systematically to check detection accuracy.
+
+## About TowerScout
+
+Cooling towers are potential sources of *Legionella* bacteria, which cause
+Legionnaires' disease. The [Centers for Disease Control and Prevention](https://www.cdc.gov)
+provides [guidance for identifying cooling towers during outbreak investigations](https://www.cdc.gov/legionella/health-depts/environmental-inv-resources/id-cooling-towers.html).
+TowerScout has been used in more than 12 outbreak investigations across eight
+states since 2021.
+
+In 2021, TowerScout was the
+[Hal Varian Award winner](https://www.ischool.berkeley.edu/programs/mids/capstone/varianaward)
+for the [Master of Information and Data Science program](https://www.ischool.berkeley.edu/programs/mids)
+at the [UC Berkeley School of Information](https://www.ischool.berkeley.edu).
+This repository carries forward the original `TowerScout/TowerScout` project.
+
+Public health applications include:
+
+- The Utah Department of Health and Human Services used TowerScout for [detecting cooling towers in aerial imagery](https://gis.utah.gov/blog/2023-07-04-cooling-tower-update/).
+- The Los Angeles County Enterprise GIS team and Department of Public Health used TowerScout to build an initial dataset of likely cooling-tower locations across the county. The work received the [2023 NACo Achievement Award for Information Technology, Best in Category](https://www.naco.org/resources/award-programs/towerscout-adaptation-%E2%80%93-automated-image-analysis-identify-cooling-towers).
+
+Related project: [TowerScout Enterprise](https://github.com/cdcai/TowerScout-Enterprise).
+
+### TowerScout Team
+
+Karen K Wong, Jia Lu, Gunnar Mein, and Thaddeus Segura.
+
+Fred Nugen, Alberto Todeschini, Elizabeth J Hannapel, Jasen M Kunz, Troy Ritter,
+Jessica C Smith, and Chris Edens helped guide the project.
 
 ## Attribution
+
 Please cite the following publication and this GitHub repository when utilizing TowerScout:
+
 - Wong, KK, Segura T, Mein G, Lu J, Hannapel EJ, Kunz JM, Ritter T, Smith JC, Todeschini A, Nugen F, Edens C. Automated cooling tower detection through deep learning for Legionnaires’ disease outbreak investigations: a model development and validation study. *Lancet Digit Health.* 2024;6(7):e500-e506. [doi.org/10.1016/S2589-7500(24)00094-3](https://doi.org/10.1016/S2589-7500(24)00094-3)
 
-
 ## Additional files
+
 * YOLOv5 detector weights - distributed through the release asset bundle and treated as YOLO-derived/AGPL-governed unless separate written model terms say otherwise; see `MODEL_LICENSES.md` and `webapp/asset_manifest.v1.json`.
 * EfficientNet weights - distributed under the original TowerScout CC-BY-NC-SA-4.0 license, including attribution, noncommercial and share-alike conditions; see `MODEL_LICENSES.md` and `webapp/asset_manifest.v1.json` for the exact asset identity.
 * ZCTA shapefile data - distributed according to `DATA_LICENSES.md` and the release asset manifest.
 
 TowerScout is a research tool. Its licenses govern permitted uses; imagery and data provider terms also apply.
-
 
 ## License
 
