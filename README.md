@@ -14,13 +14,15 @@ require human review.
 ### Download And Install
 
 Follow [Install And First Run](https://github.com/cdcai/TowerScout/wiki/Install-And-First-Run)
-for package selection, SHA-256 checksum verification, and setup. Choose
+for package selection and setup. Before extracting each ZIP, compare its
+SHA-256 checksum with the value on the authoritative release page. Choose
 [Docker or Podman, CPU or NVIDIA GPU processing, and Google Maps or Azure Maps](https://github.com/cdcai/TowerScout/wiki/Choose-Your-Setup).
 See [supported configurations](https://github.com/cdcai/TowerScout/wiki/Releases-And-Supported-Versions#tested-configurations)
 for requirements and test coverage.
 
-The supplied Windows scripts are **unsigned**. Use them only where your
-organization permits them. If policy blocks installation or startup, stop and
+The supplied Windows scripts are **unsigned**. Their CMD/BAT launchers apply an
+execution-policy setting only to the running process; permanent policy stays
+unchanged. Use them only where your organization permits them. If policy blocks installation or startup, stop and
 consult [Local IT](https://github.com/cdcai/TowerScout/wiki/Local-IT-Administrator-Guide).
 
 The application package includes offline manuals, and the running app provides
