@@ -1,26 +1,33 @@
 # TowerScout: Start Here
 
-> **Audience:** New users and Local IT. **Applies to:** The next final Windows
-> release. **Last reviewed:** 2026-10-02. **Publication state:** Source-contained guidance; GitHub wiki publication is separate;
-> do not treat this page as a published release announcement.
+> **Applies to:** [supported release v0.1.3-rc.1](https://github.com/cdcai/TowerScout/releases/tag/v0.1.3-rc.1). **Guide updated:** 2026-10-28.
 
 TowerScout is a local Windows application that helps a person review aerial or
 satellite images for possible cooling towers. Its results are suggestions for
 human review, not confirmed cooling-tower locations.
 
+## Watch The Demo
+
+**[Watch the TowerScout demo (about 6 minutes)](Demo-Video-And-Written-Walkthrough#watch-the-demo)**
+
+See TowerScout in use, then follow the setup pages below. The demo page also
+includes a written walkthrough.
+
+## Choose Your Setup
+
 You make three independent choices:
 
-1. **Docker or Podman** runs TowerScout in a protected container environment.
+1. **Docker or Podman** runs TowerScout in a Linux container.
 2. **CPU or a compatible NVIDIA GPU** performs image processing. CPU is the
    simplest choice. A supported GPU can be faster.
 3. **Google Maps or Azure Maps** supplies the map and imagery. You need an
    account and usable credential for only one provider.
 
-These are supported options, not paths assigned by the project team. Your
-computer must meet the requirements for the options you choose. On a managed
-computer, your organization may require Local IT approval before you install
-software, enable Windows features, create cloud resources, or run unsigned
-scripts.
+Choose among the options permitted by your organization and suitable for your
+computer. On a managed computer, Local IT may prescribe an engine or provider
+and may need to approve software installation, Windows features, cloud
+resources, or unsigned scripts. See [Releases And Supported Versions](Releases-And-Supported-Versions#tested-configurations)
+for the scope of the completed qualification.
 
 ## Recommended Reading Order
 
@@ -40,16 +47,13 @@ Follow these pages in order. You do not need to read every advanced page.
    symptom-based help without sharing private data.
 
 If your organization manages the computer, give Local IT the
-[Local IT Administrator Guide](Local-IT-Administrator-Guide). Local IT approves
-workstation and security changes; it does not choose Docker versus Podman, CPU
-versus GPU, or Google versus Azure for you.
+[Local IT Administrator Guide](Local-IT-Administrator-Guide). Local IT confirms
+which choices and workstation or security changes the organization permits.
 
 ## Where Exact Release Information Lives
 
 The [GitHub Releases page](https://github.com/cdcai/TowerScout/releases)
-is the public download location. Its authoritative release record will identify the
-supported version, exact files, SHA-256 values, tested configurations, and
-known limitations.
+is the public download location. The [supported v0.1.3-rc.1 record](https://github.com/cdcai/TowerScout/releases/tag/v0.1.3-rc.1) identifies the exact files, SHA-256 values, tested configurations and known limitations. Its original tag and filenames are retained to identify the tested downloads.
 
 The versioned `docs` folder included with the Application Package contains the
 complete offline instructions. In-app Help comes from the same documentation

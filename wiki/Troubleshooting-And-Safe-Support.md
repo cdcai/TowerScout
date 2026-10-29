@@ -1,8 +1,6 @@
 # Troubleshooting And Safe Support
 
-> **Audience:** TowerScout users and Local IT. **Applies to:** The next final
-> Windows release. **Last reviewed:** 2026-10-06. **Publication state:** Local
-> draft.
+> **Applies to:** [supported release v0.1.3-rc.1](https://github.com/cdcai/TowerScout/releases/tag/v0.1.3-rc.1). **Guide updated:** 2026-10-28.
 
 Start with what you can see. Run commands from the extracted Application
 Package folder and use the same engine and port recorded for your setup.
@@ -63,8 +61,8 @@ Certificate selection and trust import are Local IT or advanced-user tasks:
    procedure. Open `docs\package-guide.md` inside the extracted TowerScout
    Application Package and find **Provider-Key Validation Or TLS Failure**.
    That file matches the installed release. An
-   [online preview](https://github.com/cdcai/TowerScout/blob/main/docs/package-guide.md#provider-key-validation-or-tls-failure)
-   is also available, but `main` may describe a newer release.
+   [online preview](https://github.com/cdcai/TowerScout/blob/412411786f24b3dddda02506ca44bf9b77f9874d/docs/package-guide.md#provider-key-validation-or-tls-failure)
+   is pinned to the supported release's exact source revision.
 
 Do not disable TLS verification. If Local IT cannot confirm an approved
 certificate trust path, stop rather than weakening a computer or network
@@ -77,8 +75,7 @@ installation, proxy, firewall, TLS certificate, and managed-device issues.
 
 For a reproducible TowerScout defect that contains no sensitive data, use the
 [TowerScout GitHub issue tracker](https://github.com/cdcai/TowerScout/issues).
-The repository may transfer at handoff; use the issue link shown by the current
-repository. This is a public project record, not a staffed private help desk.
+Use the issue link shown by the official repository. This is a public project record, not a staffed private help desk.
 Do not name an individual as permanent support.
 
 If you have no Local IT and the safe checks do not resolve the problem, stop at

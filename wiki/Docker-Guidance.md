@@ -1,8 +1,6 @@
 # Docker Guidance
 
-> **Audience:** Users who choose Docker and their Local IT staff. **Applies
-> to:** The next final Windows release. **Last reviewed:** 2026-10-02.
-> **Publication state:** Source-contained guidance; GitHub wiki publication is separate.
+> **Applies to:** [supported release v0.1.3-rc.1](https://github.com/cdcai/TowerScout/releases/tag/v0.1.3-rc.1). **Guide updated:** 2026-10-28.
 
 Docker Desktop is one supported way to run TowerScout. You may use CPU or a
 compatible NVIDIA GPU.
@@ -34,7 +32,14 @@ containers.
   `-cuda128` Application Package, and use `-Gpu on`.
 
 Then follow [Install And First Run](Install-And-First-Run) or the complete
-[Docker CPU guide](https://github.com/cdcai/TowerScout/blob/main/docs/docker-cpu-user-guide.md) / [Docker GPU guide](https://github.com/cdcai/TowerScout/blob/main/docs/docker-gpu-user-guide.md).
+[Docker CPU guide](https://github.com/cdcai/TowerScout/blob/412411786f24b3dddda02506ca44bf9b77f9874d/docs/docker-cpu-user-guide.md) / [Docker GPU guide](https://github.com/cdcai/TowerScout/blob/412411786f24b3dddda02506ca44bf9b77f9874d/docs/docker-gpu-user-guide.md).
+
+## Switch Between Docker And Podman
+
+Run only the engine selected for the current TowerScout installation. Stop
+TowerScout using that engine before switching. Follow the
+[switching and recovery steps](Podman-Guidance#switch-between-docker-and-podman),
+which preserve the separate named volumes used by each engine.
 
 ## Common Docker Symptoms
 
@@ -47,5 +52,6 @@ Then follow [Install And First Run](Install-And-First-Run) or the complete
 - **Port 5000 is busy:** choose another port and record it; use that port on
   setup, start, status, and the browser address.
 - **Organization blocks Docker Desktop:** do not bypass the policy. You may
-  choose Podman only if that engine is permitted and its prerequisites can be
-  met.
+  choose Podman if it is permitted and its prerequisites can be met. Check
+  the [qualification scope](Releases-And-Supported-Versions#tested-configurations)
+  before treating a different installation layout as qualified.

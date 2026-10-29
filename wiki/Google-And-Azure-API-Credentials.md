@@ -1,9 +1,6 @@
 # Google And Azure API Credentials
 
-> **Audience:** New users and Local IT. **Applies to:** The provider you choose
-> and its current terms. **Last reviewed:** 2026-10-06. **Publication state:**
-> Source-contained guidance; GitHub wiki publication is separate; current Google labels were checked against official provider
-> documentation, but final live setup remains part of candidate validation.
+> **Applies to:** [supported release v0.1.3-rc.1](https://github.com/cdcai/TowerScout/releases/tag/v0.1.3-rc.1). **Guide updated:** 2026-10-28.
 
 TowerScout needs one working Google Maps API key or one Azure Maps subscription
 key. Provider accounts, billing, usage rights, and charges are not included
@@ -46,8 +43,10 @@ does not meet that requirement.
    **IP addresses** restriction for server web-service requests; one key cannot
    use both restriction types. This setting is compatible with TowerScout's
    current design but is not Google's recommended split-key design. If an
-   application restriction is required, stop and use Azure Maps; this release
-   cannot accept separate Google browser/server keys.
+   application restriction is required, stop and ask Local IT whether Azure
+   Maps' shared-key model is an acceptable alternative. Azure is suitable only
+   if that model meets local policy; it also exposes its configured key to the
+   browser. This release cannot accept separate Google browser/server keys.
 8. Set quotas and alerts appropriate for local TowerScout use. Copy the key to
    a temporary private location for entry into TowerScout; do not put it in a
    document, screenshot, issue, or chat.
@@ -65,8 +64,7 @@ Official instructions:
 2. Use an Azure subscription and resource group owned by you or your
    organization. Review current pricing and approval requirements.
 3. Search for **Azure Maps**, select **Create**, create an Azure Maps account,
-   and accept the applicable terms. Use the current Gen2 pricing tier shown by
-   Azure unless your organization directs otherwise.
+   and accept the applicable terms. Select the currently available approved pricing tier after reviewing Azure's current terms; console labels and plans can change.
 4. Open the Azure Maps account. Under **Settings**, open **Authentication**.
 5. Copy the **Primary Key** to a temporary private location for entry into
    TowerScout. Keep the Secondary Key available for controlled rotation.
@@ -85,15 +83,21 @@ Official instructions:
 
 ## Enter And Validate The Credential
 
-After TowerScout opens, its Setup Wizard shows separate Google and Azure key
-fields. Paste only the provider credential you chose, select that provider as
-the default, and choose **Validate** or save the setup as directed on screen.
-One valid provider is enough.
+After TowerScout opens, complete the Setup Wizard in this order:
+
+1. Select **Get Started**.
+2. Paste the credential into its Google or Azure field, then select **Validate Keys**.
+3. On **Choose Default Detection Provider**, select that provider and choose **Next**.
+4. On **Performance Guidance**, select **Save Configuration**.
+5. On **Setup Complete**, select **Start Using TowerScout**.
+
+One valid provider is enough. Leave the other provider's field empty if you do
+not intend to configure it.
 
 If validation fails, do not post the key or a provider response. Use the
 message category:
 
-- **invalid key:** check for a copying error or rotate the key;
+- **invalid key:** check that the complete intended key was copied from the provider account;
 - **API not authorized:** enable the required service and review API
   restrictions;
 - **billing/account:** confirm the provider account and billing status;
