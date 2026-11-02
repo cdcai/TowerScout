@@ -1,5 +1,5 @@
 {
-  "description": "Project-owner-approved exact residuals: four existing records renewed through January 31, 2027 and eight separately approved CVE-2026-53615 records only through November 5, 2026. Resolved Expat is removed. Other findings, changed identities/severities, unused entries and expired acceptance fail closed; the 396-key baseline is unchanged. Publication requires separate authorization.",
+  "description": "Project-owner-approved exact residuals: two pip-private urllib3 records through January 31, 2027 and eight CVE-2026-53615 records renewed by the project owner on November 2, 2026 through December 5, 2026. Renewal records continued temporary risk acceptance based on the November 2 advisory and static exposure review; fresh exact-image scans/inventories remain required before publication. Resolved Expat and OpenSSL entries are removed. Other findings, changed identities/severities, unused entries and expired acceptance fail closed; the 396-key baseline is unchanged. Publication requires separate authorization.",
   "findings": [
     {
       "applicable_publish_flavors": [
@@ -64,16 +64,16 @@
         "No block devices were present in isolated default CPU/CUDA containers. This is bounded exposure evidence, not proof of unexploitable code.",
         "Retain Debian 12 and its required libraries; do not force-remove essential dependencies or mix Debian suites.",
         "The project owner owns TASK-107 review weekly and immediately on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change, or failed gate.",
-        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires November 5, 2026; no automatic extension or January renewal applies."
+        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires December 5, 2026; no automatic extension or January renewal applies."
       ],
-      "expires_utc": "2026-11-05T23:59:59Z",
+      "expires_utc": "2026-12-05T23:59:59Z",
       "follow_up_task": "TASK-107",
       "installed_version": "1:2.38.1-5+deb12u3",
       "package": "bsdutils",
       "package_class": "os-pkgs",
       "package_id": "bsdutils@1:2.38.1-5+deb12u3",
       "package_type": "debian",
-      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation.",
+      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation. On November 2, 2026, the project owner explicitly authorized a one-month renewal to December 5 while awaiting vendor fixes, informed by the same-day advisory and static exposure review. Fresh image scans/inventories remain outstanding; this renewal does not claim remediation, fresh runtime qualification or publication authorization.",
       "severity": "HIGH",
       "vulnerability_id": "CVE-2026-53615"
     },
@@ -88,16 +88,16 @@
         "No block devices were present in isolated default CPU/CUDA containers. This is bounded exposure evidence, not proof of unexploitable code.",
         "Retain Debian 12 and its required libraries; do not force-remove essential dependencies or mix Debian suites.",
         "The project owner owns TASK-107 review weekly and immediately on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change, or failed gate.",
-        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires November 5, 2026; no automatic extension or January renewal applies."
+        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires December 5, 2026; no automatic extension or January renewal applies."
       ],
-      "expires_utc": "2026-11-05T23:59:59Z",
+      "expires_utc": "2026-12-05T23:59:59Z",
       "follow_up_task": "TASK-107",
       "installed_version": "2.38.1-5+deb12u3",
       "package": "libblkid1",
       "package_class": "os-pkgs",
       "package_id": "libblkid1@2.38.1-5+deb12u3",
       "package_type": "debian",
-      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation.",
+      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation. On November 2, 2026, the project owner explicitly authorized a one-month renewal to December 5 while awaiting vendor fixes, informed by the same-day advisory and static exposure review. Fresh image scans/inventories remain outstanding; this renewal does not claim remediation, fresh runtime qualification or publication authorization.",
       "severity": "HIGH",
       "vulnerability_id": "CVE-2026-53615"
     },
@@ -112,16 +112,16 @@
         "No block devices were present in isolated default CPU/CUDA containers. This is bounded exposure evidence, not proof of unexploitable code.",
         "Retain Debian 12 and its required libraries; do not force-remove essential dependencies or mix Debian suites.",
         "The project owner owns TASK-107 review weekly and immediately on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change, or failed gate.",
-        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires November 5, 2026; no automatic extension or January renewal applies."
+        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires December 5, 2026; no automatic extension or January renewal applies."
       ],
-      "expires_utc": "2026-11-05T23:59:59Z",
+      "expires_utc": "2026-12-05T23:59:59Z",
       "follow_up_task": "TASK-107",
       "installed_version": "2.38.1-5+deb12u3",
       "package": "libmount1",
       "package_class": "os-pkgs",
       "package_id": "libmount1@2.38.1-5+deb12u3",
       "package_type": "debian",
-      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation.",
+      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation. On November 2, 2026, the project owner explicitly authorized a one-month renewal to December 5 while awaiting vendor fixes, informed by the same-day advisory and static exposure review. Fresh image scans/inventories remain outstanding; this renewal does not claim remediation, fresh runtime qualification or publication authorization.",
       "severity": "HIGH",
       "vulnerability_id": "CVE-2026-53615"
     },
@@ -136,16 +136,16 @@
         "No block devices were present in isolated default CPU/CUDA containers. This is bounded exposure evidence, not proof of unexploitable code.",
         "Retain Debian 12 and its required libraries; do not force-remove essential dependencies or mix Debian suites.",
         "The project owner owns TASK-107 review weekly and immediately on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change, or failed gate.",
-        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires November 5, 2026; no automatic extension or January renewal applies."
+        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires December 5, 2026; no automatic extension or January renewal applies."
       ],
-      "expires_utc": "2026-11-05T23:59:59Z",
+      "expires_utc": "2026-12-05T23:59:59Z",
       "follow_up_task": "TASK-107",
       "installed_version": "2.38.1-5+deb12u3",
       "package": "libsmartcols1",
       "package_class": "os-pkgs",
       "package_id": "libsmartcols1@2.38.1-5+deb12u3",
       "package_type": "debian",
-      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation.",
+      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation. On November 2, 2026, the project owner explicitly authorized a one-month renewal to December 5 while awaiting vendor fixes, informed by the same-day advisory and static exposure review. Fresh image scans/inventories remain outstanding; this renewal does not claim remediation, fresh runtime qualification or publication authorization.",
       "severity": "HIGH",
       "vulnerability_id": "CVE-2026-53615"
     },
@@ -160,16 +160,16 @@
         "No block devices were present in isolated default CPU/CUDA containers. This is bounded exposure evidence, not proof of unexploitable code.",
         "Retain Debian 12 and its required libraries; do not force-remove essential dependencies or mix Debian suites.",
         "The project owner owns TASK-107 review weekly and immediately on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change, or failed gate.",
-        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires November 5, 2026; no automatic extension or January renewal applies."
+        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires December 5, 2026; no automatic extension or January renewal applies."
       ],
-      "expires_utc": "2026-11-05T23:59:59Z",
+      "expires_utc": "2026-12-05T23:59:59Z",
       "follow_up_task": "TASK-107",
       "installed_version": "2.38.1-5+deb12u3",
       "package": "libuuid1",
       "package_class": "os-pkgs",
       "package_id": "libuuid1@2.38.1-5+deb12u3",
       "package_type": "debian",
-      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation.",
+      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation. On November 2, 2026, the project owner explicitly authorized a one-month renewal to December 5 while awaiting vendor fixes, informed by the same-day advisory and static exposure review. Fresh image scans/inventories remain outstanding; this renewal does not claim remediation, fresh runtime qualification or publication authorization.",
       "severity": "HIGH",
       "vulnerability_id": "CVE-2026-53615"
     },
@@ -184,16 +184,16 @@
         "No block devices were present in isolated default CPU/CUDA containers. This is bounded exposure evidence, not proof of unexploitable code.",
         "Retain Debian 12 and its required libraries; do not force-remove essential dependencies or mix Debian suites.",
         "The project owner owns TASK-107 review weekly and immediately on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change, or failed gate.",
-        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires November 5, 2026; no automatic extension or January renewal applies."
+        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires December 5, 2026; no automatic extension or January renewal applies."
       ],
-      "expires_utc": "2026-11-05T23:59:59Z",
+      "expires_utc": "2026-12-05T23:59:59Z",
       "follow_up_task": "TASK-107",
       "installed_version": "2.38.1-5+deb12u3",
       "package": "mount",
       "package_class": "os-pkgs",
       "package_id": "mount@2.38.1-5+deb12u3",
       "package_type": "debian",
-      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation.",
+      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation. On November 2, 2026, the project owner explicitly authorized a one-month renewal to December 5 while awaiting vendor fixes, informed by the same-day advisory and static exposure review. Fresh image scans/inventories remain outstanding; this renewal does not claim remediation, fresh runtime qualification or publication authorization.",
       "severity": "HIGH",
       "vulnerability_id": "CVE-2026-53615"
     },
@@ -208,16 +208,16 @@
         "No block devices were present in isolated default CPU/CUDA containers. This is bounded exposure evidence, not proof of unexploitable code.",
         "Retain Debian 12 and its required libraries; do not force-remove essential dependencies or mix Debian suites.",
         "The project owner owns TASK-107 review weekly and immediately on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change, or failed gate.",
-        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires November 5, 2026; no automatic extension or January renewal applies."
+        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires December 5, 2026; no automatic extension or January renewal applies."
       ],
-      "expires_utc": "2026-11-05T23:59:59Z",
+      "expires_utc": "2026-12-05T23:59:59Z",
       "follow_up_task": "TASK-107",
       "installed_version": "2.38.1-5+deb12u3",
       "package": "util-linux",
       "package_class": "os-pkgs",
       "package_id": "util-linux@2.38.1-5+deb12u3",
       "package_type": "debian",
-      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation.",
+      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation. On November 2, 2026, the project owner explicitly authorized a one-month renewal to December 5 while awaiting vendor fixes, informed by the same-day advisory and static exposure review. Fresh image scans/inventories remain outstanding; this renewal does not claim remediation, fresh runtime qualification or publication authorization.",
       "severity": "HIGH",
       "vulnerability_id": "CVE-2026-53615"
     },
@@ -232,16 +232,16 @@
         "No block devices were present in isolated default CPU/CUDA containers. This is bounded exposure evidence, not proof of unexploitable code.",
         "Retain Debian 12 and its required libraries; do not force-remove essential dependencies or mix Debian suites.",
         "The project owner owns TASK-107 review weekly and immediately on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change, or failed gate.",
-        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires November 5, 2026; no automatic extension or January renewal applies."
+        "Remove this exact exception when fixed and requalify affected images/packages. Acceptance expires December 5, 2026; no automatic extension or January renewal applies."
       ],
-      "expires_utc": "2026-11-05T23:59:59Z",
+      "expires_utc": "2026-12-05T23:59:59Z",
       "follow_up_task": "TASK-107",
       "installed_version": "2.38.1-5+deb12u3",
       "package": "util-linux-extra",
       "package_class": "os-pkgs",
       "package_id": "util-linux-extra@2.38.1-5+deb12u3",
       "package_type": "debian",
-      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation.",
+      "reason": "The project owner separately approved this exact eight-record CVE-2026-53615 exception on October 22, 2026 after paired-image scans and the Debian 13 assessment. Crafted DOS extended-partition input can falsify libblkid partition metadata; no supported application caller was identified and no Bookworm vendor fix was available. This is temporary risk acceptance, not remediation. On November 2, 2026, the project owner explicitly authorized a one-month renewal to December 5 while awaiting vendor fixes, informed by the same-day advisory and static exposure review. Fresh image scans/inventories remain outstanding; this renewal does not claim remediation, fresh runtime qualification or publication authorization.",
       "severity": "HIGH",
       "vulnerability_id": "CVE-2026-53615"
     }
