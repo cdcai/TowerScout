@@ -87,12 +87,25 @@ Before requesting review for a code-changing PR:
 ## Review And Merge Policy
 
 - `main` is the only long-lived integration branch.
-- Code-changing PRs require 1 approval.
+- Code-changing PRs require 1 approval, subject to the project-owner exception below.
 - Required CI checks must pass before merge.
 - Resolve review conversations before merge.
 - Use `Squash and merge` by default.
 
 Verify the destination's actual protection settings and required checks before merge.
+
+### Project-owner approval exception
+
+The project owner may approve and authorize merging any PR, including a PR
+authored by the owner. For an owner-authored PR, record explicit owner
+acceptance of the final change in the PR description or merge rationale;
+GitHub does not permit an author to submit an approving review of their own PR.
+This recorded acceptance satisfies the approval requirement for that PR.
+
+The exception does not waive required CI checks, resolved review conversations,
+source/artifact identity checks, or separate security and release-publication
+authorization. Preserve the repository's other branch protections. Reconfirm
+owner acceptance if the final scope or material risks change after approval.
 
 Use UTF-8 for source and documentation. Preserve existing line-ending contracts.
 
