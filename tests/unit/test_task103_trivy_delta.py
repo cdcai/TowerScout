@@ -61,7 +61,7 @@ def test_committed_residual_policy_is_exact_and_time_bounded():
         and item["approved_by"] == "Project owner"
         and item["follow_up_task"] == "TASK-107"
         and item["expires_utc"] == (
-            "2026-11-05T23:59:59Z"
+            "2026-12-05T23:59:59Z"
             if item["vulnerability_id"] == "CVE-2026-53615"
             else "2027-01-31T23:59:59Z"
         )
@@ -70,9 +70,12 @@ def test_committed_residual_policy_is_exact_and_time_bounded():
 
 
 @pytest.mark.parametrize("flavor", ["cpu", "cuda128"])
-@pytest.mark.parametrize("second,expired", [(58, False), (59, True)])
+@pytest.mark.parametrize(
+    "month,day,second,expired",
+    [(11, 6, 0, False), (12, 5, 58, False), (12, 5, 59, True)],
+)
 def test_util_linux_expiry_blocks_even_while_old_renewals_remain_valid(
-    monkeypatch, flavor, second, expired
+    monkeypatch, flavor, month, day, second, expired
 ):
     import importlib
     from datetime import datetime, timezone
@@ -83,7 +86,7 @@ def test_util_linux_expiry_blocks_even_while_old_renewals_remain_valid(
     class FrozenDateTime(datetime):
         @classmethod
         def now(cls, tz=None):
-            return datetime(2026, 11, 5, 23, 59, second, tzinfo=timezone.utc)
+            return datetime(2026, month, day, 23, 59, second, tzinfo=timezone.utc)
 
     monkeypatch.setattr(gate, "datetime", FrozenDateTime)
     document = json.loads(COMMITTED_RESIDUALS.read_text(encoding="utf-8"))
@@ -94,7 +97,7 @@ def test_util_linux_expiry_blocks_even_while_old_renewals_remain_valid(
     ]
     assert len(gate._accepted_residuals(old_only, flavor)) == 2
     if expired:
-        with pytest.raises(gate.InputError, match="expired at 2026-11-05"):
+        with pytest.raises(gate.InputError, match="expired at 2026-12-05"):
             gate._accepted_residuals(document, flavor)
     else:
         assert len(gate._accepted_residuals(document, flavor)) == 10

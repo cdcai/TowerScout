@@ -3,7 +3,7 @@
 The release gate retains the accepted 396-key baseline and ten exact time-limited HIGH residual identities: two remaining renewed records and eight separately approved util-linux records.
 The authoritative machine-readable identities, versions, CPU/CUDA scope and expiry are in
 `.github/security/task103-accepted-residuals.v1.json` in corresponding source.
-On October 22, 2026, the project owner authorized conditional renewal of the existing findings supported by fresh evidence, with a maximum expiry of January 31, 2027 at 23:59:59 UTC. The resolved Expat entry has been removed. Two of those four older records remain after the October 26 OpenSSL correction. The project owner subsequently approved the separate eight-record November 5 exception below.
+On October 22, 2026, the project owner authorized conditional renewal of the existing findings supported by fresh evidence, with a maximum expiry of January 31, 2027 at 23:59:59 UTC. The resolved Expat entry has been removed. Two of those four older records remain after the October 26 OpenSSL correction. The separate eight-record util-linux exception below was renewed on November 2 through December 5.
 
 | Finding | Exact retained identity | Scope |
 | --- | --- | --- |
@@ -38,7 +38,9 @@ Fresh paired CPU/CUDA scans identify CVE-2026-53615 on eight Debian util-linux b
 | util-linux | `2.38.1-5+deb12u3` |
 | util-linux-extra | `2.38.1-5+deb12u3` |
 
-The project owner owns TASK-107 weekly review and immediate review on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change or failed gate. Remove these entries when fixed and repeat affected qualification. The November 5 expiry is independent of the January 31 renewal; no automatic extension applies. Publication still requires separate authorization and final-artifact qualification.
+On November 2, 2026, the project owner explicitly renewed these same eight identities through **2026-12-05T23:59:59Z**, replacing the original November 5 deadline while awaiting vendor fixes. The same-day [Debian advisory review](https://security-tracker.debian.org/tracker/CVE-2026-53615) still found the accepted Bookworm version vulnerable with no listed Bookworm fix. Static source review found no supported disk-probing caller, privileged mode, SYS_ADMIN capability or raw-block-device mapping in the standard profiles; GPU mappings remain present. This is continued temporary risk acceptance with evidence limits: fresh exact-digest scans, filesystem inventories and live exposure revalidation were not performed for this renewal and remain required before publication. The existing package identities, severity, CPU/CUDA scope, controls and 396-key baseline remain unchanged. No remediation or fresh runtime qualification is claimed.
+
+The project owner owns TASK-107 weekly review and immediate review on a vendor fix, severity/identity change, new disk-probing caller, raw-device exposure, privileged/capability change or failed gate. Remove these entries when fixed and repeat affected qualification. The December 5 expiry is independent of the January 31 renewal; no automatic extension applies. Publication still requires separate authorization and final-artifact qualification.
 
 An isolated Debian 13 CPU assessment removed that CVE and the OpenSSL residuals, but introduced eight unaccepted records for four other util-linux CVEs on `login` and `liblastlog2-2`. Debian protects `login`, and essential util-linux requires liblastlog2-2. The assessment is not adopted; do not force-remove required packages, mix Debian suites, or broaden the baseline. The approved short exception applies only to the retained Debian 12 identities; none of the Debian 13 findings is accepted.
 
@@ -67,7 +69,7 @@ still required at handoff, without publishing private approval correspondence.
 
 | Obligation | Due/trigger | Required evidence and disposition |
 | --- | --- | --- |
-| Eight exact util-linux identities | Weekly and immediately on the changes listed above; hard expiry 2026-11-05T23:59:59Z | Fresh exact-digest scans, installed identities and exposure review; remove fixed entries and requalify. No automatic extension. |
+| Eight exact util-linux identities | Weekly and immediately on the changes listed above; hard expiry 2026-12-05T23:59:59Z | Owner renewed November 2 based on scoped advisory/static review. Fresh exact-digest scans, installed identities and exposure revalidation remain required; remove fixed entries and requalify. No automatic extension. |
 | Two remaining renewed identities | Weekly/immediate-change review; week of January 25 review; hard expiry 2027-01-31T23:59:59Z | Same exact-identity/scan review; retain only still applicable approved entries. |
 | New/changed/unused/expired findings | Every build and publication verification | Fail closed against the unchanged 396-key baseline and exact residual policy at `.github/security/task103-accepted-residuals.v1.json` in the corresponding source identified by `SOURCE.txt`. The control ZIP does not include `.github/`. |
 | Corresponding source and evidence custody | Before artifact publication/handoff | Final-version recursive source, build/relink inputs, notices and SBOMs; checksum-verified receiving-held evidence copy. Retain commit-addressed fork records and their evidence ref. |
