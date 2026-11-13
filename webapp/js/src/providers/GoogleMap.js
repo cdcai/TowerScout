@@ -279,6 +279,16 @@
         });
       }
 
+      // Capture Enter before Places selects a nearby address for exact coordinates.
+      // Use the public value property; do not depend on the widget's shadow DOM.
+      autocompleteElement.addEventListener('keydown', (event) => {
+        if (currentProvider !== 'google' || event.key !== 'Enter' || event.isComposing) return;
+        if (window.CoordinateSearch.handle(autocompleteElement.value || '', this)) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      }, { capture: true });
+
       // Listen for the gmp-select event fired when the user selects a prediction
       // Note: This is async pattern with placePrediction.toPlace() and fetchFields()
       autocompleteElement.addEventListener('gmp-select', async (event) => {
@@ -747,6 +757,7 @@
 
 
     getBoundsPolygon(query, place) {
+      if (window.CoordinateSearch.handle(query, this)) return;
       googleMap.resetBoundaries();
       // Google Maps provider-specific search - only affects Google Maps
 
@@ -801,7 +812,9 @@
             }
             //window.TowerScoutLogger.debug(bounds.toUrlValue());
           } else if (x["geojson"]["type"] == "LineString" || x["geojson"]["type"] == "Point") {
-            googleMap.map.fitBounds(place.geometry.viewport, 0)
+            if (hasPlace && place.geometry.viewport) {
+              googleMap.map.fitBounds(place.geometry.viewport, 0);
+            }
           }
           if (googleMap.boundaries.length > 0) {
             googleMap.showBoundaries();

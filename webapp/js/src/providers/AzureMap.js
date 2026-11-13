@@ -1669,6 +1669,7 @@
     }
 
     getBoundsPolygon(query, place) {
+      if (window.CoordinateSearch.handle(query, this)) return;
       // Azure Maps native search integration - NO Google dependency
       this.resetBoundaries();
 
