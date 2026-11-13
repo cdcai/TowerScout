@@ -861,14 +861,14 @@
       return [sw.lng(), ne.lat(), ne.lng(), sw.lat()];
     }
 
-    fitBounds(x1, y1, x2, y2) {
+    fitBounds(x1, y1, x2, y2, padding) {
       let bounds = {
         north: y1,
         south: y2,
         east: x2,
         west: x1
       };
-      this.map.fitBounds(bounds);
+      this.map.fitBounds(bounds, padding);
     }
 
     setCenter(c) {
