@@ -79,6 +79,7 @@ webapp/js/src/settings.js
 webapp/js/src/setup-wizard.js
 webapp/js/src/store.js
 webapp/js/src/towerscout.js
+webapp/js/src/ui/LocationSearch.js
 webapp/js/src/ui/export.js
 webapp/js/src/ui/navigation.js
 webapp/js/src/ui/search.js
