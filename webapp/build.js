@@ -58,6 +58,7 @@ const MODULE_ORDER = [
     'src/utils/coordinates.js',
     'src/utils/imagery.js',
     'src/utils/apiHelpers.js',
+    'src/ui/LocationSearch.js',
     'src/setup-wizard.js',
     'src/settings.js',
 

@@ -633,47 +633,9 @@
       }
     }
 
+    // Compatibility hook: keep the same location field when Azure becomes active.
     disableGooglePlacesWhenActive() {
-      // Critical fix: Disable Google Places SearchBox when Azure is active
-      const searchInput = document.getElementById('search');
-
-      // Remove Google Places classes and listeners when Azure is selected
-      if (currentProvider === 'azure') {
-        window.TowerScoutLogger.debug('🔧 Completely disabling Google Places for Azure Maps');
-
-        // Remove Google Places autocomplete classes
-        searchInput.classList.remove('pac-target-input');
-
-        // Remove Google Places autocomplete attribute
-        searchInput.removeAttribute('autocomplete');
-        searchInput.setAttribute('autocomplete', 'off');
-
-        // Hide Google Places autocomplete dropdown
-        const pacContainer = document.querySelector('.pac-container');
-        if (pacContainer) {
-          pacContainer.style.display = 'none';
-          pacContainer.style.visibility = 'hidden';
-        }
-
-        // Clear any existing Google Places listeners
-        const newInput = searchInput.cloneNode(true);
-        searchInput.parentNode.replaceChild(newInput, searchInput);
-
-        // CRITICAL: Update global input reference to new element
-        input = document.getElementById('search');
-
-        // Re-add the Azure Maps event listener to the new input
-        eventManager.addEventListener(input, 'keypress', function (e) {
-          if (e.key === 'Enter') {
-            handleGlobalSearch();
-          }
-        });
-
-        // Set Azure Maps placeholder
-        input.setAttribute('placeholder', 'Search with Azure Maps...');
-
-        window.TowerScoutLogger.debug('✅ Google Places completely disabled, Azure Maps search active');
-      }
+      window.LocationSearch.init();
     }
 
     addSearchResultMarker(result) {

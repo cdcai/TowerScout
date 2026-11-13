@@ -64,33 +64,8 @@ for (const Provider of [context.window.GoogleMap, context.window.AzureMap]) {
 }
 assert.strictEqual(warnings.length, 2);
 
-// Exercise the actual Google widget initialization and its registered Enter handler.
+// Shared-input keyboard coverage lives in test_location_search.js.
 const googleMap = Object.create(context.window.GoogleMap.prototype);
-googleMap.originalInput = input;
-googleMap.initializeSearch();
-assert.strictEqual(listeners.keydown.options.capture, true);
-const centers = [];
-googleMap.setCenter = coordinates => centers.push([...coordinates]);
-googleMap.setZoom = () => {};
-const event = () => ({
-  key: 'Enter', prevented: false, stopped: false,
-  preventDefault() { this.prevented = true; },
-  stopImmediatePropagation() { this.stopped = true; }
-});
-googleMap.autocompleteElement.value = '40.7128, -74.0060';
-let enter = event();
-listeners.keydown.handler(enter);
-assert.deepStrictEqual(centers, [[-74.006, 40.7128]]);
-assert.ok(enter.prevented && enter.stopped);
-googleMap.autocompleteElement.value = '1600 Pennsylvania Ave NW';
-enter = event();
-listeners.keydown.handler(enter);
-assert.ok(!enter.prevented && !enter.stopped, 'Address autocomplete must keep handling Enter');
-context.currentProvider = 'azure';
-googleMap.autocompleteElement.value = '0, 0';
-listeners.keydown.handler(event());
-assert.strictEqual(centers.length, 1, 'Inactive Google widget must not navigate');
-context.currentProvider = 'google';
 
 // A Google fallback point without a Place must no longer throw.
 context.googleMap = googleMap;

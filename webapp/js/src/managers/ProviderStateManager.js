@@ -71,6 +71,7 @@
       }
       window.TowerScoutLogger.debug(`🔄 Switching provider from ${this.currentProvider} to ${targetProvider}`);
       this.switchingInProgress = true;
+      window.LocationSearch?.invalidate();
 
       // Store current state for rollback
       const rollbackState = {
