@@ -146,6 +146,18 @@ function testLockedMutationsFailFastInsteadOfSpinning() {
   assert.equal(manager.tileLock, true);
 }
 
+async function testSearchCleanupFailureReleasesSwitchLock() {
+  const context = loadProviderManagerContext();
+  const manager = context.window.providerManager;
+  context.window.LocationSearch = {
+    invalidate() { throw new Error('forced search cleanup failure'); }
+  };
+  await assert.rejects(manager.switchProvider('google'), /forced search cleanup failure/);
+  assert.equal(manager.isSwitching(), false);
+  context.window.LocationSearch.invalidate = () => {};
+  assert.equal(await manager.switchProvider('google'), true);
+}
+
 function testSourceHasNoProviderStateSpinLoops() {
   assert.equal(/while\s*\(\s*this\.[a-zA-Z]+Lock\s*\)/.test(source), false);
 }
@@ -153,6 +165,7 @@ function testSourceHasNoProviderStateSpinLoops() {
 (async () => {
   await testQueuedSwitchesReplayTargetProvider();
   await testProviderSwitchQueueRecoversAfterFailure();
+  await testSearchCleanupFailureReleasesSwitchLock();
   testLockedMutationsFailFastInsteadOfSpinning();
   testSourceHasNoProviderStateSpinLoops();
   console.log('TASK-064 ProviderStateManager tests passed');

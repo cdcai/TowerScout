@@ -71,7 +71,6 @@
       }
       window.TowerScoutLogger.debug(`🔄 Switching provider from ${this.currentProvider} to ${targetProvider}`);
       this.switchingInProgress = true;
-      window.LocationSearch?.invalidate();
 
       // Store current state for rollback
       const rollbackState = {
@@ -80,6 +79,7 @@
       };
 
       try {
+        window.LocationSearch?.invalidate();
         // ⭐ MEMORY MANAGEMENT: Cleanup previous provider BEFORE switching
         if (this.currentMap && typeof this.currentMap.cleanup === 'function') {
           window.TowerScoutLogger.debug(`🧹 Cleaning up ${this.currentProvider} before switch...`);
