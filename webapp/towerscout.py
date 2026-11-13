@@ -164,6 +164,7 @@ MAP_PROXY_CONFIG = {
         'static': {'rate_limit': (500, 3600), 'cache_ttl': 43200}   # 500/hour, 12hr cache
     },
     'azure': {
+        'suggest': {'rate_limit': (60, 60), 'cache_ttl': 0},      # Type-ahead; do not persist partial queries/results.
         'search': {'rate_limit': (100, 3600), 'cache_ttl': 3600},   # 100/hour, 1hr cache  
         'tiles': {'rate_limit': (1000, 3600), 'cache_ttl': 86400}   # 1000/hour, 24hr cache
     }
@@ -2452,7 +2453,7 @@ def map_proxy(provider, service):
         cache_file = os.path.join(MAP_CACHE_DIR, f"{cache_key}.cache")
         
         # Check cache
-        if os.path.exists(cache_file):
+        if config['cache_ttl'] > 0 and os.path.exists(cache_file):
             cache_age = time.time() - os.path.getmtime(cache_file)
             if cache_age < config['cache_ttl']:
                 maps_logger.debug(f"Cache hit for {provider}/{service}")
@@ -2469,7 +2470,7 @@ def map_proxy(provider, service):
             return jsonify({'error': f'Provider {provider} not implemented'}), 500
             
         # Cache successful responses
-        if response_data:
+        if response_data and config['cache_ttl'] > 0:
             try:
                 with open(cache_file, 'wb') as f:
                     f.write(response_data)
@@ -2477,7 +2478,10 @@ def map_proxy(provider, service):
             except Exception as cache_error:
                 maps_logger.warning(f"Failed to cache response: {cache_error}")
                 
-        return Response(response_data, headers={'Content-Type': _get_content_type(service)})
+        headers = {'Content-Type': _get_content_type(service)}
+        if service == 'suggest':
+            headers['Cache-Control'] = 'no-store'
+        return Response(response_data, headers=headers)
         
     except ValidationError as e:
         api_logger.warning(f"Map proxy validation error: {e}")
@@ -2502,7 +2506,7 @@ def _get_content_type(service):
     """Get appropriate content type for service response"""
     if service in ['tiles', 'static']:
         return 'image/png'
-    elif service == 'search':
+    elif service in ('search', 'suggest'):
         return 'application/json'
     else:
         return 'application/octet-stream'
@@ -2562,7 +2566,7 @@ def _handle_azure_proxy(service, params):
     # Log proxy request
     maps_logger.info(f"Azure Maps proxy request: service={service}, params={len(params)} parameters")
         
-    if service == 'search':
+    if service in ('search', 'suggest'):
         # Azure Maps Search API - Use address search for better geocoding results
         url = f"https://atlas.microsoft.com/search/address/json"
         
@@ -2574,6 +2578,10 @@ def _handle_azure_proxy(service, params):
             'limit': min(int(params.get('limit', 5)), 20),  # Cap at 20 results for performance
             'countrySet': params.get('countrySet', 'US')  # Default to US
         }
+        if service == 'suggest':
+            search_params['query'] = TowerScoutValidator.validate_search_query(search_params['query'])
+            search_params['typeahead'] = 'true'
+            search_params['limit'] = max(1, min(search_params['limit'], 5))
         
         # Add optional geospatial bias if provided
         if 'lat' in params and 'lon' in params:
@@ -2588,7 +2596,8 @@ def _handle_azure_proxy(service, params):
             except (ValueError, TypeError):
                 maps_logger.warning(f"Invalid coordinate format: lat={params.get('lat')}, lon={params.get('lon')}")
         
-        maps_logger.debug(f"Azure search request: {url} with query='{search_params['query']}', limit={search_params['limit']}")
+        maps_logger.debug("Azure search request: typeahead=%s query_chars=%s limit=%s",
+                          service == 'suggest', len(search_params['query']), search_params['limit'])
         
     elif service == 'tiles':
         # Azure Maps Raster Tile Service for satellite imagery
