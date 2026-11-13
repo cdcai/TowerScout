@@ -64,6 +64,25 @@ for (const Provider of [context.window.GoogleMap, context.window.AzureMap]) {
 }
 assert.strictEqual(warnings.length, 2);
 
+// Azure navigation must remove only location markers from its shared drawing source.
+const azureMap = Object.create(context.window.AzureMap.prototype);
+const boundary = { getProperties: () => ({ type: 'boundary', isCircle: true }) };
+const otherShape = { getProperties: () => ({}) };
+const marker = { getProperties: () => ({ searchResult: true }) };
+let shapes = [boundary, otherShape, marker];
+azureMap.searchDataSource = {
+  getShapes: () => shapes,
+  remove: removed => { shapes = shapes.filter(shape => !removed.includes(shape)); },
+  clear() { throw new Error('Navigation must not clear boundary drawings'); }
+};
+azureMap.clearSearchResultMarkers();
+assert.deepStrictEqual(shapes, [boundary, otherShape]);
+shapes.push(marker);
+azureMap.setCenter = () => {};
+azureMap.setZoom = () => {};
+context.window.CoordinateSearch.handle('40.7128, -74.0060', azureMap);
+assert.deepStrictEqual(shapes, [boundary, otherShape]);
+
 // Shared-input keyboard coverage lives in test_location_search.js.
 const googleMap = Object.create(context.window.GoogleMap.prototype);
 

@@ -49,12 +49,15 @@ async function main() {
   let azureResponse = async () => ({ results: [] });
   let tokenCount = 0;
   const makeMap = name => ({
-    map: { getBounds: () => ({}), setCenter: value => calls.push([name, 'center', value]) },
+    map: {
+      getBounds: () => ({}), setCenter: value => calls.push([name, 'center', value]),
+      fitBounds: value => calls.push([name, 'viewport', value])
+    },
     getCenter: () => [-74, 40],
     setCenter: value => calls.push([name, 'center', [...value]]),
     setZoom: zoom => calls.push([name, 'zoom', zoom]),
-    getBoundsPolygon(query, place, current) { if (current()) calls.push([name, 'place', query]); },
-    resetBoundaries: () => calls.push([name, 'reset']),
+    getBoundsPolygon() { throw new Error('Address navigation must not look up outlines'); },
+    resetBoundaries() { throw new Error('Address navigation must preserve boundaries'); },
     addSearchResultMarker: () => calls.push([name, 'marker']),
     searchAddress: async () => [{ position: { lon: -77, lat: 38 }, address: {} }]
   });
@@ -113,7 +116,7 @@ async function main() {
   assert.strictEqual(search.list.children[0].attributes['aria-selected'], 'true');
   input.fire('keydown', { key: 'Enter' });
   await flush();
-  assert.ok(calls.some(call => call[1] === 'place'), 'Selection must resolve and navigate');
+  assert.ok(calls.some(call => call[1] === 'viewport'), 'Selection must navigate without changing boundaries');
   assert.strictEqual(input.value, '<img onerror=bad>');
   assert.strictEqual(search.token, null, 'A selection ends the Google session');
 

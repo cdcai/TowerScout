@@ -220,7 +220,7 @@
           const place = item.prediction.toPlace();
           await this.bounded(place.fetchFields({ fields: ['location', 'viewport', 'displayName', 'formattedAddress'] }));
           if (!this.current(selection)) return;
-          this.showGoogle(place, item.label, selection);
+          this.showGoogle(place, selection);
         } else {
           this.showAzure(item.result, selection);
         }
@@ -229,23 +229,17 @@
       }
     }
 
-    showGoogle(place, label, snapshot) {
+    showGoogle(place, snapshot) {
       if (!this.current(snapshot) || !place.location) throw new Error('location unavailable');
-      const normalized = {
-        name: place.displayName || label,
-        formatted_address: place.formattedAddress || label,
-        geometry: { location: place.location, viewport: place.viewport }
-      };
-      // Keep the existing Google outline lookup, guarded against stale responses.
+      // Address results navigate only; boundaries are selected explicitly by the user.
       snapshot.map.map.setCenter(place.location);
-      if (!place.viewport) snapshot.map.setZoom(17);
-      snapshot.map.getBoundsPolygon(snapshot.query, normalized, () => this.current(snapshot));
+      if (place.viewport) snapshot.map.map.fitBounds(place.viewport);
+      else snapshot.map.setZoom(17);
       this.status.textContent = 'Location found.';
     }
 
     showAzure(result, snapshot) {
       if (!this.current(snapshot) || !result?.position) return;
-      snapshot.map.resetBoundaries();
       snapshot.map.setCenter([result.position.lon, result.position.lat]);
       snapshot.map.setZoom(17);
       snapshot.map.addSearchResultMarker(result);
@@ -275,7 +269,7 @@
           this.showGoogle({
             location: place.geometry.location, viewport: place.geometry.viewport,
             formattedAddress: place.formatted_address
-          }, snapshot.query, snapshot);
+          }, snapshot);
         } else if (snapshot.provider === 'azure') {
           const results = await this.bounded(snapshot.map.searchAddress(snapshot.query));
           if (!this.current(snapshot)) return;

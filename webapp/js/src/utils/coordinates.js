@@ -66,7 +66,7 @@
     map.setCenter([coordinates.lng, coordinates.lat]);
     map.setZoom(17);
     // A prior Azure address marker must not describe the new coordinate location.
-    if (map.searchDataSource) map.searchDataSource.clear();
+    if (typeof map.clearSearchResultMarkers === 'function') map.clearSearchResultMarkers();
     return true;
   }
 

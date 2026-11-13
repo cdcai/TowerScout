@@ -638,13 +638,20 @@
       window.LocationSearch.init();
     }
 
+    clearSearchResultMarkers() {
+      if (!this.searchDataSource) return;
+      const markers = this.searchDataSource.getShapes().filter(shape =>
+        shape.getProperties()?.searchResult === true);
+      if (markers.length) this.searchDataSource.remove(markers);
+    }
+
     addSearchResultMarker(result) {
       // Add a marker for search results with proper Azure coordinates
       const lng = result.position.lon;
       const lat = result.position.lat;
 
       // Clear previous search markers
-      this.searchDataSource.clear();
+      this.clearSearchResultMarkers();
 
       // Create marker using Azure Maps Point with [lng, lat] format
       const searchMarker = new atlas.data.Feature(
