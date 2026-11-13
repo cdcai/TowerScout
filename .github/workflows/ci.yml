@@ -62,6 +62,11 @@ jobs:
     - name: Run detection cancellation recovery contract
       run: node tests/frontend/test_detection_cancel_recovery_contract.js
 
+    - name: Run location search regression tests
+      run: |
+        node tests/frontend/test_coordinate_search.js
+        node tests/frontend/test_location_search.js
+
     - name: Verify export downloads and parsed CSV/KML contents
       run: |
         python3 tests/frontend/verify_export_serialization.py
