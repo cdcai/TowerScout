@@ -22,9 +22,9 @@ SITE = "usr/local/lib/python3.11/site-packages"
 APP_DIR = f"{SITE}/urllib3"
 VENDOR_DIR = f"{SITE}/pip/_vendor/urllib3"
 APP_METADATA = f"{SITE}/urllib3-2.8.0.dist-info/METADATA"
-PIP_METADATA = f"{SITE}/pip-26.2.2.dist-info/METADATA"
+PIP_METADATA = f"{SITE}/pip-26.3.dist-info/METADATA"
 VENDOR_SBOM = f"{SITE}/pip/_vendor/bom.cdx.json"
-NOTICE_DIR = f"{SITE}/pip-26.2.2.dist-info/licenses/src/pip/_vendor/urllib3"
+NOTICE_DIR = f"{SITE}/pip-26.3.dist-info/licenses/src/pip/_vendor/urllib3"
 LOCATION_POLICY = "pip-vendored-urllib3-v1"
 SCOPE = "image-root-excluding-dev-proc-sys"
 
@@ -116,10 +116,10 @@ def collect_inventory(root: Path) -> dict:
     ]
     if (
         len(matches) != 1
-        or matches[0].get("version") != "2.7.0"
-        or matches[0].get("purl") != "pkg:pypi/urllib3@2.7.0"
+        or matches[0].get("version") != "2.8.0"
+        or matches[0].get("purl") != "pkg:pypi/urllib3@2.8.0"
     ):
-        raise InventoryError("pip's embedded SBOM must identify exactly urllib3 2.7.0")
+        raise InventoryError("pip's embedded SBOM must identify exactly urllib3 2.8.0")
 
     notice_files = sorted(
         path.relative_to(root).as_posix() for path in (root / NOTICE_DIR).rglob("*")
@@ -140,8 +140,13 @@ def collect_inventory(root: Path) -> dict:
 
 
 def validate_inventory(
-    document: dict, image_id: str, source_ref: str, flavor: str
+    document: dict, image_id: str, source_ref: str, flavor: str,
+    *, legacy_residual: bool = False,
 ) -> None:
+    """Require the fixed inventory, or explicitly verify the historical exception."""
+    pip_version = "26.2.2" if legacy_residual else "26.3"
+    vendored_version = "2.7.0" if legacy_residual else "2.8.0"
+    notice_dir = f"{SITE}/pip-{pip_version}.dist-info/licenses/src/pip/_vendor/urllib3"
     expected = {
         "schema_version": 1,
         "location_policy": LOCATION_POLICY,
@@ -149,14 +154,14 @@ def validate_inventory(
         "source_ref": source_ref,
         "pytorch_flavor": flavor,
         "scope": SCOPE,
-        "urllib3_directories": sorted([APP_DIR, VENDOR_DIR, NOTICE_DIR]),
-        "urllib3_notice_files": [f"{NOTICE_DIR}/LICENSE.txt"],
+        "urllib3_directories": sorted([APP_DIR, VENDOR_DIR, notice_dir]),
+        "urllib3_notice_files": [f"{notice_dir}/LICENSE.txt"],
         "urllib3_distributions": [f"{SITE}/urllib3-2.8.0.dist-info"],
         "urllib3_sbom_sources": [VENDOR_SBOM],
-        "pip_version": "26.2.2",
+        "pip_version": pip_version,
         "application_version": "2.8.0",
         "application_module_version": "2.8.0",
-        "vendored_module_version": "2.7.0",
+        "vendored_module_version": vendored_version,
     }
     if not isinstance(document, dict) or set(document) != set(expected) | {
         "vendored_sbom_sha256"
