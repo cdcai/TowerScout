@@ -47,6 +47,8 @@ The available pip and apt updates resolve six HIGH scanner keys in a small local
 
 The [guarded NIS omission assessment](2026-11-16-runtime-exposure.md) removes 56 HIGH scanner keys in a small local assessment, leaving 13 unaccepted keys. No exception is added and no baseline key is broadened. The dedicated image intentionally omits the optional Unix NIS module and its reviewed non-essential package chain; it retains Expat, SQLite, PAM and compression support. Bundled native copies, an advisory-data mismatch and final-artifact qualification remain open.
 
+The [current-runtime applicability review](2026-11-16-runtime-exposure.md#current-runtime-applicability-review) retains Python 3.11 and Debian 12 as directed by the project owner. It separates 13 package keys into ten advisories, records inactive PAM namespace configuration, validates the backported Expat allocation tracker, and strengthens the SQLite secure-delete mapping question with patched Debian source evidence. The zlib product-identity discrepancy remains open. No match is suppressed, no acceptance is added, and publication remains blocked.
+
 ## Enforcement and maintenance
 
 Fresh scans must fail on new HIGH/CRITICAL keys, severity increases, changed identities, incomplete scans,
