@@ -34,6 +34,25 @@ A fresh package-index query in an isolated Debian 12 container found no newer ca
 
 Next, reassess supported vendor updates or an isolated base-image migration against the full current scan. Backporting and any new bounded risk decision require separate technical review; only the owner can approve new acceptance. Preserve the release hold until a valid disposition and affected artifact qualification are complete.
 
+## Read-only base-image follow-up
+
+A subsequent November 16 review of Debian's official [security-tracker dataset](https://security-tracker.debian.org/tracker/data/json) matched all 24 CVE IDs behind the 69 remaining keys, plus the separately accepted util-linux CVE. This is a source-advisory review, not a scan or qualification of a new image.
+
+| Source group | Reviewed CVE IDs | Debian 12 open | Debian 13 open | Debian 13 resolved |
+| --- | ---: | ---: | ---: | ---: |
+| krb5 | 14 | 14 | 14 | 0 |
+| expat | 4 | 4 | 4 | 0 |
+| pam | 1 | 1 | 0 | 1 |
+| sqlite3 | 3 | 3 | 3 | 0 |
+| zlib | 2 | 2 | 0 | 2 |
+| util-linux (existing exception) | 1 | 1 | 0 | 1 |
+
+Debian 13 therefore still lists 21 reviewed CVEs as open. Merely changing Debian versions cannot be expected to clear the gate: the corresponding currently installed package keys would total 63, before accounting for any changed package graph or new findings. Do not treat that projection as an actual Debian 13 scan.
+
+The next small assessment should establish which packages introduce Kerberos, Expat and SQLite and whether any can be omitted safely, then review supported vendor backports and any required Python/native dependency changes. Inspect the dependency graph and upstream fixes before choosing a base and budget; use a CPU candidate first only when there is a plausible remediation path. Preserve TLS verification, trusted model loading, supported GPU coverage and the unchanged gate. New acceptance, if proposed, requires a scoped owner decision rather than automatic renewal.
+
+The downloaded tracker snapshot has SHA-256 `bc664f8c81eea8feacf344dca6d39ae6951a8ed6e1eb2321c6984b46b37f5324`. Raw data remains outside commits. No image build, package installation, baseline change or acceptance change was performed for this advisory follow-up.
+
 ## Artifact identities
 
 The security branch starts from accepted main `5ea89807bcc71c397522679a66dcddc0c9bae977`. The reused application layers identify search-test source `79422383e9e09dad301cf66ea659d30335fa7661`; they do not identify the security branch as their clean build source.
