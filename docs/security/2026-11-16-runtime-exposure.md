@@ -54,11 +54,26 @@ The official [CVE-2026-76844 record](https://raw.githubusercontent.com/CVEProjec
 - Live Azure estimate/detection produced 25 detections across four tiles. CSV contained 25 rows and KML 16 placemarks. Dataset restore, invalid-archive recovery and export after controlled restart passed. Both ZIPs passed CRC checks and preserved all four tile-image byte hashes.
 - Maintained Azure cancellation/retry coverage passed, with 25 review entries and 16 visible markers; no browser page errors were recorded.
 - A real ZIP-code boundary read through GeoPandas/Fiona returned one feature with HTTP 200. This supplements the native-import and linkage checks.
-- The attempted Google workflow failed map-tile TLS validation. An isolated verified-HTTPS comparison reproduced the Google-domain certificate failure in both the unmodified and guarded images, while Azure succeeded in both. This is an unresolved current network/trust limitation, not a successful Google qualification. TLS verification was never disabled and no CA trust change was made.
+- The initial Google workflow failed map-tile TLS validation in both the unmodified and guarded images, while Azure succeeded in both. A follow-up used the documented certificate importer in an isolated test control project, with a CA already trusted by Windows. The importer validated the CA, built a combined bundle and verified Google HTTPS before activating it. TLS verification stayed enabled; the user's normal control package and configuration were not modified.
+- With that bundle, live Google detection produced 26 detections across four tiles. CSV contained 26 rows and KML 16 placemarks. Dataset restore, invalid-archive recovery, readiness and export after restart passed. Both ZIPs passed CRC checks and preserved the same four image byte hashes; restored export paths were normalized. An initial restart test attempted export before the server was ready and timed out; a repeat with an explicit health wait passed. This is local network-trust validation, not official package qualification.
+- Google cancellation/retry also passed: cancellation cleared the active run, retry produced 26 review entries and 16 visible markers, and no browser page errors were recorded.
 - Full maintained unit suite: 931 passed, 74 skipped. Blocking Python lint reports zero findings; whitespace/adoption checks are recorded separately.
 - New removal-guard tests cover unexpected/essential/missing package metadata, extra APT actions, malformed extension files, host refusal and refusal before any file/system mutation. The genuine package-removal build and real-model/browser checks are separate evidence from these source tests.
 
 All private imagery, fixtures, raw scans, model outputs, credentials and logs remain outside commits. A small dependency layer over the previously tested application image was used to avoid a full CUDA rebuild. It is not a clean build from this branch, a separate CPU-flavor image, an official downloaded package, a second-host test or Podman qualification. Source changes must still be built and qualified in official artifacts before any release decision.
+
+## Supported dependency update path
+
+The November 16 official package metadata lists Fiona 1.10.1, already pinned here, as its latest release. The installed pyproj 3.7.2 is the latest release compatible with Python 3.11; pyproj 3.8.0 requires Python 3.12. Inspection of the hash-verified official Linux CPython 3.11 pyproj 3.7.2 wheel confirmed bundled SQLite 3.46.1. Reinstalling those current wheels would not replace their old SQLite copies. Sources: [Fiona metadata](https://pypi.org/pypi/fiona/json), [pyproj metadata](https://pypi.org/pypi/pyproj/json), and [pyproj 3.7.2 metadata](https://pypi.org/pypi/pyproj/3.7.2/json).
+
+The next dependency implementation should be a separate native-stack change:
+
+1. Resolve the advisory identity and feature-applicability questions above without suppressing the existing gate entries prematurely.
+2. Prefer fixed vendor packages and upstream wheels. If those remain unavailable, assess reproducible, hash-pinned builds of the affected native libraries and their Python consumers as one stack, including Fiona/GDAL, PROJ/pyproj and Python's own extensions. Replacing only Debian's SQLite or one shared-library filename leaves bundled copies unaddressed and does not establish ABI compatibility.
+3. Evaluate a supported base update alongside that work. [Debian's PAM tracker](https://security-tracker.debian.org/tracker/CVE-2025-6020) lists a fix in Debian 13 and an incomplete Debian 12 patch, but [its SQLite tracker](https://security-tracker.debian.org/tracker/CVE-2026-119374) still lists both releases as affected. A base update alone does not resolve the complete inventory. Do not mix Debian suites or force-remove essential login/PAM packages. A Python-version change also requires deliberate revision of the Python 3.11-specific NIS guard.
+4. Reinventory every native copy, rescan the resulting image, repeat native linkage and dependency-sensitive decoding/ZIP-code checks, compare both production models on CPU/CUDA and repeat Google/Azure workflows before official artifact qualification.
+
+No unsupported binary swaps, dependency-policy exceptions, new base migration or additional full CUDA build were made for this follow-up. The 13 unaccepted assessment keys and release hold remain.
 
 ## Exact evidence identities
 
