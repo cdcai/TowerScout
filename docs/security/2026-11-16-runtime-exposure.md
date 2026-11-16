@@ -1,4 +1,4 @@
-# Runtime dependency exposure assessment ? November 16, 2026
+# Runtime dependency exposure assessment: November 16, 2026
 
 ## Outcome and boundary
 
@@ -8,7 +8,7 @@ The source change is an application-specific runtime reduction, not a patched Ke
 
 ## Why NIS can be assessed separately
 
-The original installed OS dependency graph is `nis` extension ? libnsl2 ? libtirpc3 ? the Kerberos libraries. Inspection of 508 native ELF files under `/usr/local`, including Python, Torch and CUDA libraries, found the NIS extension as the only consumer of this system chain; no TowerScout NIS import or supported account-directory feature was found. The image contains no krb5kdc, kadmind or kadmin executable. Absence of those servers is bounded applicability evidence, not proof that every library vulnerability is unreachable.
+The original installed OS dependency graph is `nis` extension -> libnsl2 -> libtirpc3 -> the Kerberos libraries. Inspection of 508 native ELF files under `/usr/local`, including Python, Torch and CUDA libraries, found the NIS extension as the only consumer of this system chain; no TowerScout NIS import or supported account-directory feature was found. The image contains no krb5kdc, kadmind or kadmin executable. Absence of those servers is bounded applicability evidence, not proof that every library vulnerability is unreachable.
 
 The guarded build helper first verifies the Linux/root/Python 3.11 profile, exactly one regular ELF NIS extension, and the complete installed/non-essential package set. It simulates APT removal and rejects any additional removal, installation, missing package or essential package before changing files. It then omits that extension and uses normal, non-forced APT purge of exactly:
 
