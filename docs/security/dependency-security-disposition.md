@@ -43,6 +43,10 @@ Primary review sources: [Debian util-linux finding](https://security-tracker.deb
 
 The available pip and apt updates resolve six HIGH scanner keys in a small local CUDA assessment, but 69 unaccepted keys remain and the publication gate fails. See the [assessment and remaining blocker register](2026-11-16-local-assessment.md) for counts, package groups, validation limits and follow-up. No new risk acceptance or release qualification is claimed.
 
+## Runtime exposure follow-up
+
+The [guarded NIS omission assessment](2026-11-16-runtime-exposure.md) removes 56 HIGH scanner keys in a small local assessment, leaving 13 unaccepted keys. No exception is added and no baseline key is broadened. The dedicated image intentionally omits the optional Unix NIS module and its reviewed non-essential package chain; it retains Expat, SQLite, PAM and compression support. Bundled native copies, an advisory-data mismatch and final-artifact qualification remain open.
+
 ## Enforcement and maintenance
 
 Fresh scans must fail on new HIGH/CRITICAL keys, severity increases, changed identities, incomplete scans,
