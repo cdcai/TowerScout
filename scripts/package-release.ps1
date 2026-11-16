@@ -275,6 +275,7 @@ $releaseFiles = @(
     "docs\adr\023-unsigned-windows-package-support-boundary.md",
     "docs\security\dependency-security-disposition.md",
     "docs\security\2026-11-16-local-assessment.md",
+    "docs\security\2026-11-16-runtime-exposure.md",
     "docs\support\issue-report-form.txt",
     "webapp\asset_manifest.v1.json",
     "scripts\podman-compose-providers.v1.json",

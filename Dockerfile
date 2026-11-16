@@ -59,6 +59,11 @@ RUN --mount=type=secret,id=towerscout_build_ca,required=false \
     && python -m pip install --no-cache-dir -r /tmp/requirements-runtime.txt \
     && rm /tmp/requirements-runtime.txt
 
+# The dedicated app runtime does not expose Unix NIS account-directory services.
+# Fail closed if a base-image change would remove any other/essential package.
+COPY scripts/prune-runtime-nis.py scripts/prune-runtime-nis.py
+RUN python -I -B scripts/prune-runtime-nis.py
+
 COPY webapp webapp
 COPY docs docs
 COPY --from=frontend /src/webapp/js/towerscout.js webapp/js/towerscout.js
