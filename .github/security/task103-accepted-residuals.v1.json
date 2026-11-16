@@ -1,58 +1,6 @@
 {
-  "description": "Project-owner-approved exact residuals: two pip-private urllib3 records through January 31, 2027 and eight CVE-2026-53615 records renewed by the project owner on November 2, 2026 through December 5, 2026. Renewal records continued temporary risk acceptance based on the November 2 advisory and static exposure review; fresh exact-image scans/inventories remain required before publication. Resolved Expat and OpenSSL entries are removed. Other findings, changed identities/severities, unused entries and expired acceptance fail closed; the 396-key baseline is unchanged. Publication requires separate authorization.",
+  "description": "Project-owner-approved exact residuals: eight CVE-2026-53615 records renewed on November 2, 2026 through December 5, 2026. The pip-private urllib3 exceptions are removed for the pip 26.3 upgrade; exact-image inventories and fresh scans must confirm the fixed copies. Resolved Expat and OpenSSL entries remain removed. Other findings, changed identities/severities, unused entries and expired acceptance fail closed; the 396-key baseline is unchanged. Publication requires separate authorization and final-artifact qualification.",
   "findings": [
-    {
-      "applicable_publish_flavors": [
-        "cpu",
-        "cuda128"
-      ],
-      "approved_by": "Project owner",
-      "compensating_controls": [
-        "TowerScout imports urllib3 2.8.0 from the application environment.",
-        "The publish workflow verifies the application and pip-private urllib3 versions before scanning.",
-        "The accepted record is limited to pip 26.2.2's private urllib3 2.7.0 package identity.",
-        "The comparator requires exact-image filesystem inventory and the matching Trivy embedded-SBOM package record; an extra or misplaced urllib3 copy fails closed.",
-        "The project owner reviews weekly under TASK-107 and immediately on an upstream fix, changed identity/severity, supported-path exposure change, or failed gate; January 31, 2027 is the expiry cap, not an automatic retention period.",
-        "The application does not invoke pip or install model dependencies automatically. Pip remains active during controlled HTTPS dependency installation; this is bounded acceptance, not a claim that pip is unreachable."
-      ],
-      "expires_utc": "2027-01-31T23:59:59Z",
-      "follow_up_task": "TASK-107",
-      "installed_version": "2.7.0",
-      "location_policy": "pip-vendored-urllib3-v1",
-      "package": "urllib3",
-      "package_class": "lang-pkgs",
-      "package_id": "urllib3@2.7.0",
-      "package_type": "python-pkg",
-      "reason": "Trivy inventories pip's private vendored copy through pip's CycloneDX metadata; TowerScout's importable HTTP dependency is fixed at urllib3 2.8.0.",
-      "severity": "HIGH",
-      "vulnerability_id": "CVE-2026-97687"
-    },
-    {
-      "applicable_publish_flavors": [
-        "cpu",
-        "cuda128"
-      ],
-      "approved_by": "Project owner",
-      "compensating_controls": [
-        "TowerScout imports urllib3 2.8.0 from the application environment.",
-        "The publish workflow verifies the application and pip-private urllib3 versions before scanning.",
-        "The accepted record is limited to pip 26.2.2's private urllib3 2.7.0 package identity.",
-        "The comparator requires exact-image filesystem inventory and the matching Trivy embedded-SBOM package record; an extra or misplaced urllib3 copy fails closed.",
-        "The project owner reviews weekly under TASK-107 and immediately on an upstream fix, changed identity/severity, supported-path exposure change, or failed gate; January 31, 2027 is the expiry cap, not an automatic retention period.",
-        "The application does not invoke pip or install model dependencies automatically. Pip remains active during controlled HTTPS dependency installation; this is bounded acceptance, not a claim that pip is unreachable."
-      ],
-      "expires_utc": "2027-01-31T23:59:59Z",
-      "follow_up_task": "TASK-107",
-      "installed_version": "2.7.0",
-      "location_policy": "pip-vendored-urllib3-v1",
-      "package": "urllib3",
-      "package_class": "lang-pkgs",
-      "package_id": "urllib3@2.7.0",
-      "package_type": "python-pkg",
-      "reason": "Trivy inventories pip's private vendored copy through pip's CycloneDX metadata; TowerScout's importable HTTP dependency is fixed at urllib3 2.8.0.",
-      "severity": "HIGH",
-      "vulnerability_id": "CVE-2026-97689"
-    },
     {
       "applicable_publish_flavors": [
         "cpu",

@@ -24,7 +24,7 @@ def test_committed_residual_policy_is_exact_and_time_bounded():
     document = json.loads(COMMITTED_RESIDUALS.read_text(encoding="utf-8"))
     assert document["schema_version"] == 1
     assert document["policy"] == "task103-g10-time-bounded-residuals"
-    assert len(document["findings"]) == 10
+    assert len(document["findings"]) == 8
     identities = {
         (
             item["vulnerability_id"],
@@ -52,19 +52,12 @@ def test_committed_residual_policy_is_exact_and_time_bounded():
             "util-linux-extra": "2.38.1-5+deb12u3",
         }.items()
     }
-    assert identities == {
-        ("CVE-2026-97687", "urllib3@2.7.0", "lang-pkgs", "python-pkg", "HIGH"),
-        ("CVE-2026-97689", "urllib3@2.7.0", "lang-pkgs", "python-pkg", "HIGH"),
-    } | util_linux_identities
+    assert identities == util_linux_identities
     assert all(
         item["applicable_publish_flavors"] == ["cpu", "cuda128"]
         and item["approved_by"] == "Project owner"
         and item["follow_up_task"] == "TASK-107"
-        and item["expires_utc"] == (
-            "2026-12-05T23:59:59Z"
-            if item["vulnerability_id"] == "CVE-2026-53615"
-            else "2027-01-31T23:59:59Z"
-        )
+        and item["expires_utc"] == "2026-12-05T23:59:59Z"
         for item in document["findings"]
     )
 
@@ -74,7 +67,7 @@ def test_committed_residual_policy_is_exact_and_time_bounded():
     "month,day,second,expired",
     [(11, 6, 0, False), (12, 5, 58, False), (12, 5, 59, True)],
 )
-def test_util_linux_expiry_blocks_even_while_old_renewals_remain_valid(
+def test_util_linux_expiry_still_blocks_after_pip_residual_removal(
     monkeypatch, flavor, month, day, second, expired
 ):
     import importlib
@@ -90,17 +83,11 @@ def test_util_linux_expiry_blocks_even_while_old_renewals_remain_valid(
 
     monkeypatch.setattr(gate, "datetime", FrozenDateTime)
     document = json.loads(COMMITTED_RESIDUALS.read_text(encoding="utf-8"))
-    old_only = copy.deepcopy(document)
-    old_only["findings"] = [
-        item for item in old_only["findings"]
-        if item["vulnerability_id"] != "CVE-2026-53615"
-    ]
-    assert len(gate._accepted_residuals(old_only, flavor)) == 2
     if expired:
         with pytest.raises(gate.InputError, match="expired at 2026-12-05"):
             gate._accepted_residuals(document, flavor)
     else:
-        assert len(gate._accepted_residuals(document, flavor)) == 10
+        assert len(gate._accepted_residuals(document, flavor)) == 8
 
 
 def _finding(

@@ -26,14 +26,14 @@ def _write(root, relative, text):
 def image_root(tmp_path):
     for directory, version in [
         (inventory.APP_DIR, "2.8.0"),
-        (inventory.VENDOR_DIR, "2.7.0"),
+        (inventory.VENDOR_DIR, "2.8.0"),
     ]:
         _write(
             tmp_path, f"{directory}/__init__.py", "from ._version import __version__\n"
         )
         _write(tmp_path, f"{directory}/_version.py", f'__version__ = "{version}"\n')
     _write(tmp_path, inventory.APP_METADATA, "Name: urllib3\nVersion: 2.8.0\n")
-    _write(tmp_path, inventory.PIP_METADATA, "Name: pip\nVersion: 26.2.2\n")
+    _write(tmp_path, inventory.PIP_METADATA, "Name: pip\nVersion: 26.3\n")
     _write(
         tmp_path,
         inventory.VENDOR_SBOM,
@@ -43,8 +43,8 @@ def image_root(tmp_path):
                 "components": [
                     {
                         "name": "urllib3",
-                        "version": "2.7.0",
-                        "purl": "pkg:pypi/urllib3@2.7.0",
+                        "version": "2.8.0",
+                        "purl": "pkg:pypi/urllib3@2.8.0",
                     }
                 ],
             }
@@ -150,3 +150,17 @@ def test_filesystem_read_errors_are_not_silently_ignored(image_root, monkeypatch
     monkeypatch.setattr(inventory.os, "walk", failing_walk)
     with pytest.raises(PermissionError, match="incomplete inventory"):
         inventory.collect_inventory(image_root)
+
+
+def test_fixed_inventory_cannot_justify_historical_pip_residual(image_root):
+    document = _document(image_root)
+    with pytest.raises(inventory.InventoryError, match="inventory mismatch"):
+        inventory.validate_inventory(
+            document, IMAGE_ID, "test-source", "cpu", legacy_residual=True
+        )
+
+
+def test_old_vendored_module_rejected_even_with_fixed_sbom(image_root):
+    _write(image_root, f"{inventory.VENDOR_DIR}/_version.py", '__version__ = "2.7.0"\n')
+    with pytest.raises(inventory.InventoryError, match="vendored_module_version"):
+        inventory.validate_inventory(_document(image_root), IMAGE_ID, "test-source", "cpu")

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Install reviewed pip bytes before any dependency resolution.
 
-Hash independently published by the Python security team and PyPI:
-https://discuss.python.org/t/109576
-https://pypi.org/pypi/pip/26.2.2/json
+Reviewed wheel hash and release provenance published by PyPI:
+https://pypi.org/project/pip/26.3/
+https://pypi.org/pypi/pip/26.3/json
 Uses stdlib TLS plus a mandatory artifact hash, then installs offline.
 Run with the target virtual environment's Python; never changes other envs.
 """
@@ -19,9 +19,9 @@ import tempfile
 import time
 import urllib.request
 
-WHEEL_NAME = "pip-26.2.2-py3-none-any.whl"
-WHEEL_URL = "https://files.pythonhosted.org/packages/3f/06/3e4420302363fbb71be3c7f35ce042f54bfca330e3e66b3a2e3c4cca579f/" + WHEEL_NAME
-WHEEL_SHA256 = "fd7f4dfa8190e014013b9f08f3e973f4e4c26ffd179a204895533a7254813a70"
+WHEEL_NAME = "pip-26.3-py3-none-any.whl"
+WHEEL_URL = "https://files.pythonhosted.org/packages/07/25/ee8c38ae72d66b844ce8eb9711ba905dba21ca1a8a0c960057c41cd23337/" + WHEEL_NAME
+WHEEL_SHA256 = "f3b60b20ffaadd4415ed7957212a38ac63fa4c5fa375bd0f4a797777940fad13"
 MAX_WHEEL_BYTES = 8 * 1024 * 1024
 
 

@@ -283,7 +283,13 @@ def test_runtime_image_uses_only_required_system_libraries():
         )
     )
 
-    assert installed == {"ca-certificates", "openssl", "libssl3", "libgl1", "libglib2.0-0"}
+    # apt/libapt already ship in the pinned base; update them for CVE-2026-109518.
+    assert installed == {
+        "ca-certificates", "apt", "libapt-pkg6.0", "openssl", "libssl3",
+        "libgl1", "libglib2.0-0",
+    }
+    assert "apt=2.6.2" in apt_install
+    assert "libapt-pkg6.0=2.6.2" in apt_install
     assert "ca-certificates=20250419~deb12u2" in apt_install
     assert "openssl=3.0.22-1~deb12u2" in apt_install
     assert "libssl3=3.0.22-1~deb12u2" in apt_install

@@ -657,7 +657,10 @@ def compare(args: argparse.Namespace) -> int:
             raise InputError("pip residuals require --urllib3-inventory from the exact image")
         inventory = _load_json(args.urllib3_inventory, "urllib3 inventory")
         try:
-            validate_inventory(inventory, candidate_image_id, args.source_ref, args.flavor)
+            validate_inventory(
+                inventory, candidate_image_id, args.source_ref, args.flavor,
+                legacy_residual=True,
+            )
         except InventoryError as exc:
             raise InputError(str(exc)) from exc
         inventory_verified = True
