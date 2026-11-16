@@ -1,23 +1,16 @@
 # Dependency security disposition
 
-The release gate retains the accepted 396-key baseline and ten exact time-limited HIGH residual identities: two remaining renewed records and eight separately approved util-linux records.
-The authoritative machine-readable identities, versions, CPU/CUDA scope and expiry are in
-`.github/security/task103-accepted-residuals.v1.json` in corresponding source.
-On October 22, 2026, the project owner authorized conditional renewal of the existing findings supported by fresh evidence, with a maximum expiry of January 31, 2027 at 23:59:59 UTC. The resolved Expat entry has been removed. Two of those four older records remain after the October 26 OpenSSL correction. The separate eight-record util-linux exception below was renewed on November 2 through December 5.
+The release gate retains the accepted 396-key baseline and eight exact time-limited HIGH util-linux residual identities. The authoritative machine-readable package identities, versions, CPU/CUDA scope and expiry are in `.github/security/task103-accepted-residuals.v1.json` in corresponding source. The owner renewed those eight records on November 2 through December 5, 2026; this change does not extend or broaden that acceptance.
 
-| Finding | Exact retained identity | Scope |
-| --- | --- | --- |
-| CVE-2026-97687 | `urllib3@2.7.0` | pip-private Python package, CPU/CUDA |
-| CVE-2026-97689 | `urllib3@2.7.0` | pip-private Python package, CPU/CUDA |
+## Resolved pip findings and inventory boundary
 
-The project owner owns weekly review under TASK-107, immediate review on a fix, severity/identity/exposure change or failed gate, and a final review during the week of January 25. Retain each entry only while its evidence remains valid. There is no automatic extension beyond January 31.
+The hash-verified bootstrap now selects the official pip 26.3 wheel, whose private urllib3 is 2.8.0. This addresses CVE-2026-97687 and CVE-2026-97689 in pip's old private urllib3 2.7.0; the two pip exceptions are removed. The application's separately installed urllib3 remains 2.8.0. Pip 26.3 also updates its private msgpack beyond the 1.2.3 fix for CVE-2026-114613.
 
-## Reachability rationale
+The exact-image inventory requires pip 26.3, application and private urllib3 module versions 2.8.0, matching distribution metadata and embedded SBOM, the expected license notice, and no extra copies. Historical residual-comparison code can validate only the separately selected exact pip 26.2.2/urllib3 2.7.0 inventory; a fixed inventory cannot justify an old exception. The committed policy no longer accepts either pip finding. Old images therefore fail under the updated policy.
 
-Two urllib3 findings apply to pip 26.2.2's private urllib3 2.7.0, not the application's separately installed 2.8.0.
-The application does not invoke pip at runtime, and automatic model dependency installation is disabled.
-Exact-image filesystem inventory must prove the accepted copy and reject additional copies.
-Pip still handles controlled HTTPS dependency downloads during installation/builds. The proxy-TLS and chunked-response risks are therefore not claimed unreachable in pip; this is bounded owner acceptance. Official pip 26.2.2 remains the latest published release at review time and still vendors 2.7.0. Do not replace its private files manually or disable TLS verification to suppress a finding.
+The application does not invoke pip at runtime, and automatic model dependency installation remains disabled. Pip is still used for controlled dependency downloads during builds/installations. Retain normal TLS verification and the mandatory wheel hash; do not edit pip's private files manually to suppress findings. The real downloaded wheel and bootstrap have been exercised locally, but rebuilt official CPU/CUDA artifacts still require their own exact-image checks and qualification.
+
+Runtime `apt` and `libapt-pkg6.0` are additionally pinned to Debian's 2.6.2 security update for CVE-2026-109518. These updates do not authorize other exceptions or change the baseline.
 
 The runtime pins Debian `openssl` and `libssl3` to `3.0.22-1~deb12u2`, fixing CVE-2026-84782; their two exceptions are removed. This updates system OpenSSL, not separately bundled wheel copies. The earlier fixed `libexpat1@2.5.0-1+deb12u5` remains outside the residual policy.
 
@@ -44,7 +37,11 @@ The project owner owns TASK-107 weekly review and immediate review on a vendor f
 
 An isolated Debian 13 CPU assessment removed that CVE and the OpenSSL residuals, but introduced eight unaccepted records for four other util-linux CVEs on `login` and `liblastlog2-2`. Debian protects `login`, and essential util-linux requires liblastlog2-2. The assessment is not adopted; do not force-remove required packages, mix Debian suites, or broaden the baseline. The approved short exception applies only to the retained Debian 12 identities; none of the Debian 13 findings is accepted.
 
-Primary review sources: [Debian util-linux finding](https://security-tracker.debian.org/tracker/CVE-2026-53615), [Debian OpenSSL status](https://security-tracker.debian.org/tracker/CVE-2026-84782), [urllib3 proxy advisory](https://github.com/urllib3/urllib3/security/advisories/GHSA-8988-9cw3-xx77), [urllib3 response advisory](https://github.com/urllib3/urllib3/security/advisories/GHSA-vxq7-64xx-v4gw), and [pip's exact vendored versions](https://github.com/pypa/pip/blob/26.2.2/src/pip/_vendor/vendor.txt).
+Primary review sources: [Debian util-linux finding](https://security-tracker.debian.org/tracker/CVE-2026-53615), [Debian OpenSSL status](https://security-tracker.debian.org/tracker/CVE-2026-84782), [urllib3 proxy advisory](https://github.com/urllib3/urllib3/security/advisories/GHSA-8988-9cw3-xx77), [urllib3 response advisory](https://github.com/urllib3/urllib3/security/advisories/GHSA-vxq7-64xx-v4gw), and [pip's fixed vendored versions](https://github.com/pypa/pip/blob/26.3/src/pip/_vendor/vendor.txt).
+
+## November 16 local assessment
+
+The available pip and apt updates resolve six HIGH scanner keys in a small local CUDA assessment, but 69 unaccepted keys remain and the publication gate fails. See the [assessment and remaining blocker register](2026-11-16-local-assessment.md) for counts, package groups, validation limits and follow-up. No new risk acceptance or release qualification is claimed.
 
 ## Enforcement and maintenance
 
@@ -70,7 +67,6 @@ still required at handoff, without publishing private approval correspondence.
 | Obligation | Due/trigger | Required evidence and disposition |
 | --- | --- | --- |
 | Eight exact util-linux identities | Weekly and immediately on the changes listed above; hard expiry 2026-12-05T23:59:59Z | Owner renewed November 2 based on scoped advisory/static review. Fresh exact-digest scans, installed identities and exposure revalidation remain required; remove fixed entries and requalify. No automatic extension. |
-| Two remaining renewed identities | Weekly/immediate-change review; week of January 25 review; hard expiry 2027-01-31T23:59:59Z | Same exact-identity/scan review; retain only still applicable approved entries. |
 | New/changed/unused/expired findings | Every build and publication verification | Fail closed against the unchanged 396-key baseline and exact residual policy at `.github/security/task103-accepted-residuals.v1.json` in the corresponding source identified by `SOURCE.txt`. The control ZIP does not include `.github/`. |
 | Corresponding source and evidence custody | Before artifact publication/handoff | Final-version recursive source, build/relink inputs, notices and SBOMs; checksum-verified receiving-held evidence copy. Retain commit-addressed fork records and their evidence ref. |
 | Receiving publication controls | Before authoritative publication; promotion before stable/Latest | Main-only release environment without mandatory reviewer approval, approved source/ref, scoped package-write permissions and exact qualified-digest promotion. |

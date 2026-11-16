@@ -36,6 +36,8 @@ WORKDIR /app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates=20250419~deb12u2 \
+        apt=2.6.2 \
+        libapt-pkg6.0=2.6.2 \
         openssl=3.0.22-1~deb12u2 \
         libssl3=3.0.22-1~deb12u2 \
         libgl1 \
