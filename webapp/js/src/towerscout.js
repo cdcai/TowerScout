@@ -750,99 +750,12 @@ function initializeDOMReferences() {
 
 // Global search handler that routes to appropriate provider
 function initializeProviderAwareSearch() {
-  window.TowerScoutLogger.debug('Initializing provider-aware search system');
-
-  // Add event listener for search input
-  if (input) {
-    eventManager.addEventListener(input, 'keypress', function (e) {
-      if (e.key === 'Enter') {
-        handleGlobalSearch();
-      }
-    });
-
-    // Also handle programmatic searches
-    window.executeSearch = handleGlobalSearch;
-  }
+  window.LocationSearch.init();
+  window.executeSearch = handleGlobalSearch;
 }
 
 function handleGlobalSearch() {
-  window.TowerScoutLogger.debug('🔍 Global search triggered');
-
-  // Validate DOM elements are available
-  if (!input) {
-    console.error('❌ Search input not initialized. DOM not ready?');
-    return;
-  }
-
-  const query = input.value.trim();
-  if (!query) {
-    window.TowerScoutLogger.debug('🚫 Empty search value');
-    return;
-  }
-
-  window.TowerScoutLogger.debug(`🔍 Current provider: ${currentProvider}`);
-  window.TowerScoutLogger.debug(`🔍 Azure check result: ${currentProvider === 'azure'}, Google check result: ${currentProvider === 'google'}`);
-
-  // Handle zipcode searches (provider-independent)
-  if ((query.length === 5 && !isNaN(query)) ||
-    (query.length === 7 && query[0] == '"' && query[6] == '"' && !isNaN(query.substring(1, 6))) ||
-    (query.startsWith("zipcode "))) {
-    window.TowerScoutLogger.debug('🏢 Processing zipcode search:', query);
-    getZipcodePolygon(query);
-    return;
-  }
-
-  // Route search based on current provider
-  if (currentProvider === 'azure' && azureMap) {
-    window.TowerScoutLogger.debug('🗺️ Routing search to Azure Maps');
-    azureMap.getBoundsPolygon(query, null); // No Google place object needed
-  } else if (currentProvider === 'google' && googleMap) {
-    window.TowerScoutLogger.debug('🌍 Routing search to Google Maps');
-
-    // Ensure Google Maps is properly initialized before search
-    try {
-      if (!googleMap.map || !googleMap.map.getCenter) {
-        console.warn('⚠️ Google Maps not ready for search, ensuring initialization...');
-        throw new Error('Google Maps not ready');
-      }
-
-      // Execute the search
-      googleMap.getBoundsPolygon(query, null);
-    } catch (searchError) {
-      console.error('❌ Google Maps search failed:', searchError);
-      console.warn('🔄 Attempting to reinitialize Google Maps...');
-
-      // Try to reinitialize Google Maps
-      loadGoogleMaps().then(() => {
-        window.TowerScoutLogger.debug('✅ Google Maps reinitialized, retrying search...');
-        if (googleMap && googleMap.map) {
-          googleMap.getBoundsPolygon(query, null);
-        }
-      }).catch(initError => {
-        console.error('❌ Failed to reinitialize Google Maps:', initError);
-        alert('Google Maps search unavailable. Please try switching to Azure Maps.');
-      });
-    }
-  } else {
-    console.warn('⚠️ No active map provider for search. Provider:', currentProvider, 'Available maps:', { azure: !!azureMap, google: !!googleMap });
-
-    // Auto-switch to available provider if current one is not ready
-    if (azureMap) {
-      window.TowerScoutLogger.debug('🔄 Auto-switching to Azure Maps for search');
-      setMap('azure');
-      // Retry search with Azure
-      setTimeout(() => azureMap.getBoundsPolygon(query, null), 100);
-    } else if (googleMap) {
-      window.TowerScoutLogger.debug('🔄 Auto-switching to Google Maps for search');
-      setMap('google');
-      // Retry search with Google after brief delay
-      setTimeout(() => {
-        if (googleMap && googleMap.map) {
-          googleMap.getBoundsPolygon(query, null);
-        }
-      }, 100);
-    }
-  }
+  return window.LocationSearch.submit();
 }
 
 // STAGE 5: About dialog functions extracted to src/ui/navigation.js
@@ -4023,6 +3936,7 @@ async function fillProviders() {
 }
 
 async function setMap(newMap) {
+  window.LocationSearch.invalidate();
   // Gracefully handle missing argument by using the currently checked radio
   if (!newMap) {
     const checked = document.querySelector('input[name="uis"]:checked');

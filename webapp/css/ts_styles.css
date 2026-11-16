@@ -163,6 +163,79 @@
     vertical-align: middle;
 }
 
+.location-search {
+    position: relative;
+    flex: 1 1 320px;
+    min-width: 220px;
+    max-width: 420px;
+}
+
+.location-search #search {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    box-sizing: border-box;
+}
+
+.location-search-panel {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 2000;
+    background: white;
+    color: #1f1f1f;
+    border: 1px solid #b8c2cc;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px #0003;
+    white-space: normal;
+}
+
+.location-search-panel [role="option"] {
+    padding: 9px 12px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.location-search-panel [role="option"]:hover,
+.location-search-panel [aria-selected="true"] {
+    background: #e8f0fe;
+}
+
+.location-search-attribution {
+    padding: 6px 12px;
+    border-top: 1px solid #e0e0e0;
+    font-family: Roboto, sans-serif;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: normal;
+    color: #5e5e5e;
+    white-space: nowrap;
+}
+
+.location-search-status {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1999;
+    background: white;
+    color: #333;
+    padding: 4px 8px;
+    font-size: 12px;
+    white-space: normal;
+}
+
+.location-search-status:empty,
+.location-search:has(.location-search-panel:not([hidden])) .location-search-status {
+    /* Keep announcements available to assistive technology without duplicate UI. */
+    clip-path: inset(50%);
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    padding: 0;
+}
+
 /* TASK-039 Phase 4B: Constrain PlaceAutocompleteElement Web Component size */
 #mapsearchui {
     display: flex;

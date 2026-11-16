@@ -5,10 +5,7 @@
 (function () {
   'use strict';
 
-  // TASK-039 Phase 4B: GLOBAL singleton pattern to prevent duplicate Web Components
-  // Multiple GoogleMap instances can be created, but only ONE PlaceAutocompleteElement should exist
-  let globalAutocompleteElement = null;
-  let isGloballyInitializingSearch = false;
+  // The shared location control owns search input and suggestion state.
 
   class GoogleMap extends TSMap {
     constructor() {
@@ -67,38 +64,7 @@
         markers: []       // Future: detection result markers
       };
 
-      // TASK-039 Phase 4B: Store input reference for lazy initialization
-      this.originalInput = input;
-
-      // TASK-039 Phase 4B: Use GLOBAL singleton pattern (not instance variable)
-      // Multiple GoogleMap instances may exist, but only ONE Web Component
-
-      // TASK-039 Phase 4B: Initialize search (PlaceAutocompleteElement Web Component)
       this.initializeSearch();
-
-      // Bias the PlaceAutocompleteElement results towards current map's viewport.
-      // Note: locationBias expects LatLngBounds object directly (not wrapped)
-      this.map.addListener("bounds_changed", () => {
-        if (currentProvider === 'google') {
-          // Auto-recreate search if needed (e.g., after provider switch)
-          // BUT prevent race condition from concurrent bounds_changed events
-          // Use GLOBAL element reference and flag
-          if (!globalAutocompleteElement && !isGloballyInitializingSearch) {
-            window.TowerScoutLogger.debug('🔄 Autocomplete element missing, reinitializing...');
-            this.initializeSearch();
-          }
-
-          if (globalAutocompleteElement) {
-            const bounds = this.map.getBounds();
-            if (bounds) {
-              // Pass LatLngBounds directly to locationBias property
-              globalAutocompleteElement.locationBias = bounds;
-            }
-          }
-        }
-      });
-
-      // Note: Event listener setup moved to initializeSearch() method
     }
 
     extractBoundaryPointsFromShape(shape) {
@@ -147,217 +113,8 @@
       return validation;
     }
 
-    // TASK-039 Phase 4B: Initialize PlaceAutocompleteElement Web Component
-    // Extracted into separate method for reuse during provider switching
     initializeSearch() {
-      // CRITICAL: ALWAYS hide the standard search input when Google Maps is active
-      // This must happen BEFORE any early returns
-      const input = document.getElementById('search');
-      if (input) {
-        input.style.display = 'none';
-        window.TowerScoutLogger.debug('🔧 Standard search input hidden for Google Maps');
-      }
-
-      // CRITICAL: Use GLOBAL flag to prevent concurrent initialization across ALL instances
-      if (isGloballyInitializingSearch) {
-        window.TowerScoutLogger.debug('⚠️ [GLOBAL] Search initialization already in progress, skipping...');
-        return;
-      }
-
-      // Skip if GLOBAL element already exists
-      if (globalAutocompleteElement) {
-        window.TowerScoutLogger.debug('✅ [GLOBAL] PlaceAutocompleteElement already initialized (skipping)');
-        // Store reference to this instance too for backward compatibility
-        this.autocompleteElement = globalAutocompleteElement;
-        return;
-      }
-
-      // Set GLOBAL flag to prevent concurrent calls
-      isGloballyInitializingSearch = true;
-      window.TowerScoutLogger.debug('🔧 Initializing PlaceAutocompleteElement Web Component... [VERSION: 2026-03-11-FIX8-GLOBAL]');
-
-      // DIAGNOSTIC: Check what's actually in the DOM RIGHT NOW
-      const allElements = document.querySelectorAll('gmp-place-autocomplete');
-      window.TowerScoutLogger.debug(`🔍 [DIAGNOSTIC] DOM contains ${allElements.length} gmp-place-autocomplete element(s) BEFORE creation`);
-      if (allElements.length > 0) {
-        allElements.forEach((el, idx) => {
-          window.TowerScoutLogger.debug(`   └─ Element ${idx + 1}: parent=${el.parentElement?.id || 'unknown'}, display=${el.style.display}`);
-        });
-      }
-
-      // Validate originalInput reference (use different variable name to avoid conflict)
-      const originalInput = this.originalInput;
-      if (!originalInput) {
-        console.error('❌ Original input reference not found');
-        isGloballyInitializingSearch = false;  // Clear GLOBAL flag on error
-        return;
-      }
-
-      // ULTRA-DEFENSIVE: Find and remove ANY existing gmp-place-autocomplete elements in the entire document
-      const existingElements = document.querySelectorAll('gmp-place-autocomplete');
-      if (existingElements.length > 0) {
-        console.warn(`⚠️ Found ${existingElements.length} orphaned gmp-place-autocomplete element(s), removing...`);
-        existingElements.forEach((el, idx) => {
-          window.TowerScoutLogger.debug(`🧹 Removing orphaned element ${idx + 1}/${existingElements.length}`);
-          if (el.parentElement) {
-            el.parentElement.removeChild(el);
-          }
-        });
-      }
-
-      // Create PlaceAutocompleteElement Web Component
-      const autocompleteElement = new google.maps.places.PlaceAutocompleteElement({
-        // locationBias will be set dynamically via bounds_changed listener
-        // includedPrimaryTypes is NOT set here to allow all geocoding types (addresses, cities, etc.)
-      });
-
-      // Append to container in HTML
-      const container = document.getElementById('google-autocomplete-container');
-      if (container) {
-        // CRITICAL: Clear container RIGHT BEFORE appending (timing-sensitive fix)
-        const childCount = container.childNodes.length;
-        if (childCount > 0) {
-          console.warn(`⚠️ Container has ${childCount} child(ren) RIGHT BEFORE append, clearing...`);
-          while (container.firstChild) {
-            window.TowerScoutLogger.debug('🧹🧹 Removing child immediately before append');
-            container.removeChild(container.firstChild);
-          }
-        }
-
-        // Now append the new element
-        container.appendChild(autocompleteElement);
-
-        // CRITICAL: Set explicit width/height constraints on both container and Web Component
-        // Web Components with Shadow DOM ignore external CSS, so we use inline styles
-        container.style.display = 'block';
-        container.style.flex = '1 1 320px';
-        container.style.minWidth = '220px';
-        container.style.maxWidth = '420px';
-        container.style.width = 'auto';
-        container.style.verticalAlign = 'middle';
-
-        // Set size on the Web Component element itself to match Azure search input
-        autocompleteElement.style.width = '100%';
-        autocompleteElement.style.maxWidth = '100%';
-        autocompleteElement.style.height = '21px';  // Match Azure input height exactly
-        autocompleteElement.style.minHeight = '21px';
-        autocompleteElement.style.fontSize = '12px';  // Small font reduces em-based internal heights
-        autocompleteElement.style.display = 'block';
-
-        // Set placeholder text to match Azure Maps user experience
-        autocompleteElement.placeholder = 'Search with Google Maps...';
-
-        // POST-APPEND VERIFICATION: Ensure only ONE gmp-place-autocomplete element exists
-        const finalCheck = container.querySelectorAll('gmp-place-autocomplete');
-        if (finalCheck.length > 1) {
-          console.error(`❌ DUPLICATE DETECTED: Found ${finalCheck.length} gmp-place-autocomplete elements after append!`);
-          // Keep only the last one (our new element), remove all others
-          for (let i = 0; i < finalCheck.length - 1; i++) {
-            window.TowerScoutLogger.debug(`🧹🧹🧹 Emergency removal of duplicate ${i + 1}`);
-            container.removeChild(finalCheck[i]);
-          }
-        }
-
-        window.TowerScoutLogger.debug('📐 PlaceAutocompleteElement sizing applied for flex search layout, height 21px (matches Azure)');
-      } else {
-        console.error('❌ google-autocomplete-container not found in DOM');
-        isGloballyInitializingSearch = false;  // Clear GLOBAL flag on error
-        return;
-      }
-
-      // Store GLOBAL reference for all instances to use
-      globalAutocompleteElement = autocompleteElement;
-      this.autocompleteElement = autocompleteElement;  // Also store instance reference
-
-      // DIAGNOSTIC: Verify only ONE element exists after creation
-      const allElementsAfterCreation = document.querySelectorAll('gmp-place-autocomplete');
-      window.TowerScoutLogger.debug(`🔍 [DIAGNOSTIC] DOM contains ${allElementsAfterCreation.length} gmp-place-autocomplete element(s) AFTER creation`);
-      if (allElementsAfterCreation.length > 1) {
-        console.error(`❌ [DIAGNOSTIC] DUPLICATE CREATION - ${allElementsAfterCreation.length} elements exist!`);
-        allElementsAfterCreation.forEach((el, idx) => {
-          console.error(`   └─ Element ${idx + 1}: parent=${el.parentElement?.id || 'unknown'}, display=${el.style.display}`);
-        });
-      }
-
-      // Listen for the gmp-select event fired when the user selects a prediction
-      // Note: This is async pattern with placePrediction.toPlace() and fetchFields()
-      autocompleteElement.addEventListener('gmp-select', async (event) => {
-        // Only handle if Google Maps is the current provider
-        if (currentProvider !== 'google') {
-          window.TowerScoutLogger.debug('Ignoring Google Places search - not current provider');
-          return;
-        }
-
-        try {
-          let i = 0;
-          // Get the place prediction from the event
-          const placePrediction = event.placePrediction;
-
-          if (!placePrediction) {
-            window.TowerScoutLogger.debug('No place prediction available');
-            return;
-          }
-
-          // Convert prediction to Place object (async)
-          const place = placePrediction.toPlace();
-
-          // Fetch required fields (async)
-          await place.fetchFields({
-            fields: ['location', 'viewport', 'displayName', 'formattedAddress', 'addressComponents']
-          });
-
-          if (!place.location) {
-            window.TowerScoutLogger.debug("No location available for selected place.");
-            return;
-          }
-
-          // Normalize to match existing code expectations
-          // New API uses different property names (location vs geometry.location, displayName vs name, etc.)
-          const normalizedPlace = {
-            geometry: {
-              location: place.location,
-              viewport: place.viewport
-            },
-            name: place.displayName,
-            formatted_address: place.formattedAddress,
-            address_components: place.addressComponents
-          };
-
-          // Store as array for compatibility with existing code
-          this.places = [normalizedPlace];
-
-          // Get the search query from the autocomplete element's input value
-          // Use the selected place's display name as the query
-          input.value = place.displayName || place.formattedAddress || '';
-        } catch (error) {
-          console.error('Error handling place selection:', error);
-          return;
-        }
-
-        // Check for zipcode special case using the actual input value
-        let p = input.value;
-        if ((p.length === 5 && !isNaN(p)) ||
-          (p.length === 7 && p[0] == '"' && p[6] == '"' && !isNaN(p.substring(1, 6))) ||
-          (p.startsWith("zipcode "))) {
-          // special case: zipcode
-          getZipcodePolygon(p);
-          return;
-        }
-
-        // Google Maps handles its own search through PlaceAutocompleteElement
-        window.TowerScoutLogger.debug('Google Maps handling search through PlaceAutocompleteElement Web Component');
-        this.getBoundsPolygon(input.value, this.places[0]);
-      });
-
-      // TASK-039: All drawing functionality moved to custom methods below
-      // No DrawingManager initialization needed
-
-      // TASK-041 Phase 1: Initialization milestones marked in initGoogleMap()
-      // after constructor completes (styleLoaded, drawingManagerReady)
-
-      // Clear GLOBAL initialization flag
-      isGloballyInitializingSearch = false;
-      window.TowerScoutLogger.debug('✅ [GLOBAL] PlaceAutocompleteElement initialized successfully');
+      window.LocationSearch.init();
     }
 
     // TASK-039: Custom polygon drawing implementation
@@ -746,7 +503,9 @@
 
 
 
-    getBoundsPolygon(query, place) {
+    getBoundsPolygon(query, place, isCurrent = () => true) {
+      if (!isCurrent()) return;
+      if (window.CoordinateSearch.handle(query, this)) return;
       googleMap.resetBoundaries();
       // Google Maps provider-specific search - only affects Google Maps
 
@@ -775,6 +534,7 @@
           format: "json",
         },
         success: function (result) {
+          if (!isCurrent()) return;
           let x = result[0];
           if (typeof x === 'undefined') {
             //googleMap.map.setCenter(place.geometry.location);
@@ -801,7 +561,9 @@
             }
             //window.TowerScoutLogger.debug(bounds.toUrlValue());
           } else if (x["geojson"]["type"] == "LineString" || x["geojson"]["type"] == "Point") {
-            googleMap.map.fitBounds(place.geometry.viewport, 0)
+            if (hasPlace && place.geometry.viewport) {
+              googleMap.map.fitBounds(place.geometry.viewport, 0);
+            }
           }
           if (googleMap.boundaries.length > 0) {
             googleMap.showBoundaries();
@@ -812,27 +574,8 @@
     }
 
 
-    // TASK-039 Phase 4B: Updated for PlaceAutocompleteElement Web Component
-    // Biases search results towards current map viewport
-    // Note: locationBias expects LatLngBounds object directly (not wrapped)
-    biasSearchBox() {
-      // TASK-039 Phase 4B: Bias PlaceAutocompleteElement instead of SearchBox
-      // Auto-recreate if missing (e.g., after provider switch)
-      // BUT prevent race condition from concurrent calls - use GLOBAL references
-      if (!globalAutocompleteElement && !isGloballyInitializingSearch) {
-        window.TowerScoutLogger.debug('🔄 PlaceAutocompleteElement not found in biasSearchBox, reinitializing...');
-        this.initializeSearch();
-      }
-
-      if (globalAutocompleteElement && this.map) {
-        const bounds = this.map.getBounds();
-        if (bounds) {
-          // Pass LatLngBounds directly to locationBias property
-          globalAutocompleteElement.locationBias = bounds;
-          window.TowerScoutLogger.debug('🎯 PlaceAutocompleteElement biased to current map bounds');
-        }
-      }
-    }
+    // The shared control reads the active viewport for each suggestion request.
+    biasSearchBox() {}
 
     getBounds() {
       let bounds = this.map.getBounds();
@@ -848,14 +591,14 @@
       return [sw.lng(), ne.lat(), ne.lng(), sw.lat()];
     }
 
-    fitBounds(x1, y1, x2, y2) {
+    fitBounds(x1, y1, x2, y2, padding) {
       let bounds = {
         north: y1,
         south: y2,
         east: x2,
         west: x1
       };
-      this.map.fitBounds(bounds);
+      this.map.fitBounds(bounds, padding);
     }
 
     setCenter(c) {
@@ -1069,70 +812,7 @@
     }
 
     cleanupSearch() {
-      window.TowerScoutLogger.debug('🧹 Cleaning up Google search infrastructure...');
-
-      // DIAGNOSTIC: Check what's in the DOM before cleanup
-      const allElementsBefore = document.querySelectorAll('gmp-place-autocomplete');
-      window.TowerScoutLogger.debug(`🔍 [DIAGNOSTIC] DOM contains ${allElementsBefore.length} gmp-place-autocomplete element(s) BEFORE cleanup`);
-
-      // TASK-039 Phase 4B: Remove PlaceAutocompleteElement Web Component (use GLOBAL reference)
-      const container = document.getElementById('google-autocomplete-container');
-
-      if (globalAutocompleteElement) {
-        try {
-          // Remove from DOM
-          if (container && globalAutocompleteElement.parentElement === container) {
-            container.removeChild(globalAutocompleteElement);
-            window.TowerScoutLogger.debug('✅ [GLOBAL] PlaceAutocompleteElement removed from container');
-          }
-
-          // Clear event listeners
-          if (typeof google !== 'undefined' && google.maps && google.maps.event) {
-            google.maps.event.clearInstanceListeners(globalAutocompleteElement);
-          }
-
-          globalAutocompleteElement = null;
-          this.autocompleteElement = null;
-          window.TowerScoutLogger.debug('✅ [GLOBAL] autocompleteElement reference cleared');
-
-        } catch (e) {
-          console.warn('⚠️ Error cleaning up PlaceAutocompleteElement:', e.message);
-        }
-      }
-
-      // DEFENSIVE: Clear ALL remaining children from container
-      if (container) {
-        while (container.firstChild) {
-          window.TowerScoutLogger.debug('🧹 Removing orphaned child from autocomplete container');
-          container.removeChild(container.firstChild);
-        }
-        container.style.display = 'none';
-        window.TowerScoutLogger.debug('✅ Container cleared and hidden');
-      }
-
-      // Show the original input for other providers
-      if (this.originalInput) {
-        this.originalInput.style.display = 'inline';
-        window.TowerScoutLogger.debug('✅ Original search input restored');
-      }
-
-      // Clear GLOBAL initialization flag in case it was stuck
-      isGloballyInitializingSearch = false;
-
-      // Clear places cache
-      this.places = null;
-
-      // DIAGNOSTIC: Verify cleanup actually removed the elements
-      const allElementsAfter = document.querySelectorAll('gmp-place-autocomplete');
-      window.TowerScoutLogger.debug(`🔍 [DIAGNOSTIC] DOM contains ${allElementsAfter.length} gmp-place-autocomplete element(s) AFTER cleanup`);
-      if (allElementsAfter.length > 0) {
-        console.error('❌ [DIAGNOSTIC] Cleanup FAILED - elements still in DOM!');
-        allElementsAfter.forEach((el, idx) => {
-          console.error(`   └─ Orphan ${idx + 1}: parent=${el.parentElement?.id || 'unknown'}, display=${el.style.display}`);
-        });
-      }
-
-      window.TowerScoutLogger.debug('✅ [GLOBAL] Google search infrastructure cleaned up');
+      window.LocationSearch.invalidate();
     }
 
     cleanup() {

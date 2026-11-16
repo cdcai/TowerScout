@@ -116,7 +116,7 @@
       // convert to m
       radius = Number(radius);
 
-      if (isNaN(radius) || radius <= 0) {
+      if (!Number.isFinite(radius) || radius <= 0) {
         console.warn('Invalid radius value:', radius);
         TowerScoutErrorHandler.showUserNotification(
           'Please enter a valid radius (positive number).',
@@ -169,7 +169,20 @@
         }
       }
 
-      // DON'T call showBoundaries() to avoid map reset - boundary should render automatically
+      // Frame the new circle on the active map, with space around its outline.
+      // Fit its actual rendered points rather than unrelated polygon boundaries.
+      const longitudes = circleBoundary.points.map(point => point[0]);
+      const latitudes = circleBoundary.points.map(point => point[1]);
+      const bounds = [
+        Math.min(...longitudes), Math.max(...latitudes),
+        Math.max(...longitudes), Math.min(...latitudes)
+      ];
+      if (provider === 'google') {
+        map.fitBounds(...bounds, 50);
+      } else if (provider === 'azure') {
+        map.fitBounds(bounds);
+      }
+
       window.TowerScoutLogger.debug('✅ Circle boundary created (should render automatically)');
     } else {
       console.warn('⚠️ No radius value entered');

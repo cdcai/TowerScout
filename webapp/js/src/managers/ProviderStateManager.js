@@ -79,6 +79,7 @@
       };
 
       try {
+        window.LocationSearch?.invalidate();
         // ⭐ MEMORY MANAGEMENT: Cleanup previous provider BEFORE switching
         if (this.currentMap && typeof this.currentMap.cleanup === 'function') {
           window.TowerScoutLogger.debug(`🧹 Cleaning up ${this.currentProvider} before switch...`);

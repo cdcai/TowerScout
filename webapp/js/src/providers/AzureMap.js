@@ -633,47 +633,16 @@
       }
     }
 
+    // Compatibility hook: keep the same location field when Azure becomes active.
     disableGooglePlacesWhenActive() {
-      // Critical fix: Disable Google Places SearchBox when Azure is active
-      const searchInput = document.getElementById('search');
+      window.LocationSearch.init();
+    }
 
-      // Remove Google Places classes and listeners when Azure is selected
-      if (currentProvider === 'azure') {
-        window.TowerScoutLogger.debug('🔧 Completely disabling Google Places for Azure Maps');
-
-        // Remove Google Places autocomplete classes
-        searchInput.classList.remove('pac-target-input');
-
-        // Remove Google Places autocomplete attribute
-        searchInput.removeAttribute('autocomplete');
-        searchInput.setAttribute('autocomplete', 'off');
-
-        // Hide Google Places autocomplete dropdown
-        const pacContainer = document.querySelector('.pac-container');
-        if (pacContainer) {
-          pacContainer.style.display = 'none';
-          pacContainer.style.visibility = 'hidden';
-        }
-
-        // Clear any existing Google Places listeners
-        const newInput = searchInput.cloneNode(true);
-        searchInput.parentNode.replaceChild(newInput, searchInput);
-
-        // CRITICAL: Update global input reference to new element
-        input = document.getElementById('search');
-
-        // Re-add the Azure Maps event listener to the new input
-        eventManager.addEventListener(input, 'keypress', function (e) {
-          if (e.key === 'Enter') {
-            handleGlobalSearch();
-          }
-        });
-
-        // Set Azure Maps placeholder
-        input.setAttribute('placeholder', 'Search with Azure Maps...');
-
-        window.TowerScoutLogger.debug('✅ Google Places completely disabled, Azure Maps search active');
-      }
+    clearSearchResultMarkers() {
+      if (!this.searchDataSource) return;
+      const markers = this.searchDataSource.getShapes().filter(shape =>
+        shape.getProperties()?.searchResult === true);
+      if (markers.length) this.searchDataSource.remove(markers);
     }
 
     addSearchResultMarker(result) {
@@ -682,7 +651,7 @@
       const lat = result.position.lat;
 
       // Clear previous search markers
-      this.searchDataSource.clear();
+      this.clearSearchResultMarkers();
 
       // Create marker using Azure Maps Point with [lng, lat] format
       const searchMarker = new atlas.data.Feature(
@@ -1669,6 +1638,7 @@
     }
 
     getBoundsPolygon(query, place) {
+      if (window.CoordinateSearch.handle(query, this)) return;
       // Azure Maps native search integration - NO Google dependency
       this.resetBoundaries();
 

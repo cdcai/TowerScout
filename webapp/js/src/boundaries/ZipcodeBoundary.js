@@ -10,15 +10,16 @@
   //
 
   // Fetch zipcode polygon from backend and display as boundary
-  function getZipcodePolygon(z) {
-    if (z.startsWith("zipcode ")) {
-      z = z.substring(8);
+  function getZipcodePolygon(z, isCurrent = () => true) {
+    if (/^zipcode\s/i.test(z)) {
+      z = z.replace(/^zipcode\s+/i, '');
     } else if (z[0] === '"') {
       z = z.substring(1, 6);
     }
     fetch('/getzipcode?zipcode=' + z, { method: "GET" })
       .then(response => response.json())
       .then(response => {
+        if (!isCurrent()) return;
         let polygons = parseZipcodeResult(response);
         if (polygons.length > 0) {
           currentMap.resetBoundaries();
