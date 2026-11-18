@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Image tag to publish, for example v0.1.0-rc1"
+        description: "Image tag to publish, for example v0.1.4-beta.1 (beta cannot update latest)"
         required: true
         type: string
       source_sha:
@@ -53,6 +53,7 @@ jobs:
           PUBLISH_TAG: ${{ inputs.tag }}
           PYTORCH_FLAVOR: ${{ inputs.pytorch_flavor }}
           EXPECTED_SOURCE: ${{ inputs.source_sha }}
+          PUSH_LATEST: ${{ inputs.push_latest }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
@@ -60,7 +61,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           gh api "repos/$GITHUB_REPOSITORY/environments/official-release" > publish-environment.json
           gh api "repos/$GITHUB_REPOSITORY/environments/official-release/deployment-branch-policies" > publish-branch-policies.json
-          python scripts/validate_publish_inputs.py --tag "$PUBLISH_TAG" --flavor "$PYTORCH_FLAVOR" --expected-source "$EXPECTED_SOURCE" --actual-source "$GITHUB_SHA" --environment-json publish-environment.json --branch-policies-json publish-branch-policies.json
+          python scripts/validate_publish_inputs.py --tag "$PUBLISH_TAG" --flavor "$PYTORCH_FLAVOR" --expected-source "$EXPECTED_SOURCE" --actual-source "$GITHUB_SHA" --push-latest "$PUSH_LATEST" --environment-json publish-environment.json --branch-policies-json publish-branch-policies.json
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
@@ -174,7 +175,7 @@ jobs:
           import urllib3
           from pip._vendor import urllib3 as pip_urllib3
           assert urllib3.__version__ == "2.8.0", urllib3.__version__
-          assert pip_urllib3.__version__ == "2.7.0", pip_urllib3.__version__
+          assert pip_urllib3.__version__ == "2.8.0", pip_urllib3.__version__
           '
           docker run --rm --entrypoint sh "$LOCAL_IMAGE" -s <<'CONTAINER_SH'
           set -eu
@@ -328,7 +329,7 @@ jobs:
           cat image-scan-dispositions.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Promote latest flavor tag
-        if: ${{ inputs.push_latest }}
+        if: ${{ inputs.push_latest && !contains(inputs.tag, '-beta') }}
         shell: bash
         env:
           LOCAL_IMAGE: '${{ steps.build.outputs.local_ref }}'

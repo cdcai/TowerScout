@@ -5,9 +5,13 @@ import re
 from pathlib import Path
 
 
-def validate(tag, flavor, expected_source, actual_source):
-    if not re.fullmatch(r'v\d+\.\d+\.\d+(?:-rc\.?\d+)?(?:-(?:cpu|cuda128))?', tag, flags=re.ASCII):
-        raise ValueError('Tag must be a version or release-candidate version, optionally suffixed with its flavor')
+def validate(tag, flavor, expected_source, actual_source, push_latest=False):
+    if not re.fullmatch(r'v\d+\.\d+\.\d+(?:-(?:rc|beta)\.?\d+)?(?:-(?:cpu|cuda128))?', tag, flags=re.ASCII):
+        raise ValueError('Tag must be a version, release-candidate or beta version, optionally suffixed with its flavor')
+    if not isinstance(push_latest, bool):
+        raise ValueError('Latest promotion must be a boolean')
+    if '-beta' in tag and push_latest:
+        raise ValueError('Beta images must not replace latest flavor tags')
     if flavor not in ('cpu', 'cuda128'):
         raise ValueError('Unsupported PyTorch flavor')
     if re.search(r'-(cpu|cuda128)$', tag) and not tag.endswith('-' + flavor):
@@ -34,11 +38,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ('tag', 'flavor', 'expected-source', 'actual-source'):
         parser.add_argument('--' + name, required=True)
+    parser.add_argument('--push-latest', choices=('false', 'true'), default='false')
     parser.add_argument('--environment-json', required=True, type=Path)
     parser.add_argument('--branch-policies-json', required=True, type=Path)
     args = parser.parse_args()
     try:
-        validate(args.tag, args.flavor, args.expected_source, args.actual_source)
+        validate(args.tag, args.flavor, args.expected_source, args.actual_source,
+                 push_latest=args.push_latest == 'true')
         validate_environment(json.loads(args.environment_json.read_text(encoding='utf-8')),
                              json.loads(args.branch_policies_json.read_text(encoding='utf-8')))
     except (ValueError, OSError) as error:

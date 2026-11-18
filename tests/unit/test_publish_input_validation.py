@@ -15,6 +15,29 @@ def test_versions_and_matching_flavors_are_accepted(tag, flavor):
     module.validate(tag, flavor, SHA, SHA)
 
 
+@pytest.mark.parametrize('flavor', ['cpu', 'cuda128'])
+@pytest.mark.parametrize('number', ['beta.1', 'beta2'])
+def test_beta_tags_require_separate_version_and_preserve_latest(flavor, number):
+    for suffix in ['', '-' + flavor]:
+        tag = 'v0.1.4-' + number + suffix
+        module.validate(tag, flavor, SHA, SHA, push_latest=False)
+        with pytest.raises(ValueError, match='must not replace latest'):
+            module.validate(tag, flavor, SHA, SHA, push_latest=True)
+
+
+@pytest.mark.parametrize('tag', ['v0.1.4-beta', 'v0.1.4-beta.', 'v0.1.4-beta.1-forged',
+                                 'v0.1.4-beta.1\nforged=value'])
+def test_malformed_beta_inputs_fail_closed(tag):
+    with pytest.raises(ValueError):
+        module.validate(tag, 'cpu', SHA, SHA)
+
+
+def test_stable_promotion_remains_available_only_with_valid_inputs():
+    module.validate('v0.1.4-cpu', 'cpu', SHA, SHA, push_latest=True)
+    with pytest.raises(ValueError, match='boolean'):
+        module.validate('v0.1.4', 'cpu', SHA, SHA, push_latest='false')
+
+
 @pytest.mark.parametrize('tag', ['latest', 'v1.2.3;touch injected', 'v1.2.3$(touch injected)', 'v1.2.3`id`', 'v1.2.3\nforged=value', '../v1.2.3', 'v1.2.3-cuda126', 'v１.2.3', 'v1.2.3 '])
 def test_shell_and_nonversion_inputs_are_rejected(tag):
     with pytest.raises(ValueError):
