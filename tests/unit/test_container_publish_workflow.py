@@ -200,7 +200,7 @@ def test_container_publish_verifies_runtime_versions_and_remote_identity():
     assert "awk '{print $3}'" in boundary_step
     assert 'test "$local_image_id" = "$local_manifest_digest"' not in workflow
     assert 'data.get("containerimage.config.digest")' in workflow
-    assert "descriptor_config_digest" in workflow
+    assert 'docker image save "$local_image_id" | python scripts/image_config_identity.py saved-config' in workflow
     assert 'local_config_digest="$(docker image inspect' not in workflow
     assert "Could not resolve local image ID for $local_ref" in workflow
     assert "Could not resolve local manifest digest for $local_ref" in workflow
@@ -265,7 +265,10 @@ def test_container_verify_is_read_only_and_fails_closed_on_exact_identity():
     assert "latest-" not in workflow_text
     assert '"$image"@sha256:' in identity
     assert 'test "$remote_config_digest" = "$EXPECTED_CONFIG_DIGEST"' in identity
-    assert 'test "$image_id" = "$EXPECTED_CONFIG_DIGEST"' in identity
+    assert 'test "$remote_config_digest" = "$EXPECTED_CONFIG_DIGEST"' in identity
+    assert 'scripts/image_config_identity.py verify-pulled' in identity
+    assert '--image-id "$image_id" --config-digest "$remote_config_digest"' in identity
+    assert '--manifest-digest "${PINNED_REF##*@}"' in identity
     assert 'test "$source_label" = "$EXPECTED_SOURCE_REF"' in identity
     assert 'test "$flavor_label" = "$EXPECTED_FLAVOR"' in identity
     assert scan["with"]["severity"] == "CRITICAL,HIGH"
@@ -327,3 +330,6 @@ def test_required_docker_build_exercises_inventory_without_publication():
     assert '--entrypoint python "$image_id" -I -B -' in check["run"]
     assert '--image-id "$image_id" --source-ref "$GITHUB_SHA" --flavor cpu' in check["run"]
     assert 'docker push' not in str(build)
+    config = next(step for step in steps if step.get("name") == "Verify built-image config identity")
+    assert not config.get("continue-on-error", False)
+    assert 'docker image save "$image_id" | python scripts/image_config_identity.py saved-config' in config["run"]

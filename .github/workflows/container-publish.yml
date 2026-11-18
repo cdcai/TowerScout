@@ -124,12 +124,13 @@ jobs:
           local_manifest_digest="$(python -c 'import json; print(json.load(open("image-metadata.json", encoding="utf-8"))["containerimage.digest"])')"
           local_config_digest="$(python -c 'import json; data=json.load(open("image-metadata.json", encoding="utf-8")); descriptor=data.get("containerimage.descriptor") or {}; print(data.get("containerimage.config.digest") or (descriptor.get("annotations") or {}).get("config.digest") or "")')"
           if [ -z "$local_config_digest" ]; then
-            descriptor_config_digest="$(docker image inspect --format '{{with .Descriptor}}{{index .Annotations "config.digest"}}{{end}}' "$local_ref" 2>/dev/null || true)"
-            if [ -n "$descriptor_config_digest" ]; then
-              local_config_digest="$descriptor_config_digest"
-            elif [ "$local_image_id" != "$local_manifest_digest" ]; then
+            if [ "$local_image_id" != "$local_manifest_digest" ]; then
               # The classic Docker image store reports the config digest as .Id.
               local_config_digest="$local_image_id"
+            else
+              # containerd can report the manifest as .Id and omit config metadata.
+              # Stream the immutable local image; do not push or save a second tar.
+              local_config_digest="$(docker image save "$local_image_id" | python scripts/image_config_identity.py saved-config)"
             fi
           fi
           source_label="$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$local_ref")"
@@ -148,6 +149,8 @@ jobs:
           esac
           test "$source_label" = "$GITHUB_SHA"
           test "$flavor_label" = "$pytorch_flavor"
+          printf '{"image_id":"%s","manifest_digest":"%s","config_digest":"%s"}\n' \
+            "$local_image_id" "$local_manifest_digest" "$local_config_digest" > local-image-identity.json
 
           echo "image=$image" >> "$GITHUB_OUTPUT"
           echo "base_tag=$tag" >> "$GITHUB_OUTPUT"
@@ -346,6 +349,7 @@ jobs:
           name: image-security-${{ steps.build.outputs.tag }}
           path: |
             image-metadata.json
+            local-image-identity.json
             image-identity.json
             remote-manifest.json
             prepublish-image-trivy.json
