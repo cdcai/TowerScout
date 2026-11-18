@@ -54,6 +54,66 @@ def _write_podman_compose_provider(path: Path, version: str = "1.5.0"):
     )
 
 
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell launcher helpers are Windows-only")
+@pytest.mark.parametrize("engine", ["docker", "podman"])
+@pytest.mark.parametrize("outcome", ["success", "timeout", "error"])
+def test_failed_launch_preserves_exit_code_when_host_diagnostics_finish_or_fail(engine, outcome):
+    command = f"""
+    $ErrorActionPreference = "Stop"
+    . "{LAUNCH_SCRIPT}"
+    $script:probes = @()
+    function Get-Command {{
+        param([string] $Name)
+        if ($Name -ne "wsl.exe") {{ throw "Unexpected command lookup: $Name" }}
+        return [pscustomobject]@{{ Source = 'synthetic-wsl.exe' }}
+    }}
+    function Invoke-TowerScoutBootstrapCommand {{
+        param([string] $FileName, [string[]] $Arguments, [int] $TimeoutSeconds)
+        if ($FileName -ne 'synthetic-wsl.exe' -or ($Arguments -join ' ') -ne '--status') {{
+            throw 'Unexpected WSL diagnostic'
+        }}
+        Complete-TestProbe -TimeoutSeconds $TimeoutSeconds
+    }}
+    function Invoke-TowerScoutPodmanCommand {{
+        param([string[]] $Arguments, [int] $TimeoutSeconds)
+        if (($Arguments -join ' ') -ne 'machine list') {{ throw 'Unexpected Podman diagnostic' }}
+        Complete-TestProbe -TimeoutSeconds $TimeoutSeconds
+    }}
+    function Complete-TestProbe {{
+        param([int] $TimeoutSeconds)
+        $script:probes += $TimeoutSeconds
+        if ('{outcome}' -eq 'error') {{ throw 'synthetic diagnostic error' }}
+        return [pscustomobject]@{{
+            ExitCode = $(if ('{outcome}' -eq 'timeout') {{ 124 }} else {{ 0 }})
+            TimedOut = ('{outcome}' -eq 'timeout')
+            StdOut = "synthetic output line 1`nsynthetic output line 2"
+            StdErr = 'synthetic diagnostic stderr'
+        }}
+    }}
+    function Invoke-TowerScoutCompose {{ $script:TowerScoutComposeExitCode = 7 }}
+    $code = Invoke-TowerScoutLaunchRuntime -EngineName '{engine}' -GpuMode off `
+        -AppPort 5000 -RootPath '{REPO_ROOT}' -PackageFlavor cpu `
+        -AppUrl 'http://localhost:5000' -ReadinessUrl 'http://localhost:5000/api/readiness' `
+        -ReadinessTimeoutSeconds 5 -NoBrowser
+    if ($code -ne 7) {{ throw "Startup exit code changed to $code" }}
+    $expectedCount = $(if ('{engine}' -eq 'podman') {{ 2 }} else {{ 1 }})
+    if ($script:probes.Count -ne $expectedCount -or @($script:probes | Where-Object {{ $_ -ne 5 }}).Count) {{
+        throw 'Diagnostics did not use the bounded command helpers'
+    }}
+    "original startup exit code: $code"
+    """
+    result = _run_powershell(command)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "original startup exit code: 7" in result.stdout
+    if outcome == "error":
+        assert "synthetic diagnostic error" in result.stdout
+    else:
+        assert "synthetic output line 1\n  synthetic output line 2" in result.stdout
+        assert "synthetic diagnostic stderr" in result.stdout
+        if outcome == "timeout":
+            assert "diagnostic timed out" in result.stdout
+
+
 def test_compose_defaults_use_cpu_tag_restart_and_runtime_guards():
     compose = COMPOSE_FILE.read_text(encoding="utf-8")
     env_example = ENV_EXAMPLE.read_text(encoding="utf-8")
