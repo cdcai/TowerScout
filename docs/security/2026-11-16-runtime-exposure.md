@@ -110,7 +110,7 @@ If a release is needed before compatible fixes exist, the project owner would ne
 
 ## Proposed release dispositions: November 18, 2026
 
-**Draft for project-owner review. No approval, gate change, new exception or publication is recorded by this section.** Keep Python 3.11 and Debian 12. The proposal uses the current-runtime review above to define a route to a release decision with explicit conditions, instead of requiring every upstream scanner entry to disappear.
+**Individual new dispositions remain a draft for project-owner review.** The owner subsequently set January 30, 2027 as the common expiry and renewed the existing eight util-linux exceptions to that date. No additional finding is accepted or publication authorized by that date instruction. Keep Python 3.11 and Debian 12. The proposal uses the current-runtime review above to define a route to a release decision with explicit conditions, instead of requiring every upstream scanner entry to disappear.
 
 ### Refreshed status
 
@@ -157,13 +157,13 @@ P1, E1, S1 and Z1 are completion criteria, not claims that qualification is comp
 
 ### Proposed scope, expiry and review ownership
 
-The project owner remains the decision owner and TASK-107 review owner. If approved after the evidence conditions are met, new exact risk acceptances and any temporary scanner/applicability disposition would expire **December 18, 2026 at 23:59:59 UTC**, with no automatic extension. A later approval does not move that fixed deadline. Review at least weekly and immediately when relevant facts change. Reconfirm advisory/exploitation information at implementation and publication time.
+The project owner remains the decision owner and TASK-107 review owner. On November 18, 2026, the owner set **January 30, 2027 at 23:59:59 UTC** as the common expiry, replacing the proposed December 18 date. Individual new exact risk acceptances and any temporary scanner/applicability disposition still require their evidence conditions and explicit approval; any approved decision would use that fixed January 30 deadline, with no automatic extension. A later approval does not move the deadline. Review at least weekly and immediately when relevant facts change. Reconfirm advisory/exploitation information at implementation and publication time.
 
 Scope is the documented local, single-user Windows profile with loopback binding, verified TLS, approved model/asset provenance, existing upload/restore controls and the qualified engine/device configuration. A server/shared/network-exposed deployment, changed capabilities/mounts or broadened inputs is outside this proposed decision. The Linux libraries remain affected where their vulnerable code is present; risk acceptance must not be labelled remediation or guaranteed unreachability.
 
 Remove or reconsider a decision immediately on a compatible fix, known-exploitation information, changed severity/identity/version, a new relevant caller/input, altered metadata/PAM/SQL/gzip handling, a control failure or a changed deployment profile. Fix and requalify when a suitable update becomes available. Expiry holds future publication; it does not disable installed copies.
 
-The eight existing util-linux exceptions still expire **December 5, 2026 at 23:59:59 UTC**. Their scope and deadline are unchanged. They require a separate review before any later publication; the proposed December 18 deadline for new decisions cannot extend them.
+The owner also explicitly renewed the eight existing util-linux exceptions through **January 30, 2027 at 23:59:59 UTC**, replacing their December 5 deadline. Their exact identities, versions, severity and flavor scope are unchanged. Weekly/immediate review and final-artifact qualification remain required; the date renewal is separate from deciding whether to accept additional findings.
 
 ### What would continue to block release
 
@@ -173,13 +173,13 @@ Under this proposal the seven conditional candidates remain blocking until their
 
 ### Implementation sequence for owner review
 
-1. Review the 13 rows, proposed decision criteria and fixed expiry. Approval of this document's approach would authorize preparing the individual decisions, not accepting unresolved conditions or publishing an image.
+1. Review the 13 rows and proposed decision criteria, using the owner's January 30 expiry instruction. The common date does not resolve the individual evidence/acceptance decisions or authorize publishing an image.
 2. Build one candidate from approved main when disk headroom is adequate, or use a separately authorized remote candidate-build path. Keep the current installation, images and named volumes available for rollback. Keep publication and registry upload separate from a build-only action.
 3. Refresh scanner data, scan/inventory that candidate and complete P1/E1/S1/Z1 for the relevant rows. Resolve the corrected zlib mapping and review all remaining/new findings and bundled copies. Stop on failed conditions instead of writing an exception to make the scan pass.
 4. Present the exact per-record decisions and artifact evidence for explicit owner acceptance. Only then implement matching expiring policy entries or a reviewed component-specific adjudication mechanism with positive and negative gate tests. Preserve fail-closed behavior for changed, unknown, unused and expired entries; keep corrected/absent records out of the exception set.
 5. Complete the remaining artifact/package qualification and obtain separate publication authorization. A passing source PR, approved proposal or security comparator alone does not qualify a release.
 
-No image was built or rescanned for this November 18 proposal. Docker remained stopped; no volume/image deletion, active gate edit, public push, third-party report or release action was performed. The November 16 scan remains historical evidence with its original 13-key result; a refreshed scan may differ.
+No image was built or rescanned for this November 18 work. Docker remained stopped; no volume/image deletion, public push, third-party report or release action was performed. The subsequent owner-authorized renewal changes only the active util-linux expiry and associated decision records; the comparator, baseline and other acceptance scope remain unchanged. The November 16 scan remains historical evidence with its original 13-key result; a refreshed scan may differ.
 
 ## Exact evidence identities
 
