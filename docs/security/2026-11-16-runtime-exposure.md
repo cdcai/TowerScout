@@ -108,6 +108,79 @@ For actual fixes, prefer Bookworm vendor updates and compatible upstream wheels 
 
 If a release is needed before compatible fixes exist, the project owner would need to consider each exact unresolved record with its evidence, limits, expiry and review triggers under the existing policy. This review does not request or grant blanket acceptance, add exceptions, clear publication, or authorize a release. Relevant changes to PAM configuration, GIS inputs/drivers/metadata, SQL/changeset paths, OpenCV persistence, gzip error recovery, native packages or deployment profile require renewed review.
 
+## Proposed release dispositions: November 18, 2026
+
+**Draft for project-owner review. No approval, gate change, new exception or publication is recorded by this section.** Keep Python 3.11 and Debian 12. The proposal uses the current-runtime review above to define a route to a release decision with explicit conditions, instead of requiring every upstream scanner entry to disappear.
+
+### Refreshed status
+
+The November 18 [Debian tracker](https://security-tracker.debian.org/tracker/data/json) still lists the reviewed Bookworm PAM, Expat, SQLite and genuine zlib CVE-2026-85091 records as open, with the same relevant installed versions. No compatible Bookworm vendor fix was identified for those records. However, [CVE-2026-76844](https://security-tracker.debian.org/tracker/CVE-2026-76844) now says `NOT-FOR-US: webpack-dev-middleware` and no longer assigns the finding to zlib. Refreshing the scanner database and rescanning should test whether that correction has propagated. Do not carry it as a new risk exception simply to accommodate stale metadata.
+
+None of the ten reviewed CVE identifiers appears in the retrieved [CISA KEV catalog](https://raw.githubusercontent.com/cisagov/kev-data/main/known_exploited_vulnerabilities.json), catalog version `2026.11.17`. KEV absence does not establish absence of exploitation or acceptable application risk. The recommendation also considers the actual input/configuration paths, code present, impact and remaining uncertainty. [FIRST's CVSS guidance](https://www.first.org/cvss/v4.0/user-guide#cvss-base-score-cvss-b-measures-severity-not-risk) explains why a base severity score alone does not establish deployment risk.
+
+The retained scan still has 13 unaccepted package keys. The categories below cover exactly those 13 keys; they are proposed actions, not new scan results:
+
+- Four PAM keys: recommend considering a short, scoped risk acceptance after final-image configuration verification.
+- Seven keys: conditional acceptance candidates; retain blocking status until the specific evidence conditions below are satisfied and the owner approves each exact record.
+- One SQLite key: candidate for an exact component-applicability disposition; further source/runtime confirmation and explicit adjudication are required.
+- One zlib key: vendor metadata has been corrected; verify disappearance through an updated scan without adding an exception.
+
+### Record-by-record proposal
+
+All identities below are the retained scan's HIGH `os-pkgs` / `debian` keys. They apply only to the listed package/version combination. A different version, severity, package class/type, flavor, additional copy or changed input path requires review rather than an automatic match.
+
+| CVE | Exact package and installed version | Proposed action | Reason and evidence required before activation |
+| --- | --- | --- | --- |
+| CVE-2025-6020 | `libpam-modules@1.5.2-6+deb12u2` | Scoped acceptance candidate | Namespace module is installed but inactive in the assessed image; no supported app PAM login path. Recheck all active PAM configuration/include paths and namespace rules in the final image (P1). |
+| CVE-2025-6020 | `libpam-modules-bin@1.5.2-6+deb12u2` | Scoped acceptance candidate | Same PAM source advisory and inactive namespace configuration. Verify this exact binary-package identity and P1; do not infer that helper binaries are patched. |
+| CVE-2025-6020 | `libpam-runtime@1.5.2-6+deb12u2` | Scoped acceptance candidate | Same source advisory; configured activation is the relevant boundary. Verify identity and P1; retain essential login/PAM dependencies. |
+| CVE-2025-6020 | `libpam0g@1.5.2-6+deb12u2` | Scoped acceptance candidate | Same source advisory; no supported TowerScout PAM authentication caller was identified. Verify identity and P1. |
+| CVE-2026-113351 | `libexpat1@2.5.0-1+deb12u5` | Conditional acceptance; block until E1 | Availability impact requires the affected parser/reset behavior. Backported code is present, so do not use the 2.5.0 label as a not-affected argument. Assess system and embedded Expat callers and reset behavior (E1). |
+| CVE-2026-115506 | `libexpat1@2.5.0-1+deb12u5` | Conditional acceptance; block until E1 | Entity-expansion CPU exhaustion matters if attacker-controlled XML reaches a parser. Verify GIS metadata/sidecars and image/restore input paths, including embedded Expat; file-size limits alone are insufficient (E1). |
+| CVE-2026-117610 | `libexpat1@2.5.0-1+deb12u5` | Conditional acceptance; block until E1 | Crash requires external-entity subparser creation and the described chunk sequence. Establish the supported caller boundary, including indirect/native callers, before accepting remaining uncertainty (E1). |
+| CVE-2026-118370 | `libexpat1@2.5.0-1+deb12u5` | Conditional acceptance; block until E1 | Memory corruption deserves more scrutiny than a generic availability issue. Verify whether supported inputs can supply or expand into the oversized XML attribute input, beyond merely citing request-size limits. If that path is plausible and uncontrolled, keep blocking and pursue a fix/control (E1). |
+| CVE-2026-119373 | `libsqlite3-0@3.40.1-2+deb12u2` | Conditional acceptance; block until S1 | FTS5 code is present. Confirm fixed application query/database inputs, database provenance and all three native copies; no arbitrary FTS table/population/query route may be assumed solely from a source grep (S1). |
+| CVE-2026-119374 | `libsqlite3-0@3.40.1-2+deb12u2` | Exact applicability adjudication candidate; keep blocking | Patched Debian source and the runtime feature probe support absence of this secure-delete feature in the system copy. Reconfirm source/build identity and runtime behavior for the final image, with a normal FTS5 control. The pyproj copy supports the feature and needs its own S1 decision. Seek vendor clarification; no global CVE suppression or claim that all copies are unaffected. |
+| CVE-2026-119379 | `libsqlite3-0@3.40.1-2+deb12u2` | Conditional acceptance; block until S1 | System SQLite has the session extension, but no application changeset input/apply route was identified. Confirm the final call/input inventory and compiled options; wheel-copy absence of session support does not clear the system copy (S1). |
+| CVE-2026-76844 | `zlib1g@1:1.2.13.dfsg-1` | Updated-scan correction; no exception proposed | Debian now identifies webpack-dev-middleware rather than zlib. Refresh the vulnerability database and rescan the exact candidate. If the record persists, investigate the scanner data source; retain the discrepancy for explicit adjudication rather than silently ignoring it. |
+| CVE-2026-85091 | `zlib1g@1:1.2.13.dfsg-1` | Conditional acceptance; block until Z1 | OpenCV imports `gzputs`; the affected pre-1.3.1.2 error/recovery sequence additionally requires `gzclearerr`. Review relevant native callers, compressed FileStorage output and error recovery in the final image, with explicit limits on dynamic/static call analysis (Z1). |
+
+### Evidence conditions for any decision
+
+P1, E1, S1 and Z1 are completion criteria, not claims that qualification is complete:
+
+- **P1 - PAM configuration:** inventory package identities, active PAM services/includes, module activation, namespace rules and the supported authentication/deployment profile in each final image. Confirm no supported path activates `pam_namespace`. A new service/include or activation invalidates the proposed acceptance.
+- **E1 - XML input and parser behavior:** inventory system/embedded Expat versions/features and their consumers; trace supported custom-image, restored-image and GIS metadata paths, including optional XML sidecars and indirect native decoding. Verify provenance/hash controls for packaged assets and representative benign metadata fixtures. Record whether attacker-controlled entity expansion, external subparsers, parser reset or oversized XML attributes can reach the named behavior. Passing benign workflows alone does not establish absence of a vulnerability. Any credible uncontrolled memory-corruption path remains blocking.
+- **S1 - SQLite copies and inputs:** inventory system, Fiona and pyproj SQLite versions/features and the databases/queries they consume, including PROJ database provenance and relevant environment/configuration. Confirm the supported interface does not accept arbitrary SQL, SQLite databases, FTS configuration or session changesets. Repeat the benign feature/control probes on the exact final copies and assess pyproj's secure-delete capability separately. An OS-package disposition must not conceal an affected bundled copy, even if the scanner omits it.
+- **Z1 - native gzip error path:** identify relevant gzip-write and error-recovery callers in the final native dependency closure and supported app paths. Recheck OpenCV's compressed FileStorage use and any `gzclearerr` sequence. Record gaps for static linkage and runtime symbol lookup. If a supported path can exercise the vulnerable sequence with uncontrolled state, keep it blocking until fixed or separately mitigated.
+- **Artifact qualification:** obtain a clean candidate build from the approved source; record the exact local image ID and per-flavor inventory, perform a fresh complete scan with database timestamp, and bind decisions to the final artifact identity. Every flavor needs its own evidence; forcing CPU mode inside a CUDA image does not qualify a CPU image. Preserve the existing real-model, provider, export/restore, cancellation/restart and downloaded-package qualification requirements. This proposal waives none of them.
+
+### Proposed scope, expiry and review ownership
+
+The project owner remains the decision owner and TASK-107 review owner. If approved after the evidence conditions are met, new exact risk acceptances and any temporary scanner/applicability disposition would expire **December 18, 2026 at 23:59:59 UTC**, with no automatic extension. A later approval does not move that fixed deadline. Review at least weekly and immediately when relevant facts change. Reconfirm advisory/exploitation information at implementation and publication time.
+
+Scope is the documented local, single-user Windows profile with loopback binding, verified TLS, approved model/asset provenance, existing upload/restore controls and the qualified engine/device configuration. A server/shared/network-exposed deployment, changed capabilities/mounts or broadened inputs is outside this proposed decision. The Linux libraries remain affected where their vulnerable code is present; risk acceptance must not be labelled remediation or guaranteed unreachability.
+
+Remove or reconsider a decision immediately on a compatible fix, known-exploitation information, changed severity/identity/version, a new relevant caller/input, altered metadata/PAM/SQL/gzip handling, a control failure or a changed deployment profile. Fix and requalify when a suitable update becomes available. Expiry holds future publication; it does not disable installed copies.
+
+The eight existing util-linux exceptions still expire **December 5, 2026 at 23:59:59 UTC**. Their scope and deadline are unchanged. They require a separate review before any later publication; the proposed December 18 deadline for new decisions cannot extend them.
+
+### What would continue to block release
+
+Keep the unchanged 396-key baseline and exact-match policy. Continue blocking on unreviewed/new HIGH or CRITICAL findings, changed identities/severities, incomplete or stale evidence, extra/unassessed native copies, unused or expired exceptions, failed input/control assumptions, and failed runtime/package qualification. A finding remains blocking where a credible supported attack path has unacceptable impact and the required evidence or mitigation is missing. Lack of a vendor fix and absence from KEV are insufficient reasons for automatic acceptance.
+
+Under this proposal the seven conditional candidates remain blocking until their conditions and exact owner decisions are complete; they are not automatically accepted with the PAM records. The SQLite applicability candidate requires its own decision, and the corrected zlib record requires a fresh scan. Any new finding in that scan gets a new review. Even if all listed security dispositions are eventually valid, separate publication authorization and all standing qualification requirements still apply.
+
+### Implementation sequence for owner review
+
+1. Review the 13 rows, proposed decision criteria and fixed expiry. Approval of this document's approach would authorize preparing the individual decisions, not accepting unresolved conditions or publishing an image.
+2. Build one candidate from approved main when disk headroom is adequate, or use a separately authorized remote candidate-build path. Keep the current installation, images and named volumes available for rollback. Keep publication and registry upload separate from a build-only action.
+3. Refresh scanner data, scan/inventory that candidate and complete P1/E1/S1/Z1 for the relevant rows. Resolve the corrected zlib mapping and review all remaining/new findings and bundled copies. Stop on failed conditions instead of writing an exception to make the scan pass.
+4. Present the exact per-record decisions and artifact evidence for explicit owner acceptance. Only then implement matching expiring policy entries or a reviewed component-specific adjudication mechanism with positive and negative gate tests. Preserve fail-closed behavior for changed, unknown, unused and expired entries; keep corrected/absent records out of the exception set.
+5. Complete the remaining artifact/package qualification and obtain separate publication authorization. A passing source PR, approved proposal or security comparator alone does not qualify a release.
+
+No image was built or rescanned for this November 18 proposal. Docker remained stopped; no volume/image deletion, active gate edit, public push, third-party report or release action was performed. The November 16 scan remains historical evidence with its original 13-key result; a refreshed scan may differ.
+
 ## Exact evidence identities
 
 - Accepted main at start: `bce3e1bc49b0ba012961ccb3fb65d5afd1832c6b`.
