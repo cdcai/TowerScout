@@ -20,6 +20,10 @@ not qualified. The exact Host allowlist, foreign-Origin, cross-site and same-sit
 reduce DNS-rebinding/browser request exposure; they are not authentication or
 protection against same-origin script execution or other local software.
 
+After a Compose startup failure, WSL status and Podman machine-list diagnostics
+each use a five-second command budget with bounded process cleanup. Diagnostic
+timeouts or errors retain the original Compose failure code.
+
 Official artifacts still require fresh qualification. Run core checks in all four engine/device profiles on both Windows NVIDIA hosts:
 exact downloads, setup/import, both real models on the required device, Google and Azure workflows, review visibility and stop/relaunch.
 Run full export/restore, cancellation/retry and recoverable-error workflows on first-host Docker CPU and Podman CUDA,

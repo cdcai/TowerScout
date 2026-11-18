@@ -198,8 +198,12 @@ function Write-TowerScoutHostDiagnostics {
     else {
         Write-Host "- wsl.exe found at $($wslCommand.Source)."
         try {
-            $wslStatus = & wsl.exe --status 2>&1
-            foreach ($line in $wslStatus) {
+            $wslResult = Invoke-TowerScoutBootstrapCommand -FileName $wslCommand.Source -Arguments @("--status") -TimeoutSeconds 5
+            $wslStatus = @($wslResult.StdOut, $wslResult.StdErr) -join [Environment]::NewLine
+            if ($wslResult.TimedOut) {
+                Write-Host "  WSL status diagnostic timed out; continuing with the original startup failure."
+            }
+            foreach ($line in ($wslStatus -split "(`r`n|`n|`r)")) {
                 $normalizedLine = ([string] $line).Replace([string][char]0, "")
                 if (-not [string]::IsNullOrWhiteSpace($normalizedLine)) {
                     Write-Host "  $normalizedLine"
@@ -214,8 +218,12 @@ function Write-TowerScoutHostDiagnostics {
     if ($EngineName -eq "podman") {
         Write-Host "- For Podman, check the machine state with: podman machine list"
         try {
-            $podmanMachine = & podman machine list 2>&1
-            foreach ($line in $podmanMachine) {
+            $podmanResult = Invoke-TowerScoutPodmanCommand -Arguments @("machine", "list") -TimeoutSeconds 5
+            $podmanMachine = @($podmanResult.StdOut, $podmanResult.StdErr) -join [Environment]::NewLine
+            if ($podmanResult.TimedOut) {
+                Write-Host "  Podman machine diagnostic timed out; continuing with the original startup failure."
+            }
+            foreach ($line in ($podmanMachine -split "(`r`n|`n|`r)")) {
                 $normalizedLine = ([string] $line).Replace([string][char]0, "")
                 if (-not [string]::IsNullOrWhiteSpace($normalizedLine)) {
                     Write-Host "  $normalizedLine"
