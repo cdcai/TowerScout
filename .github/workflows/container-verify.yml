@@ -83,7 +83,9 @@ jobs:
           image_id="$(docker image inspect --format '{{.Id}}' "$PINNED_REF")"
           source_label="$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$PINNED_REF")"
           flavor_label="$(docker image inspect --format '{{index .Config.Labels "org.towerscout.pytorch.flavor"}}' "$PINNED_REF")"
-          test "$image_id" = "$EXPECTED_CONFIG_DIGEST"
+          python scripts/image_config_identity.py verify-pulled \
+            --image-id "$image_id" --config-digest "$remote_config_digest" \
+            --manifest-digest "${PINNED_REF##*@}"
           test "$source_label" = "$EXPECTED_SOURCE_REF"
           test "$flavor_label" = "$EXPECTED_FLAVOR"
 

@@ -224,6 +224,12 @@ jobs:
           --image-id "$image_id" --source-ref "$GITHUB_SHA" --flavor cpu \
           < scripts/task104_urllib3_inventory.py
 
+    - name: Verify built-image config identity
+      run: |
+        set -euo pipefail
+        image_id="$(docker image inspect --format '{{.Id}}' towerscout:test)"
+        docker image save "$image_id" | python scripts/image_config_identity.py saved-config
+
   security:
     runs-on: ubuntu-latest
     timeout-minutes: 20
