@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "policy": "task103-g10-time-bounded-residuals",
+  "description": "Owner-authorized risk acceptance of twelve exact HIGH package keys for experimental v0.1.4-beta.1 CPU and CUDA 12.8 only; expires January 30, 2027. Does not claim remediation or completed deployment qualification.",
+  "findings": [
+    {
+      "vulnerability_id": "CVE-2025-6020",
+      "package": "libpam-modules",
+      "severity": "HIGH",
+      "installed_version": "1.5.2-6+deb12u2",
+      "package_id": "libpam-modules@1.5.2-6+deb12u2",
+      "package_class": "os-pkgs",
+      "package_type": "debian",
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "expires_utc": "2027-01-30T23:59:59Z",
+      "approved_by": "Project owner",
+      "follow_up_task": "TASK-107",
+      "reason": "On November 18, 2026 the project owner explicitly directed publication of the CPU and GPU v0.1.4-beta.1 prerelease despite these known blocking findings. This is beta-only risk acceptance, not remediation or a claim of non-applicability. The earlier conditional exposure-review requirements remain incomplete; publication of this experimental beta is authorized with that limitation disclosed. See docs/security/2026-11-18-beta1-release-decision.md.",
+      "compensating_controls": [
+        "Applies only when the verified image version label is exactly v0.1.4-beta.1; normal release policy is unchanged.",
+        "Retain local single-user loopback deployment, TLS verification, model hashes, standard container capabilities and volume isolation.",
+        "Fresh CPU and CUDA scans must match the exact package, version, class, type and HIGH severity. Additional or escalated findings remain blocking.",
+        "Publish as a GitHub prerelease with make_latest=false, digest-pinned per-flavor packages and known vulnerabilities disclosed.",
+        "Project owner reviews TASK-107 weekly and on changed exposure or vendor fixes. Remove the exception when fixed; expires January 30, 2027 without automatic renewal."
+      ]
+    },
+    {
+      "vulnerability_id": "CVE-2025-6020",
+      "package": "libpam-modules-bin",
+      "severity": "HIGH",
+      "installed_version": "1.5.2-6+deb12u2",
+      "package_id": "libpam-modules-bin@1.5.2-6+deb12u2",
+      "package_class": "os-pkgs",
+      "package_type": "debian",
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "expires_utc": "2027-01-30T23:59:59Z",
+      "approved_by": "Project owner",
+      "follow_up_task": "TASK-107",
+      "reason": "On November 18, 2026 the project owner explicitly directed publication of the CPU and GPU v0.1.4-beta.1 prerelease despite these known blocking findings. This is beta-only risk acceptance, not remediation or a claim of non-applicability. The earlier conditional exposure-review requirements remain incomplete; publication of this experimental beta is authorized with that limitation disclosed. See docs/security/2026-11-18-beta1-release-decision.md.",
+      "compensating_controls": [
+        "Applies only when the verified image version label is exactly v0.1.4-beta.1; normal release policy is unchanged.",
+        "Retain local single-user loopback deployment, TLS verification, model hashes, standard container capabilities and volume isolation.",
+        "Fresh CPU and CUDA scans must match the exact package, version, class, type and HIGH severity. Additional or escalated findings remain blocking.",
+        "Publish as a GitHub prerelease with make_latest=false, digest-pinned per-flavor packages and known vulnerabilities disclosed.",
+        "Project owner reviews TASK-107 weekly and on changed exposure or vendor fixes. Remove the exception when fixed; expires January 30, 2027 without automatic renewal."
+      ]
+    },
+    {
+      "vulnerability_id": "CVE-2025-6020",
+      "package": "libpam-runtime",
+      "severity": "HIGH",
+      "installed_version": "1.5.2-6+deb12u2",
+      "package_id": "libpam-runtime@1.5.2-6+deb12u2",
+      "package_class": "os-pkgs",
+      "package_type": "debian",
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "expires_utc": "2027-01-30T23:59:59Z",
+      "approved_by": "Project owner",
+      "follow_up_task": "TASK-107",
+      "reason": "On November 18, 2026 the project owner explicitly directed publication of the CPU and GPU v0.1.4-beta.1 prerelease despite these known blocking findings. This is beta-only risk acceptance, not remediation or a claim of non-applicability. The earlier conditional exposure-review requirements remain incomplete; publication of this experimental beta is authorized with that limitation disclosed. See docs/security/2026-11-18-beta1-release-decision.md.",
+      "compensating_controls": [
+        "Applies only when the verified image version label is exactly v0.1.4-beta.1; normal release policy is unchanged.",
+        "Retain local single-user loopback deployment, TLS verification, model hashes, standard container capabilities and volume isolation.",
+        "Fresh CPU and CUDA scans must match the exact package, version, class, type and HIGH severity. Additional or escalated findings remain blocking.",
+        "Publish as a GitHub prerelease with make_latest=false, digest-pinned per-flavor packages and known vulnerabilities disclosed.",
+        "Project owner reviews TASK-107 weekly and on changed exposure or vendor fixes. Remove the exception when fixed; expires January 30, 2027 without automatic renewal."
+      ]
+    },
+    {
+      "vulnerability_id": "CVE-2025-6020",
+      "package": "libpam0g",
+      "severity": "HIGH",
+      "installed_version": "1.5.2-6+deb12u2",
+      "package_id": "libpam0g@1.5.2-6+deb12u2",
+      "package_class": "os-pkgs",
+      "package_type": "debian",
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "expires_utc": "2027-01-30T23:59:59Z",
+      "approved_by": "Project owner",
+      "follow_up_task": "TASK-107",
+      "reason": "On November 18, 2026 the project owner explicitly directed publication of the CPU and GPU v0.1.4-beta.1 prerelease despite these known blocking findings. This is beta-only risk acceptance, not remediation or a claim of non-applicability. The earlier conditional exposure-review requirements remain incomplete; publication of this experimental beta is authorized with that limitation disclosed. See docs/security/2026-11-18-beta1-release-decision.md.",
+      "compensating_controls": [
+        "Applies only when the verified image version label is exactly v0.1.4-beta.1; normal release policy is unchanged.",
+        "Retain local single-user loopback deployment, TLS verification, model hashes, standard container capabilities and volume isolation.",
+        "Fresh CPU and CUDA scans must match the exact package, version, class, type and HIGH severity. Additional or escalated findings remain blocking.",
+        "Publish as a GitHub prerelease with make_latest=false, digest-pinned per-flavor packages and known vulnerabilities disclosed.",
+        "Project owner reviews TASK-107 weekly and on changed exposure or vendor fixes. Remove the exception when fixed; expires January 30, 2027 without automatic renewal."
+      ]
+    },
+    {
+      "vulnerability_id": "CVE-2026-113351",
+      "package": "libexpat1",
+      "severity": "HIGH",
+      "installed_version": "2.5.0-1+deb12u5",
+      "package_id": "libexpat1@2.5.0-1+deb12u5",
+      "package_class": "os-pkgs",
+      "package_type": "debian",
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "expires_utc": "2027-01-30T23:59:59Z",
+      "approved_by": "Project owner",
+      "follow_up_task": "TASK-107",
+      "reason": "On November 18, 2026 the project owner explicitly directed publication of the CPU and GPU v0.1.4-beta.1 prerelease despite these known blocking findings. This is beta-only risk acceptance, not remediation or a claim of non-applicability. The earlier conditional exposure-review requirements remain incomplete; publication of this experimental beta is authorized with that limitation disclosed. See docs/security/2026-11-18-beta1-release-decision.md.",
+      "compensating_controls": [
+        "Applies only when the verified image version label is exactly v0.1.4-beta.1; normal release policy is unchanged.",
+        "Retain local single-user loopback deployment, TLS verification, model hashes, standard container capabilities and volume isolation.",
+        "Fresh CPU and CUDA scans must match the exact package, version, class, type and HIGH severity. Additional or escalated findings remain blocking.",
+        "Publish as a GitHub prerelease with make_latest=false, digest-pinned per-flavor packages and known vulnerabilities disclosed.",
+        "Project owner reviews TASK-107 weekly and on changed exposure or vendor fixes. Remove the exception when fixed; expires January 30, 2027 without automatic renewal."
+      ]
+    },
+    {
+      "vulnerability_id": "CVE-2026-115506",
+      "package": "libexpat1",
+      "severity": "HIGH",
+      "installed_version": "2.5.0-1+deb12u5",
+      "package_id": "libexpat1@2.5.0-1+deb12u5",
+      "package_class": "os-pkgs",
+      "package_type": "debian",
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "expires_utc": "2027-01-30T23:59:59Z",
+      "approved_by": "Project owner",
+      "follow_up_task": "TASK-107",
+      "reason": "On November 18, 2026 the project owner explicitly directed publication of the CPU and GPU v0.1.4-beta.1 prerelease despite these known blocking findings. This is beta-only risk acceptance, not remediation or a claim of non-applicability. The earlier conditional exposure-review requirements remain incomplete; publication of this experimental beta is authorized with that limitation disclosed. See docs/security/2026-11-18-beta1-release-decision.md.",
+      "compensating_controls": [
+        "Applies only when the verified image version label is exactly v0.1.4-beta.1; normal release policy is unchanged.",
+        "Retain local single-user loopback deployment, TLS verification, model hashes, standard container capabilities and volume isolation.",
+        "Fresh CPU and CUDA scans must match the exact package, version, class, type and HIGH severity. Additional or escalated findings remain blocking.",
+        "Publish as a GitHub prerelease with make_latest=false, digest-pinned per-flavor packages and known vulnerabilities disclosed.",
+        "Project owner reviews TASK-107 weekly and on changed exposure or vendor fixes. Remove the exception when fixed; expires January 30, 2027 without automatic renewal."
+      ]
+    },
+    {
+      "vulnerability_id": "CVE-2026-117610",
+      "package": "libexpat1",
+      "severity": "HIGH",
+      "installed_version": "2.5.0-1+deb12u5",
+      "package_id": "libexpat1@2.5.0-1+deb12u5",
+      "package_class": "os-pkgs",
+      "package_type": "debian",
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "expires_utc": "2027-01-30T23:59:59Z",
+      "approved_by": "Project owner",
+      "follow_up_task": "TASK-107",
+      "reason": "On November 18, 2026 the project owner explicitly directed publication of the CPU and GPU v0.1.4-beta.1 prerelease despite these known blocking findings. This is beta-only risk acceptance, not remediation or a claim of non-applicability. The earlier conditional exposure-review requirements remain incomplete; publication of this experimental beta is authorized with that limitation disclosed. See docs/security/2026-11-18-beta1-release-decision.md.",
+      "compensating_controls": [
+        "Applies only when the verified image version label is exactly v0.1.4-beta.1; normal release policy is unchanged.",
+        "Retain local single-user loopback deployment, TLS verification, model hashes, standard container capabilities and volume isolation.",
+        "Fresh CPU and CUDA scans must match the exact package, version, class, type and HIGH severity. Additional or escalated findings remain blocking.",
+        "Publish as a GitHub prerelease with make_latest=false, digest-pinned per-flavor packages and known vulnerabilities disclosed.",
+        "Project owner reviews TASK-107 weekly and on changed exposure or vendor fixes. Remove the exception when fixed; expires January 30, 2027 without automatic renewal."
+      ]
+    },
+    {
+      "vulnerability_id": "CVE-2026-118370",
+      "package": "libexpat1",
+      "severity": "HIGH",
+      "installed_version": "2.5.0-1+deb12u5",
+      "package_id": "libexpat1@2.5.0-1+deb12u5",
+      "package_class": "os-pkgs",
+      "package_type": "debian",
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "expires_utc": "2027-01-30T23:59:59Z",
+      "approved_by": "Project owner",
+      "follow_up_task": "TASK-107",
+      "reason": "On November 18, 2026 the project owner explicitly directed publication of the CPU and GPU v0.1.4-beta.1 prerelease despite these known blocking findings. This is beta-only risk acceptance, not remediation or a claim of non-applicability. The earlier conditional exposure-review requirements remain incomplete; publication of this experimental beta is authorized with that limitation disclosed. See docs/security/2026-11-18-beta1-release-decision.md.",
+      "compensating_controls": [
+        "Applies only when the verified image version label is exactly v0.1.4-beta.1; normal release policy is unchanged.",
+        "Retain local single-user loopback deployment, TLS verification, model hashes, standard container capabilities and volume isolation.",
+        "Fresh CPU and CUDA scans must match the exact package, version, class, type and HIGH severity. Additional or escalated findings remain blocking.",
+        "Publish as a GitHub prerelease with make_latest=false, digest-pinned per-flavor packages and known vulnerabilities disclosed.",
+        "Project owner reviews TASK-107 weekly and on changed exposure or vendor fixes. Remove the exception when fixed; expires January 30, 2027 without automatic renewal."
+      ]
+    },
+    {
+      "vulnerability_id": "CVE-2026-119373",
+      "package": "libsqlite3-0",
+      "severity": "HIGH",
+      "installed_version": "3.40.1-2+deb12u2",
+      "package_id": "libsqlite3-0@3.40.1-2+deb12u2",
+      "package_class": "os-pkgs",
+      "package_type": "debian",
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "expires_utc": "2027-01-30T23:59:59Z",
+      "approved_by": "Project owner",
+      "follow_up_task": "TASK-107",
+      "reason": "On November 18, 2026 the project owner explicitly directed publication of the CPU and GPU v0.1.4-beta.1 prerelease despite these known blocking findings. This is beta-only risk acceptance, not remediation or a claim of non-applicability. The earlier conditional exposure-review requirements remain incomplete; publication of this experimental beta is authorized with that limitation disclosed. See docs/security/2026-11-18-beta1-release-decision.md.",
+      "compensating_controls": [
+        "Applies only when the verified image version label is exactly v0.1.4-beta.1; normal release policy is unchanged.",
+        "Retain local single-user loopback deployment, TLS verification, model hashes, standard container capabilities and volume isolation.",
+        "Fresh CPU and CUDA scans must match the exact package, version, class, type and HIGH severity. Additional or escalated findings remain blocking.",
+        "Publish as a GitHub prerelease with make_latest=false, digest-pinned per-flavor packages and known vulnerabilities disclosed.",
+        "Project owner reviews TASK-107 weekly and on changed exposure or vendor fixes. Remove the exception when fixed; expires January 30, 2027 without automatic renewal."
+      ]
+    },
+    {
+      "vulnerability_id": "CVE-2026-119374",
+      "package": "libsqlite3-0",
+      "severity": "HIGH",
+      "installed_version": "3.40.1-2+deb12u2",
+      "package_id": "libsqlite3-0@3.40.1-2+deb12u2",
+      "package_class": "os-pkgs",
+      "package_type": "debian",
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "expires_utc": "2027-01-30T23:59:59Z",
+      "approved_by": "Project owner",
+      "follow_up_task": "TASK-107",
+      "reason": "On November 18, 2026 the project owner explicitly directed publication of the CPU and GPU v0.1.4-beta.1 prerelease despite these known blocking findings. This is beta-only risk acceptance, not remediation or a claim of non-applicability. The earlier conditional exposure-review requirements remain incomplete; publication of this experimental beta is authorized with that limitation disclosed. See docs/security/2026-11-18-beta1-release-decision.md.",
+      "compensating_controls": [
+        "Applies only when the verified image version label is exactly v0.1.4-beta.1; normal release policy is unchanged.",
+        "Retain local single-user loopback deployment, TLS verification, model hashes, standard container capabilities and volume isolation.",
+        "Fresh CPU and CUDA scans must match the exact package, version, class, type and HIGH severity. Additional or escalated findings remain blocking.",
+        "Publish as a GitHub prerelease with make_latest=false, digest-pinned per-flavor packages and known vulnerabilities disclosed.",
+        "Project owner reviews TASK-107 weekly and on changed exposure or vendor fixes. Remove the exception when fixed; expires January 30, 2027 without automatic renewal."
+      ]
+    },
+    {
+      "vulnerability_id": "CVE-2026-119379",
+      "package": "libsqlite3-0",
+      "severity": "HIGH",
+      "installed_version": "3.40.1-2+deb12u2",
+      "package_id": "libsqlite3-0@3.40.1-2+deb12u2",
+      "package_class": "os-pkgs",
+      "package_type": "debian",
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "expires_utc": "2027-01-30T23:59:59Z",
+      "approved_by": "Project owner",
+      "follow_up_task": "TASK-107",
+      "reason": "On November 18, 2026 the project owner explicitly directed publication of the CPU and GPU v0.1.4-beta.1 prerelease despite these known blocking findings. This is beta-only risk acceptance, not remediation or a claim of non-applicability. The earlier conditional exposure-review requirements remain incomplete; publication of this experimental beta is authorized with that limitation disclosed. See docs/security/2026-11-18-beta1-release-decision.md.",
+      "compensating_controls": [
+        "Applies only when the verified image version label is exactly v0.1.4-beta.1; normal release policy is unchanged.",
+        "Retain local single-user loopback deployment, TLS verification, model hashes, standard container capabilities and volume isolation.",
+        "Fresh CPU and CUDA scans must match the exact package, version, class, type and HIGH severity. Additional or escalated findings remain blocking.",
+        "Publish as a GitHub prerelease with make_latest=false, digest-pinned per-flavor packages and known vulnerabilities disclosed.",
+        "Project owner reviews TASK-107 weekly and on changed exposure or vendor fixes. Remove the exception when fixed; expires January 30, 2027 without automatic renewal."
+      ]
+    },
+    {
+      "vulnerability_id": "CVE-2026-85091",
+      "package": "zlib1g",
+      "severity": "HIGH",
+      "installed_version": "1:1.2.13.dfsg-1",
+      "package_id": "zlib1g@1:1.2.13.dfsg-1",
+      "package_class": "os-pkgs",
+      "package_type": "debian",
+      "applicable_publish_flavors": [
+        "cpu",
+        "cuda128"
+      ],
+      "expires_utc": "2027-01-30T23:59:59Z",
+      "approved_by": "Project owner",
+      "follow_up_task": "TASK-107",
+      "reason": "On November 18, 2026 the project owner explicitly directed publication of the CPU and GPU v0.1.4-beta.1 prerelease despite these known blocking findings. This is beta-only risk acceptance, not remediation or a claim of non-applicability. The earlier conditional exposure-review requirements remain incomplete; publication of this experimental beta is authorized with that limitation disclosed. See docs/security/2026-11-18-beta1-release-decision.md.",
+      "compensating_controls": [
+        "Applies only when the verified image version label is exactly v0.1.4-beta.1; normal release policy is unchanged.",
+        "Retain local single-user loopback deployment, TLS verification, model hashes, standard container capabilities and volume isolation.",
+        "Fresh CPU and CUDA scans must match the exact package, version, class, type and HIGH severity. Additional or escalated findings remain blocking.",
+        "Publish as a GitHub prerelease with make_latest=false, digest-pinned per-flavor packages and known vulnerabilities disclosed.",
+        "Project owner reviews TASK-107 weekly and on changed exposure or vendor fixes. Remove the exception when fixed; expires January 30, 2027 without automatic renewal."
+      ]
+    }
+  ]
+}

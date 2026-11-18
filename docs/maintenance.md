@@ -33,6 +33,14 @@ GPU fallback to CPU is a failure. Expand affected coverage after relevant change
 
 ## Security and publication
 
+The project owner subsequently authorized experimental **v0.1.4-beta.1 CPU and
+CUDA 12.8** publication with twelve exact additional HIGH findings accepted
+through January 30, 2027. See the [beta-only release decision](security/2026-11-18-beta1-release-decision.md).
+For this beta, that explicit decision supersedes the earlier pending-disposition
+and pre-publication qualification hold below; investigations and deployment
+qualification remain incomplete and must be disclosed. It does not authorize
+stable/latest promotion or exceptions for other versions or additional findings.
+
 Retain the unchanged 396-key security baseline. The pip-private urllib3 exceptions are removed for the hash-verified pip 26.3 upgrade, which vendors fixed urllib3 2.8.0. Exact-image inventories and fresh scans must confirm the fixed copies; old pip 26.2.2 images no longer satisfy the updated policy. The resolved Expat and OpenSSL entries remain removed. Runtime apt and libapt-pkg6.0 are pinned to 2.6.2 for CVE-2026-109518.
 The project owner owns TASK-107 weekly and immediate-change review. The eight util-linux records below are the only retained exceptions. New, changed, unused or expired findings fail closed; an exception's expiry is not permission to retain it after a fix or changed exposure.
 On November 18, 2026, the project owner renewed the eight exact CVE-2026-53615 Debian 12 records through **January 30, 2027 at 23:59:59 UTC**, replacing the December 5 expiry while awaiting vendor fixes. The November 18 advisory and static source/Compose review support the bounded exposure record; fresh exact-image scans, inventories and live exposure revalidation remain outstanding and required before publication. TASK-107 weekly and immediate-change review continues. The same January 30 date applies to the proposed deadlines for new decisions, whose individual evidence and approval requirements remain pending. Expiry blocks future publication. See [the dependency disposition](security/dependency-security-disposition.md) for the exact records and controls. This renewal does not add accepted findings, authorize publication or substitute for final qualification.

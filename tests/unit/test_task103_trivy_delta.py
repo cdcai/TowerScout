@@ -63,6 +63,71 @@ def test_committed_residual_policy_is_exact_and_time_bounded():
 
 
 @pytest.mark.parametrize("flavor", ["cpu", "cuda128"])
+@pytest.mark.parametrize("version", [None, "v0.1.4", "v0.1.4-beta.2", "v0.1.4-beta.1"])
+def test_beta_acceptance_is_limited_to_exact_image_version(tmp_path, flavor, version):
+    policy = REPO_ROOT / ".github/security/task107-beta1-residuals.v1.json"
+    entries = json.loads(policy.read_text())["findings"]
+    assert len(entries) == 12
+    assert all(e["expires_utc"] == "2027-01-30T23:59:59Z" for e in entries)
+    findings = [_finding(e["vulnerability_id"], e["package"], installed=e["installed_version"])
+                for e in entries]
+    scan = _scan(*findings, flavor=flavor)
+    if version is not None:
+        scan["Metadata"]["ImageConfig"]["config"]["Labels"]["org.opencontainers.image.version"] = version
+    result, _, delta = _compare(tmp_path, _baseline(tmp_path),
+                                _write(tmp_path / "beta-scan.json", scan), flavor=flavor)
+    report = json.loads(delta.read_text())
+    if version == "v0.1.4-beta.1":
+        assert result.returncode == 0, result.stderr
+        assert report["accepted_residual_count"] == 12
+        assert report["beta_release_version"] == version
+        assert len(report["beta_residuals_sha256"]) == 64
+    else:
+        assert result.returncode == 1, result.stderr
+        assert report["blocking_count"] == 12
+        assert report["beta_residuals_sha256"] is None
+
+
+@pytest.mark.parametrize("mutation", ["additional", "version", "severity", "missing"])
+def test_beta_acceptance_still_blocks_changed_or_additional_findings(tmp_path, mutation):
+    entries = json.loads((REPO_ROOT / ".github/security/task107-beta1-residuals.v1.json").read_text())["findings"]
+    findings = [_finding(e["vulnerability_id"], e["package"], installed=e["installed_version"])
+                for e in entries]
+    if mutation == "additional":
+        findings.append(_finding("CVE-NEW", "unexpected-package"))
+    elif mutation == "version":
+        findings[0]["InstalledVersion"] = "changed"
+        findings[0]["PkgID"] = findings[0]["PkgName"] + "@changed"
+    elif mutation == "severity":
+        findings[0]["Severity"] = "CRITICAL"
+    else:
+        findings.pop()
+    scan = _scan(*findings)
+    scan["Metadata"]["ImageConfig"]["config"]["Labels"]["org.opencontainers.image.version"] = "v0.1.4-beta.1"
+    result, _, _ = _compare(tmp_path, _baseline(tmp_path), _write(tmp_path / "beta-scan.json", scan))
+    assert result.returncode != 0
+
+
+def test_beta_acceptance_expires(monkeypatch):
+    import importlib
+    from datetime import datetime, timezone
+
+    monkeypatch.syspath_prepend(str(SCRIPT.parent))
+    gate = importlib.import_module("task103_trivy_delta")
+
+    class FrozenDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2027, 1, 31, tzinfo=timezone.utc)
+
+    monkeypatch.setattr(gate, "datetime", FrozenDateTime)
+    document = json.loads(gate.BETA_RESIDUALS.read_text())
+    for flavor in ("cpu", "cuda128"):
+        with pytest.raises(gate.InputError, match="expired at 2027-01-30"):
+            gate._accepted_residuals(document, flavor)
+
+
+@pytest.mark.parametrize("flavor", ["cpu", "cuda128"])
 @pytest.mark.parametrize(
     "year,month,day,second,expired",
     [

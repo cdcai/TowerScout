@@ -4,6 +4,26 @@ Use the authoritative release record and the included `release-manifest.v1.json`
 source revision, CPU/CUDA flavor, image digest, package hashes and qualification results.
 This source document does not declare a new official artifact qualified or published.
 
+## v0.1.4-beta.1 experimental prerelease
+
+Separate CPU and NVIDIA CUDA 12.8 packages are prepared from the current source.
+This beta retains known HIGH findings in PAM, Expat, SQLite and zlib. The project
+owner authorized twelve exact additional exceptions for this beta only, expiring
+January 30, 2027. This is risk acceptance, not a security fix. The existing eight
+util-linux exceptions remain. Fresh per-flavor scans and exact-image verification
+are required; additional findings remain blocking.
+
+Windows/model/device qualification and the outstanding exposure investigations
+are incomplete. A successful CUDA image build does not establish working GPU
+inference on a particular machine. Use this prerelease for evaluation with that
+limitation understood. The stable release and latest image aliases are preserved.
+Use a separate installation directory, Compose project and unused port, preserving
+existing named volumes. The unsigned-package boundary below still applies.
+
+Recent changes include coordinate search fixes, one provider-aware search box
+with autocomplete, navigation-only address searches, and fitting the map to
+newly drawn circles. The package manifest records the exact source and image.
+
 ## Changes prepared for this release
 
 - Retain Windows Docker/Podman CPU and NVIDIA CUDA 12.8 profiles with separate digest-pinned packages.

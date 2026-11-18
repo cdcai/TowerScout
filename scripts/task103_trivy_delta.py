@@ -28,6 +28,8 @@ POLICY = "task103-g10-no-new-high-critical"
 RESIDUAL_POLICY = "task103-g10-time-bounded-residuals"
 SUPPORTED_FLAVORS = frozenset({"cpu", "cuda128"})
 SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+BETA_VERSION = "v0.1.4-beta.1"
+BETA_RESIDUALS = Path(__file__).resolve().parents[1] / ".github/security/task107-beta1-residuals.v1.json"
 
 BASELINE_FIELDS = frozenset(
     {
@@ -651,6 +653,17 @@ def compare(args: argparse.Namespace) -> int:
     candidate = _extract_findings(report, "candidate Trivy scan")
     residual_doc = _load_json(args.accepted_residuals, "accepted residuals")
     residuals = _accepted_residuals(residual_doc, args.flavor)
+    release_version = report["Metadata"]["ImageConfig"]["config"]["Labels"].get(
+        "org.opencontainers.image.version"
+    )
+    beta_policy_sha256 = None
+    if release_version == BETA_VERSION:
+        beta_doc = _load_json(BETA_RESIDUALS, "owner-approved beta residuals")
+        beta_residuals = _accepted_residuals(beta_doc, args.flavor)
+        if residuals.keys() & beta_residuals.keys():
+            raise InputError("beta residuals overlap the normal residual policy")
+        residuals.update(beta_residuals)
+        beta_policy_sha256 = _sha256(BETA_RESIDUALS)
     inventory_verified = False
     if any(value.get("location_policy") == LOCATION_POLICY for value in residuals.values()):
         if args.urllib3_inventory is None:
@@ -726,6 +739,8 @@ def compare(args: argparse.Namespace) -> int:
         "baseline_sha256": _sha256(args.baseline),
         "accepted_residuals_path": args.accepted_residuals.as_posix(),
         "accepted_residuals_sha256": _sha256(args.accepted_residuals),
+        "beta_release_version": BETA_VERSION if beta_policy_sha256 else None,
+        "beta_residuals_sha256": beta_policy_sha256,
         "urllib3_inventory_sha256": (
             _sha256(args.urllib3_inventory) if inventory_verified else None
         ),
@@ -757,6 +772,7 @@ def compare(args: argparse.Namespace) -> int:
         f"- Baseline SHA-256: `{delta['baseline_sha256']}`",
         f"- Accepted residuals: `{args.accepted_residuals.as_posix()}`",
         f"- Accepted residuals SHA-256: `{delta['accepted_residuals_sha256']}`",
+        f"- Beta-only owner exception: `{delta['beta_release_version'] or 'not applicable'}`; policy SHA-256: `{beta_policy_sha256 or 'not applicable'}`",
         f"- Exact-image urllib3 inventory SHA-256: `{delta['urllib3_inventory_sha256'] or 'not required'}`",
         f"- Policy: block every unaccepted new CRITICAL/HIGH key and every severity escalation.",
         f"- Counts: baseline {len(baseline)}; candidate {len(candidate)}; "
