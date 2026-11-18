@@ -1,4 +1,8 @@
 from pathlib import Path
+import json
+import re
+import subprocess
+import sys
 
 import yaml
 
@@ -17,6 +21,8 @@ def test_publication_uses_reviewed_main_and_safe_input_transport():
     build = next(s for s in steps if s.get('id') == 'build')
     assert steps.index(preflight) < steps.index(build)
     assert preflight['env']['EXPECTED_SOURCE'] == '${{ inputs.source_sha }}'
+    assert preflight['env']['PUSH_LATEST'] == '${{ inputs.push_latest }}'
+    assert '--push-latest "$PUSH_LATEST"' in preflight['run']
     assert 'validate_publish_inputs.py' in preflight['run']
     assert '/environments/official-release' in preflight['run']
     assert 'deployment-branch-policies' in preflight['run']
@@ -40,6 +46,36 @@ def test_container_publish_sets_release_oci_label_build_args():
 
     assert '--build-arg TOWERSCOUT_RELEASE_VERSION="$tag"' in workflow
     assert '--build-arg TOWERSCOUT_SOURCE_REF="$GITHUB_SHA"' in workflow
+
+
+def test_publication_dependency_probe_accepts_fixed_pip_and_rejects_old_copies():
+    workflow = yaml.safe_load((REPO_ROOT / '.github/workflows/container-publish.yml').read_text())
+    step = next(s for s in workflow['jobs']['publish']['steps']
+                if s.get('name') == 'Verify local dependency and geospatial boundary')
+    match = re.search(r'''docker run --rm --entrypoint python "\$LOCAL_IMAGE" -c '(.*?)'\n''',
+                      step['run'], re.DOTALL)
+    assert match, 'The publication dependency probe must be exercised'
+    harness = '''
+import json, sys, types
+direct, private, code = json.loads(sys.argv[1])
+modules = {name: types.ModuleType(name) for name in
+           ('urllib3', 'pip', 'pip._vendor', 'pip._vendor.urllib3')}
+modules['urllib3'].__version__ = direct
+modules['pip._vendor.urllib3'].__version__ = private
+modules['pip']._vendor = modules['pip._vendor']
+modules['pip._vendor'].urllib3 = modules['pip._vendor.urllib3']
+sys.modules.update(modules)
+exec(compile(code, '<publication dependency probe>', 'exec'))
+'''
+    # Execute the workflow's probe with controlled module versions. Real-image
+    # inventory and scans remain mandatory in the publication workflow.
+    for direct, private, accepted in [('2.8.0', '2.8.0', True),
+                                      ('2.8.0', '2.7.0', False),
+                                      ('2.7.0', '2.8.0', False)]:
+        result = subprocess.run([sys.executable, '-I', '-c', harness,
+                                 json.dumps([direct, private, match.group(1)])],
+                                capture_output=True, text=True, timeout=15)
+        assert (result.returncode == 0) == accepted, result.stderr
 
 
 def test_container_publish_exposes_pytorch_flavor_input_and_build_arg():
@@ -151,7 +187,7 @@ def test_container_publish_verifies_runtime_versions_and_remote_identity():
     )["run"]
 
     assert 'urllib3.__version__ == "2.8.0"' in workflow
-    assert 'pip_urllib3.__version__ == "2.7.0"' in workflow
+    assert 'pip_urllib3.__version__ == "2.8.0"' in workflow
     assert "gdal-bin libgdal32 libheif1 python3.11" in workflow
     assert "site-packages/fiona.libs" in workflow
     assert "readlink -f" in workflow
