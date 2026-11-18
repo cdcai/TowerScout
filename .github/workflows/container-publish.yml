@@ -362,4 +362,5 @@ jobs:
             image-scan-delta.json
             .github/security/task103-trivy-baseline.v1.json
             .github/security/task103-accepted-residuals.v1.json
+            .github/security/task107-beta1-residuals.v1.json
           if-no-files-found: error

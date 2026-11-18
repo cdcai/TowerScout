@@ -276,6 +276,8 @@ $releaseFiles = @(
     "docs\security\dependency-security-disposition.md",
     "docs\security\2026-11-16-local-assessment.md",
     "docs\security\2026-11-16-runtime-exposure.md",
+    "docs\security\2026-11-18-beta1-release-decision.md",
+    ".github\security\task107-beta1-residuals.v1.json",
     "docs\support\issue-report-form.txt",
     "webapp\asset_manifest.v1.json",
     "scripts\podman-compose-providers.v1.json",
