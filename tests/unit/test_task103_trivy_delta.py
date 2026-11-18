@@ -57,18 +57,23 @@ def test_committed_residual_policy_is_exact_and_time_bounded():
         item["applicable_publish_flavors"] == ["cpu", "cuda128"]
         and item["approved_by"] == "Project owner"
         and item["follow_up_task"] == "TASK-107"
-        and item["expires_utc"] == "2026-12-05T23:59:59Z"
+        and item["expires_utc"] == "2027-01-30T23:59:59Z"
         for item in document["findings"]
     )
 
 
 @pytest.mark.parametrize("flavor", ["cpu", "cuda128"])
 @pytest.mark.parametrize(
-    "month,day,second,expired",
-    [(11, 6, 0, False), (12, 5, 58, False), (12, 5, 59, True)],
+    "year,month,day,second,expired",
+    [
+        (2026, 12, 6, 0, False),
+        (2027, 1, 30, 58, False),
+        (2027, 1, 30, 59, True),
+        (2027, 1, 31, 0, True),
+    ],
 )
 def test_util_linux_expiry_still_blocks_after_pip_residual_removal(
-    monkeypatch, flavor, month, day, second, expired
+    monkeypatch, flavor, year, month, day, second, expired
 ):
     import importlib
     from datetime import datetime, timezone
@@ -79,12 +84,12 @@ def test_util_linux_expiry_still_blocks_after_pip_residual_removal(
     class FrozenDateTime(datetime):
         @classmethod
         def now(cls, tz=None):
-            return datetime(2026, month, day, 23, 59, second, tzinfo=timezone.utc)
+            return datetime(year, month, day, 23, 59, second, tzinfo=timezone.utc)
 
     monkeypatch.setattr(gate, "datetime", FrozenDateTime)
     document = json.loads(COMMITTED_RESIDUALS.read_text(encoding="utf-8"))
     if expired:
-        with pytest.raises(gate.InputError, match="expired at 2026-12-05"):
+        with pytest.raises(gate.InputError, match="expired at 2027-01-30"):
             gate._accepted_residuals(document, flavor)
     else:
         assert len(gate._accepted_residuals(document, flavor)) == 8

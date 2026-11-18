@@ -15,7 +15,7 @@ These are scanner CVE/package keys, not counts of distinct underlying vulnerabil
 
 - Replace the official hash-verified pip 26.2.2 wheel with pip 26.3. Its private urllib3 is 2.8.0 and msgpack is 1.2.4; the application's urllib3 remains 2.8.0.
 - Update the base image's existing apt and libapt-pkg6.0 packages from 2.6.1 to Debian's signed 2.6.2 security packages. Preserve all other explicit runtime pins and inference settings.
-- Remove only the two pip-private urllib3 exceptions. Preserve the eight exact util-linux exceptions and their December 5, 2026 deadline.
+- Remove only the two pip-private urllib3 exceptions. Preserve the eight exact util-linux exceptions and their then-current December 5, 2026 deadline. The owner later renewed that expiry to January 30, 2027; see the [current disposition](dependency-security-disposition.md).
 - Require the fixed pip/module/SBOM/notice inventory in current images; retain explicitly selected historical inventory validation only for historical residual-gate regression coverage.
 
 The six resolved keys were CVE-2026-97687 and CVE-2026-97689 on urllib3; CVE-2026-114613 and GHSA-6v7p-g79w-8964 on msgpack; and CVE-2026-109518 on apt and libapt-pkg6.0.
