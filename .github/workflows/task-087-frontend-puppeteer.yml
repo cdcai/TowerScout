@@ -62,8 +62,13 @@ jobs:
           # Install Playwright and download Chromium with deps; this provides a reliable browser binary for CI
           npx -y playwright@1.62.0 install --with-deps chromium
           # Find the downloaded chromium binary and expose it to later steps for Puppeteer
-          CHROME_PATH=$(find $HOME/.cache/ms-playwright -type f -name "chrome*" -executable 2>/dev/null | head -n1 || true)
-          if [ -n "$CHROME_PATH" ]; then echo "PUPPETEER_EXECUTABLE_PATH=$CHROME_PATH" >> $GITHUB_ENV; fi
+          CHROME_PATH=$(find "$HOME/.cache/ms-playwright" -type f -name chrome -executable -print -quit 2>/dev/null || true)
+          if [ -z "$CHROME_PATH" ]; then
+            echo "::error::Playwright Chromium executable was not found"
+            exit 1
+          fi
+          "$CHROME_PATH" --version
+          echo "PUPPETEER_EXECUTABLE_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
 
       - name: Install lightweight test utilities
         run: npm install --no-audit --no-fund --no-save http-server wait-on
@@ -155,8 +160,13 @@ jobs:
       - name: Install Playwright Chromium for Puppeteer
         run: |
           npx -y playwright@1.62.0 install --with-deps chromium
-          CHROME_PATH=$(find $HOME/.cache/ms-playwright -type f -name "chrome*" -executable 2>/dev/null | head -n1 || true)
-          if [ -n "$CHROME_PATH" ]; then echo "PUPPETEER_EXECUTABLE_PATH=$CHROME_PATH" >> $GITHUB_ENV; fi
+          CHROME_PATH=$(find "$HOME/.cache/ms-playwright" -type f -name chrome -executable -print -quit 2>/dev/null || true)
+          if [ -z "$CHROME_PATH" ]; then
+            echo "::error::Playwright Chromium executable was not found"
+            exit 1
+          fi
+          "$CHROME_PATH" --version
+          echo "PUPPETEER_EXECUTABLE_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
 
       - name: Install lightweight test utilities
         run: npm install --no-audit --no-fund --no-save http-server wait-on
